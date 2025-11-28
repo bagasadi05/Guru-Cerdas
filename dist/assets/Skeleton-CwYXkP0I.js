@@ -1,0 +1,1 @@
+import{j as t}from"./index-D1C6o8KR.js";const n=({className:r,...a})=>t.jsx("div",{className:`bg-gray-200 dark:bg-gray-700/50 rounded-md animate-shimmer bg-gradient-to-r from-transparent via-gray-400/20 to-transparent bg-[length:200%_100%] ${r}`,...a});export{n as S};
