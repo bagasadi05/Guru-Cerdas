@@ -192,18 +192,9 @@ const AttendancePage: React.FC = () => {
         return Math.round((marked / students.length) * 100);
     }, [students, unmarkedStudents]);
 
-    const handleBulkStatusChange = (status: AttendanceStatus) => {
-        if (selectedStudents.size === 0) return;
-        const updatedRecords = { ...attendanceRecords };
-        selectedStudents.forEach(studentId => {
-            updatedRecords[studentId] = { ...updatedRecords[studentId], status, note: (status === 'Izin' || status === 'Sakit') ? (updatedRecords[studentId]?.note || '') : '' };
-        });
-        setAttendanceRecords(updatedRecords);
-        setSelectedStudents(new Set());
-        toast.success(`Status ${selectedStudents.size} siswa diubah menjadi ${status}`);
-    };
 
-    const handleBulkNoteSave = () => {
+
+    const handleSaveNote = () => {
         if (selectedStudents.size === 0) return;
         const updatedRecords = { ...attendanceRecords };
         selectedStudents.forEach(studentId => {
@@ -213,28 +204,10 @@ const AttendancePage: React.FC = () => {
         setSelectedStudents(new Set());
         setIsNoteModalOpen(false);
         setNoteText('');
-        toast.success(`Catatan disimpan untuk ${selectedStudents.size} siswa`);
+        toast.success(`Catatan berhasil disimpan`);
     };
 
-    const handleStudentCheckbox = (studentId: string) => {
-        setSelectedStudents(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(studentId)) {
-                newSet.delete(studentId);
-            } else {
-                newSet.add(studentId);
-            }
-            return newSet;
-        });
-    };
 
-    const handleSelectAll = () => {
-        if (selectedStudents.size === students?.length) {
-            setSelectedStudents(new Set());
-        } else if (students) {
-            setSelectedStudents(new Set(students.map(s => s.id)));
-        }
-    };
 
     const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
         setAttendanceRecords(prev => ({
@@ -623,9 +596,6 @@ const AttendancePage: React.FC = () => {
                                 Tandai Sisa Hadir ({unmarkedStudents.length})
                             </Button>
                         )}
-                        <Button size="sm" variant="ghost" onClick={handleSelectAll} className="text-gray-500">
-                            {selectedStudents.size === students?.length ? 'Batal Pilih' : 'Pilih Semua'}
-                        </Button>
                     </div>
                 </div>
 
@@ -633,51 +603,75 @@ const AttendancePage: React.FC = () => {
                     {isLoadingStudents ? <div className="p-12 text-center text-gray-500">Memuat daftar siswa...</div> :
                         !students || students.length === 0 ? <div className="p-12 text-center text-gray-400 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">Pilih kelas untuk memulai absensi.</div> :
                             <>
-                                {students.map((student) => {
+                                {students.map((student, index) => {
                                     const record = attendanceRecords[student.id];
-                                    const isSelected = selectedStudents.has(student.id);
-                                    const statusOption = record ? statusOptions.find(o => o.value === record.status) : null;
-                                    const statusColor = statusOption ? statusStyles[statusOption.color] : null;
 
                                     return (
                                         <div
                                             key={student.id}
-                                            onClick={() => handleStudentCheckbox(student.id)}
-                                            className={`group relative bg-white dark:bg-gray-800 rounded-2xl p-4 border transition-all duration-200 cursor-pointer hover:shadow-md ${isSelected
-                                                ? 'border-blue-500 ring-1 ring-blue-500 shadow-blue-100 dark:shadow-none'
-                                                : 'border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
-                                                }`}
+                                            className="group flex flex-col sm:flex-row sm:items-center gap-4 p-4 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
                                         >
-                                            <div className="flex items-center gap-4">
-                                                {/* Checkbox indicator */}
-                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300 dark:border-gray-600 group-hover:border-blue-400'}`}>
-                                                    {isSelected && <CheckCircleIcon className="w-4 h-4 text-white" />}
-                                                </div>
-
-                                                <img src={student.avatar_url} alt={student.name} className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm bg-gray-100" />
-
-                                                <div className="flex-grow min-w-0">
-                                                    <h4 className={`font-bold text-base truncate ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>{student.name}</h4>
-                                                    {record?.note ? (
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 italic truncate flex items-center gap-1 mt-0.5">
-                                                            <InfoIcon className="w-3 h-3" /> "{record.note}"
+                                            {/* Student Info */}
+                                            <div className="flex items-center gap-4 flex-grow min-w-0">
+                                                <span className="text-gray-400 font-mono w-6 text-right flex-shrink-0">{index + 1}.</span>
+                                                <img src={student.avatar_url} alt={student.name} className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+                                                <div className="min-w-0">
+                                                    <h4 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white uppercase tracking-wide truncate">{student.name}</h4>
+                                                    {record?.note && (
+                                                        <p className="text-xs text-blue-500 italic truncate flex items-center gap-1 mt-0.5">
+                                                            <InfoIcon className="w-3 h-3" /> {record.note}
                                                         </p>
-                                                    ) : (
-                                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Klik untuk memilih</p>
                                                     )}
                                                 </div>
+                                            </div>
 
-                                                {/* Status Badge */}
-                                                {statusOption ? (
-                                                    <div className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border shadow-sm ${statusColor?.active.replace('shadow-lg', '')} bg-white dark:bg-gray-900`}>
-                                                        <statusOption.icon className={`w-4 h-4 ${statusColor?.icon}`} />
-                                                        <span className={statusColor?.icon.replace('text-', 'text-gray-700 dark:text-')}>{statusOption.label}</span>
-                                                    </div>
-                                                ) : (
-                                                    <div className="px-3 py-1.5 rounded-xl text-xs font-medium text-gray-400 bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700">
-                                                        Belum diabsen
-                                                    </div>
-                                                )}
+                                            {/* Action Buttons */}
+                                            <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+                                                {statusOptions.map((opt) => {
+                                                    const isActive = record?.status === opt.value;
+
+                                                    // Custom styles based on the screenshot reference
+                                                    let buttonStyle = "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-transparent hover:bg-gray-200 dark:hover:bg-gray-700";
+
+                                                    if (isActive) {
+                                                        if (opt.value === AttendanceStatus.Hadir) buttonStyle = "bg-green-600 text-white border-green-500 shadow-lg shadow-green-900/20";
+                                                        else if (opt.value === AttendanceStatus.Sakit) buttonStyle = "bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-900/20";
+                                                        else if (opt.value === AttendanceStatus.Izin) buttonStyle = "bg-yellow-600 text-white border-yellow-500 shadow-lg shadow-yellow-900/20";
+                                                        else if (opt.value === AttendanceStatus.Alpha) buttonStyle = "bg-red-600 text-white border-red-500 shadow-lg shadow-red-900/20";
+                                                    }
+
+                                                    return (
+                                                        <button
+                                                            key={opt.value}
+                                                            onClick={() => handleStatusChange(student.id, opt.value)}
+                                                            className={`
+                                                                flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 min-w-[90px]
+                                                                ${buttonStyle}
+                                                            `}
+                                                        >
+                                                            <opt.icon className={`w-4 h-4 ${isActive ? 'text-white' : ''}`} />
+                                                            <span>{opt.label}</span>
+                                                        </button>
+                                                    );
+                                                })}
+
+                                                <button
+                                                    onClick={() => {
+                                                        setNoteText(record?.note || '');
+                                                        setSelectedStudents(new Set([student.id]));
+                                                        setIsNoteModalOpen(true);
+                                                    }}
+                                                    className={`
+                                                        p-2 rounded-lg transition-all ml-1
+                                                        ${record?.note
+                                                            ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                                            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                        }
+                                                    `}
+                                                    title="Catatan"
+                                                >
+                                                    <PencilIcon className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </div>
                                     );
@@ -685,51 +679,20 @@ const AttendancePage: React.FC = () => {
                             </>
                     }
                 </div>
-            </main>
 
-            {/* Bottom Action Bar */}
-            <div className="fixed bottom-20 lg:bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] p-4 transition-transform duration-300">
-                <div className="max-w-7xl mx-auto">
-                    {selectedStudents.size > 0 ? (
-                        <div className="animate-slide-up space-y-3">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                    Tandai <strong className="text-gray-900 dark:text-white">{selectedStudents.size} siswa</strong> sebagai:
-                                </p>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setIsNoteModalOpen(true)}
-                                    className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                                >
-                                    <PencilIcon className="w-4 h-4 mr-1" />
-                                    Catatan
-                                </Button>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                {statusOptions.map(opt => (
-                                    <button
-                                        key={opt.value}
-                                        onClick={() => handleBulkStatusChange(opt.value)}
-                                        className={`flex items-center justify-center gap-2 h-12 rounded-xl border font-semibold transition-all active:scale-95 hover:-translate-y-0.5 ${opt.value === AttendanceStatus.Hadir ? 'border-green-200 bg-green-50 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400' :
-                                            opt.value === AttendanceStatus.Sakit ? 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400' :
-                                                opt.value === AttendanceStatus.Izin ? 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-400' :
-                                                    'border-red-200 bg-red-50 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
-                                            }`}
-                                    >
-                                        <opt.icon className="w-5 h-5" />
-                                        <span>{opt.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <Button onClick={handleSave} disabled={isSaving} className="w-full h-12 text-lg font-bold shadow-lg shadow-indigo-500/20">
+                {/* Static Save Button */}
+                {students && students.length > 0 && (
+                    <div className="mt-8 mb-8">
+                        <Button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="w-full h-12 text-lg font-bold shadow-lg shadow-indigo-500/20 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none rounded-xl"
+                        >
                             {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
                         </Button>
-                    )}
-                </div>
-            </div>
+                    </div>
+                )}
+            </main>
 
             <Modal title="Analisis Kehadiran AI" isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} icon={<BrainCircuitIcon className="h-5 w-5" />}>
                 {isAiLoading ? <div className="text-center py-8">Menganalisis data...</div> : aiAnalysisResult ? (
