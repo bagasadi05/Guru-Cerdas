@@ -16,7 +16,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Centralized Google GenAI Client
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyBS7aR1YXioBNibQQgg5SSzpqWlKXkrOeA';
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyBmECgy27mPlqplI4AQEj9r2BAw00nCRw8';
 export const ai = new GoogleGenAI({ apiKey });
 
 /**

@@ -4,7 +4,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Modal } from '../ui/Modal';
-import { CheckCircleIcon, XCircleIcon, AlertCircleIcon, DownloadCloudIcon, BrainCircuitIcon, UserCheckIcon, PencilIcon, SparklesIcon, UserMinusIcon, UserPlusIcon, ChevronDownIcon, CalendarIcon, HeartIcon, InfoIcon } from '../Icons';
+import { CheckCircleIcon, XCircleIcon, AlertCircleIcon, DownloadCloudIcon, BrainCircuitIcon, UserCheckIcon, PencilIcon, SparklesIcon, UserMinusIcon, UserPlusIcon, ChevronDownIcon, CalendarIcon, HeartIcon, InfoIcon, SearchIcon } from '../Icons';
 import BottomSheet from '../ui/BottomSheet';
 import { useToast } from '../../hooks/useToast';
 import { supabase, ai } from '../../services/supabase';
@@ -30,25 +30,11 @@ type AiAnalysis = {
 };
 
 const statusOptions = [
-    { value: AttendanceStatus.Hadir, label: 'Hadir', icon: CheckCircleIcon, color: 'green' },
-    { value: AttendanceStatus.Izin, label: 'Izin', icon: InfoIcon, color: 'yellow' },
-    { value: AttendanceStatus.Sakit, label: 'Sakit', icon: HeartIcon, color: 'blue' },
-    { value: AttendanceStatus.Alpha, label: 'Alpha', icon: XCircleIcon, color: 'red' },
+    { value: AttendanceStatus.Hadir, label: 'Hadir', icon: CheckCircleIcon, color: 'emerald', gradient: 'from-emerald-400 to-green-500' },
+    { value: AttendanceStatus.Izin, label: 'Izin', icon: InfoIcon, color: 'amber', gradient: 'from-amber-400 to-orange-500' },
+    { value: AttendanceStatus.Sakit, label: 'Sakit', icon: HeartIcon, color: 'sky', gradient: 'from-sky-400 to-blue-500' },
+    { value: AttendanceStatus.Alpha, label: 'Alpha', icon: XCircleIcon, color: 'rose', gradient: 'from-rose-400 to-red-500' },
 ];
-
-const statusStyles: Record<string, { active: string; hover: string; icon: string }> = {
-    green: { active: 'border-green-500 shadow-lg shadow-green-500/20', hover: 'hover:border-green-500/50', icon: 'text-green-500' },
-    yellow: { active: 'border-yellow-500 shadow-lg shadow-yellow-500/20', hover: 'hover:border-yellow-500/50', icon: 'text-yellow-500' },
-    blue: { active: 'border-blue-500 shadow-lg shadow-blue-500/20', hover: 'hover:border-blue-500/50', icon: 'text-blue-500' },
-    red: { active: 'border-red-500 shadow-lg shadow-red-500/20', hover: 'hover:border-red-500/50', icon: 'text-red-500' },
-};
-
-const buttonStatusStyles: Record<string, { active: string; hover: string; }> = {
-    green: { active: 'bg-green-500/20 border-green-500 text-green-700 dark:text-green-300', hover: 'hover:border-green-500/50' },
-    yellow: { active: 'bg-yellow-500/20 border-yellow-500 text-yellow-700 dark:text-yellow-300', hover: 'hover:border-yellow-500/50' },
-    blue: { active: 'bg-blue-500/20 border-blue-500 text-blue-700 dark:text-blue-300', hover: 'hover:border-blue-500/50' },
-    red: { active: 'bg-red-500/20 border-red-500 text-red-700 dark:text-red-300', hover: 'hover:border-red-500/50' },
-};
 
 const AttendancePage: React.FC = () => {
     const toast = useToast();
@@ -65,6 +51,7 @@ const AttendancePage: React.FC = () => {
     const [isDatePickerOpen, setDatePickerOpen] = useState(false);
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [noteText, setNoteText] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportMonth, setExportMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -119,7 +106,6 @@ const AttendancePage: React.FC = () => {
         setAttendanceRecords(existingAttendance || {});
     }, [existingAttendance]);
 
-    // FIX: Add explicit generic types to useMutation to ensure the `context` object in `onError` is correctly typed.
     const { mutate: saveAttendance, isPending: isSaving } = useMutation<
         { synced: boolean },
         Error,
@@ -143,7 +129,6 @@ const AttendancePage: React.FC = () => {
         onMutate: async (recordsToUpsert) => {
             await queryClient.cancelQueries({ queryKey: ['attendanceData', selectedClass, selectedDate] });
             const previousAttendance = queryClient.getQueryData<Record<string, AttendanceRecord>>(['attendanceData', selectedClass, selectedDate]);
-            // FIX: Explicitly type the `old` parameter to resolve the 'unknown' type error when optimistically updating the cache.
             queryClient.setQueryData(['attendanceData', selectedClass, selectedDate], (old: Record<string, AttendanceRecord> = {}) => {
                 const newData = { ...old };
                 recordsToUpsert.forEach(record => {
@@ -174,7 +159,6 @@ const AttendancePage: React.FC = () => {
 
     const attendanceSummary = useMemo(() => {
         const summary = statusOptions.reduce((acc, opt) => ({ ...acc, [opt.value]: 0 }), {} as Record<AttendanceStatus, number>);
-        // FIX: Explicitly type `record` to resolve 'unknown' type from Object.values.
         Object.values(attendanceRecords).forEach((record: AttendanceRecord) => {
             summary[record.status]++;
         });
@@ -186,13 +170,10 @@ const AttendancePage: React.FC = () => {
         return students.filter(student => !attendanceRecords[student.id]);
     }, [students, attendanceRecords]);
 
-    const completionPercentage = useMemo(() => {
-        if (!students || students.length === 0) return 0;
-        const marked = students.length - unmarkedStudents.length;
-        return Math.round((marked / students.length) * 100);
-    }, [students, unmarkedStudents]);
-
-
+    const filteredStudents = useMemo(() => {
+        if (!students) return [];
+        return students.filter(student => student.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }, [students, searchQuery]);
 
     const handleSaveNote = () => {
         if (selectedStudents.size === 0) return;
@@ -207,17 +188,11 @@ const AttendancePage: React.FC = () => {
         toast.success(`Catatan berhasil disimpan`);
     };
 
-
-
     const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
         setAttendanceRecords(prev => ({
             ...prev,
             [studentId]: { ...prev[studentId], status, note: (status === 'Izin' || status === 'Sakit') ? (prev[studentId]?.note || '') : '' }
         }));
-    };
-
-    const handleNoteChange = (studentId: string, note: string) => {
-        setAttendanceRecords(prev => ({ ...prev, [studentId]: { ...prev[studentId], note } }));
     };
 
     const markRestAsPresent = () => {
@@ -267,7 +242,6 @@ const AttendancePage: React.FC = () => {
 
         if (studentsRes.error || attendanceRes.error || classesRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
 
-        // FIX: Manually join student with class name as the relationship is not defined in Supabase schema.
         const classMap = new Map((classesRes.data || []).map(c => [c.id, { name: c.name }]));
         const studentsWithClasses = (studentsRes.data || []).map((s: StudentRow) => ({
             ...s,
@@ -302,20 +276,16 @@ const AttendancePage: React.FC = () => {
 
                 for (const classData of studentsByClass) {
                     const wsData = [];
-
-                    // Header Info
                     wsData.push(['Laporan Absensi Bulanan']);
                     wsData.push([`Kelas: ${classData.name}`]);
                     wsData.push([`Periode: ${monthName} ${year}`]);
-                    wsData.push([]); // Empty row
+                    wsData.push([]);
 
-                    // Table Header
                     const headerRow = ['No', 'Nama Siswa'];
                     for (let i = 1; i <= daysInMonth; i++) headerRow.push(String(i));
                     headerRow.push('Hadir', 'Sakit', 'Izin', 'Alpha');
                     wsData.push(headerRow);
 
-                    // Student Data
                     classData.students.forEach((student, index) => {
                         const row = [index + 1, student.name];
                         let h = 0, s = 0, i = 0, a = 0;
@@ -338,21 +308,18 @@ const AttendancePage: React.FC = () => {
                     });
 
                     const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-                    // Basic column width adjustment
                     const wscols = [{ wch: 5 }, { wch: 30 }];
                     for (let i = 0; i < daysInMonth; i++) wscols.push({ wch: 3 });
                     wscols.push({ wch: 5 }, { wch: 5 }, { wch: 5 }, { wch: 5 });
                     ws['!cols'] = wscols;
 
-                    XLSX.utils.book_append_sheet(wb, ws, classData.name.substring(0, 31)); // Sheet name max 31 chars
+                    XLSX.utils.book_append_sheet(wb, ws, classData.name.substring(0, 31));
                 }
 
                 XLSX.writeFile(wb, `Absensi_${exportMonth}.xlsx`);
                 toast.success('Laporan Excel berhasil diunduh!');
 
             } else {
-                // PDF Export
                 const doc = new jsPDF({ orientation: 'landscape' });
                 const pageHeight = doc.internal.pageSize.getHeight();
                 const pageWidth = doc.internal.pageSize.getWidth();
@@ -363,18 +330,12 @@ const AttendancePage: React.FC = () => {
                     isFirstClass = false;
 
                     let yPos = 20;
-
-                    // --- HEADER WITH LOGO ---
-                    // Add Logo (Assuming logo.png is available in public folder, but for PDF we need base64 or URL)
-                    // Since we can't easily get base64 here without fetching, we'll use a text header for now but styled better.
-                    // Ideally, we would load the image. Let's try to add a simple colored header bar.
-
-                    doc.setFillColor(240, 249, 255); // Light blue background
+                    doc.setFillColor(240, 249, 255);
                     doc.rect(0, 0, pageWidth, 40, 'F');
 
                     doc.setFontSize(22);
                     doc.setFont('helvetica', 'bold');
-                    doc.setTextColor('#0f172a'); // Dark slate
+                    doc.setTextColor('#0f172a');
                     doc.text('PortalGuru', 14, 18);
 
                     doc.setFontSize(12);
@@ -384,7 +345,6 @@ const AttendancePage: React.FC = () => {
 
                     yPos = 50;
 
-                    // Class Info
                     doc.setFontSize(14);
                     doc.setFont('helvetica', 'bold');
                     doc.setTextColor('#334155');
@@ -392,7 +352,6 @@ const AttendancePage: React.FC = () => {
                     doc.text(`Periode: ${monthName} ${year}`, pageWidth - 14, yPos, { align: 'right' });
                     yPos += 10;
 
-                    // --- SUMMARY ---
                     const classAttendance = attendance.filter(a => classData.students.some(s => s.id === a.student_id));
                     const summary = { H: 0, S: 0, I: 0, A: 0 };
                     classAttendance.forEach((rec: AttendanceRow) => {
@@ -404,7 +363,6 @@ const AttendancePage: React.FC = () => {
 
                     doc.setFontSize(10);
                     const summaryColors: Record<string, string> = { H: '#22c55e', S: '#3b82f6', I: '#f59e0b', A: '#ef4444' };
-                    const summaryLabels: Record<string, string> = { H: 'Hadir', S: 'Sakit', I: 'Izin', A: 'Alpha' };
                     let xPos = 14;
                     Object.entries(summary).forEach(([key, value]) => {
                         doc.setFillColor(summaryColors[key]);
@@ -416,7 +374,6 @@ const AttendancePage: React.FC = () => {
                     });
                     yPos += 15;
 
-                    // --- TABLE LOGIC ---
                     const head = [['No', 'Nama Siswa', ...Array.from({ length: daysInMonth }, (_, i) => String(i + 1)), 'H', 'S', 'I', 'A']];
                     const body = classData.students.map((student, index) => {
                         const row = [String(index + 1), student.name];
@@ -439,10 +396,6 @@ const AttendancePage: React.FC = () => {
                         return row;
                     });
 
-                    // Split table if too wide (simplified split logic for PDF)
-                    // For better readability, we might need to reduce font size or split columns.
-                    // Let's try to fit it all first with smaller font.
-
                     autoTable(doc, {
                         head: head,
                         body: body,
@@ -454,7 +407,6 @@ const AttendancePage: React.FC = () => {
                         columnStyles: {
                             0: { cellWidth: 8, halign: 'center' },
                             1: { cellWidth: 40, fontStyle: 'bold' },
-                            // Dynamic columns for days will take remaining space
                         },
                         didDrawCell: (data: any) => {
                             const statusColors: Record<string, string> = { 'S': '#3b82f6', 'I': '#f59e0b', 'A': '#ef4444', 'H': '#dcfce7' };
@@ -476,7 +428,6 @@ const AttendancePage: React.FC = () => {
                         }
                     });
 
-                    // Footer
                     const pageCount = (doc as any).internal.getNumberOfPages();
                     doc.setFontSize(8);
                     doc.setTextColor('#94a3b8');
@@ -495,7 +446,6 @@ const AttendancePage: React.FC = () => {
             setIsExportModalOpen(false);
         }
     };
-
 
     const handleAnalyzeAttendance = async () => {
         if (!students || students.length === 0) {
@@ -526,73 +476,88 @@ const AttendancePage: React.FC = () => {
     };
 
     return (
-        <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col">
+        <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col animate-fade-in-up">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Pendataan Absensi</h1>
-                    <p className="mt-1 text-gray-500 dark:text-gray-400">Kelola kehadiran siswa dengan mudah dan efisien.</p>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-serif">Rekapitulasi Kehadiran</h1>
+                    <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400 tracking-wide">Manajemen data kehadiran peserta didik secara real-time.</p>
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
-                    <Button onClick={handleAnalyzeAttendance} variant="outline" disabled={!isOnline} className="flex-1 md:flex-none justify-center">
-                        <BrainCircuitIcon className="w-4 h-4 mr-2 text-purple-500" />
-                        Analisis AI
+                    <Button onClick={handleAnalyzeAttendance} variant="outline" disabled={!isOnline} className="flex-1 md:flex-none justify-center border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 tracking-wide">
+                        <BrainCircuitIcon className="w-4 h-4 mr-2 text-indigo-500" />
+                        Analisis Cerdas
                     </Button>
-                    <Button onClick={() => setIsExportModalOpen(true)} variant="outline" className="flex-1 md:flex-none justify-center">
-                        <DownloadCloudIcon className="w-4 h-4 mr-2 text-blue-500" />
-                        Export
+                    <Button onClick={() => setIsExportModalOpen(true)} variant="outline" className="flex-1 md:flex-none justify-center border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 tracking-wide">
+                        <DownloadCloudIcon className="w-4 h-4 mr-2 text-slate-500" />
+                        Ekspor Data
                     </Button>
                 </div>
             </header>
 
-            <div className="sticky top-0 z-20 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md p-4 border-b border-gray-200 dark:border-gray-800 shadow-sm -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none mb-6 transition-all">
+            <div className="sticky top-0 z-20 glass-card p-4 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none mb-6 transition-all rounded-2xl overflow-hidden">
                 <div
-                    className="group relative overflow-hidden w-full rounded-2xl bg-gradient-to-br from-white to-blue-50 dark:from-gray-900 dark:to-blue-900/20 border border-blue-100 dark:border-blue-800/50 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
+                    className="group relative overflow-hidden w-full rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 cursor-pointer"
                     onClick={() => setDatePickerOpen(true)}
                 >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
-                    <div className="relative p-4 sm:p-5 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300">
-                                <CalendarIcon className="w-6 h-6" />
+                    <div className="relative p-5 sm:p-6 flex items-center justify-between">
+                        <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner border border-white/20 group-hover:scale-110 transition-transform duration-300">
+                                <CalendarIcon className="w-7 h-7" />
                             </div>
                             <div className="text-left">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-0.5">Tanggal Absensi</p>
-                                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <p className="text-xs font-bold uppercase tracking-wider text-indigo-100 mb-1">Tanggal Absensi</p>
+                                <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-3">
                                     {new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                                    {selectedDate === today && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Hari Ini</span>}
+                                    {selectedDate === today && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
                                 </h2>
                             </div>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm border border-gray-100 dark:border-gray-700 group-hover:bg-blue-50 dark:group-hover:bg-gray-700 transition-colors">
-                            <ChevronDownIcon className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
+                        <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-colors">
+                            <ChevronDownIcon className="w-6 h-6 text-white" />
                         </div>
                     </div>
                 </div>
             </div>
 
             {students && students.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                     {statusOptions.map((opt) => (
-                        <div key={opt.value} className={`bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group`}>
-                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity bg-${opt.color}-500`}></div>
-                            <opt.icon className={`w-6 h-6 mb-2 text-${opt.color}-500`} />
-                            <span className="text-2xl font-bold text-gray-900 dark:text-white">{attendanceSummary[opt.value]}</span>
-                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{opt.label}</span>
+                        <div key={opt.value} className={`glass-card p-4 rounded-2xl border border-white/40 dark:border-white/5 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group hover:shadow-md transition-all duration-300`}>
+                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity bg-gradient-to-br ${opt.gradient}`}></div>
+                            <div className={`w-10 h-10 rounded-full bg-${opt.color}-100 dark:bg-${opt.color}-900/30 flex items-center justify-center mb-2 text-${opt.color}-500 dark:text-${opt.color}-400`}>
+                                <opt.icon className="w-5 h-5" />
+                            </div>
+                            <span className="text-3xl font-bold text-slate-800 dark:text-white">{attendanceSummary[opt.value]}</span>
+                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">{opt.label}</span>
                         </div>
                     ))}
                 </div>
             )}
 
             <main className="bg-transparent flex flex-col mb-40">
-                <div className="flex justify-between items-center mb-4 px-1">
-                    <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
-                        Daftar Siswa
-                        <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs py-0.5 px-2 rounded-full">{students?.length || 0}</span>
-                    </h3>
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 px-1">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2 tracking-wide">
+                            Direktori Peserta Didik
+                            <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold py-1 px-2.5 rounded-full border border-slate-200 dark:border-slate-700">{filteredStudents.length}</span>
+                        </h3>
+                        <div className="relative flex-1 sm:w-64">
+                            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Input
+                                placeholder="Cari nama siswa..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-9 h-9 text-sm bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-indigo-500"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                         {unmarkedStudents.length > 0 && (
-                            <Button onClick={markRestAsPresent} size="sm" variant="ghost" className="text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                            <Button onClick={markRestAsPresent} size="sm" variant="ghost" className="w-full sm:w-auto text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20 font-medium">
+                                <CheckCircleIcon className="w-4 h-4 mr-2" />
                                 Tandai Sisa Hadir ({unmarkedStudents.length})
                             </Button>
                         )}
@@ -600,60 +565,77 @@ const AttendancePage: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                    {isLoadingStudents ? <div className="p-12 text-center text-gray-500">Memuat daftar siswa...</div> :
-                        !students || students.length === 0 ? <div className="p-12 text-center text-gray-400 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">Pilih kelas untuk memulai absensi.</div> :
+                    {isLoadingStudents ? <div className="p-12 text-center text-slate-500">Memuat daftar siswa...</div> :
+                        !students || students.length === 0 ? <div className="p-16 text-center text-slate-400 bg-white/50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">Pilih kelas untuk memulai absensi.</div> :
                             <>
-                                {students.map((student, index) => {
+                                {filteredStudents.map((student, index) => {
                                     const record = attendanceRecords[student.id];
 
                                     return (
                                         <div
                                             key={student.id}
-                                            className="group flex flex-col sm:flex-row sm:items-center gap-4 p-4 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+                                            className="group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all duration-300"
                                         >
                                             {/* Student Info */}
                                             <div className="flex items-center gap-4 flex-grow min-w-0">
-                                                <span className="text-gray-400 font-mono w-6 text-right flex-shrink-0">{index + 1}.</span>
-                                                <img src={student.avatar_url} alt={student.name} className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+                                                <span className="text-slate-300 dark:text-slate-600 font-bold font-mono w-6 text-right flex-shrink-0">{index + 1}</span>
+                                                <div className="relative">
+                                                    <img src={student.avatar_url} alt={student.name} className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-slate-700 shadow-sm" />
+                                                    {record?.status && (
+                                                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-white text-[10px] font-bold
+                                                            ${record.status === 'Hadir' ? 'bg-emerald-500' :
+                                                                record.status === 'Sakit' ? 'bg-sky-500' :
+                                                                    record.status === 'Izin' ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                                        >
+                                                            {record.status[0]}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <div className="min-w-0">
-                                                    <h4 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white uppercase tracking-wide truncate">{student.name}</h4>
-                                                    {record?.note && (
-                                                        <p className="text-xs text-blue-500 italic truncate flex items-center gap-1 mt-0.5">
+                                                    <h4 className="font-bold text-base text-slate-800 dark:text-white truncate">{student.name}</h4>
+                                                    {record?.note ? (
+                                                        <p className="text-xs text-indigo-500 font-medium truncate flex items-center gap-1 mt-0.5 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-md w-fit">
                                                             <InfoIcon className="w-3 h-3" /> {record.note}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                                                            {record?.status ? `Status: ${record.status}` : 'Belum diabsen'}
                                                         </p>
                                                     )}
                                                 </div>
                                             </div>
 
                                             {/* Action Buttons */}
-                                            <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
-                                                {statusOptions.map((opt) => {
-                                                    const isActive = record?.status === opt.value;
+                                            <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 overflow-x-auto pb-2 sm:pb-0 custom-scrollbar">
+                                                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
+                                                    {statusOptions.map((opt) => {
+                                                        const isActive = record?.status === opt.value;
 
-                                                    // Custom styles based on the screenshot reference
-                                                    let buttonStyle = "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-transparent hover:bg-gray-200 dark:hover:bg-gray-700";
+                                                        let activeClass = "";
+                                                        if (isActive) {
+                                                            if (opt.value === AttendanceStatus.Hadir) activeClass = "bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-black/5";
+                                                            else if (opt.value === AttendanceStatus.Sakit) activeClass = "bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm ring-1 ring-black/5";
+                                                            else if (opt.value === AttendanceStatus.Izin) activeClass = "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm ring-1 ring-black/5";
+                                                            else if (opt.value === AttendanceStatus.Alpha) activeClass = "bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-sm ring-1 ring-black/5";
+                                                        } else {
+                                                            activeClass = "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-white/50 dark:hover:bg-white/5";
+                                                        }
 
-                                                    if (isActive) {
-                                                        if (opt.value === AttendanceStatus.Hadir) buttonStyle = "bg-green-600 text-white border-green-500 shadow-lg shadow-green-900/20";
-                                                        else if (opt.value === AttendanceStatus.Sakit) buttonStyle = "bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-900/20";
-                                                        else if (opt.value === AttendanceStatus.Izin) buttonStyle = "bg-yellow-600 text-white border-yellow-500 shadow-lg shadow-yellow-900/20";
-                                                        else if (opt.value === AttendanceStatus.Alpha) buttonStyle = "bg-red-600 text-white border-red-500 shadow-lg shadow-red-900/20";
-                                                    }
-
-                                                    return (
-                                                        <button
-                                                            key={opt.value}
-                                                            onClick={() => handleStatusChange(student.id, opt.value)}
-                                                            className={`
-                                                                flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 min-w-[90px]
-                                                                ${buttonStyle}
-                                                            `}
-                                                        >
-                                                            <opt.icon className={`w-4 h-4 ${isActive ? 'text-white' : ''}`} />
-                                                            <span>{opt.label}</span>
-                                                        </button>
-                                                    );
-                                                })}
+                                                        return (
+                                                            <button
+                                                                key={opt.value}
+                                                                onClick={() => handleStatusChange(student.id, opt.value)}
+                                                                className={`
+                                                                    flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200
+                                                                    ${activeClass}
+                                                                `}
+                                                                title={opt.label}
+                                                            >
+                                                                <opt.icon className={`w-5 h-5`} />
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
 
                                                 <button
                                                     onClick={() => {
@@ -662,15 +644,15 @@ const AttendancePage: React.FC = () => {
                                                         setIsNoteModalOpen(true);
                                                     }}
                                                     className={`
-                                                        p-2 rounded-lg transition-all ml-1
+                                                        w-10 h-10 flex items-center justify-center rounded-xl transition-all ml-1 border border-transparent
                                                         ${record?.note
-                                                            ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                                            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                            ? 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
+                                                            : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-800'
                                                         }
                                                     `}
                                                     title="Catatan"
                                                 >
-                                                    <PencilIcon className="w-4 h-4" />
+                                                    <PencilIcon className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         </div>
@@ -682,11 +664,12 @@ const AttendancePage: React.FC = () => {
 
                 {/* Static Save Button */}
                 {students && students.length > 0 && (
-                    <div className="mt-8 mb-8">
+                    <div className="mt-8 mb-8 sticky bottom-6 z-30">
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent dark:from-black dark:via-black -z-10 h-32 -top-20 pointer-events-none"></div>
                         <Button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="w-full h-12 text-lg font-bold shadow-lg shadow-indigo-500/20 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none rounded-xl"
+                            className="w-full h-14 text-lg font-bold shadow-xl shadow-indigo-500/30 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 border-none rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
                         </Button>
@@ -694,28 +677,60 @@ const AttendancePage: React.FC = () => {
                 )}
             </main>
 
-            <Modal title="Analisis Kehadiran AI" isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} icon={<BrainCircuitIcon className="h-5 w-5" />}>
-                {isAiLoading ? <div className="text-center py-8">Menganalisis data...</div> : aiAnalysisResult ? (
+            <Modal title="Analisis Kehadiran AI" isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} icon={<BrainCircuitIcon className="h-5 w-5 text-indigo-500" />}>
+                {isAiLoading ? <div className="text-center py-12"><div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>Menganalisis data...</div> : aiAnalysisResult ? (
                     <div className="space-y-4 text-sm">
-                        {aiAnalysisResult.perfect_attendance.length > 0 && <div><h4 className="font-bold text-green-500">Kehadiran Sempurna</h4><p>{aiAnalysisResult.perfect_attendance.join(', ')}</p></div>}
-                        {aiAnalysisResult.frequent_absentees.length > 0 && <div><h4 className="font-bold text-yellow-500">Sering Alpha</h4><ul>{aiAnalysisResult.frequent_absentees.map(s => <li key={s.student_name}>{s.student_name} ({s.absent_days} hari)</li>)}</ul></div>}
-                        {aiAnalysisResult.pattern_warnings.length > 0 && <div><h4 className="font-bold text-red-500">Pola Terdeteksi</h4><ul>{aiAnalysisResult.pattern_warnings.map(p => <li key={p.pattern_description}>{p.pattern_description} (Siswa: {p.implicated_students.join(', ')})</li>)}</ul></div>}
+                        {aiAnalysisResult.perfect_attendance.length > 0 && (
+                            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                                <h4 className="font-bold text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2"><CheckCircleIcon className="w-4 h-4" /> Kehadiran Sempurna</h4>
+                                <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{aiAnalysisResult.perfect_attendance.join(', ')}</p>
+                            </div>
+                        )}
+                        {aiAnalysisResult.frequent_absentees.length > 0 && (
+                            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
+                                <h4 className="font-bold text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-2"><AlertCircleIcon className="w-4 h-4" /> Sering Alpha</h4>
+                                <ul className="space-y-1">{aiAnalysisResult.frequent_absentees.map(s => <li key={s.student_name} className="flex justify-between text-slate-700 dark:text-slate-300"><span>{s.student_name}</span> <span className="font-bold">{s.absent_days} hari</span></li>)}</ul>
+                            </div>
+                        )}
+                        {aiAnalysisResult.pattern_warnings.length > 0 && (
+                            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-100 dark:border-rose-800">
+                                <h4 className="font-bold text-rose-700 dark:text-rose-400 mb-2 flex items-center gap-2"><BrainCircuitIcon className="w-4 h-4" /> Pola Terdeteksi</h4>
+                                <ul className="space-y-2">{aiAnalysisResult.pattern_warnings.map(p => <li key={p.pattern_description} className="text-slate-700 dark:text-slate-300"><p className="font-medium text-rose-600 dark:text-rose-400">{p.pattern_description}</p><p className="text-xs mt-1 text-slate-500">Siswa: {p.implicated_students.join(', ')}</p></li>)}</ul>
+                            </div>
+                        )}
                     </div>
-                ) : <div className="text-center py-8">Tidak ada hasil.</div>}
+                ) : <div className="text-center py-8 text-slate-500">Tidak ada hasil.</div>}
             </Modal>
+
+            <Modal title="Catatan Absensi" isOpen={isNoteModalOpen} onClose={() => setIsNoteModalOpen(false)}>
+                <div className="space-y-4">
+                    <p className="text-sm text-slate-500">Tambahkan catatan untuk siswa yang dipilih.</p>
+                    <textarea
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        className="w-full h-32 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                        placeholder="Contoh: Pulang cepat karena urusan keluarga..."
+                    />
+                    <div className="flex justify-end gap-2">
+                        <Button variant="ghost" onClick={() => setIsNoteModalOpen(false)}>Batal</Button>
+                        <Button onClick={handleSaveNote}>Simpan Catatan</Button>
+                    </div>
+                </div>
+            </Modal>
+
             <Modal title="Export Laporan Absensi" isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)}>
                 <div className="space-y-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Pilih bulan dan tahun untuk mengekspor laporan absensi ke format PDF.</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Pilih bulan dan tahun untuk mengekspor laporan absensi.</p>
                     <div>
-                        <label htmlFor="export-month" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bulan & Tahun</label>
-                        <Input id="export-month" type="month" value={exportMonth} onChange={e => setExportMonth(e.target.value)} />
+                        <label htmlFor="export-month" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Bulan & Tahun</label>
+                        <Input id="export-month" type="month" value={exportMonth} onChange={e => setExportMonth(e.target.value)} className="h-12" />
                     </div>
-                    <div className="flex justify-end gap-2 pt-4">
+                    <div className="flex justify-end gap-3 pt-4">
                         <Button type="button" variant="ghost" onClick={() => setIsExportModalOpen(false)} disabled={isExporting}>Batal</Button>
-                        <Button type="button" variant="outline" onClick={() => handleExport('excel')} disabled={isExporting} className="border-green-500 text-green-600 hover:bg-green-50">
+                        <Button type="button" variant="outline" onClick={() => handleExport('excel')} disabled={isExporting} className="border-emerald-500 text-emerald-600 hover:bg-emerald-50">
                             {isExporting ? '...' : 'Excel (.xlsx)'}
                         </Button>
-                        <Button type="button" onClick={() => handleExport('pdf')} disabled={isExporting}>
+                        <Button type="button" onClick={() => handleExport('pdf')} disabled={isExporting} className="bg-rose-600 hover:bg-rose-700 text-white">
                             {isExporting ? 'Mengekspor...' : 'PDF (.pdf)'}
                         </Button>
                     </div>
@@ -724,28 +739,28 @@ const AttendancePage: React.FC = () => {
 
             <BottomSheet isOpen={isDatePickerOpen} onClose={() => setDatePickerOpen(false)} title="Pilih Tanggal Absensi">
                 <div className="space-y-6 pb-6">
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800/50 flex items-start gap-3">
-                        <InfoIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/50 flex items-start gap-3">
+                        <InfoIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-indigo-800 dark:text-indigo-200">
                             Anda sedang melihat data absensi untuk tanggal <span className="font-bold">{new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>.
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Aksi Cepat</label>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Aksi Cepat</label>
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => {
                                     setSelectedDate(today);
                                     setDatePickerOpen(false);
                                 }}
-                                className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${selectedDate === today
-                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 text-gray-700 dark:text-gray-200'
+                                className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate === today
+                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200'
                                     }`}
                             >
-                                <CalendarIcon className="w-4 h-4" />
-                                <span className="font-medium">Hari Ini</span>
+                                <CalendarIcon className="w-5 h-5" />
+                                <span className="font-bold">Hari Ini</span>
                             </button>
                             <button
                                 onClick={() => {
@@ -755,19 +770,19 @@ const AttendancePage: React.FC = () => {
                                     setSelectedDate(yesterday);
                                     setDatePickerOpen(false);
                                 }}
-                                className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${selectedDate !== today && new Date(selectedDate).getTime() === new Date(new Date().setDate(new Date().getDate() - 1)).getTime()
-                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 text-gray-700 dark:text-gray-200'
+                                className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate !== today && new Date(selectedDate).getTime() === new Date(new Date().setDate(new Date().getDate() - 1)).getTime()
+                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200'
                                     }`}
                             >
-                                <div className="w-4 h-4 rounded-full border-2 border-current opacity-60"></div>
-                                <span className="font-medium">Kemarin</span>
+                                <div className="w-5 h-5 rounded-full border-2 border-current opacity-60 flex items-center justify-center text-[10px] font-bold">1</div>
+                                <span className="font-bold">Kemarin</span>
                             </button>
                         </div>
                     </div>
 
                     <div>
-                        <label htmlFor="attendance-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih Tanggal Manual</label>
+                        <label htmlFor="attendance-date" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Pilih Tanggal Manual</label>
                         <div className="relative">
                             <Input
                                 id="attendance-date"
@@ -777,9 +792,9 @@ const AttendancePage: React.FC = () => {
                                     setSelectedDate(e.target.value);
                                     setDatePickerOpen(false);
                                 }}
-                                className="w-full h-12 pl-10 text-lg"
+                                className="w-full h-14 pl-12 text-lg font-medium rounded-xl border-slate-200 dark:border-slate-700 focus:ring-indigo-500"
                             />
-                            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                            <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400 pointer-events-none" />
                         </div>
                     </div>
                 </div>

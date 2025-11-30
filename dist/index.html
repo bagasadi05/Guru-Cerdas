@@ -3,10 +3,10 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Manajemen Guru</title>
+  <title>PortalGuru</title>
 
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,33 +23,47 @@
       darkMode: 'class',
       theme: {
         extend: {
+          colors: {
+            slate: {
+              850: '#151e32',
+              900: '#0f172a',
+              950: '#020617',
+            },
+            violet: {
+              950: '#1e1b4b',
+            },
+            amber: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+            },
+          },
           fontFamily: {
             sans: ['Inter', 'sans-serif'],
             serif: ['Tinos', 'serif'],
           },
           animation: {
-            'fade-in-up': 'fade-in-up 0.6s ease-out both',
-            'fade-in': 'fade-in 0.5s ease-out both',
-            'shimmer': 'shimmer 4s infinite linear',
+            'fade-in-up': 'fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both',
+            'fade-in': 'fade-in 0.6s ease-out both',
+            'shimmer': 'shimmer 3s infinite linear',
             'slide-down': 'slide-down 1.2s cubic-bezier(0.25, 1, 0.5, 1) both',
             'slide-up': 'slide-up 1.2s cubic-bezier(0.5, 0, 0.75, 0) both',
-            'float': 'float 4s ease-in-out infinite',
-            'page-transition': 'page-transition 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
-            'grow-bar': 'grow-bar 0.8s cubic-bezier(0.25, 1, 0.5, 1) both',
-            // Animations for new login page
-            'pulse-glow': 'pulse-glow 2s infinite ease-in-out',
-            'subtle-pop': 'subtle-pop 0.3s ease-out',
-            // Animation for task board
-            'pulse-border': 'pulse-border 1.5s ease-in-out infinite',
-            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'holographic-shine': 'holographic-shine 1.2s ease-in-out',
-            // Animation for portal sidebar
-            'pulse-border-glow': 'pulse-border-glow 2.5s infinite ease-in-out',
+            'float': 'float 6s ease-in-out infinite',
+            'page-transition': 'page-transition 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
+            'grow-bar': 'grow-bar 1s cubic-bezier(0.25, 1, 0.5, 1) both',
+            'pulse-glow': 'pulse-glow 3s infinite ease-in-out',
+            'subtle-pop': 'subtle-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            'pulse-border': 'pulse-border 2s ease-in-out infinite',
+            'holographic-shine': 'holographic-shine 2s ease-in-out infinite',
             'aurora-glow': 'aurora-glow 20s infinite linear alternate',
-            // New animation for modal border
             'border-spin': 'border-spin 4s linear infinite',
+            'glass-shine': 'glass-shine 1.5s ease-in-out infinite',
           },
           keyframes: {
+            'glass-shine': {
+              '0%': { transform: 'translateX(-100%) skewX(-15deg)', opacity: '0' },
+              '50%': { opacity: '0.5' },
+              '100%': { transform: 'translateX(200%) skewX(-15deg)', opacity: '0' },
+            },
             'border-spin': {
               '100%': { transform: 'rotate(360deg)' },
             },
@@ -59,40 +73,20 @@
               '100%': { transform: 'translateX(-50%) translateY(-50%) rotate(360deg)', opacity: 0.3 },
             },
             'fade-in-up': {
-              'from': {
-                opacity: '0',
-                transform: 'translateY(20px)',
-              },
-              'to': {
-                opacity: '1',
-                transform: 'translateY(0)',
-              },
+              'from': { opacity: '0', transform: 'translateY(30px)' },
+              'to': { opacity: '1', transform: 'translateY(0)' },
             },
             'page-transition': {
-              'from': {
-                opacity: '0',
-                transform: 'translateY(15px)',
-              },
-              'to': {
-                opacity: '1',
-                transform: 'translateY(0)',
-              },
+              'from': { opacity: '0', transform: 'translateY(20px) scale(0.98)' },
+              'to': { opacity: '1', transform: 'translateY(0) scale(1)' },
             },
             'grow-bar': {
-              'from': {
-                transform: 'scaleY(0)',
-              },
-              'to': {
-                transform: 'scaleY(1)',
-              },
+              'from': { transform: 'scaleY(0)' },
+              'to': { transform: 'scaleY(1)' },
             },
             'fade-in': {
-              'from': {
-                opacity: '0',
-              },
-              'to': {
-                opacity: '1',
-              },
+              'from': { opacity: '0' },
+              'to': { opacity: '1' },
             },
             'shimmer': {
               '0%': { 'background-position': '200% 0' },
@@ -107,34 +101,34 @@
               'to': { transform: 'translateY(-120%)' },
             },
             'float': {
-              '0%, 100%': { transform: 'translateY(40px)' },
-              '50%': { transform: 'translateY(30px)' },
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
             },
             'pulse-glow': {
-              '0%, 100%': { 'box-shadow': '0 0 0 0 rgba(59, 130, 246, 0.4)' },
-              '70%': { 'box-shadow': '0 0 0 10px rgba(59, 130, 246, 0)' }
+              '0%, 100%': { 'box-shadow': '0 0 0 0 rgba(99, 102, 241, 0.4)' },
+              '50%': { 'box-shadow': '0 0 20px 5px rgba(99, 102, 241, 0.1)' }
             },
             'subtle-pop': {
               '0%': { transform: 'scale(1)' },
-              '50%': { transform: 'scale(1.05)' },
+              '50%': { transform: 'scale(1.03)' },
               '100%': { transform: 'scale(1)' }
             },
             'pulse-border': {
-              '0%, 100%': { 'border-color': 'rgba(59, 130, 246, 0.4)' },
-              '50%': { 'border-color': 'rgba(59, 130, 246, 1)' }
+              '0%, 100%': { 'border-color': 'rgba(99, 102, 241, 0.3)' },
+              '50%': { 'border-color': 'rgba(99, 102, 241, 0.8)' }
             },
             'holographic-shine': {
               'from': { transform: 'translateX(-100%) skewX(-30deg)' },
               'to': { transform: 'translateX(200%) skewX(-30deg)' }
             },
-            'pulse-border-glow': {
-              '0%, 100%': { 'box-shadow': '0 0 0 0 rgba(167, 139, 250, 0)', 'border-color': 'rgba(167, 139, 250, 0.5)' },
-              '50%': { 'box-shadow': '0 0 15px 5px rgba(167, 139, 250, 0.3)', 'border-color': 'rgba(167, 139, 250, 1)' }
-            },
           },
           transitionTimingFunction: {
             'springy': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
           },
+          backdropBlur: {
+            'xs': '2px',
+          }
         }
       }
     }
@@ -144,10 +138,10 @@
 
   <meta name="theme-color" content="#0ea5e9" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
-  <link rel="apple-touch-icon" href="/logo.svg" />
+  <link rel="apple-touch-icon" href="/logo.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Manajemen Guru" />
+  <meta name="apple-mobile-web-app-title" content="PortalGuru" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="msapplication-TileColor" content="#0ea5e9" />
@@ -173,6 +167,14 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+      background: #f8fafc; /* Fallback */
+      font-feature-settings: "cv11", "ss01";
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .dark body {
+      background: #0f172a; /* Fallback */
     }
 
     #root {
@@ -183,97 +185,37 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    input,
-    textarea,
-    select,
-    button {
-      font-size: 16px !important;
-      touch-action: manipulation;
+    /* Glassmorphism Utilities */
+    .glass {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
     }
 
-    input:focus,
-    textarea:focus,
-    select:focus {
-      font-size: 16px !important;
+    .dark .glass {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    nav[class*="bottom-0"] {
-      position: fixed !important;
-      bottom: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      z-index: 30 !important;
-      display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      transform: translateY(0) !important;
-      pointer-events: auto !important;
+    .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
     }
 
-    @supports (padding: env(safe-area-inset-bottom)) {
-      nav[class*="bottom-0"] {
-        padding-bottom: env(safe-area-inset-bottom);
-      }
+    .dark .glass-card {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
     }
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    header>* {
-      display: flex;
-      align-items: center;
-    }
-
-    nav a,
-    nav button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    button[aria-label],
-    a[aria-label] {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .animation-delay-100 {
-      animation-delay: 100ms;
-    }
-
-    .animation-delay-200 {
-      animation-delay: 200ms;
-    }
-
-    .animation-delay-300 {
-      animation-delay: 300ms;
-    }
-
-    .animation-delay-400 {
-      animation-delay: 400ms;
-    }
-
-    .animation-delay-2000 {
-      animation-delay: 2s;
-    }
-
-    .animation-delay-4000 {
-      animation-delay: 4s;
-    }
-
-    .text-shadow-md {
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Custom Scrollbar */
+    /* Premium Scrollbar */
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
     }
 
     ::-webkit-scrollbar-track {
@@ -281,16 +223,20 @@
     }
 
     ::-webkit-scrollbar-thumb {
-      background-color: rgba(139, 92, 246, 0.4);
-      /* purple-500/40 */
+      background-color: rgba(148, 163, 184, 0.3);
       border-radius: 10px;
-      border: 2px solid transparent;
-      background-clip: content-box;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-      background-color: rgba(139, 92, 246, 0.6);
-      /* purple-500/60 */
+      background-color: rgba(148, 163, 184, 0.5);
+    }
+
+    .dark ::-webkit-scrollbar-thumb {
+      background-color: rgba(71, 85, 105, 0.4);
+    }
+
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(71, 85, 105, 0.6);
     }
 
     /* Utility to hide scrollbars */
@@ -300,9 +246,7 @@
 
     .scrollbar-hide {
       -ms-overflow-style: none;
-      /* IE and Edge */
       scrollbar-width: none;
-      /* Firefox */
     }
 
     /* Styles for Login/Role Selection Page (Light & Dark) */
@@ -1096,8 +1040,8 @@
     window.addEventListener('load', observeNavbar);
   </script>
 
-  <script type="module" crossorigin src="/assets/index-D1C6o8KR.js"></script>
-<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+  <script type="module" crossorigin src="/assets/index-G-l7BLyB.js"></script>
+<link rel="manifest" href="/manifest.webmanifest"></head>
 
 <body class="cosmic-bg font-sans text-base text-gray-900 dark:text-gray-100">
   <div id="root"></div>

@@ -55,12 +55,64 @@ function clearScheduledNotifications() {
     timeoutIds = [];
 }
 
+let taskTimeoutIds = [];
+
+function showTaskNotification(task) {
+    self.registration.showNotification('Pengingat Tugas: ' + task.title, {
+        body: 'Tugas "' + task.title + '" jatuh tempo hari ini.',
+        icon: '/logo.svg',
+        requireInteraction: true,
+        tag: 'task-' + task.id,
+    });
+}
+
+function scheduleTaskNotifications(tasks) {
+    clearScheduledTaskNotifications();
+    const now = new Date();
+
+    tasks.forEach(task => {
+        if (task.status === 'done' || !task.due_date) return;
+
+        const dueDate = new Date(task.due_date);
+        dueDate.setHours(0, 0, 0, 0);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // If due date is today
+        if (dueDate.getTime() === today.getTime()) {
+            // Schedule for 9 AM or now if it's past 9 AM but still today
+            const notificationTime = new Date();
+            notificationTime.setHours(9, 0, 0, 0);
+
+            if (notificationTime < now) {
+                // If it's already past 9 AM, verify if we haven't notified yet (simplified: just notify now if it's not too late in the day)
+                // For simplicity in this demo, we'll notify 1 minute from now if it's the first time loading
+                const delay = 60 * 1000; // 1 minute delay
+                const id = setTimeout(() => showTaskNotification(task), delay);
+                taskTimeoutIds.push(id);
+            } else {
+                const delay = notificationTime.getTime() - now.getTime();
+                const id = setTimeout(() => showTaskNotification(task), delay);
+                taskTimeoutIds.push(id);
+            }
+        }
+    });
+}
+
+function clearScheduledTaskNotifications() {
+    taskTimeoutIds.forEach(clearTimeout);
+    taskTimeoutIds = [];
+}
+
 self.addEventListener('message', (event) => {
     if (event.data) {
         if (event.data.type === 'SCHEDULE_UPDATED') {
             scheduleNotifications(event.data.payload);
         } else if (event.data.type === 'CLEAR_SCHEDULE') {
             clearScheduledNotifications();
+        } else if (event.data.type === 'TASKS_UPDATED') {
+            scheduleTaskNotifications(event.data.payload);
         }
     }
 });

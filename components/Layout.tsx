@@ -9,22 +9,22 @@ import { useSyncQueue } from '../hooks/useSyncQueue';
 import GreetingRobot from './GreetingRobot';
 
 const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: HomeIcon },
-    { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
-    { href: '/siswa', label: 'Siswa', icon: UsersIcon },
-    { href: '/jadwal', label: 'Jadwal', icon: CalendarIcon },
-    { href: '/tugas', label: 'Tugas', icon: CheckSquareIcon },
-    { href: '/input-massal', label: 'Input Massal', icon: ClipboardPenIcon },
-    { href: '/pengaturan', label: 'Pengaturan', icon: SettingsIcon },
+    { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
+    { href: '/absensi', label: 'Rekap Absensi', icon: ClipboardIcon },
+    { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
+    { href: '/jadwal', label: 'Jadwal Pelajaran', icon: CalendarIcon },
+    { href: '/tugas', label: 'Manajemen Tugas', icon: CheckSquareIcon },
+    { href: '/input-massal', label: 'Input Nilai Cepat', icon: ClipboardPenIcon },
+    { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
 ];
 
 const mobileNavItems = [
-    { href: '/dashboard', label: 'Home', icon: HomeIcon },
+    { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
     { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
     { href: '/jadwal', label: 'Jadwal', icon: CalendarIcon },
     { href: '/tugas', label: 'Tugas', icon: CheckSquareIcon },
     { href: '/siswa', label: 'Siswa', icon: UsersIcon },
-    { href: '/input-massal', label: 'Input', icon: ClipboardPenIcon },
+    { href: '/input-massal', label: 'Nilai', icon: ClipboardPenIcon },
 ];
 
 interface SidebarProps {
@@ -44,90 +44,91 @@ const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
     };
 
     return (
-        <aside className="relative w-72 h-full flex-shrink-0 bg-[#0f172a] text-white overflow-hidden font-sans border-r border-white/5">
-            {/* Rich Gradient Background */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-900/50 via-slate-900 to-slate-950 z-0"></div>
+        <aside className="relative w-72 h-full flex-shrink-0 font-sans">
+            {/* Floating Glass Container */}
+            <div className="h-full m-4 rounded-3xl bg-slate-900/90 backdrop-blur-xl border border-white/10 shadow-2xl flex flex-col overflow-hidden relative">
 
-            {/* Decorative Orbs */}
-            <div className="absolute -top-20 -left-20 w-64 h-64 bg-purple-600/30 rounded-full blur-3xl z-0"></div>
-            <div className="absolute bottom-0 right-0 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl z-0"></div>
+                {/* Ambient Background Effects */}
+                <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-indigo-500/20 to-transparent opacity-50 pointer-events-none"></div>
+                <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-            <div className="relative z-10 flex flex-col h-full p-5">
-                {/* Header */}
-                <div className="flex items-center gap-4 px-2 mb-10 mt-2">
-                    <div className="relative group">
-                        <div className="absolute inset-0 bg-purple-500 blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                        <div className="relative w-12 h-12 bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl rounded-2xl border border-white/20 flex items-center justify-center shadow-inner">
-                            <GraduationCapIcon className="w-7 h-7 text-white drop-shadow-md" />
+                <div className="relative z-10 flex flex-col h-full p-5">
+                    {/* Header */}
+                    <div className="flex items-center gap-4 px-2 mb-8 mt-2">
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
+                            <div className="relative w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-transform duration-300">
+                                <GraduationCapIcon className="w-7 h-7 text-white drop-shadow-md" />
+                            </div>
+                        </div>
+                        <div>
+                            <h1 className="text-lg font-bold tracking-wide text-white uppercase font-serif">
+                                Portal Guru
+                            </h1>
+                            <p className="text-[10px] font-medium text-indigo-200 tracking-[0.2em] uppercase opacity-80">Ecosystem</p>
                         </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-200">
-                            Guru Cerdas
-                        </h1>
-                        <p className="text-xs font-medium text-indigo-200/80 tracking-wide">Asisten Digital Anda</p>
-                    </div>
-                </div>
 
-                {/* Profile Card */}
-                <div className="mb-8 p-4 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-white/10 shadow-xl relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-purple-500 to-indigo-500 rounded-full blur-sm opacity-70"></div>
-                            <img
-                                className="relative h-12 w-12 rounded-full object-cover border-2 border-white/20 shadow-md"
-                                src={user?.avatarUrl}
-                                alt="User avatar"
-                            />
-                        </div>
-                        <div className="overflow-hidden">
-                            <p className="font-bold text-base text-white truncate">{user?.name}</p>
-                            <p className="text-xs text-indigo-200 truncate opacity-80">{user?.email}</p>
+                    {/* Profile Card */}
+                    <div className="mb-6 p-1 rounded-2xl bg-white/5 border border-white/5 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div className="flex items-center gap-3 p-3 relative z-10">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-indigo-500 rounded-full blur-sm opacity-50"></div>
+                                <img
+                                    className="relative h-10 w-10 rounded-full object-cover border border-white/20"
+                                    src={user?.avatarUrl}
+                                    alt="User avatar"
+                                />
+                            </div>
+                            <div className="overflow-hidden">
+                                <p className="font-semibold text-sm text-white truncate">{user?.name}</p>
+                                <p className="text-[10px] text-slate-400 truncate">{user?.email}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 space-y-1.5">
-                    {navItems.map((item) => (
-                        <NavLink
-                            key={item.href}
-                            to={item.href}
-                            end={item.href === '/dashboard'}
-                            onClick={onLinkClick}
-                            className={({ isActive }) =>
-                                `relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 group overflow-hidden ${isActive
-                                    ? 'text-white shadow-lg shadow-purple-900/20'
-                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                }`
-                            }
+                    {/* Navigation */}
+                    <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-hide pr-1">
+                        {navItems.map((item) => (
+                            <NavLink
+                                key={item.href}
+                                to={item.href}
+                                end={item.href === '/dashboard'}
+                                onClick={onLinkClick}
+                                className={({ isActive }) =>
+                                    `relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group overflow-hidden ${isActive
+                                        ? 'text-white shadow-lg shadow-indigo-500/20'
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`
+                                }
+                            >
+                                {({ isActive }) => (
+                                    <>
+                                        {isActive && (
+                                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 z-0"></div>
+                                        )}
+                                        {isActive && (
+                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/50 rounded-r-full blur-[1px]"></div>
+                                        )}
+                                        <item.icon className={`w-5 h-5 relative z-10 transition-transform duration-300 ${isActive ? 'scale-110 text-white' : 'group-hover:scale-110 group-hover:text-indigo-300'}`} />
+                                        <span className={`relative z-10 text-sm tracking-wide ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
+                                    </>
+                                )}
+                            </NavLink>
+                        ))}
+                    </nav>
+
+                    {/* Logout */}
+                    <div className="mt-auto pt-4 border-t border-white/5">
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center w-full gap-3 px-4 py-3 text-slate-400 rounded-xl hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 group"
                         >
-                            {({ isActive }) => (
-                                <>
-                                    {isActive && (
-                                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 z-0"></div>
-                                    )}
-                                    <item.icon className={`w-5 h-5 relative z-10 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
-                                    <span className={`relative z-10 font-medium tracking-wide ${isActive ? 'font-semibold' : ''}`}>{item.label}</span>
-                                    {isActive && (
-                                        <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-white shadow-glow animate-pulse z-10"></div>
-                                    )}
-                                </>
-                            )}
-                        </NavLink>
-                    ))}
-                </nav>
-
-                {/* Logout */}
-                <div className="mt-auto pt-6 border-t border-white/10">
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full gap-4 px-4 py-3.5 text-slate-400 rounded-xl hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 group"
-                    >
-                        <LogoutIcon className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-                        <span className="font-medium">Logout</span>
-                    </button>
+                            <LogoutIcon className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+                            <span className="text-sm font-medium">Logout</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -196,14 +197,20 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
+        <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950/50">
+            {/* Background Gradients */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[100px]"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/5 rounded-full blur-[100px]"></div>
+            </div>
+
             {showGreeting && user && (
                 <GreetingRobot userName={user.name} onAnimationEnd={handleGreetingEnd} />
             )}
 
             {/* Mobile sidebar overlay */}
             {isMobileSidebarOpen && (
-                <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsMobileSidebarOpen(false)} />
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileSidebarOpen(false)} />
             )}
 
             {/* Desktop sidebar - hidden on mobile */}
@@ -211,89 +218,102 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <Sidebar onLinkClick={() => setIsMobileSidebarOpen(false)} />
             </div>
 
-            <div className="flex flex-col flex-1 w-full overflow-hidden">
-                {/* Mobile header with menu button */}
-                <header className="h-16 bg-white/80 dark:bg-gray-950/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50 flex items-center justify-between px-4 sticky top-0 z-20">
-                    {/* Mobile menu button */}
-                    <button
-                        onClick={() => setIsMobileSidebarOpen(true)}
-                        className="lg:hidden flex items-center justify-center w-12 h-12 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-95"
-                        aria-label="Open menu"
-                    >
-                        <svg className="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
+            <div className="flex flex-col flex-1 w-full overflow-hidden relative z-10">
+                {/* Header */}
+                <header className="h-20 flex items-center justify-between px-6 lg:px-8 sticky top-0 z-20 transition-all duration-300">
+                    <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm"></div>
 
-                    {/* Search button - hidden on small mobile, shown on desktop */}
-                    <Button
-                        variant="outline"
-                        onClick={() => setIsSearchOpen(true)}
-                        className="hidden sm:flex items-center justify-center gap-2 h-10 px-4 text-gray-600 dark:text-gray-300"
-                    >
-                        <SearchIcon className="w-5 h-5" />
-                        <span className="hidden md:inline text-sm font-medium">Cari Siswa...</span>
-                    </Button>
-
-                    {/* Mobile search icon */}
-                    <button
-                        onClick={() => setIsSearchOpen(true)}
-                        className="sm:hidden flex items-center justify-center w-12 h-12 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-95"
-                        aria-label="Search"
-                    >
-                        <SearchIcon className="w-6 h-6 text-gray-700 dark:text-gray-200" />
-                    </button>
-
-                    <div className="flex items-center gap-1">
-                        {/* Theme Toggle */}
-                        <div className="flex items-center justify-center w-12 h-12">
-                            <ThemeToggle />
-                        </div>
-
-                        {/* Sync Status - simplified on mobile */}
-                        <div className="hidden sm:flex items-center justify-center gap-2 px-2 h-10">
-                            <div className={`w-2 h-2 rounded-full ${isSyncing ? 'bg-blue-500 animate-pulse' : (pendingCount > 0 ? 'bg-yellow-500' : 'bg-green-500')}`}></div>
-                            <span className="hidden md:inline text-sm font-medium text-gray-600 dark:text-gray-300">{pendingCount > 0 ? pendingCount : ''}</span>
-                        </div>
-
-                        {/* Profile - simplified on mobile */}
-                        <Link
-                            to="/pengaturan"
-                            className="flex items-center justify-center w-12 h-12 rounded-full transition-transform hover:scale-105 active:scale-95 ml-1"
-                            aria-label="Settings"
+                    <div className="relative z-10 flex items-center gap-4 w-full">
+                        {/* Mobile menu button */}
+                        <button
+                            onClick={() => setIsMobileSidebarOpen(true)}
+                            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 transition-all active:scale-95 border border-black/5 dark:border-white/10"
+                            aria-label="Open menu"
                         >
-                            <img
-                                className="w-10 h-10 rounded-full object-cover ring-2 ring-offset-2 ring-sky-500 dark:ring-purple-500 shadow-sm"
-                                src={user?.avatarUrl}
-                                alt="User avatar"
-                            />
-                        </Link>
+                            <svg className="w-5 h-5 text-slate-700 dark:text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+
+                        {/* Search button */}
+                        <Button
+                            variant="ghost"
+                            onClick={() => setIsSearchOpen(true)}
+                            className="hidden sm:flex items-center gap-3 h-11 px-4 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-black/5 dark:border-white/10 text-slate-500 dark:text-slate-400 w-full max-w-md transition-all group"
+                        >
+                            <SearchIcon className="w-4 h-4 group-hover:text-indigo-500 transition-colors" />
+                            <span className="text-sm font-medium">Cari Siswa...</span>
+                            <div className="ml-auto flex items-center gap-1">
+                                <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-1.5 font-mono text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                                    <span className="text-xs">⌘</span>K
+                                </kbd>
+                            </div>
+                        </Button>
+
+                        {/* Mobile search icon */}
+                        <button
+                            onClick={() => setIsSearchOpen(true)}
+                            className="sm:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 transition-all active:scale-95 border border-black/5 dark:border-white/10"
+                            aria-label="Search"
+                        >
+                            <SearchIcon className="w-5 h-5 text-slate-700 dark:text-slate-200" />
+                        </button>
+
+                        <div className="flex items-center gap-3 ml-auto">
+                            {/* Theme Toggle */}
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-black/5 dark:border-white/10 transition-all">
+                                <ThemeToggle />
+                            </div>
+
+                            {/* Sync Status */}
+                            <div className="hidden sm:flex items-center justify-center gap-2 px-3 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 border border-black/5 dark:border-white/10">
+                                <div className={`w-2 h-2 rounded-full ${isSyncing ? 'bg-indigo-500 animate-pulse' : (pendingCount > 0 ? 'bg-amber-500' : 'bg-emerald-500')}`}></div>
+                                <span className="hidden md:inline text-xs font-semibold text-slate-600 dark:text-slate-300">{pendingCount > 0 ? `${pendingCount} Pending` : 'Synced'}</span>
+                            </div>
+
+                            {/* Profile */}
+                            <Link
+                                to="/pengaturan"
+                                className="flex items-center justify-center w-10 h-10 rounded-full transition-transform hover:scale-105 active:scale-95 ml-1 ring-2 ring-white dark:ring-slate-800 shadow-md"
+                                aria-label="Settings"
+                            >
+                                <img
+                                    className="w-full h-full rounded-full object-cover"
+                                    src={user?.avatarUrl}
+                                    alt="User avatar"
+                                />
+                            </Link>
+                        </div>
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
-                    {children}
+                <main className="flex-1 overflow-y-auto pb-20 lg:pb-6 px-4 lg:px-8 pt-6">
+                    <div className="max-w-7xl mx-auto h-full">
+                        {children}
+                    </div>
                 </main>
 
                 {/* Bottom Navigation for Mobile */}
-                <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-                    <div className="w-full grid grid-cols-6 items-center justify-items-center h-16 px-1 safe-area-inset-bottom">
+                <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+                    <div className="w-full grid grid-cols-6 items-center justify-items-center h-16 px-2 safe-area-inset-bottom">
                         {mobileNavItems.map((item) => (
                             <NavLink
                                 key={item.href}
                                 to={item.href}
                                 end={item.href === '/dashboard'}
                                 className={({ isActive }) =>
-                                    `flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all duration-200 active:scale-95 ${isActive
-                                        ? 'text-sky-600 dark:text-purple-400'
-                                        : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                    `flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all duration-300 active:scale-95 ${isActive
+                                        ? 'text-indigo-600 dark:text-indigo-400'
+                                        : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                                     }`
                                 }
                             >
                                 {({ isActive }) => (
                                     <>
-                                        <item.icon className={`w-6 h-6 transition-transform ${isActive ? 'scale-110' : 'scale-100'}`} />
-                                        <span className={`text-[9px] leading-tight font-medium ${isActive ? 'font-bold' : ''}`}>{item.label}</span>
+                                        <div className={`relative p-1.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-indigo-50 dark:bg-indigo-500/10 -translate-y-1' : ''}`}>
+                                            <item.icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110' : 'scale-100'}`} />
+                                        </div>
+                                        <span className={`text-[9px] leading-tight font-medium transition-all ${isActive ? 'font-bold opacity-100' : 'opacity-80'}`}>{item.label}</span>
                                     </>
                                 )}
                             </NavLink>

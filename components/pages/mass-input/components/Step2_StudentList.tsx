@@ -29,24 +29,45 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     selectedStudentIds, handleStudentSelect, scores, handleScoreChange, existingGrades
 }) => {
     return (
-        <div className="lg:col-span-2 bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 flex flex-col">
-            <div className="p-4 sm:p-6 border-b border-white/10 flex-shrink-0 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-                <div className="relative flex-grow w-full sm:w-auto">
-                    <SearchIcon className="w-5 h-5 text-gray-400 absolute top-1/2 left-3 -translate-y-1/2" />
-                    <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Cari nama siswa..." className="pl-10 w-full" />
+        <div className="lg:col-span-2 glass-card rounded-3xl border border-white/10 flex flex-col overflow-hidden shadow-xl shadow-indigo-500/10 animate-fade-in-right">
+            <div className="p-5 sm:p-6 border-b border-white/10 flex-shrink-0 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between bg-white/5 backdrop-blur-md">
+                <div className="relative flex-grow w-full sm:w-auto group">
+                    <SearchIcon className="w-5 h-5 text-indigo-300 absolute top-1/2 left-4 -translate-y-1/2 transition-colors group-focus-within:text-indigo-400" />
+                    <Input
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        placeholder="Cari nama siswa..."
+                        className="pl-12 w-full h-12 bg-white/5 border-white/10 text-white rounded-xl placeholder:text-white/30 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                    />
                 </div>
                 <FilterPills options={filterOptions} currentValue={studentFilter} onFilterChange={setStudentFilter} />
             </div>
-            <div className="flex-grow overflow-y-auto p-4">
-                {isLoadingStudents ? <p className="p-6 text-center">Memuat siswa...</p> : students && students.length > 0 ? (
+
+            <div className="flex-grow overflow-y-auto p-4 custom-scrollbar">
+                {isLoadingStudents ? (
+                    <div className="flex flex-col items-center justify-center h-64 text-indigo-200">
+                        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p>Memuat data siswa...</p>
+                    </div>
+                ) : students && students.length > 0 ? (
                     <>
                         <div className="hidden md:block overflow-x-auto">
-                            <table className="w-full text-sm striped-table sticky-header">
+                            <table className="w-full text-sm border-separate border-spacing-y-2">
                                 <thead>
-                                    <tr>
-                                        <th className="p-4 text-left w-10">{mode !== 'subject_grade' && <Checkbox checked={isAllSelected} onChange={e => handleSelectAllStudents(e.target.checked)} />}</th>
-                                        <th className="p-4 text-left font-semibold">Nama Siswa</th>
-                                        <th className="p-4 text-left font-semibold">{mode === 'subject_grade' ? 'Input Nilai' : (mode === 'academic_print' || mode === 'delete_subject_grade') ? 'Nilai Saat Ini' : 'Status'}</th>
+                                    <tr className="text-indigo-200">
+                                        <th className="p-4 text-left w-14 font-bold tracking-wide uppercase text-xs">
+                                            {mode !== 'subject_grade' && (
+                                                <Checkbox
+                                                    checked={isAllSelected}
+                                                    onChange={e => handleSelectAllStudents(e.target.checked)}
+                                                    className="border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                />
+                                            )}
+                                        </th>
+                                        <th className="p-4 text-left font-bold tracking-wide uppercase text-xs">Nama Siswa</th>
+                                        <th className="p-4 text-left font-bold tracking-wide uppercase text-xs">
+                                            {mode === 'subject_grade' ? 'Input Nilai' : (mode === 'academic_print' || mode === 'delete_subject_grade') ? 'Nilai Saat Ini' : 'Status'}
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -54,19 +75,67 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                         const isSelected = selectedStudentIds.has(s.id);
                                         const gradeRecord = (mode === 'delete_subject_grade' || mode === 'academic_print') ? (existingGrades || []).find(g => g.student_id === s.id) : null;
                                         const hasGrade = !!gradeRecord;
+                                        const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
+
                                         return (
-                                            <tr key={s.id} onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined} className={`border-b border-white/10 transition-colors ${(isSelected || (mode === 'subject_grade' && scores[s.id]?.trim())) ? 'bg-purple-500/10' : 'hover:bg-white/5'} ${mode !== 'subject_grade' ? 'cursor-pointer' : ''}`}>
-                                                <td className="p-4">{mode !== 'subject_grade' && <Checkbox checked={isSelected} onChange={() => handleStudentSelect(s.id)} disabled={mode === 'delete_subject_grade' && !hasGrade} />}</td>
-                                                <td className="p-4 flex items-center gap-3">
-                                                    <img src={s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random`} alt={s.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10" />
-                                                    <span className="font-medium">{s.name}</span>
+                                            <tr
+                                                key={s.id}
+                                                onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
+                                                className={`
+                                                    group transition-all duration-300 rounded-xl
+                                                    ${(isSelected || hasScore)
+                                                        ? 'bg-indigo-500/20 shadow-lg shadow-indigo-500/10 border-transparent'
+                                                        : 'bg-white/5 hover:bg-white/10 hover:shadow-md border-transparent'
+                                                    }
+                                                    ${mode !== 'subject_grade' ? 'cursor-pointer' : ''}
+                                                `}
+                                            >
+                                                <td className="p-4 rounded-l-xl border-y border-l border-white/5 group-hover:border-white/10">
+                                                    {mode !== 'subject_grade' && (
+                                                        <Checkbox
+                                                            checked={isSelected}
+                                                            onChange={() => handleStudentSelect(s.id)}
+                                                            disabled={mode === 'delete_subject_grade' && !hasGrade}
+                                                            className="border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                        />
+                                                    )}
                                                 </td>
-                                                <td className="p-4">
+                                                <td className="p-4 border-y border-white/5 group-hover:border-white/10">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="relative">
+                                                            <div className="absolute inset-0 bg-indigo-500 blur-md opacity-0 group-hover:opacity-30 transition-opacity rounded-full"></div>
+                                                            <img
+                                                                src={s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random`}
+                                                                alt={s.name}
+                                                                className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10 relative z-10"
+                                                            />
+                                                        </div>
+                                                        <span className={`font-medium text-base ${isSelected || hasScore ? 'text-white' : 'text-indigo-100'}`}>{s.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 rounded-r-xl border-y border-r border-white/5 group-hover:border-white/10">
                                                     {mode === 'subject_grade' ?
-                                                        <Input type="number" inputMode="numeric" min="0" max="100" value={scores[s.id] || ''} onChange={e => handleScoreChange(s.id, e.target.value)} placeholder="0-100" className="w-28" /> :
+                                                        <div className="relative">
+                                                            <Input
+                                                                type="number"
+                                                                inputMode="numeric"
+                                                                min="0"
+                                                                max="100"
+                                                                value={scores[s.id] || ''}
+                                                                onChange={e => handleScoreChange(s.id, e.target.value)}
+                                                                placeholder="0"
+                                                                className={`w-24 text-center font-bold text-lg h-10 transition-all ${scores[s.id] ? 'bg-indigo-500/30 border-indigo-400 text-white' : 'bg-white/10 border-white/10 text-white/70'}`}
+                                                            />
+                                                        </div> :
                                                         (mode === 'academic_print' || mode === 'delete_subject_grade') ?
-                                                            <span className={`font-bold px-3 py-1.5 rounded-lg ${hasGrade ? 'bg-purple-500/20 text-purple-200' : 'bg-white/10 text-gray-500'}`}>{hasGrade ? gradeRecord?.score : 'N/A'}</span> :
-                                                            isSelected ? <span className="text-green-400 font-semibold">Terpilih</span> : <span className="text-gray-500">Belum dipilih</span>
+                                                            <span className={`font-bold px-4 py-2 rounded-lg text-sm ${hasGrade ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-500/30' : 'bg-white/5 text-gray-500 border border-white/5'}`}>
+                                                                {hasGrade ? gradeRecord?.score : 'N/A'}
+                                                            </span> :
+                                                            isSelected ?
+                                                                <span className="flex items-center gap-2 text-emerald-400 font-bold bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-400/20 w-fit">
+                                                                    <CheckSquareIcon className="w-4 h-4" />Terpilih
+                                                                </span> :
+                                                                <span className="text-white/30 text-sm italic">Belum dipilih</span>
                                                     }
                                                 </td>
                                             </tr>
@@ -75,40 +144,85 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                 </tbody>
                             </table>
                         </div>
-                        <div className="md:hidden space-y-3">
+
+                        {/* Mobile View */}
+                        <div className="md:hidden space-y-4">
                             {students.map((s: StudentRow) => {
                                 const isSelected = selectedStudentIds.has(s.id);
                                 const gradeRecord = (mode === 'delete_subject_grade' || mode === 'academic_print') ? (existingGrades || []).find(g => g.student_id === s.id) : null;
                                 const hasGrade = !!gradeRecord;
+                                const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
+
                                 return (
-                                    <div key={s.id} onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined} className={`bg-white/5 backdrop-blur-sm rounded-xl border transition-all duration-200 ${(isSelected || (mode === 'subject_grade' && scores[s.id]?.trim())) ? 'border-purple-500/50 bg-purple-500/10 shadow-lg shadow-purple-500/20' : 'border-white/10 hover:border-white/20'} ${mode !== 'subject_grade' ? 'cursor-pointer active:scale-98' : ''} p-4`}>
-                                        <div className="flex items-center gap-3 mb-3">
-                                            {mode !== 'subject_grade' && <Checkbox checked={isSelected} onChange={() => handleStudentSelect(s.id)} disabled={mode === 'delete_subject_grade' && !hasGrade} />}
-                                            <img src={s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random`} alt={s.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-white/20 shadow-md" />
-                                            <div className="flex-grow">
-                                                <p className="font-semibold text-white text-base leading-tight">{s.name}</p>
-                                                <p className="text-xs text-gray-400 mt-0.5">No. {students.indexOf(s) + 1}</p>
+                                    <div
+                                        key={s.id}
+                                        onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
+                                        className={`
+                                            glass-card rounded-2xl p-5 border transition-all duration-300
+                                            ${(isSelected || hasScore)
+                                                ? 'bg-indigo-500/20 border-indigo-500/30 shadow-lg shadow-indigo-500/10'
+                                                : 'bg-white/5 border-white/10'
+                                            } 
+                                            ${mode !== 'subject_grade' ? 'cursor-pointer active:scale-95' : ''}
+                                        `}
+                                    >
+                                        <div className="flex items-center gap-4 mb-4">
+                                            {mode !== 'subject_grade' && (
+                                                <Checkbox
+                                                    checked={isSelected}
+                                                    onChange={() => handleStudentSelect(s.id)}
+                                                    disabled={mode === 'delete_subject_grade' && !hasGrade}
+                                                    className="w-6 h-6 border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                />
+                                            )}
+                                            <img
+                                                src={s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random`}
+                                                alt={s.name}
+                                                className="w-14 h-14 rounded-full object-cover ring-2 ring-white/20 shadow-md"
+                                            />
+                                            <div className="flex-grow min-w-0">
+                                                <p className="font-bold text-white text-lg truncate">{s.name}</p>
+                                                <p className="text-sm text-indigo-200/70 mt-0.5">No. {students.indexOf(s) + 1}</p>
                                             </div>
                                         </div>
+
                                         {mode === 'subject_grade' ? (
-                                            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/10">
-                                                <label className="text-sm font-medium text-gray-300 min-w-[60px]">Nilai:</label>
-                                                <Input type="number" inputMode="numeric" min="0" max="100" value={scores[s.id] || ''} onChange={e => handleScoreChange(s.id, e.target.value)} placeholder="0-100" className="flex-grow text-lg font-semibold text-center" />
-                                                {scores[s.id] && (
-                                                    <span className={`px-3 py-1.5 rounded-lg text-sm font-bold ${parseInt(scores[s.id]) >= 75 ? 'bg-green-500/20 text-green-300' : parseInt(scores[s.id]) >= 60 ? 'bg-yellow-500/20 text-yellow-300' : 'bg-red-500/20 text-red-300'}`}>
-                                                        {parseInt(scores[s.id]) >= 75 ? 'Baik' : parseInt(scores[s.id]) >= 60 ? 'Cukup' : 'Kurang'}
-                                                    </span>
-                                                )}
+                                            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-white/10">
+                                                <label className="text-sm font-bold text-indigo-200 uppercase tracking-wide">Nilai</label>
+                                                <div className="flex-grow flex items-center gap-3">
+                                                    <Input
+                                                        type="number"
+                                                        inputMode="numeric"
+                                                        min="0"
+                                                        max="100"
+                                                        value={scores[s.id] || ''}
+                                                        onChange={e => handleScoreChange(s.id, e.target.value)}
+                                                        placeholder="0"
+                                                        className="flex-grow text-xl font-bold text-center h-12 bg-white/10 border-white/10 text-white rounded-xl focus:ring-indigo-500"
+                                                    />
+                                                    {scores[s.id] && (
+                                                        <span className={`px-4 py-2 rounded-xl text-sm font-bold shadow-lg ${parseInt(scores[s.id]) >= 75 ? 'bg-emerald-500 text-white' : parseInt(scores[s.id]) >= 60 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'}`}>
+                                                            {parseInt(scores[s.id]) >= 75 ? 'Baik' : parseInt(scores[s.id]) >= 60 ? 'Cukup' : 'Kurang'}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         ) : (mode === 'academic_print' || mode === 'delete_subject_grade') ? (
-                                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
-                                                <span className="text-sm text-gray-400">Nilai Saat Ini:</span>
-                                                <span className={`font-bold px-3 py-1.5 rounded-lg text-lg ${hasGrade ? 'bg-purple-500/20 text-purple-200' : 'bg-white/10 text-gray-500'}`}>{hasGrade ? gradeRecord?.score : 'N/A'}</span>
+                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
+                                                <span className="text-sm text-indigo-200">Nilai Saat Ini</span>
+                                                <span className={`font-bold px-4 py-2 rounded-xl text-lg ${hasGrade ? 'bg-indigo-500/30 text-white border border-indigo-500/30' : 'bg-white/5 text-white/50 border border-white/5'}`}>
+                                                    {hasGrade ? gradeRecord?.score : 'N/A'}
+                                                </span>
                                             </div>
                                         ) : (
-                                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
-                                                <span className="text-sm text-gray-400">Status:</span>
-                                                {isSelected ? <span className="text-green-400 font-semibold flex items-center gap-1"><CheckSquareIcon className="w-4 h-4" />Terpilih</span> : <span className="text-gray-500">Belum dipilih</span>}
+                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
+                                                <span className="text-sm text-indigo-200">Status</span>
+                                                {isSelected ?
+                                                    <span className="text-emerald-400 font-bold flex items-center gap-2 bg-emerald-400/10 px-3 py-1 rounded-lg border border-emerald-400/20">
+                                                        <CheckSquareIcon className="w-4 h-4" />Terpilih
+                                                    </span> :
+                                                    <span className="text-white/30 text-sm italic">Belum dipilih</span>
+                                                }
                                             </div>
                                         )}
                                     </div>
@@ -116,7 +230,13 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                             })}
                         </div>
                     </>
-                ) : <p className="p-6 text-center">Tidak ada siswa di kelas ini atau tidak ada hasil pencarian.</p>}
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-64 text-indigo-200/60">
+                        <SearchIcon className="w-12 h-12 mb-4 opacity-50" />
+                        <p className="text-lg">Tidak ada siswa ditemukan.</p>
+                        <p className="text-sm opacity-70">Coba ubah kata kunci atau filter.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

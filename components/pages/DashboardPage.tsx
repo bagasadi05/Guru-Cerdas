@@ -125,12 +125,12 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
 
     if (!insight) {
         return (
-            <div className="text-center py-4">
-                <Button onClick={generateInsight} disabled={isLoading || !dashboardData}>
+            <div className="text-center py-6">
+                <Button onClick={generateInsight} disabled={isLoading || !dashboardData} className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/20 transition-all hover:scale-105">
                     <SparklesIcon className="w-4 h-4 mr-2" />
                     Buat Wawasan Harian dengan AI
                 </Button>
-                <p className="text-xs text-gray-400 mt-2">Dapatkan ringkasan performa kelas hari ini.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">Dapatkan ringkasan performa kelas hari ini.</p>
             </div>
         );
     }
@@ -138,11 +138,11 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
     return (
         <div className="space-y-4 text-sm">
             {insight.positive_highlights?.length > 0 && (
-                <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center"><CheckCircleIcon className="w-5 h-5 text-green-400" /></div>
-                    <div><p className="font-bold text-gray-900 dark:text-gray-200">Siswa Berprestasi</p>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-green-500/5 border border-green-500/10">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center"><CheckCircleIcon className="w-5 h-5 text-green-500" /></div>
+                    <div><p className="font-bold text-slate-800 dark:text-slate-200">Siswa Berprestasi</p>
                         {insight.positive_highlights.map(item => (
-                            <p key={item.student_name} className="text-gray-600 dark:text-gray-400">
+                            <p key={item.student_name} className="text-slate-600 dark:text-slate-400 mt-1">
                                 <Link to={`/siswa/${item.student_id}`} className="font-semibold text-green-600 dark:text-green-400 hover:underline">{item.student_name}</Link>: {item.reason}
                             </p>
                         ))}
@@ -150,21 +150,21 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
                 </div>
             )}
             {insight.areas_for_attention?.length > 0 && (
-                <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center"><AlertTriangleIcon className="w-5 h-5 text-yellow-400" /></div>
-                    <div><p className="font-bold text-gray-900 dark:text-gray-200">Perlu Perhatian</p>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center"><AlertTriangleIcon className="w-5 h-5 text-amber-500" /></div>
+                    <div><p className="font-bold text-slate-800 dark:text-slate-200">Perlu Perhatian</p>
                         {insight.areas_for_attention.map(item => (
-                            <p key={item.student_name} className="text-gray-600 dark:text-gray-400">
-                                <Link to={`/siswa/${item.student_id}`} className="font-semibold text-yellow-600 dark:text-yellow-400 hover:underline">{item.student_name}</Link>: {item.reason}
+                            <p key={item.student_name} className="text-slate-600 dark:text-slate-400 mt-1">
+                                <Link to={`/siswa/${item.student_id}`} className="font-semibold text-amber-600 dark:text-amber-400 hover:underline">{item.student_name}</Link>: {item.reason}
                             </p>
                         ))}
                     </div>
                 </div>
             )}
             {insight.class_focus_suggestion && (
-                <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center"><SparklesIcon className="w-5 h-5 text-blue-400" /></div>
-                    <div><p className="font-bold text-gray-900 dark:text-gray-200">Saran Hari Ini</p><p className="text-gray-600 dark:text-gray-400">{insight.class_focus_suggestion}</p></div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><SparklesIcon className="w-5 h-5 text-indigo-500" /></div>
+                    <div><p className="font-bold text-slate-800 dark:text-slate-200">Saran Hari Ini</p><p className="text-slate-600 dark:text-slate-400 mt-1">{insight.class_focus_suggestion}</p></div>
                 </div>
             )}
         </div>
@@ -182,8 +182,8 @@ const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data })
             <svg width="100%" height={chartHeight} aria-label="Grafik absensi mingguan">
                 <defs>
                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" className="text-sky-500 dark:text-purple-500" stopColor="currentColor" />
-                        <stop offset="100%" className="text-sky-700 dark:text-blue-500" stopColor="currentColor" />
+                        <stop offset="0%" className="text-indigo-500 dark:text-indigo-400" stopColor="currentColor" />
+                        <stop offset="100%" className="text-violet-600 dark:text-violet-500" stopColor="currentColor" />
                     </linearGradient>
                 </defs>
                 {data.map((day, index) => {
@@ -202,8 +202,8 @@ const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data })
                                 width={barWidth}
                                 height={barHeight}
                                 fill="url(#barGradient)"
-                                rx="4"
-                                className="transition-transform duration-300 animate-grow-bar group-hover:scale-y-105"
+                                rx="6"
+                                className="transition-all duration-300 animate-grow-bar group-hover:opacity-80"
                                 style={{ transformOrigin: 'bottom', animationDelay: `${index * 100}ms` }}
                             />
                             <text
@@ -211,23 +211,25 @@ const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data })
                                 y={chartHeight - 5}
                                 textAnchor="middle"
                                 fontSize="12"
-                                className="font-semibold fill-gray-500 dark:fill-gray-400"
+                                className="font-medium fill-slate-400 dark:fill-slate-500"
                             >
                                 {day.day.slice(0, 3)}
                             </text>
                             {hoveredIndex === index && (
                                 <g className="transition-opacity duration-300 animate-fade-in" style={{ opacity: 1 }}>
-                                    <rect x={x - 10} y={y - 28} width={barWidth + 20} height={22} rx="5" className="fill-gray-800 dark:fill-gray-900 stroke-gray-500 dark:stroke-purple-400/50" />
+                                    <rect x={x - 10} y={y - 32} width={barWidth + 20} height={26} rx="6" className="fill-slate-800 dark:fill-white" />
                                     <text
                                         x={x + barWidth / 2}
-                                        y={y - 14}
+                                        y={y - 15}
                                         textAnchor="middle"
                                         fontSize="12"
                                         fontWeight="bold"
-                                        fill="#fff"
+                                        className="fill-white dark:fill-slate-900"
                                     >
                                         {Math.round(day.present_percentage)}%
                                     </text>
+                                    {/* Triangle arrow */}
+                                    <path d={`M${x + barWidth / 2 - 4},${y - 6} L${x + barWidth / 2 + 4},${y - 6} L${x + barWidth / 2},${y - 2} Z`} className="fill-slate-800 dark:fill-white" />
                                 </g>
                             )}
                         </g>
@@ -431,20 +433,20 @@ const DashboardPage: React.FC = () => {
     }
 
     const stats = [
-        { label: 'Total Siswa', value: students.length, icon: UsersIcon, link: '/siswa', color: 'from-sky-500 to-blue-500', darkColor: 'dark:from-sky-500 dark:to-blue-500', description: `${classes.length} kelas` },
-        { label: 'Kehadiran', value: `${attendancePercentage}%`, subValue: `${dailyAttendanceSummary?.present || 0}/${students.length}`, icon: CheckSquareIcon, link: '/absensi', color: 'from-emerald-500 to-green-500', darkColor: 'dark:from-emerald-500 dark:to-green-500', description: 'siswa hadir' },
+        { label: 'Peserta Didik', value: students.length, icon: UsersIcon, link: '/siswa', color: 'from-sky-500 to-blue-500', darkColor: 'dark:from-sky-500 dark:to-blue-500', description: `${classes.length} kelas` },
+        { label: 'Kehadiran Hari Ini', value: `${attendancePercentage}%`, subValue: `${dailyAttendanceSummary?.present || 0}/${students.length}`, icon: CheckSquareIcon, link: '/absensi', color: 'from-emerald-500 to-green-500', darkColor: 'dark:from-emerald-500 dark:to-green-500', description: 'siswa hadir' },
         { label: 'Tugas Aktif', value: tasks.length, icon: BookOpenIcon, link: '/tugas', color: 'from-amber-500 to-yellow-500', darkColor: 'dark:from-amber-500 dark:to-yellow-500', description: 'tugas' },
-        { label: 'Jadwal', value: schedule.length, icon: CalendarIcon, link: '/jadwal', color: 'from-violet-500 to-purple-500', darkColor: 'dark:from-violet-500 dark:to-purple-500', description: nextClassIndex >= 0 ? `Next: ${schedule[nextClassIndex]?.subject.slice(0, 8)}...` : 'Selesai' }
+        { label: 'Jadwal Pelajaran', value: schedule.length, icon: CalendarIcon, link: '/jadwal', color: 'from-violet-500 to-purple-500', darkColor: 'dark:from-violet-500 dark:to-purple-500', description: nextClassIndex >= 0 ? `Next: ${schedule[nextClassIndex]?.subject.slice(0, 8)}...` : 'Selesai' }
     ];
 
 
 
     return (
-        <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 md:space-y-8 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8">
+        <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 md:space-y-8 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
             <header className="flex items-center justify-between h-16 px-1">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-serif">Beranda</h1>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 tracking-wide">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
                 </div>
             </header>
 
@@ -455,18 +457,19 @@ const DashboardPage: React.FC = () => {
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
                         {stats.map(stat => (
                             <Link to={stat.link} key={stat.label} className="group block h-full">
-                                <Card className="px-4 py-3 h-full flex flex-col justify-between group-hover:-translate-y-1 card-shine-hover overflow-hidden relative min-h-[96px]">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br ${stat.color} ${stat.darkColor} shadow-md text-white`}>
+                                <div className="glass-card rounded-2xl p-4 h-full flex flex-col justify-between group-hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                    <div className="flex items-start justify-between mb-3 relative z-10">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-lg text-white`}>
                                             <stat.icon className="w-5 h-5" />
                                         </div>
-                                        {stat.subValue && <span className="text-[10px] font-medium bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full text-gray-600 dark:text-gray-300">{stat.subValue}</span>}
+                                        {stat.subValue && <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full text-slate-600 dark:text-slate-300">{stat.subValue}</span>}
                                     </div>
-                                    <div>
-                                        <p className="text-2xl font-bold text-gray-900 dark:text-white leading-none mb-1">{stat.value}</p>
-                                        <p className="text-sm text-gray-600 dark:text-gray-300 font-medium truncate">{stat.label}</p>
+                                    <div className="relative z-10">
+                                        <p className="text-2xl font-bold text-slate-800 dark:text-white leading-none mb-1">{stat.value}</p>
+                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{stat.label}</p>
                                     </div>
-                                </Card>
+                                </div>
                             </Link>
                         ))}
                     </div>
@@ -474,42 +477,50 @@ const DashboardPage: React.FC = () => {
                     {/* Quick Actions Trigger */}
 
 
-                    <Card className="animate-pulse-border-glow border-purple-500/50 bg-gradient-to-br from-white/5 to-transparent dark:from-slate-900/80 dark:to-slate-900/50">
-                        <CardHeader><CardTitle className="flex items-center gap-3"><BrainCircuitIcon className="w-6 h-6 text-sky-500 dark:text-purple-400" />Wawasan Harian AI</CardTitle></CardHeader>
-                        <CardContent><AiDashboardInsight dashboardData={data || null} /></CardContent>
-                    </Card>
+                    <div className="glass-card rounded-2xl p-0 overflow-hidden border-indigo-500/20 shadow-lg shadow-indigo-500/5">
+                        <div className="p-5 border-b border-white/10 bg-gradient-to-r from-indigo-500/5 to-transparent">
+                            <h3 className="flex items-center gap-2 font-bold text-lg text-slate-800 dark:text-white tracking-wide">
+                                <BrainCircuitIcon className="w-5 h-5 text-indigo-500" />
+                                Analisis Cerdas Harian
+                            </h3>
+                        </div>
+                        <div className="p-5">
+                            <AiDashboardInsight dashboardData={data || null} />
+                        </div>
+                    </div>
 
-                    <Card>
-                        <CardHeader><CardTitle>Absensi Mingguan</CardTitle><CardDescription>Persentase kehadiran selama 5 hari terakhir.</CardDescription></CardHeader>
-                        <CardContent className="h-[180px] p-2">
+                    <div className="glass-card rounded-2xl p-0 overflow-hidden">
+                        <div className="p-5 border-b border-slate-200/50 dark:border-white/5">
+                            <h3 className="font-bold text-lg text-slate-800 dark:text-white tracking-wide">Tren Kehadiran</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 tracking-wide">Persentase kehadiran 5 hari terakhir</p>
+                        </div>
+                        <div className="p-5 h-[200px]">
                             <WeeklyAttendanceChart data={weeklyAttendance} />
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-3">
-                                <UserMinusIcon className="w-6 h-6 text-sky-500 dark:text-purple-400" />
-                                Pemeriksa Kelengkapan Nilai
-                            </CardTitle>
-                            <CardDescription>
-                                Lihat siswa yang belum memiliki nilai untuk penilaian tertentu.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4 mb-4">
-                                <Select value={selectedClassForCheck} onChange={(e) => setSelectedClassForCheck(e.target.value)}>
+                    <div className="glass-card rounded-2xl p-0 overflow-hidden">
+                        <div className="p-5 border-b border-slate-200/50 dark:border-white/5">
+                            <h3 className="flex items-center gap-2 font-bold text-lg text-slate-800 dark:text-white tracking-wide">
+                                <UserMinusIcon className="w-5 h-5 text-amber-500" />
+                                Audit Kelengkapan Nilai
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 tracking-wide">Cek siswa yang belum dinilai</p>
+                        </div>
+                        <div className="p-5">
+                            <div className="space-y-4 mb-6">
+                                <Select value={selectedClassForCheck} onChange={(e) => setSelectedClassForCheck(e.target.value)} className="bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
                                     <option value="">Semua Kelas</option>
                                     {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </Select>
                                 <div className="flex flex-col sm:flex-row gap-4">
-                                    <Select value={subjectForCompletionCheck} onChange={handleSubjectChange} className="flex-1">
+                                    <Select value={subjectForCompletionCheck} onChange={handleSubjectChange} className="flex-1 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
                                         <option value="" disabled>Pilih Mata Pelajaran</option>
                                         {uniqueSubjects.map((subject) => (
                                             <option key={subject} value={subject}>{subject}</option>
                                         ))}
                                     </Select>
-                                    <Select value={assessmentForCompletionCheck} onChange={(e) => setAssessmentForCompletionCheck(e.target.value)} className="flex-1" disabled={uniqueAssessmentsForSubject.length === 0}>
+                                    <Select value={assessmentForCompletionCheck} onChange={(e) => setAssessmentForCompletionCheck(e.target.value)} className="flex-1 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700" disabled={uniqueAssessmentsForSubject.length === 0}>
                                         <option value="">Semua Penilaian</option>
                                         {uniqueAssessmentsForSubject.map((assessment) => (
                                             <option key={assessment} value={assessment}>{assessment}</option>
@@ -519,85 +530,85 @@ const DashboardPage: React.FC = () => {
                             </div>
 
                             {subjectForCompletionCheck && (
-                                <div className="mb-4">
-                                    <div className="flex justify-between text-xs mb-1">
-                                        <span className="text-gray-500 dark:text-gray-400">Progres Kelengkapan ({totalStudentsForCheck - studentsMissingGrade.length}/{totalStudentsForCheck})</span>
-                                        <span className={`font-bold ${completionPercentage === 100 ? 'text-green-500' : 'text-blue-500'}`}>{completionPercentage}%</span>
+                                <div className="mb-6">
+                                    <div className="flex justify-between text-xs mb-2 font-medium">
+                                        <span className="text-slate-500 dark:text-slate-400">Progres Kelengkapan ({totalStudentsForCheck - studentsMissingGrade.length}/{totalStudentsForCheck})</span>
+                                        <span className={`${completionPercentage === 100 ? 'text-green-500' : 'text-indigo-500'}`}>{completionPercentage}%</span>
                                     </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 overflow-hidden">
-                                        <div className={`h-2 rounded-full transition-all duration-500 ${completionPercentage === 100 ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${completionPercentage}%` }}></div>
+                                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                        <div className={`h-full rounded-full transition-all duration-1000 ease-out ${completionPercentage === 100 ? 'bg-green-500' : 'bg-indigo-500'}`} style={{ width: `${completionPercentage}%` }}></div>
                                     </div>
                                 </div>
                             )}
 
-                            <div className="max-h-64 overflow-y-auto space-y-1 pr-2">
+                            <div className="max-h-64 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                                 {subjectForCompletionCheck ? (
                                     studentsMissingGrade.length > 0 ? (
                                         <>
-                                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 px-1">
-                                                {studentsMissingGrade.length} SISWA BELUM DINILAI:
+                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
+                                                {studentsMissingGrade.length} Siswa Belum Dinilai
                                             </p>
                                             {studentsMissingGrade.map(student => (
-                                                <div key={student.id} onClick={() => handleNavigateToStudent(student.id)} className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
-                                                    <img src={student.avatar_url} alt={student.name} className="w-9 h-9 rounded-full object-cover" />
+                                                <div key={student.id} onClick={() => handleNavigateToStudent(student.id)} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/5 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/10 transition-colors border border-transparent hover:border-indigo-500/30">
+                                                    <img src={student.avatar_url} alt={student.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-slate-700" />
                                                     <div>
-                                                        <span className="font-medium text-gray-700 dark:text-gray-300">{student.name}</span>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                        <span className="font-semibold text-slate-700 dark:text-slate-200">{student.name}</span>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400">
                                                             {'missingAssessments' in student
                                                                 ? `Kurang: ${(student as any).missingAssessments.join(', ')}`
                                                                 : `Kelas ${student.className}`
                                                             }
                                                         </p>
                                                     </div>
-                                                    <ChevronRightIcon className="w-5 h-5 ml-auto text-gray-400" />
+                                                    <ChevronRightIcon className="w-5 h-5 ml-auto text-slate-400" />
                                                 </div>
                                             ))}
                                         </>
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center text-center py-8 bg-green-500/5 dark:bg-green-500/10 rounded-lg animate-fade-in">
-                                            <div className="w-16 h-16 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center mb-4">
-                                                <CheckCircleIcon className="w-10 h-10 text-green-600 dark:text-green-400" />
+                                        <div className="flex flex-col items-center justify-center text-center py-8 bg-green-500/5 rounded-2xl border border-green-500/10 animate-fade-in">
+                                            <div className="w-16 h-16 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                                                <CheckCircleIcon className="w-8 h-8 text-green-600 dark:text-green-400" />
                                             </div>
-                                            <p className="font-bold text-lg text-green-700 dark:text-green-300">Semua Siswa Lengkap!</p>
-                                            <p className="text-sm text-green-600 dark:text-green-400">Kerja bagus, nilai untuk penilaian ini sudah lengkap.</p>
+                                            <p className="font-bold text-lg text-green-700 dark:text-green-300">Semua Lengkap!</p>
+                                            <p className="text-sm text-green-600 dark:text-green-400">Semua siswa telah dinilai untuk bagian ini.</p>
                                         </div>
                                     )
                                 ) : (
-                                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                        <ClipboardPenIcon className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
-                                        <p className="font-semibold">Pilih Mata Pelajaran & Penilaian</p>
-                                        <p className="text-sm">Pilih subjek dan penilaian di atas untuk melihat siapa saja yang masih memerlukan nilai.</p>
+                                    <div className="text-center py-10 text-slate-400 dark:text-slate-500">
+                                        <ClipboardPenIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                        <p className="font-medium">Pilih Mata Pelajaran</p>
+                                        <p className="text-xs mt-1">Silakan pilih mata pelajaran dan jenis penilaian di atas.</p>
                                     </div>
                                 )}
                             </div>
 
                             {studentsMissingGrade.length > 0 && subjectForCompletionCheck && (
-                                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
-                                    <Button onClick={handleOpenMassInput} className="w-full" size="sm">
+                                <div className="mt-6 pt-4 border-t border-slate-200/50 dark:border-white/5">
+                                    <Button onClick={handleOpenMassInput} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20" size="lg">
                                         <ClipboardPenIcon className="w-4 h-4 mr-2" />
                                         Lengkapi via Input Massal
                                     </Button>
-                                    <p className="text-xs text-center text-gray-400 mt-2">
-                                        {selectedClassForCheck ? 'Buka halaman input untuk kelas ini.' : 'Buka halaman input (pilih kelas otomatis).'}
-                                    </p>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Right Column */}
                 <div className="xl:col-span-2 space-y-8">
-                    <Card className="h-full max-h-[700px] flex flex-col">
+                    <div className="glass-card rounded-2xl h-full max-h-[800px] flex flex-col overflow-hidden">
                         <Tabs defaultValue="schedule" className="w-full flex flex-col h-full">
-                            <TabsList className="m-4 self-center">
-                                <TabsTrigger value="schedule">Jadwal Hari Ini</TabsTrigger>
-                                <TabsTrigger value="tasks">Tugas Mendatang</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="schedule" className="flex-1 overflow-y-auto px-6 pb-6">
-                                <div className="relative space-y-3">
+                            <div className="p-4 border-b border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+                                <TabsList className="w-full grid grid-cols-2 p-1 bg-slate-200/50 dark:bg-black/20 rounded-xl">
+                                    <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm">Jadwal Hari Ini</TabsTrigger>
+                                    <TabsTrigger value="tasks" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm">Tugas</TabsTrigger>
+                                </TabsList>
+                            </div>
+
+                            <TabsContent value="schedule" className="flex-1 overflow-y-auto p-0 m-0">
+                                <div className="relative p-6">
                                     {todaySchedule.length > 0 ? (
-                                        <div className="space-y-4 pl-2">
+                                        <div className="space-y-0 pl-4 border-l-2 border-slate-200 dark:border-slate-800 ml-4">
                                             {todaySchedule.map((item, index) => {
                                                 const now = currentTime;
                                                 const [startH, startM] = item.start_time.split(':').map(Number);
@@ -608,92 +619,101 @@ const DashboardPage: React.FC = () => {
                                                 const isCurrent = now >= startTime && now <= endTime;
 
                                                 return (
-                                                    <div key={item.id} className="relative flex gap-4 items-start group">
-                                                        {/* Timeline Line */}
-                                                        {index < todaySchedule.length - 1 && (
-                                                            <div className="absolute left-8 top-10 bottom-[-20px] w-0.5 bg-gray-200 dark:bg-gray-800 group-last:hidden" />
-                                                        )}
-
-                                                        {/* Time Badge */}
-                                                        <div className="flex-shrink-0 w-16 pt-1 z-10">
-                                                            <div className={`
-                                                                rounded-lg px-2 py-1.5 text-center border
-                                                                ${isCurrent
-                                                                    ? 'bg-sky-100 border-sky-200 text-sky-700 dark:bg-sky-900/30 dark:border-sky-800 dark:text-sky-300'
-                                                                    : 'bg-gray-50 border-gray-100 text-gray-600 dark:bg-gray-900 dark:border-gray-800 dark:text-gray-400'}
-                                                            `}>
-                                                                <time className="text-xs font-bold block">
-                                                                    {item.start_time.slice(0, 5)}
-                                                                </time>
-                                                                <span className="text-[10px] opacity-80">
-                                                                    {item.end_time.slice(0, 5)}
-                                                                </span>
-                                                            </div>
-                                                        </div>
+                                                    <div key={item.id} className="relative pl-8 pb-8 last:pb-0 group">
+                                                        {/* Timeline Dot */}
+                                                        <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 transition-colors duration-300 ${isCurrent ? 'bg-indigo-500 border-indigo-200 dark:border-indigo-900 shadow-[0_0_0_4px_rgba(99,102,241,0.2)]' : 'bg-slate-200 dark:bg-slate-800 border-white dark:border-slate-900'}`}></div>
 
                                                         {/* Schedule Card */}
-                                                        <Card className={`
-                                                            flex-1 p-4 transition-all duration-200 min-h-[72px]
-                                                            ${isCurrent ? 'ring-2 ring-sky-500 shadow-md' : 'hover:bg-gray-50 dark:hover:bg-gray-900'}
-                                                            ${isPast ? 'opacity-60' : ''}
+                                                        <div className={`
+                                                            p-4 rounded-xl border transition-all duration-300
+                                                            ${isCurrent
+                                                                ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/30 shadow-sm'
+                                                                : 'bg-white/50 dark:bg-white/5 border-slate-100 dark:border-white/5 hover:bg-white dark:hover:bg-white/10'}
+                                                            ${isPast ? 'opacity-60 grayscale' : ''}
                                                         `}>
-                                                            <div className="flex justify-between items-start mb-1">
-                                                                <h4 className="font-bold text-base text-gray-900 dark:text-white">{item.subject}</h4>
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div>
+                                                                    <span className={`text-xs font-bold px-2 py-1 rounded-md mb-2 inline-block ${isCurrent ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                                                        {item.start_time.slice(0, 5)} - {item.end_time.slice(0, 5)}
+                                                                    </span>
+                                                                    <h4 className="font-bold text-base text-slate-900 dark:text-white">{item.subject}</h4>
+                                                                </div>
                                                                 {isCurrent && (
-                                                                    <span className="flex h-2 w-2">
-                                                                        <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-sky-400 opacity-75"></span>
-                                                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+                                                                    <span className="flex h-2.5 w-2.5 relative">
+                                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                                                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{item.className}</p>
-                                                            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
+                                                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-2">
+                                                                <UsersIcon className="w-4 h-4" />
+                                                                {item.className}
+                                                            </p>
+                                                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-500 border-t border-slate-100 dark:border-white/5 pt-3">
                                                                 <div className="flex items-center gap-1">
                                                                     <ClockIcon className="w-3.5 h-3.5" />
                                                                     <span>{Math.round((endTime.getTime() - startTime.getTime()) / 60000)} menit</span>
                                                                 </div>
                                                             </div>
-                                                        </Card>
+                                                        </div>
                                                     </div>
                                                 );
                                             })}
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500 dark:text-gray-400">
-                                            <CalendarIcon className="w-12 h-12 mb-3 opacity-20" />
-                                            <p>Tidak ada jadwal hari ini.</p>
+                                        <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400 dark:text-slate-500">
+                                            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
+                                                <CalendarIcon className="w-10 h-10 opacity-50" />
+                                            </div>
+                                            <p className="font-medium">Tidak ada jadwal hari ini.</p>
+                                            <p className="text-xs mt-1">Nikmati waktu luang Anda!</p>
                                         </div>
                                     )}
                                 </div>
                             </TabsContent>
-                            <TabsContent value="tasks" className="flex-1 overflow-y-auto px-6 pb-6">
-                                <div className="space-y-3">
+                            <TabsContent value="tasks" className="flex-1 overflow-y-auto p-0 m-0">
+                                <div className="p-6 space-y-3">
                                     {tasks.length > 0 ? tasks.slice(0, 10).map(task => (
-                                        <div key={task.id} className="p-3 bg-gray-100 dark:bg-black/20 rounded-lg">
-                                            <p className="font-semibold text-gray-900 dark:text-white">{task.title}</p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">Jatuh tempo: {task.due_date ? new Date(task.due_date).toLocaleDateString('id-ID') : 'Tidak ada'}</p>
+                                        <div key={task.id} className="p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl hover:shadow-md transition-shadow">
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <p className="font-semibold text-slate-800 dark:text-white line-clamp-1">{task.title}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                                                        <ClockIcon className="w-3 h-3" />
+                                                        Jatuh tempo: {task.due_date ? new Date(task.due_date).toLocaleDateString('id-ID') : 'Tidak ada'}
+                                                    </p>
+                                                </div>
+                                                <div className={`w-2 h-2 rounded-full mt-1.5 ${task.priority === 'high' ? 'bg-red-500' : task.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+                                            </div>
                                         </div>
-                                    )) : <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Tidak ada tugas aktif.</p>}
+                                    )) : (
+                                        <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400 dark:text-slate-500">
+                                            <BookOpenIcon className="w-12 h-12 mb-3 opacity-50" />
+                                            <p>Tidak ada tugas aktif.</p>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="mt-4"><Button variant="outline" size="sm" onClick={() => navigate('/tugas')} className="w-full">Lihat Semua Tugas</Button></div>
+                                <div className="p-4 border-t border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+                                    <Button variant="outline" size="sm" onClick={() => navigate('/tugas')} className="w-full border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800">Lihat Semua Tugas</Button>
+                                </div>
                             </TabsContent>
                         </Tabs>
-                    </Card>
+                    </div>
                 </div>
             </div>
 
             {/* Speed Dial FAB */}
-            <div className="fixed bottom-20 right-4 lg:bottom-8 lg:right-8 z-40 flex flex-col items-end gap-3">
+            <div className="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 z-40 flex flex-col items-end gap-3">
                 {isFabOpen && (
                     <div className="flex flex-col gap-3 animate-fade-in-up">
                         <Link
                             to="/jadwal"
                             className="flex items-center gap-3 pr-1 group"
                         >
-                            <span className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-lg shadow-md text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg shadow-lg shadow-black/5 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                                 Jadwal
                             </span>
-                            <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 text-orange-600 dark:text-orange-400 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 text-amber-500 shadow-xl flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
                                 <CalendarIcon className="w-5 h-5" />
                             </div>
                         </Link>
@@ -701,10 +721,10 @@ const DashboardPage: React.FC = () => {
                             onClick={() => (window as any).toggleSearch?.()}
                             className="flex items-center gap-3 pr-1 group"
                         >
-                            <span className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-lg shadow-md text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg shadow-lg shadow-black/5 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                                 Cari
                             </span>
-                            <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 text-sky-600 dark:text-sky-400 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 text-sky-500 shadow-xl flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
                                 <SearchIcon className="w-5 h-5" />
                             </div>
                         </button>
@@ -712,10 +732,10 @@ const DashboardPage: React.FC = () => {
                             onClick={() => (window as any).toggleAiChat?.()}
                             className="flex items-center gap-3 pr-1 group"
                         >
-                            <span className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-lg shadow-md text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg shadow-lg shadow-black/5 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                                 AI Chat
                             </span>
-                            <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 text-purple-500 shadow-xl flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
                                 <BrainCircuitIcon className="w-5 h-5" />
                             </div>
                         </button>
@@ -723,10 +743,10 @@ const DashboardPage: React.FC = () => {
                             to="/pengaturan"
                             className="flex items-center gap-3 pr-1 group"
                         >
-                            <span className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-lg shadow-md text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg shadow-lg shadow-black/5 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                                 Pengaturan
                             </span>
-                            <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 text-slate-500 shadow-xl flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
                                 <SettingsIcon className="w-5 h-5" />
                             </div>
                         </Link>
@@ -735,7 +755,7 @@ const DashboardPage: React.FC = () => {
                 <FloatingActionButton
                     onClick={() => setIsFabOpen(!isFabOpen)}
                     icon={isFabOpen ? <PlusIcon className="w-6 h-6 rotate-45 transition-transform" /> : <PlusIcon className="w-6 h-6 transition-transform" />}
-                    className={isFabOpen ? 'bg-red-500 hover:bg-red-600 dark:bg-red-600' : ''}
+                    className={isFabOpen ? 'bg-red-500 hover:bg-red-600 dark:bg-red-600 shadow-red-500/30' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30'}
                     position="bottom-right"
                     offset={{ bottom: 0, right: 0 }}
                 />
