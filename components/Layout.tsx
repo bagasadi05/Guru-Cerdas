@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { HomeIcon, UsersIcon, CalendarIcon, ClipboardIcon, LogoutIcon, SettingsIcon, GraduationCapIcon, SearchIcon, CheckSquareIcon, BrainCircuitIcon, ClipboardPenIcon } from './Icons';
 import ThemeToggle from './ui/ThemeToggle';
@@ -7,6 +7,7 @@ import GlobalSearch from './ui/GlobalSearch';
 import { Button } from './ui/Button';
 import { useSyncQueue } from '../hooks/useSyncQueue';
 import GreetingRobot from './GreetingRobot';
+import { useSound } from '../hooks/useSound';
 
 const navItems = [
     { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
@@ -34,6 +35,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
+    const { playClick } = useSound();
 
     const handleLogout = async () => {
         if (onLinkClick) {
@@ -95,7 +97,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
                                 key={item.href}
                                 to={item.href}
                                 end={item.href === '/dashboard'}
-                                onClick={onLinkClick}
+                                onClick={() => {
+                                    playClick();
+                                    if (onLinkClick) onLinkClick();
+                                }}
                                 className={({ isActive }) =>
                                     `relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group overflow-hidden ${isActive
                                         ? 'text-white shadow-lg shadow-indigo-500/20'
@@ -137,6 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user } = useAuth();
+    const { playClick } = useSound();
     const { pendingCount, isSyncing } = useSyncQueue();
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -195,6 +201,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             sessionStorage.setItem('greeted', 'true');
         }
     };
+
+    const location = useLocation();
 
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950/50">
@@ -289,7 +297,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
                 <main className="flex-1 overflow-y-auto pb-20 lg:pb-6 px-4 lg:px-8 pt-6">
                     <div className="max-w-7xl mx-auto h-full">
-                        {children}
+                        <div key={location.pathname} className="animate-page-transition h-full">
+                            {children}
+                        </div>
                     </div>
                 </main>
 
@@ -301,6 +311,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                                 key={item.href}
                                 to={item.href}
                                 end={item.href === '/dashboard'}
+                                onClick={() => playClick()}
                                 className={({ isActive }) =>
                                     `flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all duration-300 active:scale-95 ${isActive
                                         ? 'text-indigo-600 dark:text-indigo-400'

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSound } from '../../hooks/useSound';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'destructive' | 'outline' | 'ghost';
@@ -7,6 +8,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'default', children, onClick, ...props }, ref) => {
+    const { playClick } = useSound();
     const baseClasses = "relative overflow-hidden inline-flex items-center justify-center rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-950 focus:ring-sky-500 disabled:opacity-50 disabled:pointer-events-none transform-gpu active:scale-95";
 
     const variantClasses = {
@@ -24,6 +26,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const handleRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
+      playClick();
       if (onClick) {
         onClick(event);
       }
@@ -38,17 +41,17 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       const circle = document.createElement("span");
       const diameter = Math.max(button.clientWidth, button.clientHeight);
       const radius = diameter / 2;
-      
+
       circle.style.width = circle.style.height = `${diameter}px`;
       circle.style.left = `${event.clientX - button.getBoundingClientRect().left - radius}px`;
       circle.style.top = `${event.clientY - button.getBoundingClientRect().top - radius}px`;
       circle.classList.add("ripple");
-      
+
       button.appendChild(circle);
 
       // Hapus ripple setelah animasi selesai
       setTimeout(() => {
-        if(circle.parentElement) {
+        if (circle.parentElement) {
           circle.remove();
         }
       }, 600);

@@ -6,6 +6,7 @@ import { HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './hooks/useTheme';
 import { ToastProvider } from './hooks/useToast';
+import { useSound } from './hooks/useSound';
 import Layout from './components/Layout';
 import PwaPrompt from './components/PwaPrompt';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -55,9 +56,9 @@ const PrivateRoutes = () => {
 };
 
 const loadingSpinner = (
-    <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-950">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
+  <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
 );
 
 const queryClient = new QueryClient({
@@ -70,6 +71,30 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const { playClick } = useSound();
+
+  React.useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Find the closest interactive element
+      const interactiveElement = target.closest('button, a, [role="button"], input, select, textarea, .glass-card');
+
+      if (interactiveElement) {
+        playClick();
+
+        // Add animation class if it's not already animating
+        if (!interactiveElement.classList.contains('animate-subtle-pop')) {
+          interactiveElement.classList.add('animate-subtle-pop');
+          setTimeout(() => {
+            interactiveElement.classList.remove('animate-subtle-pop');
+          }, 400);
+        }
+      }
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, [playClick]);
   return (
     // FIX: All errors in ErrorBoundary are fixed by changing state initialization to a class property.
     <ErrorBoundary>
@@ -84,7 +109,7 @@ function App() {
                     <Route path="/guru-login" element={<LoginPage />} />
                     <Route path="/portal-login" element={<PortalLoginPage />} />
                     <Route path="/portal/:studentId" element={<ParentPortalPage />} />
-                    
+
                     <Route element={<PrivateRoutes />}>
                       <Route path="/dashboard" element={<DashboardPage />} />
                       <Route path="/absensi" element={<AttendancePage />} />
@@ -95,7 +120,7 @@ function App() {
                       <Route path="/tugas" element={<TasksPage />} />
                       <Route path="/input-massal" element={<MassInputPage />} />
                     </Route>
-                    
+
                     {/* Report page has no main layout */}
                     <Route path="/cetak-rapot/:studentId" element={<ReportPage />} />
 

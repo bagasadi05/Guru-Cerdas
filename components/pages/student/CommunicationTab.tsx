@@ -32,9 +32,9 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({ communicatio
     };
 
     return (
-        <div className="flex flex-col h-[60vh]">
+        <div className="flex flex-col">
             <div className="p-6"><CardTitle className="flex items-center gap-2"><MessageSquareIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />Komunikasi dengan Orang Tua</CardTitle></div>
-            <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-gray-50 dark:bg-black/20">
+            <div className="space-y-4 p-4 bg-gray-50 dark:bg-black/20">
                 {communications.map(msg => (
                     <div key={msg.id} className={`group flex items-start gap-3 ${msg.sender === 'teacher' ? 'justify-end' : 'justify-start'}`}>
                         {msg.sender === 'parent' && <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0"><UsersIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" /></div>}

@@ -29,11 +29,37 @@ type AiAnalysis = {
     pattern_warnings: { pattern_description: string; implicated_students: string[]; }[];
 };
 
+// Custom Letter Icons
+const IconH = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.2" />
+        <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="900" fill="currentColor" stroke="none">H</text>
+    </svg>
+);
+const IconI = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.2" />
+        <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="900" fill="currentColor" stroke="none">I</text>
+    </svg>
+);
+const IconS = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.2" />
+        <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="900" fill="currentColor" stroke="none">S</text>
+    </svg>
+);
+const IconA = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.2" />
+        <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="900" fill="currentColor" stroke="none">A</text>
+    </svg>
+);
+
 const statusOptions = [
-    { value: AttendanceStatus.Hadir, label: 'Hadir', icon: CheckCircleIcon, color: 'emerald', gradient: 'from-emerald-400 to-green-500' },
-    { value: AttendanceStatus.Izin, label: 'Izin', icon: InfoIcon, color: 'amber', gradient: 'from-amber-400 to-orange-500' },
-    { value: AttendanceStatus.Sakit, label: 'Sakit', icon: HeartIcon, color: 'sky', gradient: 'from-sky-400 to-blue-500' },
-    { value: AttendanceStatus.Alpha, label: 'Alpha', icon: XCircleIcon, color: 'rose', gradient: 'from-rose-400 to-red-500' },
+    { value: AttendanceStatus.Hadir, label: 'Hadir', icon: IconH, color: 'emerald', gradient: 'from-emerald-400 to-green-500' },
+    { value: AttendanceStatus.Izin, label: 'Izin', icon: IconI, color: 'amber', gradient: 'from-amber-400 to-orange-500' },
+    { value: AttendanceStatus.Sakit, label: 'Sakit', icon: IconS, color: 'sky', gradient: 'from-sky-400 to-blue-500' },
+    { value: AttendanceStatus.Alpha, label: 'Alpha', icon: IconA, color: 'rose', gradient: 'from-rose-400 to-red-500' },
 ];
 
 const AttendancePage: React.FC = () => {
@@ -494,7 +520,7 @@ const AttendancePage: React.FC = () => {
                 </div>
             </header>
 
-            <div className="sticky top-0 z-20 glass-card p-4 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none mb-6 transition-all rounded-2xl overflow-hidden">
+            <div className="relative z-10 glass-card p-4 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none mb-6 transition-all rounded-2xl overflow-hidden">
                 <div
                     className="group relative overflow-hidden w-full rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 cursor-pointer"
                     onClick={() => setDatePickerOpen(true)}
@@ -537,7 +563,7 @@ const AttendancePage: React.FC = () => {
                 </div>
             )}
 
-            <main className="bg-transparent flex flex-col mb-40">
+            <main className="bg-transparent flex flex-col">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 px-1">
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                         <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2 tracking-wide">
@@ -664,8 +690,7 @@ const AttendancePage: React.FC = () => {
 
                 {/* Static Save Button */}
                 {students && students.length > 0 && (
-                    <div className="mt-8 mb-8 sticky bottom-6 z-30">
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent dark:from-black dark:via-black -z-10 h-32 -top-20 pointer-events-none"></div>
+                    <div className="mt-8 mb-8">
                         <Button
                             onClick={handleSave}
                             disabled={isSaving}

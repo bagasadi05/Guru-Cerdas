@@ -14,6 +14,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Database } from '../../services/database.types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
+import { Skeleton } from '../ui/Skeleton';
 import { optimizeImage } from '../utils/image';
 import { violationList } from '../../services/violations.data';
 import { ChildDevelopmentAnalysisTab } from './ChildDevelopmentAnalysisTab';
@@ -36,6 +37,7 @@ import { QuizForm } from './student/forms/QuizForm';
 import { ViolationForm } from './student/forms/ViolationForm';
 import { CommunicationForm } from './student/forms/CommunicationForm';
 import { useStudentMutations } from './student/hooks/useStudentMutations';
+import { useConfetti } from '../../hooks/useConfetti';
 
 const generateAccessCode = (): string => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No 0, O, 1, I
@@ -320,15 +322,42 @@ const StudentDetailPage = () => {
         }
     }, [modalState.type, uniqueSubjectsForGrades]);
 
+    const { triggerConfetti } = useConfetti();
+
     const handleApplyPointsSubmit = () => {
         if (!subjectToApply) {
             toast.error("Silakan pilih mata pelajaran.");
             return;
         }
-        applyPointsMutation.mutate(subjectToApply);
+        applyPointsMutation.mutate(subjectToApply, {
+            onSuccess: () => {
+                triggerConfetti();
+            }
+        });
     };
 
-    if (isLoading) return <div className="flex items-center justify-center h-screen"><div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
+    if (isLoading) return (
+        <div className="space-y-8 p-4 md:p-6 pb-8 lg:pb-6 animate-fade-in-up bg-gray-50 dark:bg-gray-950 min-h-full max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="w-10 h-10 rounded-md" />
+                    <div className="relative">
+                        <Skeleton className="w-20 h-20 rounded-full" />
+                    </div>
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-48" />
+                        <Skeleton className="h-4 w-24" />
+                    </div>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-24 rounded-xl" />
+                ))}
+            </div>
+            <Skeleton className="h-[400px] rounded-xl" />
+        </div>
+    );
     if (isError) return <div className="flex items-center justify-center h-screen">Error: {(queryError as Error).message}</div>;
     if (!studentDetails || !studentDetails.student) return null;
 
@@ -336,7 +365,7 @@ const StudentDetailPage = () => {
 
 
     return (
-        <div className="space-y-8 p-4 md:p-6 pb-32 lg:pb-6 animate-fade-in-up bg-gray-50 dark:bg-gray-950 min-h-full max-w-7xl mx-auto">
+        <div className="space-y-8 p-4 md:p-6 pb-8 lg:pb-6 animate-fade-in-up bg-gray-50 dark:bg-gray-950 min-h-full max-w-7xl mx-auto">
             <div className="no-print">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-center gap-4">

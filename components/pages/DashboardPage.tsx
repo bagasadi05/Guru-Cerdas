@@ -445,7 +445,16 @@ const DashboardPage: React.FC = () => {
         <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 md:space-y-8 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
             <header className="flex items-center justify-between h-16 px-1">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-serif">Beranda</h1>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-serif">
+                        {(() => {
+                            const hour = new Date().getHours();
+                            let greeting = 'Selamat Pagi';
+                            if (hour >= 11 && hour < 15) greeting = 'Selamat Siang';
+                            else if (hour >= 15 && hour < 19) greeting = 'Selamat Sore';
+                            else if (hour >= 19 || hour < 4) greeting = 'Selamat Malam';
+                            return `${greeting}, ${user?.name?.split(' ')[0] || 'Guru'}`;
+                        })()}
+                    </h1>
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400 tracking-wide">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
                 </div>
             </header>
@@ -683,7 +692,7 @@ const DashboardPage: React.FC = () => {
                                                         Jatuh tempo: {task.due_date ? new Date(task.due_date).toLocaleDateString('id-ID') : 'Tidak ada'}
                                                     </p>
                                                 </div>
-                                                <div className={`w-2 h-2 rounded-full mt-1.5 ${task.priority === 'high' ? 'bg-red-500' : task.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+                                                <div className={`w-2 h-2 rounded-full mt-1.5 ${task.due_date && new Date(task.due_date) < new Date() ? 'bg-red-500' : 'bg-blue-500'}`}></div>
                                             </div>
                                         </div>
                                     )) : (

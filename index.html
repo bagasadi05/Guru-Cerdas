@@ -158,6 +158,8 @@
       -webkit-text-size-adjust: 100%;
       -ms-text-size-adjust: 100%;
       -moz-text-size-adjust: 100%;
+      overflow: hidden;
+      height: 100%;
     }
 
     body {
@@ -167,21 +169,22 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #f8fafc; /* Fallback */
+      background: #f8fafc;
+      /* Fallback */
       font-feature-settings: "cv11", "ss01";
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
 
     .dark body {
-      background: #0f172a; /* Fallback */
+      background: #0f172a;
+      /* Fallback */
     }
 
     #root {
       width: 100%;
       height: 100%;
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow: hidden;
       -webkit-overflow-scrolling: touch;
     }
 

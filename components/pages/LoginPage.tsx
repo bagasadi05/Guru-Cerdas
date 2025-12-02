@@ -97,109 +97,111 @@ const LoginPage: React.FC = () => {
 
     return (
         <>
-            <div className="flex items-center justify-center min-h-screen animate-page-transition">
-                <div className="login-card">
+            <div className="h-screen w-full overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                <div className="flex items-center justify-center min-h-full p-4 animate-page-transition">
+                    <div className="login-card">
 
-                    <h1 className="form-title">
-                        {isLoginMode ? 'Selamat Datang Kembali' : 'Buat Akun Guru'}
-                    </h1>
-                    <p className="form-subtitle">
-                        {isLoginMode ? 'Masuk untuk melanjutkan ke Portal Guru' : 'Satu langkah lagi menuju kelas digital Anda.'}
-                    </p>
+                        <h1 className="form-title">
+                            {isLoginMode ? 'Selamat Datang Kembali' : 'Buat Akun Guru'}
+                        </h1>
+                        <p className="form-subtitle">
+                            {isLoginMode ? 'Masuk untuk melanjutkan ke Portal Guru' : 'Satu langkah lagi menuju kelas digital Anda.'}
+                        </p>
 
-                    {isLoginMode ? (
-                        <form onSubmit={handleSubmitLogin(onLoginSubmit)} className="space-y-4">
-                            <div className="form-group-icon">
-                                <MailIcon className="icon h-5 w-5" />
-                                <Input
-                                    type="email"
-                                    placeholder="Email"
-                                    {...registerLogin('email')}
-                                    error={errorsLogin.email?.message}
-                                    className="pl-10"
-                                />
-                            </div>
-                            <div className="form-group-icon relative">
-                                <LockIcon className="icon h-5 w-5" />
-                                <Input
-                                    type={showPassword ? 'text' : 'password'}
-                                    placeholder="Password"
-                                    {...registerLogin('password')}
-                                    error={errorsLogin.password?.message}
-                                    className="pl-10 pr-10"
-                                />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 z-10">
-                                    {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                        {isLoginMode ? (
+                            <form onSubmit={handleSubmitLogin(onLoginSubmit)} className="space-y-4">
+                                <div className="form-group-icon">
+                                    <MailIcon className="icon h-5 w-5" />
+                                    <Input
+                                        type="email"
+                                        placeholder="Email"
+                                        {...registerLogin('email')}
+                                        error={errorsLogin.email?.message}
+                                        className="pl-10"
+                                    />
+                                </div>
+                                <div className="form-group-icon relative">
+                                    <LockIcon className="icon h-5 w-5" />
+                                    <Input
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="Password"
+                                        {...registerLogin('password')}
+                                        error={errorsLogin.password?.message}
+                                        className="pl-10 pr-10"
+                                    />
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 z-10">
+                                        {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                                    </button>
+                                </div>
+
+                                <button type="submit" className="form-btn" disabled={loading}>
+                                    {loading ? 'Memproses...' : 'Masuk'}
                                 </button>
-                            </div>
+                            </form>
+                        ) : (
+                            <form onSubmit={handleSubmitSignup(onSignupSubmit)} className="space-y-4">
+                                <div className="form-group-icon">
+                                    <UserCircleIcon className="icon h-5 w-5" />
+                                    <Input
+                                        type="text"
+                                        placeholder="Nama Lengkap"
+                                        {...registerSignup('name')}
+                                        error={errorsSignup.name?.message}
+                                        className="pl-10"
+                                    />
+                                </div>
+                                <div className="form-group-icon">
+                                    <MailIcon className="icon h-5 w-5" />
+                                    <Input
+                                        type="email"
+                                        placeholder="Email"
+                                        {...registerSignup('email')}
+                                        error={errorsSignup.email?.message}
+                                        className="pl-10"
+                                    />
+                                </div>
+                                <div className="form-group-icon relative">
+                                    <LockIcon className="icon h-5 w-5" />
+                                    <Input
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="Password"
+                                        {...registerSignup('password')}
+                                        error={errorsSignup.password?.message}
+                                        className="pl-10 pr-10"
+                                    />
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 z-10">
+                                        {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                                    </button>
+                                </div>
+                                <div className="form-group-icon relative">
+                                    <LockIcon className="icon h-5 w-5" />
+                                    <Input
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="Konfirmasi Password"
+                                        {...registerSignup('confirmPassword')}
+                                        error={errorsSignup.confirmPassword?.message}
+                                        className="pl-10 pr-10"
+                                    />
+                                </div>
 
-                            <button type="submit" className="form-btn" disabled={loading}>
-                                {loading ? 'Memproses...' : 'Masuk'}
-                            </button>
-                        </form>
-                    ) : (
-                        <form onSubmit={handleSubmitSignup(onSignupSubmit)} className="space-y-4">
-                            <div className="form-group-icon">
-                                <UserCircleIcon className="icon h-5 w-5" />
-                                <Input
-                                    type="text"
-                                    placeholder="Nama Lengkap"
-                                    {...registerSignup('name')}
-                                    error={errorsSignup.name?.message}
-                                    className="pl-10"
-                                />
-                            </div>
-                            <div className="form-group-icon">
-                                <MailIcon className="icon h-5 w-5" />
-                                <Input
-                                    type="email"
-                                    placeholder="Email"
-                                    {...registerSignup('email')}
-                                    error={errorsSignup.email?.message}
-                                    className="pl-10"
-                                />
-                            </div>
-                            <div className="form-group-icon relative">
-                                <LockIcon className="icon h-5 w-5" />
-                                <Input
-                                    type={showPassword ? 'text' : 'password'}
-                                    placeholder="Password"
-                                    {...registerSignup('password')}
-                                    error={errorsSignup.password?.message}
-                                    className="pl-10 pr-10"
-                                />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 z-10">
-                                    {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                                <button type="submit" className="form-btn" disabled={loading}>
+                                    {loading ? 'Memproses...' : 'Daftar'}
                                 </button>
-                            </div>
-                            <div className="form-group-icon relative">
-                                <LockIcon className="icon h-5 w-5" />
-                                <Input
-                                    type={showPassword ? 'text' : 'password'}
-                                    placeholder="Konfirmasi Password"
-                                    {...registerSignup('confirmPassword')}
-                                    error={errorsSignup.confirmPassword?.message}
-                                    className="pl-10 pr-10"
-                                />
-                            </div>
+                            </form>
+                        )}
 
-                            <button type="submit" className="form-btn" disabled={loading}>
-                                {loading ? 'Memproses...' : 'Daftar'}
+                        <div className="form-links">
+                            <button type="button" onClick={toggleMode}>
+                                {isLoginMode ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Masuk'}
                             </button>
-                        </form>
-                    )}
+                            {isLoginMode && <button type="button" onClick={() => setIsForgotModalOpen(true)}>Lupa password?</button>}
+                        </div>
 
-                    <div className="form-links">
-                        <button type="button" onClick={toggleMode}>
-                            {isLoginMode ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Masuk'}
-                        </button>
-                        {isLoginMode && <button type="button" onClick={() => setIsForgotModalOpen(true)}>Lupa password?</button>}
-                    </div>
-
-                    <div className="text-center mt-6 border-t border-gray-200 dark:border-white/10 pt-4">
-                        <Link to="/" className="form-links a">
-                            Kembali ke pemilihan peran
-                        </Link>
+                        <div className="text-center mt-6 border-t border-gray-200 dark:border-white/10 pt-4">
+                            <Link to="/" className="form-links a">
+                                Kembali ke pemilihan peran
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
