@@ -16,9 +16,11 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Centralized Google GenAI Client
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+// Centralized Google GenAI Client
+// Note: We use process.env.GEMINI_API_KEY because it is defined in vite.config.ts
+const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || '';
 if (!apiKey) {
-    console.warn("VITE_GEMINI_API_KEY is not set. AI features will not work.");
+    console.warn("GEMINI_API_KEY is not set. AI features will not work.");
 }
 export const ai = new GoogleGenAI({ apiKey });
 
