@@ -16,7 +16,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as ics from 'ics';
 
-const daysOfWeek: Database['public']['Tables']['schedules']['Row']['day'][] = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const daysOfWeek: string[] = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
 type ScheduleWithClassName = ScheduleRow & { className?: string };
 type ScheduleMutationVars =
@@ -218,7 +218,7 @@ const SchedulePage: React.FC = () => {
 
         try {
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema, } });
-            setAnalysisResult(JSON.parse(response.text));
+            setAnalysisResult(JSON.parse(response.text || '{}'));
         } catch (error) {
             console.error("Schedule Analysis Error:", error);
             setAnalysisResult({ error: "Gagal menganalisis jadwal. Silakan coba lagi." });
@@ -473,71 +473,60 @@ const SchedulePage: React.FC = () => {
     const currentDaySchedule = schedule.filter(s => s.day === selectedDay).sort((a, b) => a.start_time.localeCompare(b.start_time));
 
     return (
-        <div className="w-full min-h-full bg-gray-50 dark:bg-gray-950 pb-24">
-            {/* Sticky Day Selector */}
-            <div className="sticky top-0 z-20 bg-white dark:bg-gray-950 px-4 py-3 border-b border-gray-200 dark:border-gray-800 shadow-sm">
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1">
-                    {daysOfWeek.map((day) => {
-                        const isToday = day === new Date().toLocaleDateString('id-ID', { weekday: 'long' });
-                        const isSelected = selectedDay === day;
-
-                        return (
-                            <button
-                                key={day}
-                                onClick={() => setSelectedDay(day)}
-                                className={`
-                                    flex-shrink-0 snap-center
-                                    min-w-[72px] h-20
-                                    rounded-2xl
-                                    flex flex-col items-center justify-center
-                                    transition-all duration-200
-                                    ${isSelected
-                                        ? 'bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg scale-105'
-                                        : isToday
-                                            ? 'bg-sky-100 dark:bg-sky-900/30 border-2 border-sky-500 text-sky-700 dark:text-sky-300'
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                                    }
-                                `}
-                            >
-                                <span className="text-xs font-medium mb-1 opacity-90">
-                                    {day.slice(0, 3)}
-                                </span>
-                                <span className="text-2xl font-bold">
-                                    {getDayNumber(day)}
-                                </span>
-                                {isToday && !isSelected && (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-sky-500 mt-1" />
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            <div className="p-4 sm:p-6 max-w-3xl mx-auto">
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div className="w-full min-h-full bg-[#0B1120] text-white pb-24 animate-fade-in-up">
+            <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Jadwal {selectedDay}</h1>
-                        <p className="mt-1 text-gray-600 dark:text-indigo-200">
-                            {currentDaySchedule.length} sesi pelajaran hari ini.
+                        <h1 className="text-3xl font-bold tracking-tight text-white font-serif">Jadwal Pelajaran</h1>
+                        <p className="mt-1 text-slate-400">
+                            Kelola dan pantau jadwal mengajar Anda.
                         </p>
                     </div>
                     <div className="flex gap-2 self-end md:self-center">
-                        <Button onClick={handleAnalyzeSchedule} variant="outline" size="sm" disabled={!isOnline || schedule.length === 0} className="text-xs sm:text-sm"><BrainCircuitIcon className="w-4 h-4 mr-2 text-sky-500 dark:text-purple-400" />Analisis</Button>
-                        <Button onClick={handleExportPdf} variant="outline" size="sm" className="text-xs sm:text-sm"><DownloadCloudIcon className="w-4 h-4 mr-2" />PDF</Button>
-                        <Button onClick={handleExportToIcs} variant="outline" size="sm" className="text-xs sm:text-sm"><CalendarIcon className="w-4 h-4 mr-2" />ICS</Button>
+                        <Button onClick={handleAnalyzeSchedule} variant="outline" size="sm" disabled={!isOnline || schedule.length === 0} className="rounded-lg border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"><BrainCircuitIcon className="w-4 h-4 mr-2 text-purple-400" />Analisis AI</Button>
+                        <Button onClick={handleExportPdf} variant="outline" size="sm" className="rounded-lg border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"><DownloadCloudIcon className="w-4 h-4 mr-2" />PDF</Button>
+                        <Button onClick={handleExportToIcs} variant="outline" size="sm" className="rounded-lg border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"><CalendarIcon className="w-4 h-4 mr-2" />ICS</Button>
                     </div>
                 </header>
+
+                {/* Day Selector */}
+                <div className="overflow-x-auto scrollbar-hide">
+                    <div className="flex md:grid md:grid-cols-6 gap-2 min-w-max md:min-w-0">
+                        {daysOfWeek.map((day) => {
+                            const isToday = day === new Date().toLocaleDateString('id-ID', { weekday: 'long' });
+                            const isSelected = selectedDay === day;
+
+                            return (
+                                <button
+                                    key={day}
+                                    onClick={() => setSelectedDay(day)}
+                                    className={`
+                                        relative flex-1 min-w-[100px] md:min-w-0 p-4 rounded-xl transition-all duration-300
+                                        flex flex-col items-center justify-center gap-1
+                                        ${isSelected
+                                            ? 'bg-[#4F46E5] text-white shadow-lg shadow-indigo-500/30 scale-[1.02]'
+                                            : 'text-slate-400 hover:text-slate-200'
+                                        }
+                                    `}
+                                >
+                                    <span className={`text-xs font-bold uppercase tracking-widest ${isSelected ? 'text-indigo-100' : 'text-slate-500'}`}>{day}</span>
+                                    <span className={`text-2xl font-bold ${isSelected ? 'text-white' : 'text-white'}`}>{getDayNumber(day)}</span>
+                                    {isToday && <span className={`absolute top-3 right-3 w-2 h-2 rounded-full ${isSelected ? 'bg-white' : 'bg-indigo-500'}`}></span>}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
 
                 {!isNotificationsEnabled && <NotificationPrompt onEnable={handleEnableNotifications} isLoading={isEnablingNotifications} />}
 
                 {conflictWarnings.length > 0 && (
-                    <div className="bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-200 dark:border-red-500/30 p-4 mb-6 animate-fade-in">
+                    <div className="bg-red-500/10 rounded-2xl border border-red-500/20 p-4 animate-fade-in">
                         <div className="flex items-start gap-3">
-                            <AlertCircleIcon className="w-6 h-6 text-red-600 dark:text-red-300 flex-shrink-0 mt-0.5" />
+                            <AlertCircleIcon className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
                             <div>
-                                <h4 className="font-bold text-red-800 dark:text-white mb-1">Konflik Jadwal Terdeteksi!</h4>
-                                <ul className="list-disc list-inside text-sm text-red-700 dark:text-gray-200 space-y-1">
+                                <h4 className="font-bold text-red-200 mb-1">Konflik Jadwal Terdeteksi!</h4>
+                                <ul className="list-disc list-inside text-sm text-red-300 space-y-1">
                                     {conflictWarnings.map((conflict, idx) => (
                                         <li key={idx}>
                                             <span className="font-semibold">{conflict.day}</span> ({conflict.time}): {conflict.subjects.join(' & ')}
@@ -549,85 +538,99 @@ const SchedulePage: React.FC = () => {
                     </div>
                 )}
 
-                <div className="space-y-4">
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                            <span className="bg-[#4F46E5] text-white px-3 py-1 rounded-lg text-sm font-medium">
+                                {currentDaySchedule.length} Sesi
+                            </span>
+                            <span className="text-slate-600">|</span>
+                            <span>{selectedDay}</span>
+                        </h2>
+                    </div>
+
                     {currentDaySchedule.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                                <CalendarIcon className="w-10 h-10 text-gray-400" />
+                        <div className="flex flex-col items-center justify-center py-20 text-center bg-[#0F172A] rounded-3xl border border-dashed border-slate-800">
+                            <div className="w-24 h-24 bg-slate-800/50 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                                <CalendarIcon className="w-10 h-10 text-slate-600" />
                             </div>
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Tidak ada jadwal</h3>
-                            <p className="text-gray-500 dark:text-gray-400 max-w-xs mx-auto mt-1">
-                                Belum ada jadwal pelajaran untuk hari {selectedDay}. Ketuk tombol + untuk menambahkan.
+                            <h3 className="text-xl font-bold text-white mb-2">Hari Libur?</h3>
+                            <p className="text-slate-400 max-w-xs mx-auto mb-6">
+                                Belum ada jadwal pelajaran untuk hari {selectedDay}.
                             </p>
+                            <Button onClick={() => handleOpenAddModal()} variant="outline" className="rounded-full border-slate-700 text-slate-300 hover:bg-slate-800">
+                                <PlusIcon className="w-4 h-4 mr-2" /> Tambah Jadwal
+                            </Button>
                         </div>
                     ) : (
-                        currentDaySchedule.map(item => {
-                            const status = getScheduleStatus(item);
-                            const isOngoing = status === 'ongoing';
-                            const isPast = status === 'past';
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                            {currentDaySchedule.map((item, index) => {
+                                const status = getScheduleStatus(item);
+                                const isOngoing = status === 'ongoing';
+                                const isPast = status === 'past';
 
-                            return (
-                                <div key={item.id} className={`
-                                    relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl border transition-all duration-300
-                                    ${isOngoing ? 'ring-2 ring-green-500 border-green-500 shadow-lg scale-[1.02] z-10' : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'}
-                                    ${isPast ? 'opacity-75 grayscale-[0.5]' : ''}
-                                `}>
-                                    {isOngoing && (
-                                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-emerald-500">
-                                            <div className="h-full w-1/2 bg-white/30 animate-pulse" />
-                                        </div>
-                                    )}
+                                return (
+                                    <div
+                                        key={item.id}
+                                        className={`
+                                            group relative overflow-hidden rounded-2xl transition-all duration-300
+                                            bg-[#0F172A] border border-slate-800 hover:border-slate-700
+                                            ${isOngoing ? 'ring-1 ring-indigo-500/50' : ''}
+                                        `}
+                                        style={{ animationDelay: `${index * 50}ms` }}
+                                    >
+                                        <div className="p-5 flex flex-col h-full">
+                                            {/* Top Row: Time & Checkbox */}
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div className="flex items-center gap-2 text-slate-400 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50">
+                                                    <ClockIcon className="w-3.5 h-3.5" />
+                                                    <span className="text-xs font-medium tracking-wide">{item.start_time} - {item.end_time}</span>
+                                                </div>
 
-                                    <div className="p-4 sm:p-5">
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div className={`
-                                                px-3 py-1.5 rounded-lg flex items-center gap-2
-                                                ${isOngoing
-                                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                                                }
-                                            `}>
-                                                <ClockIcon className="w-4 h-4" />
-                                                <span className="text-sm font-bold">{item.start_time} - {item.end_time}</span>
-                                                {isOngoing && <span className="ml-1 w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
+                                                <DropdownMenu>
+                                                    <DropdownTrigger className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
+                                                        <MoreVerticalIcon className="w-4 h-4" />
+                                                    </DropdownTrigger>
+                                                    <DropdownContent>
+                                                        <DropdownItem icon={<EditIcon className="w-4 h-4" />} onClick={() => handleOpenEditModal(item)}>Edit</DropdownItem>
+                                                        <DropdownItem icon={<CopyIcon className="w-4 h-4" />} onClick={() => {
+                                                            const newItem = { ...item, id: undefined };
+                                                            setFormData({ day: item.day, start_time: item.start_time, end_time: item.end_time, subject: `${item.subject} (Copy)`, class_id: item.class_id });
+                                                            setModalState({ isOpen: true, mode: 'add', data: null });
+                                                        }}>Duplikat</DropdownItem>
+                                                        <DropdownItem icon={<TrashIcon className="w-4 h-4 text-red-500" />} onClick={() => handleDeleteClick(item)} className="text-red-400">Hapus</DropdownItem>
+                                                    </DropdownContent>
+                                                </DropdownMenu>
                                             </div>
 
-                                            <DropdownMenu>
-                                                <DropdownTrigger className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors">
-                                                    <MoreVerticalIcon className="w-5 h-5" />
-                                                </DropdownTrigger>
-                                                <DropdownContent>
-                                                    <DropdownItem icon={<EditIcon className="w-4 h-4" />} onClick={() => handleOpenEditModal(item)}>Edit</DropdownItem>
-                                                    <DropdownItem icon={<CopyIcon className="w-4 h-4" />} onClick={() => {
-                                                        const newItem = { ...item, id: undefined }; // Prepare for duplicate
-                                                        setFormData({ day: item.day, start_time: item.start_time, end_time: item.end_time, subject: `${item.subject} (Copy)`, class_id: item.class_id });
-                                                        setModalState({ isOpen: true, mode: 'add', data: null });
-                                                    }}>Duplikat</DropdownItem>
-                                                    <DropdownItem icon={<TrashIcon className="w-4 h-4 text-red-500" />} onClick={() => handleDeleteClick(item)} className="text-red-600 dark:text-red-400">Hapus</DropdownItem>
-                                                </DropdownContent>
-                                            </DropdownMenu>
-                                        </div>
-
-                                        <div className="mb-4">
-                                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{item.subject}</h3>
-                                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                                <UsersIcon className="w-4 h-4" />
-                                                <span className="font-medium">Kelas {item.class_id}</span>
+                                            {/* Middle Row: Subject & Class */}
+                                            <div className="mb-auto space-y-2">
+                                                <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors">
+                                                    {item.subject}
+                                                </h3>
+                                                <div className="flex items-center gap-2 text-slate-500">
+                                                    <UsersIcon className="w-4 h-4" />
+                                                    <span className="text-sm font-medium">Kelas {item.class_id}</span>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700/50">
-                                            <span className="text-xs text-gray-500 dark:text-gray-500">
-                                                {item.day}
-                                            </span>
-                                            <span className="text-xs font-medium text-sky-600 dark:text-sky-400">
-                                                {getDuration(item.start_time, item.end_time)} menit
-                                            </span>
+                                            {/* Bottom Row: Status & Duration */}
+                                            <div className="mt-8 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${isOngoing ? 'bg-green-500 animate-pulse' : isPast ? 'bg-slate-600' : 'bg-indigo-500'}`}></div>
+                                                    <span className={`text-xs font-medium ${isOngoing ? 'text-green-400' : 'text-slate-500'}`}>
+                                                        {isOngoing ? 'Sedang Berlangsung' : isPast ? 'Selesai' : 'Akan Datang'}
+                                                    </span>
+                                                </div>
+                                                <span className="text-xs font-mono text-slate-600">
+                                                    {getDuration(item.start_time, item.end_time)} min
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
             </div>

@@ -1,15 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { AttendanceStatus } from '../../types';
+import { AttendanceStatus, AttendanceInsert, AttendanceRecord, AiAnalysis } from '../../types';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
 import { Modal } from '../ui/Modal';
-import { CheckCircleIcon, XCircleIcon, AlertCircleIcon, DownloadCloudIcon, BrainCircuitIcon, UserCheckIcon, PencilIcon, SparklesIcon, UserMinusIcon, UserPlusIcon, ChevronDownIcon, CalendarIcon, HeartIcon, InfoIcon, SearchIcon } from '../Icons';
+import { CheckCircleIcon, CalendarIcon, ChevronDownIcon, SearchIcon, InfoIcon } from '../Icons';
 import BottomSheet from '../ui/BottomSheet';
 import { useToast } from '../../hooks/useToast';
 import { supabase, ai } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
-import { Database } from '../../services/database.types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import jsPDF from 'jspdf';
@@ -17,50 +15,14 @@ import autoTable from 'jspdf-autotable';
 import { Type } from '@google/genai';
 import * as XLSX from 'xlsx';
 import { addToQueue } from '../../services/offlineQueue';
+import { statusOptions } from '../../constants';
 
-type ClassRow = Database['public']['Tables']['classes']['Row'];
-type StudentRow = Database['public']['Tables']['students']['Row'];
-type AttendanceRow = Database['public']['Tables']['attendance']['Row'];
-type StudentWithClass = StudentRow & { classes: Pick<ClassRow, 'name'> | null };
-type AttendanceRecord = { id?: string; status: AttendanceStatus; note: string };
-type AiAnalysis = {
-    perfect_attendance: string[];
-    frequent_absentees: { student_name: string; absent_days: number; }[];
-    pattern_warnings: { pattern_description: string; implicated_students: string[]; }[];
-};
-
-// Custom Letter Icons
-const IconH = ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.2" />
-        <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="900" fill="currentColor" stroke="none">H</text>
-    </svg>
-);
-const IconI = ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.2" />
-        <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="900" fill="currentColor" stroke="none">I</text>
-    </svg>
-);
-const IconS = ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.2" />
-        <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="900" fill="currentColor" stroke="none">S</text>
-    </svg>
-);
-const IconA = ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.2" />
-        <text x="12" y="16" textAnchor="middle" fontSize="14" fontWeight="900" fill="currentColor" stroke="none">A</text>
-    </svg>
-);
-
-const statusOptions = [
-    { value: AttendanceStatus.Hadir, label: 'Hadir', icon: IconH, color: 'emerald', gradient: 'from-emerald-400 to-green-500' },
-    { value: AttendanceStatus.Izin, label: 'Izin', icon: IconI, color: 'amber', gradient: 'from-amber-400 to-orange-500' },
-    { value: AttendanceStatus.Sakit, label: 'Sakit', icon: IconS, color: 'sky', gradient: 'from-sky-400 to-blue-500' },
-    { value: AttendanceStatus.Alpha, label: 'Alpha', icon: IconA, color: 'rose', gradient: 'from-rose-400 to-red-500' },
-];
+// Sub-components
+import { AttendanceHeader } from '../attendance/AttendanceHeader';
+import { AttendanceStats } from '../attendance/AttendanceStats';
+import { AttendanceList } from '../attendance/AttendanceList';
+import { AttendanceExportModal } from '../attendance/AttendanceExportModal';
+import { AiAnalysisModal } from '../attendance/AiAnalysisModal';
 
 const AttendancePage: React.FC = () => {
     const toast = useToast();
@@ -89,7 +51,7 @@ const AttendancePage: React.FC = () => {
 
     const { data: classes, isLoading: isLoadingClasses } = useQuery({
         queryKey: ['classes', user?.id],
-        queryFn: async (): Promise<ClassRow[]> => {
+        queryFn: async () => {
             const { data, error } = await supabase.from('classes').select('*').eq('user_id', user!.id);
             if (error) throw error;
             return data || [];
@@ -120,7 +82,7 @@ const AttendancePage: React.FC = () => {
             if (!students || students.length === 0) return {};
             const { data: attendanceData, error: attendanceError } = await supabase.from('attendance').select('*').eq('date', selectedDate).in('student_id', students.map(s => s.id));
             if (attendanceError) throw attendanceError;
-            return (attendanceData || []).reduce((acc, record: AttendanceRow) => {
+            return (attendanceData || []).reduce((acc, record: any) => {
                 acc[record.student_id] = { id: record.id, status: record.status as AttendanceStatus, note: record.notes || '' };
                 return acc;
             }, {} as Record<string, AttendanceRecord>);
@@ -135,10 +97,10 @@ const AttendancePage: React.FC = () => {
     const { mutate: saveAttendance, isPending: isSaving } = useMutation<
         { synced: boolean },
         Error,
-        (Database['public']['Tables']['attendance']['Insert'] & { id?: string })[],
+        (AttendanceInsert & { id?: string })[],
         { previousAttendance: Record<string, AttendanceRecord> | undefined }
     >({
-        mutationFn: async (recordsToUpsert: (Database['public']['Tables']['attendance']['Insert'] & { id?: string })[]) => {
+        mutationFn: async (recordsToUpsert: (AttendanceInsert & { id?: string })[]) => {
             if (isOnline) {
                 const { error } = await supabase.from('attendance').upsert(recordsToUpsert);
                 if (error) throw error;
@@ -269,7 +231,7 @@ const AttendancePage: React.FC = () => {
         if (studentsRes.error || attendanceRes.error || classesRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
 
         const classMap = new Map((classesRes.data || []).map(c => [c.id, { name: c.name }]));
-        const studentsWithClasses = (studentsRes.data || []).map((s: StudentRow) => ({
+        const studentsWithClasses = (studentsRes.data || []).map((s: any) => ({
             ...s,
             classes: classMap.get(s.class_id) || null
         }));
@@ -292,10 +254,10 @@ const AttendancePage: React.FC = () => {
             const monthName = new Date(year, monthNum - 1).toLocaleString('id-ID', { month: 'long' });
             const daysInMonth = new Date(year, monthNum, 0).getDate();
 
-            const studentsByClass = classes.map(c => ({
+            const studentsByClass = classes.map((c: any) => ({
                 ...c,
-                students: students.filter(s => s.class_id === c.id).sort((a, b) => a.name.localeCompare(b.name))
-            })).filter(c => c.students.length > 0);
+                students: students.filter((s: any) => s.class_id === c.id).sort((a: any, b: any) => a.name.localeCompare(b.name))
+            })).filter((c: any) => c.students.length > 0);
 
             if (format === 'excel') {
                 const wb = XLSX.utils.book_new();
@@ -312,13 +274,13 @@ const AttendancePage: React.FC = () => {
                     headerRow.push('Hadir', 'Sakit', 'Izin', 'Alpha');
                     wsData.push(headerRow);
 
-                    classData.students.forEach((student, index) => {
+                    classData.students.forEach((student: any, index: number) => {
                         const row = [index + 1, student.name];
                         let h = 0, s = 0, i = 0, a = 0;
 
                         for (let day = 1; day <= daysInMonth; day++) {
                             const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                            const record = attendance.find(att => att.student_id === student.id && att.date === dateStr);
+                            const record = attendance.find((att: any) => att.student_id === student.id && att.date === dateStr);
                             if (record) {
                                 if (record.status === 'Hadir') { row.push('H'); h++; }
                                 else if (record.status === 'Sakit') { row.push('S'); s++; }
@@ -378,9 +340,9 @@ const AttendancePage: React.FC = () => {
                     doc.text(`Periode: ${monthName} ${year}`, pageWidth - 14, yPos, { align: 'right' });
                     yPos += 10;
 
-                    const classAttendance = attendance.filter(a => classData.students.some(s => s.id === a.student_id));
+                    const classAttendance = attendance.filter((a: any) => classData.students.some((s: any) => s.id === a.student_id));
                     const summary = { H: 0, S: 0, I: 0, A: 0 };
-                    classAttendance.forEach((rec: AttendanceRow) => {
+                    classAttendance.forEach((rec: any) => {
                         if (rec.status === 'Hadir') summary.H++;
                         else if (rec.status === 'Sakit') summary.S++;
                         else if (rec.status === 'Izin') summary.I++;
@@ -401,14 +363,14 @@ const AttendancePage: React.FC = () => {
                     yPos += 15;
 
                     const head = [['No', 'Nama Siswa', ...Array.from({ length: daysInMonth }, (_, i) => String(i + 1)), 'H', 'S', 'I', 'A']];
-                    const body = classData.students.map((student, index) => {
+                    const body = classData.students.map((student: any, index: number) => {
                         const row = [String(index + 1), student.name];
                         let h = 0, s = 0, i = 0, a = 0;
                         for (let day = 1; day <= daysInMonth; day++) {
                             const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                            const record = attendance.find(att => att.student_id === student.id && att.date === dateStr);
+                            const record = attendance.find((att: any) => att.student_id === student.id && att.date === dateStr);
                             if (record) {
-                                const statusChar = { Hadir: 'H', Sakit: 'S', Izin: 'I', Alpha: 'A' }[record.status] || '-';
+                                const statusChar = { Hadir: 'H', Sakit: 'S', Izin: 'I', Alpha: 'A' }[record.status as string] || '-';
                                 row.push(statusChar);
                                 if (record.status === 'Hadir') h++;
                                 else if (record.status === 'Sakit') s++;
@@ -503,22 +465,11 @@ const AttendancePage: React.FC = () => {
 
     return (
         <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col animate-fade-in-up">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-serif">Rekapitulasi Kehadiran</h1>
-                    <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400 tracking-wide">Manajemen data kehadiran peserta didik secara real-time.</p>
-                </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                    <Button onClick={handleAnalyzeAttendance} variant="outline" disabled={!isOnline} className="flex-1 md:flex-none justify-center border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 tracking-wide">
-                        <BrainCircuitIcon className="w-4 h-4 mr-2 text-indigo-500" />
-                        Analisis Cerdas
-                    </Button>
-                    <Button onClick={() => setIsExportModalOpen(true)} variant="outline" className="flex-1 md:flex-none justify-center border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 tracking-wide">
-                        <DownloadCloudIcon className="w-4 h-4 mr-2 text-slate-500" />
-                        Ekspor Data
-                    </Button>
-                </div>
-            </header>
+            <AttendanceHeader
+                onAnalyze={handleAnalyzeAttendance}
+                onExport={() => setIsExportModalOpen(true)}
+                isOnline={isOnline}
+            />
 
             <div className="relative z-10 glass-card p-4 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none mb-6 transition-all rounded-2xl overflow-hidden">
                 <div
@@ -549,18 +500,7 @@ const AttendancePage: React.FC = () => {
             </div>
 
             {students && students.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-                    {statusOptions.map((opt) => (
-                        <div key={opt.value} className={`glass-card p-4 rounded-2xl border border-white/40 dark:border-white/5 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group hover:shadow-md transition-all duration-300`}>
-                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity bg-gradient-to-br ${opt.gradient}`}></div>
-                            <div className={`w-10 h-10 rounded-full bg-${opt.color}-100 dark:bg-${opt.color}-900/30 flex items-center justify-center mb-2 text-${opt.color}-500 dark:text-${opt.color}-400`}>
-                                <opt.icon className="w-5 h-5" />
-                            </div>
-                            <span className="text-3xl font-bold text-slate-800 dark:text-white">{attendanceSummary[opt.value]}</span>
-                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">{opt.label}</span>
-                        </div>
-                    ))}
-                </div>
+                <AttendanceStats summary={attendanceSummary} />
             )}
 
             <main className="bg-transparent flex flex-col">
@@ -593,98 +533,16 @@ const AttendancePage: React.FC = () => {
                 <div className="space-y-3">
                     {isLoadingStudents ? <div className="p-12 text-center text-slate-500">Memuat daftar siswa...</div> :
                         !students || students.length === 0 ? <div className="p-16 text-center text-slate-400 bg-white/50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">Pilih kelas untuk memulai absensi.</div> :
-                            <>
-                                {filteredStudents.map((student, index) => {
-                                    const record = attendanceRecords[student.id];
-
-                                    return (
-                                        <div
-                                            key={student.id}
-                                            className="group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all duration-300"
-                                        >
-                                            {/* Student Info */}
-                                            <div className="flex items-center gap-4 flex-grow min-w-0">
-                                                <span className="text-slate-300 dark:text-slate-600 font-bold font-mono w-6 text-right flex-shrink-0">{index + 1}</span>
-                                                <div className="relative">
-                                                    <img src={student.avatar_url} alt={student.name} className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-slate-700 shadow-sm" />
-                                                    {record?.status && (
-                                                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-white text-[10px] font-bold
-                                                            ${record.status === 'Hadir' ? 'bg-emerald-500' :
-                                                                record.status === 'Sakit' ? 'bg-sky-500' :
-                                                                    record.status === 'Izin' ? 'bg-amber-500' : 'bg-rose-500'}`}
-                                                        >
-                                                            {record.status[0]}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <h4 className="font-bold text-base text-slate-800 dark:text-white truncate">{student.name}</h4>
-                                                    {record?.note ? (
-                                                        <p className="text-xs text-indigo-500 font-medium truncate flex items-center gap-1 mt-0.5 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-md w-fit">
-                                                            <InfoIcon className="w-3 h-3" /> {record.note}
-                                                        </p>
-                                                    ) : (
-                                                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
-                                                            {record?.status ? `Status: ${record.status}` : 'Belum diabsen'}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Action Buttons */}
-                                            <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 overflow-x-auto pb-2 sm:pb-0 custom-scrollbar">
-                                                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
-                                                    {statusOptions.map((opt) => {
-                                                        const isActive = record?.status === opt.value;
-
-                                                        let activeClass = "";
-                                                        if (isActive) {
-                                                            if (opt.value === AttendanceStatus.Hadir) activeClass = "bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-black/5";
-                                                            else if (opt.value === AttendanceStatus.Sakit) activeClass = "bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm ring-1 ring-black/5";
-                                                            else if (opt.value === AttendanceStatus.Izin) activeClass = "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm ring-1 ring-black/5";
-                                                            else if (opt.value === AttendanceStatus.Alpha) activeClass = "bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-sm ring-1 ring-black/5";
-                                                        } else {
-                                                            activeClass = "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-white/50 dark:hover:bg-white/5";
-                                                        }
-
-                                                        return (
-                                                            <button
-                                                                key={opt.value}
-                                                                onClick={() => handleStatusChange(student.id, opt.value)}
-                                                                className={`
-                                                                    flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200
-                                                                    ${activeClass}
-                                                                `}
-                                                                title={opt.label}
-                                                            >
-                                                                <opt.icon className={`w-5 h-5`} />
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-
-                                                <button
-                                                    onClick={() => {
-                                                        setNoteText(record?.note || '');
-                                                        setSelectedStudents(new Set([student.id]));
-                                                        setIsNoteModalOpen(true);
-                                                    }}
-                                                    className={`
-                                                        w-10 h-10 flex items-center justify-center rounded-xl transition-all ml-1 border border-transparent
-                                                        ${record?.note
-                                                            ? 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
-                                                            : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                                        }
-                                                    `}
-                                                    title="Catatan"
-                                                >
-                                                    <PencilIcon className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </>
+                            <AttendanceList
+                                students={filteredStudents}
+                                attendanceRecords={attendanceRecords}
+                                onStatusChange={handleStatusChange}
+                                onNoteClick={(studentId, currentNote) => {
+                                    setNoteText(currentNote);
+                                    setSelectedStudents(new Set([studentId]));
+                                    setIsNoteModalOpen(true);
+                                }}
+                            />
                     }
                 </div>
 
@@ -702,30 +560,12 @@ const AttendancePage: React.FC = () => {
                 )}
             </main>
 
-            <Modal title="Analisis Kehadiran AI" isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} icon={<BrainCircuitIcon className="h-5 w-5 text-indigo-500" />}>
-                {isAiLoading ? <div className="text-center py-12"><div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>Menganalisis data...</div> : aiAnalysisResult ? (
-                    <div className="space-y-4 text-sm">
-                        {aiAnalysisResult.perfect_attendance.length > 0 && (
-                            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
-                                <h4 className="font-bold text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2"><CheckCircleIcon className="w-4 h-4" /> Kehadiran Sempurna</h4>
-                                <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{aiAnalysisResult.perfect_attendance.join(', ')}</p>
-                            </div>
-                        )}
-                        {aiAnalysisResult.frequent_absentees.length > 0 && (
-                            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
-                                <h4 className="font-bold text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-2"><AlertCircleIcon className="w-4 h-4" /> Sering Alpha</h4>
-                                <ul className="space-y-1">{aiAnalysisResult.frequent_absentees.map(s => <li key={s.student_name} className="flex justify-between text-slate-700 dark:text-slate-300"><span>{s.student_name}</span> <span className="font-bold">{s.absent_days} hari</span></li>)}</ul>
-                            </div>
-                        )}
-                        {aiAnalysisResult.pattern_warnings.length > 0 && (
-                            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-100 dark:border-rose-800">
-                                <h4 className="font-bold text-rose-700 dark:text-rose-400 mb-2 flex items-center gap-2"><BrainCircuitIcon className="w-4 h-4" /> Pola Terdeteksi</h4>
-                                <ul className="space-y-2">{aiAnalysisResult.pattern_warnings.map(p => <li key={p.pattern_description} className="text-slate-700 dark:text-slate-300"><p className="font-medium text-rose-600 dark:text-rose-400">{p.pattern_description}</p><p className="text-xs mt-1 text-slate-500">Siswa: {p.implicated_students.join(', ')}</p></li>)}</ul>
-                            </div>
-                        )}
-                    </div>
-                ) : <div className="text-center py-8 text-slate-500">Tidak ada hasil.</div>}
-            </Modal>
+            <AiAnalysisModal
+                isOpen={isAiModalOpen}
+                onClose={() => setIsAiModalOpen(false)}
+                isLoading={isAiLoading}
+                result={aiAnalysisResult}
+            />
 
             <Modal title="Catatan Absensi" isOpen={isNoteModalOpen} onClose={() => setIsNoteModalOpen(false)}>
                 <div className="space-y-4">
@@ -743,24 +583,14 @@ const AttendancePage: React.FC = () => {
                 </div>
             </Modal>
 
-            <Modal title="Export Laporan Absensi" isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)}>
-                <div className="space-y-4">
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Pilih bulan dan tahun untuk mengekspor laporan absensi.</p>
-                    <div>
-                        <label htmlFor="export-month" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Bulan & Tahun</label>
-                        <Input id="export-month" type="month" value={exportMonth} onChange={e => setExportMonth(e.target.value)} className="h-12" />
-                    </div>
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="ghost" onClick={() => setIsExportModalOpen(false)} disabled={isExporting}>Batal</Button>
-                        <Button type="button" variant="outline" onClick={() => handleExport('excel')} disabled={isExporting} className="border-emerald-500 text-emerald-600 hover:bg-emerald-50">
-                            {isExporting ? '...' : 'Excel (.xlsx)'}
-                        </Button>
-                        <Button type="button" onClick={() => handleExport('pdf')} disabled={isExporting} className="bg-rose-600 hover:bg-rose-700 text-white">
-                            {isExporting ? 'Mengekspor...' : 'PDF (.pdf)'}
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+            <AttendanceExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                onExport={handleExport}
+                isExporting={isExporting}
+                exportMonth={exportMonth}
+                setExportMonth={setExportMonth}
+            />
 
             <BottomSheet isOpen={isDatePickerOpen} onClose={() => setDatePickerOpen(false)} title="Pilih Tanggal Absensi">
                 <div className="space-y-6 pb-6">
@@ -800,27 +630,22 @@ const AttendancePage: React.FC = () => {
                                     : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200'
                                     }`}
                             >
-                                <div className="w-5 h-5 rounded-full border-2 border-current opacity-60 flex items-center justify-center text-[10px] font-bold">1</div>
                                 <span className="font-bold">Kemarin</span>
                             </button>
                         </div>
                     </div>
 
                     <div>
-                        <label htmlFor="attendance-date" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Pilih Tanggal Manual</label>
-                        <div className="relative">
-                            <Input
-                                id="attendance-date"
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => {
-                                    setSelectedDate(e.target.value);
-                                    setDatePickerOpen(false);
-                                }}
-                                className="w-full h-14 pl-12 text-lg font-medium rounded-xl border-slate-200 dark:border-slate-700 focus:ring-indigo-500"
-                            />
-                            <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400 pointer-events-none" />
-                        </div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Pilih Tanggal Manual</label>
+                        <Input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => {
+                                setSelectedDate(e.target.value);
+                                setDatePickerOpen(false);
+                            }}
+                            className="w-full h-12 text-lg"
+                        />
                     </div>
                 </div>
             </BottomSheet>

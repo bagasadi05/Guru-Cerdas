@@ -272,7 +272,7 @@ const StudentsPage: React.FC = () => {
                 <p className="mt-1 text-gray-600 dark:text-indigo-200">Kelola data siswa dan kelas Anda.</p>
             </header>
 
-            <div className="sticky top-0 z-30 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm pt-2 pb-4 -mx-4 px-4 sm:static sm:bg-transparent sm:p-0 sm:mx-0 border-b sm:border-none border-gray-200 dark:border-gray-800 transition-all">
+            <div className="mb-6">
                 <div className="flex flex-col gap-3 max-w-7xl mx-auto">
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
