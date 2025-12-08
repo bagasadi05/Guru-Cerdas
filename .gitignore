@@ -131,3 +131,5 @@ dist-ssr
 *.sw?
 
 .env
+*storybook.log
+storybook-static

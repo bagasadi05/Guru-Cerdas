@@ -5,6 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
+  const isAnalyze = process.env.ANALYZE === 'true';
+
   return {
     server: {
       port: 3000,
@@ -18,13 +20,16 @@ export default defineConfig(({ mode }) => {
         srcDir: 'src',
         filename: 'sw.js',
         manifest: {
-          name: "Manajemen Guru",
-          short_name: "Guru PWA",
+          name: "Portal Guru - Manajemen Kelas & Siswa",
+          short_name: "Portal Guru",
+          description: "Aplikasi manajemen kelas, siswa, dan absensi untuk guru modern. Bekerja offline dan real-time.",
           start_url: "/",
           display: "standalone",
-          background_color: "#ffffff",
-          theme_color: "#0ea5e9",
+          background_color: "#f8fafc", // slate-50
+          theme_color: "#4f46e5", // indigo-600
           orientation: "portrait",
+          lang: "id",
+          categories: ["education", "productivity", "utilities"],
           icons: [
             {
               src: "/logo.svg",
@@ -60,8 +65,52 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, './src'),
       }
+    },
+    build: {
+      // Enable source maps for debugging
+      sourcemap: mode !== 'production',
+      // Rollup options for optimization
+      rollupOptions: {
+        output: {
+          // Manual chunk splitting for better caching
+          manualChunks: {
+            // Vendor chunks
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-ui': ['framer-motion', '@tanstack/react-query'],
+            'vendor-utils': ['zod', 'date-fns'],
+          },
+          // Asset naming for cache busting
+          assetFileNames: (assetInfo) => {
+            const info = assetInfo.name?.split('.') || [];
+            const ext = info[info.length - 1];
+            if (/png|jpe?g|svg|gif|tiff|bmp|ico|webp/i.test(ext)) {
+              return `assets/images/[name]-[hash][extname]`;
+            }
+            if (/woff2?|ttf|eot|otf/i.test(ext)) {
+              return `assets/fonts/[name]-[hash][extname]`;
+            }
+            return `assets/[name]-[hash][extname]`;
+          },
+          chunkFileNames: 'assets/js/[name]-[hash].js',
+          entryFileNames: 'assets/js/[name]-[hash].js',
+        },
+      },
+      // Chunk size warning limit
+      chunkSizeWarningLimit: 500,
+      // Minification options
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: mode === 'production',
+          drop_debugger: mode === 'production',
+        },
+      },
+    },
+    // Optimize dependencies
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-router-dom'],
     },
     test: {
       globals: true,

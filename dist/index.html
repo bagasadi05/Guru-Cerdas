@@ -45,6 +45,7 @@
             'fade-in-up': 'fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both',
             'fade-in': 'fade-in 0.6s ease-out both',
             'shimmer': 'shimmer 3s infinite linear',
+            'shimmer-slide': 'shimmer-slide 1.5s infinite',
             'slide-down': 'slide-down 1.2s cubic-bezier(0.25, 1, 0.5, 1) both',
             'slide-up': 'slide-up 1.2s cubic-bezier(0.5, 0, 0.75, 0) both',
             'float': 'float 6s ease-in-out infinite',
@@ -57,6 +58,11 @@
             'aurora-glow': 'aurora-glow 20s infinite linear alternate',
             'border-spin': 'border-spin 4s linear infinite',
             'glass-shine': 'glass-shine 1.5s ease-in-out infinite',
+            'scale-in': 'scale-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both',
+            'draw-check': 'draw-check 0.4s ease-out 0.2s both',
+            'slide-in-right': 'slide-in-right 0.3s ease-out both',
+            'slide-up': 'slide-up 0.3s ease-out both',
+            'slide-down': 'slide-down 0.3s ease-out both',
           },
           keyframes: {
             'glass-shine': {
@@ -92,6 +98,10 @@
               '0%': { 'background-position': '200% 0' },
               '100%': { 'background-position': '-200% 0' },
             },
+            'shimmer-slide': {
+              '0%': { transform: 'translateX(-100%)' },
+              '100%': { transform: 'translateX(100%)' },
+            },
             'slide-down': {
               'from': { transform: 'translateY(-120%)' },
               'to': { transform: 'translateY(40px)' },
@@ -120,6 +130,26 @@
             'holographic-shine': {
               'from': { transform: 'translateX(-100%) skewX(-30deg)' },
               'to': { transform: 'translateX(200%) skewX(-30deg)' }
+            },
+            'scale-in': {
+              '0%': { transform: 'scale(0)', opacity: '0' },
+              '100%': { transform: 'scale(1)', opacity: '1' }
+            },
+            'draw-check': {
+              '0%': { 'stroke-dashoffset': '100' },
+              '100%': { 'stroke-dashoffset': '0' }
+            },
+            'slide-in-right': {
+              '0%': { transform: 'translateX(100%)', opacity: '0' },
+              '100%': { transform: 'translateX(0)', opacity: '1' }
+            },
+            'slide-up': {
+              '0%': { transform: 'translateY(100%)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' }
+            },
+            'slide-down': {
+              '0%': { transform: 'translateY(-100%)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' }
             },
           },
           transitionTimingFunction: {
@@ -1043,7 +1073,10 @@
     window.addEventListener('load', observeNavbar);
   </script>
 
-  <script type="module" crossorigin src="/assets/index-D4cF4HXd.js"></script>
+  <script type="module" crossorigin src="/assets/js/index-Cr2DlQUu.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-BsqzNlzy.js">
+  <link rel="modulepreload" crossorigin href="/assets/js/vendor-ui-DGfqxsWF.js">
+  <link rel="stylesheet" crossorigin href="/assets/index-QAC9X3Sr.css">
 <link rel="manifest" href="/manifest.webmanifest"></head>
 
 <body class="cosmic-bg font-sans text-base text-gray-900 dark:text-gray-100">

@@ -1,0 +1,37 @@
+{
+  "entryPoints": ["./src"],
+  "entryPointStrategy": "expand",
+  "out": "./docs/api/generated",
+  "exclude": [
+    "**/node_modules/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/setupTests.ts",
+    "**/vite-env.d.ts"
+  ],
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeExternals": true,
+  "includeVersion": true,
+  "readme": "./README.md",
+  "name": "Portal Guru API Documentation",
+  "navigationLinks": {
+    "GitHub": "https://github.com/your-org/portal-guru"
+  },
+  "plugin": [],
+  "theme": "default",
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Services",
+    "Hooks",
+    "Components",
+    "Utilities",
+    "*"
+  ],
+  "sort": ["source-order"],
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": false
+  }
+}

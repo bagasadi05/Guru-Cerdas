@@ -1,0 +1,224 @@
+# Documentation CI/CD Workflow
+# 
+# This workflow:
+# 1. Validates documentation on every PR
+# 2. Generates and deploys docs on merge to main
+# 3. Deploys Storybook for component documentation
+
+name: Documentation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - 'src/**/*.ts'
+      - 'src/**/*.tsx'
+      - '.storybook/**'
+      - 'scripts/validate-docs.js'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - 'src/**/*.ts'
+      - 'src/**/*.tsx'
+      - '.storybook/**'
+
+jobs:
+  # Job 1: Validate documentation
+  validate:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run documentation validation
+        run: node scripts/validate-docs.js
+
+      - name: Check TypeScript compilation
+        run: npx tsc --noEmit
+
+  # Job 2: Generate API documentation with TypeDoc
+  generate-api-docs:
+    name: Generate API Docs
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install TypeDoc
+        run: npm install -D typedoc
+
+      - name: Generate API documentation
+        run: npx typedoc
+
+      - name: Upload API docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: docs/api/generated
+          retention-days: 7
+
+  # Job 3: Build and deploy Storybook
+  storybook:
+    name: Build Storybook
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Storybook
+        run: npm run build-storybook
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Upload Storybook artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook
+          path: storybook-static
+          retention-days: 7
+
+      # Optional: Deploy to GitHub Pages
+      # - name: Deploy to GitHub Pages
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./storybook-static
+      #     destination_dir: storybook
+
+  # Job 4: Documentation coverage report
+  coverage:
+    name: Documentation Coverage
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Calculate JSDoc coverage
+        id: jsdoc-coverage
+        run: |
+          # Count exported functions
+          TOTAL=$(grep -r "export \(const\|function\|async function\)" src/services src/hooks src/utils --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l)
+          
+          # Count JSDoc comments
+          DOCUMENTED=$(grep -r "/\*\*" src/services src/hooks src/utils --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l)
+          
+          # Calculate percentage
+          if [ "$TOTAL" -gt 0 ]; then
+            COVERAGE=$((DOCUMENTED * 100 / TOTAL))
+          else
+            COVERAGE=0
+          fi
+          
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "documented=$DOCUMENTED" >> $GITHUB_OUTPUT
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          
+          echo "📊 Documentation Coverage: $COVERAGE%"
+          echo "   Total exports: $TOTAL"
+          echo "   Documented: $DOCUMENTED"
+
+      - name: Create coverage badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          COVERAGE=${{ steps.jsdoc-coverage.outputs.coverage }}
+          
+          if [ "$COVERAGE" -ge 80 ]; then
+            COLOR="brightgreen"
+          elif [ "$COVERAGE" -ge 60 ]; then
+            COLOR="yellow"
+          else
+            COLOR="red"
+          fi
+          
+          echo "Coverage: $COVERAGE% ($COLOR)"
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const coverage = '${{ steps.jsdoc-coverage.outputs.coverage }}';
+            const total = '${{ steps.jsdoc-coverage.outputs.total }}';
+            const documented = '${{ steps.jsdoc-coverage.outputs.documented }}';
+            
+            const emoji = coverage >= 80 ? '✅' : coverage >= 60 ? '⚠️' : '❌';
+            
+            const body = `## 📚 Documentation Coverage Report
+            
+            ${emoji} **Coverage: ${coverage}%**
+            
+            | Metric | Value |
+            |--------|-------|
+            | Total exports | ${total} |
+            | Documented | ${documented} |
+            | Coverage | ${coverage}% |
+            
+            ${coverage < 80 ? '> ⚠️ Coverage is below 80%. Please add JSDoc comments to new functions.' : ''}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # Job 5: Link check
+  link-check:
+    name: Check Links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          config-file: '.github/markdown-link-check-config.json'
+          folder-path: 'docs/'
+        continue-on-error: true

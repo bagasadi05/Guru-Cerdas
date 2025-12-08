@@ -1,0 +1,114 @@
+# Dependency Review and Security Scanning
+# Runs on pull requests to check for vulnerable dependencies
+
+name: Dependency Review
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-3.0, AGPL-3.0
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC
+          comment-summary-in-pr: always
+
+  # ============================================
+  # DEPENDENCY SCANNING WITH TRIVY
+  # ============================================
+  trivy-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          trivy-config: trivy.yaml
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+          
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
+
+  # ============================================
+  # CHECK FOR OUTDATED DEPENDENCIES
+  # ============================================
+  check-outdated:
+    name: Check Outdated Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for outdated packages
+        run: npm outdated || true
+        
+      - name: Comment outdated packages
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            let outdated = '';
+            try {
+              outdated = execSync('npm outdated --json', { encoding: 'utf-8' });
+            } catch (e) {
+              outdated = e.stdout || '{}';
+            }
+            
+            const packages = JSON.parse(outdated || '{}');
+            const count = Object.keys(packages).length;
+            
+            if (count > 0) {
+              let body = '📦 **Outdated Dependencies Found**\n\n';
+              body += '| Package | Current | Wanted | Latest |\n';
+              body += '|---------|---------|--------|--------|\n';
+              
+              for (const [name, info] of Object.entries(packages)) {
+                body += `| ${name} | ${info.current} | ${info.wanted} | ${info.latest} |\n`;
+              }
+              
+              body += '\n> Consider updating these dependencies for security and performance improvements.';
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }

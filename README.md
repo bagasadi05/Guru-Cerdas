@@ -1,33 +1,40 @@
 # Portal Guru
 
-Portal Guru adalah aplikasi manajemen kehadiran siswa modern yang dirancang untuk memudahkan guru dalam mencatat, menganalisis, dan melaporkan kehadiran siswa. Aplikasi ini mendukung fitur offline (PWA) dan analisis cerdas menggunakan AI.
+Portal Guru adalah aplikasi manajemen sekolah modern yang dirancang untuk memudahkan guru dalam mencatat kehadiran, memantau perkembangan siswa, dan berkomunikasi dengan orang tua. Aplikasi ini dibangun dengan teknologi web modern dan mendukung fitur Progressive Web App (PWA) untuk penggunaan offline.
 
 ## Fitur Utama
 
-- **Manajemen Absensi Real-time**: Catat kehadiran (Hadir, Izin, Sakit, Alpha) dengan mudah.
-- **Dukungan Offline (PWA)**: Tetap bisa mencatat absensi tanpa koneksi internet. Data akan disinkronkan otomatis saat online.
-- **Analisis Cerdas (AI)**: Menggunakan Google Gemini AI untuk menganalisis pola kehadiran siswa.
-- **Ekspor Laporan**: Unduh laporan absensi bulanan dalam format PDF dan Excel.
-- **Direktori Siswa**: Manajemen data siswa yang terorganisir per kelas.
+### 📱 Manajemen Kelas & Absensi
+- **Absensi Real-time**: Catat kehadiran (Hadir, Izin, Sakit, Alpha) dengan antarmuka yang cepat dan intuitif.
+- **Dukungan Offline (PWA)**: Tetap produktif tanpa koneksi internet. Data akan disinkronkan otomatis saat online.
+- **Jadwal Pelajaran**: Tampilan jadwal mingguan yang responsif dan mudah dibaca.
 
-## Teknologi yang Digunakan
+### 📊 Analisis & Laporan
+- **Dashboard Interaktif**: Ringkasan statistik kehadiran dan performa kelas dalam satu pandangan.
+- **Analisis AI**: Wawasan cerdas tentang pola kehadiran dan perilaku siswa menggunakan Google Gemini AI.
+- **Cetak Rapor**: Generate laporan hasil belajar siswa dalam format PDF siap cetak.
+
+### 👨‍👩‍👧‍👦 Portal Orang Tua & Siswa
+- **Akses Khusus**: Orang tua dapat memantau kehadiran, nilai, dan pelanggaran siswa menggunakan kode akses unik.
+- **Komunikasi Dua Arah**: Fitur pesan terintegrasi antara guru dan orang tua.
+- **Transparansi**: Lihat catatan pelanggaran dan poin keaktifan secara real-time.
+
+### ⚙️ Personalisasi
+- **Profil Guru**: Kelola data diri dan nama sekolah.
+- **Tema & Tampilan**: Dukungan Dark Mode dan kustomisasi antarmuka.
+
+## Teknologi
 
 - **Frontend**: React, TypeScript, Vite
-- **Styling**: Tailwind CSS, Framer Motion
-- **Backend / Database**: Supabase
-- **AI Integration**: Google Generative AI SDK
-- **PWA**: Vite PWA Plugin
-- **PDF/Excel**: jsPDF, SheetJS (xlsx)
-
-## Prasyarat
-
-Sebelum memulai, pastikan Anda telah menginstal:
-- [Node.js](https://nodejs.org/) (versi 18 atau lebih baru)
-- [npm](https://www.npmjs.com/)
+- **Styling**: Tailwind CSS, Framer Motion (Glassmorphism Design)
+- **Backend**: Supabase (PostgreSQL, Auth, Realtime)
+- **AI**: Google Generative AI SDK
+- **PWA**: Vite PWA Plugin, Workbox
+- **PDF**: jsPDF
 
 ## Cara Menjalankan Proyek
 
-1.  **Clone repositori ini** (jika belum):
+1.  **Clone repositori**:
     ```bash
     git clone <repository-url>
     cd Portal-Guru-main
@@ -39,7 +46,7 @@ Sebelum memulai, pastikan Anda telah menginstal:
     ```
 
 3.  **Konfigurasi Environment Variables**:
-    Buat file `.env` di root direktori dan tambahkan konfigurasi berikut (sesuaikan dengan kredensial Supabase dan Google AI Anda):
+    Buat file `.env` di root direktori:
     ```env
     VITE_SUPABASE_URL=your_supabase_url
     VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -50,15 +57,14 @@ Sebelum memulai, pastikan Anda telah menginstal:
     ```bash
     npm run dev
     ```
-    Akses aplikasi di `http://localhost:5173`.
+    Akses di `http://localhost:5173`.
 
 ## Struktur Proyek
 
-- `/components`: Komponen React (UI, Pages, dll).
-- `/services`: Logika bisnis dan integrasi API (Supabase, AI).
-- `/hooks`: Custom React Hooks.
-- `/types`: Definisi tipe TypeScript (sedang dalam perbaikan sentralisasi).
-- `/public`: Aset statis.
+- `/src/components`: Komponen UI (Pages, Shared Components).
+- `/src/hooks`: Custom React Hooks (useAuth, useOfflineStatus, dll).
+- `/src/services`: Integrasi API (Supabase, AI, PDF Generator).
+- `/src/types`: Definisi tipe TypeScript.
 
 ## Lisensi
 

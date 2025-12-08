@@ -1,0 +1,74 @@
+/**
+ * Portal Guru Documentation Theme
+ * Based on Portal Guru Design System
+ */
+
+:root {
+    /* COPY FROM designSystem.css */
+    --color-primary-500: #6366f1;
+    --color-primary-600: #4f46e5;
+    --color-primary-700: #4338ca;
+
+    --color-neutral-50: #f8fafc;
+    --color-neutral-100: #f1f5f9;
+    --color-neutral-200: #e2e8f0;
+    --color-neutral-800: #1e293b;
+    --color-neutral-900: #0f172a;
+    --color-neutral-950: #020617;
+
+    /* VitePress Brand Colors */
+    --vp-c-brand-1: var(--color-primary-500);
+    --vp-c-brand-2: var(--color-primary-600);
+    --vp-c-brand-3: var(--color-primary-700);
+
+    /* Typography */
+    --vp-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Dark Mode Overrides (Matching Portal Guru) */
+.dark {
+    --vp-c-bg: var(--color-neutral-950);
+    --vp-c-bg-soft: var(--color-neutral-900);
+    --vp-c-bg-alt: var(--color-neutral-800);
+
+    --vp-c-divider: var(--color-neutral-800);
+    --vp-c-gutter: var(--color-neutral-800);
+
+    --vp-c-text-1: var(--color-neutral-50);
+    --vp-c-text-2: #94a3b8;
+    --vp-c-text-3: #64748b;
+
+    /* Navbar */
+    --vp-nav-bg-color: var(--color-neutral-950);
+    --vp-sidebar-bg-color: var(--color-neutral-900);
+
+    /* Code Blocks */
+    --vp-code-block-bg: var(--color-neutral-800);
+}
+
+/* Custom Portal Guru Styling */
+.VPNavBar {
+    border-bottom-color: var(--vp-c-gutter) !important;
+}
+
+.VPSidebar {
+    border-right-color: var(--vp-c-gutter) !important;
+}
+
+/* Button Gradients similar to app */
+.action-link.brand {
+    background-image: linear-gradient(to right, var(--color-primary-500), var(--color-primary-600));
+    border: none;
+}
+
+.action-link.brand:hover {
+    background-image: linear-gradient(to right, var(--color-primary-600), var(--color-primary-700));
+}
+
+/* Hero Section Enhancement */
+.VPHero .name {
+    background: -webkit-linear-gradient(120deg, #bd34fe 30%, #41d1ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

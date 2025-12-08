@@ -1,0 +1,25 @@
+{
+    "ignorePatterns": [
+        {
+            "pattern": "^http://localhost"
+        },
+        {
+            "pattern": "^#"
+        }
+    ],
+    "replacementPatterns": [
+        {
+            "pattern": "^/",
+            "replacement": "{{BASEURL}}/"
+        }
+    ],
+    "httpHeaders": [],
+    "timeout": "10s",
+    "retryOn429": true,
+    "retryCount": 3,
+    "fallbackRetryDelay": "5s",
+    "aliveStatusCodes": [
+        200,
+        206
+    ]
+}

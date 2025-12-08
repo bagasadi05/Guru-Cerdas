@@ -1,11 +1,11 @@
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AttendancePage from '../../components/pages/AttendancePage';
+import AttendancePage from '../../src/components/pages/AttendancePage';
 import { renderWithProviders } from '../test-utils';
-import { supabase } from '../../services/supabase';
+import { supabase } from '../../src/services/supabase';
 
 // Mock Supabase
-vi.mock('../../services/supabase', () => ({
+vi.mock('../../src/services/supabase', () => ({
     supabase: {
         from: vi.fn(() => ({
             select: vi.fn(() => ({
@@ -31,7 +31,7 @@ vi.mock('../../services/supabase', () => ({
 }));
 
 // Mock useOfflineStatus
-vi.mock('../hooks/useOfflineStatus', () => ({
+vi.mock('../../hooks/useOfflineStatus', () => ({
     useOfflineStatus: () => true,
 }));
 

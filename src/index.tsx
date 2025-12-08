@@ -1,0 +1,31 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import { registerSW } from 'virtual:pwa-register';
+
+// Import dev testing utilities (available in browser console during development)
+import './utils/devTestUtils';
+
+// Register Service Worker for PWA
+const updateSW = registerSW({
+  onNeedRefresh() {
+    console.log('New content available, click on reload button to update.');
+  },
+  onOfflineReady() {
+    console.log('App is ready to work offline.');
+  },
+});
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
+}
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+

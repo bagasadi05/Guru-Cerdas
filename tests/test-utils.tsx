@@ -2,8 +2,8 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { AuthContext } from '../hooks/useAuth';
-import { ToastProvider } from '../hooks/useToast';
+import { AuthContext } from '../src/hooks/useAuth';
+import { ToastProvider } from '../src/hooks/useToast';
 import { vi } from 'vitest';
 
 const createTestQueryClient = () => new QueryClient({

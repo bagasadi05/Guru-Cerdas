@@ -1,0 +1,18 @@
+# Trivy Security Scanner Configuration
+
+severity:
+  - CRITICAL
+  - HIGH
+
+vulnerability:
+  ignorefile: .trivyignore
+
+ignore-unfixed: true
+
+scanners:
+  - vuln
+  - misconfig
+  - secret
+
+format: sarif
+output: trivy-results.sarif
