@@ -7,6 +7,7 @@ import FloatingActionButton from '../ui/FloatingActionButton';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
 import { Type } from '@google/genai';
 import { supabase, ai } from '../../services/supabase';
+import { enhancedSecurity } from '../../services/securityEnhanced';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { Database } from '../../services/database.types';
@@ -715,7 +716,7 @@ const SchedulePage: React.FC = () => {
                         <div className="space-y-4">
                             {analysisResult.sections?.map((section: any, index: number) => (
                                 <div key={index}>
-                                    <h4 className="font-bold text-lg text-purple-300" dangerouslySetInnerHTML={{ __html: section.title }}></h4>
+                                    <h4 className="font-bold text-lg text-purple-300" dangerouslySetInnerHTML={{ __html: enhancedSecurity.sanitizeContent(section.title) }}></h4>
                                     <ul className="list-disc list-inside space-y-1 mt-2 text-gray-300">
                                         {section.points?.map((point: string, pIndex: number) => <li key={pIndex}>{point}</li>)}
                                     </ul>

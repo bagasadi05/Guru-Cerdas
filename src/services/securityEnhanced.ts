@@ -589,7 +589,7 @@ export function sanitizeFormData<T extends Record<string, any>>(data: T): T {
                 (sanitized as any)[key] = sanitizeText(value);
             }
         } else if (Array.isArray(value)) {
-            (sanitized as any)[key] = value.map(item =>
+            (sanitized as any)[key] = value.map((item: any) =>
                 typeof item === 'string' ? sanitizeText(item) : item
             );
         } else if (value && typeof value === 'object') {

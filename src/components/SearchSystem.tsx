@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, createContext, useContext, useMemo } from 'react';
 import { Search, X, Clock, TrendingUp, Users, Calendar, ClipboardList, Filter, ChevronRight, ArrowRight } from 'lucide-react';
+import { enhancedSecurity } from '../services/securityEnhanced';
 
 /**
  * Advanced Search & Filtering System
@@ -276,9 +277,25 @@ export const GlobalSearchModal: React.FC<{
     };
 
     const highlightMatch = (text: string, query: string) => {
-        if (!query.trim()) return text;
+        if (!query.trim()) return enhancedSecurity.escapeHtml(text);
+
+        const escapedText = enhancedSecurity.escapeHtml(text);
+        // We match against the escaped text, which might be tricky if the query contains chars that are escaped.
+        // But for simple highlighting, it's safer to escape parts.
+
+        // Approach: Find matches in original text, then escape everything properly.
         const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">$1</mark>');
+
+        // If text is "<b>Bold</b>" and query is "B".
+        // Split: ["<", "b", ">", "B", "old</", "b", ">"] (approximate)
+
+        const parts = text.split(regex);
+        return parts.map(part => {
+             if (part.toLowerCase() === query.toLowerCase()) {
+                 return `<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">${enhancedSecurity.escapeHtml(part)}</mark>`;
+             }
+             return enhancedSecurity.escapeHtml(part);
+        }).join('');
     };
 
     if (!isOpen) return null;
