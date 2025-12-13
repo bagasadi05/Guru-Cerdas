@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Switch } from './Switch';
 
@@ -173,11 +174,11 @@ export const SettingsPanel: Story = {
 export const Controlled: Story = {
   render: () => {
     const [isEnabled, setIsEnabled] = React.useState(false);
-    
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Switch 
+          <Switch
             id="controlled-switch"
             checked={isEnabled}
             onChange={(e) => setIsEnabled(e.target.checked)}
@@ -211,10 +212,10 @@ export const Controlled: Story = {
  */
 export const InCard: Story = {
   render: () => (
-    <div style={{ 
-      width: '400px', 
-      padding: '1.5rem', 
-      border: '1px solid #e5e7eb', 
+    <div style={{
+      width: '400px',
+      padding: '1.5rem',
+      border: '1px solid #e5e7eb',
       borderRadius: '0.75rem',
       backgroundColor: 'white',
     }}>

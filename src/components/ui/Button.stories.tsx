@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
 import { Button } from './Button';
+
+// fn mock for click handler
+const fn = () => () => { };
 
 /**
  * The Button component is a versatile, accessible button with multiple variants and sizes.
@@ -52,7 +54,7 @@ const meta = {
       description: 'Button content',
     },
   },
-  args: { 
+  args: {
     onClick: fn(),
     children: 'Button',
   },

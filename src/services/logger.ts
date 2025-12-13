@@ -203,15 +203,18 @@ export class Logger {
         this.log(LogLevel.WARN, message, component, data);
     }
 
-    error(message: string, error?: Error, data?: any, component?: string) {
+    error(message: string, errorOrComponent?: Error | string, dataOrError?: any, componentOrData?: string | any) {
         // Handle different signature call from older code: error(message: string, context?: string, error?: Error, data?: any)
         // If 2nd arg is string and not Error, it's likely 'component' from old signature
-        if (typeof error === 'string') {
-            const oldComponent = error as string;
-            const oldError = data as Error | undefined;
-            const oldData = component; // 4th arg
+        if (typeof errorOrComponent === 'string') {
+            const oldComponent = errorOrComponent;
+            const oldError = dataOrError instanceof Error ? dataOrError : undefined;
+            const oldData = componentOrData;
             this.log(LogLevel.ERROR, message, oldComponent, oldData, oldError);
         } else {
+            const error = errorOrComponent;
+            const data = dataOrError;
+            const component = typeof componentOrData === 'string' ? componentOrData : undefined;
             this.log(LogLevel.ERROR, message, component, data, error);
         }
     }

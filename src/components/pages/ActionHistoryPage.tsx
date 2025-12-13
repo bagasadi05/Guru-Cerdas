@@ -203,25 +203,25 @@ const ActionHistoryPage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
                 <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
             <div className="p-4 md:p-6 lg:p-8 space-y-6 w-full pb-24 lg:pb-6">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-                                <History className="w-5 h-5 text-indigo-400" />
+                            <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
+                                <History className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
                             </div>
-                            <h1 className="text-3xl font-bold text-white">Riwayat Aksi</h1>
+                            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Riwayat Aksi</h1>
                         </div>
-                        <p className="text-slate-400 text-sm">
+                        <p className="text-slate-500 dark:text-slate-400 text-sm">
                             Lihat dan batalkan aksi yang baru dilakukan
                         </p>
                     </div>
@@ -249,15 +249,15 @@ const ActionHistoryPage: React.FC = () => {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Cari riwayat..."
-                                className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                             />
                         </div>
 
                         <button
                             onClick={() => setShowFilters(!showFilters)}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all ${hasActiveFilters
-                                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                                    : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-white'
+                                ? 'bg-indigo-600 border-indigo-600 text-white'
+                                : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white shadow-sm'
                                 }`}
                         >
                             <Filter className="w-4 h-4" />
@@ -273,17 +273,17 @@ const ActionHistoryPage: React.FC = () => {
 
                     {/* Filter Panel */}
                     {showFilters && (
-                        <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 space-y-4">
+                        <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-xl p-4 space-y-4 shadow-sm">
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 {/* Action Type Filter */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-2">
+                                    <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
                                         Tipe Aksi
                                     </label>
                                     <select
                                         value={filterType}
                                         onChange={(e) => setFilterType(e.target.value as ActionType | 'all')}
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                                     >
                                         <option value="all">Semua</option>
                                         {Object.entries(actionTypeConfig).map(([key, config]) => (
@@ -294,13 +294,13 @@ const ActionHistoryPage: React.FC = () => {
 
                                 {/* Entity Filter */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-2">
+                                    <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
                                         Tipe Data
                                     </label>
                                     <select
                                         value={filterEntity}
                                         onChange={(e) => setFilterEntity(e.target.value as SoftDeleteEntity | 'all')}
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                                     >
                                         <option value="all">Semua</option>
                                         {Object.entries(entityLabels).map(([key, label]) => (
@@ -311,26 +311,26 @@ const ActionHistoryPage: React.FC = () => {
 
                                 {/* Date Range */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-2">
+                                    <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
                                         Dari Tanggal
                                     </label>
                                     <input
                                         type="date"
                                         value={dateRange.start || ''}
                                         onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-2">
+                                    <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
                                         Sampai Tanggal
                                     </label>
                                     <input
                                         type="date"
                                         value={dateRange.end || ''}
                                         onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
                             </div>
@@ -351,12 +351,12 @@ const ActionHistoryPage: React.FC = () => {
 
                 {/* Actions List */}
                 {filteredActions.length === 0 ? (
-                    <div className="text-center py-16 bg-slate-800/30 rounded-2xl border border-slate-700/50">
-                        <div className="w-20 h-20 mx-auto rounded-2xl bg-slate-800 flex items-center justify-center mb-4">
-                            <History className="w-10 h-10 text-slate-600" />
+                    <div className="text-center py-16 bg-white dark:bg-slate-800/30 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+                        <div className="w-20 h-20 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                            <History className="w-10 h-10 text-slate-400 dark:text-slate-600" />
                         </div>
-                        <h3 className="text-xl font-semibold text-white mb-2">Tidak Ada Riwayat</h3>
-                        <p className="text-slate-400">
+                        <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Tidak Ada Riwayat</h3>
+                        <p className="text-slate-500 dark:text-slate-400">
                             {hasActiveFilters
                                 ? 'Tidak ada riwayat yang cocok dengan filter'
                                 : 'Belum ada aksi yang tercatat'
@@ -369,8 +369,8 @@ const ActionHistoryPage: React.FC = () => {
                             <div key={date}>
                                 <div className="flex items-center gap-3 mb-3">
                                     <Calendar className="w-4 h-4 text-slate-400" />
-                                    <h3 className="font-semibold text-white">{date}</h3>
-                                    <span className="text-sm text-slate-400">({groupActions.length} aksi)</span>
+                                    <h3 className="font-semibold text-slate-900 dark:text-white">{date}</h3>
+                                    <span className="text-sm text-slate-500 dark:text-slate-400">({groupActions.length} aksi)</span>
                                 </div>
 
                                 <div className="space-y-2">
@@ -380,7 +380,7 @@ const ActionHistoryPage: React.FC = () => {
                                         return (
                                             <div
                                                 key={action.id}
-                                                className="flex items-center gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-xl hover:bg-slate-800/60 transition-all"
+                                                className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all shadow-sm"
                                             >
                                                 {/* Icon */}
                                                 <div className={`w-10 h-10 rounded-xl ${config.bgColor} flex items-center justify-center ${config.color}`}>
@@ -389,7 +389,7 @@ const ActionHistoryPage: React.FC = () => {
 
                                                 {/* Content */}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-white">
+                                                    <p className="font-medium text-slate-900 dark:text-white">
                                                         {action.description}
                                                     </p>
                                                     <div className="flex items-center gap-3 mt-1">
@@ -435,17 +435,17 @@ const ActionHistoryPage: React.FC = () => {
                             <button
                                 onClick={() => setPage(p => Math.max(0, p - 1))}
                                 disabled={page === 0}
-                                className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                             >
                                 Sebelumnya
                             </button>
-                            <span className="text-sm text-slate-400">
+                            <span className="text-sm text-slate-500 dark:text-slate-400">
                                 Halaman {page + 1}
                             </span>
                             <button
                                 onClick={() => setPage(p => p + 1)}
                                 disabled={actions.length < pageSize}
-                                className="px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                             >
                                 Selanjutnya
                             </button>

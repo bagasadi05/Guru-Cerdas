@@ -25,6 +25,7 @@ import { useSessionTimeout } from './hooks/useSessionTimeout';
 import { SessionTimeoutWarning } from './components/ui/SessionTimeoutWarning';
 import { cleanupExpiredBackups } from './utils/dataBackup';
 import { supabase } from './services/supabase';
+import helpArticles from './data/helpArticles';
 
 // Start cleanup scheduler on app load
 startCleanupScheduler();
@@ -184,6 +185,41 @@ function AppContent() {
     },
   });
 
+  // Android Back Button Handler
+  React.useEffect(() => {
+    const setupBackButton = async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        const { App: CapApp } = await import('@capacitor/app');
+
+        if (Capacitor.isNativePlatform()) {
+          const listener = await CapApp.addListener('backButton', ({ canGoBack }) => {
+            const currentPath = window.location.pathname;
+
+            // If on home/dashboard, exit app
+            if (currentPath === '/' || currentPath === '/dashboard') {
+              CapApp.exitApp();
+            } else if (canGoBack || window.history.length > 1) {
+              // Navigate back
+              navigate(-1);
+            } else {
+              // Exit app as fallback
+              CapApp.exitApp();
+            }
+          });
+
+          return () => {
+            listener.remove();
+          };
+        }
+      } catch (error) {
+        console.log('Back button handler not available on this platform');
+      }
+    };
+
+    setupBackButton();
+  }, [navigate]);
+
   // Real search handler using Supabase
   const handleSearch = async (query: string, type: string, _filters: unknown[]) => {
     if (!query || query.length < 2) return [];
@@ -315,10 +351,7 @@ function AppContent() {
         <HelpCenter
           isOpen={showHelp}
           onClose={() => setShowHelp(false)}
-          articles={[
-            { id: '1', title: 'Cara Input Absensi', category: 'Tutorial', tags: ['absensi'], content: 'Panduan input absensi...' },
-            { id: '2', title: 'Menambah Data Siswa', category: 'Tutorial', tags: ['siswa'], content: 'Panduan menambah siswa...' },
-          ]}
+          articles={helpArticles}
         />
         <KeyboardShortcutsPanel isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
 

@@ -836,3 +836,623 @@
 .animate-confetti {
     animation: confetti 1.5s ease-out forwards;
 }
+
+/* ============================================
+ * MOBILE UI UTILITIES
+ * Enhanced touch targets, animations, and interactions
+ * ============================================ */
+
+/* Touch Target Utilities - Comfortable sizes */
+.touch-target-comfortable {
+    min-width: 48px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Icon Action Button - 40x40 with 20px icon */
+.icon-action-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-normal) var(--ease-out);
+}
+
+.icon-action-btn:active {
+    transform: scale(0.95);
+}
+
+/* Card Tap Animation */
+@keyframes card-tap {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(0.97);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.animate-card-tap {
+    animation: card-tap 250ms var(--ease-out);
+}
+
+.card-interactive {
+    transition: transform var(--duration-normal) var(--ease-out),
+        box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.card-interactive:active {
+    transform: scale(0.98);
+}
+
+/* Staggered List Animations */
+@keyframes list-item-in {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-list-item {
+    animation: list-item-in 300ms var(--ease-out) both;
+}
+
+/* Stagger delay classes */
+.stagger-1 {
+    animation-delay: 50ms;
+}
+
+.stagger-2 {
+    animation-delay: 100ms;
+}
+
+.stagger-3 {
+    animation-delay: 150ms;
+}
+
+.stagger-4 {
+    animation-delay: 200ms;
+}
+
+.stagger-5 {
+    animation-delay: 250ms;
+}
+
+.stagger-6 {
+    animation-delay: 300ms;
+}
+
+/* Stats Badge Styles */
+.stats-badge {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: var(--shadow-lg);
+}
+
+/* Stats Value Typography */
+.stats-value {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.stats-value-lg {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+/* Stats Label Typography */
+.stats-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Student Name Typography */
+.text-student-name {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* Mobile Header - Max 64px */
+@media (max-width: 1023px) {
+    .mobile-header {
+        height: 64px;
+        max-height: 64px;
+    }
+
+    .mobile-header-compact {
+        height: 56px;
+        max-height: 56px;
+    }
+}
+
+/* Student Card Styles */
+.student-card {
+    padding: var(--space-lg);
+    gap: var(--space-lg);
+    border-radius: var(--radius-xl);
+    min-height: 88px;
+}
+
+.student-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    object-fit: cover;
+}
+
+/* Action Button Group */
+.action-btn-group {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+/* Status Badge Enhanced */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* Attendance Status Colors */
+.status-hadir {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.dark .status-hadir {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.status-sakit {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+.dark .status-sakit {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.status-izin {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.dark .status-izin {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+.status-alpha {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.dark .status-alpha {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+/* Mobile Stats Grid */
+.mobile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-sm);
+}
+
+.mobile-stats-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    min-height: 100px;
+    text-align: center;
+}
+
+/* Fade In Up Animation */
+@keyframes fade-in-up {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.3s var(--ease-out) both;
+}
+
+/* Page Transition Animation */
+@keyframes page-transition {
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-page-transition {
+    animation: page-transition 350ms var(--ease-out) both;
+}
+
+/* Empty State Styles */
+.empty-state-illustration {
+    width: 128px;
+    height: 128px;
+}
+
+@media (min-width: 768px) {
+    .empty-state-illustration {
+        width: 160px;
+        height: 160px;
+    }
+}
+
+/* Form Input Enhanced */
+.input-enhanced {
+    min-height: 48px;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-normal) var(--ease-out);
+}
+
+.input-enhanced:focus {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Bottom Nav Enhanced */
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 48px;
+    min-height: 48px;
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-normal) var(--ease-out);
+}
+
+.bottom-nav-item.active {
+    transform: translateY(-2px);
+}
+
+.bottom-nav-label {
+    font-size: 10px;
+    font-weight: 500;
+    transition: all var(--duration-normal) var(--ease-out);
+}
+
+.bottom-nav-label.active {
+    font-weight: 700;
+}
+
+/* ============================================
+ * TOUCH TARGET UTILITIES (Mobile Accessibility)
+ * Minimum 48x48dp for Android, 44x44pt for iOS
+ * ============================================ */
+
+/* Base touch target - ensures minimum 48px hit area */
+.touch-target {
+    position: relative;
+    min-width: 48px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* For smaller visual elements that need larger touch area */
+.touch-target-expand::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 48px;
+    min-height: 48px;
+}
+
+/* Touch-friendly button - used for primary actions */
+.btn-touch {
+    min-height: 48px;
+    min-width: 48px;
+    padding: 12px 20px;
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+    touch-action: manipulation;
+    /* Removes 300ms delay */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+/* Touch-friendly icon button */
+.btn-icon-touch {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch-friendly list item */
+.list-item-touch {
+    min-height: 48px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    touch-action: manipulation;
+}
+
+/* Touch-friendly link */
+.link-touch {
+    min-height: 44px;
+    padding: 10px 4px;
+    display: inline-flex;
+    align-items: center;
+    touch-action: manipulation;
+}
+
+/* Touch-friendly input */
+.input-touch {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+}
+
+/* Touch-friendly select */
+.select-touch {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px;
+}
+
+/* Touch-friendly checkbox/radio wrapper */
+.checkbox-touch,
+.radio-touch {
+    min-width: 48px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Touch manipulation for all interactive elements (removes 300ms delay) */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[role="link"],
+[role="checkbox"],
+[role="radio"],
+[role="tab"],
+[tabindex] {
+    touch-action: manipulation;
+}
+
+/* Safe area insets for notched devices */
+.safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-inset-left {
+    padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-inset-right {
+    padding-right: env(safe-area-inset-right);
+}
+
+/* Active state feedback for touch */
+.touch-active:active {
+    transform: scale(0.97);
+    opacity: 0.9;
+    transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+}
+
+/* Prevent text selection on touch elements */
+.no-select {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* ============================================
+ * THEME TRANSITION ANIMATIONS
+ * Smooth transitions when switching themes
+ * ============================================ */
+
+/* Apply transition to common elements during theme change */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+    transition: background-color 0.3s ease-out,
+                border-color 0.3s ease-out,
+                color 0.3s ease-out,
+                box-shadow 0.3s ease-out !important;
+}
+
+/* Base transition for all themed elements */
+.theme-transition {
+    transition: background-color 0.3s ease-out,
+                border-color 0.3s ease-out,
+                color 0.3s ease-out;
+}
+
+/* ============================================
+ * MICRO-INTERACTIONS & ANIMATIONS
+ * Subtle animations for better UX
+ * ============================================ */
+
+/* Button press effect */
+.btn-press {
+    transition: transform 0.15s var(--ease-out), 
+                box-shadow 0.15s var(--ease-out);
+}
+
+.btn-press:active {
+    transform: scale(0.97);
+}
+
+/* Card hover lift effect */
+.card-lift {
+    transition: transform 0.25s var(--ease-out), 
+                box-shadow 0.25s var(--ease-out);
+}
+
+.card-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+/* Icon spin animation for theme toggle */
+@keyframes icon-spin-in {
+    0% {
+        opacity: 0;
+        transform: rotate(-180deg) scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+.animate-icon-spin {
+    animation: icon-spin-in 0.4s var(--ease-bounce) forwards;
+}
+
+/* Pulse glow effect */
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+    }
+}
+
+.animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Ripple effect on click */
+.ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+    transform: scale(0);
+    opacity: 0;
+    transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+}
+
+.ripple:active::after {
+    transform: scale(2.5);
+    opacity: 1;
+    transition: transform 0s, opacity 0s;
+}
+
+/* Smooth hover scale */
+.hover-scale {
+    transition: transform 0.2s var(--ease-out);
+}
+
+.hover-scale:hover {
+    transform: scale(1.02);
+}
+
+/* Link underline animation */
+.link-underline {
+    position: relative;
+}
+
+.link-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: currentColor;
+    transition: width 0.25s var(--ease-out);
+}
+
+.link-underline:hover::after {
+    width: 100%;
+}
+
+/* Focus ring animation */
+.focus-ring {
+    outline: none;
+}
+
+.focus-ring:focus-visible {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3),
+                0 0 0 4px rgba(99, 102, 241, 0.6);
+    transition: box-shadow 0.2s var(--ease-out);
+}

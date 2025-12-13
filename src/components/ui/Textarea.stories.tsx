@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Textarea } from './Textarea';
 
@@ -81,13 +82,13 @@ export const WithCharacterCount: Story = {
   render: () => {
     const [text, setText] = React.useState('');
     const maxLength = 200;
-    
+
     return (
       <div style={{ width: '400px' }}>
         <label htmlFor="bio" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
           Bio
         </label>
-        <Textarea 
+        <Textarea
           id="bio"
           placeholder="Tell us about yourself..."
           rows={4}
@@ -184,7 +185,7 @@ export const WithError: Story = {
       <label htmlFor="message" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
         Message
       </label>
-      <Textarea 
+      <Textarea
         id="message"
         placeholder="Enter your message..."
         rows={4}

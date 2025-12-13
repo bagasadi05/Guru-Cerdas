@@ -12,10 +12,11 @@ export interface TabsProps {
   defaultValue?: string;
   value?: string;
   className?: string;
+  style?: React.CSSProperties;
   onValueChange?: (value: string) => void;
 }
 
-export const Tabs: React.FC<TabsProps> = ({ children, defaultValue, value, className, onValueChange }) => {
+export const Tabs: React.FC<TabsProps> = ({ children, defaultValue, value, className, style, onValueChange }) => {
   const [internalValue, setInternalValue] = useState(defaultValue);
 
   const isControlled = value !== undefined;
@@ -32,7 +33,7 @@ export const Tabs: React.FC<TabsProps> = ({ children, defaultValue, value, class
 
   return (
     <TabsContext.Provider value={{ activeTab: activeTab!, setActiveTab: handleSetActiveTab }}>
-      <div className={className}>{children}</div>
+      <div className={className} style={style}>{children}</div>
     </TabsContext.Provider>
   );
 };
@@ -83,7 +84,7 @@ export const TabsTrigger: React.FC<{ children: React.ReactNode, value: string, c
   );
 };
 
-export const TabsContent: React.FC<{ children: React.ReactNode, value: string, className?: string }> = ({ children, value, className }) => {
+export const TabsContent: React.FC<{ children: React.ReactNode, value: string, className?: string, style?: React.CSSProperties }> = ({ children, value, className, style }) => {
   const { activeTab } = useTabs();
   const isActive = activeTab === value;
 
@@ -95,6 +96,7 @@ export const TabsContent: React.FC<{ children: React.ReactNode, value: string, c
       role="tabpanel"
       data-state={isActive ? 'active' : 'inactive'}
       className={`ring-offset-white dark:ring-offset-gray-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${className}`}
+      style={style}
     >
       {children}
     </div>

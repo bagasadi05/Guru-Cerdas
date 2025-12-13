@@ -104,10 +104,10 @@ export const OnboardingTooltip: React.FC<OnboardingTooltipProps> = ({
                         <div
                             key={i}
                             className={`w-2 h-2 rounded-full transition-colors ${i === currentStep
-                                    ? 'bg-indigo-500'
-                                    : i < currentStep
-                                        ? 'bg-indigo-300'
-                                        : 'bg-slate-300 dark:bg-slate-600'
+                                ? 'bg-indigo-500'
+                                : i < currentStep
+                                    ? 'bg-indigo-300'
+                                    : 'bg-slate-300 dark:bg-slate-600'
                                 }`}
                         />
                     ))}
@@ -259,7 +259,7 @@ export const HelpPanel: React.FC = () => {
         return (
             <button
                 onClick={() => setLocalOpen(true)}
-                className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
+                className="fixed bottom-24 lg:bottom-6 right-6 z-50 w-14 h-14 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
                 aria-label="Bantuan"
             >
                 <HelpCircle className="w-6 h-6" />
@@ -268,7 +268,7 @@ export const HelpPanel: React.FC = () => {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 w-96 max-h-[70vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed bottom-24 lg:bottom-6 right-6 z-50 w-96 max-h-[60vh] lg:max-h-[70vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
             {/* Header */}
             <div className="p-4 bg-indigo-500 text-white">
                 <div className="flex items-center justify-between mb-4">
@@ -402,8 +402,8 @@ export const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = ({
                 onClick={onUndo}
                 disabled={!canUndo}
                 className={`p-2 rounded-lg transition-colors ${canUndo
-                        ? 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
-                        : 'text-slate-400 cursor-not-allowed'
+                    ? 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                    : 'text-slate-400 cursor-not-allowed'
                     }`}
                 title={`Undo (${undoCount})`}
             >
@@ -415,8 +415,8 @@ export const UndoRedoToolbar: React.FC<UndoRedoToolbarProps> = ({
                 onClick={onRedo}
                 disabled={!canRedo}
                 className={`p-2 rounded-lg transition-colors ${canRedo
-                        ? 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
-                        : 'text-slate-400 cursor-not-allowed'
+                    ? 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                    : 'text-slate-400 cursor-not-allowed'
                     }`}
                 title={`Redo (${redoCount})`}
             >

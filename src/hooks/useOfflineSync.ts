@@ -109,7 +109,7 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
         } catch (error) {
             const err = error instanceof Error ? error : new Error('Sync failed');
             onError?.(err);
-            logger.error('Sync failed', 'useOfflineSync', { error: err.message });
+            logger.error('Sync failed', err);
             return results;
         } finally {
             syncInProgressRef.current = false;
@@ -189,8 +189,8 @@ async function syncItem(
 
     // Check for conflicts (for UPDATE operations)
     if (type === 'UPDATE' && data.id) {
-        const { data: serverData, error: fetchError } = await supabase
-            .from(table)
+        const { data: serverData, error: fetchError } = await (supabase
+            .from(table as any) as any)
             .select('*')
             .eq('id', data.id)
             .single();
@@ -227,8 +227,8 @@ async function syncItem(
     switch (type) {
         case 'CREATE':
             const { id: _, ...createData } = data;
-            ({ data: result, error } = await supabase
-                .from(table)
+            ({ data: result, error } = await (supabase
+                .from(table as any) as any)
                 .insert(createData)
                 .select()
                 .single());
@@ -236,8 +236,8 @@ async function syncItem(
 
         case 'UPDATE':
             const { _localTimestamp, ...updateData } = data;
-            ({ data: result, error } = await supabase
-                .from(table)
+            ({ data: result, error } = await (supabase
+                .from(table as any) as any)
                 .update({ ...updateData, updated_at: new Date().toISOString() })
                 .eq('id', data.id)
                 .select()
@@ -245,8 +245,8 @@ async function syncItem(
             break;
 
         case 'DELETE':
-            ({ error } = await supabase
-                .from(table)
+            ({ error } = await (supabase
+                .from(table as any) as any)
                 .delete()
                 .eq('id', data.id));
             result = { deleted: true };

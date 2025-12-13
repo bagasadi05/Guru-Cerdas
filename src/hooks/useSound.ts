@@ -1,12 +1,17 @@
 import { useCallback } from 'react';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError } from '../services/haptics';
+import {
+    playNotificationSound,
+    playSuccessSound,
+    playErrorSound,
+    playMessageSound,
+    playReminderSound,
+} from '../utils/notificationSound';
 
-// Short "pop" / "click" sound
-const CLICK_SOUND = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==';
-// The above is silent/empty. Let's use a real one or AudioContext.
-// Actually, for a truly professional feel without assets, AudioContext is safer and more customizable.
+// Short "pop" / "click" sound using AudioContext
 
 export const useSound = () => {
-    const playClick = useCallback(() => {
+    const playAudioClick = useCallback(() => {
         try {
             const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
             if (!AudioContext) return;
@@ -29,9 +34,80 @@ export const useSound = () => {
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.05);
         } catch (e) {
-            console.error("Audio play failed", e);
+            // Silent fail for audio
         }
     }, []);
 
-    return { playClick };
+    // Combined audio + haptic feedback
+    const playClick = useCallback(() => {
+        playAudioClick();
+        hapticLight();
+    }, [playAudioClick]);
+
+    // Medium haptic for toggles and confirms
+    const playToggle = useCallback(() => {
+        playAudioClick();
+        hapticMedium();
+    }, [playAudioClick]);
+
+    // Heavy haptic for important actions
+    const playAction = useCallback(() => {
+        playAudioClick();
+        hapticHeavy();
+    }, [playAudioClick]);
+
+    // Success feedback with sound and haptic
+    const playSuccess = useCallback(() => {
+        playSuccessSound();
+        hapticSuccess();
+    }, []);
+
+    // Error feedback with sound and haptic
+    const playError = useCallback(() => {
+        playErrorSound();
+        hapticError();
+    }, []);
+
+    // Notification sound (ding-dong) with haptic
+    const playNotification = useCallback(() => {
+        playNotificationSound();
+        hapticMedium();
+    }, []);
+
+    // Message received sound with haptic
+    const playMessage = useCallback(() => {
+        playMessageSound();
+        hapticLight();
+    }, []);
+
+    // Reminder sound with haptic
+    const playReminder = useCallback(() => {
+        playReminderSound();
+        hapticHeavy();
+    }, []);
+
+    return {
+        playClick,
+        playToggle,
+        playAction,
+        playSuccess,
+        playError,
+        // New notification sounds
+        playNotification,
+        playMessage,
+        playReminder,
+        // Also expose individual haptics
+        hapticLight,
+        hapticMedium,
+        hapticHeavy,
+        // Expose raw sound functions for direct use
+        sounds: {
+            notification: playNotificationSound,
+            success: playSuccessSound,
+            error: playErrorSound,
+            message: playMessageSound,
+            reminder: playReminderSound,
+        },
+    };
 };
+

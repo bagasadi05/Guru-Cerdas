@@ -414,6 +414,197 @@ export const zIndex = {
 } as const;
 
 // ============================================
+// ICON SIZES (Mobile UI)
+// ============================================
+
+export const iconSize = {
+    /** 16px - Tiny icons */
+    xs: '1rem',
+    /** 20px - Small action icons (card buttons) */
+    sm: '1.25rem',
+    /** 24px - Standard icons, bottom nav */
+    md: '1.5rem',
+    /** 32px - Large icons in cards */
+    lg: '2rem',
+    /** 48px - Hero icons, stats */
+    xl: '3rem',
+    /** 64px - Extra large decorative */
+    '2xl': '4rem',
+} as const;
+
+// Tailwind class mappings for icon sizes
+export const iconSizeClasses = {
+    xs: 'w-4 h-4',
+    sm: 'w-5 h-5',
+    md: 'w-6 h-6',
+    lg: 'w-8 h-8',
+    xl: 'w-12 h-12',
+    '2xl': 'w-16 h-16',
+} as const;
+
+// ============================================
+// TOUCH TARGETS (Accessibility)
+// ============================================
+
+export const touchTarget = {
+    /** 44px - Minimum touch target (WCAG) */
+    min: '2.75rem',
+    /** 48px - Comfortable touch target */
+    comfortable: '3rem',
+    /** 56px - Large touch target */
+    large: '3.5rem',
+} as const;
+
+// Tailwind class mappings for touch targets
+export const touchTargetClasses = {
+    min: 'min-w-[44px] min-h-[44px]',
+    comfortable: 'min-w-[48px] min-h-[48px]',
+    large: 'min-w-[56px] min-h-[56px]',
+} as const;
+
+// ============================================
+// ANIMATION PRESETS (Mobile Interactions)
+// ============================================
+
+export const animation = {
+    duration: {
+        /** 200-300ms - Card tap animation */
+        tap: '250ms',
+        /** 300-400ms - Page transitions */
+        page: '350ms',
+        /** 50-100ms - List item stagger delay */
+        stagger: '75ms',
+        /** 200ms - Quick interactions */
+        fast: '200ms',
+        /** 300ms - Standard animations */
+        normal: '300ms',
+        /** 500ms - Slow, deliberate animations */
+        slow: '500ms',
+    },
+    easing: {
+        /** Standard ease-out */
+        smooth: 'cubic-bezier(0, 0, 0.2, 1)',
+        /** Springy bounce effect */
+        springy: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        /** Sharp, quick response */
+        sharp: 'cubic-bezier(0.4, 0, 0.2, 1)',
+    },
+    scale: {
+        /** Subtle tap feedback */
+        tap: 'scale(0.97)',
+        /** Hover lift */
+        hover: 'scale(1.02)',
+        /** Active press */
+        active: 'scale(0.95)',
+    },
+} as const;
+
+// ============================================
+// STATUS COLORS (Attendance)
+// ============================================
+
+export const statusColors = {
+    /** Hadir - Green */
+    hadir: {
+        bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+        bgSolid: 'bg-emerald-500',
+        text: 'text-emerald-600 dark:text-emerald-400',
+        border: 'border-emerald-500',
+        gradient: 'from-emerald-500 to-green-600',
+    },
+    /** Sakit - Blue */
+    sakit: {
+        bg: 'bg-blue-50 dark:bg-blue-900/20',
+        bgSolid: 'bg-blue-500',
+        text: 'text-blue-600 dark:text-blue-400',
+        border: 'border-blue-500',
+        gradient: 'from-blue-500 to-cyan-600',
+    },
+    /** Izin - Amber */
+    izin: {
+        bg: 'bg-amber-50 dark:bg-amber-900/20',
+        bgSolid: 'bg-amber-500',
+        text: 'text-amber-600 dark:text-amber-400',
+        border: 'border-amber-500',
+        gradient: 'from-amber-500 to-orange-600',
+    },
+    /** Alpha - Red */
+    alpha: {
+        bg: 'bg-rose-50 dark:bg-rose-900/20',
+        bgSolid: 'bg-rose-500',
+        text: 'text-rose-600 dark:text-rose-400',
+        border: 'border-rose-500',
+        gradient: 'from-rose-500 to-red-600',
+    },
+} as const;
+
+// ============================================
+// MOBILE COMPONENT SPECS
+// ============================================
+
+export const mobileSpecs = {
+    /** Student card specifications */
+    studentCard: {
+        padding: 'p-4',
+        gap: 'gap-4',
+        borderRadius: 'rounded-2xl',
+        minHeight: 'min-h-[88px]',
+        avatarSize: 'w-12 h-12',
+        avatarRadius: 'rounded-xl',
+        nameSize: 'text-base font-semibold',
+        actionButtonSize: 'w-10 h-10',
+        actionIconSize: 'w-5 h-5',
+        actionGap: 'gap-2',
+    },
+    /** Stats card specifications */
+    statsCard: {
+        padding: 'p-5',
+        borderRadius: 'rounded-2xl',
+        minHeight: 'min-h-[140px]',
+        iconSize: 'w-12 h-12',
+        iconContainer: 'w-16 h-16',
+        valueSize: 'text-4xl font-extrabold',
+        labelSize: 'text-xs font-bold uppercase tracking-wider',
+        subValueSize: 'text-[11px] opacity-70',
+    },
+    /** Attendance stats specifications */
+    attendanceStats: {
+        gridCols: 'grid-cols-4',
+        gap: 'gap-2',
+        badgeSize: 'w-10 h-10',
+        valueSize: 'text-[28px] font-extrabold',
+        labelSize: 'text-[10px] font-bold uppercase tracking-wider',
+    },
+    /** Bottom navigation specifications */
+    bottomNav: {
+        height: 'h-[68px]',
+        iconSize: 'w-6 h-6',
+        activeIconSize: 'w-[26px] h-[26px]',
+        labelSize: 'text-[10px]',
+        itemMinSize: 'min-w-[48px] min-h-[48px]',
+    },
+    /** Header specifications */
+    header: {
+        height: 'h-16',
+        maxHeight: 'max-h-16',
+        greetingSize: 'text-2xl font-bold',
+        dateSize: 'text-xs',
+        actionButtonSize: 'w-10 h-10',
+    },
+    /** Form input specifications */
+    formInput: {
+        minHeight: 'min-h-[48px]',
+        gap: 'gap-4',
+        labelSize: 'text-sm font-medium',
+    },
+    /** Empty state specifications */
+    emptyState: {
+        illustrationSize: 'w-32 h-32',
+        illustrationSizeLg: 'w-40 h-40',
+    },
+} as const;
+
+// ============================================
 // BREAKPOINTS
 // ============================================
 
@@ -541,4 +732,12 @@ export default {
     breakpoints,
     cx,
     componentStyles,
+    // Mobile UI additions
+    iconSize,
+    iconSizeClasses,
+    touchTarget,
+    touchTargetClasses,
+    animation,
+    statusColors,
+    mobileSpecs,
 };

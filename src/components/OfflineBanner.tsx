@@ -1,10 +1,10 @@
 import React from 'react';
-import { useOfflineStatus } from '../hooks/useOfflineStatus';
+import { useNativeNetwork } from '../hooks/useNativeNetwork';
 import { useSyncQueue } from '../hooks/useSyncQueue';
 import { AlertTriangleIcon, RefreshCwIcon } from './Icons';
 
 const OfflineBanner: React.FC = () => {
-  const isOnline = useOfflineStatus();
+  const { isConnected: isOnline, wasOffline, connectionType } = useNativeNetwork();
   const { pendingCount, isSyncing, processQueue } = useSyncQueue();
 
   if (isOnline && pendingCount === 0) {

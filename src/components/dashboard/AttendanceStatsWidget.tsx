@@ -206,26 +206,34 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
             </div>
 
             {/* Overall Stats */}
-            <div className="grid grid-cols-4 gap-3 mb-6">
-                <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
-                    <CheckCircleIcon className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
-                    <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{overallStats.hadir}</span>
-                    <p className="text-xs text-slate-500 mt-1">Hadir</p>
+            <div className="grid grid-cols-4 gap-2 mb-6">
+                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center mb-2 shadow-lg">
+                        <CheckCircleIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-[28px] font-extrabold leading-none text-emerald-600 dark:text-emerald-400">{overallStats.hadir}</span>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Hadir</p>
                 </div>
-                <div className="text-center p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
-                    <AlertTriangleIcon className="w-5 h-5 text-amber-500 mx-auto mb-1" />
-                    <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{overallStats.sakit}</span>
-                    <p className="text-xs text-slate-500 mt-1">Sakit</p>
+                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-2 shadow-lg">
+                        <AlertTriangleIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-[28px] font-extrabold leading-none text-amber-600 dark:text-amber-400">{overallStats.sakit}</span>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Sakit</p>
                 </div>
-                <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                    <UsersIcon className="w-5 h-5 text-blue-500 mx-auto mb-1" />
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{overallStats.izin}</span>
-                    <p className="text-xs text-slate-500 mt-1">Izin</p>
+                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center mb-2 shadow-lg">
+                        <UsersIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-[28px] font-extrabold leading-none text-blue-600 dark:text-blue-400">{overallStats.izin}</span>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Izin</p>
                 </div>
-                <div className="text-center p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl">
-                    <XCircleIcon className="w-5 h-5 text-rose-500 mx-auto mb-1" />
-                    <span className="text-2xl font-bold text-rose-600 dark:text-rose-400">{overallStats.alpha}</span>
-                    <p className="text-xs text-slate-500 mt-1">Alpha</p>
+                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-rose-50 dark:bg-rose-900/20 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center mb-2 shadow-lg">
+                        <XCircleIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-[28px] font-extrabold leading-none text-rose-600 dark:text-rose-400">{overallStats.alpha}</span>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Alpha</p>
                 </div>
             </div>
 
@@ -241,8 +249,8 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                             <span className="font-bold text-slate-800 dark:text-white">{stat.className}</span>
                             {showTrend && stat.trend !== 'stable' && (
                                 <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${stat.trend === 'up'
-                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                        : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                    : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
                                     }`}>
                                     {stat.trend === 'up' ? <TrendingUpIcon className="w-3 h-3" /> : <TrendingDownIcon className="w-3 h-3" />}
                                 </span>
@@ -259,14 +267,14 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                                 <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full rounded-full transition-all duration-500 ${stat.percentage >= 80 ? 'bg-emerald-500' :
-                                                stat.percentage >= 60 ? 'bg-amber-500' : 'bg-rose-500'
+                                            stat.percentage >= 60 ? 'bg-amber-500' : 'bg-rose-500'
                                             }`}
                                         style={{ width: `${stat.percentage}%` }}
                                     />
                                 </div>
                             </div>
                             <span className={`font-bold text-sm w-12 text-right ${stat.percentage >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
-                                    stat.percentage >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
+                                stat.percentage >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
                                 }`}>
                                 {stat.percentage.toFixed(0)}%
                             </span>

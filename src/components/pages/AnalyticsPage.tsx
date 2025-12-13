@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
+import AnalyticsPageSkeleton from '../skeletons/AnalyticsPageSkeleton';
 
 // Types
 interface AttendanceStats {
@@ -242,9 +243,10 @@ const AnalyticsPage: React.FC = () => {
 
     const SimpleBarChart = ({ data, subtitle }: { data: DailyAttendance[]; subtitle?: string }) => {
         const maxTotal = Math.max(...data.map(d => d.total), 1);
-        const chartHeight = 220;
-        const barWidth = 12;
-        const barGap = 6;
+        // Responsive chart height - smaller on mobile
+        const chartHeight = typeof window !== 'undefined' && window.innerWidth < 640 ? 160 : 220;
+        const barWidth = typeof window !== 'undefined' && window.innerWidth < 640 ? 8 : 12;
+        const barGap = typeof window !== 'undefined' && window.innerWidth < 640 ? 3 : 6;
 
         // Calculate nice Y-axis intervals
         const yAxisSteps = 4;
@@ -268,8 +270,8 @@ const AnalyticsPage: React.FC = () => {
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{subtitle}</p>
                 )}
 
-                {/* Legend - Top Right */}
-                <div className="absolute top-0 right-0 flex items-center gap-4 text-xs">
+                {/* Legend - Moves below subtitle on mobile */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:absolute sm:top-0 sm:right-0 mb-2 sm:mb-0">
                     <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
                         <span className="text-slate-500 dark:text-slate-400">Hadir</span>
@@ -280,9 +282,9 @@ const AnalyticsPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex mt-8">
+                <div className="flex mt-4 sm:mt-8 overflow-hidden">
                     {/* Y-axis */}
-                    <div className="flex flex-col justify-between pr-3 text-right" style={{ height: `${chartHeight}px` }}>
+                    <div className="flex-shrink-0 flex flex-col justify-between pr-2 sm:pr-3 text-right" style={{ height: `${chartHeight}px` }}>
                         {yAxisLabels.map((val, i) => (
                             <span key={i} className="text-[10px] text-slate-500 dark:text-slate-400 leading-none">
                                 {val}
@@ -291,7 +293,7 @@ const AnalyticsPage: React.FC = () => {
                     </div>
 
                     {/* Chart Container */}
-                    <div className="flex-1 relative">
+                    <div className="flex-1 relative overflow-hidden min-w-0">
                         {/* Grid Lines */}
                         <div className="absolute inset-0 flex flex-col justify-between pointer-events-none" style={{ height: `${chartHeight}px` }}>
                             {yAxisLabels.map((_, i) => (
@@ -303,9 +305,9 @@ const AnalyticsPage: React.FC = () => {
                             ))}
                         </div>
 
-                        {/* Bars Container */}
+                        {/* Bars Container - horizontal scroll on mobile */}
                         <div
-                            className="flex items-end justify-between relative z-10 overflow-x-auto scrollbar-hide"
+                            className="flex items-end relative z-10 overflow-x-auto pb-1 scrollbar-hide"
                             style={{ height: `${chartHeight}px`, gap: `${barGap}px` }}
                         >
                             {data.map((day, i) => {
@@ -427,23 +429,23 @@ const AnalyticsPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Summary stats below chart */}
-                <div className="grid grid-cols-4 gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/50">
-                    <div className="text-center">
-                        <p className="text-lg font-bold text-green-500">{data.reduce((sum, d) => sum + d.hadir, 0)}</p>
-                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">Total Hadir</p>
+                {/* Summary stats below chart - 2 cols on mobile, 4 cols on larger */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                    <div className="text-center p-2 rounded-lg bg-green-500/10">
+                        <p className="text-base sm:text-lg font-bold text-green-500">{data.reduce((sum, d) => sum + d.hadir, 0)}</p>
+                        <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wide">Hadir</p>
                     </div>
-                    <div className="text-center">
-                        <p className="text-lg font-bold text-blue-500">{data.reduce((sum, d) => sum + d.izin, 0)}</p>
-                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">Total Izin</p>
+                    <div className="text-center p-2 rounded-lg bg-blue-500/10">
+                        <p className="text-base sm:text-lg font-bold text-blue-500">{data.reduce((sum, d) => sum + d.izin, 0)}</p>
+                        <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wide">Izin</p>
                     </div>
-                    <div className="text-center">
-                        <p className="text-lg font-bold text-amber-500">{data.reduce((sum, d) => sum + d.sakit, 0)}</p>
-                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">Total Sakit</p>
+                    <div className="text-center p-2 rounded-lg bg-amber-500/10">
+                        <p className="text-base sm:text-lg font-bold text-amber-500">{data.reduce((sum, d) => sum + d.sakit, 0)}</p>
+                        <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wide">Sakit</p>
                     </div>
-                    <div className="text-center">
-                        <p className="text-lg font-bold text-rose-500">{data.reduce((sum, d) => sum + d.alpha, 0)}</p>
-                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">Total Alpha</p>
+                    <div className="text-center p-2 rounded-lg bg-rose-500/10">
+                        <p className="text-base sm:text-lg font-bold text-rose-500">{data.reduce((sum, d) => sum + d.alpha, 0)}</p>
+                        <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wide">Alpha</p>
                     </div>
                 </div>
             </div>
@@ -533,8 +535,8 @@ const AnalyticsPage: React.FC = () => {
                             <div
                                 key={i}
                                 className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-300 cursor-pointer border ${isHovered
-                                        ? 'bg-slate-100 dark:bg-slate-800 scale-[1.02] border-slate-200 dark:border-slate-700'
-                                        : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                    ? 'bg-slate-100 dark:bg-slate-800 scale-[1.02] border-slate-200 dark:border-slate-700'
+                                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                     }`}
                                 onMouseEnter={() => setHoveredIndex(i)}
                                 onMouseLeave={() => setHoveredIndex(null)}
@@ -548,8 +550,8 @@ const AnalyticsPage: React.FC = () => {
                                     }}
                                 />
                                 <span className={`flex-1 text-sm transition-colors ${isHovered
-                                        ? 'text-slate-900 dark:text-white font-semibold'
-                                        : 'text-slate-600 dark:text-slate-400'
+                                    ? 'text-slate-900 dark:text-white font-semibold'
+                                    : 'text-slate-600 dark:text-slate-400'
                                     }`}>
                                     {item.label}
                                 </span>
@@ -583,30 +585,26 @@ const AnalyticsPage: React.FC = () => {
     };
 
     if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <RefreshCwIcon className="w-8 h-8 animate-spin text-indigo-600" />
-            </div>
-        );
+        return <AnalyticsPageSkeleton />;
     }
 
     return (
-        <div className="min-h-screen p-4 md:p-8 space-y-6 animate-fade-in">
+        <div className="min-h-screen p-4 md:p-8 space-y-6 animate-fade-in pb-24 lg:pb-8">
             {/* Header */}
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <header className="flex flex-col gap-4">
                 <div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
+                    <h1 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white">
                         Analytics Dashboard
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-1">
                         Statistik dan analisis data siswa, absensi, dan tugas
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <Select
                         value={selectedClassId}
                         onChange={(e) => setSelectedClassId(e.target.value)}
-                        className="min-w-[150px]"
+                        className="flex-1 min-w-[120px] sm:min-w-[150px] sm:flex-none"
                     >
                         <option value="all">Semua Kelas</option>
                         {classes.map(cls => (
@@ -616,14 +614,14 @@ const AnalyticsPage: React.FC = () => {
                     <Select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value as any)}
-                        className="min-w-[120px]"
+                        className="flex-1 min-w-[100px] sm:min-w-[120px] sm:flex-none"
                     >
                         <option value="7d">7 Hari</option>
                         <option value="30d">30 Hari</option>
                         <option value="90d">90 Hari</option>
                         <option value="all">Semua</option>
                     </Select>
-                    <Button variant="outline" size="sm" onClick={() => refetch()}>
+                    <Button variant="outline" size="sm" onClick={() => refetch()} className="flex-shrink-0">
                         <RefreshCwIcon className="w-4 h-4" />
                     </Button>
                 </div>

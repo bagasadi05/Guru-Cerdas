@@ -474,8 +474,8 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                             <button
                                 onClick={() => setSelectedCategory(null)}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${!selectedCategory
-                                        ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600'
-                                        : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600'
+                                    : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }`}
                             >
                                 Semua
@@ -485,8 +485,8 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
                                     className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory === cat
-                                            ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600'
-                                            : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                        ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600'
+                                        : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }`}
                                 >
                                     {cat}
@@ -507,8 +507,8 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                                         className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-left transition-colors"
                                     >
                                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${article.videoUrl
-                                                ? 'bg-red-100 dark:bg-red-900/40 text-red-600'
-                                                : 'bg-blue-100 dark:bg-blue-900/40 text-blue-600'
+                                            ? 'bg-red-100 dark:bg-red-900/40 text-red-600'
+                                            : 'bg-blue-100 dark:bg-blue-900/40 text-blue-600'
                                             }`}>
                                             {article.videoUrl ? <Video className="w-5 h-5" /> : <Book className="w-5 h-5" />}
                                         </div>
@@ -750,7 +750,7 @@ export const HelpButton: React.FC<{
     return (
         <button
             onClick={onClick}
-            className={`fixed bottom-4 right-4 w-12 h-12 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-all hover:scale-105 ${className}`}
+            className={`fixed bottom-24 lg:bottom-4 right-4 w-12 h-12 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-all hover:scale-105 ${className}`}
             aria-label="Bantuan"
         >
             <HelpCircle className="w-6 h-6" />

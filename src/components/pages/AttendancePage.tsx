@@ -529,21 +529,24 @@ const AttendancePage: React.FC = () => {
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
-                    <div className="relative p-5 sm:p-6 flex items-center justify-between">
-                        <div className="flex items-center gap-5">
-                            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner border border-white/20 group-hover:scale-110 transition-transform duration-300">
-                                <CalendarIcon className="w-7 h-7" />
+                    <div className="relative p-4 sm:p-6 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
+                            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner border border-white/20 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                                <CalendarIcon className="w-5 h-5 sm:w-7 sm:h-7" />
                             </div>
-                            <div className="text-left">
-                                <p className="text-xs font-bold uppercase tracking-wider text-indigo-100 mb-1">Tanggal Absensi</p>
-                                <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-3">
+                            <div className="text-left flex-1 min-w-0">
+                                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-100 mb-0.5 sm:mb-1">Tanggal Absensi</p>
+                                <h2 className="text-base sm:text-2xl font-bold text-white leading-tight">
                                     {new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                                    {selectedDate === today && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
                                 </h2>
                             </div>
                         </div>
-                        <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-colors">
-                            <ChevronDownIcon className="w-6 h-6 text-white" />
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            {selectedDate === today && <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
+                            {selectedDate === today && <span className="sm:hidden inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-bold bg-white/20 text-white border border-white/20">HARI INI</span>}
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-colors">
+                                <ChevronDownIcon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -588,58 +591,60 @@ const AttendancePage: React.FC = () => {
             <main className="bg-transparent flex flex-col pb-32">
                 {/* Bulk Actions Bar */}
                 {students && students.length > 0 && (
-                    <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Aksi Cepat:</span>
-                            <Button
-                                onClick={markAllAsPresent}
-                                size="sm"
-                                variant="ghost"
-                                className="text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
-                                aria-label="Tandai semua hadir"
-                            >
-                                <CheckCircleIcon className="w-4 h-4 mr-1.5" />
-                                Semua Hadir
-                            </Button>
-                            <Button
-                                onClick={markAllAsAlpha}
-                                size="sm"
-                                variant="ghost"
-                                className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                                aria-label="Tandai semua alpha"
-                            >
-                                <XCircleIcon className="w-4 h-4 mr-1.5" />
-                                Semua Alpha
-                            </Button>
-                            <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
-                            <Button
-                                onClick={() => setIsQrModalOpen(true)}
-                                size="sm"
-                                variant="ghost"
-                                className="text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
-                                aria-label="Generate QR Code"
-                            >
-                                <QrCodeIcon className="w-4 h-4 mr-1.5" />
-                                QR Code
-                            </Button>
-                        </div>
-                        <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                                aria-label="Tampilan daftar"
-                                aria-pressed={viewMode === 'list'}
-                            >
-                                <ListIcon className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('calendar')}
-                                className={`p-2 rounded-md transition-colors ${viewMode === 'calendar' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                                aria-label="Tampilan kalender"
-                                aria-pressed={viewMode === 'calendar'}
-                            >
-                                <LayoutGridIcon className="w-4 h-4" />
-                            </button>
+                    <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">Aksi Cepat:</span>
+                            <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
+                                <Button
+                                    onClick={markAllAsPresent}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 px-2 sm:px-3"
+                                    aria-label="Tandai semua hadir"
+                                >
+                                    <CheckCircleIcon className="w-4 h-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">Semua Hadir</span>
+                                </Button>
+                                <Button
+                                    onClick={markAllAsAlpha}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 px-2 sm:px-3"
+                                    aria-label="Tandai semua alpha"
+                                >
+                                    <XCircleIcon className="w-4 h-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">Semua Alpha</span>
+                                </Button>
+                                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
+                                <Button
+                                    onClick={() => setIsQrModalOpen(true)}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 px-2 sm:px-3"
+                                    aria-label="Generate QR Code"
+                                >
+                                    <QrCodeIcon className="w-4 h-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">QR Code</span>
+                                </Button>
+                                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 ml-1">
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                        aria-label="Tampilan daftar"
+                                        aria-pressed={viewMode === 'list'}
+                                    >
+                                        <ListIcon className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('calendar')}
+                                        className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'calendar' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                        aria-label="Tampilan kalender"
+                                        aria-pressed={viewMode === 'calendar'}
+                                    >
+                                        <LayoutGridIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

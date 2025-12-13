@@ -193,7 +193,7 @@ const searchTasks = async (
 ): Promise<SearchResult[]> => {
     const { data: tasks } = await supabase
         .from('tasks')
-        .select('id, title, description, status, due_date, priority')
+        .select('id, title, description, status, due_date')
         .eq('user_id', userId);
 
     if (!tasks) return [];
@@ -215,7 +215,7 @@ const searchTasks = async (
                 title: task.title,
                 subtitle: statusLabels[task.status] || task.status,
                 description: task.due_date ? `Deadline: ${new Date(task.due_date).toLocaleDateString('id-ID')}` : undefined,
-                metadata: { status: task.status, priority: task.priority, dueDate: task.due_date },
+                metadata: { status: task.status, dueDate: task.due_date },
                 relevance,
                 link: '/tugas',
             };

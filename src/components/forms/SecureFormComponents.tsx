@@ -6,7 +6,7 @@ import {
     sanitizeFilename,
     escapeHtml,
     auditLog
-} from '../services/securityEnhanced';
+} from '../../services/securityEnhanced';
 
 // ============================================
 // SECURE INPUT COMPONENT

@@ -76,10 +76,28 @@ export default defineConfig(({ mode }) => {
         output: {
           // Manual chunk splitting for better caching
           manualChunks: {
-            // Vendor chunks
+            // Vendor chunks - core React
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            // UI libraries
             'vendor-ui': ['framer-motion', '@tanstack/react-query'],
+            // Utility libraries
             'vendor-utils': ['zod', 'date-fns'],
+            // Icons (heavy)
+            'vendor-icons': ['lucide-react'],
+            // Supabase
+            'vendor-supabase': ['@supabase/supabase-js'],
+            // Heavy export libraries (lazy loaded)
+            'vendor-export': ['xlsx', 'jspdf', 'jspdf-autotable', 'html2canvas'],
+            // Capacitor plugins
+            'vendor-capacitor': [
+              '@capacitor/app',
+              '@capacitor/haptics',
+              '@capacitor/keyboard',
+              '@capacitor/local-notifications',
+              '@capacitor/network',
+              '@capacitor/splash-screen',
+              '@capacitor/status-bar'
+            ],
           },
           // Asset naming for cache busting
           assetFileNames: (assetInfo) => {

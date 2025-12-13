@@ -9,10 +9,10 @@ export function useErrorMonitoring() {
     useEffect(() => {
         // Handle unhandled errors
         const handleError = (event: ErrorEvent) => {
+            const err = event.error instanceof Error ? event.error : new Error(event.message);
             logger.error(
-                `Unhandled Error: ${event.message}`,
-                'GlobalErrorHandler',
-                event.error,
+                `[GlobalErrorHandler] Unhandled Error: ${event.message}`,
+                err,
                 {
                     filename: event.filename,
                     lineno: event.lineno,
@@ -23,10 +23,10 @@ export function useErrorMonitoring() {
 
         // Handle unhandled promise rejections
         const handleRejection = (event: PromiseRejectionEvent) => {
+            const err = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
             logger.error(
-                `Unhandled Promise Rejection: ${event.reason}`,
-                'GlobalErrorHandler',
-                event.reason instanceof Error ? event.reason : new Error(String(event.reason))
+                `[GlobalErrorHandler] Unhandled Promise Rejection`,
+                err
             );
         };
 

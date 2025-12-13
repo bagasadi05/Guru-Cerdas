@@ -315,4 +315,4 @@ export function validateAndSanitize(input: string): { valid: boolean; sanitized:
 }
 
 // Export types
-export { SecurityEvent };
+export type { SecurityEvent };

@@ -203,25 +203,25 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
     const statusConfig = {
         synced: {
             icon: <Check className="w-4 h-4" />,
-            label: 'Tersinkronisasi',
+            label: 'Sinkron',
             color: 'text-emerald-500',
             bg: 'bg-emerald-100 dark:bg-emerald-900/30'
         },
         syncing: {
             icon: <RefreshCw className="w-4 h-4 animate-spin" />,
-            label: 'Menyinkronkan...',
+            label: 'Sinkron...',
             color: 'text-blue-500',
             bg: 'bg-blue-100 dark:bg-blue-900/30'
         },
         pending: {
             icon: <Clock className="w-4 h-4" />,
-            label: `${pendingCount} menunggu`,
+            label: `${pendingCount}`,
             color: 'text-amber-500',
             bg: 'bg-amber-100 dark:bg-amber-900/30'
         },
         error: {
             icon: <AlertTriangle className="w-4 h-4" />,
-            label: 'Gagal sinkron',
+            label: 'Gagal',
             color: 'text-red-500',
             bg: 'bg-red-100 dark:bg-red-900/30'
         },
@@ -246,12 +246,13 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
         <div className={`relative ${className}`}>
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${config.bg} ${config.color} transition-colors`}
+                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg ${config.bg} ${config.color} transition-colors`}
+                title={config.label}
             >
                 {config.icon}
-                <span className="text-sm font-medium">{config.label}</span>
+                <span className="text-sm font-medium hidden lg:inline">{config.label}</span>
                 {showDetails && (
-                    isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
+                    isExpanded ? <ChevronUp className="w-3 h-3 hidden lg:inline" /> : <ChevronDown className="w-3 h-3 hidden lg:inline" />
                 )}
             </button>
 

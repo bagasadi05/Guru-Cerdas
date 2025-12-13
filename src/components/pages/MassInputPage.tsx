@@ -446,16 +446,16 @@ const MassInputPage: React.FC = () => {
     }, [mode]);
 
     return (
-        <div className="w-full min-h-screen p-4 sm:p-6 md:p-8 pb-24 flex flex-col cosmic-bg text-white overflow-y-auto">
+        <div className="w-full min-h-screen p-4 sm:p-6 md:p-8 pb-24 flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-y-auto">
             {step === 1 ? <Step1_ModeSelection handleModeSelect={handleModeSelect} /> : (
                 <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
                     <header className="flex items-center gap-4 mb-6">
-                        <Button variant="outline" size="icon" onClick={handleBack} className="bg-white/10 border-white/20 hover:bg-white/20 flex-shrink-0">
+                        <Button variant="outline" size="icon" onClick={handleBack} className="bg-white dark:bg-white/10 border-slate-200 dark:border-white/20 hover:bg-slate-100 dark:hover:bg-white/20 flex-shrink-0">
                             <ArrowLeftIcon className="w-4 h-4" />
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">{actionCards.find(c => c.mode === mode)?.title}</h1>
-                            <p className="mt-1 text-gray-300">{actionCards.find(c => c.mode === mode)?.description}</p>
+                            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{actionCards.find(c => c.mode === mode)?.title}</h1>
+                            <p className="mt-1 text-slate-600 dark:text-gray-300">{actionCards.find(c => c.mode === mode)?.description}</p>
                         </div>
                     </header>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">

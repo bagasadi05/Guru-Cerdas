@@ -52,10 +52,10 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
 
     return (
         <footer className="sticky bottom-4 sm:bottom-6 md:bottom-8 z-30 animate-fade-in-up">
-            <div className="bg-gray-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-2xl shadow-black/50 mx-auto max-w-4xl ring-1 ring-white/10">
+            <div className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-2xl shadow-black/10 dark:shadow-black/50 mx-auto max-w-4xl ring-1 ring-slate-200 dark:ring-white/10">
                 <div className="flex items-center gap-4">
-                    <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                        <p className="text-sm font-medium text-indigo-200">{summaryText}</p>
+                    <div className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                        <p className="text-sm font-medium text-indigo-700 dark:text-indigo-200">{summaryText}</p>
                     </div>
                     {(mode !== 'subject_grade' && selectedStudentIds.size > 0) || (mode === 'subject_grade' && gradedCount > 0) ? (
                         <Button

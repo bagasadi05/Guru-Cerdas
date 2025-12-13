@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 import { Card, CardContent } from './Card';
@@ -13,7 +14,7 @@ import { Card, CardContent } from './Card';
  * - Focus management with visible focus rings
  * - data-state attributes for styling
  */
-const meta = {
+const meta: Meta<typeof Tabs> = {
   title: 'UI/Tabs',
   component: Tabs,
   parameters: {
@@ -39,10 +40,10 @@ const meta = {
       description: 'Callback when tab changes',
     },
   },
-} satisfies Meta<typeof Tabs>;
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<typeof Tabs>;
 
 /**
  * Basic tabs with simple content.
@@ -288,17 +289,17 @@ export const ManyTabs: Story = {
 export const Controlled: Story = {
   render: () => {
     const [activeTab, setActiveTab] = React.useState('home');
-    
+
     return (
       <div style={{ width: '600px' }}>
         <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
-          <button 
+          <button
             onClick={() => setActiveTab('home')}
             style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', border: '1px solid #d1d5db' }}
           >
             Go to Home
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('settings')}
             style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', border: '1px solid #d1d5db' }}
           >

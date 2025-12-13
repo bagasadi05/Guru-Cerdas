@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, createContext, useContext, useMemo } from 'react';
 import { Search, X, Clock, TrendingUp, Users, Calendar, ClipboardList, Filter, ChevronRight, ArrowRight } from 'lucide-react';
+import { sanitizeHtml } from '../utils/validation';
 
 /**
  * Advanced Search & Filtering System
@@ -276,10 +277,13 @@ export const GlobalSearchModal: React.FC<{
     };
 
     const highlightMatch = (text: string, query: string) => {
-        if (!query.trim()) return text;
+        if (!query.trim()) return sanitizeHtml(text);
+        // SECURITY: Sanitize text to prevent XSS before adding HTML markup
+        const safeText = sanitizeHtml(text);
         const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">$1</mark>');
+        return safeText.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">$1</mark>');
     };
+
 
     if (!isOpen) return null;
 

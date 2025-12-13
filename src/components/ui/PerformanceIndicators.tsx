@@ -377,7 +377,7 @@ export const EnhancedSyncStatus: React.FC<EnhancedSyncStatusProps> = ({
             color: 'text-green-500',
             bgColor: 'bg-green-100 dark:bg-green-900/30',
             borderColor: 'border-green-200 dark:border-green-800',
-            label: 'Tersinkronisasi',
+            label: 'Sinkron',
             description: 'Semua data tersinkronisasi',
             animate: false,
         };
@@ -388,31 +388,33 @@ export const EnhancedSyncStatus: React.FC<EnhancedSyncStatusProps> = ({
 
     return (
         <div className={`relative ${className}`}>
-            {/* Main Status Button */}
+            {/* Main Status Button - Icon Only with Tooltip */}
             <button
                 onClick={() => showDetails && setIsExpanded(!isExpanded)}
                 className={`
-                    flex items-center gap-2 px-3 py-2 rounded-xl border transition-all
+                    flex items-center justify-center w-10 h-10 rounded-xl border transition-all
                     ${config.bgColor} ${config.borderColor}
                     ${showDetails ? 'cursor-pointer hover:shadow-md' : 'cursor-default'}
+                    group relative
                 `}
+                title={config.label}
+                aria-label={config.label}
             >
                 <div className="relative">
                     <Icon className={`w-5 h-5 ${config.color} ${config.animate ? 'animate-pulse' : ''}`} />
                     {pendingCount > 0 && (
                         <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-ping" />
                     )}
+                    {failedCount > 0 && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center">
+                            {failedCount}
+                        </div>
+                    )}
                 </div>
-                <span className={`text-sm font-medium ${config.color}`}>
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                     {config.label}
-                </span>
-                {showDetails && (failedCount > 0 || pendingCount > 0) && (
-                    isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-slate-400" />
-                    ) : (
-                        <ChevronDown className="w-4 h-4 text-slate-400" />
-                    )
-                )}
+                </div>
             </button>
 
             {/* Expanded Details */}
@@ -447,10 +449,10 @@ export const EnhancedSyncStatus: React.FC<EnhancedSyncStatusProps> = ({
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.status === 'failed'
-                                                ? 'bg-red-100 dark:bg-red-900/30'
-                                                : item.status === 'syncing'
-                                                    ? 'bg-blue-100 dark:bg-blue-900/30'
-                                                    : 'bg-slate-100 dark:bg-slate-800'
+                                            ? 'bg-red-100 dark:bg-red-900/30'
+                                            : item.status === 'syncing'
+                                                ? 'bg-blue-100 dark:bg-blue-900/30'
+                                                : 'bg-slate-100 dark:bg-slate-800'
                                             }`}>
                                             {item.status === 'syncing' ? (
                                                 <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
@@ -736,10 +738,10 @@ export const UploadProgressIndicator: React.FC<UploadProgressIndicatorProps> = (
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${upload.status === 'completed'
-                                            ? 'bg-green-100 dark:bg-green-900/30'
-                                            : upload.status === 'failed'
-                                                ? 'bg-red-100 dark:bg-red-900/30'
-                                                : 'bg-blue-100 dark:bg-blue-900/30'
+                                        ? 'bg-green-100 dark:bg-green-900/30'
+                                        : upload.status === 'failed'
+                                            ? 'bg-red-100 dark:bg-red-900/30'
+                                            : 'bg-blue-100 dark:bg-blue-900/30'
                                         }`}>
                                         {upload.status === 'completed' ? (
                                             <CheckCircle2 className="w-5 h-5 text-green-500" />

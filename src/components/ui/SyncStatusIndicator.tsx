@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CloudOffIcon, CloudIcon, RefreshCwIcon, CheckCircleIcon, AlertCircleIcon, ClockIcon } from '../Icons';
+import { RefreshCwIcon, CheckCircleIcon, AlertCircleIcon, ClockIcon } from '../Icons';
+import { Signal, SignalZero } from 'lucide-react';
 
 interface SyncItem {
     id: string;
@@ -78,7 +79,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
 
     const statusConfig = {
         offline: {
-            icon: CloudOffIcon,
+            icon: SignalZero,
             color: 'text-gray-500',
             bg: 'bg-gray-100 dark:bg-gray-800',
             label: 'Offline',
@@ -109,7 +110,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
             icon: CheckCircleIcon,
             color: 'text-green-500',
             bg: 'bg-green-100 dark:bg-green-900/30',
-            label: 'Tersinkronisasi',
+            label: 'Sinkron',
             description: 'Semua data sudah tersinkronisasi'
         }
     };
@@ -122,10 +123,11 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
             {/* Status Badge */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${config.bg} transition-all hover:scale-105`}
+                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-full ${config.bg} transition-all hover:scale-105`}
+                title={config.label}
             >
                 <Icon className={`w-4 h-4 ${config.color} ${status === 'syncing' ? 'animate-spin' : ''}`} />
-                <span className={`text-sm font-medium ${config.color}`}>
+                <span className={`text-sm font-medium ${config.color} hidden lg:inline`}>
                     {config.label}
                 </span>
                 {pendingCount > 0 && status !== 'synced' && (
@@ -143,7 +145,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
                         <div className="flex items-center justify-between">
                             <h3 className="font-bold text-gray-900 dark:text-white">Status Sinkronisasi</h3>
                             <div className={`flex items-center gap-1 ${isOnline ? 'text-green-500' : 'text-gray-400'}`}>
-                                {isOnline ? <CloudIcon className="w-4 h-4" /> : <CloudOffIcon className="w-4 h-4" />}
+                                {isOnline ? <Signal className="w-4 h-4" /> : <SignalZero className="w-4 h-4" />}
                                 <span className="text-xs">{isOnline ? 'Online' : 'Offline'}</span>
                             </div>
                         </div>
@@ -175,8 +177,8 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
                                     <div
                                         key={item.id}
                                         className={`flex items-center justify-between p-2 rounded-lg text-xs ${item.status === 'error' ? 'bg-red-50 dark:bg-red-900/20' :
-                                                item.status === 'syncing' ? 'bg-blue-50 dark:bg-blue-900/20' :
-                                                    'bg-gray-50 dark:bg-gray-800'
+                                            item.status === 'syncing' ? 'bg-blue-50 dark:bg-blue-900/20' :
+                                                'bg-gray-50 dark:bg-gray-800'
                                             }`}
                                     >
                                         <span className="text-gray-600 dark:text-gray-400">
@@ -214,8 +216,8 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
                             onClick={handleSync}
                             disabled={!isOnline || isSyncing}
                             className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${isOnline && !isSyncing
-                                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                                ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                                 }`}
                         >
                             <RefreshCwIcon className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />

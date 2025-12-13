@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BellIcon, CheckIcon, TrashIcon, XIcon } from 'lucide-react';
 import { Button } from './Button';
+import {
+    playNotificationSound,
+    playSuccessSound,
+    playErrorSound,
+    playReminderSound,
+} from '../../utils/notificationSound';
 
 export interface Notification {
     id: string;
@@ -238,13 +244,33 @@ export const useNotifications = () => {
         localStorage.setItem('portal-guru-notifications', JSON.stringify(notifications));
     }, [notifications]);
 
-    const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+    const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>, playSound = true) => {
         const newNotification: Notification = {
             ...notification,
             id: crypto.randomUUID(),
             timestamp: new Date(),
             read: false,
         };
+
+        // Play appropriate sound based on notification type
+        if (playSound) {
+            switch (notification.type) {
+                case 'success':
+                    playSuccessSound();
+                    break;
+                case 'error':
+                    playErrorSound();
+                    break;
+                case 'warning':
+                    playReminderSound();
+                    break;
+                case 'info':
+                default:
+                    playNotificationSound();
+                    break;
+            }
+        }
+
         setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep max 50
     };
 

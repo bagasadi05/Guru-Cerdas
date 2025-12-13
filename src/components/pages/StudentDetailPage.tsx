@@ -438,12 +438,14 @@ const StudentDetailPage = () => {
 
                 <AiStudentSummary studentDetails={studentDetails} />
 
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard icon={CheckCircleIcon} label="Total Kehadiran" value={`${attendanceSummary.Hadir} hari`} color="from-green-500 to-emerald-400" />
-                    <StatCard icon={AlertCircleIcon} label="Total Izin/Sakit" value={`${attendanceSummary.Izin + attendanceSummary.Sakit} hari`} color="from-yellow-500 to-amber-400" />
-                    <StatCard icon={XCircleIcon} label="Total Alpha" value={`${attendanceSummary.Alpha} hari`} color="from-orange-500 to-red-400" />
+                <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <StatCard icon={CheckCircleIcon} label="Hadir" value={`${attendanceSummary.Hadir} hari`} color="from-green-500 to-emerald-400" />
+                    <StatCard icon={AlertCircleIcon} label="Izin" value={`${attendanceSummary.Izin} hari`} color="from-blue-500 to-cyan-400" />
+                    <StatCard icon={AlertCircleIcon} label="Sakit" value={`${attendanceSummary.Sakit} hari`} color="from-yellow-500 to-amber-400" />
+                    <StatCard icon={XCircleIcon} label="Alpha" value={`${attendanceSummary.Alpha} hari`} color="from-orange-500 to-red-400" />
                     <StatCard icon={ShieldAlertIcon} label="Poin Pelanggaran" value={totalViolationPoints} color="from-red-500 to-rose-400" />
                 </section>
+
 
                 <Card>
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

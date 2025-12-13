@@ -38,28 +38,50 @@ const SettingsPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50 dark:bg-slate-950/50 p-4 md:p-8 font-sans">
-            <div className="max-w-7xl mx-auto space-y-8">
-                {/* Premium Header */}
-                <header className="relative p-8 md:p-12 rounded-3xl bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-900 via-purple-900 to-slate-900 text-white shadow-2xl shadow-indigo-900/20 overflow-hidden isolate">
+        <div className="min-h-screen bg-gray-50/50 dark:bg-slate-950/50 p-3 sm:p-4 md:p-8 font-sans pb-24 lg:pb-8">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-8">
+                {/* Premium Header - Compact on mobile */}
+                <header className="relative p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-900 via-purple-900 to-slate-900 text-white shadow-2xl shadow-indigo-900/20 overflow-hidden isolate">
                     {/* Decorative Elements */}
                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-purple-500/30 rounded-full blur-3xl -z-10"></div>
                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/20 to-transparent -z-10"></div>
 
                     <div className="relative z-10 animate-fade-in-up">
-                        <h1 className="text-3xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-100 to-indigo-200">
+                        <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-100 to-indigo-200">
                             Pengaturan
                         </h1>
-                        <p className="mt-4 text-indigo-100/80 text-lg max-w-2xl leading-relaxed">
-                            Kelola profil, tampilan, dan preferensi notifikasi Anda dengan pengalaman yang lebih personal.
+                        <p className="mt-2 sm:mt-4 text-indigo-100/80 text-sm sm:text-lg max-w-2xl leading-relaxed">
+                            Kelola profil, tampilan, dan preferensi notifikasi Anda.
                         </p>
                     </div>
                 </header>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    {/* Navigation Sidebar */}
-                    <aside className="lg:col-span-3 space-y-4">
-                        <nav className="flex flex-wrap lg:flex-col gap-2 p-2 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-lg">
+                {/* Mobile Tab Navigation - Horizontal scroll */}
+                <div className="lg:hidden overflow-x-auto -mx-3 px-3 scrollbar-hide">
+                    <nav className="flex gap-2 p-1.5 rounded-xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-lg min-w-max">
+                        {navItems.map((item) => (
+                            <button
+                                key={item.id}
+                                onClick={() => setActiveTab(item.id)}
+                                className={`
+                                    flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all duration-300 whitespace-nowrap
+                                    ${activeTab === item.id
+                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
+                                        : 'text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-white/5'
+                                    }
+                                `}
+                            >
+                                <item.icon className="w-4 h-4 flex-shrink-0" />
+                                <span className="text-sm font-semibold">{item.label}</span>
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
+                    {/* Desktop Navigation Sidebar - Hidden on mobile */}
+                    <aside className="hidden lg:block lg:col-span-3 space-y-4">
+                        <nav className="flex flex-col gap-2 p-2 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-lg sticky top-4">
                             {navItems.map((item) => (
                                 <button
                                     key={item.id}

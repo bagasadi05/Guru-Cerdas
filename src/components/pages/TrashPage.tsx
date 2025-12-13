@@ -270,25 +270,25 @@ const TrashPage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
                 <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
             <div className="p-4 md:p-6 lg:p-8 space-y-6 w-full pb-24 lg:pb-6">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                                <Trash2 className="w-5 h-5 text-red-400" />
+                            <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-500/20 flex items-center justify-center">
+                                <Trash2 className="w-5 h-5 text-red-500 dark:text-red-400" />
                             </div>
-                            <h1 className="text-3xl font-bold text-white">Sampah</h1>
+                            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Sampah</h1>
                         </div>
-                        <p className="text-slate-400 text-sm">
+                        <p className="text-slate-500 dark:text-slate-400 text-sm">
                             Item yang dihapus akan disimpan selama 30 hari sebelum dihapus permanen
                         </p>
                     </div>
@@ -296,24 +296,24 @@ const TrashPage: React.FC = () => {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                    <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-4">
-                        <div className="text-2xl font-bold text-white">{stats.total}</div>
-                        <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mt-1">Total</div>
+                    <div className="bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">Total</div>
                     </div>
                     {Object.entries(entityConfig).map(([key, config]) => (
                         <div
                             key={key}
-                            className={`bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-4 cursor-pointer transition-all ${filterEntity === key ? 'ring-2 ring-indigo-500' : ''
+                            className={`bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 cursor-pointer transition-all shadow-sm hover:shadow-md ${filterEntity === key ? 'ring-2 ring-indigo-500' : ''
                                 }`}
                             onClick={() => setFilterEntity(filterEntity === key ? 'all' : key as SoftDeleteEntity)}
                         >
                             <div className="flex items-center gap-2">
                                 <div className={`${config.color}`}>{config.icon}</div>
-                                <div className="text-2xl font-bold text-white">
+                                <div className="text-2xl font-bold text-slate-900 dark:text-white">
                                     {stats[key as keyof typeof stats]}
                                 </div>
                             </div>
-                            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mt-1">
+                            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">
                                 {config.labelPlural}
                             </div>
                         </div>
@@ -340,7 +340,7 @@ const TrashPage: React.FC = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Cari item yang dihapus..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         />
                     </div>
 
@@ -371,12 +371,12 @@ const TrashPage: React.FC = () => {
 
                 {/* Items List */}
                 {filteredItems.length === 0 ? (
-                    <div className="text-center py-16 bg-slate-800/30 rounded-2xl border border-slate-700/50">
-                        <div className="w-20 h-20 mx-auto rounded-2xl bg-slate-800 flex items-center justify-center mb-4">
-                            <Trash2 className="w-10 h-10 text-slate-600" />
+                    <div className="text-center py-16 bg-white dark:bg-slate-800/30 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-sm">
+                        <div className="w-20 h-20 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                            <Trash2 className="w-10 h-10 text-slate-400 dark:text-slate-600" />
                         </div>
-                        <h3 className="text-xl font-semibold text-white mb-2">Sampah Kosong</h3>
-                        <p className="text-slate-400">Tidak ada item yang dihapus</p>
+                        <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Sampah Kosong</h3>
+                        <p className="text-slate-500 dark:text-slate-400">Tidak ada item yang dihapus</p>
                     </div>
                 ) : (
                     <div className="space-y-6">
@@ -387,9 +387,9 @@ const TrashPage: React.FC = () => {
                                     type="checkbox"
                                     checked={selectedItems.size === filteredItems.length && filteredItems.length > 0}
                                     onChange={selectAll}
-                                    className="w-4 h-4 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-slate-800"
+                                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-white dark:bg-slate-800"
                                 />
-                                <span className="text-sm text-slate-400">Pilih Semua</span>
+                                <span className="text-sm text-slate-600 dark:text-slate-400">Pilih Semua</span>
                             </label>
                         </div>
 
@@ -405,22 +405,22 @@ const TrashPage: React.FC = () => {
                                         <div className={`w-6 h-6 rounded-lg ${config.bgColor} flex items-center justify-center ${config.color}`}>
                                             {config.icon}
                                         </div>
-                                        <h3 className="font-semibold text-white">{config.labelPlural}</h3>
-                                        <span className="text-sm text-slate-400">({items.length})</span>
+                                        <h3 className="font-semibold text-slate-900 dark:text-white">{config.labelPlural}</h3>
+                                        <span className="text-sm text-slate-500 dark:text-slate-400">({items.length})</span>
                                     </div>
 
                                     <div className="space-y-2">
                                         {items.map(item => (
                                             <div
                                                 key={item.id}
-                                                className={`flex items-center gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-xl hover:bg-slate-800/60 transition-all ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500' : ''
+                                                className={`flex items-center gap-4 p-4 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all shadow-sm ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500' : ''
                                                     }`}
                                             >
                                                 <input
                                                     type="checkbox"
                                                     checked={selectedItems.has(item.id)}
                                                     onChange={() => toggleSelect(item.id)}
-                                                    className="w-4 h-4 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-slate-800"
+                                                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-white dark:bg-slate-800"
                                                 />
 
                                                 <div className={`w-10 h-10 rounded-xl ${config.bgColor} flex items-center justify-center ${config.color}`}>
@@ -428,19 +428,19 @@ const TrashPage: React.FC = () => {
                                                 </div>
 
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-white truncate">
+                                                    <p className="font-medium text-slate-900 dark:text-white truncate">
                                                         {getItemDisplayName(item)}
                                                     </p>
-                                                    <p className="text-sm text-slate-400">
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
                                                         Dihapus {new Date(item.deletedAt).toLocaleDateString('id-ID')}
                                                     </p>
                                                 </div>
 
                                                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${item.daysRemaining <= 3
-                                                        ? 'bg-red-500/20 text-red-400'
-                                                        : item.daysRemaining <= 7
-                                                            ? 'bg-amber-500/20 text-amber-400'
-                                                            : 'bg-slate-700/50 text-slate-400'
+                                                    ? 'bg-red-500/20 text-red-400'
+                                                    : item.daysRemaining <= 7
+                                                        ? 'bg-amber-500/20 text-amber-400'
+                                                        : 'bg-slate-700/50 text-slate-400'
                                                     }`}>
                                                     <Clock className="w-3 h-3" />
                                                     {item.daysRemaining} hari lagi

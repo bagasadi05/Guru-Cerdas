@@ -68,46 +68,50 @@ export const StudentSortControls: React.FC<StudentSortControlsProps> = ({
     };
 
     return (
-        <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+        <div className={`flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-3 ${className}`}>
             {/* Sort Controls */}
-            <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 mr-1">Urutkan:</span>
-                <SortButton field="index" label="No" />
-                <SortButton field="name" label="Nama" />
-                <SortButton field="score" label="Nilai" />
+            <div className="flex items-center gap-1 flex-wrap">
+                <span className="text-xs text-gray-400 mr-1 whitespace-nowrap">Urutkan:</span>
+                <div className="flex items-center gap-1">
+                    <SortButton field="index" label="No" />
+                    <SortButton field="name" label="Nama" />
+                    <SortButton field="score" label="Nilai" />
+                </div>
             </div>
 
             {/* Grouping Controls */}
             {showGrouping && (
-                <div className="flex items-center gap-1 ml-auto">
-                    <span className="text-xs text-gray-400 mr-1">Kelompok:</span>
-                    <button
-                        onClick={() => onGroupByChange('none')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'none'
+                <div className="flex items-center gap-1 flex-wrap">
+                    <span className="text-xs text-gray-400 mr-1 whitespace-nowrap">Kelompok:</span>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => onGroupByChange('none')}
+                            className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'none'
                                 ? 'bg-indigo-500 text-white'
                                 : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                            }`}
-                    >
-                        Semua
-                    </button>
-                    <button
-                        onClick={() => onGroupByChange('status')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'status'
+                                }`}
+                        >
+                            Semua
+                        </button>
+                        <button
+                            onClick={() => onGroupByChange('status')}
+                            className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'status'
                                 ? 'bg-indigo-500 text-white'
                                 : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                            }`}
-                    >
-                        Status
-                    </button>
-                    <button
-                        onClick={() => onGroupByChange('scoreRange')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'scoreRange'
+                                }`}
+                        >
+                            Status
+                        </button>
+                        <button
+                            onClick={() => onGroupByChange('scoreRange')}
+                            className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'scoreRange'
                                 ? 'bg-indigo-500 text-white'
                                 : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                            }`}
-                    >
-                        Rentang
-                    </button>
+                                }`}
+                        >
+                            Rentang
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

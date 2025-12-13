@@ -87,7 +87,7 @@ describe('Error Handling Service', () => {
         });
 
         it('should classify 403 as permission error', () => {
-            const status = 403;
+            const status: number = 403;
             const type = status === 401 ? 'AUTH' : status === 403 ? 'PERMISSION' : 'UNKNOWN';
             expect(type).toBe('PERMISSION');
         });

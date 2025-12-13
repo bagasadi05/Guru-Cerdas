@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { ClockIcon, UserIcon, EditIcon, PlusIcon, TrashIcon } from '../Icons';
+import { ClockIcon, UsersIcon, EditIcon, PlusIcon, TrashIcon } from '../Icons';
 import { AuditLog, getAuditLogs, getUserActivityLogs } from '../../services/gradeService';
 
 interface AuditLogViewerProps {
@@ -140,7 +140,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
                                 {/* User info */}
                                 <div className="flex items-center gap-1 text-sm text-gray-500 mb-3">
-                                    <UserIcon className="w-3 h-3" />
+                                    <UsersIcon className="w-3 h-3" />
                                     <span>{log.user_email || 'Unknown user'}</span>
                                 </div>
 
@@ -164,10 +164,10 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
                                 {log.action === 'INSERT' && log.new_data && (
                                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                                        {log.new_data.score && (
+                                        {log.new_data.score !== undefined && (
                                             <span>Nilai: <strong>{String(log.new_data.score)}</strong></span>
                                         )}
-                                        {log.new_data.subject && (
+                                        {log.new_data.subject !== undefined && (
                                             <span className="ml-2">({String(log.new_data.subject)})</span>
                                         )}
                                     </div>
@@ -175,7 +175,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
                                 {log.action === 'DELETE' && log.old_data && (
                                     <div className="text-sm text-red-600 dark:text-red-400">
-                                        Data dihapus: {log.old_data.score && `Nilai ${log.old_data.score}`}
+                                        Data dihapus: {log.old_data.score !== undefined ? `Nilai ${String(log.old_data.score)}` : ''}
                                     </div>
                                 )}
                             </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -6,8 +6,6 @@ import { Select } from '../ui/Select';
 import { Modal } from '../ui/Modal';
 import {
     PlusIcon,
-    CheckCircleIcon,
-    ClockIcon,
     TrashIcon,
     EditIcon,
     CalendarIcon,
@@ -19,27 +17,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Database } from '../../services/database.types';
 import { useToast } from '../../hooks/useToast';
 import { TasksPageSkeleton } from '../skeletons/PageSkeletons';
-import {
-    DndContext,
-    DragEndEvent,
-    DragOverlay,
-    DragStartEvent,
-    PointerSensor,
-    TouchSensor,
-    useSensor,
-    useSensors,
-    useDroppable,
-    DragOverEvent,
-    rectIntersection,
-} from '@dnd-kit/core';
-import {
-    SortableContext,
-    useSortable,
-    verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, MoreVertical, Loader2, PlayCircle, Circle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { MoreVertical, Loader2, PlayCircle, Circle, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import { ValidationService } from '../../services/ValidationService';
+import { recordAction } from '../../services/UndoManager';
 import { ValidationRules } from '../../types';
 
 // Native date helpers
@@ -62,267 +42,257 @@ const fetchTasks = async (userId: string): Promise<TaskRow[]> => {
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
+        .is('deleted_at', null)  // Filter out soft-deleted tasks
         .order('created_at', { ascending: false });
 
     if (error) throw error;
     return data || [];
 };
 
-// Column configuration
-const columns: { id: TaskStatus; title: string; icon: React.ReactNode; color: string; bgColor: string }[] = [
-    {
-        id: 'todo',
+// Status configuration
+const statusConfig: Record<TaskStatus, { title: string; icon: React.ReactNode; color: string; bgColor: string; textColor: string }> = {
+    todo: {
         title: 'To Do',
         icon: <Circle className="w-4 h-4" />,
         color: 'text-slate-400',
-        bgColor: 'bg-slate-500/20'
+        bgColor: 'bg-slate-500/20',
+        textColor: 'text-slate-600 dark:text-slate-400'
     },
-    {
-        id: 'in_progress',
+    in_progress: {
         title: 'In Progress',
         icon: <PlayCircle className="w-4 h-4" />,
         color: 'text-blue-400',
-        bgColor: 'bg-blue-500/20'
+        bgColor: 'bg-blue-500/20',
+        textColor: 'text-blue-600 dark:text-blue-400'
     },
-    {
-        id: 'done',
+    done: {
         title: 'Selesai',
         icon: <CheckCircle2 className="w-4 h-4" />,
         color: 'text-emerald-400',
-        bgColor: 'bg-emerald-500/20'
+        bgColor: 'bg-emerald-500/20',
+        textColor: 'text-emerald-600 dark:text-emerald-400'
     },
-];
+};
+
+const statusOrder: TaskStatus[] = ['todo', 'in_progress', 'done'];
 
 const taskRules: ValidationRules = {
     title: [ValidationService.validators.required("Judul tugas harus diisi")]
 };
-
 
 // Task Card Component
 interface TaskCardProps {
     task: TaskRow;
     onEdit: (task: TaskRow) => void;
     onDelete: (id: string) => void;
-    isDragging?: boolean;
-    isOverlay?: boolean;
+    onStatusChange: (id: string, newStatus: TaskStatus) => void;
+    isUpdating?: boolean;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, isDragging, isOverlay }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusChange, isUpdating }) => {
     const [showMenu, setShowMenu] = useState(false);
     const overdue = isOverdue(task.due_date) && task.status !== 'done';
+    const currentStatus = statusConfig[task.status];
+
+    // Get next status
+    const currentIndex = statusOrder.indexOf(task.status);
+    const nextStatus = currentIndex < statusOrder.length - 1 ? statusOrder[currentIndex + 1] : null;
+    const prevStatus = currentIndex > 0 ? statusOrder[currentIndex - 1] : null;
 
     return (
         <div
             className={`
                 rounded-2xl p-4 border transition-all duration-300 group relative overflow-hidden
-                ${isDragging
-                    ? 'shadow-2xl border-indigo-500/50 ring-2 ring-indigo-500/30 rotate-2 scale-105 z-50 bg-slate-800/90'
-                    : 'glass-card border-white/20 dark:border-white/5 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-1'
-                }
-                ${isOverlay ? 'shadow-2xl rotate-3 cursor-grabbing' : ''}
-                ${overdue ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-transparent hover:border-l-indigo-500'}
+                bg-white dark:bg-slate-800/50 border-slate-200 dark:border-white/5 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/10 shadow-sm
+                ${overdue ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-transparent'}
+                ${isUpdating ? 'opacity-60 pointer-events-none' : ''}
             `}
         >
-            <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 dark:from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
+            {/* Header with Status Badge */}
             <div className="flex items-start gap-3">
-                {/* Drag Handle */}
-                <div className="pt-0.5 cursor-grab active:cursor-grabbing">
-                    <GripVertical className="w-4 h-4 text-slate-500 group-hover:text-slate-400" />
+                {/* Status Badge */}
+                <div className={`p-2 rounded-xl ${currentStatus.bgColor} ${currentStatus.color}`}>
+                    {currentStatus.icon}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                        <h4 className={`font-medium text-white leading-snug ${task.status === 'done' ? 'line-through text-slate-400' : ''}`}>
-                            {task.title}
-                        </h4>
+                        <div>
+                            <h4 className={`font-medium text-slate-800 dark:text-white leading-snug ${task.status === 'done' ? 'line-through text-slate-400 dark:text-slate-400' : ''}`}>
+                                {task.title}
+                            </h4>
+                            <span className={`text-xs font-medium ${currentStatus.textColor}`}>
+                                {currentStatus.title}
+                            </span>
+                        </div>
 
                         {/* Menu */}
-                        {!isOverlay && (
-                            <div className="relative">
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                                    className="p-1 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
-                                >
-                                    <MoreVertical className="w-4 h-4" />
-                                </button>
+                        <div className="relative">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+                                className="p-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                                aria-label="Opsi tugas"
+                                aria-expanded={showMenu}
+                                aria-haspopup="menu"
+                            >
+                                <MoreVertical className="w-4 h-4" />
+                            </button>
 
-                                {showMenu && (
-                                    <>
-                                        <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                                        <div className="absolute right-0 top-full mt-1 w-36 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 py-1 z-20">
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); onEdit(task); setShowMenu(false); }}
-                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700/50"
-                                            >
-                                                <EditIcon className="w-4 h-4" />
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); onDelete(task.id); setShowMenu(false); }}
-                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10"
-                                            >
-                                                <TrashIcon className="w-4 h-4" />
-                                                Hapus
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
+                            {showMenu && (
+                                <>
+                                    <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                                    <div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1 z-20">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onEdit(task); setShowMenu(false); }}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                                        >
+                                            <EditIcon className="w-4 h-4" />
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onDelete(task.id); setShowMenu(false); }}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                                        >
+                                            <TrashIcon className="w-4 h-4" />
+                                            Hapus
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
 
                     {task.description && (
-                        <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 line-clamp-2">
                             {task.description}
                         </p>
                     )}
 
-                    {/* Footer */}
-                    {task.due_date && (
-                        <div className="flex items-center gap-3 mt-3">
+                    {/* Footer with Date and Status Buttons */}
+                    <div className="flex items-center justify-between gap-3 mt-4">
+                        {/* Due Date */}
+                        {task.due_date && (
                             <div className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-lg ${overdue
-                                ? 'bg-red-500/20 text-red-400'
-                                : 'bg-slate-700/50 text-slate-400'
+                                ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                                : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400'
                                 }`}>
                                 {overdue ? <AlertTriangle className="w-3 h-3" /> : <CalendarIcon className="w-3 h-3" />}
                                 {formatDateDisplay(new Date(task.due_date))}
                             </div>
+                        )}
+
+                        {/* Status Change Buttons */}
+                        <div className="flex items-center gap-2 ml-auto">
+                            {prevStatus && (
+                                <button
+                                    onClick={() => onStatusChange(task.id, prevStatus)}
+                                    className="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600/50 hover:text-slate-800 dark:hover:text-white transition-all flex items-center gap-1"
+                                    title={`Pindah ke ${statusConfig[prevStatus].title}`}
+                                    disabled={isUpdating}
+                                >
+                                    <ArrowRight className="w-3 h-3 rotate-180" />
+                                    {statusConfig[prevStatus].title}
+                                </button>
+                            )}
+                            {nextStatus && (
+                                <button
+                                    onClick={() => onStatusChange(task.id, nextStatus)}
+                                    className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1 ${nextStatus === 'done'
+                                        ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                                        : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+                                        }`}
+                                    title={`Pindah ke ${statusConfig[nextStatus].title}`}
+                                    disabled={isUpdating}
+                                >
+                                    {statusConfig[nextStatus].title}
+                                    <ArrowRight className="w-3 h-3" />
+                                </button>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-// Draggable Task Card Wrapper
-interface DraggableTaskCardProps {
-    task: TaskRow;
-    onEdit: (task: TaskRow) => void;
-    onDelete: (id: string) => void;
-}
-
-const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, onEdit, onDelete }) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: task.id });
-
-    const style: React.CSSProperties = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.3 : 1,
-    };
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            className="touch-none"
-        >
-            <TaskCard
-                task={task}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                isDragging={isDragging}
-            />
-        </div>
-    );
-};
-
-// Droppable Column Component
-interface DroppableColumnProps {
-    column: typeof columns[0];
+// Column Component (non-draggable)
+interface ColumnProps {
+    status: TaskStatus;
     tasks: TaskRow[];
     onEdit: (task: TaskRow) => void;
     onDelete: (id: string) => void;
+    onStatusChange: (id: string, newStatus: TaskStatus) => void;
     onAddTask: (status: TaskStatus) => void;
-    isOver: boolean;
+    updatingTaskId: string | null;
 }
 
-const DroppableColumn: React.FC<DroppableColumnProps> = ({
-    column,
+const Column: React.FC<ColumnProps> = ({
+    status,
     tasks,
     onEdit,
     onDelete,
+    onStatusChange,
     onAddTask,
-    isOver
+    updatingTaskId
 }) => {
-    const { setNodeRef } = useDroppable({
-        id: column.id,
-    });
+    const config = statusConfig[status];
 
     return (
         <div className="flex-1 min-w-[300px] max-w-[400px]">
             {/* Column Header */}
             <div className="flex items-center justify-between mb-4 px-2">
                 <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-xl ${column.bgColor} flex items-center justify-center ${column.color} shadow-sm`}>
-                        {column.icon}
+                    <div className={`w-8 h-8 rounded-xl ${config.bgColor} flex items-center justify-center ${config.color} shadow-sm`}>
+                        {config.icon}
                     </div>
                     <div>
-                        <h3 className="font-bold text-slate-800 dark:text-white dark:text-shadow-sm">{column.title}</h3>
+                        <h3 className="font-bold text-slate-800 dark:text-white dark:text-shadow-sm">{config.title}</h3>
                         <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-200/50 dark:bg-slate-700/50 px-2 py-0.5 rounded-full">{tasks.length} tugas</span>
                     </div>
                 </div>
                 <button
-                    onClick={() => onAddTask(column.id)}
-                    className="p-2 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors"
+                    onClick={() => onAddTask(status)}
+                    className="p-2 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
                     title="Tambah tugas"
+                    aria-label="Tambah tugas baru"
                 >
                     <PlusIcon className="w-4 h-4" />
                 </button>
             </div>
 
-            {/* Droppable Task List */}
-            <div
-                ref={setNodeRef}
-                className={`
-                    rounded-3xl p-3 min-h-[300px] border-2 border-dashed transition-all duration-300
-                    ${isOver
-                        ? 'bg-indigo-500/10 border-indigo-500/50 scale-[1.02]'
-                        : 'bg-slate-50/50 dark:bg-slate-800/30 border-slate-200/50 dark:border-slate-700/30'
-                    }
-                `}
-            >
-                <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-3">
-                        {tasks.length === 0 ? (
-                            <div className={`text-center py-8 transition-all ${isOver ? 'scale-105' : ''}`}>
-                                <div className={`w-12 h-12 mx-auto rounded-xl ${column.bgColor} flex items-center justify-center ${column.color} mb-3`}>
-                                    {column.icon}
-                                </div>
-                                <p className="text-sm text-slate-500">
-                                    {isOver ? 'Lepaskan di sini!' : 'Tidak ada tugas'}
-                                </p>
-                                {!isOver && (
-                                    <button
-                                        onClick={() => onAddTask(column.id)}
-                                        className="mt-3 text-sm text-indigo-400 hover:text-indigo-300"
-                                    >
-                                        + Tambah tugas
-                                    </button>
-                                )}
+            {/* Task List */}
+            <div className="rounded-3xl p-3 min-h-[300px] bg-white/50 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-700/30 shadow-inner">
+                <div className="space-y-3">
+                    {tasks.length === 0 ? (
+                        <div className="text-center py-8">
+                            <div className={`w-12 h-12 mx-auto rounded-xl ${config.bgColor} flex items-center justify-center ${config.color} mb-3`}>
+                                {config.icon}
                             </div>
-                        ) : (
-                            tasks.map(task => (
-                                <DraggableTaskCard
-                                    key={task.id}
-                                    task={task}
-                                    onEdit={onEdit}
-                                    onDelete={onDelete}
-                                />
-                            ))
-                        )}
-                    </div>
-                </SortableContext>
+                            <p className="text-sm text-slate-500">Tidak ada tugas</p>
+                            <button
+                                onClick={() => onAddTask(status)}
+                                className="mt-3 text-sm text-indigo-400 hover:text-indigo-300"
+                            >
+                                + Tambah tugas
+                            </button>
+                        </div>
+                    ) : (
+                        tasks.map(task => (
+                            <TaskCard
+                                key={task.id}
+                                task={task}
+                                onEdit={onEdit}
+                                onDelete={onDelete}
+                                onStatusChange={onStatusChange}
+                                isUpdating={updatingTaskId === task.id}
+                            />
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -335,6 +305,8 @@ const TasksPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<TaskRow | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
+    const [mobileActiveTab, setMobileActiveTab] = useState<TaskStatus>('todo');
 
     // Form state
     const [title, setTitle] = useState('');
@@ -342,20 +314,6 @@ const TasksPage: React.FC = () => {
     const [dueDate, setDueDate] = useState('');
     const [status, setStatus] = useState<TaskStatus>('todo');
     const [errors, setErrors] = useState<Record<string, string>>({});
-
-
-    // Drag state
-    const [activeId, setActiveId] = useState<string | null>(null);
-    const [overId, setOverId] = useState<string | null>(null);
-
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: { distance: 5 },
-        }),
-        useSensor(TouchSensor, {
-            activationConstraint: { delay: 150, tolerance: 5 },
-        })
-    );
 
     const { data: tasks = [], isLoading } = useQuery({
         queryKey: ['tasks', user?.id],
@@ -394,7 +352,6 @@ const TasksPage: React.FC = () => {
 
     const deleteTaskMutation = useMutation({
         mutationFn: async (id: string) => {
-            // Use soft delete by setting deleted_at instead of permanent delete
             const { error } = await supabase.from('tasks').update({ deleted_at: new Date().toISOString() }).eq('id', id);
             if (error) throw error;
         },
@@ -407,19 +364,19 @@ const TasksPage: React.FC = () => {
 
     const updateStatusMutation = useMutation({
         mutationFn: async ({ id, newStatus }: { id: string; newStatus: TaskStatus }) => {
+            setUpdatingTaskId(id);
             const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', id);
             if (error) throw error;
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            const statusLabels: Record<TaskStatus, string> = {
-                'todo': 'To Do',
-                'in_progress': 'In Progress',
-                'done': 'Selesai'
-            };
-            toast.success(`Status diubah ke ${statusLabels[variables.newStatus]}`);
+            toast.success(`Status diubah ke ${statusConfig[variables.newStatus].title}`);
+            setUpdatingTaskId(null);
         },
-        onError: () => toast.error('Gagal mengubah status'),
+        onError: () => {
+            toast.error('Gagal mengubah status');
+            setUpdatingTaskId(null);
+        },
     });
 
     const resetForm = () => {
@@ -473,6 +430,10 @@ const TasksPage: React.FC = () => {
         setIsModalOpen(true);
     };
 
+    const handleStatusChange = (id: string, newStatus: TaskStatus) => {
+        updateStatusMutation.mutate({ id, newStatus });
+    };
+
     // Filter tasks
     const filteredTasks = useMemo(() => {
         return tasks.filter(task => {
@@ -505,65 +466,6 @@ const TasksPage: React.FC = () => {
         return { total, todo, inProgress, done, overdue };
     }, [tasks]);
 
-    // Drag handlers
-    const handleDragStart = (event: DragStartEvent) => {
-        setActiveId(event.active.id as string);
-    };
-
-    const handleDragOver = (event: DragOverEvent) => {
-        const { over } = event;
-        if (over) {
-            // Check if we're over a column
-            const isColumn = columns.some(col => col.id === over.id);
-            if (isColumn) {
-                setOverId(over.id as string);
-            } else {
-                // We're over a task, find its column
-                const task = tasks.find(t => t.id === over.id);
-                if (task) {
-                    setOverId(task.status);
-                }
-            }
-        } else {
-            setOverId(null);
-        }
-    };
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-
-        setActiveId(null);
-        setOverId(null);
-
-        if (!over) return;
-
-        const activeTask = tasks.find(t => t.id === active.id);
-        if (!activeTask) return;
-
-        // Check if dropped on a column directly
-        const targetColumn = columns.find(col => col.id === over.id);
-        if (targetColumn) {
-            if (activeTask.status !== targetColumn.id) {
-                updateStatusMutation.mutate({
-                    id: activeTask.id,
-                    newStatus: targetColumn.id
-                });
-            }
-            return;
-        }
-
-        // Check if dropped on another task
-        const overTask = tasks.find(t => t.id === over.id);
-        if (overTask && activeTask.status !== overTask.status) {
-            updateStatusMutation.mutate({
-                id: activeTask.id,
-                newStatus: overTask.status
-            });
-        }
-    };
-
-    const activeTask = activeId ? tasks.find(t => t.id === activeId) : null;
-
     if (isLoading) {
         return <TasksPageSkeleton />;
     }
@@ -578,7 +480,7 @@ const TasksPage: React.FC = () => {
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-2">
                         <CheckSquareIcon className="w-4 h-4" />
-                        Seret tugas ke kolom lain untuk mengubah status
+                        Kelola tugas Anda dengan mudah
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -605,98 +507,114 @@ const TasksPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="glass-card rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-white/20 dark:border-white/5">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="relative z-10">
-                        <div className="text-3xl font-bold text-slate-800 dark:text-white mb-1">{stats.total}</div>
-                        <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</div>
-                    </div>
+            {/* Stats Cards - With dividers */}
+            <div className="flex flex-wrap gap-0 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg overflow-hidden divide-x divide-slate-200 dark:divide-slate-700/50">
+                <div className="flex-1 min-w-[80px] p-3 sm:p-5 text-center">
+                    <div className="text-xl sm:text-3xl font-bold text-slate-800 dark:text-white">{stats.total}</div>
+                    <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</div>
                 </div>
-                <div className="glass-card rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-white/20 dark:border-white/5">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="relative z-10">
-                        <div className="text-3xl font-bold text-slate-400 mb-1">{stats.todo}</div>
-                        <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">To Do</div>
-                    </div>
+                <div className="flex-1 min-w-[80px] p-3 sm:p-5 text-center">
+                    <div className="text-xl sm:text-3xl font-bold text-slate-400">{stats.todo}</div>
+                    <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">To Do</div>
                 </div>
-                <div className="glass-card rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-white/20 dark:border-white/5">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="relative z-10">
-                        <div className="text-3xl font-bold text-blue-500 mb-1">{stats.inProgress}</div>
-                        <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress</div>
-                    </div>
+                <div className="flex-1 min-w-[80px] p-3 sm:p-5 text-center">
+                    <div className="text-xl sm:text-3xl font-bold text-blue-500">{stats.inProgress}</div>
+                    <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress</div>
                 </div>
-                <div className="glass-card rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-white/20 dark:border-white/5">
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="relative z-10">
-                        <div className="text-3xl font-bold text-emerald-500 mb-1">{stats.done}</div>
-                        <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Selesai</div>
-                    </div>
+                <div className="flex-1 min-w-[80px] p-3 sm:p-5 text-center">
+                    <div className="text-xl sm:text-3xl font-bold text-emerald-500">{stats.done}</div>
+                    <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Selesai</div>
                 </div>
                 {stats.overdue > 0 && (
-                    <div className="glass-card rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-red-500/30 bg-red-500/5">
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div className="relative z-10">
-                            <div className="text-3xl font-bold text-red-500 mb-1">{stats.overdue}</div>
-                            <div className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1">
-                                <AlertTriangle className="w-3 h-3" />
-                                Terlambat
-                            </div>
-                        </div>
+                    <div className="flex-1 min-w-[80px] p-3 sm:p-5 text-center bg-red-50 dark:bg-red-500/5">
+                        <div className="text-xl sm:text-3xl font-bold text-red-500">{stats.overdue}</div>
+                        <div className="text-[10px] sm:text-xs font-bold text-red-400 uppercase tracking-wider">Terlambat</div>
                     </div>
                 )}
             </div>
 
-            {/* Kanban Board */}
-            <DndContext
-                sensors={sensors}
-                collisionDetection={rectIntersection}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragEnd={handleDragEnd}
-            >
-                <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4">
-                    {columns.map(column => (
-                        <DroppableColumn
-                            key={column.id}
-                            column={column}
-                            tasks={tasksByStatus[column.id]}
-                            onEdit={handleEdit}
-                            onDelete={(id) => deleteTaskMutation.mutate(id)}
-                            onAddTask={handleAddTask}
-                            isOver={overId === column.id}
-                        />
-                    ))}
+            {/* Mobile Tab Navigation - Only visible on small screens */}
+            <div className="lg:hidden">
+                <div className="flex rounded-xl bg-slate-200/50 dark:bg-slate-800/50 p-1 mb-4">
+                    {statusOrder.map(statusKey => {
+                        const config = statusConfig[statusKey];
+                        const count = tasksByStatus[statusKey].length;
+                        return (
+                            <button
+                                key={statusKey}
+                                onClick={() => setMobileActiveTab(statusKey)}
+                                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-lg text-sm font-medium transition-all ${mobileActiveTab === statusKey
+                                    ? `${config.bgColor} ${config.color}`
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                    }`}
+                            >
+                                <span className="flex items-center gap-1.5">
+                                    {config.icon}
+                                    <span className="hidden sm:inline">{config.title}</span>
+                                </span>
+                                <span className={`text-xs ${mobileActiveTab === statusKey ? config.color : 'text-slate-400 dark:text-slate-500'}`}>
+                                    {count} tugas
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
 
-                {/* Drag Overlay */}
-                <DragOverlay dropAnimation={{
-                    duration: 200,
-                    easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-                }}>
-                    {activeTask && (
-                        <div className="w-[350px]">
-                            <TaskCard
-                                task={activeTask}
-                                onEdit={() => { }}
-                                onDelete={() => { }}
-                                isOverlay
-                            />
+                {/* Mobile Task List */}
+                <div className="space-y-3">
+                    {tasksByStatus[mobileActiveTab].length === 0 ? (
+                        <div className="text-center py-12 bg-slate-100/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-300/50 dark:border-slate-700/50">
+                            <div className={`w-12 h-12 mx-auto rounded-xl ${statusConfig[mobileActiveTab].bgColor} flex items-center justify-center ${statusConfig[mobileActiveTab].color} mb-3`}>
+                                {statusConfig[mobileActiveTab].icon}
+                            </div>
+                            <p className="text-slate-500 dark:text-slate-500 mb-3">Tidak ada tugas {statusConfig[mobileActiveTab].title}</p>
+                            <button
+                                onClick={() => handleAddTask(mobileActiveTab)}
+                                className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-medium"
+                            >
+                                + Tambah tugas
+                            </button>
                         </div>
+                    ) : (
+                        tasksByStatus[mobileActiveTab].map(task => (
+                            <TaskCard
+                                key={task.id}
+                                task={task}
+                                onEdit={handleEdit}
+                                onDelete={(id) => deleteTaskMutation.mutate(id)}
+                                onStatusChange={handleStatusChange}
+                                isUpdating={updatingTaskId === task.id}
+                            />
+                        ))
                     )}
-                </DragOverlay>
-            </DndContext>
+                </div>
+            </div>
+
+            {/* Desktop Kanban Board - Hidden on mobile */}
+            <div className="hidden lg:flex gap-6 overflow-x-auto pb-4 divide-x divide-slate-200 dark:divide-slate-700/30">
+                {statusOrder.map((statusKey, index) => (
+                    <div key={statusKey} className={index > 0 ? 'pl-6' : ''}>
+                        <Column
+                            status={statusKey}
+                            tasks={tasksByStatus[statusKey]}
+                            onEdit={handleEdit}
+                            onDelete={(id) => deleteTaskMutation.mutate(id)}
+                            onStatusChange={handleStatusChange}
+                            onAddTask={handleAddTask}
+                            updatingTaskId={updatingTaskId}
+                        />
+                    </div>
+                ))}
+            </div>
 
             {/* Empty State */}
             {tasks.length === 0 && (
-                <div className="text-center py-16 bg-slate-800/30 rounded-2xl border border-slate-700/50">
-                    <div className="w-20 h-20 mx-auto rounded-2xl bg-slate-800 flex items-center justify-center mb-4">
-                        <CheckSquareIcon className="w-10 h-10 text-slate-600" />
+                <div className="text-center py-16 bg-slate-100/50 dark:bg-slate-800/30 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                    <div className="w-20 h-20 mx-auto rounded-2xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center mb-4">
+                        <CheckSquareIcon className="w-10 h-10 text-slate-400 dark:text-slate-600" />
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Belum ada tugas</h3>
-                    <p className="text-slate-400 mb-6">Mulai dengan menambahkan tugas pertama Anda</p>
+                    <h3 className="text-xl font-semibold text-slate-800 dark:text-white mb-2">Belum ada tugas</h3>
+                    <p className="text-slate-500 dark:text-slate-400 mb-6">Mulai dengan menambahkan tugas pertama Anda</p>
                     <Button
                         onClick={() => handleAddTask('todo')}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl"

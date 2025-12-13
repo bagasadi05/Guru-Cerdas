@@ -3,6 +3,7 @@ import { supabase } from '../services/supabase';
 import { useAuth } from './useAuth';
 import { useToast } from './useToast';
 import { useQueryClient } from '@tanstack/react-query';
+import { playMessageSound } from '../utils/notificationSound';
 
 /**
  * Hook for listening to real-time parent messages.
@@ -86,6 +87,9 @@ export const useParentMessageNotifications = () => {
                         const messagePreview = newMessage.message.length > 50
                             ? newMessage.message.substring(0, 50) + '...'
                             : newMessage.message;
+
+                        // Play custom notification sound
+                        playMessageSound();
 
                         // Show toast notification
                         toast.info(

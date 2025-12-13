@@ -20,13 +20,14 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                 return (
                     <div
                         key={student.id}
-                        className="group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all duration-300"
+                        className={`group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all duration-300 card-interactive animate-list-item`}
+                        style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
                     >
                         {/* Student Info */}
                         <div className="flex items-center gap-4 flex-grow min-w-0">
-                            <span className="text-slate-300 dark:text-slate-600 font-bold font-mono w-6 text-right flex-shrink-0">{index + 1}</span>
+                            <span className="text-slate-300 dark:text-slate-600 font-bold font-mono w-8 text-right flex-shrink-0 text-sm">{index + 1}</span>
                             <div className="relative">
-                                <img src={student.avatar_url} alt={student.name} className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-slate-700 shadow-sm" />
+                                <img src={student.avatar_url} alt={student.name} className="w-12 h-12 rounded-xl object-cover border-2 border-white dark:border-slate-700 shadow-sm" />
                                 {record?.status && (() => {
                                     const statusOpt = statusOptions.find(opt => opt.value === record.status);
                                     if (!statusOpt) return null;
@@ -42,7 +43,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                 })()}
                             </div>
                             <div className="min-w-0">
-                                <h4 className="font-bold text-base text-slate-800 dark:text-white truncate">{student.name}</h4>
+                                <h4 className="font-semibold text-base text-slate-800 dark:text-white truncate">{student.name}</h4>
                                 {record?.note ? (
                                     <p className="text-xs text-indigo-500 font-medium truncate flex items-center gap-1 mt-0.5 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-md w-fit">
                                         <InfoIcon className="w-3 h-3" /> {record.note}

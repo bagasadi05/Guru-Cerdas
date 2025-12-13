@@ -10,7 +10,7 @@
  * - INP (Interaction to Next Paint)
  */
 
-import { LoggerService } from './LoggerService';
+import { logger } from './logger';
 
 interface PerformanceMetric {
     name: string;
@@ -37,7 +37,6 @@ const THRESHOLDS: Record<string, WebVitalsThresholds> = {
 class PerformanceMonitoringService {
     private static instance: PerformanceMonitoringService;
     private metrics: Map<string, PerformanceMetric> = new Map();
-    private logger = LoggerService.getInstance();
     private observers: Set<(metrics: Map<string, PerformanceMetric>) => void> = new Set();
     private isEnabled: boolean = true;
 
@@ -91,15 +90,15 @@ class PerformanceMonitoringService {
 
         // Log warnings for poor metrics
         if (metric.rating === 'poor') {
-            this.logger.warn('PerformanceMonitor', `Poor ${name} detected: ${value.toFixed(2)}`, { metric });
+            logger.warn(`Poor ${name} detected: ${value.toFixed(2)}`, 'PerformanceMonitor', { metric });
 
             if (process.env.NODE_ENV === 'development') {
                 console.warn(`⚠️ Poor ${name}: ${value.toFixed(2)} (threshold: ${THRESHOLDS[name].poor})`);
             }
         } else if (metric.rating === 'needs-improvement') {
-            this.logger.info('PerformanceMonitor', `${name} needs improvement: ${value.toFixed(2)}`, { metric });
+            logger.info(`${name} needs improvement: ${value.toFixed(2)}`, 'PerformanceMonitor', { metric });
         } else {
-            this.logger.debug('PerformanceMonitor', `${name}: ${value.toFixed(2)} (good)`, { metric });
+            logger.debug(`${name}: ${value.toFixed(2)} (good)`, 'PerformanceMonitor', { metric });
         }
     }
 
@@ -336,7 +335,7 @@ class PerformanceMonitoringService {
                     total: navigation.loadEventEnd - navigation.startTime,
                 };
 
-                this.logger.info('PerformanceMonitor', 'Navigation timing', timing);
+                logger.info('Navigation timing', 'PerformanceMonitor', timing);
 
                 if (process.env.NODE_ENV === 'development') {
                     console.log('📊 Navigation Timing:', timing);

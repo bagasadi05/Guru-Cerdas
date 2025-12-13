@@ -110,38 +110,38 @@ const AppearanceSection: React.FC = () => {
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                     {/* High Contrast */}
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400">
-                                <ContrastIcon className="w-6 h-6" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="p-2 sm:p-3 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 flex-shrink-0">
+                                <ContrastIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <div>
-                                <p className="font-semibold text-slate-800 dark:text-slate-200">Mode Kontras Tinggi</p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Meningkatkan kontras warna untuk visibilitas lebih baik.</p>
+                            <div className="min-w-0">
+                                <p className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200">Mode Kontras Tinggi</p>
+                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Meningkatkan kontras warna.</p>
                             </div>
                         </div>
                         <Switch
                             checked={highContrast}
                             onChange={(e) => setHighContrast(e.target.checked)}
-                            className="data-[state=checked]:bg-cyan-600"
+                            className="data-[state=checked]:bg-cyan-600 flex-shrink-0"
                         />
                     </div>
 
                     {/* Reduced Motion */}
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                                <ZapOffIcon className="w-6 h-6" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="p-2 sm:p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex-shrink-0">
+                                <ZapOffIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <div>
-                                <p className="font-semibold text-slate-800 dark:text-slate-200">Kurangi Gerakan</p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Mengurangi animasi untuk menghindari distraksi.</p>
+                            <div className="min-w-0">
+                                <p className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200">Kurangi Gerakan</p>
+                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Mengurangi animasi.</p>
                             </div>
                         </div>
                         <Switch
                             checked={reducedMotion}
                             onChange={(e) => setReducedMotion(e.target.checked)}
-                            className="data-[state=checked]:bg-blue-600"
+                            className="data-[state=checked]:bg-blue-600 flex-shrink-0"
                         />
                     </div>
                 </CardContent>
@@ -154,22 +154,23 @@ const AppearanceSection: React.FC = () => {
                     <CardDescription className="text-base">Pelajari fitur-fitur aplikasi dengan panduan interaktif.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800/50">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30">
-                                <SparklesIcon className="w-6 h-6" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800/50">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 flex-shrink-0">
+                                <SparklesIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <div>
-                                <p className="font-semibold text-slate-800 dark:text-slate-200">Onboarding Tour</p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Jalankan ulang tutorial untuk melihat panduan fitur.</p>
+                            <div className="min-w-0">
+                                <p className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200">Onboarding Tour</p>
+                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Jalankan ulang tutorial fitur.</p>
                             </div>
                         </div>
                         <Button
                             onClick={handleResetTour}
-                            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-4 py-2 rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-2"
+                            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-3 sm:px-4 py-2 rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-2 text-sm flex-shrink-0"
                         >
                             <RefreshCwIcon className="w-4 h-4" />
-                            Mulai Ulang
+                            <span className="hidden sm:inline">Mulai Ulang</span>
+                            <span className="sm:hidden">Reset</span>
                         </Button>
                     </div>
                 </CardContent>

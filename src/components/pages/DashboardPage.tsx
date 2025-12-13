@@ -55,7 +55,7 @@ const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> =
         weeklyAttendanceRes, academicRecordsRes, violationsRes
     ] = await Promise.all([
         supabase.from('students').select('id, name, avatar_url, class_id').eq('user_id', userId),
-        supabase.from('tasks').select('*').eq('user_id', userId).neq('status', 'done').order('due_date'),
+        supabase.from('tasks').select('*').eq('user_id', userId).is('deleted_at', null).neq('status', 'done').order('due_date'),
         supabase.from('schedules').select('*').eq('user_id', userId).eq('day', todayDay as Database['public']['Tables']['schedules']['Row']['day']).order('start_time'),
         supabase.from('classes').select('id, name').eq('user_id', userId),
         supabase.from('attendance').select('status', { count: 'exact' }).eq('user_id', userId).eq('date', today),

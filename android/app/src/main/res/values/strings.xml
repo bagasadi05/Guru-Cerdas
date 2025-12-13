@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Portal Guru</string>
+    <string name="title_activity_main">Portal Guru</string>
+    <string name="package_name">com.portalguru.app</string>
+    <string name="custom_url_scheme">com.portalguru.app</string>
+</resources>

@@ -103,7 +103,7 @@ describe('Mobile UX', () => {
         });
 
         it('should not allow pull when scrolled', () => {
-            const scrollTop = 100;
+            const scrollTop: number = 100;
             const canPull = scrollTop === 0;
             expect(canPull).toBe(false);
         });

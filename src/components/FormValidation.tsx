@@ -481,7 +481,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
                     onChange={handleChange}
                     onBlur={onBlur}
                     className={`
-                        w-full px-4 py-2.5 rounded-xl border-2 transition-all duration-200
+                        w-full px-4 py-3 min-h-[48px] rounded-xl border-2 transition-all duration-200
                         bg-white dark:bg-slate-800 
                         text-slate-900 dark:text-white
                         placeholder-slate-400
@@ -603,7 +603,7 @@ export const ValidatedTextarea: React.FC<ValidatedTextareaProps> = ({
                     onBlur={onBlur}
                     maxLength={maxLength}
                     className={`
-                        w-full px-4 py-2.5 rounded-xl border-2 transition-all duration-200
+                        w-full px-4 py-3 rounded-xl border-2 transition-all duration-200
                         bg-white dark:bg-slate-800 
                         text-slate-900 dark:text-white
                         placeholder-slate-400
@@ -709,7 +709,7 @@ export const ValidatedSelect: React.FC<ValidatedSelectProps> = ({
                     onChange={handleChange}
                     onBlur={onBlur}
                     className={`
-                        w-full px-4 py-2.5 rounded-xl border-2 transition-all duration-200
+                        w-full px-4 py-3 min-h-[48px] rounded-xl border-2 transition-all duration-200
                         bg-white dark:bg-slate-800 
                         text-slate-900 dark:text-white
                         focus:outline-none focus:ring-4

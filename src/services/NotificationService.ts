@@ -39,7 +39,6 @@ export interface DueTask {
     title: string;
     description?: string;
     due_date: string;
-    priority: 'low' | 'medium' | 'high';
     status: string;
     isOverdue: boolean;
     hoursUntilDue: number;
@@ -174,7 +173,7 @@ export const savePreferences = (prefs: Partial<NotificationPreferences>): void =
 export const getDueTasks = async (userId: string): Promise<DueTask[]> => {
     const { data: tasks } = await supabase
         .from('tasks')
-        .select('id, title, description, due_date, priority, status')
+        .select('id, title, description, due_date, status')
         .eq('user_id', userId)
         .neq('status', 'done')
         .not('due_date', 'is', null)
@@ -187,17 +186,17 @@ export const getDueTasks = async (userId: string): Promise<DueTask[]> => {
     const reminderThreshold = preferences.taskReminderHours * 60 * 60 * 1000; // Convert to ms
 
     return tasks
+        .filter(task => task.due_date !== null)
         .map(task => {
-            const dueDate = new Date(task.due_date);
+            const dueDate = new Date(task.due_date!);
             const timeDiff = dueDate.getTime() - now.getTime();
             const hoursUntilDue = timeDiff / (1000 * 60 * 60);
 
             return {
                 id: task.id,
                 title: task.title,
-                description: task.description,
-                due_date: task.due_date,
-                priority: task.priority as 'low' | 'medium' | 'high',
+                description: task.description ?? undefined,
+                due_date: task.due_date!,
                 status: task.status,
                 isOverdue: timeDiff < 0,
                 hoursUntilDue: Math.round(hoursUntilDue),
@@ -232,7 +231,7 @@ export const checkAndNotify = async (userId: string): Promise<number> => {
                 type: 'task_overdue',
                 title: 'Tugas Terlambat!',
                 message: `"${task.title}" sudah melewati deadline.`,
-                metadata: { taskId: task.id, priority: task.priority },
+                metadata: { taskId: task.id },
                 link: '/tugas',
             });
             newNotifications++;
@@ -241,7 +240,7 @@ export const checkAndNotify = async (userId: string): Promise<number> => {
                 type: 'task_due',
                 title: 'Tugas Hampir Deadline',
                 message: `"${task.title}" deadline dalam ${task.hoursUntilDue} jam.`,
-                metadata: { taskId: task.id, priority: task.priority, hoursLeft: task.hoursUntilDue },
+                metadata: { taskId: task.id, hoursLeft: task.hoursUntilDue },
                 link: '/tugas',
             });
             newNotifications++;

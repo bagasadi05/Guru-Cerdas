@@ -4,13 +4,13 @@ import {
     Line,
     BarChart,
     Bar,
+    Cell,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
     Legend,
     ResponsiveContainer,
-    TooltipProps,
 } from 'recharts';
 import { TrendingUpIcon, TrendingDownIcon, MinusIcon, DownloadIcon } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -34,7 +34,13 @@ interface ClassComparisonData {
 }
 
 // Custom Tooltip Component
-const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload, label }) => {
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: Array<{ name: string; value: number; color: string }>;
+    label?: string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-xl">
@@ -160,7 +166,7 @@ export const InteractiveAttendanceTrendChart: React.FC<InteractiveAttendanceTren
                     data={data}
                     margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
                     onMouseMove={(state) => {
-                        if (state.activeTooltipIndex !== undefined) {
+                        if (state.activeTooltipIndex !== undefined && typeof state.activeTooltipIndex === 'number') {
                             setHoveredPoint(state.activeTooltipIndex);
                         }
                     }}
@@ -256,7 +262,7 @@ export const InteractiveGradeDistributionChart: React.FC<InteractiveGradeDistrib
                     data={data}
                     margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
                     onClick={(data) => {
-                        if (data && data.activeTooltipIndex !== undefined) {
+                        if (data && data.activeTooltipIndex !== undefined && typeof data.activeTooltipIndex === 'number') {
                             setSelectedBar(data.activeTooltipIndex);
                         }
                     }}
@@ -280,7 +286,7 @@ export const InteractiveGradeDistributionChart: React.FC<InteractiveGradeDistrib
                         cursor="pointer"
                     >
                         {data.map((entry, index) => (
-                            <cell
+                            <Cell
                                 key={`cell-${index}`}
                                 fill={selectedBar === index ? entry.color : `${entry.color}dd`}
                                 opacity={selectedBar === null || selectedBar === index ? 1 : 0.6}

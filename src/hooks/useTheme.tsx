@@ -2,19 +2,27 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 
 /**
  * Available theme options for the application
+ * - 'light': Light theme
+ * - 'dark': Dark theme
+ * - 'system': Follow system preference
  */
-type Theme = 'light' | 'dark';
+type ThemePreference = 'light' | 'dark' | 'system';
+type ResolvedTheme = 'light' | 'dark';
 
 /**
  * Theme context type providing theme state and operations
  */
 interface ThemeContextType {
-  /** Current active theme */
-  theme: Theme;
-  /** Toggles between light and dark themes */
+  /** Current theme preference (user selection) */
+  themePreference: ThemePreference;
+  /** Current resolved theme (actual applied theme) */
+  theme: ResolvedTheme;
+  /** Toggles between light, dark, and system themes */
   toggleTheme: () => void;
-  /** Sets a specific theme */
-  setTheme: (theme: Theme) => void;
+  /** Sets a specific theme preference */
+  setTheme: (theme: ThemePreference) => void;
+  /** Whether the theme is following system preference */
+  isSystemTheme: boolean;
 }
 
 /**
@@ -24,64 +32,116 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /**
+ * Gets the system color scheme preference
+ */
+const getSystemTheme = (): ResolvedTheme => {
+  if (typeof window === 'undefined') return 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+/**
  * Theme provider component that manages application theme state
  * 
  * This component provides theme context to all child components, enabling:
- * - Light and dark theme switching
+ * - Light, dark, and system (auto) theme switching
  * - Theme persistence in localStorage
  * - Automatic DOM class updates for Tailwind dark mode
- * - Prevention of Flash of Unstyled Content (FOUC) on page load
- * 
- * The provider synchronizes with an inline script in index.html that sets the initial
- * theme class before React hydrates, preventing theme flicker on page load.
+ * - Smooth theme transition animations
+ * - System preference change detection
  * 
  * @param props - Component props
  * @param props.children - Child components that will have access to theme context
  * 
- * @example
- * ```typescript
- * import { ThemeProvider } from './hooks/useTheme';
- * 
- * function App() {
- *   return (
- *     <ThemeProvider>
- *       <YourApp />
- *     </ThemeProvider>
- *   );
- * }
- * ```
- * 
- * @since 1.0.0
+ * @since 2.0.0 - Added system preference support
  */
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Pada mount awal, React state disinkronkan dengan DOM.
-    // Ini bergantung pada skrip inline di `index.html` yang telah berjalan
-    // dan mengatur kelas yang benar pada elemen <html> untuk mencegah FOUC.
+  const [themePreference, setThemePreference] = useState<ThemePreference>(() => {
+    if (typeof window === 'undefined') return 'system';
+    const stored = localStorage.getItem('theme');
+    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+      return stored;
+    }
+    // Default to system preference
+    return 'system';
+  });
+
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
     if (typeof window !== 'undefined' && document.documentElement.classList.contains('dark')) {
       return 'dark';
     }
     return 'light';
   });
 
+  // Listen for system theme changes when in 'system' mode
   useEffect(() => {
-    // Effect ini menyinkronkan perubahan status (misalnya, dari toggle)
-    // kembali ke DOM dan localStorage.
+    if (themePreference !== 'system') return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setResolvedTheme(e.matches ? 'dark' : 'light');
+    };
+
+    // Set initial system theme
+    setResolvedTheme(mediaQuery.matches ? 'dark' : 'light');
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [themePreference]);
+
+  // Update resolved theme when preference changes
+  useEffect(() => {
+    if (themePreference === 'system') {
+      setResolvedTheme(getSystemTheme());
+    } else {
+      setResolvedTheme(themePreference);
+    }
+  }, [themePreference]);
+
+  // Apply theme to DOM with transition animation
+  useEffect(() => {
     const root = window.document.documentElement;
-    if (theme === 'dark') {
+
+    // Add transition class for smooth color changes
+    root.classList.add('theme-transitioning');
+
+    // Apply theme
+    if (resolvedTheme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-    // Pertahankan pengaturan tema baru ke localStorage.
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+
+    // Remove transition class after animation completes
+    const timeout = setTimeout(() => {
+      root.classList.remove('theme-transitioning');
+    }, 300);
+
+    // Store preference
+    localStorage.setItem('theme', themePreference);
+
+    return () => clearTimeout(timeout);
+  }, [resolvedTheme, themePreference]);
 
   const toggleTheme = useCallback(() => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    setThemePreference(prev => {
+      // Cycle: light -> dark -> system -> light
+      if (prev === 'light') return 'dark';
+      if (prev === 'dark') return 'system';
+      return 'light';
+    });
   }, []);
 
-  const value = useMemo(() => ({ theme, toggleTheme, setTheme }), [theme, toggleTheme]);
+  const setTheme = useCallback((theme: ThemePreference) => {
+    setThemePreference(theme);
+  }, []);
+
+  const value = useMemo(() => ({
+    themePreference,
+    theme: resolvedTheme,
+    toggleTheme,
+    setTheme,
+    isSystemTheme: themePreference === 'system',
+  }), [themePreference, resolvedTheme, toggleTheme, setTheme]);
 
   return (
     <ThemeContext.Provider value={value}>
@@ -97,6 +157,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
  * The theme is persisted in localStorage and automatically applied to the DOM
  * via Tailwind's dark mode class on the html element.
  * 
+ * Now supports 'system' mode which follows the OS color scheme preference.
+ * 
  * Must be used within a ThemeProvider component.
  * 
  * @returns Theme context with current theme and control functions
@@ -107,32 +169,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
  * import { useTheme } from './hooks/useTheme';
  * 
  * function ThemeToggleButton() {
- *   const { theme, toggleTheme } = useTheme();
+ *   const { theme, themePreference, toggleTheme, isSystemTheme } = useTheme();
  * 
  *   return (
  *     <button onClick={toggleTheme}>
- *       {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+ *       {isSystemTheme ? '🖥️ Auto' : theme === 'light' ? '☀️ Light' : '🌙 Dark'}
  *     </button>
  *   );
  * }
  * ```
  * 
- * @example
- * ```typescript
- * // Set a specific theme
- * function ThemeSelector() {
- *   const { theme, setTheme } = useTheme();
- * 
- *   return (
- *     <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)}>
- *       <option value="light">Light</option>
- *       <option value="dark">Dark</option>
- *     </select>
- *   );
- * }
- * ```
- * 
- * @since 1.0.0
+ * @since 2.0.0
  */
 export const useTheme = () => {
   const context = useContext(ThemeContext);

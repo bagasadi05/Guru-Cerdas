@@ -286,7 +286,7 @@ describe('Bundle Optimization', () => {
         });
 
         it('should keep console in development', () => {
-            const mode = 'development';
+            const mode: string = 'development';
             const dropConsole = mode === 'production';
 
             expect(dropConsole).toBe(false);

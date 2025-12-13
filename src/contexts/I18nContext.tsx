@@ -3,12 +3,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 // Available languages
 export type Language = 'id' | 'en';
 
-// Nested translation key type
-type NestedKeyOf<ObjectType extends object> = {
-    [Key in keyof ObjectType]: ObjectType[Key] extends object
-    ? `${Key & string}.${NestedKeyOf<ObjectType[Key]> & string}`
-    : Key & string;
-}[keyof ObjectType];
+// Simplified translation key type to avoid excessive recursion
+type TranslationKey = string;
 
 // Translation structure - comprehensive
 interface Translations {
@@ -1043,4 +1039,4 @@ export const Trans: React.FC<{
 };
 
 export default I18nProvider;
-export type { Translations, Language };
+export type { Translations };

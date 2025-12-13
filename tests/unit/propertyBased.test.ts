@@ -255,7 +255,7 @@ describe('Property-Based Testing: Search and Filter', () => {
             name: randomString(randomInt(5, 30))
         }));
 
-        const searchTerm = '';
+        const searchTerm: string = '';
         const filtered = items.filter(i =>
             !searchTerm || i.name.toLowerCase().includes(searchTerm.toLowerCase())
         );

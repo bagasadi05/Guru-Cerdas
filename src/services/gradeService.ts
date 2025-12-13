@@ -5,6 +5,9 @@
  * - Bulk grade insert with validation
  * - Conflict resolution (optimistic locking)
  * - Audit log viewing
+ * 
+ * Note: Some RPC functions referenced here need to be created in Supabase.
+ * See docs for SQL definitions.
  */
 
 import { supabase } from './supabase';
@@ -55,6 +58,7 @@ export interface AuditLog {
 
 /**
  * Validate a single grade input server-side
+ * Note: Requires 'validate_grade_input' function in Supabase
  */
 export const validateGradeServer = async (
     studentId: string,
@@ -62,7 +66,8 @@ export const validateGradeServer = async (
     score: number,
     assessmentName: string
 ): Promise<ValidationResult> => {
-    const { data, error } = await supabase.rpc('validate_grade_input', {
+    // Use type assertion for RPC call to future-defined function
+    const { data, error } = await (supabase.rpc as any)('validate_grade_input', {
         p_student_id: studentId,
         p_subject: subject,
         p_score: score,
@@ -83,12 +88,14 @@ export const validateGradeServer = async (
 
 /**
  * Bulk insert grades with server-side validation and transaction
+ * Note: Requires 'bulk_insert_grades' function in Supabase
  */
 export const bulkInsertGrades = async (
     grades: GradeInput[],
     teacherId: string
 ): Promise<BulkInsertResult> => {
-    const { data, error } = await supabase.rpc('bulk_insert_grades', {
+    // Use type assertion for RPC call to future-defined function
+    const { data, error } = await (supabase.rpc as any)('bulk_insert_grades', {
         p_grades: grades,
         p_teacher_id: teacherId,
     });
@@ -122,6 +129,7 @@ export const bulkInsertGrades = async (
 
 /**
  * Update grade with version check (optimistic locking)
+ * Note: Requires 'update_grade_with_version' function in Supabase
  */
 export const updateGradeWithVersion = async (
     recordId: string,
@@ -129,7 +137,8 @@ export const updateGradeWithVersion = async (
     notes: string,
     expectedVersion: number
 ): Promise<UpdateWithVersionResult> => {
-    const { data, error } = await supabase.rpc('update_grade_with_version', {
+    // Use type assertion for RPC call to future-defined function
+    const { data, error } = await (supabase.rpc as any)('update_grade_with_version', {
         p_record_id: recordId,
         p_score: score,
         p_notes: notes,
@@ -149,6 +158,7 @@ export const updateGradeWithVersion = async (
 
 /**
  * Check rate limit status
+ * Note: Requires 'check_rate_limit' function in Supabase
  */
 export const checkRateLimit = async (
     actionType: string,
@@ -158,7 +168,8 @@ export const checkRateLimit = async (
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
 
-    const { data, error } = await supabase.rpc('check_rate_limit', {
+    // Use type assertion for RPC call to future-defined function
+    const { data, error } = await (supabase.rpc as any)('check_rate_limit', {
         p_user_id: user.user.id,
         p_action_type: actionType,
         p_max_requests: maxRequests,
@@ -175,14 +186,15 @@ export const checkRateLimit = async (
 
 /**
  * Get audit logs for a specific record
+ * Note: Requires 'audit_logs' table in Supabase
  */
 export const getAuditLogs = async (
     tableName: string,
     recordId?: string,
     limit: number = 50
 ): Promise<AuditLog[]> => {
-    let query = supabase
-        .from('audit_logs')
+    // Use type assertion for table that may not exist yet
+    let query = (supabase.from as any)('audit_logs')
         .select('*')
         .eq('table_name', tableName)
         .order('created_at', { ascending: false })
@@ -199,11 +211,12 @@ export const getAuditLogs = async (
         return [];
     }
 
-    return data as AuditLog[];
+    return (data || []) as AuditLog[];
 };
 
 /**
  * Get user's recent activity from audit logs
+ * Note: Requires 'audit_logs' table in Supabase
  */
 export const getUserActivityLogs = async (
     limit: number = 20
@@ -211,8 +224,8 @@ export const getUserActivityLogs = async (
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return [];
 
-    const { data, error } = await supabase
-        .from('audit_logs')
+    // Use type assertion for table that may not exist yet
+    const { data, error } = await (supabase.from as any)('audit_logs')
         .select('*')
         .eq('user_id', user.user.id)
         .order('created_at', { ascending: false })
@@ -223,7 +236,7 @@ export const getUserActivityLogs = async (
         return [];
     }
 
-    return data as AuditLog[];
+    return (data || []) as AuditLog[];
 };
 
 export default {
@@ -234,3 +247,4 @@ export default {
     getAuditLogs,
     getUserActivityLogs,
 };
+

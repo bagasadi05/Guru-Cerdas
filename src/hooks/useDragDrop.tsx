@@ -607,7 +607,6 @@ export const ScheduleDragDrop: React.FC<ScheduleDragDropProps> = ({
     };
 
     const slotItems = slots.map((slot) => ({
-        id: slot.id,
         ...slot,
     }));
 
