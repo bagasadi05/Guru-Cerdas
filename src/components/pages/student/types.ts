@@ -31,7 +31,8 @@ export type ModalState =
     | { type: 'violation', mode: 'add' | 'edit', data: ViolationRow | null }
     | { type: 'confirmDelete', title: string; message: string; onConfirm: () => void; isPending: boolean }
     | { type: 'applyPoints' }
-    | { type: 'editCommunication', data: CommunicationRow };
+    | { type: 'editCommunication', data: CommunicationRow }
+    | { type: 'portalAccess' };
 
 export type AiSummary = {
     general_evaluation: string;

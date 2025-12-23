@@ -1,0 +1,50 @@
+name: Keep Supabase Alive
+
+# Prevents Supabase free tier from auto-pausing due to inactivity
+# Runs every 5 days to keep the database active
+
+on:
+  schedule:
+    # Run every 5 days at 00:00 UTC (07:00 WIB)
+    - cron: '0 0 */5 * *'
+  workflow_dispatch:
+    # Allow manual trigger for testing
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          echo "🔄 Pinging Supabase to prevent auto-pause..."
+          
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+          
+          if [ "$response" = "200" ]; then
+            echo "✅ Supabase pinged successfully! (HTTP $response)"
+          else
+            echo "⚠️ Received HTTP $response - database might be paused"
+            exit 1
+          fi
+
+      - name: Simple Database Query
+        run: |
+          echo "🗄️ Running simple database query..."
+          
+          curl -s \
+            -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/classes?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+          
+          echo ""
+          echo "✅ Database query completed!"
+
+      - name: Log Success
+        run: |
+          echo "🎉 Supabase keep-alive completed successfully!"
+          echo "📅 Next run scheduled in 5 days"
+          echo "⏰ Current time: $(date)"

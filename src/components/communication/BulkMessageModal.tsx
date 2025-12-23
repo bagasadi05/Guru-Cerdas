@@ -12,12 +12,14 @@ import {
     ChevronDownIcon
 } from '../Icons';
 import { MESSAGE_TEMPLATES, TEMPLATE_CATEGORIES, MessageTemplate, applyTemplate } from '../../data/messageTemplates';
+import { getStudentAvatar } from '../../utils/avatarUtils';
 
 interface Student {
     id: string;
     name: string;
     class_id: string;
     avatar_url?: string;
+    gender?: string;
 }
 
 interface Class {
@@ -167,8 +169,8 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 <button
                                     onClick={() => setSelectionMode('all')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'all'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                                         }`}
                                 >
                                     <UsersIcon className="w-4 h-4 inline-block mr-2" />
@@ -177,8 +179,8 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 <button
                                     onClick={() => setSelectionMode('class')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'class'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                                         }`}
                                 >
                                     Per Kelas
@@ -186,8 +188,8 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 <button
                                     onClick={() => setSelectionMode('custom')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'custom'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                                         }`}
                                 >
                                     Pilih Manual
@@ -252,7 +254,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                                 className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                             />
                                             <img
-                                                src={student.avatar_url || `https://i.pravatar.cc/40?u=${student.id}`}
+                                                src={getStudentAvatar(student.avatar_url, student.gender, student.id)}
                                                 alt={student.name}
                                                 className="w-8 h-8 rounded-full object-cover"
                                             />

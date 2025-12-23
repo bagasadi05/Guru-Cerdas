@@ -314,7 +314,7 @@ describe('Accessibility Components', () => {
 
     describe('Focus Management', () => {
         it('should save previous focus', () => {
-            let previousFocus: string | null = 'button-1';
+            const previousFocus: string | null = 'button-1';
             const currentFocus = 'modal-input';
 
             // When modal opens

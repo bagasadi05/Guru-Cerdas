@@ -11,7 +11,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types'; // This will be generated from your Supabase schema
-import { GoogleGenAI } from '@google/genai';
+// import { GoogleGenAI } from '@google/genai';
 
 // --- IMPORTANT ---
 // The credentials below have been provided to make the application runnable.
@@ -50,14 +50,15 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
  */
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-// Centralized Google GenAI Client
+// Centralized Google GenAI Client - DEPRECATED in favor of OpenRouter
 // Note: We use process.env.GEMINI_API_KEY because it is defined in vite.config.ts
 const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || '';
+const openRouterKey = process.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_OPENROUTER_API_KEY || '';
 
 /**
  * Flag indicating whether AI features are enabled.
  * 
- * This boolean is true when a valid Gemini API key is configured,
+ * This boolean is true when a valid AI API key is configured,
  * allowing the application to use AI-powered features such as:
  * - Student performance analysis
  * - Automated report generation
@@ -77,41 +78,17 @@ const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY
  * 
  * @since 1.0.0
  */
-export const isAiEnabled = !!apiKey;
+export const isAiEnabled = !!apiKey || !!openRouterKey;
 
-if (!apiKey) {
-    console.warn("GEMINI_API_KEY is not set. AI features will not work.");
+if (!isAiEnabled) {
+    console.warn("AI API Keys are not set. AI features will not work.");
 }
 
 /**
  * Google GenAI client instance for AI-powered features.
- * 
- * This client provides access to Google's Gemini AI models for generating
- * intelligent insights, analysis, and recommendations within the Portal Guru application.
- * 
- * The client is initialized with the API key from environment variables.
- * Always check {@link isAiEnabled} before using this client to ensure proper configuration.
- * 
- * @example
- * ```typescript
- * import { ai, isAiEnabled } from './services/supabase';
- * 
- * async function analyzeStudent(studentData: StudentData) {
- *   if (!isAiEnabled) {
- *     throw new Error('AI features are not enabled');
- *   }
- *   
- *   const model = ai.getGenerativeModel({ model: 'gemini-pro' });
- *   const prompt = `Analyze this student's performance: ${JSON.stringify(studentData)}`;
- *   const result = await model.generateContent(prompt);
- *   return result.response.text();
- * }
- * ```
- * 
- * @see {@link https://ai.google.dev/docs} Google AI Documentation
- * @since 1.0.0
+ * @deprecated Use openRouterService instead for better free tier support.
  */
-export const ai = new GoogleGenAI({ apiKey });
+// export const ai = new GoogleGenAI({ apiKey }); - Removed to prevent usage
 
 /**
  * Note on Offline Sync:

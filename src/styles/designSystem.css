@@ -1456,3 +1456,17 @@ html.theme-transitioning *::after {
                 0 0 0 4px rgba(99, 102, 241, 0.6);
     transition: box-shadow 0.2s var(--ease-out);
 }
+
+/* Undo Toast Progress Animation */
+@keyframes shrink {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+.animate-shrink {
+    animation: shrink 5s linear forwards;
+}

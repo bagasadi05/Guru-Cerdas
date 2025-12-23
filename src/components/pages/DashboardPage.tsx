@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useScheduleNotifications } from '../../hooks/useScheduleNotifications';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '../ui/Card';
+// Card components removed - not currently used
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarIcon, UsersIcon, BookOpenIcon, ClockIcon, BrainCircuitIcon, CheckSquareIcon, AlertTriangleIcon, CheckCircleIcon, UserMinusIcon, ChevronRightIcon, ClipboardPenIcon, PlusIcon, SearchIcon, SettingsIcon, SparklesIcon, TrendingUpIcon, ActivityIcon } from '../Icons';
+import { CalendarIcon, UsersIcon, BookOpenIcon, ClockIcon, BrainCircuitIcon, CheckSquareIcon, AlertTriangleIcon, CheckCircleIcon, UserMinusIcon, ClipboardPenIcon, PlusIcon, SearchIcon, SettingsIcon, SparklesIcon, ActivityIcon } from '../Icons';
 import { Button } from '../ui/Button';
-import { Type } from '@google/genai';
-import { ai } from '../../services/supabase';
+// import { Type } from '@google/genai';
+// import { ai } from '../../services/supabase';
+import { generateOpenRouterJson } from '../../services/openRouterService';
 import { supabase } from '../../services/supabase';
 import { Database } from '../../services/database.types';
 import { useQuery } from '@tanstack/react-query';
@@ -15,13 +16,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Select } from '../ui/Select';
 import { Skeleton } from '../ui/Skeleton';
 import FloatingActionButton from '../ui/FloatingActionButton';
-import { GradeDistributionChart, ClassComparisonChart } from '../ui/AnalyticsCharts';
-import { EmptyState } from '../ui/EmptyState';
+import { MarkdownText } from '../ui/MarkdownText';
+// Analytics charts removed - not currently used
 import AttendanceStatsWidget from '../dashboard/AttendanceStatsWidget';
 import ParentMessagesWidget from '../dashboard/ParentMessagesWidget';
 import { ClassAnalyticsSection } from '../dashboard/ClassAnalyticsSection';
 import { LeaderboardCard } from '../gamification/LeaderboardCard';
-import { transformToGameData, StudentGameData } from '../../services/gamificationService';
+import { transformToGameData } from '../../services/gamificationService';
 
 type TaskRow = Database['public']['Tables']['tasks']['Row'];
 type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
@@ -50,6 +51,14 @@ const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> =
     const today = new Date().toISOString().slice(0, 10);
     const todayDay = new Date().toLocaleDateString('id-ID', { weekday: 'long' });
 
+    // Calculate dates for the last 5 days
+    const last5Days: string[] = [];
+    for (let i = 4; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        last5Days.push(d.toISOString().slice(0, 10));
+    }
+
     const [
         studentsRes, tasksRes, scheduleRes, classesRes, dailyAttendanceRes,
         weeklyAttendanceRes, academicRecordsRes, violationsRes
@@ -59,16 +68,29 @@ const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> =
         supabase.from('schedules').select('*').eq('user_id', userId).eq('day', todayDay as Database['public']['Tables']['schedules']['Row']['day']).order('start_time'),
         supabase.from('classes').select('id, name').eq('user_id', userId),
         supabase.from('attendance').select('status', { count: 'exact' }).eq('user_id', userId).eq('date', today),
-        supabase.rpc('get_weekly_attendance_summary'),
+        supabase.from('attendance').select('date, status').eq('user_id', userId).gte('date', last5Days[0]).lte('date', last5Days[4]),
         supabase.from('academic_records').select('student_id, subject, score, assessment_name').eq('user_id', userId),
         supabase.from('violations').select('student_id, points').eq('user_id', userId)
     ]);
 
-    const errors = [studentsRes, tasksRes, scheduleRes, classesRes, dailyAttendanceRes, weeklyAttendanceRes, academicRecordsRes, violationsRes]
+    const errors = [studentsRes, tasksRes, scheduleRes, classesRes, dailyAttendanceRes, academicRecordsRes, violationsRes]
         .map(res => res.error).filter((e): e is NonNullable<typeof e> => e !== null);
     if (errors.length > 0) throw new Error(errors.map(e => e.message).join(', '));
 
     const presentCount = dailyAttendanceRes.data?.filter(a => a.status === 'Hadir').length || 0;
+    const totalStudents = studentsRes.data?.length || 1;
+
+    // Calculate weekly attendance from raw data
+    const weeklyAttendance: WeeklyAttendance[] = last5Days.map(date => {
+        const dayAttendance = weeklyAttendanceRes.data?.filter(a => a.date === date) || [];
+        const presentOnDay = dayAttendance.filter(a => a.status === 'Hadir').length;
+        const total = dayAttendance.length || totalStudents;
+        const dayName = new Date(date).toLocaleDateString('id-ID', { weekday: 'long' });
+        return {
+            day: dayName,
+            present_percentage: total > 0 ? (presentOnDay / total) * 100 : 0
+        };
+    });
 
     return {
         students: studentsRes.data || [],
@@ -76,7 +98,7 @@ const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> =
         schedule: scheduleRes.data || [],
         classes: classesRes.data || [],
         dailyAttendanceSummary: { present: presentCount, total: dailyAttendanceRes.count || 0 },
-        weeklyAttendance: weeklyAttendanceRes.data as WeeklyAttendance[] || [],
+        weeklyAttendance,
         academicRecords: academicRecordsRes.data || [],
         violations: violationsRes.data || [],
     };
@@ -139,7 +161,14 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
             const { students, academicRecords, violations, dailyAttendanceSummary } = dashboardData;
             const studentMap = new Map(dashboardData.students.map(s => [s.name, s.id]));
 
-            const systemInstruction = `Anda adalah asisten guru AI yang cerdas dan proaktif. Analisis data yang diberikan dan hasilkan ringkasan dalam format JSON yang valid. Fokus pada menyoroti pencapaian positif, area yang memerlukan perhatian, dan saran umum. Gunakan Bahasa Indonesia.`;
+            const systemInstruction = `Anda adalah asisten guru AI yang cerdas dan proaktif. Analisis data yang diberikan dan hasilkan ringkasan dalam format JSON yang valid. Fokus pada menyoroti pencapaian positif, area yang memerlukan perhatian, dan saran umum. Gunakan Bahasa Indonesia.
+            
+            Format JSON yang diharapkan:
+            {
+                "positive_highlights": [{ "student_name": "Nama Siswa", "reason": "Alasan singkat" }],
+                "areas_for_attention": [{ "student_name": "Nama Siswa", "reason": "Masalah/Concern" }],
+                "class_focus_suggestion": "Saran fokus untuk kelas hari ini"
+            }`;
             const studentDataForPrompt = students.map(s => {
                 const studentViolations = violations.filter(v => v.student_id === s.id).reduce((sum, v) => sum + v.points, 0);
                 const studentScores = academicRecords.filter(r => r.student_id === s.id);
@@ -147,10 +176,8 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
                 return { name: s.name, total_violation_points: studentViolations, average_score: avgScore ? Math.round(avgScore) : 'N/A' };
             });
             const prompt = `Analisis data guru berikut untuk memberikan wawasan harian. Data Ringkasan: Total Siswa: ${students.length}, Absensi Hari Ini: ${dailyAttendanceSummary.present} dari ${students.length} hadir. Data Rinci Siswa (nilai & pelanggaran): ${JSON.stringify(studentDataForPrompt)} Tugas Anda: 1. Identifikasi 1-2 siswa berprestasi (nilai rata-rata tinggi, 0 poin pelanggaran). 2. Identifikasi 1-2 siswa yang memerlukan perhatian (nilai rata-rata rendah atau poin pelanggaran tinggi). 3. Berikan satu saran fokus untuk kelas secara umum.`;
-            const responseSchema = { type: Type.OBJECT, properties: { positive_highlights: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { student_name: { type: Type.STRING }, reason: { type: Type.STRING } } } }, areas_for_attention: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { student_name: { type: Type.STRING }, reason: { type: Type.STRING } } } }, class_focus_suggestion: { type: Type.STRING } } };
 
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema } });
-            const parsedInsight: AiInsight = JSON.parse(response.text || '{}');
+            const parsedInsight = await generateOpenRouterJson<AiInsight>(prompt, systemInstruction);
 
             const enrichedInsight = {
                 ...parsedInsight,
@@ -201,7 +228,7 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
                     <div><p className="font-bold text-slate-800 dark:text-slate-200">Siswa Berprestasi</p>
                         {insight.positive_highlights.map(item => (
                             <p key={item.student_name} className="text-slate-600 dark:text-slate-400 mt-1">
-                                <Link to={`/siswa/${item.student_id}`} className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">{item.student_name}</Link>: {item.reason}
+                                <Link to={`/siswa/${item.student_id}`} className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">{item.student_name}</Link>: <MarkdownText text={item.reason} />
                             </p>
                         ))}
                     </div>
@@ -213,7 +240,7 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
                     <div><p className="font-bold text-slate-800 dark:text-slate-200">Perlu Perhatian</p>
                         {insight.areas_for_attention.map(item => (
                             <p key={item.student_name} className="text-slate-600 dark:text-slate-400 mt-1">
-                                <Link to={`/siswa/${item.student_id}`} className="font-semibold text-amber-600 dark:text-amber-400 hover:underline">{item.student_name}</Link>: {item.reason}
+                                <Link to={`/siswa/${item.student_id}`} className="font-semibold text-amber-600 dark:text-amber-400 hover:underline">{item.student_name}</Link>: <MarkdownText text={item.reason} />
                             </p>
                         ))}
                     </div>
@@ -222,7 +249,7 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
             {insight.class_focus_suggestion && (
                 <div className="flex items-start gap-3 p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><SparklesIcon className="w-5 h-5 text-indigo-500" /></div>
-                    <div><p className="font-bold text-slate-800 dark:text-slate-200">Saran Hari Ini</p><p className="text-slate-600 dark:text-slate-400 mt-1">{insight.class_focus_suggestion}</p></div>
+                    <div><p className="font-bold text-slate-800 dark:text-slate-200">Saran Hari Ini</p><div className="text-slate-600 dark:text-slate-400 mt-1"><MarkdownText text={insight.class_focus_suggestion} /></div></div>
                 </div>
             )}
         </div>
@@ -350,24 +377,27 @@ const DashboardPage: React.FC = () => {
     const [selectedClassForCheck, setSelectedClassForCheck] = useState<string>('');
 
     const uniqueSubjects = useMemo(() => {
-        if (!data?.academicRecords) return [];
-        const subjects = new Set(data.academicRecords.map(r => r.subject));
+        const academicRecords = data?.academicRecords;
+        if (!academicRecords) return [];
+        const subjects = new Set(academicRecords.map(r => r.subject));
         return Array.from(subjects).sort();
-    }, [data?.academicRecords]);
+    }, [data]);
 
     const uniqueAssessmentsForSubject = useMemo(() => {
-        if (!subjectForCompletionCheck || !data?.academicRecords || !data?.students) return [];
+        const academicRecords = data?.academicRecords;
+        const students = data?.students;
+        if (!subjectForCompletionCheck || !academicRecords || !students) return [];
 
         let relevantStudentIds: Set<string> | null = null;
         if (selectedClassForCheck) {
             relevantStudentIds = new Set(
-                data.students
+                students
                     .filter(s => s.class_id === selectedClassForCheck)
                     .map(s => s.id)
             );
         }
 
-        const assessmentNames = data.academicRecords
+        const assessmentNames = academicRecords
             .filter(r => {
                 if (r.subject !== subjectForCompletionCheck) return false;
                 if (!r.assessment_name) return false;
@@ -379,13 +409,15 @@ const DashboardPage: React.FC = () => {
         const uniqueAssessments = [...new Set(assessmentNames)].filter(Boolean);
 
         return uniqueAssessments.sort((a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-    }, [data?.academicRecords, data?.students, subjectForCompletionCheck, selectedClassForCheck]);
+    }, [data, subjectForCompletionCheck, selectedClassForCheck]);
 
+    // Set default subject when uniqueSubjects changes
+    const defaultSubject = uniqueSubjects.length > 0 ? uniqueSubjects[0] : '';
     useEffect(() => {
-        if (uniqueSubjects.length > 0 && !subjectForCompletionCheck) {
-            setSubjectForCompletionCheck(uniqueSubjects[0]);
+        if (defaultSubject && !subjectForCompletionCheck) {
+            setSubjectForCompletionCheck(defaultSubject);
         }
-    }, [uniqueSubjects, subjectForCompletionCheck]);
+    }, [defaultSubject, subjectForCompletionCheck]);
 
     useEffect(() => {
         setAssessmentForCompletionCheck('');
@@ -440,12 +472,13 @@ const DashboardPage: React.FC = () => {
     }, [subjectForCompletionCheck, assessmentForCompletionCheck, data, selectedClassForCheck, uniqueAssessmentsForSubject]);
 
     const totalStudentsForCheck = useMemo(() => {
-        if (!data?.students) return 0;
+        const students = data?.students;
+        if (!students) return 0;
         if (selectedClassForCheck) {
-            return data.students.filter(s => s.class_id === selectedClassForCheck).length;
+            return students.filter(s => s.class_id === selectedClassForCheck).length;
         }
-        return data.students.length;
-    }, [data?.students, selectedClassForCheck]);
+        return students.length;
+    }, [data, selectedClassForCheck]);
 
     const completionPercentage = useMemo(() => {
         if (totalStudentsForCheck === 0) return 0;
@@ -466,7 +499,7 @@ const DashboardPage: React.FC = () => {
 
         let assessmentToPass = assessmentForCompletionCheck;
         if (!assessmentToPass && studentsMissingGrade.length > 0 && 'missingAssessments' in studentsMissingGrade[0]) {
-            // @ts-ignore
+            // @ts-expect-error - missingAssessments type varies
             assessmentToPass = studentsMissingGrade[0].missingAssessments[0];
         }
 
@@ -511,7 +544,7 @@ const DashboardPage: React.FC = () => {
     ];
 
     return (
-        <div className="w-full min-h-full p-4 lg:p-8 flex flex-col space-y-6 lg:space-y-8 bg-transparent max-w-7xl mx-auto pb-32 lg:pb-12 animate-fade-in-up">
+        <div className="w-full min-h-full p-4 lg:p-8 flex flex-col space-y-6 lg:space-y-8 bg-transparent max-w-7xl mx-auto pb-32 lg:pb-12 animate-fade-in-up" style={{ zoom: 1.1 }}>
             <header className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight font-serif bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">

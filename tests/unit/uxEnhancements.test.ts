@@ -215,7 +215,7 @@ describe('UX Enhancements', () => {
 
             it('should handle is_empty operator', () => {
                 expect('' === '').toBe(true);
-                expect(null === null).toBe(true);
+                expect((null as unknown) === null).toBe(true);
             });
         });
 

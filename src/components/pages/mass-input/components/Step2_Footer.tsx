@@ -1,8 +1,13 @@
 import React from 'react';
 import { Button } from '../../../ui/Button';
 import { XCircleIcon, DownloadIcon, BarChartIcon } from '../../../Icons';
-import { InputMode } from '../types';
+import { InputMode, ViolationRow } from '../types';
 import { exportGradesToExcel } from '../../../../utils/gradeExporter';
+import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../../../ui/DropdownMenu';
+import { FileTextIcon, FileSpreadsheetIcon } from 'lucide-react';
+import { exportViolationsToPDF, exportViolationsToExcel } from '../../../../services/violationExport';
+import { useAuth } from '../../../../hooks/useAuth';
+import { useToast } from '../../../../hooks/useToast';
 
 interface Step2_FooterProps {
     summaryText: string;
@@ -23,6 +28,7 @@ interface Step2_FooterProps {
     students?: { id: string; name: string }[];
     subjectGradeInfo?: { subject: string; assessment_name: string };
     className?: string;
+    existingViolations?: any[];
     onShowChart?: () => void;
 }
 
@@ -30,7 +36,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
     summaryText, mode, selectedStudentIds, gradedCount, setScores, setSelectedStudentIds,
     isExporting, exportProgress, handleSubmit, isSubmitDisabled, submitButtonTooltip,
     isSubmitting, isDeleting,
-    scores, students, subjectGradeInfo, className, onShowChart
+    scores, students, subjectGradeInfo, className, existingViolations, onShowChart
 }) => {
     const handleExportExcel = () => {
         if (!scores || !students) return;
@@ -48,6 +54,28 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
             className: className,
             includeStats: true,
         });
+    };
+
+    const { user } = useAuth();
+    const toast = useToast();
+
+    const handleViolationExport = (type: 'pdf' | 'excel') => {
+        if (!existingViolations || !students) return;
+
+        const options = {
+            studentName: 'Semua Siswa',
+            className: className || 'Kelas',
+            schoolName: user?.school_name || 'Sekolah',
+            violations: existingViolations as ViolationRow[]
+        };
+
+        if (type === 'pdf') {
+            exportViolationsToPDF(options);
+            toast.success('Mengunduh Laporan Pelanggaran (PDF)...');
+        } else {
+            exportViolationsToExcel(options);
+            toast.success('Mengunduh Laporan Pelanggaran (Excel)...');
+        }
     };
 
     return (
@@ -94,6 +122,50 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                             <DownloadIcon className="w-4 h-4 mr-1" />
                             Export
                         </Button>
+                    )}
+
+                    {/* Violation Export Button */}
+                    {mode === 'violation' && existingViolations && existingViolations.length > 0 && (
+                        <DropdownMenu>
+                            <DropdownTrigger>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="relative gap-2 bg-gradient-to-r from-orange-500/10 to-amber-500/10 border-orange-500/30 text-orange-500 dark:text-orange-400 hover:from-orange-500/20 hover:to-amber-500/20 hover:border-orange-500/50 transition-all duration-300"
+                                >
+                                    <DownloadIcon className="w-4 h-4" />
+                                    <span>Export Data</span>
+                                    <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30">
+                                        {existingViolations.length}
+                                    </span>
+                                </Button>
+                            </DropdownTrigger>
+                            <DropdownContent className="min-w-[180px]">
+                                <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Export {existingViolations.length} pelanggaran</p>
+                                </div>
+                                <DropdownItem
+                                    onClick={() => handleViolationExport('pdf')}
+                                    icon={<FileTextIcon className="w-4 h-4 text-red-500" />}
+                                    className="gap-3"
+                                >
+                                    <div>
+                                        <p className="font-medium">PDF (Formal)</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Laporan formal dengan kop</p>
+                                    </div>
+                                </DropdownItem>
+                                <DropdownItem
+                                    onClick={() => handleViolationExport('excel')}
+                                    icon={<FileSpreadsheetIcon className="w-4 h-4 text-green-600" />}
+                                    className="gap-3"
+                                >
+                                    <div>
+                                        <p className="font-medium">Excel</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Data terstruktur untuk analisis</p>
+                                    </div>
+                                </DropdownItem>
+                            </DropdownContent>
+                        </DropdownMenu>
                     )}
 
                     {isExporting ? (

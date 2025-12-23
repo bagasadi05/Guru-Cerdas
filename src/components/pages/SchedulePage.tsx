@@ -4,9 +4,12 @@ import { Input } from '../ui/Input';
 import { TrashIcon, PlusIcon, ClockIcon, PencilIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, BellIcon, MoreVerticalIcon, EditIcon, CopyIcon, UsersIcon, AlertCircleIcon } from '../Icons';
 import { Modal } from '../ui/Modal';
 import FloatingActionButton from '../ui/FloatingActionButton';
+import { MarkdownText } from '../ui/MarkdownText';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
-import { Type } from '@google/genai';
-import { supabase, ai } from '../../services/supabase';
+// import { Type } from '@google/genai';
+// import { ai } from '../../services/supabase';
+import { generateOpenRouterJson } from '../../services/openRouterService';
+import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { Database } from '../../services/database.types';
@@ -33,6 +36,8 @@ type ScheduleWithClassName = ScheduleRow & { className?: string };
 type ScheduleMutationVars =
     | { mode: 'add'; data: Database['public']['Tables']['schedules']['Insert'] }
     | { mode: 'edit'; data: Database['public']['Tables']['schedules']['Update']; id: string };
+
+
 
 const FormInputWrapper: React.FC<{ children: React.ReactNode; label: string; icon: React.FC<any> }> = ({ children, label, icon: Icon }) => (
     <div>
@@ -307,13 +312,25 @@ const SchedulePage: React.FC = () => {
 
     const handleAnalyzeSchedule = async () => {
         setAnalysisModalOpen(true); setAnalysisLoading(true); setAnalysisResult(null);
-        const systemInstruction = `Anda adalah seorang analis efisiensi jadwal. Tugas Anda adalah menemukan potensi masalah dan peluang optimasi dalam jadwal guru. Jawaban Anda harus dalam format JSON yang sesuai dengan skema yang diberikan. Format teks di dalam JSON harus menggunakan markdown (e.g., '**Teks Tebal**').`;
+        const systemInstruction = `Anda adalah seorang analis efisiensi jadwal. Tugas Anda adalah menemukan potensi masalah dan peluang optimasi dalam jadwal guru. Jawaban Anda harus dalam format JSON yang valid.
+        
+        Format JSON yang diharapkan:
+        {
+          "sections": [
+            {
+              "title": "Judul Bagian (e.g., **Konflik Jadwal**)",
+              "points": ["Poin 1", "Poin 2"]
+            }
+          ]
+        }
+        
+        Format teks di dalam JSON harus menggunakan markdown (e.g., '**Teks Tebal**').`;
         const prompt = `Analisis data jadwal JSON berikut dan berikan wawasan. Fokus pada: 1. Konflik Jadwal: Identifikasi jika ada jadwal yang tumpang tindih. Jika tidak ada, sebutkan itu. 2. Hari Terpadat: Tentukan hari mana yang memiliki sesi pelajaran terbanyak dan paling sedikit. 3. Saran Optimasi: Berikan saran untuk mendistribusikan beban kerja secara lebih merata jika perlu. Judul saran (seperti 'Perataan Beban Kerja') harus ditebalkan. Data Jadwal: ${JSON.stringify(schedule)}`;
-        const responseSchema = { type: Type.OBJECT, properties: { sections: { type: Type.ARRAY, description: "Array berisi bagian-bagian analisis: Konflik Jadwal, Hari Terpadat, dan Saran Optimasi.", items: { type: Type.OBJECT, properties: { title: { type: Type.STRING, description: "Judul bagian, diformat dengan markdown untuk bold." }, points: { type: Type.ARRAY, description: "Daftar poin-poin untuk bagian ini.", items: { type: Type.STRING } } } } } } };
+        // const responseSchema = { type: Type.OBJECT, properties: { sections: { type: Type.ARRAY, description: "Array berisi bagian-bagian analisis: Konflik Jadwal, Hari Terpadat, dan Saran Optimasi.", items: { type: Type.OBJECT, properties: { title: { type: Type.STRING, description: "Judul bagian, diformat dengan markdown untuk bold." }, points: { type: Type.ARRAY, description: "Daftar poin-poin untuk bagian ini.", items: { type: Type.STRING } } } } } } };
 
         try {
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema, } });
-            setAnalysisResult(JSON.parse(response.text || '{}'));
+            const result = await generateOpenRouterJson<{ sections: { title: string; points: string[] }[] }>(prompt, systemInstruction);
+            setAnalysisResult(result);
         } catch (error) {
             console.error("Schedule Analysis Error:", error);
             setAnalysisResult({ error: "Gagal menganalisis jadwal. Silakan coba lagi." });
@@ -603,32 +620,30 @@ const SchedulePage: React.FC = () => {
 
                 {/* Day Selector & List (Visible on all screens) */}
                 <div className="space-y-6">
-                    <div className="overflow-x-auto scrollbar-hide">
-                        <div className="flex gap-2 min-w-max">
-                            {daysOfWeek.map((day) => {
-                                const isToday = day === new Date().toLocaleDateString('id-ID', { weekday: 'long' });
-                                const isSelected = selectedDay === day;
+                    <div className="grid grid-cols-6 gap-3">
+                        {daysOfWeek.map((day) => {
+                            const isToday = day === new Date().toLocaleDateString('id-ID', { weekday: 'long' });
+                            const isSelected = selectedDay === day;
 
-                                return (
-                                    <button
-                                        key={day}
-                                        onClick={() => setSelectedDay(day)}
-                                        className={`
-                                            relative min-w-[80px] p-3 rounded-xl transition-all duration-300
-                                            flex flex-col items-center justify-center gap-1
-                                            ${isSelected
-                                                ? 'bg-[#4F46E5] text-white shadow-lg shadow-indigo-500/30 scale-[1.02]'
-                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-transparent'
-                                            }
-                                        `}
-                                    >
-                                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-indigo-100' : 'text-slate-400 dark:text-slate-500'}`}>{day.substring(0, 3)}</span>
-                                        <span className="text-xl font-bold">{getDayNumber(day)}</span>
-                                        {isToday && <span className={`absolute top-2 right-2 w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-indigo-500'}`}></span>}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                            return (
+                                <button
+                                    key={day}
+                                    onClick={() => setSelectedDay(day)}
+                                    className={`
+                                        relative p-4 rounded-2xl transition-all duration-300
+                                        flex flex-col items-center justify-center gap-1.5
+                                        ${isSelected
+                                            ? 'bg-[#4F46E5] text-white shadow-lg shadow-indigo-500/30 scale-[1.02]'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50'
+                                        }
+                                    `}
+                                >
+                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-indigo-100' : 'text-slate-400 dark:text-slate-500'}`}>{day.substring(0, 3)}</span>
+                                    <span className="text-2xl font-bold">{getDayNumber(day)}</span>
+                                    {isToday && <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${isSelected ? 'bg-white' : 'bg-indigo-500'}`}></span>}
+                                </button>
+                            );
+                        })}
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -715,9 +730,11 @@ const SchedulePage: React.FC = () => {
                         <div className="space-y-4">
                             {analysisResult.sections?.map((section: any, index: number) => (
                                 <div key={index}>
-                                    <h4 className="font-bold text-lg text-purple-300" dangerouslySetInnerHTML={{ __html: section.title }}></h4>
+                                    <h4 className="font-bold text-lg text-purple-300">
+                                        <MarkdownText text={section.title} />
+                                    </h4>
                                     <ul className="list-disc list-inside space-y-1 mt-2 text-gray-300">
-                                        {section.points?.map((point: string, pIndex: number) => <li key={pIndex}>{point}</li>)}
+                                        {section.points?.map((point: string, pIndex: number) => <li key={pIndex}><MarkdownText text={point} /></li>)}
                                     </ul>
                                 </div>
                             ))}

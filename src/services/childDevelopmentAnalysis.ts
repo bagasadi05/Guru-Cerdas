@@ -1,4 +1,5 @@
-import { ai } from './supabase';
+import { isAiEnabled } from './supabase';
+import { generateOpenRouterJson } from './openRouterService';
 
 export interface ChildDevelopmentData {
   student: {
@@ -31,7 +32,7 @@ export interface ChildDevelopmentData {
 export interface CognitiveDevelopmentAnalysis {
   strengths: string[];
   areasForDevelopment: string[];
-  learningStyle: 'Visual' | 'Auditori' | 'Kinestetik' | 'Campuran';
+  learningStyle: string;
   criticalThinking: string;
   academicComparison: string;
 }
@@ -96,48 +97,48 @@ function generateFallbackAnalysis(
     },
     cognitive: {
       strengths: [
-        `Memiliki nilai rata-rata ${averageScore} yang menunjukkan pemahaman yang ${performanceLevel}`,
-        averageScore >= 75 ? 'Menunjukkan konsistensi dalam mengikuti pembelajaran dengan baik' : 'Menunjukkan usaha dalam mengikuti pembelajaran',
-        'Aktif dalam kegiatan kelas dan partisipasi pembelajaran',
-        data.academicRecords.length > 5 ? 'Memiliki catatan penilaian yang lengkap dan konsisten' : 'Terus mengikuti penilaian dengan baik'
+        `🌟 Wow! Rata-rata nilainya ${averageScore}, membanggakan sekali ya Bun!`,
+        averageScore >= 75 ? '📚 Ananda mengikuti pelajaran dengan sangat antusias' : '📖 Ananda sudah menunjukkan usaha hebat di kelas',
+        '🙋‍♂️ Aktif bertanya dan berdiskusi seru dengan teman',
+        data.academicRecords.length > 5 ? '📈 Hasil belajarnya stabil terus lho' : '📝 Rajin banget ikut ujian dan tugas'
       ].slice(0, 4),
       areasForDevelopment: [
-        averageScore < 75 ? 'Perlu peningkatan pemahaman konsep di beberapa mata pelajaran' : 'Pertahankan dan tingkatkan prestasi akademik',
-        'Latihan soal secara rutin untuk memperkuat pemahaman materi',
-        averageScore < 70 ? 'Konsultasi dengan guru untuk strategi belajar yang lebih efektif' : 'Eksplorasi materi tambahan untuk memperdalam pemahaman'
+        averageScore < 75 ? '💡 Bisa kita temani belajar lagi di rumah sambil santai' : '🚀 Semangat belajarnya perlu dijaga terus ya',
+        '✍️ Perbanyak latihan soal biar makin jago',
+        averageScore < 70 ? '🤝 Boleh banget ngobrol santai sama guru wali kelas' : '📚 Coba eksplor buku-buku seru lainnya'
       ].slice(0, 3),
-      learningStyle: 'Campuran',
-      criticalThinking: averageScore >= 75 ? 'Menunjukkan kemampuan berpikir kritis yang baik dengan pemahaman konsep yang solid' : 'Sedang mengembangkan kemampuan berpikir kritis, perlu latihan lebih banyak',
-      academicComparison: averageScore >= 75 ? 'Berada pada atau di atas standar perkembangan anak seusianya' : 'Sedang berupaya mencapai standar perkembangan sesuai usia'
+      learningStyle: '🌈 Campuran (Unik banget!)',
+      criticalThinking: averageScore >= 75 ? '🧠 Pintar banget menangkap inti masalah' : '🌱 Sedang belajar memahami masalah, yuk sering diajak ngobrol!',
+      academicComparison: averageScore >= 75 ? '🏆 Perkembangannya juara untuk usianya' : '👣 Sedang asyik melangkah sesuai tahapannya'
     },
     affective: {
       positiveCharacters: [
-        `Memiliki kedisiplinan yang ${attendanceLevel} dengan tingkat kehadiran ${attendanceRate}%`,
-        'Menunjukkan tanggung jawab dalam mengikuti kegiatan sekolah',
-        totalViolations === 0 ? 'Tidak ada catatan pelanggaran, menunjukkan perilaku yang baik' : 'Terus berusaha memperbaiki perilaku dan sikap',
-        attendanceRate >= 90 ? 'Sangat konsisten dalam kehadiran menunjukkan komitmen belajar' : 'Menunjukkan usaha untuk hadir secara teratur'
+        `🏫 Rajin banget sekolahnya (${attendanceRate}%)`,
+        '⭐ Anak yang bertanggung jawab, keren!',
+        totalViolations === 0 ? '😇 Anak baik, perilakunya sopan sekali' : '🌱 Sedang belajar jadi lebih tertib lagi',
+        attendanceRate >= 90 ? '🔥 Semangat sekolahnya patut diacungi jempol' : '🎒 Cukup rajin berangkat sekolah'
       ].slice(0, 4),
-      socialSkills: 'Menunjukkan kemampuan bersosialisasi yang baik dengan teman sebaya dan aktif dalam kegiatan kelompok',
+      socialSkills: '🤝 Senang berteman dan main bareng sahabatnya',
       characterDevelopmentAreas: [
-        totalViolations > 0 ? 'Perlu bimbingan lebih dalam memahami dan mematuhi tata tertib sekolah' : 'Terus kembangkan sikap empati dan kerja sama tim',
-        'Latih kemampuan komunikasi dan leadership dalam kegiatan kelompok',
-        attendanceRate < 85 ? 'Tingkatkan kedisiplinan dan konsistensi kehadiran' : 'Kembangkan inisiatif dan kemandirian dalam belajar'
+        totalViolations > 0 ? '🗓️ Perlu diingatkan lagi soal aturan sekolah pelan-pelan ya' : '💖 Terus diajarkan untuk sayang teman',
+        '🎤 Bisa didorong jadi pemimpin barisan biar makin berani',
+        attendanceRate < 85 ? '⏰ Semangati lagi biar bangun pagi lebih happy' : '🦸‍♂️ Dorong untuk lebih mandiri saat belajar'
       ].slice(0, 3),
-      emotionalIntelligence: 'Mampu mengatur emosi dengan baik sesuai usia dan menunjukkan empati terhadap teman',
-      discipline: attendanceRate >= 95 ? 'Sangat baik' : attendanceRate >= 85 ? 'Baik' : attendanceRate >= 75 ? 'Cukup' : 'Perlu peningkatan'
+      emotionalIntelligence: '🥰 Bisa mengerti perasaan teman, anak yang peka',
+      discipline: attendanceRate >= 95 ? '🏅 Sangat Rajin (Teladan!)' : attendanceRate >= 85 ? '👍 Rajin' : attendanceRate >= 75 ? '👌 Cukup Rajin' : '💪 Perlu Semangat Lagi'
     },
     psychomotor: {
-      motorSkills: 'Perkembangan motorik sesuai dengan usia dan tahap perkembangan anak',
+      motorSkills: '🏃‍♂️ Gerak tubuhnya lincah, aktif, dan sehat',
       outstandingSkills: [
-        'Aktif dalam kegiatan praktik dan pembelajaran hands-on',
-        'Menunjukkan koordinasi mata-tangan yang baik',
-        'Mampu mengikuti instruksi aktivitas fisik dengan baik'
+        '🛠️ Suka praktek dan bikin karya seru',
+        '✍️ Tangannya terampil (tulisan/gambarnya rapi)',
+        '⚽ Jago mengikuti gerakan olahraga'
       ],
       areasNeedingStimulation: [
-        'Tingkatkan aktivitas fisik dan olahraga untuk pengembangan motorik kasar',
-        'Latihan keterampilan motorik halus melalui aktivitas seni dan kerajinan'
+        '🌳 Sering ajak main di taman biar makin kuat fisiknya',
+        '✂️ Ajak main origami atau lego untuk melatih jari'
       ],
-      coordination: 'Koordinasi motorik berkembang dengan baik sesuai tahap perkembangan'
+      coordination: '🕺 Gerakannya luwes banget, tidak kaku'
     },
     recommendations: {
       homeSupport: [
@@ -244,13 +245,25 @@ export async function generateComprehensiveChildAnalysis(
     };
 
     // Check if AI is available
-    if (!ai) {
+    if (!isAiEnabled) {
       console.warn('AI service not available, using fallback analysis');
       return generateFallbackAnalysis(data, averageScore, attendanceRate, violationSummary.total);
     }
 
-    // Build prompt
-    const systemInstruction = `Anda adalah seorang psikolog anak dan ahli perkembangan anak yang berpengalaman. Analisis data perkembangan anak secara holistik berdasarkan domain Kognitif, Afektif, dan Psikomotor. Berikan analisis yang mendalam, empati, dan actionable dalam Bahasa Indonesia yang mudah dipahami.`;
+    const systemInstruction = `Anda adalah seorang psikolog anak dan sobat orang tua yang sangat hangat, bijaksana, dan penuh empati.
+    Tugas Anda adalah memberikan analisis perkembangan anak yang "menyenangkan untuk dibaca" (delightful to read).
+    
+    PANDUAN GAYA BAHASA & FORMAT:
+    1.  **Nada Bicara**: Sangat personal, hangat, dan menenangkan. Gunakan kata sapaan seperti "Bunda/Ayah", "Ananda", atau langsung sebut nama anak dengan panggilan sayang.
+    2.  **Sederhana & Mengalir**: JANGAN gunakan bahasa kaku/akademis sama sekali. Tulis seperti sedang MENGAJAK NGOBROL santai sambil ngopi.
+    3.  **Visualisasi Teks**:
+        *   Gunakan **EMOJI** 🌟😊🚀 untuk membuat suasana hidup dan ceria di setiap poin.
+        *   Gunakan **Huruf Tebal** untuk poin-poin penting agar mudah diskimming.
+    4.  **Struktur Ulasan**:
+        *   Mulai dengan apresiasi tulus.
+        *   Fokus pada *Kekuatan Unik* anak.
+        *   Sampaikan area perkembangan sebagai "Petualangan Baru" atau "Tantangan Seru".
+    5.  **DILARANG**: Menggunakan kata "kurang", "lemah", "masalah". Ganti dengan "perlu sentuhan lebih", "bisa diasah lagi", "sedang berkembang".`;
 
     const prompt = `Analisis perkembangan anak dengan data berikut:
 
@@ -272,31 +285,8 @@ PARTISIPASI: ${validQuizPoints.length} kegiatan
 Berikan analisis dalam format JSON dengan struktur:
 {"summary":{"name":"","age":0,"class":"","overallAssessment":""},"cognitive":{"strengths":[],"areasForDevelopment":[],"learningStyle":"","criticalThinking":"","academicComparison":""},"affective":{"positiveCharacters":[],"socialSkills":"","characterDevelopmentAreas":[],"emotionalIntelligence":"","discipline":""},"psychomotor":{"motorSkills":"","outstandingSkills":[],"areasNeedingStimulation":[],"coordination":""},"recommendations":{"homeSupport":[],"neededStimulation":{"cognitive":[],"affective":[],"psychomotor":[]},"developmentPlan":{"threeMonths":[],"sixMonths":[]},"warningsSigns":[]}}`;
 
-    // Call AI
-    // Call AI
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        systemInstruction,
-        temperature: 0.7,
-        maxOutputTokens: 8192,
-        responseMimeType: 'application/json',
-      }
-    });
-
-    let text = response.text || '{}';
-
-    // Parse response
-    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-    // Extract JSON
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      text = jsonMatch[0];
-    }
-
-    const analysis = JSON.parse(text) as ComprehensiveChildAnalysis;
+    // Call AI via OpenRouter
+    const analysis = await generateOpenRouterJson<ComprehensiveChildAnalysis>(prompt, systemInstruction);
 
     return analysis;
 

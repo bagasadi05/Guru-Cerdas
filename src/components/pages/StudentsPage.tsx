@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
 import { Modal } from '../ui/Modal';
 import { useToast } from '../../hooks/useToast';
-import { GraduationCapIcon, UsersIcon, PlusIcon, PencilIcon, TrashIcon, AlertCircleIcon, LayoutGridIcon, ListIcon, KeyRoundIcon, SearchIcon, MoreVerticalIcon, EyeIcon, ClipboardIcon, FilterIcon, CheckCircleIcon, XCircleIcon, DownloadCloudIcon } from '../Icons';
+import { GraduationCapIcon, UsersIcon, PlusIcon, PencilIcon, TrashIcon, AlertCircleIcon, LayoutGridIcon, ListIcon, KeyRoundIcon, SearchIcon, MoreVerticalIcon, EyeIcon, ClipboardIcon, FilterIcon, CheckCircleIcon, XCircleIcon, DownloadCloudIcon, PrinterIcon, ArrowRightIcon } from '../Icons';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { Database } from '../../services/database.types';
@@ -21,11 +21,15 @@ import { ExportPreviewModal as NewExportPreviewModal, ColumnConfig } from '../ui
 import { exportData } from '../../services/ExportService';
 import { ImportModal } from '../ui/ImportModal';
 import { ParsedRow } from '../../services/ImportService';
-import { UploadCloudIcon } from 'lucide-react';
+import { UploadCloudIcon, CheckCircle2, QrCode, MoreHorizontal } from 'lucide-react';
+import { getStudentAvatar } from '../../utils/avatarUtils';
+import { StudentGrid } from '../students/StudentGrid';
+import { StudentTable } from '../students/StudentTable';
+import { StudentFilters } from '../students/StudentFilters';
+import { IDCardPrintModal } from '../students/IDCardPrintModal';
+import { BulkMoveModal } from '../students/BulkMoveModal';
+import { StudentRow, ClassRow } from '../students/types';
 
-
-type StudentRow = Database['public']['Tables']['students']['Row'];
-type ClassRow = Database['public']['Tables']['classes']['Row'];
 
 // Simplified data type for this page to improve performance
 type StudentsPageData = {
@@ -77,7 +81,7 @@ const StudentsPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [activeClassId, setActiveClassId] = useState<string>('');
-    const [sortBy, setSortBy] = useState<'name' | 'gender'>('name');
+    const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
     const [genderFilter, setGenderFilter] = useState<'all' | 'Laki-laki' | 'Perempuan'>('all');
     const [accessCodeFilter, setAccessCodeFilter] = useState<'all' | 'has_code' | 'no_code'>('all');
 
@@ -221,13 +225,24 @@ const StudentsPage: React.FC = () => {
         }
 
         return filtered.sort((a, b) => {
-            if (sortBy === 'name') {
-                return a.name.localeCompare(b.name, 'id-ID');
-            } else {
-                return a.gender.localeCompare(b.gender);
-            }
+            const aValue = a[sortConfig.key as keyof StudentRow];
+            const bValue = b[sortConfig.key as keyof StudentRow];
+
+            if (aValue === bValue) return 0;
+            if (aValue === null || aValue === undefined) return 1;
+            if (bValue === null || bValue === undefined) return -1;
+
+            const comparison = String(aValue).localeCompare(String(bValue), 'id-ID', { numeric: true });
+            return sortConfig.direction === 'asc' ? comparison : -comparison;
         });
-    }, [searchTerm, students, activeClassId, sortBy, genderFilter, accessCodeFilter]);
+    }, [searchTerm, students, activeClassId, sortConfig, genderFilter, accessCodeFilter]);
+
+    const handleSort = (key: string) => {
+        setSortConfig(current => ({
+            key,
+            direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
 
     const studentStats = useMemo(() => {
         const allInClass = students.filter(s => s.class_id === activeClassId);
@@ -237,7 +252,24 @@ const StudentsPage: React.FC = () => {
         return { total: allInClass.length, male: maleCount, female: femaleCount, hasCode: hasCodeCount };
     }, [students, activeClassId]);
 
+    const [isIDCardModalOpen, setIsIDCardModalOpen] = useState(false);
+    const [isBulkMoveModalOpen, setIsBulkMoveModalOpen] = useState(false);
+
     const { selectedItems, toggleItem, toggleAll, isAllSelected, isSelected, selectedCount, clearSelection } = useBulkSelection(studentsForActiveClass);
+
+    const { mutate: bulkMoveStudents, isPending: isMovingStudents } = useMutation({
+        mutationFn: async ({ studentIds, targetClassId }: { studentIds: string[], targetClassId: string }) => {
+            const { error } = await supabase.from('students').update({ class_id: targetClassId }).in('id', studentIds);
+            if (error) throw error;
+        },
+        ...mutationOptions,
+        onSuccess: () => {
+            mutationOptions.onSuccess();
+            toast.success("Siswa berhasil dipindahkan.");
+            setIsBulkMoveModalOpen(false);
+            clearSelection();
+        }
+    });
 
     const handleBulkDelete = async (ids: string[]) => {
         setConfirmModalState({
@@ -337,6 +369,20 @@ const StudentsPage: React.FC = () => {
             icon: <KeyRoundIcon className="w-4 h-4" />,
             variant: 'default' as const,
             onClick: handleBulkGenerateCodes
+        },
+        {
+            id: 'print_ids',
+            label: 'Cetak Kartu',
+            icon: <PrinterIcon className="w-4 h-4" />,
+            variant: 'default' as const,
+            onClick: () => setIsIDCardModalOpen(true)
+        },
+        {
+            id: 'move_class',
+            label: 'Pindah Kelas',
+            icon: <ArrowRightIcon className="w-4 h-4" />,
+            variant: 'default' as const,
+            onClick: () => setIsBulkMoveModalOpen(true)
         },
         {
             id: 'delete',
@@ -498,6 +544,16 @@ const StudentsPage: React.FC = () => {
 
     if (isLoading) return <StudentsPageSkeleton />;
 
+    const handleStudentAction = (student: StudentRow, action: 'view' | 'edit' | 'delete' | 'menu') => {
+        if (action === 'edit') {
+            handleOpenStudentModal('edit', student);
+        } else if (action === 'delete') {
+            handleDeleteStudentClick(student);
+        } else if (action === 'menu') {
+            setSelectedStudentForActions(student);
+        }
+    };
+
     return (
         <div className="w-full min-h-full p-4 lg:p-8 flex flex-col space-y-6 max-w-7xl mx-auto pb-32 lg:pb-12 animate-fade-in-up">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -505,73 +561,53 @@ const StudentsPage: React.FC = () => {
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white font-serif">Manajemen Siswa</h1>
                     <p className="mt-2 text-gray-600 dark:text-gray-400">Kelola data siswa, kelas, dan kode akses.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Button size="sm" variant="outline" onClick={() => setIsImportModalOpen(true)} className="rounded-xl border-dashed border-gray-300 text-gray-500 hover:text-blue-600 hover:border-blue-300 hidden sm:flex">
-                        <UploadCloudIcon className="w-3.5 h-3.5 mr-2" /> Import
+                <div className="flex items-center gap-2">
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-600 shadow-sm"
+                    >
+                        <UploadCloudIcon className="w-4 h-4 mr-2" /> Import
                     </Button>
-                    <Button size="sm" variant="outline" onClick={handleExportStudents} className="rounded-xl border-dashed border-gray-300 text-gray-500 hover:text-green-600 hover:border-green-300 hidden sm:flex">
-                        <DownloadCloudIcon className="w-3.5 h-3.5 mr-2" /> Export
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleExportStudents}
+                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-600 shadow-sm"
+                    >
+                        <DownloadCloudIcon className="w-4 h-4 mr-2" /> Export
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setIsClassManageModalOpen(true)} className="rounded-xl border-dashed border-gray-300 text-gray-500 hover:text-indigo-600 hover:border-indigo-300"><PencilIcon className="w-3.5 h-3.5 mr-2" /> Kelola Kelas</Button>
-                    <Button size="sm" onClick={() => handleOpenStudentModal('add')} className="rounded-xl shadow-lg shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white border-none"><PlusIcon className="w-4 h-4 mr-2" /> Siswa Baru</Button>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsClassManageModalOpen(true)}
+                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 shadow-sm"
+                    >
+                        <PencilIcon className="w-4 h-4 mr-2" /> Kelola Kelas
+                    </Button>
+                    <Button
+                        size="sm"
+                        onClick={() => handleOpenStudentModal('add')}
+                        className="rounded-xl shadow-lg shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white border-none"
+                    >
+                        <PlusIcon className="w-4 h-4 mr-2" /> Siswa Baru
+                    </Button>
                 </div>
             </header>
 
             <div className="space-y-6">
                 {/* Search and Filters */}
-                <div className="flex flex-col lg:flex-row gap-4">
-                    <div className="relative flex-grow group">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <SearchIcon className="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
-                        </div>
-                        <Input
-                            type="text"
-                            placeholder="Cari nama atau kode akses..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="pl-11 h-12 text-base w-full shadow-sm border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-2xl bg-white dark:bg-gray-800 transition-all"
-                        />
-                    </div>
-
-                    <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-                        <div className="flex items-center bg-white dark:bg-gray-800 rounded-2xl p-1 border border-gray-200 dark:border-gray-700 shadow-sm">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-                                title="Tampilan Grid"
-                            >
-                                <LayoutGridIcon className="h-5 w-5" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-                                title="Tampilan List/Tabel"
-                            >
-                                <ListIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        <Select
-                            value={genderFilter}
-                            onChange={(e) => setGenderFilter(e.target.value as any)}
-                            className="h-12 w-40 rounded-2xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                        >
-                            <option value="all">Semua Gender</option>
-                            <option value="Laki-laki">Laki-laki</option>
-                            <option value="Perempuan">Perempuan</option>
-                        </Select>
-
-                        <Select
-                            value={accessCodeFilter}
-                            onChange={(e) => setAccessCodeFilter(e.target.value as any)}
-                            className="h-12 w-44 rounded-2xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                        >
-                            <option value="all">Semua Status</option>
-                            <option value="has_code">Sudah Ada Kode</option>
-                            <option value="no_code">Belum Ada Kode</option>
-                        </Select>
-                    </div>
-                </div>
+                <StudentFilters
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    genderFilter={genderFilter}
+                    onGenderFilterChange={setGenderFilter}
+                    accessCodeFilter={accessCodeFilter}
+                    onAccessCodeFilterChange={setAccessCodeFilter}
+                />
 
                 {/* Class Tabs */}
                 <Tabs value={activeClassId} onValueChange={setActiveClassId} className="w-full">
@@ -619,178 +655,23 @@ const StudentsPage: React.FC = () => {
                             ) : (
                                 <>
                                     {viewMode === 'grid' ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-                                            {studentsForActiveClass.map((student, index) => (
-                                                <Card
-                                                    key={student.id}
-                                                    className="relative p-0 group overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white dark:bg-gray-800 rounded-3xl"
-                                                    style={{ animationDelay: `${index * 50}ms` }}
-                                                >
-                                                    <div className={`h-28 w-full bg-gradient-to-br ${student.gender === 'Laki-laki' ? 'from-sky-400 to-blue-600' : 'from-pink-400 to-rose-600'} opacity-90`}>
-                                                        <div className="absolute top-3 left-3 z-10">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isSelected(student.id)}
-                                                                onChange={(e) => { e.stopPropagation(); toggleItem(student.id); }}
-                                                                className="w-5 h-5 rounded border-white/50 bg-white/20 text-indigo-600 focus:ring-indigo-500 checked:bg-indigo-600 checked:border-transparent transition-all cursor-pointer"
-                                                            />
-                                                        </div>
-                                                        <div className="absolute top-3 right-3">
-                                                            <button onClick={() => setSelectedStudentForActions(student)} className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-colors">
-                                                                <MoreVerticalIcon className="w-5 h-5" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                    <div className="px-5 pb-6 flex flex-col items-center -mt-14">
-                                                        <div className="relative">
-                                                            <img
-                                                                src={student.avatar_url}
-                                                                alt={student.name}
-                                                                className="w-28 h-28 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg bg-white dark:bg-gray-700"
-                                                            />
-                                                            <div className={`absolute bottom-1 right-1 w-8 h-8 rounded-full border-4 border-white dark:border-gray-800 flex items-center justify-center shadow-sm ${student.gender === 'Laki-laki' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                                                                <span className="text-white text-[10px] font-bold">{student.gender === 'Laki-laki' ? 'L' : 'P'}</span>
-                                                            </div>
-                                                        </div>
-
-                                                        <h4 className="mt-4 font-bold text-lg text-gray-900 dark:text-white text-center line-clamp-1 w-full px-2">{student.name}</h4>
-
-                                                        <div className="mt-2 flex items-center gap-2">
-                                                            {student.access_code ? (
-                                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-xs font-medium border border-emerald-100 dark:border-emerald-900/30">
-                                                                    <KeyRoundIcon className="w-3 h-3" />
-                                                                    {student.access_code}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs font-medium border border-gray-200 dark:border-gray-700">
-                                                                    No Code
-                                                                </span>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="mt-5 w-full">
-                                                            <Link
-                                                                to={`/siswa/${student.id}`}
-                                                                className="flex w-full items-center justify-center gap-2 py-2.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
-                                                            >
-                                                                <EyeIcon className="w-4 h-4" />
-                                                                Lihat Detail
-                                                            </Link>
-                                                        </div>
-                                                    </div>
-                                                </Card>
-                                            ))}
-                                        </div>
+                                        <StudentGrid
+                                            students={studentsForActiveClass}
+                                            isSelected={isSelected}
+                                            toggleItem={toggleItem}
+                                            onAction={handleStudentAction}
+                                        />
                                     ) : (
-                                        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                                            {/* Desktop Table View */}
-                                            <div className="hidden lg:block table-responsive">
-                                                <table className="w-full text-left text-sm">
-                                                    <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-                                                        <tr>
-                                                            <th className="px-6 py-4 w-12">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={isAllSelected}
-                                                                    onChange={toggleAll}
-                                                                    className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                                                />
-                                                            </th>
-                                                            <th className="px-6 py-4 font-semibold text-gray-900 dark:text-white">Siswa</th>
-                                                            <th className="px-6 py-4 font-semibold text-gray-900 dark:text-white">Gender</th>
-                                                            <th className="px-6 py-4 font-semibold text-gray-900 dark:text-white">Kode Akses</th>
-                                                            <th className="px-6 py-4 font-semibold text-gray-900 dark:text-white text-right">Aksi</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                                        {studentsForActiveClass.map((student) => (
-                                                            <tr key={student.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group ${isSelected(student.id) ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}>
-                                                                <td className="px-6 py-4">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={isSelected(student.id)}
-                                                                        onChange={() => toggleItem(student.id)}
-                                                                        className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                                                    />
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex items-center gap-4">
-                                                                        <img src={student.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover bg-gray-100 dark:bg-gray-700" />
-                                                                        <span className="font-medium text-gray-900 dark:text-white">{student.name}</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${student.gender === 'Laki-laki'
-                                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                                                                        : 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'
-                                                                        }`}>
-                                                                        {student.gender}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    {student.access_code ? (
-                                                                        <div className="flex items-center gap-2">
-                                                                            <code className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-mono text-xs border border-gray-200 dark:border-gray-600">
-                                                                                {student.access_code}
-                                                                            </code>
-                                                                            <button
-                                                                                onClick={() => { navigator.clipboard.writeText(student.access_code || ''); toast.success("Disalin!"); }}
-                                                                                className="text-gray-400 hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100"
-                                                                                title="Salin"
-                                                                            >
-                                                                                <ClipboardIcon className="w-4 h-4" />
-                                                                            </button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <span className="text-gray-400 italic text-xs">Belum ada kode</span>
-                                                                    )}
-                                                                </td>
-                                                                <td className="px-6 py-4 text-right">
-                                                                    <div className="flex items-center justify-end gap-2">
-                                                                        <Link to={`/siswa/${student.id}`} className="p-2 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
-                                                                            <EyeIcon className="w-4 h-4" />
-                                                                        </Link>
-                                                                        <button onClick={() => handleOpenStudentModal('edit', student)} className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
-                                                                            <PencilIcon className="w-4 h-4" />
-                                                                        </button>
-                                                                        <button onClick={() => handleDeleteStudentClick(student)} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                                                                            <TrashIcon className="w-4 h-4" />
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-
-                                            {/* Mobile List View */}
-                                            <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
-                                                {studentsForActiveClass.map((student) => (
-                                                    <div key={student.id} className="p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" onClick={() => setSelectedStudentForActions(student)}>
-                                                        <div className="relative flex-shrink-0">
-                                                            <img src={student.avatar_url} alt={student.name} className="w-12 h-12 rounded-full object-cover bg-gray-100 dark:bg-gray-700" />
-                                                            <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center ${student.gender === 'Laki-laki' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                                                                <span className="text-white text-[8px] font-bold">{student.gender === 'Laki-laki' ? 'L' : 'P'}</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-grow min-w-0">
-                                                            <h4 className="font-bold text-gray-900 dark:text-white truncate">{student.name}</h4>
-                                                            <div className="flex items-center gap-2 mt-1">
-                                                                {student.access_code ? (
-                                                                    <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">{student.access_code}</span>
-                                                                ) : (
-                                                                    <span className="text-xs text-gray-400">No Code</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <Button variant="ghost" size="icon" className="text-gray-400">
-                                                            <MoreVerticalIcon className="w-5 h-5" />
-                                                        </Button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
+                                        <StudentTable
+                                            students={studentsForActiveClass}
+                                            isSelected={isSelected}
+                                            toggleItem={toggleItem}
+                                            isAllSelected={isAllSelected}
+                                            toggleAll={toggleAll}
+                                            onAction={handleStudentAction}
+                                            sortConfig={sortConfig}
+                                            onSort={handleSort}
+                                        />
                                     )}
                                 </>
                             )}
@@ -963,6 +844,23 @@ const StudentsPage: React.FC = () => {
                 onClose={() => setIsImportModalOpen(false)}
                 onImport={handleImportStudents}
                 title="Import Data Siswa"
+            />
+
+            <IDCardPrintModal
+                isOpen={isIDCardModalOpen}
+                onClose={() => setIsIDCardModalOpen(false)}
+                students={studentsForActiveClass.filter(s => isSelected(s.id))}
+                classes={classes}
+            />
+
+            <BulkMoveModal
+                isOpen={isBulkMoveModalOpen}
+                onClose={() => setIsBulkMoveModalOpen(false)}
+                onAttributesConfirm={(targetClassId) => bulkMoveStudents({ studentIds: Array.from(selectedItems), targetClassId })}
+                classes={classes}
+                studentCount={selectedCount}
+                currentClassId={activeClassId}
+                isMoving={isMovingStudents}
             />
         </div>
     );

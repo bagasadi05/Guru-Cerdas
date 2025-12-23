@@ -1,7 +1,3 @@
-// This file is now populated with a schema based on the application's needs.
-// You can generate this file using the Supabase CLI:
-// npx supabase gen types typescript --project-id YOUR_PROJECT_ID > services/database.types.ts
-
 export type Json =
   | string
   | number
@@ -10,430 +6,531 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-// FIX: Changed 'interface' to 'type' for correct Supabase type inference.
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
       academic_records: {
         Row: {
-          id: string;
-          student_id: string;
-          subject: string;
-          score: number;
-          notes: string;
-          user_id: string;
-          created_at: string;
-          assessment_name: string | null;
-        };
+          assessment_name: string | null
+          created_at: string
+          id: string
+          notes: string
+          score: number
+          student_id: string
+          subject: string
+          user_id: string
+          version: number | null
+        }
         Insert: {
-          id?: string;
-          student_id: string;
-          subject: string;
-          score: number;
-          notes: string;
-          user_id: string;
-          created_at?: string;
-          assessment_name?: string | null;
-        };
+          assessment_name?: string | null
+          created_at?: string
+          id?: string
+          notes: string
+          score: number
+          student_id: string
+          subject: string
+          user_id: string
+          version?: number | null
+        }
         Update: {
-          id?: string;
-          student_id?: string;
-          subject?: string;
-          score?: number;
-          notes?: string;
-          user_id?: string;
-          created_at?: string;
-          assessment_name?: string | null;
-        };
-        // FIX: Add Relationships property to conform to Supabase type definitions.
+          assessment_name?: string | null
+          created_at?: string
+          id?: string
+          notes?: string
+          score?: number
+          student_id?: string
+          subject?: string
+          user_id?: string
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      action_history: {
+        Row: {
+          action_type: string
+          affected_ids: string[]
+          can_undo: boolean | null
+          created_at: string | null
+          entity_type: string
+          expires_at: string
+          id: string
+          previous_state: Json | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          affected_ids: string[]
+          can_undo: boolean | null
+          created_at?: string | null
+          entity_type: string
+          expires_at: string
+          id?: string
+          previous_state?: Json | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          affected_ids?: string[]
+          can_undo?: boolean | null
+          created_at?: string | null
+          entity_type?: string
+          expires_at?: string
+          id?: string
+          previous_state?: Json | null
+          user_id?: string
+        }
         Relationships: []
-      };
+      }
+      announcements: {
+        Row: {
+          audience_type: string | null
+          content: string
+          created_at: string | null
+          date: string | null
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          audience_type?: string | null
+          content: string
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          audience_type?: string | null
+          content?: string
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      attendance: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       communications: {
         Row: {
-          id: string
+          content: string
           created_at: string
-          student_id: string
-          user_id: string
-          message: string
-          sender: "teacher" | "parent"
+          id: string
+          is_from_teacher: boolean
           is_read: boolean
-          attachment_url: string | null
-          attachment_type: "image" | "document" | null
-          attachment_name: string | null
+          student_id: string
+          teacher_id: string
         }
         Insert: {
-          id?: string
+          content: string
           created_at?: string
-          student_id: string
-          user_id: string
-          message: string
-          sender: "teacher" | "parent"
+          id?: string
+          is_from_teacher?: boolean
           is_read?: boolean
-          attachment_url?: string | null
-          attachment_type?: "image" | "document" | null
-          attachment_name?: string | null
+          student_id: string
+          teacher_id: string
         }
         Update: {
+          content?: string
+          created_at?: string
           id?: string
-          message?: string
+          is_from_teacher?: boolean
           is_read?: boolean
-          attachment_url?: string | null
-          attachment_type?: "image" | "document" | null
-          attachment_name?: string | null
+          student_id?: string
+          teacher_id?: string
         }
-        // FIX: Add Relationships property to conform to Supabase type definitions.
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "communications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_points: {
         Row: {
-          id: number;
-          created_at: string;
-          quiz_name: string;
-          subject: string;
-          points: number;
-          max_points: number;
-          quiz_date: string;
-          student_id: string;
-          user_id: string;
-          category: 'bertanya' | 'presentasi' | 'tugas_tambahan' | 'menjawab' | 'diskusi' | 'lainnya' | null;
-          is_used: boolean;
-          used_at: string | null;
-          used_for_subject: string | null;
-        };
-        Insert: {
-          id?: number;
-          created_at?: string;
-          quiz_name: string;
-          subject: string;
-          points: number;
-          max_points: number;
-          quiz_date: string;
-          student_id: string;
-          user_id: string;
-          category?: 'bertanya' | 'presentasi' | 'tugas_tambahan' | 'menjawab' | 'diskusi' | 'lainnya' | null;
-          is_used?: boolean;
-          used_at?: string | null;
-          used_for_subject?: string | null;
-        };
-        Update: {
-          id?: number;
-          created_at?: string;
-          quiz_name?: string;
-          subject?: string;
-          points?: number;
-          max_points?: number;
-          quiz_date?: string;
-          student_id?: string;
-          user_id?: string;
-          category?: 'bertanya' | 'presentasi' | 'tugas_tambahan' | 'menjawab' | 'diskusi' | 'lainnya' | null;
-          is_used?: boolean;
-          used_at?: string | null;
-          used_for_subject?: string | null;
-        };
-        // FIX: Add Relationships property to conform to Supabase type definitions.
-        Relationships: []
-      };
-      attendance: {
-        Row: {
-          id: string
-          student_id: string
-          date: string
-          status: "Hadir" | "Izin" | "Sakit" | "Alpha"
-          notes: string | null
-          user_id: string
           created_at: string
-          deleted_at: string | null
+          id: string
+          points: number
+          reason: string
+          student_id: string
+          type: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          student_id: string
-          date: string
-          status: "Hadir" | "Izin" | "Sakit" | "Alpha"
-          notes?: string | null
-          user_id: string
           created_at?: string
-          deleted_at?: string | null
+          id?: string
+          points: number
+          reason: string
+          student_id: string
+          type: string
+          user_id: string
         }
         Update: {
-          id?: string
-          student_id?: string
-          date?: string
-          status?: "Hadir" | "Izin" | "Sakit" | "Alpha"
-          notes?: string | null
-          user_id?: string
           created_at?: string
-          deleted_at?: string | null
+          id?: string
+          points?: number
+          reason?: string
+          student_id?: string
+          type?: string
+          user_id?: string
         }
-        // FIX: Add Relationships property to conform to Supabase type definitions.
-        Relationships: []
-      }
-      classes: {
-        Row: { id: string; name: string; user_id: string; created_at: string; deleted_at: string | null; }
-        Insert: { id?: string; name: string; user_id: string; created_at?: string; deleted_at?: string | null; }
-        Update: { id?: string; name?: string; user_id?: string; created_at?: string; deleted_at?: string | null; }
-        // FIX: Add Relationships property to conform to Supabase type definitions.
-        Relationships: []
-      }
-      students: {
-        Row: { id: string; name: string; class_id: string; avatar_url: string; user_id: string; created_at: string; gender: "Laki-laki" | "Perempuan"; access_code: string | null; parent_phone: string | null; deleted_at: string | null }
-        Insert: { id?: string; name: string; class_id: string; avatar_url: string; user_id: string; created_at?: string; gender: "Laki-laki" | "Perempuan"; access_code?: string | null; parent_phone?: string | null; deleted_at?: string | null }
-        Update: { id?: string; name?: string; class_id?: string; avatar_url?: string; user_id?: string; created_at?: string; gender?: "Laki-laki" | "Perempuan"; access_code?: string | null; parent_phone?: string | null; deleted_at?: string | null }
-        // FIX: Add Relationships property to conform to Supabase type definitions.
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quiz_points_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reports: {
         Row: {
+          content: string
+          created_at: string
           id: string
           student_id: string
-          date: string
           title: string
-          notes: string
-          attachment_url: string | null
+          type: string
           user_id: string
-          created_at: string
-          category: 'akademik' | 'perilaku' | 'kesehatan' | 'prestasi' | 'lainnya' | null
-          tags: string[] | null
         }
         Insert: {
+          content: string
+          created_at?: string
           id?: string
           student_id: string
-          date: string
           title: string
-          notes: string
-          attachment_url?: string | null
+          type: string
           user_id: string
-          created_at?: string
-          category?: 'akademik' | 'perilaku' | 'kesehatan' | 'prestasi' | 'lainnya' | null
-          tags?: string[] | null
         }
         Update: {
+          content?: string
+          created_at?: string
           id?: string
           student_id?: string
-          date?: string
           title?: string
-          notes?: string
-          attachment_url?: string | null
+          type?: string
           user_id?: string
-          created_at?: string
-          category?: 'akademik' | 'perilaku' | 'kesehatan' | 'prestasi' | 'lainnya' | null
-          tags?: string[] | null
         }
-        // FIX: Add Relationships property to conform to Supabase type definitions.
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reports_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       schedules: {
         Row: {
-          id: string
-          day: "Senin" | "Selasa" | "Rabu" | "Kamis" | "Jumat"
-          start_time: string
-          end_time: string
-          subject: string
           class_id: string
-          user_id: string
           created_at: string
+          day: Database["public"]["Enums"]["day_of_week"]
+          end_time: string
+          id: string
+          start_time: string
+          subject: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          day: "Senin" | "Selasa" | "Rabu" | "Kamis" | "Jumat"
-          start_time: string
-          end_time: string
-          subject: string
           class_id: string
-          user_id: string
           created_at?: string
+          day: Database["public"]["Enums"]["day_of_week"]
+          end_time: string
+          id?: string
+          start_time: string
+          subject: string
+          user_id: string
         }
         Update: {
-          id?: string
-          day?: "Senin" | "Selasa" | "Rabu" | "Kamis" | "Jumat"
-          start_time?: string
-          end_time?: string
-          subject?: string
           class_id?: string
-          user_id?: string
           created_at?: string
+          day?: Database["public"]["Enums"]["day_of_week"]
+          end_time?: string
+          id?: string
+          start_time?: string
+          subject?: string
+          user_id?: string
         }
-        // FIX: Add Relationships property to conform to Supabase type definitions.
         Relationships: []
       }
-      violations: {
+      students: {
         Row: {
-          id: string
-          student_id: string
-          date: string
-          description: string
-          points: number
-          user_id: string
+          access_code: string | null
+          avatar_url: string | null
+          class_id: string | null
           created_at: string
-          severity: 'ringan' | 'sedang' | 'berat' | null
-          evidence_url: string | null
-          follow_up_status: 'pending' | 'in_progress' | 'resolved' | null
-          follow_up_notes: string | null
-          parent_notified: boolean
-          parent_notified_at: string | null
+          deleted_at: string | null
+          gender: Database["public"]["Enums"]["gender_enum"]
+          id: string
+          name: string
+          parent_name: string | null
+          parent_phone: string | null
+          user_id: string
         }
         Insert: {
-          id?: string
-          student_id: string
-          date: string
-          description: string
-          points: number
-          user_id: string
+          access_code?: string | null
+          avatar_url?: string | null
+          class_id?: string | null
           created_at?: string
-          severity?: 'ringan' | 'sedang' | 'berat' | null
-          evidence_url?: string | null
-          follow_up_status?: 'pending' | 'in_progress' | 'resolved' | null
-          follow_up_notes?: string | null
-          parent_notified?: boolean
-          parent_notified_at?: string | null
+          deleted_at?: string | null
+          gender: Database["public"]["Enums"]["gender_enum"]
+          id?: string
+          name: string
+          parent_name?: string | null
+          parent_phone?: string | null
+          user_id: string
         }
         Update: {
-          id?: string
-          student_id?: string
-          date?: string
-          description?: string
-          points?: number
-          user_id?: string
+          access_code?: string | null
+          avatar_url?: string | null
+          class_id?: string | null
           created_at?: string
-          severity?: 'ringan' | 'sedang' | 'berat' | null
-          evidence_url?: string | null
-          follow_up_status?: 'pending' | 'in_progress' | 'resolved' | null
-          follow_up_notes?: string | null
-          parent_notified?: boolean
-          parent_notified_at?: string | null
+          deleted_at?: string | null
+          gender?: Database["public"]["Enums"]["gender_enum"]
+          id?: string
+          name?: string
+          parent_name?: string | null
+          parent_phone?: string | null
+          user_id?: string
         }
-        // FIX: Add Relationships property to conform to Supabase type definitions.
+        Relationships: [
+          {
+            foreignKeyName: "students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subjects: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
         Relationships: []
       }
       tasks: {
         Row: {
-          id: string;
-          user_id: string;
-          title: string;
-          description: string | null;
-          due_date: string | null;
-          status: "todo" | "in_progress" | "done";
-          created_at: string;
-          deleted_at: string | null;
-        };
+          class_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          user_id: string
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          title: string;
-          description?: string | null;
-          due_date?: string | null;
-          status?: "todo" | "in_progress" | "done";
-          created_at?: string;
-          deleted_at?: string | null;
-        };
+          class_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          user_id: string
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          title?: string;
-          description?: string | null;
-          due_date?: string | null;
-          status?: "todo" | "in_progress" | "done";
-          created_at?: string;
-          deleted_at?: string | null;
-        };
-        // FIX: Add Relationships property to conform to Supabase type definitions.
-        Relationships: []
-      };
-      action_history: {
+          class_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      violations: {
         Row: {
-          id: string;
-          user_id: string;
-          action_type: string;
-          entity_type: string;
-          affected_ids: string[];
-          previous_state: Json | null;
-          created_at: string;
-          expires_at: string;
-          can_undo: boolean;
-        };
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          points: number
+          student_id: string
+          type: string
+          user_id: string
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          action_type: string;
-          entity_type: string;
-          affected_ids: string[];
-          previous_state?: Json | null;
-          created_at?: string;
-          expires_at: string;
-          can_undo?: boolean;
-        };
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          points: number
+          student_id: string
+          type: string
+          user_id: string
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          action_type?: string;
-          entity_type?: string;
-          affected_ids?: string[];
-          previous_state?: Json | null;
-          created_at?: string;
-          expires_at?: string;
-          can_undo?: boolean;
-        };
-        Relationships: []
-      };
-      export_templates: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          points?: number
+          student_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "violations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ],
+      },
+      user_roles: {
         Row: {
-          id: string;
-          user_id: string;
-          name: string;
-          config: Json;
-          created_at: string;
-          updated_at: string;
-        };
+          created_at: string
+          email: string | null
+          full_name: string | null
+          role: "admin" | "teacher" | "student" | "parent"
+          updated_at: string
+          user_id: string
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          name: string;
-          config: Json;
-          created_at?: string;
-          updated_at?: string;
-        };
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          role?: "admin" | "teacher" | "student" | "parent"
+          updated_at?: string
+          user_id: string
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          name?: string;
-          config?: Json;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: []
-      };
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          role?: "admin" | "teacher" | "student" | "parent"
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
-    Views: { [_ in never]: never }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
-      apply_quiz_points_to_grade: {
+      check_student_access: {
         Args: {
-          student_id_param: string
-          subject_param: string
-          user_id_param: string
-        }
-        Returns: undefined
-      }
-      delete_parent_message: {
-        Args: {
-          student_id_param: string
-          access_code_param: string
-          message_id_param: string
-        }
-        Returns: undefined
-      }
-      delete_user_account: {
-        // FIX: Changed 'Record<string, unknown>' to '{}' for functions with no arguments to fix type inference.
-        Args: {}
-        Returns: undefined
-      }
-      get_daily_attendance_summary: {
-        Args: {
-          for_date: string
+          p_access_code: string
         }
         Returns: {
-          present_percentage: number
-          permission_percentage: number
-          sick_percentage: number
-          absent_percentage: number
+          id: string
+          name: string
+          class_name: string
         }[]
       }
       get_student_portal_data: {
@@ -442,64 +539,27 @@ export type Database = {
           access_code_param: string
         }
         Returns: {
-          student: {
-            id: string
-            name: string
-            avatar_url: string
-            user_id: string
-            classes: { name: string }
-          }
-          reports: {
-            id: string
-            date: string
-            title: string
-            notes: string
-          }[]
-          attendanceRecords: {
-            id: string
-            date: string
-            status: string
-            notes: string | null
-          }[]
-          academicRecords: {
-            id: string
-            subject: string
-            score: number
-            notes: string
-            created_at: string
-            assessment_name: string | null
-          }[]
-          violations: {
-            id: string
-            date: string
-            description: string
-            points: number
-          }[]
-          quizPoints: {
-            id: number
-            quiz_date: string
-            subject: string
-            quiz_name: string
-            points: number
-            max_points: number
-          }[]
-          communications: {
-            id: string
-            created_at: string
-            message: string
-            sender: "teacher" | "parent"
-            is_read: boolean
-          }[]
-          teacher: { user_id: string; name: string; avatar_url: string } | null
+          student: Json
+          reports: Json
+          attendanceRecords: Json
+          academicRecords: Json
+          violations: Json
+          quizPoints: Json
+          communications: Json
+          teacher: Json
+          schedules: Json
+          tasks: Json
+          announcements: Json
         }[]
       }
-      get_weekly_attendance_summary: {
-        // FIX: Changed 'Record<string, unknown>' to '{}' for functions with no arguments to fix type inference.
-        Args: {}
-        Returns: {
-          day: string
-          present_percentage: number
-        }[]
+      update_parent_info: {
+        Args: {
+          student_id_param: string
+          access_code_param: string
+          new_parent_name: string
+          new_parent_phone: string
+        }
+        Returns: boolean
       }
       send_parent_message: {
         Args: {
@@ -508,7 +568,7 @@ export type Database = {
           message_param: string
           teacher_user_id_param: string
         }
-        Returns: undefined
+        Returns: string
       }
       update_parent_message: {
         Args: {
@@ -517,7 +577,15 @@ export type Database = {
           message_id_param: string
           new_message_param: string
         }
-        Returns: undefined
+        Returns: boolean
+      }
+      delete_parent_message: {
+        Args: {
+          student_id_param: string
+          access_code_param: string
+          message_id_param: string
+        }
+        Returns: boolean
       }
       verify_access_code: {
         Args: {
@@ -525,14 +593,143 @@ export type Database = {
         }
         Returns: {
           id: string
+          name: string
+          class_id: string
           access_code: string
         }[]
       }
     }
     Enums: {
-      "attendance_status": "Hadir" | "Izin" | "Sakit" | "Alpha"
-      "day_of_week": "Senin" | "Selasa" | "Rabu" | "Kamis" | "Jumat"
+      attendance_status: "Hadir" | "Izin" | "Sakit" | "Alpha"
+      day_of_week:
+      | "Senin"
+      | "Selasa"
+      | "Rabu"
+      | "Kamis"
+      | "Jumat"
+      | "Sabtu"
+      | "Minggu"
+      gender_enum: "Laki-laki" | "Perempuan"
+      task_status: "todo" | "in_progress" | "done"
     }
-    CompositeTypes: { [_ in never]: never }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
+
+type PublicSchema = Database[Extract<keyof Database, "public">]
+
+export type Tables<
+  PublicTableNameOrOptions extends
+  | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+  | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+  ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+    Database[PublicTableNameOrOptions["schema"]]["Views"])
+  : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+    Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+    PublicSchema["Views"])
+  ? (PublicSchema["Tables"] &
+    PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
+
+export type TablesInsert<
+  PublicTableNameOrOptions extends
+  | keyof PublicSchema["Tables"]
+  | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+  ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+  ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
+
+export type TablesUpdate<
+  PublicTableNameOrOptions extends
+  | keyof PublicSchema["Tables"]
+  | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+  ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+  ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
+
+export type Enums<
+  PublicEnumNameOrOptions extends
+  | keyof PublicSchema["Enums"]
+  | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+  ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+  : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+  | keyof PublicSchema["CompositeTypes"]
+  | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+  ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+  ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      attendance_status: ["Hadir", "Izin", "Sakit", "Alpha"],
+      day_of_week: [
+        "Senin",
+        "Selasa",
+        "Rabu",
+        "Kamis",
+        "Jumat",
+        "Sabtu",
+        "Minggu",
+      ],
+      gender_enum: ["Laki-laki", "Perempuan"],
+      task_status: ["todo", "in_progress", "done"],
+    },
+  },
+} as const

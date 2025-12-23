@@ -13,12 +13,15 @@ import {
     MinusIcon,
     FilterIcon,
     DownloadIcon,
-    RefreshCwIcon
+    RefreshCwIcon,
+    HelpCircle,
+    ExternalLink
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
 import AnalyticsPageSkeleton from '../skeletons/AnalyticsPageSkeleton';
+import { useTour } from '../OnboardingHelp';
 
 // Types
 interface AttendanceStats {
@@ -49,6 +52,39 @@ interface DailyAttendance {
 
 const AnalyticsPage: React.FC = () => {
     const { user } = useAuth();
+
+    // Onboarding Tour
+    const { start } = useTour();
+
+    React.useEffect(() => {
+        const steps = [
+            {
+                id: 'analytics-intro',
+                target: '#tour-stat-cards',
+                title: 'Dashboard Analitik Baru',
+                content: 'Tampilan ringkas untuk memantau kehadiran, siswa, dan tugas dengan penjelas otomatis.',
+                position: 'bottom' as const
+            },
+            {
+                id: 'analytics-charts',
+                target: '#tour-charts',
+                title: 'Grafik & Laporan',
+                content: 'Lihat tren kehadiran 30 hari terakhir dan rincian lengkapnya di sini.',
+                position: 'top' as const
+            },
+            {
+                id: 'help-center',
+                target: '#tour-help-button',
+                title: 'Pusat Bantuan',
+                content: 'Bingung cara pakai? Klik tombol ini untuk melihat panduan lengkap dengan gambar.',
+                position: 'left' as const
+            }
+        ];
+        // Short delay to ensure elements are rendered
+        const timer = setTimeout(() => start(steps), 1000);
+        return () => clearTimeout(timer);
+    }, [start]);
+
     const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
     const [selectedClassId, setSelectedClassId] = useState<string>('all');
 
@@ -196,7 +232,11 @@ const AnalyticsPage: React.FC = () => {
         subtitle,
         icon: Icon,
         trend,
-        color = 'indigo'
+        color = 'indigo',
+        tooltip,
+        interpretation,
+        actionLabel,
+        actionLink
     }: {
         title: string;
         value: string | number;
@@ -204,6 +244,10 @@ const AnalyticsPage: React.FC = () => {
         icon: React.ElementType;
         trend?: 'up' | 'down' | 'neutral';
         color?: 'indigo' | 'green' | 'amber' | 'red' | 'blue';
+        tooltip?: string;
+        interpretation?: { text: string; status: 'good' | 'warning' | 'danger' };
+        actionLabel?: string;
+        actionLink?: string;
     }) => {
         const colors = {
             indigo: 'from-indigo-500 to-purple-600',
@@ -213,22 +257,26 @@ const AnalyticsPage: React.FC = () => {
             blue: 'from-blue-500 to-cyan-600',
         };
 
+        const interpretationColors = {
+            good: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800',
+            warning: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+            danger: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+        };
+
         return (
             <Card className="relative overflow-hidden bg-white dark:bg-slate-900 border-0 shadow-lg">
                 <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colors[color]} opacity-10 rounded-full -translate-y-8 translate-x-8`} />
                 <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                        <div>
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2" id="tour-stat-cards">
                             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
-                            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
-                            {subtitle && (
-                                <div className="flex items-center gap-1 mt-2">
-                                    {trend === 'up' && <ArrowUpIcon className="w-4 h-4 text-green-500" />}
-                                    {trend === 'down' && <ArrowDownIcon className="w-4 h-4 text-red-500" />}
-                                    {trend === 'neutral' && <MinusIcon className="w-4 h-4 text-slate-400" />}
-                                    <span className={`text-sm ${trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-slate-500'}`}>
-                                        {subtitle}
-                                    </span>
+                            {tooltip && (
+                                <div className="group relative">
+                                    <HelpCircle className="w-4 h-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-help" />
+                                    <div className="absolute left-0 top-full mt-2 hidden group-hover:block z-50 w-64 p-3 bg-slate-900 text-white text-xs rounded-lg shadow-xl">
+                                        {tooltip}
+                                        <div className="absolute -top-1 left-4 w-2 h-2 bg-slate-900 rotate-45" />
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -236,6 +284,38 @@ const AnalyticsPage: React.FC = () => {
                             <Icon className="w-6 h-6 text-white" />
                         </div>
                     </div>
+
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
+
+                    {interpretation && (
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border mt-3 ${interpretationColors[interpretation.status]}`}>
+                            {interpretation.status === 'good' && '✅'}
+                            {interpretation.status === 'warning' && '⚠️'}
+                            {interpretation.status === 'danger' && '❌'}
+                            {interpretation.text}
+                        </div>
+                    )}
+
+                    {subtitle && (
+                        <div className="flex items-center gap-1 mt-2">
+                            {trend === 'up' && <ArrowUpIcon className="w-4 h-4 text-green-500" />}
+                            {trend === 'down' && <ArrowDownIcon className="w-4 h-4 text-red-500" />}
+                            {trend === 'neutral' && <MinusIcon className="w-4 h-4 text-slate-400" />}
+                            <span className={`text-sm ${trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-slate-500'}`}>
+                                {subtitle}
+                            </span>
+                        </div>
+                    )}
+
+                    {actionLabel && actionLink && (
+                        <a
+                            href={actionLink}
+                            className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                        >
+                            {actionLabel}
+                            <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                    )}
                 </CardContent>
             </Card>
         );
@@ -264,7 +344,7 @@ const AnalyticsPage: React.FC = () => {
         }, []);
 
         return (
-            <div className="relative">
+            <div className="relative" id="tour-charts">
                 {/* Subtitle */}
                 {subtitle && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{subtitle}</p>
@@ -463,7 +543,7 @@ const AnalyticsPage: React.FC = () => {
         const centerPercent = centerData && total > 0 ? ((centerData.value / total) * 100).toFixed(1) : null;
 
         // Build conic gradient
-        let gradientParts: string[] = [];
+        const gradientParts: string[] = [];
         let currentPercent = 0;
 
         data.forEach((item) => {
@@ -594,10 +674,10 @@ const AnalyticsPage: React.FC = () => {
             <header className="flex flex-col gap-4">
                 <div>
                     <h1 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white">
-                        Analytics Dashboard
+                        Dashboard Analitik
                     </h1>
                     <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-1">
-                        Statistik dan analisis data siswa, absensi, dan tugas
+                        Ringkasan data siswa, kehadiran, dan tugas Anda
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -635,14 +715,27 @@ const AnalyticsPage: React.FC = () => {
                     subtitle={`${genderStats.male} Laki-laki, ${genderStats.female} Perempuan`}
                     icon={UsersIcon}
                     color="indigo"
+                    tooltip="Jumlah total siswa yang terdaftar di semua kelas Anda"
+                    actionLabel="Lihat Daftar Siswa"
+                    actionLink="#/siswa"
                 />
                 <StatCard
-                    title="Tingkat Kehadiran"
+                    title="Kehadiran Siswa"
                     value={`${attendanceStats.hadirRate}%`}
                     subtitle={`${attendanceStats.hadir} dari ${attendanceStats.total} catatan`}
                     icon={CalendarIcon}
                     trend={attendanceStats.hadirRate >= 80 ? 'up' : attendanceStats.hadirRate >= 60 ? 'neutral' : 'down'}
                     color="green"
+                    tooltip="Persentase siswa yang hadir dari total kehadiran yang tercatat. Target minimal 90% untuk kategori Sangat Baik."
+                    interpretation={
+                        attendanceStats.hadirRate >= 90
+                            ? { text: 'Sangat Baik!', status: 'good' }
+                            : attendanceStats.hadirRate >= 75
+                                ? { text: 'Cukup Baik', status: 'warning' }
+                                : { text: 'Perlu Perhatian', status: 'danger' }
+                    }
+                    actionLabel="Tandai Kehadiran Hari Ini"
+                    actionLink="#/absensi"
                 />
                 <StatCard
                     title="Total Kelas"
@@ -650,6 +743,9 @@ const AnalyticsPage: React.FC = () => {
                     subtitle="Kelas aktif"
                     icon={BarChart3Icon}
                     color="blue"
+                    tooltip="Jumlah kelas yang Anda kelola saat ini"
+                    actionLabel="Kelola Kelas"
+                    actionLink="#/siswa"
                 />
                 <StatCard
                     title="Tugas Selesai"
@@ -658,6 +754,18 @@ const AnalyticsPage: React.FC = () => {
                     icon={TrendingUpIcon}
                     trend={taskStats.overdue > 0 ? 'down' : 'up'}
                     color={taskStats.overdue > 0 ? 'amber' : 'green'}
+                    tooltip="Jumlah tugas yang sudah diselesaikan dari total tugas yang Anda buat"
+                    interpretation={
+                        taskStats.total === 0
+                            ? undefined
+                            : taskStats.done === taskStats.total
+                                ? { text: 'Semua Selesai!', status: 'good' }
+                                : taskStats.overdue > 0
+                                    ? { text: 'Ada yang Terlambat', status: 'warning' }
+                                    : { text: 'Sedang Berjalan', status: 'good' }
+                    }
+                    actionLabel="Lihat Semua Tugas"
+                    actionLink="#/tugas"
                 />
             </div>
 
@@ -668,7 +776,7 @@ const AnalyticsPage: React.FC = () => {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <BarChart3Icon className="w-5 h-5 text-indigo-600" />
-                            Tren Kehadiran ({dateRange === 'all' ? 'Semua' : dateRange.replace('d', ' Hari')})
+                            Kehadiran 30 Hari Terakhir
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -690,7 +798,7 @@ const AnalyticsPage: React.FC = () => {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <PieChartIcon className="w-5 h-5 text-indigo-600" />
-                            Distribusi Kehadiran
+                            Rincian Kehadiran Siswa
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -711,7 +819,7 @@ const AnalyticsPage: React.FC = () => {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <UsersIcon className="w-5 h-5 text-indigo-600" />
-                        Perbandingan Kelas
+                        Ranking Kelas
                     </CardTitle>
                 </CardHeader>
                 <CardContent>

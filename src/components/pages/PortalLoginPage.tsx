@@ -72,7 +72,7 @@ const PortalLoginPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <h1 className="form-title">Portal Siswa</h1>
+                    <h1 className="form-title">Portal Orang Tua</h1>
                     <p className="form-subtitle">
                         Masukkan kode akses yang diberikan oleh guru Anda.
                     </p>

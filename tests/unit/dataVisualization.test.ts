@@ -107,7 +107,7 @@ describe('Data Visualization', () => {
         });
 
         it('should toggle series visibility', () => {
-            let activeSeries = [true, true, true];
+            const activeSeries = [true, true, true];
             activeSeries[1] = false;
             expect(activeSeries).toEqual([true, false, true]);
         });
@@ -224,7 +224,7 @@ describe('Data Visualization', () => {
         });
 
         it('should support toggling items', () => {
-            let items = [
+            const items = [
                 { label: 'A', active: true },
                 { label: 'B', active: true }
             ];

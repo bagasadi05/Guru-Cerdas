@@ -1,12 +1,15 @@
-
 import React, { useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { DatabaseIcon, DownloadCloudIcon, UploadCloudIcon, AlertTriangleIcon, CheckCircleIcon, RefreshCwIcon, FileTextIcon, InfoIcon } from '../Icons';
+import { DatabaseIcon, DownloadCloudIcon, UploadCloudIcon, AlertTriangleIcon, CheckCircleIcon, RefreshCwIcon, FileTextIcon, InfoIcon, CalendarIcon, LockIcon } from '../Icons';
+import { Unlock } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { exportBackup, importBackup, validateBackup, downloadBackup, ValidationResult } from '../../services/backupService';
 import { useToast } from '../../hooks/useToast';
 import { Modal } from '../ui/Modal';
+import { getCurrentSemester } from '../../utils/semesterUtils';
+import { useUserSettings } from '../../hooks/useUserSettings';
+import { Switch } from '../ui/Switch';
 
 const DataManagementSection: React.FC = () => {
     const { user } = useAuth();
@@ -17,6 +20,15 @@ const DataManagementSection: React.FC = () => {
     const [pendingFile, setPendingFile] = useState<File | null>(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const currentSemester = getCurrentSemester();
+
+    // Semester Lock Settings
+    const { settings, updateSettings, isUpdating } = useUserSettings();
+
+    const handleSemesterLockToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+        updateSettings({ semester_1_locked: e.target.checked });
+    };
 
     const handleExport = async () => {
         if (!user) return;
@@ -84,6 +96,78 @@ const DataManagementSection: React.FC = () => {
                 <div>
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Manajemen Data</h2>
                     <p className="text-slate-500 dark:text-slate-400">Cadangkan dan pulihkan database aplikasi Anda.</p>
+                </div>
+            </div>
+
+            {/* Semester Settings Card */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <CalendarIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-white">Pengaturan Semester</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Kelola periode akademik dan penguncian data.</p>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    {/* School Name Input */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 gap-4">
+                        <div className="space-y-1">
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Nama Sekolah</span>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Nama sekolah yang akan ditampilkan di kop laporan dan export.
+                            </p>
+                        </div>
+                        <input
+                            type="text"
+                            value={settings?.school_name || ''}
+                            onChange={(e) => updateSettings({ school_name: e.target.value })}
+                            disabled={isUpdating}
+                            className="bg-white dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm max-w-xs w-full focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                            placeholder="Contoh: MI AL IRSYAD KOTA MADIUN"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <div className="space-y-1">
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                Semester Saat Ini
+                                <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold px-2 py-0.5 rounded-full border border-green-200 dark:border-green-800">
+                                    {currentSemester.label}
+                                </span>
+                            </span>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Periode aktif ditentukan secara otomatis berdasarkan tanggal hari ini.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <div className="space-y-1">
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Kunci Data Semester 1 (Ganjil)</span>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md">
+                                Jika diaktifkan, data absensi dan pelanggaran di Semester 1 tidak dapat diubah atau dihapus.
+                                Berguna saat sudah memasuki Semester 2.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={settings?.semester_1_locked ?? false}
+                            onChange={handleSemesterLockToggle}
+                            disabled={isUpdating}
+                        />
+                    </div>
+
+                    {settings?.semester_1_locked && (
+                        <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-xl text-amber-700 dark:text-amber-400 text-sm animate-in fade-in slide-in-from-top-2">
+                            <Unlock className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <span className="font-bold block mb-1">Mode Arsip Aktif</span>
+                                Data Semester 1 saat ini berstatus <strong>Read-Only</strong>. Guru tidak dapat mengedit atau menghapus data lama.
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

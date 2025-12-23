@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, ai, isAiEnabled } from '../../services/supabase';
+import { supabase, isAiEnabled } from '../../services/supabase';
+import { generateOpenRouterContent, getAssistantContent } from '../../services/openRouterService';
 import { useAuth } from '../../hooks/useAuth';
 import { Database } from '../../services/database.types';
-import { generateStudentReport, ReportData } from '../../services/pdfGenerator';
+import { generateStudentReport, ReportData, ensureLogoLoaded } from '../../services/pdfGenerator';
 import { Button } from '../ui/Button';
 import { PrinterIcon, ArrowLeftIcon, GraduationCapIcon, SettingsIcon, CalendarIcon, PencilIcon, ChevronDownIcon, ChevronUpIcon, SparklesIcon, Share2Icon } from '../Icons';
 import { createWhatsAppLink, generateReportMessage } from '../../utils/whatsappUtils';
@@ -61,7 +62,7 @@ const ReportPage: React.FC = () => {
     });
 
     const generateAiNote = async () => {
-        if (!data || !ai) return;
+        if (!data) return;
 
         if (!isAiEnabled) {
             toast.error("API Key Gemini belum diset. Harap cek file .env dan restart server.");
@@ -80,12 +81,12 @@ const ReportPage: React.FC = () => {
                 Berikan catatan yang motivatif, personal, dan profesional dalam 2-3 kalimat. Bahasa Indonesia.
             `;
 
-            const result = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-            });
+            const response = await generateOpenRouterContent([
+                { role: 'system', content: 'Anda adalah asisten guru yang profesional.' },
+                { role: 'user', content: prompt }
+            ]);
 
-            const text = result.text || '';
+            const text = getAssistantContent(response) || '';
             setCustomNote(text.trim());
             toast.success("Catatan berhasil dibuat oleh AI!");
         } catch (error) {
@@ -119,18 +120,21 @@ const ReportPage: React.FC = () => {
         });
     };
 
-    const handlePrint = () => {
+    const handlePrint = async () => {
         if (!data) {
             toast.error("Data laporan tidak tersedia untuk dicetak.");
             return;
         }
         try {
+            // Ensure logo is loaded before generating PDF
+            await ensureLogoLoaded();
+
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             generateStudentReport(doc, data, customNote, reportDate, semester, academicYear, user);
             doc.save(`Rapor_${data.student.name}.pdf`);
             toast.success("Rapor berhasil diunduh sebagai PDF!");
-        } catch (e: any) {
-            toast.error(`Gagal membuat PDF: ${e.message}`);
+        } catch (e: unknown) {
+            toast.error(`Gagal membuat PDF: ${(e as Error).message}`);
         }
     };
 
@@ -348,13 +352,29 @@ const ReportPage: React.FC = () => {
                         {/* --- HEADER --- */}
                         <header className="text-center border-b-2 border-indigo-500 dark:border-indigo-400 pb-4 mb-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 -mx-6 md:-mx-[20mm] -mt-6 md:-mt-[20mm] px-6 md:px-[20mm] pt-6 md:pt-[20mm] rounded-t-2xl">
                             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-                                <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                                    <GraduationCapIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
-                                </div>
-                                <div>
+                                {/* School Logo - Left */}
+                                <img
+                                    src="/logo_sekolah.png"
+                                    alt="Logo Sekolah"
+                                    className="w-16 h-16 md:w-20 md:h-20 object-contain"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
+                                />
+                                {/* Title in the center */}
+                                <div className="flex-1 text-center">
                                     <h1 className="text-xl md:text-2xl font-bold uppercase tracking-wider font-serif bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">Laporan Hasil Belajar</h1>
                                     <h2 className="text-sm md:text-base font-medium mt-1 tracking-wide text-slate-600 dark:text-slate-400">MI AL IRSYAD AL ISLAMIYYAH KOTA MADIUN</h2>
                                 </div>
+                                {/* Kemenag Logo - Right */}
+                                <img
+                                    src="/logo_kemenag.png"
+                                    alt="Logo Kemenag"
+                                    className="w-16 h-16 md:w-20 md:h-20 object-contain"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
+                                />
                             </div>
                         </header>
 
@@ -461,7 +481,7 @@ const ReportPage: React.FC = () => {
                                             {data.quizPoints.map((q, index) => (
                                                 <tr key={q.id} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border-b border-slate-100 dark:border-slate-800">
                                                     <td className="p-3 text-center text-slate-600 dark:text-slate-400">{index + 1}</td>
-                                                    <td className="p-3 text-slate-800 dark:text-slate-200">{q.quiz_name}</td>
+                                                    <td className="p-3 text-slate-800 dark:text-slate-200">{q.reason}</td>
                                                     <td className="p-3 text-center font-bold text-emerald-600 dark:text-emerald-400">+{q.points}</td>
                                                     <td className="p-3 text-center text-slate-600 dark:text-slate-400">{new Date(q.created_at).toLocaleDateString('id-ID')}</td>
                                                 </tr>

@@ -1,9 +1,11 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, BarChartIcon, PencilIcon, TrashIcon, TrendingUpIcon, FilterIcon, DownloadIcon, TargetIcon, UsersIcon } from 'lucide-react';
+import { PlusIcon, BarChartIcon, PencilIcon, TrashIcon, TrendingUpIcon, FilterIcon, DownloadIcon, TargetIcon, UsersIcon, LockIcon } from 'lucide-react';
 import { AcademicRecordRow } from './types';
 import { GradeTrendChart } from '../../ui/GradeTrendChart';
+import { canModifyRecord } from '../../../utils/semesterUtils';
+import { useUserSettings } from '../../../hooks/useUserSettings';
 
 // Default KKM value - can be made configurable
 const DEFAULT_KKM = 75;
@@ -267,7 +269,8 @@ const GradesPanel: React.FC<{
     onDelete: (recordId: string) => void,
     isOnline: boolean;
     kkm: number;
-}> = ({ records, onEdit, onDelete, isOnline, kkm }) => {
+    isLocked?: boolean;
+}> = ({ records, onEdit, onDelete, isOnline, kkm, isLocked = false }) => {
     const recordsBySubject = useMemo(() => {
         if (!records || records.length === 0) return {};
         return records.reduce((acc, record) => {
@@ -358,8 +361,35 @@ const GradesPanel: React.FC<{
                                             </div>
                                         </div>
                                         <div className="absolute top-3 right-3 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 bg-gray-200 dark:bg-black/30 backdrop-blur-sm" onClick={() => onEdit(record)} aria-label="Edit Catatan Akademik" disabled={!isOnline}><PencilIcon className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 bg-gray-200 dark:bg-black/30 backdrop-blur-sm" onClick={() => onDelete(record.id)} aria-label="Hapus Catatan Akademik" disabled={!isOnline}><TrashIcon className="h-4 w-4" /></Button>
+                                            {(() => {
+                                                const canModify = canModifyRecord(record.created_at, isLocked);
+                                                return (
+                                                    <>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 bg-gray-200 dark:bg-black/30 backdrop-blur-sm"
+                                                            onClick={() => onEdit(record)}
+                                                            aria-label={canModify ? "Edit Catatan Akademik" : "Semester Terkunci"}
+                                                            disabled={!isOnline || !canModify}
+                                                            title={!canModify ? 'Semester Terkunci' : 'Edit'}
+                                                        >
+                                                            {canModify ? <PencilIcon className="h-4 w-4" /> : <LockIcon className="h-4 w-4 text-amber-500" />}
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 bg-gray-200 dark:bg-black/30 backdrop-blur-sm"
+                                                            onClick={() => onDelete(record.id)}
+                                                            aria-label={canModify ? "Hapus Catatan Akademik" : "Semester Terkunci"}
+                                                            disabled={!isOnline || !canModify}
+                                                            title={!canModify ? 'Semester Terkunci' : 'Hapus'}
+                                                        >
+                                                            <TrashIcon className="h-4 w-4" />
+                                                        </Button>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 );
@@ -382,6 +412,8 @@ export const GradesTab: React.FC<GradesTabProps> = ({
     kkm = DEFAULT_KKM
 }) => {
     const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+    const [selectedSubject, setSelectedSubject] = useState<string>('all');
+    const { isSemester1Locked: semester1Locked } = useUserSettings();
     const chartRef = useRef<HTMLDivElement>(null);
 
     // Filter records based on selected period
@@ -496,6 +528,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                 onDelete={onDelete}
                 isOnline={isOnline}
                 kkm={kkm}
+                isLocked={semester1Locked}
             />
         </div>
     );

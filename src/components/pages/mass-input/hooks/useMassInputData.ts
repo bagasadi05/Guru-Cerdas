@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../../services/supabase';
-import { ClassRow, StudentRow, AcademicRecordRow } from '../types';
+import { ClassRow, StudentRow, AcademicRecordRow, ViolationRow } from '../types';
 import { useAuth } from '../../../../hooks/useAuth';
 
 export const useMassInputData = (selectedClass: string, subject?: string, assessmentName?: string, mode?: string) => {
@@ -69,6 +69,20 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         enabled: !!selectedClass && !!subject && !!assessmentName && !!studentsData && (mode === 'subject_grade' || mode === 'delete_subject_grade'),
     });
 
+    const { data: existingViolations, isLoading: isLoadingViolations } = useQuery({
+        queryKey: ['existingViolations', selectedClass, user?.id],
+        queryFn: async (): Promise<ViolationRow[]> => {
+            if (!selectedClass || !studentsData) return [];
+            const { data, error } = await supabase
+                .from('violations')
+                .select('*')
+                .in('student_id', studentsData.map(s => s.id))
+                .order('date', { ascending: false });
+            if (error) throw error; return data || [];
+        },
+        enabled: (mode === 'violation' || mode === 'violation_export') && !!selectedClass && !!studentsData,
+    });
+
     return {
         classes,
         isLoadingClasses,
@@ -77,6 +91,8 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         uniqueSubjects,
         assessmentNames,
         existingGrades,
-        isLoadingGrades
+        isLoadingGrades,
+        existingViolations,
+        isLoadingViolations
     };
 };

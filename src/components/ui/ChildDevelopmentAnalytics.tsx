@@ -331,16 +331,119 @@ export const ChildDevelopmentAnalytics: React.FC<ChildAnalyticsProps> = ({
     const bestSubject = subjectBreakdown[0];
     const weakestSubject = subjectBreakdown[subjectBreakdown.length - 1];
 
+    // AI Narrative Generation State
+    const [isGenerating, setIsGenerating] = React.useState(false);
+    const [aiAnalysis, setAiAnalysis] = React.useState<string | null>(null);
+
+    const generateAnalysis = () => {
+        setIsGenerating(true);
+        // Simulate AI delay
+        setTimeout(() => {
+            const narrative = generateNarrative();
+            setAiAnalysis(narrative);
+            setIsGenerating(false);
+        }, 2000);
+    };
+
+    const generateNarrative = () => {
+        const parts = [];
+
+        // 1. Opening
+        const openings = [
+            `Berdasarkan tinjauan data komprehensif semester ini, ${studentName} menunjukkan perkembangan yang ${academicStats.average >= 80 ? 'sangat impresif' : academicStats.average >= 70 ? 'positif' : 'perlu perhatian khusus'}.`,
+            `Halo Ayah/Bunda, berikut adalah hasil evaluasi akademik untuk ananda ${studentName}. Secara umum, performa saat ini ${academicStats.average >= 75 ? 'sudah memenuhi ekspektasi' : 'masih memiliki ruang untuk perbaikan'}.`,
+        ];
+        parts.push(openings[Math.floor(Math.random() * openings.length)]);
+
+        // 2. Academic Deep Dive
+        if (bestSubject) {
+            parts.push(`Kekuatan utama ananda terletak pada mata pelajaran **${bestSubject.subject}** dengan rata-rata nilai ${bestSubject.avg}. Ini potensi yang sangat bagus untuk dikembangkan lebih lanjut.`);
+        }
+
+        if (weakestSubject && weakestSubject.avg < 75) {
+            parts.push(`Namun, perhatian lebih mungkin dibutuhkan di mata pelajaran **${weakestSubject.subject}** (rata-rata: ${weakestSubject.avg}). Identifikasi kendala sejak dini dapat membantu meningkatkan pemahaman.`);
+        }
+
+        if (academicStats.trend === 'up') {
+            parts.push("Tren nilai ananda menunjukkan grafik **meningkat** 📈, yang menandakan strategi belajar saat ini sudah efektif.");
+        } else if (academicStats.trend === 'down') {
+            parts.push("Terdeteksi tren **penurunan** pada beberapa penilaian terakhir. Penting untuk mengevaluasi kembali rutinitas belajar di rumah.");
+        }
+
+        // 3. Behavior & Attendance
+        if (attendanceStats.rate >= 90) {
+            parts.push("Tingkat kedisiplinan dan kehadiran sangat baik, menjadi fondasi kuat untuk prestasi akademik.");
+        } else if (attendanceStats.absent >= 3) {
+            parts.push(`Catatan kehadiran menunjukkan ${attendanceStats.absent} kali ketidakhadiran tanpa keterangan. Hal ini dapat berdampak pada ketertinggalan materi.`);
+        }
+
+        if (behaviorStats.totalPoints > 0) {
+            parts.push(`Terdapat catatan perilaku yang perlu didiskusikan dengan total ${behaviorStats.totalPoints} poin pelanggaran. Pendekatan persuasif di rumah sangat disarankan.`);
+        }
+
+        // 4. Closing / Recommendation
+        if (academicStats.passRate >= 80) {
+            parts.push("Rekomendasi: Pertahankan motivasi belajar dan fasilitasi minat ananda pada mata pelajaran unggulan.");
+        } else {
+            parts.push("Rekomendasi: Jadwalkan konsultasi dengan wali kelas untuk menyusun strategi belajar yang lebih personal.");
+        }
+
+        return parts.join("\n\n");
+    };
+
     return (
         <div className="space-y-6">
             {/* Section: Overview Donut Charts */}
-            <div className="p-5 bg-gradient-to-br from-indigo-50/80 to-purple-50/80 dark:from-slate-800/50 dark:to-indigo-900/30 rounded-3xl border border-indigo-100 dark:border-indigo-800/30">
-                <h3 className="text-lg font-bold mb-5 flex items-center gap-2 text-slate-800 dark:text-white">
-                    <SparklesIcon className="w-5 h-5 text-indigo-500" />
-                    Ringkasan Tumbuh Kembang
-                </h3>
+            <div className="p-5 bg-gradient-to-br from-indigo-50/80 to-purple-50/80 dark:from-slate-800/50 dark:to-indigo-900/30 rounded-3xl border border-indigo-100 dark:border-indigo-800/30 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                    <SparklesIcon className="w-24 h-24 text-indigo-500" />
+                </div>
+                <div className="flex justify-between items-start mb-5">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-white">
+                        <SparklesIcon className="w-5 h-5 text-indigo-500 animate-pulse" />
+                        Evaluasi Perkembangan Siswa
+                    </h3>
 
-                <div className="grid grid-cols-3 gap-4 sm:gap-6">
+                    {!aiAnalysis && !isGenerating && (
+                        <button
+                            onClick={generateAnalysis}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded-full shadow-lg shadow-indigo-500/20 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2"
+                        >
+                            <SparklesIcon className="w-4 h-4" />
+                            Susun Laporan Evaluasi
+                        </button>
+                    )}
+                </div>
+
+                {/* AI Analysis Result */}
+                {isGenerating ? (
+                    <div className="mb-6 p-6 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-indigo-100 dark:border-indigo-500/30 flex flex-col items-center justify-center py-12">
+                        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 animate-pulse">Sedang menyusun laporan...</p>
+                    </div>
+                ) : aiAnalysis ? (
+                    <div className="mb-6 p-6 bg-white dark:bg-slate-900 rounded-2xl border border-indigo-200 dark:border-indigo-500/30 shadow-sm relative">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500 rounded-l-2xl"></div>
+                        <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-3 text-sm uppercase tracking-wider">Ringkasan Evaluasi</h4>
+                        <div className="prose dark:prose-invert text-sm leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-line">
+                            <TypewriterEffect text={aiAnalysis} />
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                            <button
+                                onClick={generateAnalysis}
+                                className="text-xs text-slate-400 hover:text-indigo-500 flex items-center gap-1 transition-colors"
+                            >
+                                <SparklesIcon className="w-3 h-3" /> Perbarui Laporan
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-lg">
+                        Tekan tombol "Susun Laporan" untuk mendapatkan ringkasan naratif mengenai perkembangan akademik dan karakter siswa.
+                    </p>
+                )}
+
+                <div className="grid grid-cols-3 gap-4 sm:gap-6 mt-6 border-t border-indigo-100 dark:border-indigo-800/30 pt-6">
                     <DonutChart
                         percentage={academicStats.passRate}
                         colorClass={academicStats.passRate >= 75 ? 'text-emerald-500' : academicStats.passRate >= 60 ? 'text-amber-500' : 'text-rose-500'}
@@ -367,7 +470,7 @@ export const ChildDevelopmentAnalytics: React.FC<ChildAnalyticsProps> = ({
                 <div className="space-y-3">
                     <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-white">
                         <BookOpenIcon className="w-5 h-5 text-indigo-500" />
-                        Catatan untuk Orang Tua
+                        Highlight Poin Penting
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {insights.map((insight, idx) => (
@@ -455,6 +558,48 @@ export const ChildDevelopmentAnalytics: React.FC<ChildAnalyticsProps> = ({
                     </div>
                 </div>
             )}
+        </div>
+    );
+};
+
+// Typewriter Effect Component
+const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
+    const [displayedText, setDisplayedText] = React.useState('');
+    const [hasFinished, setHasFinished] = React.useState(false);
+
+    React.useEffect(() => {
+        setDisplayedText('');
+        setHasFinished(false);
+        let i = 0;
+        const timer = setInterval(() => {
+            if (i < text.length) {
+                setDisplayedText(prev => prev + text.charAt(i));
+                i++;
+            } else {
+                setHasFinished(true);
+                clearInterval(timer);
+            }
+        }, 15); // Speed of typing
+
+        return () => clearInterval(timer);
+    }, [text]);
+
+    // Use React.cloneElement or just render if we want to parse bold markdown
+    // Simple parser for **bold**
+    const renderContent = () => {
+        const parts = displayedText.split(/(\*\*.*?\*\*)/g);
+        return parts.map((part, index) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={index} className="text-indigo-700 dark:text-indigo-300 font-bold">{part.slice(2, -2)}</strong>;
+            }
+            return part;
+        });
+    };
+
+    return (
+        <div>
+            {renderContent()}
+            {!hasFinished && <span className="inline-block w-1.5 h-4 ml-1 bg-indigo-500 animate-pulse align-middle"></span>}
         </div>
     );
 };

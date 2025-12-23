@@ -379,8 +379,8 @@ describe('Status Indicators', () => {
         });
 
         it('should show reconnected message', () => {
-            let wasOffline = true;
-            let isOnline = true;
+            const wasOffline = true;
+            const isOnline = true;
             const showReconnected = wasOffline && isOnline;
             expect(showReconnected).toBe(true);
         });

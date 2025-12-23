@@ -53,6 +53,7 @@ const ParentPortalPage = lazy(() => import('@/components/pages/ParentPortalPage'
 const TrashPage = lazy(() => import('@/components/pages/TrashPage'));
 const ActionHistoryPage = lazy(() => import('@/components/pages/ActionHistoryPage'));
 const AnalyticsPage = lazy(() => import('@/components/pages/AnalyticsPage'));
+const AdminPage = lazy(() => import('@/components/pages/AdminPage'));
 
 
 // A wrapper for routes that require authentication.
@@ -336,6 +337,7 @@ function AppContent() {
             <Route path="/sampah" element={<TrashPage />} />
             <Route path="/riwayat" element={<ActionHistoryPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/admin" element={<AdminPage />} />
           </Route>
 
           {/* Report page has no main layout */}

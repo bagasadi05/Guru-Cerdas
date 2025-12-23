@@ -19,6 +19,7 @@ import {
   RefreshCwIcon,
   FileTextIcon
 } from '../Icons';
+import { MarkdownText } from '../ui/MarkdownText';
 import { useToast } from '../../hooks/useToast';
 import {
   generateComprehensiveChildAnalysis,
@@ -208,7 +209,9 @@ const ActionableRecommendation: React.FC<{
         </div>
 
         <h4 className="font-bold text-gray-900 dark:text-white mb-1">{title}</h4>
-        <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          <MarkdownText text={description} />
+        </div>
 
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -305,15 +308,21 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   const labelPositions = calculateLabelPositions(subjects, centerX, centerY, radius);
   const studentPolygonPoints = calculateRadarPoints(studentScores, maxScore, centerX, centerY, radius);
 
-  // Simulate loading progress
+  // Helper to get storage key
+  const getStorageKey = () => `child_analysis_${studentData.student.name}_${studentData.student.class || 'general'}`;
+
+  // Load from local storage on mount
   useEffect(() => {
-    if (isLoading && loadingStep <= LOADING_STEPS.length) {
-      const timer = setTimeout(() => {
-        setLoadingStep(prev => prev + 1);
-      }, 1500);
-      return () => clearTimeout(timer);
+    const savedAnalysis = localStorage.getItem(getStorageKey());
+    if (savedAnalysis) {
+      try {
+        setAnalysis(JSON.parse(savedAnalysis));
+      } catch (e) {
+        console.error('Failed to parse saved analysis:', e);
+        localStorage.removeItem(getStorageKey());
+      }
     }
-  }, [isLoading, loadingStep]);
+  }, [studentData.student.name, studentData.student.class]);
 
   const handleGenerateAnalysis = async () => {
     setIsLoading(true);
@@ -321,6 +330,8 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     try {
       const result = await generateComprehensiveChildAnalysis(studentData);
       setAnalysis(result);
+      // Save to local storage
+      localStorage.setItem(getStorageKey(), JSON.stringify(result));
       toast.success('Analisis perkembangan anak berhasil dibuat!');
     } catch (error) {
       toast.error('Gagal membuat analisis. Silakan coba lagi.');
@@ -688,7 +699,7 @@ Konsultasikan dengan profesional untuk evaluasi lebih lanjut.
               <BookOpenIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <CardTitle>A. Analisis Perkembangan Kognitif</CardTitle>
+              <CardTitle>A. Perkembangan Pola Pikir & Akademik</CardTitle>
               <CardDescription>Kemampuan akademik dan berpikir</CardDescription>
             </div>
           </div>
@@ -727,7 +738,7 @@ Konsultasikan dengan profesional untuk evaluasi lebih lanjut.
               <UsersIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <CardTitle>B. Analisis Perkembangan Afektif</CardTitle>
+              <CardTitle>B. Perkembangan Karakter & Emosi</CardTitle>
               <CardDescription>Karakter, emosi, dan kemampuan sosial</CardDescription>
             </div>
           </div>
@@ -762,7 +773,7 @@ Konsultasikan dengan profesional untuk evaluasi lebih lanjut.
               <CheckSquareIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <CardTitle>C. Analisis Perkembangan Psikomotor</CardTitle>
+              <CardTitle>C. Keterampilan Fisik & Kreativitas</CardTitle>
               <CardDescription>Kemampuan motorik dan keterampilan fisik</CardDescription>
             </div>
           </div>

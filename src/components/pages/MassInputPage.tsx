@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, ai } from '../../services/supabase';
+import { supabase } from '../../services/supabase';
+import { generateOpenRouterJson } from '../../services/openRouterService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { Database } from '../../services/database.types';
@@ -10,7 +11,7 @@ import { ArrowLeftIcon } from '../Icons';
 import { violationList } from '../../services/violations.data';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Type } from '@google/genai';
+// import { Type } from '@google/genai';
 import { generateStudentReport, ReportData as ReportDataType } from '../../services/pdfGenerator';
 import { Modal } from '../ui/Modal';
 import { ExcelImporter } from '../ui/ExcelImporter';
@@ -22,6 +23,7 @@ import { Step1_ModeSelection, actionCards } from './mass-input/components/Step1_
 import { Step2_Configuration } from './mass-input/components/Step2_Configuration';
 import { Step2_StudentList } from './mass-input/components/Step2_StudentList';
 import { Step2_Footer } from './mass-input/components/Step2_Footer';
+import { ViolationExportPanel } from './mass-input/components/ViolationExportPanel';
 import { GradeDistributionChart } from '../ui/GradeDistributionChart';
 
 const MassInputPage: React.FC = () => {
@@ -65,7 +67,9 @@ const MassInputPage: React.FC = () => {
         uniqueSubjects,
         assessmentNames,
         existingGrades,
-        isLoadingGrades
+        isLoadingGrades,
+        existingViolations,
+        isLoadingViolations
     } = useMassInputData(selectedClass, subjectGradeInfo.subject, subjectGradeInfo.assessment_name, mode || undefined);
 
     useEffect(() => {
@@ -272,12 +276,17 @@ const MassInputPage: React.FC = () => {
         setIsParsing(true);
         try {
             const studentNames = studentsData.map(s => s.name);
-            const systemInstruction = `Anda adalah asisten entri data. Tugas Anda adalah mencocokkan nama dari teks yang diberikan dengan daftar nama siswa yang ada dan mengekstrak nilainya. Hanya cocokkan nama yang ada di daftar. Abaikan nama yang tidak ada di daftar. Format output harus JSON yang valid sesuai skema.`;
+            const systemInstruction = `Anda adalah asisten entri data. Tugas Anda adalah mencocokkan nama dari teks yang diberikan dengan daftar nama siswa yang ada dan mengekstrak nilainya. Hanya cocokkan nama yang ada di daftar. Abaikan nama yang tidak ada di daftar. Format output harus JSON yang valid.
+            
+            Format JSON yang diharapkan:
+            [
+              { "studentName": "Nama Siswa", "score": "85" }
+            ]`;
             const prompt = `Daftar Siswa: ${JSON.stringify(studentNames)}\n\nTeks Nilai untuk Diproses:\n${pasteData}`;
-            const responseSchema = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { studentName: { type: Type.STRING }, score: { type: Type.STRING } } } };
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema } });
-            const responseText = response.text || "[]";
-            const parsedResults = JSON.parse(responseText.trim()) as ReviewDataItem[];
+            // const responseSchema = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { studentName: { type: Type.STRING }, score: { type: Type.STRING } } } };
+            // const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema } });
+            // const responseText = response.text || "[]";
+            const parsedResults = await generateOpenRouterJson<ReviewDataItem[]>(prompt, systemInstruction);
             const newScores: Record<string, string> = {}; let matchedCount = 0;
             parsedResults.forEach(item => {
                 const student = studentsData.find(s => s.name.toLowerCase() === item.studentName.toLowerCase());
@@ -324,13 +333,19 @@ const MassInputPage: React.FC = () => {
                     const attendanceSummary = `Sakit: ${data.attendanceRecords.filter(r => r.status === 'Sakit').length}, Izin: ${data.attendanceRecords.filter(r => r.status === 'Izin').length}, Alpha: ${data.attendanceRecords.filter(r => r.status === 'Alpha').length}.`;
                     return { studentId: data.student.id, studentName: data.student.name, academicSummary, behaviorSummary, attendanceSummary };
                 });
-                const systemInstruction = `Anda adalah seorang guru wali kelas yang bijaksana dan suportif. Tugas Anda adalah menulis paragraf "Catatan Wali Kelas" untuk setiap siswa berdasarkan data yang diberikan. Catatan harus holistik, memotivasi, dan dalam satu paragraf (3-5 kalimat). Jawab dalam format JSON array yang diminta.`;
+                const systemInstruction = `Anda adalah seorang guru wali kelas yang bijaksana dan suportif. Tugas Anda adalah menulis paragraf "Catatan Wali Kelas" untuk setiap siswa berdasarkan data yang diberikan. Catatan harus holistik, memotivasi, dan dalam satu paragraf (3-5 kalimat). Jawab dalam format JSON yang valid.
+                
+                Format JSON yang diharapkan:
+                {
+                  "notes": [
+                    { "studentId": "ID_SISWA", "teacherNote": "Isi catatan..." }
+                  ]
+                }`;
                 const prompt = `Buatkan "Catatan Wali Kelas" untuk setiap siswa dalam daftar JSON berikut. Data Siswa: ${JSON.stringify(studentDataForPrompt)}`;
-                const responseSchema = { type: Type.OBJECT, properties: { notes: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { studentId: { type: Type.STRING }, teacherNote: { type: Type.STRING } }, required: ["studentId", "teacherNote"] } } }, required: ["notes"] };
-                const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema } });
-                const responseText = response.text || "{\"notes\": []}";
-                const parsedResponse = JSON.parse(responseText);
-                const parsedNotes = parsedResponse.notes as { studentId: string; teacherNote: string }[];
+                // const responseSchema = { type: Type.OBJECT, properties: { notes: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { studentId: { type: Type.STRING }, teacherNote: { type: Type.STRING } }, required: ["studentId", "teacherNote"] } } }, required: ["notes"] };
+
+                const parsedResponse = await generateOpenRouterJson<{ notes: { studentId: string; teacherNote: string }[] }>(prompt, systemInstruction);
+                const parsedNotes = parsedResponse.notes;
                 teacherNotesMap = new Map(parsedNotes.map(item => [item.studentId, item.teacherNote.replace(/\\n/g, ' ')]));
             }
             setExportProgress("70%"); toast.info("Menyusun file PDF...");
@@ -459,55 +474,69 @@ const MassInputPage: React.FC = () => {
                         </div>
                     </header>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
-                        <Step2_Configuration
-                            mode={mode}
-                            isConfigOpen={isConfigOpen}
-                            setIsConfigOpen={setIsConfigOpen}
-                            selectedClass={selectedClass}
-                            setSelectedClass={setSelectedClass}
-                            classes={classes}
-                            isLoadingClasses={isLoadingClasses}
-                            quizInfo={quizInfo}
-                            setQuizInfo={setQuizInfo}
-                            subjectGradeInfo={subjectGradeInfo}
-                            setSubjectGradeInfo={setSubjectGradeInfo}
-                            isCustomSubject={isCustomSubject}
-                            setIsCustomSubject={setIsCustomSubject}
-                            uniqueSubjects={uniqueSubjects}
-                            selectedViolationCode={selectedViolationCode}
-                            setSelectedViolationCode={setSelectedViolationCode}
-                            violationDate={violationDate}
-                            setViolationDate={setViolationDate}
-                            noteMethod={noteMethod}
-                            setNoteMethod={setNoteMethod}
-                            templateNote={templateNote}
-                            setTemplateNote={setTemplateNote}
-                            assessmentNames={assessmentNames}
-                            pasteData={pasteData}
-                            setPasteData={setPasteData}
-                            isParsing={isParsing}
-                            handleAiParse={handleAiParse}
-                            isOnline={isOnline}
-                            onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
-                        />
+                        {mode === 'violation_export' ? (
+                            <ViolationExportPanel
+                                classes={classes}
+                                selectedClass={selectedClass}
+                                setSelectedClass={setSelectedClass}
+                                isLoadingClasses={isLoadingClasses}
+                                existingViolations={existingViolations}
+                                studentsData={studentsData}
+                                isLoadingViolations={isLoadingViolations}
+                            />
+                        ) : (
+                            <>
+                                <Step2_Configuration
+                                    mode={mode}
+                                    isConfigOpen={isConfigOpen}
+                                    setIsConfigOpen={setIsConfigOpen}
+                                    selectedClass={selectedClass}
+                                    setSelectedClass={setSelectedClass}
+                                    classes={classes}
+                                    isLoadingClasses={isLoadingClasses}
+                                    quizInfo={quizInfo}
+                                    setQuizInfo={setQuizInfo}
+                                    subjectGradeInfo={subjectGradeInfo}
+                                    setSubjectGradeInfo={setSubjectGradeInfo}
+                                    isCustomSubject={isCustomSubject}
+                                    setIsCustomSubject={setIsCustomSubject}
+                                    uniqueSubjects={uniqueSubjects}
+                                    selectedViolationCode={selectedViolationCode}
+                                    setSelectedViolationCode={setSelectedViolationCode}
+                                    violationDate={violationDate}
+                                    setViolationDate={setViolationDate}
+                                    noteMethod={noteMethod}
+                                    setNoteMethod={setNoteMethod}
+                                    templateNote={templateNote}
+                                    setTemplateNote={setTemplateNote}
+                                    assessmentNames={assessmentNames}
+                                    pasteData={pasteData}
+                                    setPasteData={setPasteData}
+                                    isParsing={isParsing}
+                                    handleAiParse={handleAiParse}
+                                    isOnline={isOnline}
+                                    onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
+                                />
 
-                        <Step2_StudentList
-                            mode={mode}
-                            searchTerm={searchTerm}
-                            setSearchTerm={setSearchTerm}
-                            filterOptions={filterOptions}
-                            studentFilter={studentFilter}
-                            setStudentFilter={setStudentFilter}
-                            isLoadingStudents={isLoadingStudents}
-                            students={students}
-                            isAllSelected={isAllSelected}
-                            handleSelectAllStudents={handleSelectAllStudents}
-                            selectedStudentIds={selectedStudentIds}
-                            handleStudentSelect={handleStudentSelect}
-                            scores={scores}
-                            handleScoreChange={handleScoreChange}
-                            existingGrades={existingGrades}
-                        />
+                                <Step2_StudentList
+                                    mode={mode}
+                                    searchTerm={searchTerm}
+                                    setSearchTerm={setSearchTerm}
+                                    filterOptions={filterOptions}
+                                    studentFilter={studentFilter}
+                                    setStudentFilter={setStudentFilter}
+                                    isLoadingStudents={isLoadingStudents}
+                                    students={students}
+                                    isAllSelected={isAllSelected}
+                                    handleSelectAllStudents={handleSelectAllStudents}
+                                    selectedStudentIds={selectedStudentIds}
+                                    handleStudentSelect={handleStudentSelect}
+                                    scores={scores}
+                                    handleScoreChange={handleScoreChange}
+                                    existingGrades={existingGrades}
+                                />
+                            </>
+                        )}
                     </div>
 
                     <Modal isOpen={confirmDeleteModal.isOpen} onClose={() => setConfirmDeleteModal({ isOpen: false, count: 0 })} title="Konfirmasi Hapus Nilai">
@@ -571,26 +600,30 @@ const MassInputPage: React.FC = () => {
                         </Modal>
                     )}
 
-                    <Step2_Footer
-                        summaryText={summaryText}
-                        mode={mode}
-                        selectedStudentIds={selectedStudentIds}
-                        gradedCount={gradedCount}
-                        setScores={setScores}
-                        setSelectedStudentIds={setSelectedStudentIds}
-                        isExporting={isExporting}
-                        exportProgress={exportProgress}
-                        handleSubmit={handleSubmit}
-                        isSubmitDisabled={isSubmitDisabled}
-                        submitButtonTooltip={submitButtonTooltip}
-                        isSubmitting={isSubmitting}
-                        isDeleting={isDeleting}
-                        scores={scores}
-                        students={studentsData}
-                        subjectGradeInfo={subjectGradeInfo}
-                        className={classes?.find(c => c.id === selectedClass)?.name}
-                        onShowChart={() => setShowChartModal(true)}
-                    />
+                    {/* Hide footer for violation_export mode - panel has its own exports */}
+                    {mode !== 'violation_export' && (
+                        <Step2_Footer
+                            summaryText={summaryText}
+                            mode={mode}
+                            selectedStudentIds={selectedStudentIds}
+                            gradedCount={gradedCount}
+                            setScores={setScores}
+                            setSelectedStudentIds={setSelectedStudentIds}
+                            isExporting={isExporting}
+                            exportProgress={exportProgress}
+                            handleSubmit={handleSubmit}
+                            isSubmitDisabled={isSubmitDisabled}
+                            submitButtonTooltip={submitButtonTooltip}
+                            isSubmitting={isSubmitting}
+                            isDeleting={isDeleting}
+                            scores={scores}
+                            students={studentsData}
+                            subjectGradeInfo={subjectGradeInfo}
+                            className={classes?.find(c => c.id === selectedClass)?.name}
+                            existingViolations={existingViolations}
+                            onShowChart={() => setShowChartModal(true)}
+                        />
+                    )}
 
                     {/* Chart Modal */}
                     {mode === 'subject_grade' && (

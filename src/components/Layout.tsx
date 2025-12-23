@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../services/supabase';
 import { HomeIcon, UsersIcon, CalendarIcon, ClipboardIcon, LogoutIcon, SettingsIcon, GraduationCapIcon, SearchIcon, CheckSquareIcon, BrainCircuitIcon, ClipboardPenIcon, MoreHorizontalIcon } from './Icons';
-import { Trash2, History, BarChart3 } from 'lucide-react';
+import { Trash2, History, BarChart3, ShieldCheck } from 'lucide-react';
 import ThemeToggle from './ui/ThemeToggle';
 import { Button } from './ui/Button';
 import GreetingRobot from './GreetingRobot';
@@ -56,6 +57,27 @@ const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
     const { playClick } = useSound();
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        const checkAdmin = async () => {
+            if (!user) return;
+            const { data } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', user.id)
+                .single();
+            if (data?.role === 'admin') {
+                setIsAdmin(true);
+            }
+        };
+        checkAdmin();
+    }, [user]);
+
+    const displayNavItems = [
+        ...navItems,
+        ...(isAdmin ? [{ href: '/admin', label: 'Admin Panel', icon: ShieldCheck }] : [])
+    ];
 
     const handleLogout = async () => {
         if (onLinkClick) {
@@ -112,7 +134,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
 
                     {/* Navigation */}
                     <nav id="navigation" className="flex-1 space-y-1 overflow-y-auto scrollbar-hide pr-1" aria-label="Main navigation">
-                        {navItems.map((item) => (
+                        {displayNavItems.map((item) => (
                             <NavLink
                                 key={item.href}
                                 to={item.href}

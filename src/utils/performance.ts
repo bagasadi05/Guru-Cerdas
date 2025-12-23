@@ -3,24 +3,14 @@
  * Image optimization, lazy loading, and performance monitoring
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { logger } from '../services/logger';
 
 // ============================================
 // IMAGE OPTIMIZATION
 // ============================================
 
-interface OptimizedImageProps {
-    src: string;
-    alt: string;
-    width?: number;
-    height?: number;
-    className?: string;
-    placeholder?: 'blur' | 'empty' | 'skeleton';
-    loading?: 'lazy' | 'eager';
-    onLoad?: () => void;
-    onError?: () => void;
-}
+
 
 /**
  * Generates an optimized image URL with size and quality parameters
@@ -527,10 +517,14 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
     delay: number
 ): T {
     const callbackRef = useRef(callback);
-    callbackRef.current = callback;
 
-    return useCallback(
-        debounce((...args: Parameters<T>) => callbackRef.current(...args), delay),
+    useEffect(() => {
+        callbackRef.current = callback;
+    }, [callback]);
+
+    return useMemo(
+        // eslint-disable-next-line react-hooks/refs
+        () => debounce((...args: Parameters<T>) => callbackRef.current(...args), delay),
         [delay]
     ) as T;
 }
@@ -718,8 +712,9 @@ export function useVirtualScroll<T>(
     const [scrollTop, setScrollTop] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const handleScroll = useCallback(
-        throttle(() => {
+    const handleScroll = useMemo(
+        // eslint-disable-next-line react-hooks/refs
+        () => throttle(() => {
             if (containerRef.current) {
                 setScrollTop(containerRef.current.scrollTop);
             }

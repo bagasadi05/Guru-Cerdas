@@ -8,9 +8,10 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   icon?: React.ReactNode;
+  maxWidth?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, icon }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, icon, maxWidth = 'max-w-lg' }) => {
   const [mounted, setMounted] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -103,7 +104,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     >
       <div
         ref={modalRef}
-        className="relative w-full max-w-lg mx-4 animate-fade-in-up modal-glow-border"
+        className={`relative w-full ${maxWidth} mx-4 animate-fade-in-up modal-glow-border`}
         onClick={(e) => e.stopPropagation()}
         id="modal-container"
       >

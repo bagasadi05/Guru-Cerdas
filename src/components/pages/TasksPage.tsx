@@ -242,7 +242,7 @@ const Column: React.FC<ColumnProps> = ({
     const config = statusConfig[status];
 
     return (
-        <div className="flex-1 min-w-[300px] max-w-[400px]">
+        <div className="w-full">
             {/* Column Header */}
             <div className="flex items-center justify-between mb-4 px-2">
                 <div className="flex items-center gap-2">
@@ -507,30 +507,24 @@ const TasksPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Stats Cards - With dividers */}
-            <div className="flex flex-wrap gap-0 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg overflow-hidden divide-x divide-slate-200 dark:divide-slate-700/50">
-                <div className="flex-1 min-w-[80px] p-3 sm:p-5 text-center">
-                    <div className="text-xl sm:text-3xl font-bold text-slate-800 dark:text-white">{stats.total}</div>
-                    <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</div>
+            {/* Stats Cards - Aligned with header */}
+            <div className="grid grid-cols-4 gap-4">
+                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-4 sm:p-6 text-center">
+                    <div className="text-2xl sm:text-4xl font-bold text-slate-800 dark:text-white mb-1">{stats.total}</div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</div>
                 </div>
-                <div className="flex-1 min-w-[80px] p-3 sm:p-5 text-center">
-                    <div className="text-xl sm:text-3xl font-bold text-slate-400">{stats.todo}</div>
-                    <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">To Do</div>
+                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-4 sm:p-6 text-center">
+                    <div className="text-2xl sm:text-4xl font-bold text-slate-400 mb-1">{stats.todo}</div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">To Do</div>
                 </div>
-                <div className="flex-1 min-w-[80px] p-3 sm:p-5 text-center">
-                    <div className="text-xl sm:text-3xl font-bold text-blue-500">{stats.inProgress}</div>
-                    <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress</div>
+                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-4 sm:p-6 text-center">
+                    <div className="text-2xl sm:text-4xl font-bold text-blue-500 mb-1">{stats.inProgress}</div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress</div>
                 </div>
-                <div className="flex-1 min-w-[80px] p-3 sm:p-5 text-center">
-                    <div className="text-xl sm:text-3xl font-bold text-emerald-500">{stats.done}</div>
-                    <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Selesai</div>
+                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-4 sm:p-6 text-center">
+                    <div className="text-2xl sm:text-4xl font-bold text-emerald-500 mb-1">{stats.done}</div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Selesai</div>
                 </div>
-                {stats.overdue > 0 && (
-                    <div className="flex-1 min-w-[80px] p-3 sm:p-5 text-center bg-red-50 dark:bg-red-500/5">
-                        <div className="text-xl sm:text-3xl font-bold text-red-500">{stats.overdue}</div>
-                        <div className="text-[10px] sm:text-xs font-bold text-red-400 uppercase tracking-wider">Terlambat</div>
-                    </div>
-                )}
             </div>
 
             {/* Mobile Tab Navigation - Only visible on small screens */}
@@ -590,20 +584,20 @@ const TasksPage: React.FC = () => {
                 </div>
             </div>
 
+
             {/* Desktop Kanban Board - Hidden on mobile */}
-            <div className="hidden lg:flex gap-6 overflow-x-auto pb-4 divide-x divide-slate-200 dark:divide-slate-700/30">
-                {statusOrder.map((statusKey, index) => (
-                    <div key={statusKey} className={index > 0 ? 'pl-6' : ''}>
-                        <Column
-                            status={statusKey}
-                            tasks={tasksByStatus[statusKey]}
-                            onEdit={handleEdit}
-                            onDelete={(id) => deleteTaskMutation.mutate(id)}
-                            onStatusChange={handleStatusChange}
-                            onAddTask={handleAddTask}
-                            updatingTaskId={updatingTaskId}
-                        />
-                    </div>
+            <div className="hidden lg:grid lg:grid-cols-3 gap-4">
+                {statusOrder.map((statusKey) => (
+                    <Column
+                        key={statusKey}
+                        status={statusKey}
+                        tasks={tasksByStatus[statusKey]}
+                        onEdit={handleEdit}
+                        onDelete={(id) => deleteTaskMutation.mutate(id)}
+                        onStatusChange={handleStatusChange}
+                        onAddTask={handleAddTask}
+                        updatingTaskId={updatingTaskId}
+                    />
                 ))}
             </div>
 

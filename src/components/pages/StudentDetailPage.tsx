@@ -6,7 +6,7 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, AlertCircleIcon, FileTextIcon, UserCircleIcon, BrainCircuitIcon, CameraIcon, ShieldAlertIcon, PlusIcon, BookOpenIcon, SparklesIcon, MessageSquareIcon } from '../Icons';
+import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, AlertCircleIcon, FileTextIcon, UserCircleIcon, BrainCircuitIcon, CameraIcon, ShieldAlertIcon, PlusIcon, BookOpenIcon, SparklesIcon, MessageSquareIcon, KeyRoundIcon, CopyIcon, CopyCheckIcon, Share2Icon, PrinterIcon } from '../Icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Modal } from '../ui/Modal';
 import { supabase } from '../../services/supabase';
@@ -21,14 +21,14 @@ import { ChildDevelopmentAnalysisTab } from './ChildDevelopmentAnalysisTab';
 import { ChildDevelopmentData } from '../../services/childDevelopmentAnalysis';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import { Breadcrumb } from '../ui/Breadcrumb';
-import { AiStudentSummary } from './student/AiStudentSummary';
+
 import { StatCard } from './student/StatCard';
 import { GradesTab } from './student/GradesTab';
 import { ActivityTab } from './student/ActivityTab';
 import { ViolationsTab } from './student/ViolationsTab';
 import { ReportsTab } from './student/ReportsTab';
 import { CommunicationTab } from './student/CommunicationTab';
-import { PortalTab } from './student/PortalTab';
+
 import { StudentDetailsData, ModalState, StudentMutationVars, ReportMutationVars, AcademicMutationVars, QuizMutationVars, ViolationMutationVars, CommunicationMutationVars, ClassRow, AcademicRecordRow, AttendanceRow, ViolationRow, QuizPointRow } from './student/types';
 import { EditStudentFormValues, ReportFormValues, AcademicFormValues, QuizFormValues, ViolationFormValues, CommunicationFormValues } from './student/schemas';
 import { EditStudentForm } from './student/forms/EditStudentForm';
@@ -40,6 +40,7 @@ import { CommunicationForm } from './student/forms/CommunicationForm';
 import { useStudentMutations } from './student/hooks/useStudentMutations';
 import { useConfetti } from '../../hooks/useConfetti';
 import { StudentDetailPageSkeleton } from '../skeletons/PageSkeletons';
+import { getStudentAvatar } from '../../utils/avatarUtils';
 
 const generateAccessCode = (): string => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No 0, O, 1, I
@@ -421,7 +422,7 @@ const StudentDetailPage = () => {
                     <div className="flex items-center gap-4">
                         <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Kembali" className="bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white"><ArrowLeftIcon className="w-5 h-5" /></Button>
                         <div className="relative">
-                            <img src={student.avatar_url || `https://i.pravatar.cc/150?u=${student.id}`} alt={student.name} className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg dark:border-white/10" />
+                            <img src={getStudentAvatar(student.avatar_url, student.gender, student.id)} alt={student.name} className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg dark:border-white/10" />
                             <input type="file" ref={photoInputRef} onChange={handlePhotoChange} accept="image/png, image/jpeg" className="hidden" disabled={isUploadingPhoto || !isOnline} />
                             <button onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} className="absolute -bottom-1 -right-1 p-1.5 bg-purple-600 text-white rounded-full shadow-md hover:scale-110 transition-transform"><CameraIcon className="w-4 h-4" /></button>
                         </div>
@@ -432,13 +433,14 @@ const StudentDetailPage = () => {
                     </div>
                     <div className="flex items-center gap-2 self-start md:self-center">
                         <Button variant="outline" onClick={() => setModalState({ type: 'editStudent', data: student })} disabled={!isOnline} className="bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white"><UserCircleIcon className="w-4 h-4 mr-2" />Edit Profil</Button>
-                        <Link to={`/cetak-rapot/${studentId}`}><Button><FileTextIcon className="w-4 h-4 mr-2" />Cetak Rapor</Button></Link>
+                        <Link to={`/cetak-rapot/${studentId}`}><Button variant="outline" className="bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white"><FileTextIcon className="w-4 h-4 mr-2" />Cetak Rapor</Button></Link>
+                        <Button onClick={() => setModalState({ type: 'portalAccess' })} className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20"><KeyRoundIcon className="w-4 h-4 mr-2" />Akses Portal</Button>
                     </div>
                 </header>
 
-                <AiStudentSummary studentDetails={studentDetails} />
 
-                <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+
+                <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
                     <StatCard icon={CheckCircleIcon} label="Hadir" value={`${attendanceSummary.Hadir} hari`} color="from-green-500 to-emerald-400" />
                     <StatCard icon={AlertCircleIcon} label="Izin" value={`${attendanceSummary.Izin} hari`} color="from-blue-500 to-cyan-400" />
                     <StatCard icon={AlertCircleIcon} label="Sakit" value={`${attendanceSummary.Sakit} hari`} color="from-yellow-500 to-amber-400" />
@@ -466,7 +468,6 @@ const StudentDetailPage = () => {
                                             {unreadMessagesCount > 0 && <span className="absolute -top-1 -right-3 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">{unreadMessagesCount}</span>}
                                         </div>
                                     </TabsTrigger>
-                                    <TabsTrigger value="portal">Portal Ortu</TabsTrigger>
                                 </TabsList>
                             </div>
                         </div>
@@ -522,6 +523,7 @@ const StudentDetailPage = () => {
                                 } as ChildDevelopmentData}
                             />
                         </TabsContent>
+
                         <TabsContent value="communication" className="p-0">
                             <CommunicationTab
                                 communications={communications}
@@ -533,9 +535,6 @@ const StudentDetailPage = () => {
                                 isOnline={isOnline}
                                 isSending={sendMessageMutation.isPending}
                             />
-                        </TabsContent>
-                        <TabsContent value="portal" className="p-0">
-                            <PortalTab student={student} onGenerateCode={handleGenerateAccessCode} isOnline={isOnline} isGenerating={studentMutation.isPending} />
                         </TabsContent>
                     </Tabs>
                 </Card>
@@ -563,146 +562,190 @@ const StudentDetailPage = () => {
                 </div>
             </div>
 
-            {/* Floating Action Button with Quick Actions */}
-            <FloatingActionButton
-                icon={<PlusIcon className="w-6 h-6" />}
-                label="Menu Cepat"
-                quickActions={[
-                    {
-                        icon: <BookOpenIcon className="w-4 h-4" />,
-                        label: 'Tambah Nilai',
-                        onClick: () => setModalState({ type: 'academic', data: null }),
-                        color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                    },
-                    {
-                        icon: <SparklesIcon className="w-4 h-4" />,
-                        label: 'Tambah Keaktifan',
-                        onClick: () => setModalState({ type: 'quiz', data: null }),
-                        color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                    },
-                    {
-                        icon: <ShieldAlertIcon className="w-4 h-4" />,
-                        label: 'Catat Pelanggaran',
-                        onClick: () => setModalState({ type: 'violation', mode: 'add', data: null }),
-                        color: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                    },
-                    {
-                        icon: <FileTextIcon className="w-4 h-4" />,
-                        label: 'Catatan Guru',
-                        onClick: () => setModalState({ type: 'report', data: null }),
-                        color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                    },
-                    {
-                        icon: <MessageSquareIcon className="w-4 h-4" />,
-                        label: 'Kirim Pesan',
-                        onClick: () => setActiveTab('communication'),
-                        color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                    }
-                ]}
-                aria-label="Menu Cepat"
-            />
+            {/* Floating Action Button with Quick Actions - Hidden on Communication Tab */}
+            {activeTab !== 'communication' && (
+                <FloatingActionButton
+                    icon={<PlusIcon className="w-6 h-6" />}
+                    label="Menu Cepat"
+                    quickActions={[
+                        {
+                            icon: <BookOpenIcon className="w-4 h-4" />,
+                            label: 'Tambah Nilai',
+                            onClick: () => setModalState({ type: 'academic', data: null }),
+                            color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                        },
+                        {
+                            icon: <SparklesIcon className="w-4 h-4" />,
+                            label: 'Tambah Keaktifan',
+                            onClick: () => setModalState({ type: 'quiz', data: null }),
+                            color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                        },
+                        {
+                            icon: <ShieldAlertIcon className="w-4 h-4" />,
+                            label: 'Catat Pelanggaran',
+                            onClick: () => setModalState({ type: 'violation', mode: 'add', data: null }),
+                            color: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                        },
+                        {
+                            icon: <FileTextIcon className="w-4 h-4" />,
+                            label: 'Catatan Guru',
+                            onClick: () => setModalState({ type: 'report', data: null }),
+                            color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                        },
+                        {
+                            icon: <MessageSquareIcon className="w-4 h-4" />,
+                            label: 'Kirim Pesan',
+                            onClick: () => setActiveTab('communication'),
+                            color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                        }
+                    ]}
+                    aria-label="Menu Cepat"
+                />
+            )}
 
-            {modalState.type === 'applyPoints' ? (
-                <Modal isOpen={true} onClose={() => setModalState({ type: 'closed' })} title="Gunakan Poin Keaktifan">
-                    <div className="space-y-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Anda akan menggunakan <strong>{quizPoints.length} poin</strong> keaktifan sebagai nilai tambahan. Poin ini akan dihapus setelah digunakan.
-                        </p>
-                        <div>
-                            <label htmlFor="subject-select" className="block text-sm font-medium mb-1">Pilih Mata Pelajaran</label>
-                            {/* FIX: Explicitly type the event object in onChange to resolve 'unknown' type error. */}
-                            <Select id="subject-select" value={subjectToApply} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSubjectToApply(e.target.value)} required>
-                                <option value="" disabled>-- Pilih --</option>
-                                {/* FIX: Explicitly type the 's' parameter to resolve 'unknown' type error. */}
-                                {uniqueSubjectsForGrades.map((s) => s && <option key={s} value={s}>{s}</option>)}
-                            </Select>
+            {
+                modalState.type === 'applyPoints' ? (
+                    <Modal isOpen={true} onClose={() => setModalState({ type: 'closed' })} title="Gunakan Poin Keaktifan">
+                        <div className="space-y-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Anda akan menggunakan <strong>{quizPoints.length} poin</strong> keaktifan sebagai nilai tambahan. Poin ini akan dihapus setelah digunakan.
+                            </p>
+                            <div>
+                                <label htmlFor="subject-select" className="block text-sm font-medium mb-1">Pilih Mata Pelajaran</label>
+                                {/* FIX: Explicitly type the event object in onChange to resolve 'unknown' type error. */}
+                                <Select id="subject-select" value={subjectToApply} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSubjectToApply(e.target.value)} required>
+                                    <option value="" disabled>-- Pilih --</option>
+                                    {/* FIX: Explicitly type the 's' parameter to resolve 'unknown' type error. */}
+                                    {uniqueSubjectsForGrades.map((s) => s && <option key={s} value={s}>{s}</option>)}
+                                </Select>
+                            </div>
+                            {currentRecordForSubject && (
+                                <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md text-sm">
+                                    <p>Nilai Saat Ini: <strong className="text-lg">{currentRecordForSubject.score}</strong></p>
+                                    <p>Nilai Baru: <strong className="text-lg text-green-500">{Math.min(100, currentRecordForSubject.score + quizPoints.length)}</strong></p>
+                                </div>
+                            )}
+                            <div className="flex justify-end gap-2 pt-4">
+                                <Button type="button" variant="ghost" onClick={() => setModalState({ type: 'closed' })}>Batal</Button>
+                                <Button type="button" onClick={handleApplyPointsSubmit} disabled={applyPointsMutation.isPending || !subjectToApply}>
+                                    {applyPointsMutation.isPending ? 'Menerapkan...' : 'Terapkan Poin'}
+                                </Button>
+                            </div>
                         </div>
-                        {currentRecordForSubject && (
-                            <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md text-sm">
-                                <p>Nilai Saat Ini: <strong className="text-lg">{currentRecordForSubject.score}</strong></p>
-                                <p>Nilai Baru: <strong className="text-lg text-green-500">{Math.min(100, currentRecordForSubject.score + quizPoints.length)}</strong></p>
+                    </Modal>
+                ) : modalState.type !== 'closed' && modalState.type !== 'confirmDelete' && (
+                    <Modal isOpen={true} onClose={() => setModalState({ type: 'closed' })} title={
+                        modalState.type === 'editStudent' ? 'Edit Profil Siswa' :
+                            modalState.type === 'report' ? (modalState.data ? 'Edit Catatan' : 'Tambah Catatan Baru') :
+                                modalState.type === 'academic' ? (modalState.data ? 'Edit Nilai' : 'Tambah Nilai Baru') :
+                                    modalState.type === 'quiz' ? (modalState.data ? 'Edit Poin' : 'Tambah Poin Keaktifan') :
+                                        modalState.type === 'editCommunication' ? 'Edit Pesan' :
+
+                                            modalState.type === 'portalAccess' ? 'Akses Portal Orang Tua' :
+                                                'Tambah Pelanggaran'
+                    }>
+                        {modalState.type === 'editStudent' && (
+                            <EditStudentForm
+                                defaultValues={modalState.data}
+                                classes={classes}
+                                onSubmit={handleEditStudentSubmit}
+                                onClose={() => setModalState({ type: 'closed' })}
+                                isPending={studentMutation.isPending}
+                            />
+                        )}
+                        {modalState.type === 'report' && (
+                            <ReportForm
+                                defaultValues={modalState.data}
+                                onSubmit={handleReportSubmit}
+                                onClose={() => setModalState({ type: 'closed' })}
+                                isPending={reportMutation.isPending}
+                            />
+                        )}
+                        {modalState.type === 'academic' && (
+                            <AcademicForm
+                                defaultValues={modalState.data}
+                                onSubmit={handleAcademicSubmit}
+                                onClose={() => setModalState({ type: 'closed' })}
+                                isPending={academicMutation.isPending}
+                            />
+                        )}
+                        {modalState.type === 'quiz' && (
+                            <QuizForm
+                                defaultValues={modalState.data}
+                                onSubmit={handleQuizSubmit}
+                                onClose={() => setModalState({ type: 'closed' })}
+                                isPending={quizMutation.isPending}
+                            />
+                        )}
+                        {modalState.type === 'violation' && (
+                            <ViolationForm
+                                defaultValues={modalState.data}
+                                onSubmit={handleViolationSubmit}
+                                onClose={() => setModalState({ type: 'closed' })}
+                                isPending={violationMutation.isPending}
+                            />
+                        )}
+                        {modalState.type === 'editCommunication' && (
+                            <CommunicationForm
+                                defaultValues={modalState.data}
+                                onSubmit={handleCommunicationSubmit}
+                                onClose={() => setModalState({ type: 'closed' })}
+                                isPending={communicationMutation.isPending}
+                            />
+                        )}
+                        {modalState.type === 'portalAccess' && (
+                            <div className="p-4 flex flex-col items-center">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-center">Bagikan kode akses ini kepada orang tua atau wali siswa.</p>
+
+                                {student.access_code ? (
+                                    <div className="w-full max-w-sm p-6 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 shadow-inner border border-indigo-200 dark:border-indigo-800 text-center mb-6">
+                                        <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-200 mb-2">Kode Akses Siswa</p>
+                                        <div className="bg-white/80 dark:bg-black/40 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 mb-2">
+                                            <p className="text-3xl font-mono font-bold tracking-[0.2em] text-indigo-700 dark:text-indigo-300">{student.access_code}</p>
+                                        </div>
+                                        <p className="text-xs text-indigo-600 dark:text-indigo-400">Kode ini bersifat rahasia.</p>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 mb-6">
+                                        <KeyRoundIcon className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                                        <p className="text-gray-500">Belum ada kode akses.</p>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-2 gap-3 w-full">
+                                    <Button onClick={handleCopyAccessCode} variant="outline" className="w-full" disabled={!student.access_code}>
+                                        {copied ? <CopyCheckIcon className="w-4 h-4 mr-2 text-green-500" /> : <CopyIcon className="w-4 h-4 mr-2" />}
+                                        {copied ? 'Disalin' : 'Salin'}
+                                    </Button>
+                                    <Button onClick={handleShare} variant="outline" className="w-full" disabled={!student.access_code}>
+                                        <Share2Icon className="w-4 h-4 mr-2" /> Bagikan
+                                    </Button>
+                                    <Button onClick={handlePrint} variant="outline" className="w-full" disabled={!student.access_code}>
+                                        <PrinterIcon className="w-4 h-4 mr-2" /> Cetak
+                                    </Button>
+                                    <Button onClick={handleGenerateAccessCode} variant="outline" className="w-full" disabled={!isOnline || studentMutation.isPending}>
+                                        <SparklesIcon className="w-4 h-4 mr-2" /> {student.access_code ? 'Reset' : 'Buat Baru'}
+                                    </Button>
+                                </div>
                             </div>
                         )}
+                    </Modal>
+                )
+            }
+            {
+                modalState.type === 'confirmDelete' && (
+                    <Modal isOpen={true} onClose={() => setModalState({ type: 'closed' })} title={modalState.title}>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{modalState.message}</p>
                         <div className="flex justify-end gap-2 pt-4">
-                            <Button type="button" variant="ghost" onClick={() => setModalState({ type: 'closed' })}>Batal</Button>
-                            <Button type="button" onClick={handleApplyPointsSubmit} disabled={applyPointsMutation.isPending || !subjectToApply}>
-                                {applyPointsMutation.isPending ? 'Menerapkan...' : 'Terapkan Poin'}
+                            <Button type="button" variant="ghost" onClick={() => setModalState({ type: 'closed' })} disabled={modalState.isPending}>Batal</Button>
+                            <Button type="button" variant="destructive" onClick={modalState.onConfirm} disabled={modalState.isPending}>
+                                {modalState.isPending ? 'Menghapus...' : 'Ya, Hapus'}
                             </Button>
                         </div>
-                    </div>
-                </Modal>
-            ) : modalState.type !== 'closed' && modalState.type !== 'confirmDelete' && (
-                <Modal isOpen={true} onClose={() => setModalState({ type: 'closed' })} title={
-                    modalState.type === 'editStudent' ? 'Edit Profil Siswa' :
-                        modalState.type === 'report' ? (modalState.data ? 'Edit Catatan' : 'Tambah Catatan Baru') :
-                            modalState.type === 'academic' ? (modalState.data ? 'Edit Nilai' : 'Tambah Nilai Baru') :
-                                modalState.type === 'quiz' ? (modalState.data ? 'Edit Poin' : 'Tambah Poin Keaktifan') :
-                                    modalState.type === 'editCommunication' ? 'Edit Pesan' :
-                                        'Tambah Pelanggaran'
-                }>
-                    {modalState.type === 'editStudent' && (
-                        <EditStudentForm
-                            defaultValues={modalState.data}
-                            classes={classes}
-                            onSubmit={handleEditStudentSubmit}
-                            onClose={() => setModalState({ type: 'closed' })}
-                            isPending={studentMutation.isPending}
-                        />
-                    )}
-                    {modalState.type === 'report' && (
-                        <ReportForm
-                            defaultValues={modalState.data}
-                            onSubmit={handleReportSubmit}
-                            onClose={() => setModalState({ type: 'closed' })}
-                            isPending={reportMutation.isPending}
-                        />
-                    )}
-                    {modalState.type === 'academic' && (
-                        <AcademicForm
-                            defaultValues={modalState.data}
-                            onSubmit={handleAcademicSubmit}
-                            onClose={() => setModalState({ type: 'closed' })}
-                            isPending={academicMutation.isPending}
-                        />
-                    )}
-                    {modalState.type === 'quiz' && (
-                        <QuizForm
-                            defaultValues={modalState.data}
-                            onSubmit={handleQuizSubmit}
-                            onClose={() => setModalState({ type: 'closed' })}
-                            isPending={quizMutation.isPending}
-                        />
-                    )}
-                    {modalState.type === 'violation' && (
-                        <ViolationForm
-                            defaultValues={modalState.data}
-                            onSubmit={handleViolationSubmit}
-                            onClose={() => setModalState({ type: 'closed' })}
-                            isPending={violationMutation.isPending}
-                        />
-                    )}
-                    {modalState.type === 'editCommunication' && (
-                        <CommunicationForm
-                            defaultValues={modalState.data}
-                            onSubmit={handleCommunicationSubmit}
-                            onClose={() => setModalState({ type: 'closed' })}
-                            isPending={communicationMutation.isPending}
-                        />
-                    )}
-                </Modal>
-            )}
-            {modalState.type === 'confirmDelete' && (
-                <Modal isOpen={true} onClose={() => setModalState({ type: 'closed' })} title={modalState.title}>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{modalState.message}</p>
-                    <div className="flex justify-end gap-2 pt-4">
-                        <Button type="button" variant="ghost" onClick={() => setModalState({ type: 'closed' })} disabled={modalState.isPending}>Batal</Button>
-                        <Button type="button" variant="destructive" onClick={modalState.onConfirm} disabled={modalState.isPending}>
-                            {modalState.isPending ? 'Menghapus...' : 'Ya, Hapus'}
-                        </Button>
-                    </div>
-                </Modal>
-            )}
-        </div>
+                    </Modal>
+                )
+            }
+        </div >
     );
 };
 

@@ -90,7 +90,8 @@ const SCHOOL_CONFIG = {
     name: "MI AL IRSYAD AL ISLAMIYYAH KOTA MADIUN",
     address: "Jl. Diponegoro No. 123, Madiun, Jawa Timur", // Placeholder address
     phone: "(0351) 123456", // Placeholder phone
-    logoUrl: "/logo.png" // Placeholder logo
+    logoUrl: "/logo_sekolah.png", // School logo
+    kemenagLogoUrl: "/logo_kemenag.png" // Kemenag logo
 };
 
 /**
@@ -151,6 +152,50 @@ const SCHOOL_CONFIG = {
  * 
  * @since 1.0.0
  */
+// Preload logos as base64 (loaded once when module imports)
+let cachedLogoDataUrl: string | null = null;
+let cachedKemenagLogoUrl: string | null = null;
+let logoLoadAttempted = false;
+
+const loadImageAsBase64 = async (url: string): Promise<string | null> => {
+    try {
+        const fullUrl = `${window.location.origin}${url}`;
+        const response = await fetch(fullUrl);
+        const blob = await response.blob();
+
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                resolve(reader.result as string);
+            };
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+        });
+    } catch (e) {
+        console.warn('Image could not be loaded:', url, e);
+        return null;
+    }
+};
+
+const preloadLogos = async (): Promise<void> => {
+    if (logoLoadAttempted) return;
+    logoLoadAttempted = true;
+
+    // Load both logos in parallel
+    const [schoolLogo, kemenagLogo] = await Promise.all([
+        loadImageAsBase64(SCHOOL_CONFIG.logoUrl),
+        loadImageAsBase64(SCHOOL_CONFIG.kemenagLogoUrl)
+    ]);
+
+    cachedLogoDataUrl = schoolLogo;
+    cachedKemenagLogoUrl = kemenagLogo;
+};
+
+// Export function to preload logos before PDF generation
+export const ensureLogoLoaded = async (): Promise<void> => {
+    await preloadLogos();
+};
+
 export const generateStudentReport = (
     doc: jsPDF,
     reportData: ReportData,
@@ -168,25 +213,46 @@ export const generateStudentReport = (
     let currentY = 0;
 
     const addHeader = (isFirstPage = false) => {
-        // Header Background
+        // Header Background - taller to accommodate bigger logos
         doc.setFillColor(30, 41, 59); // Dark blue
-        doc.rect(0, 0, PAGE_WIDTH, 35, 'F');
+        doc.rect(0, 0, PAGE_WIDTH, 38, 'F');
 
-        // School Name
+        // School logo on the left - larger (32x32mm) to compensate for thinner shape
+        if (cachedLogoDataUrl) {
+            try {
+                doc.addImage(cachedLogoDataUrl, 'PNG', MARGIN - 4, 3, 32, 32);
+            } catch (e) {
+                console.warn('Could not add school logo to PDF', e);
+            }
+        }
+
+        // Kemenag logo on the right - 25x25mm
+        if (cachedKemenagLogoUrl) {
+            try {
+                doc.addImage(cachedKemenagLogoUrl, 'PNG', PAGE_WIDTH - MARGIN - 23, 6.5, 25, 25);
+            } catch (e) {
+                console.warn('Could not add Kemenag logo to PDF', e);
+            }
+        }
+
+        // Header text - always centered
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(16);
+        doc.setFontSize(15);
         doc.setFont('helvetica', 'bold');
         doc.text("LAPORAN HASIL BELAJAR SISWA", PAGE_WIDTH / 2, 14, { align: 'center' });
 
-        // School Info
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
+        // School Name - centered
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
         doc.text(SCHOOL_CONFIG.name, PAGE_WIDTH / 2, 22, { align: 'center' });
-        doc.setFontSize(8);
-        doc.setTextColor(209, 213, 219); // Light gray
-        doc.text(`${SCHOOL_CONFIG.address} | Telp: ${SCHOOL_CONFIG.phone}`, PAGE_WIDTH / 2, 28, { align: 'center' });
 
-        currentY = isFirstPage ? 45 : 40;
+        // School Address - centered
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(209, 213, 219); // Light gray
+        doc.text(`${SCHOOL_CONFIG.address} | Telp: ${SCHOOL_CONFIG.phone}`, PAGE_WIDTH / 2, 29, { align: 'center' });
+
+        currentY = isFirstPage ? 48 : 43;
     };
 
     const addFooter = () => {
@@ -426,7 +492,7 @@ export const generateStudentReport = (
 
         const quizBody = quizPoints.map((q, index) => [
             index + 1,
-            q.quiz_name,
+            q.reason,
             q.points,
             new Date(q.created_at).toLocaleDateString('id-ID')
         ]);

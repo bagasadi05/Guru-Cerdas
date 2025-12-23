@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { addToQueue } from '../../services/offlineQueue';
+import { useUserSettings } from '../../hooks/useUserSettings';
 import {
     CalendarIcon,
     ChevronDownIcon,
@@ -40,10 +41,12 @@ import { QRCodeGenerator } from '../attendance/QRCodeGenerator';
 
 const AttendancePage: React.FC = () => {
     // Force HMR update
-    const toast = useToast();
-    const queryClient = useQueryClient();
+    const [lateThreshold, setLateThreshold] = useState('07:00');
     const { user } = useAuth();
+    const toast = useToast();
     const isOnline = useOfflineStatus();
+    const queryClient = useQueryClient();
+    const { schoolName } = useUserSettings();
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
@@ -59,6 +62,7 @@ const AttendancePage: React.FC = () => {
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportMonth, setExportMonth] = useState(new Date().toISOString().slice(0, 7));
+    const [selectedExportClass, setSelectedExportClass] = useState<string>('all');
     const [isExporting, setIsExporting] = useState(false);
 
     const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -292,26 +296,33 @@ const AttendancePage: React.FC = () => {
             const monthName = new Date(year, monthNum - 1).toLocaleString('id-ID', { month: 'long' });
             const daysInMonth = new Date(year, monthNum, 0).getDate();
 
-            const studentsByClass = classes.map((c: any) => ({
+            let studentsByClass = classes.map((c: any) => ({
                 ...c,
                 students: students.filter((s: any) => s.class_id === c.id).sort((a: any, b: any) => a.name.localeCompare(b.name))
             })).filter((c: any) => c.students.length > 0);
 
+            // Filter by selected class if not 'all'
+            if (selectedExportClass !== 'all') {
+                studentsByClass = studentsByClass.filter((c: any) => c.id === selectedExportClass);
+            }
+
             if (format === 'excel') {
-                import('../../utils/exportUtils').then(({ exportAttendanceToExcel }) => {
-                    studentsByClass.forEach((classData: any) => {
-                        exportAttendanceToExcel(
-                            classData,
-                            attendance,
-                            monthName,
-                            year,
-                            monthNum,
-                            daysInMonth,
-                            `Absensi_${classData.name}_${monthName}_${year}`
-                        );
-                    });
-                    toast.success('Laporan Excel berhasil diunduh!');
-                });
+                const { exportAttendanceToExcel } = await import('../../utils/exportUtils');
+
+                // Export each class sequentially
+                for (const classData of studentsByClass) {
+                    await exportAttendanceToExcel(
+                        classData,
+                        attendance,
+                        monthName,
+                        year,
+                        monthNum,
+                        daysInMonth,
+                        `Absensi_${classData.name}_${monthName}_${year}`,
+                        schoolName
+                    );
+                }
+                toast.success('Laporan Excel berhasil diunduh!');
             } else {
                 const doc = new jsPDF({ orientation: 'landscape' });
                 const pageHeight = doc.internal.pageSize.getHeight();
@@ -520,6 +531,26 @@ const AttendancePage: React.FC = () => {
                 onExport={() => setIsExportModalOpen(true)}
                 isOnline={isOnline}
             />
+
+            {/* Class Selector */}
+            {classes && classes.length > 0 && (
+                <div className="mb-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                        {classes.map((c) => (
+                            <button
+                                key={c.id}
+                                onClick={() => setSelectedClass(c.id)}
+                                className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${selectedClass === c.id
+                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 scale-105'
+                                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400'
+                                    }`}
+                            >
+                                {c.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="relative z-10 glass-card p-4 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none mb-6 transition-all rounded-2xl overflow-hidden">
                 <div
@@ -754,6 +785,9 @@ const AttendancePage: React.FC = () => {
                 isExporting={isExporting}
                 exportMonth={exportMonth}
                 setExportMonth={setExportMonth}
+                classes={classes || []}
+                selectedExportClass={selectedExportClass}
+                setSelectedExportClass={setSelectedExportClass}
             />
 
             <BottomSheet isOpen={isDatePickerOpen} onClose={() => setDatePickerOpen(false)} title="Pilih Tanggal Absensi">

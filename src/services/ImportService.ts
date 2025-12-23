@@ -235,46 +235,129 @@ export const parseAndValidate = (
 };
 
 /**
- * Generate import template
+ * Generate import template with professional styling
  */
-export const generateTemplate = (format: 'xlsx' | 'csv' = 'xlsx'): Blob => {
-    const templateData = [
-        ['Nama Siswa', 'Jenis Kelamin', 'Kelas', 'Kode Akses'],
-        ['Ahmad Rizki', 'Laki-laki', '7A', ''],
-        ['Siti Rahma', 'Perempuan', '7A', ''],
-        ['Budi Santoso', 'L', '7B', ''],
-    ];
+export const generateTemplate = async (format: 'xlsx' | 'csv' = 'xlsx'): Promise<Blob> => {
+    const TOTAL_ROWS = 30; // Pre-formatted rows for teachers
 
-    const worksheet = XLSX.utils.aoa_to_sheet(templateData);
+    if (format === 'csv') {
+        // Simple CSV for compatibility
+        const templateData = [['Nama Siswa', 'Jenis Kelamin', 'Kelas']];
+        for (let i = 1; i <= TOTAL_ROWS; i++) {
+            templateData.push(['', '', '']);
+        }
+        const worksheet = XLSX.utils.aoa_to_sheet(templateData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
+        const excelBuffer = XLSX.write(workbook, { bookType: 'csv', type: 'array' });
+        return new Blob([excelBuffer], { type: 'text/csv' });
+    }
 
-    // Set column widths
-    worksheet['!cols'] = [
-        { wch: 25 }, // Nama
-        { wch: 15 }, // Gender
-        { wch: 10 }, // Kelas
-        { wch: 12 }, // Kode
-    ];
+    // Use ExcelJS for styled XLSX
+    const ExcelJS = await import('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Portal Guru';
+    workbook.created = new Date();
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
-
-    const excelBuffer = XLSX.write(workbook, {
-        bookType: format === 'csv' ? 'csv' : 'xlsx',
-        type: 'array'
+    const worksheet = workbook.addWorksheet('Data Siswa', {
+        properties: { tabColor: { argb: '4F46E5' } },
+        views: [{ state: 'frozen', ySplit: 1 }] // Freeze header row
     });
 
-    const mimeType = format === 'csv'
-        ? 'text/csv'
-        : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    // Column widths
+    worksheet.columns = [
+        { width: 8 },   // A - No
+        { width: 35 },  // B - Nama Siswa
+        { width: 18 },  // C - Jenis Kelamin
+        { width: 12 },  // D - Kelas
+    ];
 
-    return new Blob([excelBuffer], { type: mimeType });
+    // === ROW 1: Header (MUST be row 1 for parser compatibility) ===
+    const headerRow = worksheet.getRow(1);
+    headerRow.values = ['No', 'Nama Siswa', 'Jenis Kelamin', 'Kelas'];
+    headerRow.height = 28;
+    headerRow.eachCell((cell, colNumber) => {
+        if (colNumber <= 4) {
+            cell.font = { bold: true, color: { argb: 'FFFFFF' }, size: 11 };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4F46E5' } };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.border = {
+                top: { style: 'thin', color: { argb: '4338CA' } },
+                left: { style: 'thin', color: { argb: '4338CA' } },
+                bottom: { style: 'thin', color: { argb: '4338CA' } },
+                right: { style: 'thin', color: { argb: '4338CA' } }
+            };
+        }
+    });
+
+    // === DATA ROWS (30 empty rows with formatting) ===
+    for (let i = 0; i < TOTAL_ROWS; i++) {
+        const dataRow = worksheet.getRow(2 + i); // Start from row 2
+        dataRow.values = [i + 1, '', '', ''];
+        dataRow.height = 22;
+
+        const isEven = i % 2 === 0;
+        dataRow.eachCell((cell, colNumber) => {
+            if (colNumber <= 4) {
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: isEven ? 'F8FAFC' : 'FFFFFF' }
+                };
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'E2E8F0' } },
+                    left: { style: 'thin', color: { argb: 'E2E8F0' } },
+                    bottom: { style: 'thin', color: { argb: 'E2E8F0' } },
+                    right: { style: 'thin', color: { argb: 'E2E8F0' } }
+                };
+                cell.alignment = { vertical: 'middle' };
+            }
+        });
+
+        // Style row number column
+        const noCell = dataRow.getCell(1);
+        noCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        noCell.font = { color: { argb: '94A3B8' } };
+
+        // Center align for gender and class
+        dataRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+        dataRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+    }
+
+    // === NOTES SECTION (after data rows) ===
+    const notesStartRow = 2 + TOTAL_ROWS + 1; // After data rows + 1 empty row
+
+    worksheet.mergeCells(`A${notesStartRow}:D${notesStartRow}`);
+    const notesHeaderCell = worksheet.getCell(`A${notesStartRow}`);
+    notesHeaderCell.value = '📌 PETUNJUK PENGISIAN:';
+    notesHeaderCell.font = { bold: true, size: 10, color: { argb: '4F46E5' } };
+    notesHeaderCell.alignment = { horizontal: 'left', vertical: 'middle' };
+
+    const notes = [
+        '• Kolom "Nama Siswa" dan "Jenis Kelamin" WAJIB diisi',
+        '• Jenis Kelamin: ketik "L" atau "Laki-laki" untuk laki-laki, "P" atau "Perempuan" untuk perempuan',
+        '• Kolom "No" akan diabaikan saat import (hanya untuk penomoran)',
+        '• Baris yang kosong (tanpa nama) akan otomatis diabaikan',
+    ];
+
+    notes.forEach((note, idx) => {
+        worksheet.mergeCells(`A${notesStartRow + 1 + idx}:D${notesStartRow + 1 + idx}`);
+        const noteCell = worksheet.getCell(`A${notesStartRow + 1 + idx}`);
+        noteCell.value = note;
+        noteCell.font = { size: 9, color: { argb: '64748B' } };
+        noteCell.alignment = { horizontal: 'left', vertical: 'middle' };
+    });
+
+    // Download file
+    const buffer = await workbook.xlsx.writeBuffer();
+    return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 };
 
 /**
  * Download template file
  */
-export const downloadTemplate = (format: 'xlsx' | 'csv' = 'xlsx'): void => {
-    const blob = generateTemplate(format);
+export const downloadTemplate = async (format: 'xlsx' | 'csv' = 'xlsx'): Promise<void> => {
+    const blob = await generateTemplate(format);
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

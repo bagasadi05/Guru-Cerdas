@@ -1,8 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, ShieldAlertIcon, PencilIcon, TrashIcon, AlertTriangleIcon, CheckCircleIcon, ClockIcon, CameraIcon, BellIcon, FilterIcon } from 'lucide-react';
+import { PlusIcon, ShieldAlertIcon, PencilIcon, TrashIcon, AlertTriangleIcon, CheckCircleIcon, ClockIcon, CameraIcon, BellIcon, FilterIcon, FileTextIcon, FileSpreadsheetIcon, DownloadIcon, LockIcon } from 'lucide-react';
 import { ViolationRow } from './types';
+import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../../ui/DropdownMenu';
+import { exportViolationsToPDF, exportViolationsToExcel } from '../../../services/violationExport';
+import { useAuth } from '../../../hooks/useAuth';
+import { useToast } from '../../../hooks/useToast';
+import { SemesterSelector, SemesterLockedBanner } from '../../ui/SemesterSelector';
+import { SemesterType, filterBySemester, canModifyRecord, getCurrentSemester } from '../../../utils/semesterUtils';
+import { useUserSettings } from '../../../hooks/useUserSettings';
 
 // Severity levels configuration
 export const SEVERITY_LEVELS = {
@@ -147,11 +154,13 @@ const ViolationCard: React.FC<{
     onNotifyParent?: () => void;
     onUpdateFollowUp?: (status: FollowUpStatus) => void;
     isOnline: boolean;
-}> = ({ violation, onEdit, onDelete, onNotifyParent, onUpdateFollowUp, isOnline }) => {
+    isLocked?: boolean;
+}> = ({ violation, onEdit, onDelete, onNotifyParent, onUpdateFollowUp, isOnline, isLocked = false }) => {
     const [showFollowUp, setShowFollowUp] = useState(false);
     const severity = violation.severity ? SEVERITY_LEVELS[violation.severity] : SEVERITY_LEVELS.ringan;
     const followUp = violation.follow_up_status ? FOLLOW_UP_STATUS[violation.follow_up_status] : FOLLOW_UP_STATUS.pending;
     const FollowUpIcon = followUp.icon;
+    const canModify = !isLocked && canModifyRecord(violation.date);
 
     return (
         <div className={`group relative p-4 rounded-xl border-2 ${severity.borderClass} ${severity.bgClass} transition-all hover:shadow-md`}>
@@ -182,10 +191,10 @@ const ViolationCard: React.FC<{
                             <BellIcon className="h-4 w-4" />
                         </Button>
                     )}
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} disabled={!isOnline}>
-                        <PencilIcon className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} disabled={!isOnline || !canModify} title={!canModify ? 'Semester Terkunci' : 'Edit'}>
+                        {canModify ? <PencilIcon className="h-4 w-4" /> : <LockIcon className="h-4 w-4 text-amber-500" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={onDelete} disabled={!isOnline}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={onDelete} disabled={!isOnline || !canModify} title={!canModify ? 'Semester Terkunci' : 'Hapus'}>
                         <TrashIcon className="h-4 w-4" />
                     </Button>
                 </div>
@@ -220,10 +229,10 @@ const ViolationCard: React.FC<{
                 <button
                     onClick={() => setShowFollowUp(!showFollowUp)}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${followUp.color === 'green'
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                            : followUp.color === 'blue'
-                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : followUp.color === 'blue'
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
                         }`}
                 >
                     <FollowUpIcon className="w-4 h-4" />
@@ -242,8 +251,8 @@ const ViolationCard: React.FC<{
                                     onClick={() => onUpdateFollowUp(status)}
                                     disabled={!isOnline || isActive}
                                     className={`p-2 rounded-lg transition-colors ${isActive
-                                            ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600'
-                                            : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500'
+                                        ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600'
+                                        : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500'
                                         }`}
                                     title={FOLLOW_UP_STATUS[status].label}
                                 >
@@ -281,15 +290,20 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
 }) => {
     const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+    const [semesterFilter, setSemesterFilter] = useState<SemesterType>(getCurrentSemester().semester);
+    const { user } = useAuth();
+    const toast = useToast();
+    const { isSemester1Locked: semester1Locked } = useUserSettings();
 
     const totalPoints = useMemo(() => violations.reduce((sum, v) => sum + v.points, 0), [violations]);
 
     const filteredViolations = useMemo(() => {
-        return [...violations]
+        const semesterFiltered = filterBySemester(violations, semesterFilter, 'date');
+        return [...semesterFiltered]
             .filter(v => severityFilter === 'all' || v.severity === severityFilter)
             .filter(v => statusFilter === 'all' || v.follow_up_status === statusFilter || (!v.follow_up_status && statusFilter === 'pending'))
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [violations, severityFilter, statusFilter]);
+    }, [violations, severityFilter, statusFilter, semesterFilter]);
 
     return (
         <div className="p-6">
@@ -299,10 +313,43 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                     <CardTitle>Riwayat Pelanggaran</CardTitle>
                     <CardDescription>Semua catatan pelanggaran tata tertib sekolah.</CardDescription>
                 </div>
+            </div>
+            <div className="flex gap-2">
+                <DropdownMenu>
+                    <DropdownTrigger className="gap-2">
+                        <DownloadIcon className="w-4 h-4" />
+                        Export
+                    </DropdownTrigger>
+                    <DropdownContent>
+                        <DropdownItem onClick={() => {
+                            exportViolationsToPDF({
+                                studentName: studentName || 'Siswa',
+                                className: 'Fase F', // Placeholder, ideally passed from parent
+                                schoolName: user?.school_name || 'Sekolah',
+                                violations: filteredViolations
+                            });
+                            toast.success('Mengunduh Laporan PDF...');
+                        }} icon={<FileTextIcon className="w-4 h-4 text-red-500" />}>
+                            Export PDF (Formal)
+                        </DropdownItem>
+                        <DropdownItem onClick={() => {
+                            exportViolationsToExcel({
+                                studentName: studentName || 'Siswa',
+                                className: 'Fase F', // Placeholder
+                                schoolName: user?.school_name || 'Sekolah',
+                                violations: filteredViolations
+                            });
+                            toast.success('Mengunduh Data Excel...');
+                        }} icon={<FileSpreadsheetIcon className="w-4 h-4 text-green-600" />}>
+                            Export Excel
+                        </DropdownItem>
+                    </DropdownContent>
+                </DropdownMenu>
                 <Button onClick={onAdd} disabled={!isOnline}>
                     <PlusIcon className="w-4 h-4 mr-2" />Tambah Pelanggaran
                 </Button>
             </div>
+
 
             {/* Threshold Alert */}
             <ThresholdAlert totalPoints={totalPoints} studentName={studentName} />
@@ -310,12 +357,26 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
             {/* Stats */}
             <ViolationStats violations={violations} />
 
+            {/* Semester Locked Banner */}
+            {semesterFilter === '1' && semester1Locked && (
+                <div className="mb-4">
+                    <SemesterLockedBanner semester="1" />
+                </div>
+            )}
+
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2">
                     <FilterIcon className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-500">Filter:</span>
                 </div>
+
+                {/* Semester Filter */}
+                <SemesterSelector
+                    value={semesterFilter}
+                    onChange={setSemesterFilter}
+                    size="sm"
+                />
 
                 {/* Severity Filter */}
                 <select
@@ -352,33 +413,35 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
             </div>
 
             {/* Content */}
-            {filteredViolations.length > 0 ? (
-                <div className="space-y-4">
-                    {filteredViolations.map(v => (
-                        <ViolationCard
-                            key={v.id}
-                            violation={v}
-                            onEdit={() => onEdit(v)}
-                            onDelete={() => onDelete(v.id)}
-                            onNotifyParent={onNotifyParent ? () => onNotifyParent(v) : undefined}
-                            onUpdateFollowUp={onUpdateFollowUp ? (status) => onUpdateFollowUp(v.id, status) : undefined}
-                            isOnline={isOnline}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-16 text-gray-400">
-                    <ShieldAlertIcon className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                    <h4 className="font-semibold">
-                        {violations.length === 0 ? 'Tidak Ada Pelanggaran' : 'Tidak Ada Hasil Filter'}
-                    </h4>
-                    <p>
-                        {violations.length === 0
-                            ? 'Siswa ini memiliki catatan perilaku yang bersih.'
-                            : 'Coba ubah filter untuk melihat pelanggaran lainnya.'}
-                    </p>
-                </div>
-            )}
-        </div>
+            {
+                filteredViolations.length > 0 ? (
+                    <div className="space-y-4">
+                        {filteredViolations.map(v => (
+                            <ViolationCard
+                                key={v.id}
+                                violation={v}
+                                onEdit={() => onEdit(v)}
+                                onDelete={() => onDelete(v.id)}
+                                onNotifyParent={onNotifyParent ? () => onNotifyParent(v) : undefined}
+                                onUpdateFollowUp={onUpdateFollowUp ? (status) => onUpdateFollowUp(v.id, status) : undefined}
+                                isOnline={isOnline}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-16 text-gray-400">
+                        <ShieldAlertIcon className="w-16 h-16 mx-auto mb-4 text-gray-600" />
+                        <h4 className="font-semibold">
+                            {violations.length === 0 ? 'Tidak Ada Pelanggaran' : 'Tidak Ada Hasil Filter'}
+                        </h4>
+                        <p>
+                            {violations.length === 0
+                                ? 'Siswa ini memiliki catatan perilaku yang bersih.'
+                                : 'Coba ubah filter untuk melihat pelanggaran lainnya.'}
+                        </p>
+                    </div>
+                )
+            }
+        </div >
     );
 };
