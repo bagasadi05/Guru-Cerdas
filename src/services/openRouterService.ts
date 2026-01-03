@@ -2,10 +2,7 @@ const OPENROUTER_API_KEY = process.env.VITE_OPENROUTER_API_KEY || import.meta.en
 
 // Priority list of FREE models to try in order
 const FALLBACK_MODELS = [
-    "google/gemini-2.0-flash-exp:free",      // Primary: Fast & Smart
-    "meta-llama/llama-3.2-3b-instruct:free", // Fallback 1: Reliable
-    "qwen/qwen-2.5-7b-instruct:free",        // Fallback 2: Good alternative
-    "xiaomi/mimo-v2-flash:free"              // Legacy/Extra fallback
+    "xiaomi/mimo-v2-flash:free"              // Primary: User selected
 ];
 
 export interface OpenRouterMessage {
