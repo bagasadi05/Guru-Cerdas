@@ -96,7 +96,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
       aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
@@ -104,11 +104,11 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     >
       <div
         ref={modalRef}
-        className={`relative w-full ${maxWidth} mx-4 animate-fade-in-up modal-glow-border`}
+        className={`relative w-full ${maxWidth} sm:mx-4 animate-fade-in-up modal-glow-border max-h-[90vh] sm:max-h-[85vh] flex flex-col`}
         onClick={(e) => e.stopPropagation()}
         id="modal-container"
       >
-        <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl border border-gray-200/20 dark:border-gray-700/50">
+        <div className="relative overflow-hidden rounded-t-3xl sm:rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl border border-gray-200/20 dark:border-gray-700/50 flex flex-col max-h-[90vh] sm:max-h-[85vh]">
           {/* Decorative Header Gradient */}
           <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-purple-600 to-blue-500 opacity-10 dark:opacity-20 pointer-events-none" aria-hidden="true"></div>
 
@@ -134,7 +134,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             </div>
           </div>
 
-          <div className="p-6" role="document">
+          <div className="flex-1 overflow-y-auto p-6" role="document">
             {children}
           </div>
         </div>

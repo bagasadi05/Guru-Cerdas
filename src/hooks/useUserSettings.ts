@@ -2,13 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuth } from './useAuth';
 import { useToast } from './useToast';
-import { SEMESTER_LOCK_KEY, setSemester1Locked } from '../utils/semesterUtils';
-import { useEffect } from 'react';
 
 export interface UserSettings {
     user_id: string;
-    semester_1_locked: boolean;
     school_name: string;
+    kkm: number;
     updated_at?: string;
 }
 
@@ -36,8 +34,8 @@ export const useUserSettings = () => {
                 // If not found, create default settings
                 const defaultSettings = {
                     user_id: user.id,
-                    semester_1_locked: false,
-                    school_name: 'MI AL IRSYAD KOTA MADIUN'
+                    school_name: 'MI AL IRSYAD KOTA MADIUN',
+                    kkm: 75
                 };
 
                 const { data: newData, error: insertError } = await supabase
@@ -51,22 +49,10 @@ export const useUserSettings = () => {
             }
 
             return data as UserSettings;
-
-            return data as UserSettings;
         },
         enabled: !!user,
         staleTime: 1000 * 60 * 5, // 5 minutes
     });
-
-    // Sync to local storage for synchronous access in non-react utilities
-    useEffect(() => {
-        if (settings) {
-            // Update local storage to keep sync with DB
-            // This ensures existing calls to isSemester1Locked() still work
-            // although they might be slightly stale if DB changes elsewhere
-            setSemester1Locked(settings.semester_1_locked);
-        }
-    }, [settings]);
 
     // Update mutation
     const { mutate: updateSettings, isPending: isUpdating } = useMutation({
@@ -88,12 +74,6 @@ export const useUserSettings = () => {
         },
         onSuccess: (newSettings) => {
             queryClient.setQueryData(['userSettings', user?.id], newSettings);
-
-            // Sync local state immediately
-            if (newSettings && typeof newSettings.semester_1_locked !== 'undefined') {
-                setSemester1Locked(newSettings.semester_1_locked);
-            }
-
             toast.success('Pengaturan berhasil disimpan');
         },
         onError: (err: any) => {
@@ -107,8 +87,7 @@ export const useUserSettings = () => {
         isLoading,
         updateSettings,
         isUpdating,
-        // Helper to check lock directly
-        isSemester1Locked: settings?.semester_1_locked ?? false, // Default false if loading
-        schoolName: settings?.school_name ?? 'MI AL IRSYAD KOTA MADIUN'
+        schoolName: settings?.school_name ?? 'MI AL IRSYAD KOTA MADIUN',
+        kkm: settings?.kkm ?? 75 // Default KKM 75
     };
 };

@@ -8,8 +8,9 @@ import { exportViolationsToPDF, exportViolationsToExcel } from '../../../service
 import { useAuth } from '../../../hooks/useAuth';
 import { useToast } from '../../../hooks/useToast';
 import { SemesterSelector, SemesterLockedBanner } from '../../ui/SemesterSelector';
-import { SemesterType, filterBySemester, canModifyRecord, getCurrentSemester } from '../../../utils/semesterUtils';
-import { useUserSettings } from '../../../hooks/useUserSettings';
+
+
+import { useSemester } from '../../../contexts/SemesterContext';
 
 // Severity levels configuration
 export const SEVERITY_LEVELS = {
@@ -160,7 +161,7 @@ const ViolationCard: React.FC<{
     const severity = violation.severity ? SEVERITY_LEVELS[violation.severity] : SEVERITY_LEVELS.ringan;
     const followUp = violation.follow_up_status ? FOLLOW_UP_STATUS[violation.follow_up_status] : FOLLOW_UP_STATUS.pending;
     const FollowUpIcon = followUp.icon;
-    const canModify = !isLocked && canModifyRecord(violation.date);
+    const canModify = !isLocked;
 
     return (
         <div className={`group relative p-4 rounded-xl border-2 ${severity.borderClass} ${severity.bgClass} transition-all hover:shadow-md`}>
@@ -290,15 +291,24 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
 }) => {
     const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-    const [semesterFilter, setSemesterFilter] = useState<SemesterType>(getCurrentSemester().semester);
+    const { activeSemester, isLocked } = useSemester();
+    const [semesterFilter, setSemesterFilter] = useState<string>(activeSemester?.id || 'all');
     const { user } = useAuth();
     const toast = useToast();
-    const { isSemester1Locked: semester1Locked } = useUserSettings();
+
+    // ... useEffect ...
+
+    // Find the viewing semester to check lock status for banner
+    const isViewingLocked = semesterFilter !== 'all' ? isLocked(semesterFilter) : false;
 
     const totalPoints = useMemo(() => violations.reduce((sum, v) => sum + v.points, 0), [violations]);
 
     const filteredViolations = useMemo(() => {
-        const semesterFiltered = filterBySemester(violations, semesterFilter, 'date');
+        let semesterFiltered = violations;
+        if (semesterFilter !== 'all') {
+            semesterFiltered = violations.filter(v => v.semester_id === semesterFilter);
+        }
+
         return [...semesterFiltered]
             .filter(v => severityFilter === 'all' || v.severity === severityFilter)
             .filter(v => statusFilter === 'all' || v.follow_up_status === statusFilter || (!v.follow_up_status && statusFilter === 'pending'))
@@ -350,7 +360,6 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                 </Button>
             </div>
 
-
             {/* Threshold Alert */}
             <ThresholdAlert totalPoints={totalPoints} studentName={studentName} />
 
@@ -358,9 +367,9 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
             <ViolationStats violations={violations} />
 
             {/* Semester Locked Banner */}
-            {semesterFilter === '1' && semester1Locked && (
+            {semesterFilter !== 'all' && isViewingLocked && (
                 <div className="mb-4">
-                    <SemesterLockedBanner semester="1" />
+                    <SemesterLockedBanner isLocked={true} />
                 </div>
             )}
 
@@ -416,17 +425,23 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
             {
                 filteredViolations.length > 0 ? (
                     <div className="space-y-4">
-                        {filteredViolations.map(v => (
-                            <ViolationCard
-                                key={v.id}
-                                violation={v}
-                                onEdit={() => onEdit(v)}
-                                onDelete={() => onDelete(v.id)}
-                                onNotifyParent={onNotifyParent ? () => onNotifyParent(v) : undefined}
-                                onUpdateFollowUp={onUpdateFollowUp ? (status) => onUpdateFollowUp(v.id, status) : undefined}
-                                isOnline={isOnline}
-                            />
-                        ))}
+                        {filteredViolations.map(v => {
+                            // Check lock status using semester ID
+                            const isViolationLocked = v.semester_id ? isLocked(v.semester_id) : isLocked(v.date);
+
+                            return (
+                                <ViolationCard
+                                    key={v.id}
+                                    violation={v}
+                                    onEdit={() => onEdit(v)}
+                                    onDelete={() => onDelete(v.id)}
+                                    onNotifyParent={onNotifyParent ? () => onNotifyParent(v) : undefined}
+                                    onUpdateFollowUp={onUpdateFollowUp ? (status) => onUpdateFollowUp(v.id, status) : undefined}
+                                    isOnline={isOnline}
+                                    isLocked={isViolationLocked}
+                                />
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="text-center py-16 text-gray-400">
@@ -442,6 +457,6 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                     </div>
                 )
             }
-        </div >
+        </div>
     );
 };

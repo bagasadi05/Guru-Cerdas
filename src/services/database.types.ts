@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           id: string
           notes: string
+          semester_id: string | null
           score: number
           student_id: string
           subject: string
@@ -31,6 +32,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes: string
+          semester_id?: string | null
           score: number
           student_id: string
           subject: string
@@ -42,6 +44,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string
+          semester_id?: string | null
           score?: number
           student_id?: string
           subject?: string
@@ -57,6 +60,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      academic_years: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          is_active: boolean | null
+          name: string
+          start_date: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          start_date: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          start_date?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       action_history: {
         Row: {
@@ -130,6 +163,7 @@ export type Database = {
           date: string
           id: string
           notes: string | null
+          semester_id: string | null
           status: Database["public"]["Enums"]["attendance_status"]
           student_id: string
           user_id: string
@@ -139,6 +173,7 @@ export type Database = {
           date?: string
           id?: string
           notes?: string | null
+          semester_id?: string | null
           status: Database["public"]["Enums"]["attendance_status"]
           student_id: string
           user_id: string
@@ -148,6 +183,7 @@ export type Database = {
           date?: string
           id?: string
           notes?: string | null
+          semester_id?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           student_id?: string
           user_id?: string
@@ -226,6 +262,7 @@ export type Database = {
           created_at: string
           id: string
           points: number
+          semester_id?: string | null
           reason: string
           student_id: string
           type: string
@@ -235,6 +272,7 @@ export type Database = {
           created_at?: string
           id?: string
           points: number
+          semester_id?: string | null
           reason: string
           student_id: string
           type: string
@@ -244,6 +282,7 @@ export type Database = {
           created_at?: string
           id?: string
           points?: number
+          semester_id?: string | null
           reason?: string
           student_id?: string
           type?: string
@@ -329,6 +368,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      semesters: {
+        Row: {
+          academic_year_id: string
+          created_at: string
+          end_date: string
+          id: string
+          is_active: boolean
+          is_locked: boolean
+          name: string
+          semester_number: number
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          academic_year_id: string
+          created_at?: string
+          end_date: string
+          id?: string
+          is_active?: boolean
+          is_locked?: boolean
+          name: string
+          semester_number: number
+          start_date: string
+          user_id: string
+        }
+        Update: {
+          academic_year_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          is_locked?: boolean
+          name?: string
+          semester_number?: number
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "semesters_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       students: {
         Row: {
@@ -449,6 +535,7 @@ export type Database = {
           description: string | null
           id: string
           points: number
+          semester_id?: string | null
           student_id: string
           type: string
           user_id: string
@@ -459,6 +546,7 @@ export type Database = {
           description?: string | null
           id?: string
           points: number
+          semester_id?: string | null
           student_id: string
           type: string
           user_id: string
@@ -469,6 +557,7 @@ export type Database = {
           description?: string | null
           id?: string
           points?: number
+          semester_id?: string | null
           student_id?: string
           type?: string
           user_id?: string
@@ -482,6 +571,41 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ],
+      },
+      user_settings: {
+        Row: {
+          created_at: string
+          id: string
+          kkm: number
+          school_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kkm?: number
+          school_name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kkm?: number
+          school_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       },
       user_roles: {
         Row: {

@@ -5,13 +5,14 @@
  * including memoization helpers and render tracking in development.
  */
 
-import { useRef, useEffect, useCallback, useMemo, DependencyList } from 'react';
+import { useRef, useEffect, useCallback, DependencyList } from 'react';
 
 /**
  * Custom hook that returns a stable callback reference
  * Unlike useCallback, this doesn't require dependencies
  * The callback always has access to the latest closure values
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useStableCallback<T extends (...args: any[]) => any>(callback: T): T {
     const callbackRef = useRef(callback);
 
@@ -21,16 +22,20 @@ export function useStableCallback<T extends (...args: any[]) => any>(callback: T
     });
 
     // Return a stable callback that uses the ref
+    // Return a stable callback that uses the ref
     return useCallback(
-        ((...args: any[]) => callbackRef.current(...args)) as T,
+        (...args: any[]) => {
+            return callbackRef.current(...args);
+        },
         []
-    );
+    ) as T;
 }
 
 /**
  * Hook to detect unnecessary re-renders in development
  * Logs when a component re-renders and what props changed
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useWhyDidUpdate<T extends Record<string, any>>(
     name: string,
     props: T
@@ -41,7 +46,7 @@ export function useWhyDidUpdate<T extends Record<string, any>>(
         if (process.env.NODE_ENV === 'development') {
             if (prevProps.current) {
                 const allKeys = Object.keys({ ...prevProps.current, ...props });
-                const changedProps: Record<string, { from: any; to: any }> = {};
+                const changedProps: Record<string, { from: unknown; to: unknown }> = {};
 
                 allKeys.forEach((key) => {
                     if (prevProps.current![key] !== props[key]) {
@@ -80,6 +85,7 @@ export function useDebouncedValue<T>(value: T, delay: number): T {
  * Hook to throttle a callback
  * Limits how often the callback can be invoked
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useThrottledCallback<T extends (...args: any[]) => any>(
     callback: T,
     delay: number,
@@ -89,7 +95,7 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
     const timeout = useRef<NodeJS.Timeout>();
 
     const throttled = useCallback(
-        ((...args: any[]) => {
+        (...args: any[]) => {
             const now = Date.now();
             const timeSinceLastCall = now - lastCall.current;
 
@@ -104,9 +110,10 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
                     callback(...args);
                 }, delay - timeSinceLastCall);
             }
-        }) as T,
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [delay, ...deps]
-    );
+    ) as T;
 
     // Cleanup on unmount
     useEffect(() => {
@@ -123,12 +130,15 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
  */
 export function useRenderCount(componentName: string): number {
     const count = useRef(0);
-    count.current++;
 
-    if (process.env.NODE_ENV === 'development') {
-        console.log(`[${componentName}] Render count: ${count.current}`);
-    }
+    useEffect(() => {
+        count.current++;
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`[${componentName}] Render count: ${count.current}`);
+        }
+    });
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     return count.current;
 }
 

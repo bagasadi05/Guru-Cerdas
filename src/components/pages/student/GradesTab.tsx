@@ -4,8 +4,7 @@ import { Button } from '../../ui/Button';
 import { PlusIcon, BarChartIcon, PencilIcon, TrashIcon, TrendingUpIcon, FilterIcon, DownloadIcon, TargetIcon, UsersIcon, LockIcon } from 'lucide-react';
 import { AcademicRecordRow } from './types';
 import { GradeTrendChart } from '../../ui/GradeTrendChart';
-import { canModifyRecord } from '../../../utils/semesterUtils';
-import { useUserSettings } from '../../../hooks/useUserSettings';
+import { useSemester } from '../../../contexts/SemesterContext';
 
 // Default KKM value - can be made configurable
 const DEFAULT_KKM = 75;
@@ -42,19 +41,31 @@ const filterRecordsByPeriod = (records: AcademicRecordRow[], period: PeriodFilte
         const recordMonth = recordDate.getMonth();
         const recordYear = recordDate.getFullYear();
 
+        // Check for explicit semester tag in notes
+        const notes = record.notes?.toLowerCase() || '';
+        const hasGanjilTag = notes.includes('[semester ganjil]');
+        const hasGenapTag = notes.includes('[semester genap]');
+
         switch (period) {
             case 'semester1':
-                // July (6) to December (11)
+                // If record has explicit semester tag, use that
+                if (hasGanjilTag) return true;
+                if (hasGenapTag) return false;
+                // Otherwise fall back to date-based (July to December)
                 return recordMonth >= 6 && recordMonth <= 11;
             case 'semester2':
-                // January (0) to June (5)
+                // If record has explicit semester tag, use that
+                if (hasGenapTag) return true;
+                if (hasGanjilTag) return false;
+                // Otherwise fall back to date-based (January to June)
                 return recordMonth >= 0 && recordMonth <= 5;
             case 'thisMonth':
                 return recordMonth === currentMonth && recordYear === currentYear;
-            case 'last3Months':
+            case 'last3Months': {
                 const threeMonthsAgo = new Date(now);
                 threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
                 return recordDate >= threeMonthsAgo;
+            }
             default:
                 return true;
         }
@@ -269,8 +280,8 @@ const GradesPanel: React.FC<{
     onDelete: (recordId: string) => void,
     isOnline: boolean;
     kkm: number;
-    isLocked?: boolean;
-}> = ({ records, onEdit, onDelete, isOnline, kkm, isLocked = false }) => {
+}> = ({ records, onEdit, onDelete, isOnline, kkm }) => {
+    const { isLocked } = useSemester();
     const recordsBySubject = useMemo(() => {
         if (!records || records.length === 0) return {};
         return records.reduce((acc, record) => {
@@ -362,7 +373,8 @@ const GradesPanel: React.FC<{
                                         </div>
                                         <div className="absolute top-3 right-3 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                             {(() => {
-                                                const canModify = canModifyRecord(record.created_at, isLocked);
+                                                const canModify = !isLocked(record.created_at);
+
                                                 return (
                                                     <>
                                                         <Button
@@ -412,8 +424,6 @@ export const GradesTab: React.FC<GradesTabProps> = ({
     kkm = DEFAULT_KKM
 }) => {
     const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
-    const [selectedSubject, setSelectedSubject] = useState<string>('all');
-    const { isSemester1Locked: semester1Locked } = useUserSettings();
     const chartRef = useRef<HTMLDivElement>(null);
 
     // Filter records based on selected period
@@ -528,7 +538,6 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                 onDelete={onDelete}
                 isOnline={isOnline}
                 kkm={kkm}
-                isLocked={semester1Locked}
             />
         </div>
     );

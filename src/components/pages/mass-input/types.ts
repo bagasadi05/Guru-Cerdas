@@ -3,7 +3,26 @@ import { Database } from '../../../services/database.types';
 export type ClassRow = Database['public']['Tables']['classes']['Row'];
 export type StudentRow = Database['public']['Tables']['students']['Row'];
 export type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
-export type ViolationRow = Database['public']['Tables']['violations']['Row'];
+
+/**
+ * Base violation row from database.
+ */
+type ViolationRowBase = Database['public']['Tables']['violations']['Row'];
+
+/**
+ * Extended ViolationRow with UI-specific fields.
+ */
+export type ViolationRow = ViolationRowBase & {
+    /** Severity level */
+    severity?: 'ringan' | 'sedang' | 'berat';
+    /** Follow-up status */
+    follow_up_status?: 'pending' | 'in_progress' | 'resolved';
+    /** Follow-up notes */
+    follow_up_notes?: string;
+    /** Evidence/attachment URL */
+    evidence_url?: string;
+};
+
 
 export type InputMode = 'quiz' | 'subject_grade' | 'violation' | 'violation_export' | 'bulk_report' | 'academic_print' | 'delete_subject_grade';
 export type Step = 1 | 2;

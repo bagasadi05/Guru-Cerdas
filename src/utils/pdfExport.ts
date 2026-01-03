@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { addPdfHeader, ensureLogosLoaded } from './pdfHeaderUtils';
 
 interface AttendanceRecord {
     student_id: string;
@@ -30,24 +31,27 @@ interface AttendanceStats {
 /**
  * Generate PDF report for daily attendance
  */
-export const exportDailyAttendanceToPDF = (
+export const exportDailyAttendanceToPDF = async (
     classData: ClassInfo,
     attendanceData: AttendanceRecord[],
     date: string,
     schoolName: string = 'MI AL IRSYAD KOTA MADIUN',
     teacherName: string = ''
 ) => {
+    // Ensure logos are loaded
+    await ensureLogosLoaded();
+
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // Header
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('DAFTAR HADIR SISWA', pageWidth / 2, 20, { align: 'center' });
+    // Add header with logos
+    let y = addPdfHeader(doc, { schoolName, orientation: 'portrait' });
 
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(schoolName, pageWidth / 2, 28, { align: 'center' });
+    // Title
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DAFTAR HADIR SISWA', pageWidth / 2, y, { align: 'center' });
+    y += 8;
 
     // Class and Date Info
     doc.setFontSize(11);
@@ -57,8 +61,9 @@ export const exportDailyAttendanceToPDF = (
         month: 'long',
         day: 'numeric'
     });
-    doc.text(`Kelas: ${classData.name}`, 14, 42);
-    doc.text(`Tanggal: ${formattedDate}`, 14, 49);
+    doc.text(`Kelas: ${classData.name}`, 14, y);
+    doc.text(`Tanggal: ${formattedDate}`, 14, y + 7);
+    const tableStartY = y + 14;
 
     // Prepare table data
     const tableData = classData.students.map((student, index) => {
@@ -81,7 +86,7 @@ export const exportDailyAttendanceToPDF = (
     autoTable(doc, {
         head: [['No', 'Nama Siswa', 'L/P', 'H', 'S', 'I', 'A']],
         body: tableData,
-        startY: 55,
+        startY: tableStartY,
         styles: {
             fontSize: 10,
             cellPadding: 3,
@@ -131,13 +136,16 @@ export const exportDailyAttendanceToPDF = (
 /**
  * Generate PDF report for monthly attendance
  */
-export const exportMonthlyAttendanceToPDF = (
+export const exportMonthlyAttendanceToPDF = async (
     classData: ClassInfo,
     attendanceData: AttendanceRecord[],
     month: number, // 1-12
     year: number,
     schoolName: string = 'MI AL IRSYAD KOTA MADIUN'
 ) => {
+    // Ensure logos are loaded
+    await ensureLogosLoaded();
+
     const doc = new jsPDF('l', 'mm', 'a4'); // Landscape for monthly report
     const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -148,15 +156,19 @@ export const exportMonthlyAttendanceToPDF = (
     const monthName = monthNames[month - 1];
     const daysInMonth = new Date(year, month, 0).getDate();
 
-    // Header
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`REKAP ABSENSI KELAS ${classData.name}`, pageWidth / 2, 15, { align: 'center' });
+    // Add header with logos
+    let y = addPdfHeader(doc, { schoolName, orientation: 'landscape' });
 
-    doc.setFontSize(11);
+    // Title
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`REKAP ABSENSI KELAS ${classData.name}`, pageWidth / 2, y, { align: 'center' });
+    y += 5;
+
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(schoolName, pageWidth / 2, 22, { align: 'center' });
-    doc.text(`Bulan: ${monthName} ${year}`, pageWidth / 2, 28, { align: 'center' });
+    doc.text(`Bulan: ${monthName} ${year}`, pageWidth / 2, y, { align: 'center' });
+    const tableStartY = y + 6;
 
     // Prepare table data with all days
     const tableData = classData.students.map((student, index) => {
@@ -200,7 +212,7 @@ export const exportMonthlyAttendanceToPDF = (
     autoTable(doc, {
         head: [headers],
         body: tableData,
-        startY: 35,
+        startY: tableStartY,
         styles: {
             fontSize: 7,
             cellPadding: 1.5,

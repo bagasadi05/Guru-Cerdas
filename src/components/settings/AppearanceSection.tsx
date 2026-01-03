@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../hooks/useTheme';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
-import { SunIcon, MoonIcon, CheckCircleIcon, RefreshCwIcon, SparklesIcon, ContrastIcon, ZapOffIcon, EyeIcon } from 'lucide-react';
+import { SunIcon, MoonIcon, CheckCircleIcon, RefreshCwIcon, SparklesIcon, ContrastIcon, ZapOffIcon, SmartphoneIcon } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Switch } from '../ui/Switch';
 
 const AppearanceSection: React.FC = () => {
     const { theme, setTheme } = useTheme();
+    const { shouldReduceMotion, setReducedMotion, autoLowPerfMode } = useReducedMotion();
+
     const [highContrast, setHighContrast] = useState(() => {
         return localStorage.getItem('portal_guru_high_contrast') === 'true';
-    });
-    const [reducedMotion, setReducedMotion] = useState(() => {
-        return localStorage.getItem('portal_guru_reduced_motion') === 'true' ||
-            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     });
 
     useEffect(() => {
@@ -24,25 +23,20 @@ const AppearanceSection: React.FC = () => {
         localStorage.setItem('portal_guru_high_contrast', String(highContrast));
     }, [highContrast]);
 
-    useEffect(() => {
-        if (reducedMotion) {
-            document.documentElement.classList.add('reduce-motion');
-        } else {
-            document.documentElement.classList.remove('reduce-motion');
-        }
-        localStorage.setItem('portal_guru_reduced_motion', String(reducedMotion));
-    }, [reducedMotion]);
-
     const handleResetTour = () => {
         localStorage.removeItem('onboarding_completed');
         window.location.reload();
+    };
+
+    const handleReducedMotionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setReducedMotion(e.target.checked);
     };
 
     return (
         <div className="space-y-6">
             <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
                 <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
-                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">Tampilan Aplikasi</CardTitle>
+                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Tampilan Aplikasi</CardTitle>
                     <CardDescription className="text-base">Sesuaikan tema aplikasi dengan preferensi visual Anda.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-8 space-y-6">
@@ -52,22 +46,22 @@ const AppearanceSection: React.FC = () => {
                             className={`
                                 group relative p-6 rounded-2xl border-2 transition-all duration-300 overflow-hidden
                                 ${theme === 'light'
-                                    ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/10 ring-4 ring-indigo-500/10'
-                                    : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 bg-white dark:bg-slate-800/50'
+                                    ? 'border-green-500 bg-green-50/50 dark:bg-green-900/10 ring-4 ring-green-500/10'
+                                    : 'border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-700 bg-white dark:bg-slate-800/50'
                                 }
                             `}
                         >
                             <div className="flex items-start gap-4 relative z-10">
-                                <div className={`p-3 rounded-xl ${theme === 'light' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
+                                <div className={`p-3 rounded-xl ${theme === 'light' ? 'bg-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
                                     <SunIcon className="w-6 h-6" />
                                 </div>
                                 <div className="text-left">
-                                    <p className={`font-bold text-lg ${theme === 'light' ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-700 dark:text-slate-200'}`}>Mode Terang</p>
+                                    <p className={`font-bold text-lg ${theme === 'light' ? 'text-green-900 dark:text-green-100' : 'text-slate-700 dark:text-slate-200'}`}>Mode Terang</p>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Tampilan cerah dan bersih untuk siang hari.</p>
                                 </div>
                             </div>
                             {theme === 'light' && (
-                                <div className="absolute top-4 right-4 text-indigo-500 animate-scale-in">
+                                <div className="absolute top-4 right-4 text-green-500 animate-scale-in">
                                     <CheckCircleIcon className="w-6 h-6" />
                                 </div>
                             )}
@@ -78,22 +72,22 @@ const AppearanceSection: React.FC = () => {
                             className={`
                                 group relative p-6 rounded-2xl border-2 transition-all duration-300 overflow-hidden
                                 ${theme === 'dark'
-                                    ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/10 ring-4 ring-purple-500/10'
-                                    : 'border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 bg-white dark:bg-slate-800/50'
+                                    ? 'border-green-500 bg-green-50/50 dark:bg-green-900/10 ring-4 ring-green-500/10'
+                                    : 'border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-700 bg-white dark:bg-slate-800/50'
                                 }
                             `}
                         >
                             <div className="flex items-start gap-4 relative z-10">
-                                <div className={`p-3 rounded-xl ${theme === 'dark' ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
+                                <div className={`p-3 rounded-xl ${theme === 'dark' ? 'bg-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
                                     <MoonIcon className="w-6 h-6" />
                                 </div>
                                 <div className="text-left">
-                                    <p className={`font-bold text-lg ${theme === 'dark' ? 'text-purple-900 dark:text-purple-100' : 'text-slate-700 dark:text-slate-200'}`}>Mode Gelap</p>
+                                    <p className={`font-bold text-lg ${theme === 'dark' ? 'text-green-900 dark:text-green-100' : 'text-slate-700 dark:text-slate-200'}`}>Mode Gelap</p>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Tampilan elegan dan nyaman untuk malam hari.</p>
                                 </div>
                             </div>
                             {theme === 'dark' && (
-                                <div className="absolute top-4 right-4 text-purple-500 animate-scale-in">
+                                <div className="absolute top-4 right-4 text-green-500 animate-scale-in">
                                     <CheckCircleIcon className="w-6 h-6" />
                                 </div>
                             )}
@@ -134,13 +128,25 @@ const AppearanceSection: React.FC = () => {
                                 <ZapOffIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
                             <div className="min-w-0">
-                                <p className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200">Kurangi Gerakan</p>
-                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Mengurangi animasi.</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200">Kurangi Gerakan</p>
+                                    {autoLowPerfMode && (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-bold">
+                                            <SmartphoneIcon className="w-3 h-3" />
+                                            Auto
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                                    {autoLowPerfMode
+                                        ? 'Diaktifkan otomatis untuk performa lebih baik.'
+                                        : 'Mengurangi animasi untuk performa lebih baik.'}
+                                </p>
                             </div>
                         </div>
                         <Switch
-                            checked={reducedMotion}
-                            onChange={(e) => setReducedMotion(e.target.checked)}
+                            checked={shouldReduceMotion}
+                            onChange={handleReducedMotionChange}
                             className="data-[state=checked]:bg-blue-600 flex-shrink-0"
                         />
                     </div>

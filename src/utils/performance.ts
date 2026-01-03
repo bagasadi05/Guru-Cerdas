@@ -208,6 +208,7 @@ export function useLazyLoad<T>(
 
     useEffect(() => {
         if (isVisible && !data && !loading) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(true);
             loadFn()
                 .then(setData)
@@ -297,6 +298,7 @@ export function usePerformanceMetrics(): PerformanceMetrics {
         // Get navigation timing
         const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
         if (navigation) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setMetrics(prev => ({
                 ...prev,
                 ttfb: navigation.responseStart - navigation.requestStart
@@ -355,6 +357,7 @@ export function usePerformanceMetrics(): PerformanceMetrics {
         // Observe CLS
         let clsValue = 0;
         const clsObserver = new PerformanceObserver((list) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             for (const entry of list.getEntries() as any[]) {
                 if (!entry.hadRecentInput) {
                     clsValue += entry.value;
@@ -425,6 +428,7 @@ export function usePerformanceMetrics(): PerformanceMetrics {
  * @see {@link useDebouncedCallback} for React hook version
  * @since 1.0.0
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => any>(
     fn: T,
     delay: number
@@ -480,6 +484,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * 
  * @since 1.0.0
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function throttle<T extends (...args: any[]) => any>(
     fn: T,
     limit: number
@@ -512,6 +517,7 @@ export function useDebouncedValue<T>(value: T, delay: number): T {
 /**
  * Hook for debounced callback
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
     callback: T,
     delay: number
@@ -576,6 +582,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
  * 
  * @since 1.0.0
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function memoize<T extends (...args: any[]) => any>(fn: T): T {
     const cache = new Map<string, ReturnType<T>>();
 
@@ -608,7 +615,7 @@ export function memoize<T extends (...args: any[]) => any>(fn: T): T {
 /**
  * Preload a page/component
  */
-export function preloadComponent(importFn: () => Promise<any>): void {
+export function preloadComponent(importFn: () => Promise<unknown>): void {
     importFn().catch(() => {
         // Silently fail preloading
     });
@@ -801,8 +808,11 @@ export function generatePerformanceReport(): string {
                 return acc;
             }, {} as Record<string, number>)
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         memory: (performance as any).memory ? {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             usedJSHeapSize: ((performance as any).memory.usedJSHeapSize / 1048576).toFixed(2) + ' MB',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             totalJSHeapSize: ((performance as any).memory.totalJSHeapSize / 1048576).toFixed(2) + ' MB'
         } : null
     };

@@ -24,7 +24,10 @@ initializeMobile();
 import * as Sentry from "@sentry/react";
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
-if (sentryDsn) {
+const isProduction = import.meta.env.PROD;
+
+// Only initialize Sentry in production to avoid ERR_BLOCKED_BY_CLIENT errors from ad blockers
+if (sentryDsn && isProduction) {
   Sentry.init({
     dsn: sentryDsn,
     integrations: [

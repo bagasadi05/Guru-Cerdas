@@ -43,7 +43,7 @@ function formatValue(value: any, type?: string, dateFormat?: string): string {
     if (value === null || value === undefined) return '';
 
     switch (type) {
-        case 'date':
+        case 'date': {
             const date = new Date(value);
             if (isNaN(date.getTime())) return String(value);
             return date.toLocaleDateString('id-ID', {
@@ -51,6 +51,7 @@ function formatValue(value: any, type?: string, dateFormat?: string): string {
                 month: 'long',
                 year: 'numeric',
             });
+        }
         case 'boolean':
             return value ? 'Ya' : 'Tidak';
         case 'number':

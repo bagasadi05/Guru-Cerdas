@@ -7,7 +7,7 @@
 
 import { supabase } from './supabase';
 
-export type SoftDeleteEntity = 'students' | 'classes' | 'attendance' | 'tasks';
+export type SoftDeleteEntity = 'students' | 'classes' | 'attendance';
 
 export interface SoftDeleteResult {
     success: boolean;
@@ -173,16 +173,16 @@ export async function getDeletedItems(
         const RETENTION_DAYS = 30;
 
         return (data || [])
-            .filter(item => item.deleted_at !== null)
+            .filter(item => (item as any).deleted_at !== null)
             .map(item => {
-                const deletedAt = new Date(item.deleted_at!);
+                const deletedAt = new Date((item as any).deleted_at!);
                 const daysSinceDelete = Math.floor((now.getTime() - deletedAt.getTime()) / (1000 * 60 * 60 * 24));
                 const daysRemaining = Math.max(0, RETENTION_DAYS - daysSinceDelete);
 
                 return {
                     id: item.id,
                     entity,
-                    deletedAt: item.deleted_at as string,
+                    deletedAt: (item as any).deleted_at as string,
                     daysRemaining,
                     data: item,
                 };
@@ -197,7 +197,7 @@ export async function getDeletedItems(
  * Get all deleted items across all entities
  */
 export async function getAllDeletedItems(userId: string): Promise<DeletedItem[]> {
-    const entities: SoftDeleteEntity[] = ['students', 'classes', 'attendance', 'tasks'];
+    const entities: SoftDeleteEntity[] = ['students', 'classes', 'attendance'];
 
     const results = await Promise.all(
         entities.map(entity => getDeletedItems(entity, userId))
@@ -216,7 +216,7 @@ export async function cleanupExpired(): Promise<{
     deletedCounts: Record<SoftDeleteEntity, number>;
     error?: string;
 }> {
-    const entities: SoftDeleteEntity[] = ['students', 'classes', 'attendance', 'tasks'];
+    const entities: SoftDeleteEntity[] = ['students', 'classes', 'attendance'];
     const RETENTION_DAYS = 30;
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DAYS);
@@ -226,7 +226,6 @@ export async function cleanupExpired(): Promise<{
         students: 0,
         classes: 0,
         attendance: 0,
-        tasks: 0,
     };
 
     try {

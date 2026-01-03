@@ -1,19 +1,31 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { logger } from '../services/logger';
+import { errorReporter } from '../services/errorHandling';
 import { AlertTriangleIcon, RefreshCwIcon, HomeIcon } from './Icons';
 import { Button } from './ui/Button';
+
+interface ErrorContext {
+  userId?: string;
+  component?: string;
+  action?: string;
+  metadata?: Record<string, any>;
+  timestamp: string;
+  url: string;
+  userAgent: string;
+}
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
   context?: string;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  onError?: (error: Error, errorInfo: ErrorInfo, context: ErrorContext) => void;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  errorContext: ErrorContext | null;
 }
 
 /**
@@ -27,7 +39,8 @@ class ErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
+      errorContext: null
     };
   }
 
@@ -36,22 +49,63 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Create comprehensive error context
+    const errorContext: ErrorContext = {
+      userId: this.getUserId(),
+      component: this.props.context || 'ErrorBoundary',
+      action: 'component_error',
+      metadata: {
+        componentStack: errorInfo.componentStack,
+        props: this.sanitizeProps()
+      },
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+      userAgent: navigator.userAgent
+    };
+
     // Log the error with structured logging
     logger.error(
       `Component Error: ${error.message}`,
       error,
-      {
-        componentStack: errorInfo.componentStack,
-        timestamp: new Date().toISOString()
-      },
-      this.props.context || 'ErrorBoundary'
+      errorContext.metadata,
+      errorContext.component
     );
 
-    this.setState({ errorInfo });
+    // Report to error tracking service
+    errorReporter.report(error, errorContext.metadata);
+
+    this.setState({
+      errorInfo,
+      errorContext
+    });
 
     // Call custom error handler if provided
     if (this.props.onError) {
-      this.props.onError(error, errorInfo);
+      this.props.onError(error, errorInfo, errorContext);
+    }
+  }
+
+  private getUserId(): string | undefined {
+    // Try to get user ID from various sources
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      return user.id;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private sanitizeProps(): Record<string, any> {
+    // Sanitize props to avoid circular references and sensitive data
+    try {
+      return JSON.parse(JSON.stringify(this.props, (key, value) => {
+        if (key === 'children' || typeof value === 'function') {
+          return '[Filtered]';
+        }
+        return value;
+      }));
+    } catch {
+      return { error: 'Failed to serialize props' };
     }
   }
 
@@ -66,8 +120,13 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   handleRetry = () => {
-    logger.info('User clicked retry after error', 'ErrorBoundary');
-    this.setState({ hasError: false, error: null, errorInfo: null });
+    logger.info('User clicked retry after error', this.props.context || 'ErrorBoundary');
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorContext: null
+    });
   };
 
   render() {

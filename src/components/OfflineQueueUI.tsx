@@ -207,7 +207,7 @@ export const OfflineQueueUI: React.FC<OfflineQueueUIProps> = ({
                                         </div>
 
                                         <p className="text-sm text-slate-700 dark:text-slate-300 truncate">
-                                            {item.data?.name || item.data?.title || item.data?.id || 'Item'}
+                                            {String(item.data?.name || item.data?.title || item.data?.id || 'Item')}
                                         </p>
 
                                         {item.error && (
@@ -379,9 +379,9 @@ export const SyncStatusIndicator: React.FC = () => {
         <div className="flex items-center gap-2 text-sm">
             <div
                 className={`w-2 h-2 rounded-full ${!isOnline ? 'bg-amber-500' :
-                        syncStatus === 'syncing' ? 'bg-blue-500 animate-pulse' :
-                            syncStatus === 'error' ? 'bg-red-500' :
-                                'bg-green-500'
+                    syncStatus === 'syncing' ? 'bg-blue-500 animate-pulse' :
+                        syncStatus === 'error' ? 'bg-red-500' :
+                            'bg-green-500'
                     }`}
             />
             <span className="text-slate-600 dark:text-slate-400">

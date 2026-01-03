@@ -75,14 +75,14 @@ const ProfileSection: React.FC = () => {
     return (
         <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
             <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
-                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">Profil Pengguna</CardTitle>
+                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Profil Pengguna</CardTitle>
                 <CardDescription className="text-base">Perbarui informasi profil dan foto identitas Anda.</CardDescription>
             </CardHeader>
             <CardContent className="pt-8">
                 <form onSubmit={handleProfileSubmit} className="space-y-8">
                     <div className="flex flex-col sm:flex-row items-center gap-8">
                         <div className="relative group">
-                            <div className="absolute -inset-1 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full opacity-70 blur group-hover:opacity-100 transition duration-500"></div>
+                            <div className="absolute -inset-1 bg-gradient-to-tr from-green-500 to-emerald-500 rounded-full opacity-70 blur group-hover:opacity-100 transition duration-500"></div>
                             <div className="relative">
                                 <ImageUploader
                                     currentImageUrl={user?.avatarUrl || `https://i.pravatar.cc/150?u=${user?.id}`}
@@ -109,7 +109,7 @@ const ProfileSection: React.FC = () => {
                                 {user?.email}
                             </p>
                             <div className="pt-2">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-100 dark:border-green-800">
                                     Guru / Pengajar
                                 </span>
                             </div>
@@ -123,7 +123,7 @@ const ProfileSection: React.FC = () => {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="Masukkan nama lengkap Anda"
                             />
                         </div>
@@ -134,13 +134,13 @@ const ProfileSection: React.FC = () => {
                                 type="text"
                                 value={schoolName}
                                 onChange={(e) => setSchoolName(e.target.value)}
-                                className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="Masukkan nama sekolah"
                             />
                         </div>
                     </div>
                     <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">
-                        <Button type="submit" disabled={!isOnline} className="h-11 px-8 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02]">
+                        <Button type="submit" disabled={!isOnline} className="h-11 px-8 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-500/20 transition-all hover:scale-[1.02]">
                             Simpan Perubahan
                         </Button>
                     </div>

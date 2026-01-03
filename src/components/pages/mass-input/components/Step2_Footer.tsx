@@ -83,7 +83,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
             <div className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-2xl shadow-black/10 dark:shadow-black/50 mx-auto max-w-4xl ring-1 ring-slate-200 dark:ring-white/10">
                 <div className="flex items-center gap-4">
                     <div className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                        <p className="text-sm font-medium text-indigo-700 dark:text-indigo-200">{summaryText}</p>
+                        <p className="text-sm font-medium text-green-700 dark:text-green-200">{summaryText}</p>
                     </div>
                     {(mode !== 'subject_grade' && selectedStudentIds.size > 0) || (mode === 'subject_grade' && gradedCount > 0) ? (
                         <Button
@@ -104,7 +104,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={onShowChart}
-                            className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                            className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
                         >
                             <BarChartIcon className="w-4 h-4 mr-1" />
                             Chart
@@ -172,11 +172,11 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                         <div className="w-full sm:w-64 text-center">
                             <div className="relative pt-1">
                                 <div className="overflow-hidden h-2 mb-2 text-xs flex rounded-full bg-white/10">
-                                    <div style={{ width: exportProgress }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 relative">
+                                    <div style={{ width: exportProgress }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500 relative">
                                         <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                                     </div>
                                 </div>
-                                <p className="text-xs font-bold text-indigo-300 animate-pulse">{exportProgress} - Memproses...</p>
+                                <p className="text-xs font-bold text-green-300 animate-pulse">{exportProgress} - Memproses...</p>
                             </div>
                         </div>
                     ) : (
@@ -188,7 +188,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                                 w-full sm:w-auto font-bold tracking-wide shadow-lg transition-all duration-300 transform hover:-translate-y-1
                                 ${mode === 'delete_subject_grade'
                                     ? 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-rose-900/20'
-                                    : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-indigo-900/20'
+                                    : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-green-900/20'
                                 }
                             `}
                         >

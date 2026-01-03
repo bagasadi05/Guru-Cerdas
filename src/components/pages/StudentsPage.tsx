@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { triggerSuccessConfetti } from '../../utils/confetti';
+
 import { Link } from 'react-router-dom';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -28,6 +30,7 @@ import { StudentTable } from '../students/StudentTable';
 import { StudentFilters } from '../students/StudentFilters';
 import { IDCardPrintModal } from '../students/IDCardPrintModal';
 import { BulkMoveModal } from '../students/BulkMoveModal';
+import { ImportFromTeacherModal } from '../students/ImportFromTeacherModal';
 import { StudentRow, ClassRow } from '../students/types';
 
 
@@ -134,7 +137,13 @@ const StudentsPage: React.FC = () => {
     const { mutate: addStudent, isPending: isAddingStudent } = useMutation({
         mutationFn: async (newStudent: Database['public']['Tables']['students']['Insert']) => { const { error } = await supabase.from('students').insert([newStudent]); if (error) throw error; },
         ...mutationOptions,
-        onSuccess: () => { mutationOptions.onSuccess(); toast.success("Siswa berhasil ditambahkan."); setIsStudentModalOpen(false); },
+        onSuccess: () => {
+            mutationOptions.onSuccess();
+            toast.success("Siswa berhasil ditambahkan.");
+            setIsStudentModalOpen(false);
+            // Trigger celebration confetti!
+            setTimeout(() => triggerSuccessConfetti(), 300);
+        },
     });
 
     const { mutate: updateStudent, isPending: isUpdatingStudent } = useMutation({
@@ -254,6 +263,7 @@ const StudentsPage: React.FC = () => {
 
     const [isIDCardModalOpen, setIsIDCardModalOpen] = useState(false);
     const [isBulkMoveModalOpen, setIsBulkMoveModalOpen] = useState(false);
+    const [isImportFromTeacherModalOpen, setIsImportFromTeacherModalOpen] = useState(false);
 
     const { selectedItems, toggleItem, toggleAll, isAllSelected, isSelected, selectedCount, clearSelection } = useBulkSelection(studentsForActiveClass);
 
@@ -403,7 +413,7 @@ const StudentsPage: React.FC = () => {
         e.preventDefault(); if (!user) return;
         const formData = new FormData(e.currentTarget);
         const name = formData.get('name') as string; const class_id = formData.get('class_id') as string; const gender = formData.get('gender') as 'Laki-laki' | 'Perempuan';
-        const avatarGender = gender === 'Laki-laki' ? 'boy' : 'girl'; const avatar_url = `https://avatar.iran.liara.run/public/${avatarGender}?username=${encodeURIComponent(name || Date.now())}`;
+        const bgColor = gender === 'Laki-laki' ? 'b6e3f4' : 'ffd5dc'; const avatar_url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name || Date.now())}&backgroundColor=${bgColor}`;
 
         if (studentModalMode === 'add') {
             const newStudentData: Database['public']['Tables']['students']['Insert'] = { name, class_id, user_id: user.id, gender, avatar_url };
@@ -512,8 +522,8 @@ const StudentsPage: React.FC = () => {
         // Map parsed rows to student insert format
         const studentsToInsert = validRows.map(row => {
             const gender = row.data.gender as 'Laki-laki' | 'Perempuan';
-            const avatarGender = gender === 'Laki-laki' ? 'boy' : 'girl';
-            const avatarUrl = `https://avatar.iran.liara.run/public/${avatarGender}?username=${encodeURIComponent(row.data.name || Date.now())}`;
+            const bgColor = gender === 'Laki-laki' ? 'b6e3f4' : 'ffd5dc';
+            const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(row.data.name || Date.now())}&backgroundColor=${bgColor}`;
 
             // Find class ID from class name if provided
             let classId = activeClassId;
@@ -555,7 +565,7 @@ const StudentsPage: React.FC = () => {
     };
 
     return (
-        <div className="w-full min-h-full p-4 lg:p-8 flex flex-col space-y-6 max-w-7xl mx-auto pb-32 lg:pb-12 animate-fade-in-up">
+        <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white font-serif">Manajemen Siswa</h1>
@@ -565,10 +575,20 @@ const StudentsPage: React.FC = () => {
                     <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setIsImportModalOpen(true)}
-                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-600 shadow-sm"
+                        onClick={() => setIsImportFromTeacherModalOpen(true)}
+                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-600 shadow-sm"
+                        title="Import data kelas & siswa dari guru lain"
                     >
-                        <UploadCloudIcon className="w-4 h-4 mr-2" /> Import
+                        <UsersIcon className="w-4 h-4 mr-2" />Import Guru
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-600 shadow-sm"
+                        title="Import data siswa dari file Excel"
+                    >
+                        <UploadCloudIcon className="w-4 h-4 mr-2" />Import Excel
                     </Button>
                     <Button
                         size="sm"
@@ -582,14 +602,14 @@ const StudentsPage: React.FC = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => setIsClassManageModalOpen(true)}
-                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 shadow-sm"
+                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-600 shadow-sm"
                     >
                         <PencilIcon className="w-4 h-4 mr-2" /> Kelola Kelas
                     </Button>
                     <Button
                         size="sm"
                         onClick={() => handleOpenStudentModal('add')}
-                        className="rounded-xl shadow-lg shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white border-none"
+                        className="rounded-xl shadow-lg shadow-green-500/20 bg-green-600 hover:bg-green-700 text-white border-none"
                     >
                         <PlusIcon className="w-4 h-4 mr-2" /> Siswa Baru
                     </Button>
@@ -617,7 +637,7 @@ const StudentsPage: React.FC = () => {
                                 <TabsTrigger
                                     key={c.id}
                                     value={c.id}
-                                    className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white dark:data-[state=active]:bg-indigo-500 dark:data-[state=active]:text-white bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-full px-5 py-2.5 transition-all shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    className="data-[state=active]:bg-green-600 data-[state=active]:text-white dark:data-[state=active]:bg-green-500 dark:data-[state=active]:text-white bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-full px-5 py-2.5 transition-all shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
                                 >
                                     {c.name}
                                 </TabsTrigger>
@@ -648,7 +668,7 @@ const StudentsPage: React.FC = () => {
                                     <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
                                         Belum ada siswa di kelas ini atau tidak ada yang cocok dengan filter pencarian Anda.
                                     </p>
-                                    <Button onClick={() => handleOpenStudentModal('add')} className="rounded-xl shadow-lg shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white">
+                                    <Button onClick={() => handleOpenStudentModal('add')} className="rounded-xl shadow-lg shadow-green-500/20 bg-green-600 hover:bg-green-700 text-white">
                                         <PlusIcon className="w-4 h-4 mr-2" /> Tambah Siswa Baru
                                     </Button>
                                 </div>
@@ -861,6 +881,11 @@ const StudentsPage: React.FC = () => {
                 studentCount={selectedCount}
                 currentClassId={activeClassId}
                 isMoving={isMovingStudents}
+            />
+
+            <ImportFromTeacherModal
+                isOpen={isImportFromTeacherModalOpen}
+                onClose={() => setIsImportFromTeacherModalOpen(false)}
             />
         </div>
     );

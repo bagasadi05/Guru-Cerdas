@@ -1,12 +1,10 @@
-import React, { useCallback, useRef, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Input } from '../../../ui/Input';
 import { Checkbox } from '../../../ui/Checkbox';
-import { SearchIcon, CheckSquareIcon, AlertTriangleIcon, BarChartIcon, ChevronUpIcon, ChevronDownIcon } from '../../../Icons';
+import { SearchIcon, CheckSquareIcon, BarChartIcon } from '../../../Icons';
 import { FilterPills } from './FilterPills';
 import { StudentRow, InputMode, StudentFilter, AcademicRecordRow } from '../types';
-import { WindowedList } from '../../../ui/VirtualList';
 import { useGridNavigation } from '../../../../hooks/useKeyboardShortcuts';
-import { getGradeColorClass } from '../../../../utils/gradeValidator';
 import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortField, SortDirection, GroupBy } from '../../../ui/StudentSortControls';
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
 
@@ -54,6 +52,27 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         }
         return groupStudents(sortedStudents, scores, groupBy);
     }, [sortedStudents, scores, groupBy, mode]);
+
+    // Navigation for inputs
+    const flatStudentList = useMemo(() => {
+        return groupedStudents.flatMap(group => group.students);
+    }, [groupedStudents]);
+
+    const { registerRef, handleKeyDown, focusItem } = useGridNavigation<HTMLInputElement>(
+        flatStudentList.length,
+        {
+            columnsPerRow: 1,
+            enabled: mode === 'subject_grade'
+        }
+    );
+
+    // Auto-focus first input when list changes
+    React.useEffect(() => {
+        if (mode === 'subject_grade' && flatStudentList.length > 0) {
+            // Small timeout to allow render
+            setTimeout(() => focusItem(0), 100);
+        }
+    }, [mode, flatStudentList.length, focusItem]);
 
     return (
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden shadow-xl shadow-indigo-500/10 animate-fade-in-right">
@@ -119,13 +138,13 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-sm border-separate border-spacing-y-2">
                                 <thead>
-                                    <tr className="text-indigo-600 dark:text-indigo-200">
+                                    <tr className="text-green-600 dark:text-green-200">
                                         <th className="p-4 text-left w-14 font-bold tracking-wide uppercase text-xs">
                                             {mode !== 'subject_grade' && (
                                                 <Checkbox
                                                     checked={isAllSelected}
                                                     onChange={e => handleSelectAllStudents(e.target.checked)}
-                                                    className="border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                    className="border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                                                 />
                                             )}
                                         </th>
@@ -136,83 +155,98 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {students.map((s: StudentRow) => {
-                                        const isSelected = selectedStudentIds.has(s.id);
-                                        const gradeRecord = (mode === 'delete_subject_grade' || mode === 'academic_print') ? (existingGrades || []).find(g => g.student_id === s.id) : null;
-                                        const hasGrade = !!gradeRecord;
-                                        const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
+                                    {groupedStudents.map((group) => (
+                                        <React.Fragment key={group.title}>
+                                            {groupBy !== 'none' && (
+                                                <tr>
+                                                    <td colSpan={3} className="pt-4 pb-2">
+                                                        <GroupHeader title={group.title} count={group.students.length} color={group.color} />
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            {group.students.map((s: StudentRow) => {
+                                                const globalIndex = flatStudentList.findIndex(st => st.id === s.id);
+                                                const isSelected = selectedStudentIds.has(s.id);
+                                                const gradeRecord = (mode === 'delete_subject_grade' || mode === 'academic_print') ? (existingGrades || []).find(g => g.student_id === s.id) : null;
+                                                const hasGrade = !!gradeRecord;
+                                                const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
 
-                                        return (
-                                            <tr
-                                                key={s.id}
-                                                onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
-                                                className={`
-                                                    group transition-all duration-300 rounded-xl
-                                                    ${(isSelected || hasScore)
-                                                        ? 'bg-indigo-100 dark:bg-indigo-500/20 shadow-lg shadow-indigo-500/10 border-transparent'
-                                                        : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 hover:shadow-md border-transparent'
-                                                    }
-                                                    ${mode !== 'subject_grade' ? 'cursor-pointer' : ''}
-                                                `}
-                                            >
-                                                <td className="p-4 rounded-l-xl border-y border-l border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
-                                                    {mode !== 'subject_grade' && (
-                                                        <Checkbox
-                                                            checked={isSelected}
-                                                            onChange={() => handleStudentSelect(s.id)}
-                                                            disabled={mode === 'delete_subject_grade' && !hasGrade}
-                                                            className="border-slate-300 dark:border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
-                                                        />
-                                                    )}
-                                                </td>
-                                                <td className="p-4 border-y border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="relative">
-                                                            <div className="absolute inset-0 bg-indigo-500 blur-md opacity-0 group-hover:opacity-30 transition-opacity rounded-full"></div>
-                                                            <img
-                                                                src={s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random`}
-                                                                alt={s.name}
-                                                                className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10 relative z-10"
-                                                            />
-                                                        </div>
-                                                        <span className={`font-medium text-base ${isSelected || hasScore ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-indigo-100'}`}>{s.name}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 rounded-r-xl border-y border-r border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
-                                                    {mode === 'subject_grade' ?
-                                                        <div className="relative">
-                                                            <Input
-                                                                type="number"
-                                                                inputMode="numeric"
-                                                                min="0"
-                                                                max="100"
-                                                                value={scores[s.id] || ''}
-                                                                onChange={e => handleScoreChange(s.id, e.target.value)}
-                                                                placeholder="0"
-                                                                className={`w-24 text-center font-bold text-lg h-10 transition-all ${scores[s.id] ? 'bg-indigo-500/30 border-indigo-400 text-white' : 'bg-white/10 border-white/10 text-white/70'}`}
-                                                            />
-                                                        </div> :
-                                                        (mode === 'academic_print' || mode === 'delete_subject_grade') ?
-                                                            <span className={`font-bold px-4 py-2 rounded-lg text-sm ${hasGrade ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-500/30' : 'bg-white/5 text-gray-500 border border-white/5'}`}>
-                                                                {hasGrade ? gradeRecord?.score : 'N/A'}
-                                                            </span> :
-                                                            isSelected ?
-                                                                <span className="flex items-center gap-2 text-emerald-400 font-bold bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-400/20 w-fit">
-                                                                    <CheckSquareIcon className="w-4 h-4" />Terpilih
-                                                                </span> :
-                                                                <span className="text-white/30 text-sm italic">Belum dipilih</span>
-                                                    }
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
+                                                return (
+                                                    <tr
+                                                        key={s.id}
+                                                        onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
+                                                        className={`
+                                                            group transition-all duration-300 rounded-xl
+                                                            ${(isSelected || hasScore)
+                                                                ? 'bg-green-100 dark:bg-green-500/20 shadow-lg shadow-green-500/10 border-transparent'
+                                                                : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 hover:shadow-md border-transparent'
+                                                            }
+                                                            ${mode !== 'subject_grade' ? 'cursor-pointer' : ''}
+                                                        `}
+                                                    >
+                                                        <td className="p-4 rounded-l-xl border-y border-l border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
+                                                            {mode !== 'subject_grade' && (
+                                                                <Checkbox
+                                                                    checked={isSelected}
+                                                                    onChange={() => handleStudentSelect(s.id)}
+                                                                    disabled={mode === 'delete_subject_grade' && !hasGrade}
+                                                                    className="border-slate-300 dark:border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                                                                />
+                                                            )}
+                                                        </td>
+                                                        <td className="p-4 border-y border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-0 bg-green-500 blur-md opacity-0 group-hover:opacity-30 transition-opacity rounded-full"></div>
+                                                                    <img
+                                                                        src={s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random`}
+                                                                        alt={s.name}
+                                                                        className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10 relative z-10"
+                                                                    />
+                                                                </div>
+                                                                <span className={`font-medium text-base ${isSelected || hasScore ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-green-100'}`}>{s.name}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-4 rounded-r-xl border-y border-r border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
+                                                            {mode === 'subject_grade' ?
+                                                                <div className="relative">
+                                                                    <Input
+                                                                        ref={(el) => registerRef(globalIndex, el)}
+                                                                        onKeyDown={(e) => handleKeyDown(e, globalIndex)}
+                                                                        type="number"
+                                                                        inputMode="numeric"
+                                                                        min="0"
+                                                                        max="100"
+                                                                        value={scores[s.id] || ''}
+                                                                        onChange={e => handleScoreChange(s.id, e.target.value)}
+                                                                        placeholder=""
+                                                                        className={`w-24 text-center font-bold text-lg h-10 transition-all ${scores[s.id] ? 'bg-green-100 dark:bg-green-500/30 border-green-400 text-green-900 dark:text-white' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70'}`}
+                                                                    />
+                                                                </div> :
+                                                                (mode === 'academic_print' || mode === 'delete_subject_grade') ?
+                                                                    <span className={`font-bold px-4 py-2 rounded-lg text-sm ${hasGrade ? 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-gray-500 border border-slate-200 dark:border-white/5'}`}>
+                                                                        {hasGrade ? gradeRecord?.score : 'N/A'}
+                                                                    </span> :
+                                                                    isSelected ?
+                                                                        <span className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-400/20 w-fit">
+                                                                            <CheckSquareIcon className="w-4 h-4" />Terpilih
+                                                                        </span> :
+                                                                        <span className="text-slate-400 dark:text-white/30 text-sm italic">Belum dipilih</span>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
+                                        </React.Fragment>
+                                    ))}
                                 </tbody>
                             </table>
                         </div>
 
                         {/* Mobile View */}
                         <div className="md:hidden space-y-4">
-                            {students.map((s: StudentRow) => {
+                            {flatStudentList.map((s: StudentRow) => {
+                                const globalIndex = flatStudentList.findIndex(st => st.id === s.id);
                                 const isSelected = selectedStudentIds.has(s.id);
                                 const gradeRecord = (mode === 'delete_subject_grade' || mode === 'academic_print') ? (existingGrades || []).find(g => g.student_id === s.id) : null;
                                 const hasGrade = !!gradeRecord;
@@ -256,13 +290,15 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 <label className="text-sm font-bold text-indigo-600 dark:text-indigo-200 uppercase tracking-wide">Nilai</label>
                                                 <div className="flex-grow flex items-center gap-3">
                                                     <Input
+                                                        ref={(el) => registerRef(globalIndex, el)}
+                                                        onKeyDown={(e) => handleKeyDown(e, globalIndex)}
                                                         type="number"
                                                         inputMode="numeric"
                                                         min="0"
                                                         max="100"
                                                         value={scores[s.id] || ''}
                                                         onChange={e => handleScoreChange(s.id, e.target.value)}
-                                                        placeholder="0"
+                                                        placeholder=""
                                                         className="flex-grow text-xl font-bold text-center h-12 bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl focus:ring-indigo-500"
                                                     />
                                                     {scores[s.id] && (

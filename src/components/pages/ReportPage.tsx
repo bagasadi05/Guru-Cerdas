@@ -71,23 +71,47 @@ const ReportPage: React.FC = () => {
 
         setIsGeneratingAi(true);
         try {
-            const prompt = `
-                Buatkan catatan wali kelas untuk rapor siswa berikut:
-                Nama: ${data.student.name}
-                Rata-rata Nilai: ${Math.round(data.academicRecords.reduce((a, b) => a + b.score, 0) / (data.academicRecords.length || 1))}
-                Total Pelanggaran: ${data.violations.length}
-                Total Kehadiran: ${data.attendanceRecords.filter(r => r.status === 'Hadir').length} dari ${data.attendanceRecords.length} hari.
-                
-                Berikan catatan yang motivatif, personal, dan profesional dalam 2-3 kalimat. Bahasa Indonesia.
-            `;
+            const avgScore = Math.round(data.academicRecords.reduce((a, b) => a + b.score, 0) / (data.academicRecords.length || 1));
+            const attendanceRate = data.attendanceRecords.length > 0
+                ? Math.round((data.attendanceRecords.filter(r => r.status === 'Hadir').length / data.attendanceRecords.length) * 100)
+                : 100;
+            const violationCount = data.violations.length;
+
+            const systemPrompt = `Anda adalah wali kelas yang menulis catatan rapor. ATURAN KETAT:
+1. Tulis HANYA 2-3 kalimat singkat (maksimal 50 kata)
+2. Gunakan format: [Penilaian Singkat]. [Saran/Motivasi].
+3. Hindari pengulangan data angka
+4. Langsung to the point, tidak bertele-tele
+5. Bahasa Indonesia formal tapi hangat`;
+
+            const prompt = `Buat catatan wali kelas SINGKAT untuk:
+- Nama: ${data.student.name}
+- Nilai rata-rata: ${avgScore}  
+- Kehadiran: ${attendanceRate}%
+- Pelanggaran: ${violationCount}
+
+Contoh format yang diharapkan:
+"${data.student.name} menunjukkan prestasi akademik yang baik dengan sikap disiplin. Terus pertahankan semangat belajar dan keaktifan di kelas."
+
+Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
 
             const response = await generateOpenRouterContent([
-                { role: 'system', content: 'Anda adalah asisten guru yang profesional.' },
+                { role: 'system', content: systemPrompt },
                 { role: 'user', content: prompt }
             ]);
 
-            const text = getAssistantContent(response) || '';
-            setCustomNote(text.trim());
+            let text = getAssistantContent(response) || '';
+
+            // Clean up: remove quotes and excessive whitespace
+            text = text.replace(/^["']|["']$/g, '').trim();
+
+            // Limit to ~3 sentences if AI still generates too much
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            if (sentences.length > 3) {
+                text = sentences.slice(0, 3).join('. ').trim() + '.';
+            }
+
+            setCustomNote(text);
             toast.success("Catatan berhasil dibuat oleh AI!");
         } catch (error) {
             console.error(error);

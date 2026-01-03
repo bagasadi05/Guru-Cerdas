@@ -358,8 +358,9 @@ export const AccessibleModal: React.FC<AccessibleModalProps> = ({
     closeOnOverlay = true
 }) => {
     const containerRef = useFocusTrap(isOpen);
-    const titleId = `modal-title-${React.useId()}`;
-    const descId = description ? `modal-desc-${React.useId()}` : undefined;
+    const uniqueId = React.useId();
+    const titleId = `modal-title-${uniqueId}`;
+    const descId = description ? `modal-desc-${uniqueId}` : undefined;
 
     const { onKeyDown } = useKeyboardNavigation({
         onEscape: closeOnEscape ? onClose : undefined
@@ -1033,11 +1034,8 @@ export const LoadingAnnouncement: React.FC<LoadingAnnouncementProps> = ({
     loadingMessage = 'Memuat...',
     loadedMessage = 'Selesai memuat'
 }) => {
-    const prevLoading = useRef(isLoading);
-
-    useEffect(() => {
-        prevLoading.current = isLoading;
-    }, [isLoading]);
+    // Simple implementation - just announce current loading state
+    // The aria-live region will automatically announce changes
 
     return (
         <div
@@ -1046,7 +1044,7 @@ export const LoadingAnnouncement: React.FC<LoadingAnnouncementProps> = ({
             aria-atomic="true"
             className="sr-only"
         >
-            {isLoading ? loadingMessage : (!prevLoading.current && loadedMessage)}
+            {isLoading ? loadingMessage : loadedMessage}
         </div>
     );
 };
@@ -1125,8 +1123,8 @@ export const AccessibleTabs: React.FC<AccessibleTabsProps> = ({
                         tabIndex={activeTab === tab.id ? 0 : -1}
                         onClick={() => setActiveTab(tab.id)}
                         className={`px-4 py-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${activeTab === tab.id
-                                ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                     >
                         {tab.label}
@@ -1234,8 +1232,8 @@ export const AccessibilitySettingsPanel: React.FC<{
                                 </p>
                             </div>
                             <div className={`px-3 py-1 rounded-full text-xs font-medium ${reducedMotion
-                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400'
-                                    : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400'
+                                : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
                                 }`}>
                                 {reducedMotion ? 'Aktif' : 'Nonaktif'}
                             </div>

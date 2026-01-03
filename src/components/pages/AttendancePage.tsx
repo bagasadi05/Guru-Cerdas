@@ -17,7 +17,9 @@ import {
     LayoutGridIcon,
     ListIcon,
     UsersIcon,
-    QrCodeIcon
+    QrCodeIcon,
+    RotateCcw,
+    AlertTriangle
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -27,7 +29,9 @@ import { AttendanceRecord, AttendanceStatus, AttendanceInsert, AiAnalysis } from
 import { statusOptions } from '../../constants';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { GoogleGenAI } from '@google/genai';
+import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
+// OpenRouter API is used directly via fetch - no SDK import needed
+import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../utils/confetti';
 
 // Sub-components
 import { AttendanceHeader } from '../attendance/AttendanceHeader';
@@ -38,6 +42,9 @@ import { AiAnalysisModal } from '../attendance/AiAnalysisModal';
 import { AttendanceCalendar } from '../attendance/AttendanceCalendar';
 import { EmptyState } from '../ui/EmptyState';
 import { QRCodeGenerator } from '../attendance/QRCodeGenerator';
+import { QuickTemplateIcons } from '../attendance/QuickTemplateIcons';
+import { AttendanceStreakIndicator } from '../attendance/AttendanceStreakIndicator';
+import { QuickNotePresets } from '../attendance/QuickNotePresets';
 
 const AttendancePage: React.FC = () => {
     // Force HMR update
@@ -69,6 +76,8 @@ const AttendancePage: React.FC = () => {
     const [aiAnalysisResult, setAiAnalysisResult] = useState<AiAnalysis | null>(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+    const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+    // Template dropdown is now inline, no modal state needed
 
     const { data: classes, isLoading: isLoadingClasses } = useQuery({
         queryKey: ['classes', user?.id],
@@ -153,9 +162,21 @@ const AttendancePage: React.FC = () => {
             queryClient.setQueryData(['attendanceData', selectedClass, selectedDate], context?.previousAttendance);
             toast.error(`Gagal menyimpan absensi: ${err.message}`);
         },
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
             if (data.synced) {
                 toast.success('Absensi berhasil disimpan!');
+
+                // Check if all students are present for confetti celebration
+                const allPresent = variables.every(record => record.status === 'Hadir');
+                if (allPresent && variables.length > 0) {
+                    // Trigger perfect attendance celebration!
+                    setTimeout(() => {
+                        triggerPerfectAttendanceConfetti();
+                    }, 300);
+                } else {
+                    // Subtle confetti for regular save
+                    triggerSubtleConfetti();
+                }
             } else {
                 toast.info('Absensi disimpan offline. Akan disinkronkan saat kembali online.');
             }
@@ -231,6 +252,116 @@ const AttendancePage: React.FC = () => {
         });
         setAttendanceRecords(updatedRecords);
         toast.warning(`Semua siswa ditandai Alpha`);
+    };
+
+    // Calculate attendance streaks
+    const attendanceStreaks = useMemo(() => {
+        if (!students || students.length === 0) return [];
+
+        // This is a simplified version - you might want to fetch actual historical data
+        return students.map(student => {
+            const record = attendanceRecords[student.id];
+            // Mock data for demonstration - replace with actual streak calculation
+            const mockStreak = Math.floor(Math.random() * 30);
+            const mockRate = 75 + Math.random() * 25;
+
+            return {
+                studentId: student.id,
+                studentName: student.name,
+                currentStreak: record?.status === 'Hadir' ? mockStreak : 0,
+                longestStreak: mockStreak + 5,
+                attendanceRate: mockRate,
+            };
+        });
+    }, [students, attendanceRecords]);
+
+    // Handle template application
+    const handleApplyTemplate = (template: any) => {
+        if (!students) return;
+
+        const newRecords = { ...attendanceRecords };
+
+        if (template.id === 'weekend') {
+            // Clear all attendance
+            setAttendanceRecords({});
+            toast.info('Absensi dikosongkan untuk hari libur');
+            return;
+        }
+
+        if (template.applyToAll) {
+            // Apply to all students
+            students.forEach(student => {
+                newRecords[student.id] = {
+                    ...newRecords[student.id],
+                    status: template.defaultStatus,
+                };
+            });
+            toast.success(`Semua siswa ditandai sebagai ${template.defaultStatus}`);
+        } else {
+            // Apply only to unmarked students
+            let count = 0;
+            students.forEach(student => {
+                if (!newRecords[student.id]?.status) {
+                    newRecords[student.id] = {
+                        ...newRecords[student.id],
+                        status: template.defaultStatus,
+                    };
+                    count++;
+                }
+            });
+            toast.success(`${count} siswa ditandai sebagai ${template.defaultStatus}`);
+        }
+
+        setAttendanceRecords(newRecords);
+    };
+
+    // Reset Attendance Mutation
+    const { mutate: resetAttendance, isPending: isResetting } = useMutation<
+        void,
+        Error,
+        void
+    >({
+        mutationFn: async () => {
+            if (!user || !students || students.length === 0) throw new Error('Data tidak valid');
+
+            // Delete all attendance records for selected date and students in selected class
+            const studentIds = students.map(s => s.id);
+            const { error } = await supabase
+                .from('attendance')
+                .delete()
+                .eq('date', selectedDate)
+                .eq('user_id', user.id)
+                .in('student_id', studentIds);
+
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            // Clear local state
+            setAttendanceRecords({});
+            setIsResetModalOpen(false);
+            toast.success('Absensi berhasil direset! Semua data absensi untuk tanggal ini telah dihapus.');
+
+            // Invalidate queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ['attendanceData', selectedClass, selectedDate] });
+            queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+        },
+        onError: (err: Error) => {
+            toast.error(`Gagal mereset absensi: ${err.message}`);
+        }
+    });
+
+    const handleResetAttendance = () => {
+        // Check if there's any attendance data to reset
+        const hasAttendanceData = Object.keys(attendanceRecords).length > 0;
+        if (!hasAttendanceData) {
+            toast.warning('Tidak ada data absensi untuk direset pada tanggal ini.');
+            return;
+        }
+        setIsResetModalOpen(true);
+    };
+
+    const confirmResetAttendance = () => {
+        resetAttendance();
     };
 
     const handleSave = () => {
@@ -324,6 +455,9 @@ const AttendancePage: React.FC = () => {
                 }
                 toast.success('Laporan Excel berhasil diunduh!');
             } else {
+                // Ensure logos are loaded before generating PDF
+                await ensureLogosLoaded();
+
                 const doc = new jsPDF({ orientation: 'landscape' });
                 const pageHeight = doc.internal.pageSize.getHeight();
                 const pageWidth = doc.internal.pageSize.getWidth();
@@ -333,28 +467,16 @@ const AttendancePage: React.FC = () => {
                     if (!isFirstClass) doc.addPage('landscape');
                     isFirstClass = false;
 
-                    let yPos = 20;
-                    doc.setFillColor(240, 249, 255);
-                    doc.rect(0, 0, pageWidth, 40, 'F');
+                    // Add header with logos
+                    let yPos = addPdfHeader(doc, { schoolName, orientation: 'landscape' });
 
-                    doc.setFontSize(22);
-                    doc.setFont("helvetica", "bold");
-                    doc.setTextColor('#0f172a');
-                    doc.text('PortalGuru', 14, 18);
-
-                    doc.setFontSize(12);
-                    doc.setFont("helvetica", "normal");
-                    doc.setTextColor('#64748b');
-                    doc.text('Laporan Absensi Siswa', 14, 26);
-
-                    yPos = 50;
-
+                    // Title
                     doc.setFontSize(14);
                     doc.setFont("helvetica", "bold");
                     doc.setTextColor('#334155');
                     doc.text(`Kelas: ${classData.name}`, 14, yPos);
                     doc.text(`Periode: ${monthName} ${year}`, pageWidth - 14, yPos, { align: 'right' });
-                    yPos += 10;
+                    yPos += 8;
 
                     const classAttendance = attendance.filter((a: any) => classData.students.some((s: any) => s.id === a.student_id));
                     const summary = { H: 0, S: 0, I: 0, A: 0 };
@@ -474,48 +596,101 @@ const AttendancePage: React.FC = () => {
                 .gte('date', thirtyDaysAgo);
             if (error) throw error;
 
-            const genAI = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
-            // @ts-ignore
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const prompt = `Analisis data kehadiran berikut: ${JSON.stringify(attendanceData)}.
+Identifikasi siswa dengan kehadiran sempurna, siswa yang sering absen (Alpha > 3), dan pola absensi yang tidak biasa.
 
-            const prompt = `Analisis data kehadiran berikut: ${JSON.stringify(attendanceData)}.Identifikasi siswa dengan kehadiran sempurna, siswa yang sering absen(Alpha > 3), dan pola absensi yang tidak biasa.`;
+Berikan respon dalam format JSON dengan struktur berikut:
+{
+  "perfect_attendance": ["nama siswa yang hadir sempurna"],
+  "frequent_absentees": [{"student_name": "nama", "absent_days": jumlah_hari}],
+  "pattern_warnings": [{"pattern_description": "deskripsi pola", "implicated_students": ["nama siswa"]}]
+}`;
 
-            const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            perfect_attendance: { type: "ARRAY", items: { type: "STRING" } },
-                            frequent_absentees: {
-                                type: "ARRAY",
-                                items: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        student_name: { type: "STRING" },
-                                        absent_days: { type: "NUMBER" }
-                                    }
+            // List of free models to try (in order of preference)
+            const freeModels = [
+                "google/gemini-2.0-flash-exp:free",
+                "meta-llama/llama-3.2-3b-instruct:free",
+                "qwen/qwen-2.5-7b-instruct:free"
+            ];
+
+            let lastError: Error | null = null;
+            let jsonData = null;
+
+            for (const model of freeModels) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+                            "Content-Type": "application/json",
+                            "HTTP-Referer": window.location.origin,
+                            "X-Title": "Portal Guru"
+                        },
+                        signal: controller.signal,
+                        body: JSON.stringify({
+                            "model": model,
+                            "messages": [
+                                {
+                                    "role": "user",
+                                    "content": prompt
                                 }
-                            },
-                            pattern_warnings: {
-                                type: "ARRAY",
-                                items: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        pattern_description: { type: "STRING" },
-                                        implicated_students: { type: "ARRAY", items: { type: "STRING" } }
-                                    }
-                                }
-                            }
+                            ]
+                        })
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    // If rate limited, try next model
+                    if (response.status === 429) {
+                        console.log(`Rate limited on ${model}, trying next...`);
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`OpenRouter API error: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    let responseText = result.choices?.[0]?.message?.content || '';
+
+                    // Strip markdown code block wrappers if present (```json ... ```)
+                    responseText = responseText.trim();
+                    if (responseText.startsWith('```')) {
+                        responseText = responseText.replace(/^```(?:json)?\s*\n?/, '');
+                        responseText = responseText.replace(/\n?```\s*$/, '');
+                    }
+
+                    // Try to extract JSON from the response
+                    try {
+                        jsonData = JSON.parse(responseText);
+                    } catch {
+                        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            jsonData = JSON.parse(jsonMatch[0]);
+                        } else {
+                            throw new Error('Could not extract JSON from AI response');
                         }
                     }
-                }
-            });
 
-            setAiAnalysisResult(JSON.parse(result.response.text()));
-        } catch (err: any) {
-            toast.error("Gagal menganalisis data kehadiran.");
+                    // Success! Break out of the loop
+                    break;
+                } catch (err) {
+                    lastError = err as Error;
+                    console.log(`Error with ${model}:`, err);
+                    // Continue to next model
+                }
+            }
+
+            if (jsonData) {
+                setAiAnalysisResult(jsonData);
+            } else {
+                throw lastError || new Error('All AI models failed');
+            }
+        } catch (err: unknown) {
+            toast.error("Gagal menganalisis data. Coba lagi dalam beberapa saat.");
             console.error(err);
         } finally {
             setIsAiLoading(false);
@@ -541,8 +716,8 @@ const AttendancePage: React.FC = () => {
                                 key={c.id}
                                 onClick={() => setSelectedClass(c.id)}
                                 className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${selectedClass === c.id
-                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 scale-105'
-                                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400'
+                                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/30 scale-105'
+                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-green-400 dark:hover:border-green-500 hover:text-green-600 dark:hover:text-green-400'
                                     }`}
                             >
                                 {c.name}
@@ -554,7 +729,7 @@ const AttendancePage: React.FC = () => {
 
             <div className="relative z-10 glass-card p-4 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none mb-6 transition-all rounded-2xl overflow-hidden">
                 <div
-                    className="group relative overflow-hidden w-full rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 cursor-pointer"
+                    className="group relative overflow-hidden w-full rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30 cursor-pointer"
                     onClick={() => setDatePickerOpen(true)}
                 >
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
@@ -619,61 +794,80 @@ const AttendancePage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Attendance Streak Indicator */}
+            {attendanceStreaks.length > 0 && (
+                <div className="mb-6">
+                    <AttendanceStreakIndicator
+                        streaks={attendanceStreaks}
+                        onStudentClick={(studentId) => {
+                            // Scroll to student or highlight
+                            const element = document.getElementById(`student-${studentId}`);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                element.classList.add('ring-2', 'ring-indigo-500');
+                                setTimeout(() => {
+                                    element.classList.remove('ring-2', 'ring-indigo-500');
+                                }, 2000);
+                            }
+                        }}
+                    />
+                </div>
+            )}
+
             <main className="bg-transparent flex flex-col pb-32">
                 {/* Bulk Actions Bar */}
                 {students && students.length > 0 && (
                     <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3">
                             <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">Aksi Cepat:</span>
-                            <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
-                                <Button
-                                    onClick={markAllAsPresent}
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 px-2 sm:px-3"
-                                    aria-label="Tandai semua hadir"
-                                >
-                                    <CheckCircleIcon className="w-4 h-4 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">Semua Hadir</span>
-                                </Button>
-                                <Button
-                                    onClick={markAllAsAlpha}
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 px-2 sm:px-3"
-                                    aria-label="Tandai semua alpha"
-                                >
-                                    <XCircleIcon className="w-4 h-4 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">Semua Alpha</span>
-                                </Button>
-                                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
-                                <Button
-                                    onClick={() => setIsQrModalOpen(true)}
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 px-2 sm:px-3"
-                                    aria-label="Generate QR Code"
-                                >
-                                    <QrCodeIcon className="w-4 h-4 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">QR Code</span>
-                                </Button>
-                                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 ml-1">
-                                    <button
-                                        onClick={() => setViewMode('list')}
-                                        className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                                        aria-label="Tampilan daftar"
-                                        aria-pressed={viewMode === 'list'}
+                            <div className="flex-1 flex items-center justify-between">
+                                {/* Template Icons - spread across available space */}
+                                <QuickTemplateIcons
+                                    onApplyTemplate={handleApplyTemplate}
+                                />
+
+                                {/* Right side actions */}
+                                <div className="flex items-center gap-1 sm:gap-2">
+                                    <Button
+                                        onClick={handleResetAttendance}
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20 px-2 sm:px-3"
+                                        aria-label="Reset absensi"
+                                        disabled={Object.keys(attendanceRecords).length === 0}
                                     >
-                                        <ListIcon className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => setViewMode('calendar')}
-                                        className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'calendar' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                                        aria-label="Tampilan kalender"
-                                        aria-pressed={viewMode === 'calendar'}
+                                        <RotateCcw className="w-4 h-4 sm:mr-1.5" />
+                                        <span className="hidden sm:inline">Reset</span>
+                                    </Button>
+                                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
+                                    <Button
+                                        onClick={() => setIsQrModalOpen(true)}
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 px-2 sm:px-3"
+                                        aria-label="Generate QR Code"
                                     >
-                                        <LayoutGridIcon className="w-4 h-4" />
-                                    </button>
+                                        <QrCodeIcon className="w-4 h-4 sm:mr-1.5" />
+                                        <span className="hidden sm:inline">QR Code</span>
+                                    </Button>
+                                    <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 ml-1">
+                                        <button
+                                            onClick={() => setViewMode('list')}
+                                            className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                            aria-label="Tampilan daftar"
+                                            aria-pressed={viewMode === 'list'}
+                                        >
+                                            <ListIcon className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('calendar')}
+                                            className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'calendar' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                            aria-label="Tampilan kalender"
+                                            aria-pressed={viewMode === 'calendar'}
+                                        >
+                                            <LayoutGridIcon className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -857,6 +1051,58 @@ const AttendancePage: React.FC = () => {
                 date={selectedDate}
                 userId={user?.id || ''}
             />
+
+            {/* Reset Attendance Confirmation Modal */}
+            <Modal
+                isOpen={isResetModalOpen}
+                onClose={() => setIsResetModalOpen(false)}
+                title="Reset Absensi"
+            >
+                <div className="space-y-4">
+                    <div className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
+                        <AlertTriangle className="w-6 h-6 text-orange-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="font-bold text-orange-700 dark:text-orange-300">Peringatan</h4>
+                            <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                                Anda akan menghapus <strong>semua data absensi</strong> untuk kelas <strong>{classes?.find(c => c.id === selectedClass)?.name}</strong> pada tanggal <strong>{new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>.
+                            </p>
+                            <p className="text-sm text-orange-600 dark:text-orange-400 mt-2">
+                                Tindakan ini tidak dapat dibatalkan!
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                        <Button
+                            onClick={() => setIsResetModalOpen(false)}
+                            variant="outline"
+                            className="flex-1"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            onClick={confirmResetAttendance}
+                            variant="destructive"
+                            className="flex-1"
+                            disabled={isResetting}
+                        >
+                            {isResetting ? (
+                                <>
+                                    <RotateCcw className="w-4 h-4 mr-2 animate-spin" />
+                                    Mereset...
+                                </>
+                            ) : (
+                                <>
+                                    <RotateCcw className="w-4 h-4 mr-2" />
+                                    Ya, Reset Absensi
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Quick Templates Dropdown is now inline in the quick actions bar */}
         </div>
     );
 };

@@ -9,13 +9,17 @@ import {
     AlertTriangleIcon,
     TrendingUpIcon,
     TrendingDownIcon,
-    CalendarIcon
+    CalendarIcon,
+    Activity
 } from 'lucide-react';
+import WeeklyAttendanceChart from './WeeklyAttendanceChart';
 
 interface AttendanceStatsProps {
     selectedDate?: string;
     showTrend?: boolean;
+    weeklyData?: { day: string; present_percentage: number }[];
 }
+
 
 interface ClassStats {
     classId: string;
@@ -31,7 +35,8 @@ interface ClassStats {
 
 const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
     selectedDate = new Date().toISOString().split('T')[0],
-    showTrend = true
+    showTrend = true,
+    weeklyData
 }) => {
     const { user } = useAuth();
 
@@ -282,7 +287,28 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                     </div>
                 ))}
             </div>
-        </div>
+
+
+            {/* Weekly Trend Chart */}
+            {
+                weeklyData && weeklyData.length > 0 && (
+                    <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h4 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                    <Activity className="w-4 h-4 text-indigo-500" />
+                                    Tren Kehadiran Mingguan
+                                </h4>
+                                <p className="text-xs text-slate-500 mt-1">5 Hari Terakhir</p>
+                            </div>
+                        </div>
+                        <div className="h-40">
+                            <WeeklyAttendanceChart data={weeklyData} />
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

@@ -13,32 +13,32 @@ export type OperationType = 'CREATE' | 'UPDATE' | 'DELETE';
 export type SyncStatus = 'pending' | 'syncing' | 'failed' | 'success';
 export type ConflictResolution = 'local_wins' | 'server_wins' | 'merge' | 'manual';
 
-export interface QueueItem {
+export interface QueueItem<T = Record<string, unknown>> {
     id: string;
     type: OperationType;
     table: string;
-    data: any;
+    data: T;
     timestamp: string;
     retryCount: number;
     maxRetries: number;
     status: SyncStatus;
     error?: string;
-    conflictWith?: any;
+    conflictWith?: T;
     priority: number;
 }
 
-export interface SyncResult {
+export interface SyncResult<T = Record<string, unknown>> {
     success: boolean;
-    item: QueueItem;
-    serverData?: any;
+    item: QueueItem<T>;
+    serverData?: T;
     conflict?: boolean;
     error?: string;
 }
 
-export interface ConflictInfo {
+export interface ConflictInfo<T = Record<string, unknown>> {
     itemId: string;
-    localData: any;
-    serverData: any;
+    localData: T;
+    serverData: T;
     localTimestamp: string;
     serverTimestamp: string;
 }
@@ -48,7 +48,7 @@ export interface ConflictInfo {
 // ============================================
 
 const QUEUE_STORAGE_KEY = 'portal_guru_offline_queue';
-const SYNC_LOG_KEY = 'portal_guru_sync_log';
+// Note: SYNC_LOG_KEY is used for IndexedDB sync logging but kept for reference
 const IDB_NAME = 'PortalGuruOffline';
 const IDB_VERSION = 1;
 const MAX_RETRIES = 5;
@@ -105,9 +105,9 @@ async function openDatabase(): Promise<IDBDatabase> {
 // ============================================
 
 class OfflineQueueService {
-    private queue: QueueItem[] = [];
+    private queue: QueueItem<Record<string, unknown>>[] = [];
     private syncInProgress = false;
-    private listeners: Set<(queue: QueueItem[]) => void> = new Set();
+    private listeners: Set<(queue: QueueItem<Record<string, unknown>>[]) => void> = new Set();
 
     constructor() {
         this.loadQueue();
@@ -177,14 +177,14 @@ class OfflineQueueService {
     }
 
     // Add item to queue
-    async add(
+    async add<T extends Record<string, unknown>>(
         type: OperationType,
         table: string,
-        data: any,
+        data: T,
         priority: number = 5
     ): Promise<string> {
         const id = crypto.randomUUID();
-        const item: QueueItem = {
+        const item: QueueItem<T & { _localTimestamp: string }> = {
             id,
             type,
             table,
@@ -288,7 +288,8 @@ class OfflineQueueService {
                     item.status = 'success';
                     await this.saveQueue();
                 }
-            } catch (error) {
+            } catch (err) {
+                const error = err instanceof Error ? err : new Error(String(err));
                 await this.handleSyncError(item, error);
             }
         }
@@ -320,7 +321,7 @@ class OfflineQueueService {
         await this.saveQueue();
     }
 
-    private async handleSyncError(item: QueueItem, error: any): Promise<void> {
+    private async handleSyncError(item: QueueItem<Record<string, unknown>>, error: Error | { message?: string }): Promise<void> {
         item.retryCount++;
 
         if (item.retryCount >= item.maxRetries) {
@@ -364,11 +365,11 @@ class OfflineQueueService {
 // CONFLICT RESOLUTION
 // ============================================
 
-export function resolveConflict(
-    local: any,
-    server: any,
+export function resolveConflict<T extends Record<string, unknown>>(
+    local: T & { _localTimestamp?: string },
+    server: T & { updated_at?: string },
     strategy: ConflictResolution
-): any {
+): T | { local: T; server: T; needsManualResolution: true } {
     switch (strategy) {
         case 'local_wins':
             return local;
@@ -376,20 +377,22 @@ export function resolveConflict(
         case 'server_wins':
             return server;
 
-        case 'merge':
+        case 'merge': {
             // Merge strategy: newer field values win
             const merged = { ...server };
-            for (const key of Object.keys(local)) {
-                if (key.startsWith('_')) continue; // Skip internal fields
+            for (const key of Object.keys(local) as (keyof T)[]) {
+                const keyStr = String(key);
+                if (keyStr.startsWith('_')) continue; // Skip internal fields
 
                 const localTime = new Date(local._localTimestamp || 0).getTime();
                 const serverTime = new Date(server.updated_at || 0).getTime();
 
                 if (localTime > serverTime) {
-                    merged[key] = local[key];
+                    (merged as Record<string, unknown>)[keyStr] = local[key];
                 }
             }
-            return merged;
+            return merged as T;
+        }
 
         case 'manual':
             // Return both for manual resolution
@@ -400,7 +403,10 @@ export function resolveConflict(
     }
 }
 
-export function detectConflict(local: any, server: any): boolean {
+export function detectConflict<T extends Record<string, unknown> & { id?: string; updated_at?: string; _localTimestamp?: string }>(
+    local: T,
+    server: T | null
+): boolean {
     if (!server) return false;
 
     const localTime = new Date(local._localTimestamp || local.updated_at || 0).getTime();
@@ -414,10 +420,10 @@ export function detectConflict(local: any, server: any): boolean {
 // CACHE OPERATIONS
 // ============================================
 
-export async function cacheData(
+export async function cacheData<T>(
     key: string,
     table: string,
-    data: any,
+    data: T,
     ttl: number = 3600000 // 1 hour default
 ): Promise<void> {
     try {
@@ -503,17 +509,29 @@ export async function invalidateCache(table?: string): Promise<void> {
 // BACKGROUND SYNC
 // ============================================
 
+// Interface for ServiceWorkerRegistration with sync capability
+interface SyncManager {
+    register(tag: string): Promise<void>;
+}
+
+interface ServiceWorkerRegistrationWithSync extends ServiceWorkerRegistration {
+    sync?: SyncManager;
+}
+
 export async function registerBackgroundSync(): Promise<boolean> {
-    if (!('serviceWorker' in navigator) || !('sync' in (window as any).ServiceWorkerRegistration?.prototype)) {
+    if (!('serviceWorker' in navigator) || !('SyncManager' in window)) {
         logger.warn('Background Sync not supported', 'OfflineSync');
         return false;
     }
 
     try {
-        const registration = await navigator.serviceWorker.ready;
-        await (registration as any).sync.register('offline-sync');
-        logger.info('Background Sync registered', 'OfflineSync');
-        return true;
+        const registration = await navigator.serviceWorker.ready as ServiceWorkerRegistrationWithSync;
+        if (registration.sync) {
+            await registration.sync.register('offline-sync');
+            logger.info('Background Sync registered', 'OfflineSync');
+            return true;
+        }
+        return false;
     } catch (error) {
         logger.warn('Failed to register Background Sync', 'OfflineSync', { error });
         return false;

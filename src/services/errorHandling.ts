@@ -1,13 +1,13 @@
 /**
  * Enhanced Error Handling & Monitoring Service
  * Features: Centralized error reporting, recovery strategies, 
- * user-friendly messages, network error handling
+ * user-friendly messages, network error handling, comprehensive context capture
  */
 
 import { logger } from './logger';
 
 // ============================================
-// ERROR TYPES
+// ERROR TYPES & CLASSIFICATION
 // ============================================
 
 export enum ErrorType {
@@ -21,6 +21,7 @@ export enum ErrorType {
     PERMISSION = 'PERMISSION',
     RATE_LIMIT = 'RATE_LIMIT',
     OFFLINE = 'OFFLINE',
+    COMPONENT = 'COMPONENT',
     UNKNOWN = 'UNKNOWN'
 }
 
@@ -31,8 +32,20 @@ export enum ErrorSeverity {
     CRITICAL = 'critical'
 }
 
+export enum ErrorCategory {
+    NETWORK = 'network',
+    VALIDATION = 'validation',
+    AUTHENTICATION = 'authentication',
+    AUTHORIZATION = 'authorization',
+    BUSINESS_LOGIC = 'business_logic',
+    SYSTEM = 'system',
+    UI = 'ui'
+}
+
 export interface AppError {
+    id: string;
     type: ErrorType;
+    category: ErrorCategory;
     message: string;
     userMessage: string;
     code?: string;
@@ -42,6 +55,11 @@ export interface AppError {
     context?: Record<string, any>;
     recoverable: boolean;
     retryable: boolean;
+    userId?: string;
+    sessionId: string;
+    component?: string;
+    url: string;
+    userAgent: string;
 }
 
 // ============================================
@@ -99,6 +117,11 @@ const ERROR_MESSAGES: Record<ErrorType, { title: string; message: string; action
         message: 'Tidak ada koneksi internet. Beberapa fitur mungkin terbatas.',
         action: 'Mode Offline'
     },
+    [ErrorType.COMPONENT]: {
+        title: 'Kesalahan Komponen',
+        message: 'Terjadi kesalahan pada komponen aplikasi. Silakan refresh halaman.',
+        action: 'Refresh'
+    },
     [ErrorType.UNKNOWN]: {
         title: 'Terjadi Kesalahan',
         message: 'Terjadi kesalahan yang tidak diketahui. Silakan coba lagi.',
@@ -110,33 +133,86 @@ const ERROR_MESSAGES: Record<ErrorType, { title: string; message: string; action
 // ERROR CLASSIFICATION
 // ============================================
 
-export function classifyError(error: unknown): AppError {
+const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+export function classifyError(error: unknown, context?: Record<string, any>): AppError {
     const timestamp = new Date().toISOString();
+    const errorId = crypto.randomUUID();
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const userId = getUserId();
+
+    // Component errors (React Error Boundary)
+    if (context?.componentStack) {
+        let errorMessage: string;
+        try {
+            errorMessage = error instanceof Error ? error.message : String(error);
+        } catch {
+            errorMessage = '[Object cannot be converted to string]';
+        }
+
+        return {
+            id: errorId,
+            type: ErrorType.COMPONENT,
+            category: ErrorCategory.UI,
+            message: errorMessage,
+            userMessage: ERROR_MESSAGES[ErrorType.COMPONENT].message,
+            severity: ErrorSeverity.HIGH,
+            timestamp,
+            stack: error instanceof Error ? error.stack : undefined,
+            context,
+            recoverable: true,
+            retryable: false,
+            userId,
+            sessionId: SESSION_ID,
+            component: context.component,
+            url,
+            userAgent
+        };
+    }
 
     // Network errors
-    if (error instanceof TypeError && error.message.includes('fetch')) {
+    if (error instanceof TypeError && (
+        error.message.includes('fetch') || 
+        error.message.includes('network') || 
+        error.message.includes('connection')
+    )) {
         return {
+            id: errorId,
             type: ErrorType.NETWORK,
+            category: ErrorCategory.NETWORK,
             message: error.message,
             userMessage: ERROR_MESSAGES[ErrorType.NETWORK].message,
             severity: ErrorSeverity.MEDIUM,
             timestamp,
             stack: error.stack,
+            context,
             recoverable: true,
-            retryable: true
+            retryable: true,
+            userId,
+            sessionId: SESSION_ID,
+            url,
+            userAgent
         };
     }
 
     // Offline
-    if (!navigator.onLine) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
         return {
+            id: errorId,
             type: ErrorType.OFFLINE,
+            category: ErrorCategory.NETWORK,
             message: 'No internet connection',
             userMessage: ERROR_MESSAGES[ErrorType.OFFLINE].message,
             severity: ErrorSeverity.MEDIUM,
             timestamp,
+            context,
             recoverable: true,
-            retryable: true
+            retryable: true,
+            userId,
+            sessionId: SESSION_ID,
+            url,
+            userAgent
         };
     }
 
@@ -147,53 +223,81 @@ export function classifyError(error: unknown): AppError {
 
         if (status === 401 || status === 403) {
             return {
+                id: errorId,
                 type: status === 401 ? ErrorType.AUTH : ErrorType.PERMISSION,
+                category: status === 401 ? ErrorCategory.AUTHENTICATION : ErrorCategory.AUTHORIZATION,
                 message: statusText,
                 userMessage: ERROR_MESSAGES[status === 401 ? ErrorType.AUTH : ErrorType.PERMISSION].message,
                 code: String(status),
                 severity: ErrorSeverity.HIGH,
                 timestamp,
+                context,
                 recoverable: status === 401,
-                retryable: false
+                retryable: false,
+                userId,
+                sessionId: SESSION_ID,
+                url,
+                userAgent
             };
         }
 
         if (status === 404) {
             return {
+                id: errorId,
                 type: ErrorType.NOT_FOUND,
+                category: ErrorCategory.BUSINESS_LOGIC,
                 message: statusText,
                 userMessage: ERROR_MESSAGES[ErrorType.NOT_FOUND].message,
                 code: '404',
                 severity: ErrorSeverity.LOW,
                 timestamp,
+                context,
                 recoverable: true,
-                retryable: false
+                retryable: false,
+                userId,
+                sessionId: SESSION_ID,
+                url,
+                userAgent
             };
         }
 
         if (status === 429) {
             return {
+                id: errorId,
                 type: ErrorType.RATE_LIMIT,
+                category: ErrorCategory.SYSTEM,
                 message: statusText,
                 userMessage: ERROR_MESSAGES[ErrorType.RATE_LIMIT].message,
                 code: '429',
                 severity: ErrorSeverity.MEDIUM,
                 timestamp,
+                context,
                 recoverable: true,
-                retryable: true
+                retryable: true,
+                userId,
+                sessionId: SESSION_ID,
+                url,
+                userAgent
             };
         }
 
         if (status >= 500) {
             return {
+                id: errorId,
                 type: ErrorType.SERVER,
+                category: ErrorCategory.SYSTEM,
                 message: statusText,
                 userMessage: ERROR_MESSAGES[ErrorType.SERVER].message,
                 code: String(status),
                 severity: ErrorSeverity.HIGH,
                 timestamp,
+                context,
                 recoverable: true,
-                retryable: true
+                retryable: true,
+                userId,
+                sessionId: SESSION_ID,
+                url,
+                userAgent
             };
         }
     }
@@ -201,55 +305,109 @@ export function classifyError(error: unknown): AppError {
     // Timeout errors
     if (error instanceof Error && error.name === 'AbortError') {
         return {
+            id: errorId,
             type: ErrorType.TIMEOUT,
+            category: ErrorCategory.NETWORK,
             message: error.message,
             userMessage: ERROR_MESSAGES[ErrorType.TIMEOUT].message,
             severity: ErrorSeverity.MEDIUM,
             timestamp,
             stack: error.stack,
+            context,
             recoverable: true,
-            retryable: true
+            retryable: true,
+            userId,
+            sessionId: SESSION_ID,
+            url,
+            userAgent
         };
     }
 
     // Validation errors
     if ((error as any)?.errors || (error as any)?.issues) {
+        let validationMessage: string;
+        try {
+            validationMessage = JSON.stringify((error as any).errors || (error as any).issues);
+        } catch {
+            validationMessage = '[Validation errors cannot be serialized]';
+        }
+
         return {
+            id: errorId,
             type: ErrorType.VALIDATION,
-            message: JSON.stringify((error as any).errors || (error as any).issues),
+            category: ErrorCategory.VALIDATION,
+            message: validationMessage,
             userMessage: ERROR_MESSAGES[ErrorType.VALIDATION].message,
             severity: ErrorSeverity.LOW,
             timestamp,
-            context: { errors: (error as any).errors || (error as any).issues },
+            context: { 
+                ...context, 
+                errors: (error as any).errors || (error as any).issues 
+            },
             recoverable: true,
-            retryable: false
+            retryable: false,
+            userId,
+            sessionId: SESSION_ID,
+            url,
+            userAgent
         };
     }
 
     // Generic Error
     if (error instanceof Error) {
         return {
+            id: errorId,
             type: ErrorType.CLIENT,
+            category: ErrorCategory.SYSTEM,
             message: error.message,
             userMessage: ERROR_MESSAGES[ErrorType.CLIENT].message,
             severity: ErrorSeverity.MEDIUM,
             timestamp,
             stack: error.stack,
+            context,
             recoverable: true,
-            retryable: false
+            retryable: false,
+            userId,
+            sessionId: SESSION_ID,
+            url,
+            userAgent
         };
     }
 
     // Unknown error
+    let errorMessage: string;
+    try {
+        errorMessage = String(error);
+    } catch {
+        errorMessage = '[Object cannot be converted to string]';
+    }
+
     return {
+        id: errorId,
         type: ErrorType.UNKNOWN,
-        message: String(error),
+        category: ErrorCategory.SYSTEM,
+        message: errorMessage,
         userMessage: ERROR_MESSAGES[ErrorType.UNKNOWN].message,
         severity: ErrorSeverity.MEDIUM,
         timestamp,
+        context,
         recoverable: true,
-        retryable: true
+        retryable: true,
+        userId,
+        sessionId: SESSION_ID,
+        url,
+        userAgent
     };
+}
+
+function getUserId(): string | undefined {
+    try {
+        if (typeof localStorage === 'undefined') return undefined;
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        return user.id;
+    } catch {
+        return undefined;
+    }
 }
 
 // ============================================
@@ -286,8 +444,12 @@ class ErrorReporter {
     private user?: { id?: string; email?: string };
     private maxQueueSize = 100;
     private flushInterval: ReturnType<typeof setInterval> | null = null;
+    private monitoringEndpoint?: string;
 
     private constructor() {
+        // Configure monitoring endpoint from environment
+        this.monitoringEndpoint = import.meta.env.VITE_ERROR_MONITORING_ENDPOINT;
+        
         // Start flush interval
         this.flushInterval = setInterval(() => this.flush(), 30000);
 
@@ -325,26 +487,26 @@ class ErrorReporter {
     }
 
     report(error: unknown, context?: Record<string, any>): AppError {
-        const appError = classifyError(error);
+        const appError = classifyError(error, context);
 
         if (!this.enabled) {
             return appError;
         }
 
         const report: ErrorReport = {
-            id: crypto.randomUUID(),
-            error: { ...appError, context: { ...appError.context, ...context } },
+            id: appError.id,
+            error: appError,
             user: this.user,
             device: {
-                userAgent: navigator.userAgent,
-                language: navigator.language,
-                screen: `${window.screen.width}x${window.screen.height}`,
-                online: navigator.onLine
+                userAgent: appError.userAgent,
+                language: typeof navigator !== 'undefined' ? navigator.language : 'unknown',
+                screen: typeof window !== 'undefined' ? `${window.screen.width}x${window.screen.height}` : 'unknown',
+                online: typeof navigator !== 'undefined' ? navigator.onLine : true
             },
             context: {
-                url: window.location.href,
-                referrer: document.referrer,
-                timestamp: new Date().toISOString()
+                url: appError.url,
+                referrer: typeof document !== 'undefined' ? document.referrer : '',
+                timestamp: appError.timestamp
             }
         };
 
@@ -389,8 +551,20 @@ class ErrorReporter {
             }
         }
 
-        // In production, send to error tracking service
-        // await fetch('/api/errors', { method: 'POST', body: JSON.stringify(report) });
+        // Send to external monitoring service if configured
+        if (this.monitoringEndpoint) {
+            try {
+                await fetch(this.monitoringEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(report)
+                });
+            } catch (e) {
+                logger.warn('Failed to send error to monitoring service', 'ErrorReporter', { error: e });
+            }
+        }
     }
 
     private handleGlobalError(event: ErrorEvent): void {
@@ -591,7 +765,8 @@ export const errorHandling = {
     isRetryable,
     isRecoverable,
     ErrorType,
-    ErrorSeverity
+    ErrorSeverity,
+    ErrorCategory
 };
 
 export default errorHandling;

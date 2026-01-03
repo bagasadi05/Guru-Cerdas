@@ -198,14 +198,14 @@ const NotificationsSection: React.FC = () => {
             {/* Schedule Notifications */}
             <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
                 <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
-                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">Preferensi Notifikasi</CardTitle>
+                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Preferensi Notifikasi</CardTitle>
                     <CardDescription className="text-base">Kelola bagaimana Anda menerima pemberitahuan penting.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 sm:pt-8 space-y-3 sm:space-y-4">
                     {/* Schedule Reminder */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-green-200 dark:hover:border-green-800 transition-colors">
                         <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="p-2 sm:p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                            <div className="p-2 sm:p-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex-shrink-0">
                                 <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
                             <div className="min-w-0">
@@ -213,7 +213,7 @@ const NotificationsSection: React.FC = () => {
                                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Notifikasi 5 menit sebelum kelas.</p>
                             </div>
                         </div>
-                        <Switch checked={isNotificationsEnabled} onChange={(e) => handleToggle(e.target.checked)} disabled={isLoading || !isOnline} className="data-[state=checked]:bg-indigo-600 flex-shrink-0" />
+                        <Switch checked={isNotificationsEnabled} onChange={(e) => handleToggle(e.target.checked)} disabled={isLoading || !isOnline} className="data-[state=checked]:bg-green-600 flex-shrink-0" />
                     </div>
 
                     {/* Task Reminders */}
@@ -283,7 +283,7 @@ const NotificationsSection: React.FC = () => {
             {/* Notification Sound Picker */}
             <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
                 <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
-                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400">
+                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
                         Nada Notifikasi
                     </CardTitle>
                     <CardDescription className="text-base">
@@ -293,7 +293,7 @@ const NotificationsSection: React.FC = () => {
                 <CardContent className="pt-6 sm:pt-8 space-y-6">
                     {/* Volume Control */}
                     <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
-                        <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                        <div className="p-2 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
                             {volume > 0.5 ? <Volume2 className="w-5 h-5" /> : <Volume className="w-5 h-5" />}
                         </div>
                         <div className="flex-1">
@@ -305,7 +305,7 @@ const NotificationsSection: React.FC = () => {
                                 step="0.1"
                                 value={volume}
                                 onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-600"
                             />
                         </div>
                         <span className="text-sm font-bold text-slate-600 dark:text-slate-400 w-12 text-right">
@@ -337,8 +337,8 @@ const NotificationsSection: React.FC = () => {
                                         className={`
                                         relative p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer group
                                         ${isSelected
-                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-lg shadow-purple-500/20'
-                                                : 'border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 bg-white dark:bg-slate-800'
+                                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20 shadow-lg shadow-green-500/20'
+                                                : 'border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-700 bg-white dark:bg-slate-800'
                                             }
                                         ${isCustomDisabled ? 'opacity-50' : ''}
                                     `}
@@ -346,7 +346,7 @@ const NotificationsSection: React.FC = () => {
                                     >
                                         {/* Selection indicator */}
                                         {isSelected && (
-                                            <div className="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                                            <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                                                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                                 </svg>
@@ -373,7 +373,7 @@ const NotificationsSection: React.FC = () => {
                                                     e.stopPropagation();
                                                     handlePreviewSound(sound.id);
                                                 }}
-                                                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-400 transition-colors opacity-0 group-hover:opacity-100"
+                                                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors opacity-0 group-hover:opacity-100"
                                                 title="Preview suara"
                                             >
                                                 <PlayCircle className="w-4 h-4" />
@@ -387,7 +387,7 @@ const NotificationsSection: React.FC = () => {
                                                     e.stopPropagation();
                                                     handleSystemRingtoneSelect();
                                                 }}
-                                                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors"
                                                 title="Pilih dari ringtone sistem"
                                             >
                                                 <Smartphone className="w-4 h-4" />
@@ -401,7 +401,7 @@ const NotificationsSection: React.FC = () => {
                                                     e.stopPropagation();
                                                     fileInputRef.current?.click();
                                                 }}
-                                                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors"
                                                 title="Upload audio"
                                             >
                                                 <Upload className="w-4 h-4" />
@@ -414,7 +414,7 @@ const NotificationsSection: React.FC = () => {
 
                     {/* Custom sound management */}
                     {hasCustomSound && (
-                        <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                        <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
                             <div className="flex items-center gap-3">
                                 <span className="text-2xl">🎵</span>
                                 <div>
@@ -427,7 +427,7 @@ const NotificationsSection: React.FC = () => {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handlePreviewSound('custom')}
-                                    className="text-purple-600 dark:text-purple-400"
+                                    className="text-green-600 dark:text-green-400"
                                 >
                                     <PlayCircle className="w-4 h-4 mr-1" />
                                     Test

@@ -127,36 +127,4 @@ export const SEMESTER_OPTIONS: { value: SemesterType; label: string }[] = [
     { value: '2', label: 'Semester 2 (Genap) - Jan-Jun' },
 ];
 
-/**
- * Local storage key for semester lock setting
- */
-export const SEMESTER_LOCK_KEY = 'portal_guru_semester_1_locked';
 
-/**
- * Check if Semester 1 is locked
- */
-export const isSemester1Locked = (): boolean => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem(SEMESTER_LOCK_KEY) === 'true';
-};
-
-/**
- * Set Semester 1 lock status
- */
-export const setSemester1Locked = (locked: boolean): void => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(SEMESTER_LOCK_KEY, locked ? 'true' : 'false');
-};
-
-/**
- * Check if a record can be edited/deleted based on semester lock
- */
-export const canModifyRecord = (date: Date | string, isLockedOverride?: boolean): boolean => {
-    const semester = getSemesterFromDate(date);
-    const locked = isLockedOverride !== undefined ? isLockedOverride : isSemester1Locked();
-
-    if (semester === '1' && locked) {
-        return false;
-    }
-    return true;
-};

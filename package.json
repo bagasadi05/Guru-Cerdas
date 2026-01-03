@@ -68,7 +68,7 @@
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
-    "framer-motion": "^12.23.25",
+    "framer-motion": "^12.23.26",
     "html2canvas": "^1.4.1",
     "ics": "^3.8.1",
     "jspdf": "^3.0.4",

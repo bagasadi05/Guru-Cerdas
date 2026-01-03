@@ -46,8 +46,18 @@ export const getDefaultAvatar = (gender?: string | null, studentId?: string): st
 export const getStudentAvatar = (
     avatarUrl?: string | null,
     gender?: string | null,
-    studentId?: string
+    studentId?: string,
+    studentName?: string
 ): string => {
+    // Check if URL is from deprecated avatar.iran.liara.run service
+    if (avatarUrl && avatarUrl.includes('avatar.iran.liara.run')) {
+        // Convert to DiceBear URL using student name or ID as seed
+        const seed = studentName || studentId || 'user';
+        const isMale = avatarUrl.includes('/boy') || gender === 'Laki-laki' || gender === 'L';
+        const bgColor = isMale ? 'b6e3f4' : 'ffd5dc';
+        return `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${bgColor}`;
+    }
+
     // If has custom avatar and not empty, use it
     if (avatarUrl && avatarUrl.trim() !== '') {
         return avatarUrl;

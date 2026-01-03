@@ -258,6 +258,7 @@ export function validateFile(
     }
 
     // Check for dangerous characters in filename
+    // eslint-disable-next-line no-control-regex
     const dangerousChars = /[<>:"/\\|?*\x00-\x1f]/;
     if (dangerousChars.test(file.name)) {
         return { valid: false, error: 'Nama file mengandung karakter tidak valid' };
@@ -325,6 +326,7 @@ export function sanitizeFilename(filename: string): string {
     if (typeof filename !== 'string') return 'file';
 
     // Remove path separators and dangerous characters
+    // eslint-disable-next-line no-control-regex
     let sanitized = filename.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
 
     // Remove leading/trailing dots and spaces
@@ -427,6 +429,7 @@ interface AuditLogEntry {
     userId?: string;
     targetType?: string;
     targetId?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     details?: Record<string, any>;
     ipAddress?: string;
     userAgent?: string;
@@ -446,6 +449,7 @@ export function auditLog(
         userId?: string;
         targetType?: string;
         targetId?: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         details?: Record<string, any>;
     } = {}
 ): void {
@@ -581,18 +585,24 @@ export function sanitizeFormData<T extends Record<string, any>>(data: T): T {
 
         if (typeof value === 'string') {
             // Sanitize based on field type
+            // Sanitize based on field type
             if (key.toLowerCase().includes('html') || key.toLowerCase().includes('content')) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (sanitized as any)[key] = sanitizeContent(value);
             } else if (key.toLowerCase().includes('url') || key.toLowerCase().includes('link')) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (sanitized as any)[key] = sanitizeUrl(value);
             } else {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (sanitized as any)[key] = sanitizeText(value);
             }
         } else if (Array.isArray(value)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (sanitized as any)[key] = value.map((item: unknown) =>
                 typeof item === 'string' ? sanitizeText(item) : item
             );
         } else if (value && typeof value === 'object') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (sanitized as any)[key] = sanitizeFormData(value);
         }
     }

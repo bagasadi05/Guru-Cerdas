@@ -11,6 +11,7 @@ import { ArrowLeftIcon } from '../Icons';
 import { violationList } from '../../services/violations.data';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 // import { Type } from '@google/genai';
 import { generateStudentReport, ReportData as ReportDataType } from '../../services/pdfGenerator';
 import { Modal } from '../ui/Modal';
@@ -19,7 +20,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { InputMode, Step, ReviewDataItem, StudentFilter, StudentRow, AcademicRecordRow } from './mass-input/types';
 import { useMassInputData } from './mass-input/hooks/useMassInputData';
-import { Step1_ModeSelection, actionCards } from './mass-input/components/Step1_ModeSelection';
+import { Step1_ModeSelection } from './mass-input/components/Step1_ModeSelection';
+import { actionCards } from './mass-input/constants';
 import { Step2_Configuration } from './mass-input/components/Step2_Configuration';
 import { Step2_StudentList } from './mass-input/components/Step2_StudentList';
 import { Step2_Footer } from './mass-input/components/Step2_Footer';
@@ -38,7 +40,7 @@ const MassInputPage: React.FC = () => {
     const [mode, setMode] = useState<InputMode | null>(null);
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [quizInfo, setQuizInfo] = useState({ name: '', subject: '', date: new Date().toISOString().slice(0, 10) });
-    const [subjectGradeInfo, setSubjectGradeInfo] = useState({ subject: '', assessment_name: '', notes: '' });
+    const [subjectGradeInfo, setSubjectGradeInfo] = useState({ subject: '', assessment_name: '', notes: '', semester: '' as 'ganjil' | 'genap' | '' });
     const [scores, setScores] = useState<Record<string, string>>({});
     const [pasteData, setPasteData] = useState('');
     const [isParsing, setIsParsing] = useState(false);
@@ -67,7 +69,7 @@ const MassInputPage: React.FC = () => {
         uniqueSubjects,
         assessmentNames,
         existingGrades,
-        isLoadingGrades,
+        // isLoadingGrades,
         existingViolations,
         isLoadingViolations
     } = useMassInputData(selectedClass, subjectGradeInfo.subject, subjectGradeInfo.assessment_name, mode || undefined);
@@ -91,7 +93,7 @@ const MassInputPage: React.FC = () => {
             // Clear state to prevent re-triggering
             navigate(location.pathname, { replace: true, state: {} });
         }
-    }, [location.state?.prefill, navigate]);
+    }, [location.state?.prefill, navigate, location.pathname]);
 
     useEffect(() => {
         if (classes && classes.length > 0 && !selectedClass) {
@@ -111,7 +113,30 @@ const MassInputPage: React.FC = () => {
         }
     }, [existingGrades, mode]);
 
-    const studentsWithGrades = useMemo(() => new Set(existingGrades?.map(g => g.student_id)), [existingGrades]);
+    // Filter existingGrades by semester for delete mode
+    const filteredExistingGrades = useMemo(() => {
+        if (!existingGrades) return [];
+        if (!subjectGradeInfo.semester) return existingGrades;
+
+        return existingGrades.filter(record => {
+            const notes = record.notes?.toLowerCase() || '';
+            // Strict check: if the note explicitly mentions a semester, respect it.
+            // If the note does NOT mention any semester, include it as a potential match (backward compatibility).
+            const hasGanjil = notes.includes('semester ganjil');
+            const hasGenap = notes.includes('semester genap');
+
+            if (subjectGradeInfo.semester === 'ganjil') {
+                // Show if explicitly Ganjil OR (not explicitly Genap AND not explicitly Ganjil [handled by first condition])
+                // Simplified: Show if Ganjil OR (Not Genap AND Not Ganjil) -> Show if Ganjil OR No Semester Tag
+                return hasGanjil || (!hasGanjil && !hasGenap);
+            } else if (subjectGradeInfo.semester === 'genap') {
+                return hasGenap || (!hasGanjil && !hasGenap);
+            }
+            return true;
+        });
+    }, [existingGrades, subjectGradeInfo.semester]);
+
+    const studentsWithGrades = useMemo(() => new Set(filteredExistingGrades?.map(g => g.student_id)), [filteredExistingGrades]);
 
     const students = useMemo((): StudentRow[] => {
         if (!studentsData) return [];
@@ -139,7 +164,7 @@ const MassInputPage: React.FC = () => {
 
     const handleBack = () => {
         setStep(1); setMode(null); setSelectedClass(''); setQuizInfo({ name: '', subject: '', date: new Date().toISOString().slice(0, 10) });
-        setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '' }); setScores({}); setPasteData(''); setSelectedViolationCode('');
+        setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '', semester: '' }); setScores({}); setPasteData(''); setSelectedViolationCode('');
         setViolationDate(new Date().toISOString().slice(0, 10)); setSelectedStudentIds(new Set()); setSearchTerm(''); setStudentFilter('all');
         setConfirmDeleteModal({ isOpen: false, count: 0 }); setIsCustomSubject(false);
     };
@@ -180,7 +205,11 @@ const MassInputPage: React.FC = () => {
     const handleStudentSelect = (studentId: string) => {
         setSelectedStudentIds(prev => {
             const newSet = new Set(prev);
-            newSet.has(studentId) ? newSet.delete(studentId) : newSet.add(studentId);
+            if (newSet.has(studentId)) {
+                newSet.delete(studentId);
+            } else {
+                newSet.add(studentId);
+            }
             return newSet;
         });
     };
@@ -206,13 +235,11 @@ const MassInputPage: React.FC = () => {
                 case 'quiz': {
                     if (!quizInfo.name || !quizInfo.subject || selectedStudentIds.size === 0) throw new Error("Informasi aktivitas dan siswa harus diisi.");
                     const records: Database['public']['Tables']['quiz_points']['Insert'][] = Array.from(selectedStudentIds).map((student_id: string) => ({
-                        quiz_name: quizInfo.name,
-                        subject: quizInfo.subject,
-                        quiz_date: quizInfo.date,
+                        reason: `${quizInfo.name} - ${quizInfo.subject}`,
+                        type: 'quiz',
                         student_id,
                         user_id: user.id,
                         points: 1,
-                        max_points: 1,
                     }));
                     const { error } = await supabase.from('quiz_points').insert(records); if (error) throw error; return `Poin keaktifan untuk ${records.length} siswa berhasil disimpan.`;
                 }
@@ -221,6 +248,10 @@ const MassInputPage: React.FC = () => {
                     if (Object.keys(validationErrors).length > 0) throw new Error("Perbaiki nilai yang tidak valid sebelum menyimpan.");
 
                     const existingGradesMap = new Map((existingGrades || []).map(g => [g.student_id, g.id]));
+                    // Prepare notes with semester info
+                    const semesterNote = subjectGradeInfo.semester
+                        ? `[Semester ${subjectGradeInfo.semester === 'ganjil' ? 'Ganjil' : 'Genap'}] ${subjectGradeInfo.notes}`
+                        : subjectGradeInfo.notes;
                     const records = Object.entries(scores)
                         .filter(([, score]: [string, string]) => score && score.trim() !== '')
                         .map(([student_id, score]: [string, string]) => {
@@ -232,7 +263,7 @@ const MassInputPage: React.FC = () => {
                                 id: existingGradesMap.get(student_id) || crypto.randomUUID(),
                                 subject: subjectGradeInfo.subject,
                                 assessment_name: subjectGradeInfo.assessment_name,
-                                notes: subjectGradeInfo.notes,
+                                notes: semesterNote,
                                 score: numScore,
                                 student_id,
                                 user_id: user.id
@@ -245,7 +276,12 @@ const MassInputPage: React.FC = () => {
                 case 'violation': {
                     if (!selectedViolation || selectedStudentIds.size === 0) throw new Error("Jenis pelanggaran dan siswa harus dipilih.");
                     const records: Database['public']['Tables']['violations']['Insert'][] = Array.from(selectedStudentIds).map((student_id: string) => ({
-                        date: violationDate, description: selectedViolation.description, points: selectedViolation.points, student_id, user_id: user.id
+                        date: violationDate,
+                        description: selectedViolation.description,
+                        points: selectedViolation.points,
+                        type: selectedViolation.code,
+                        student_id,
+                        user_id: user.id
                     }));
                     const { error } = await supabase.from('violations').insert(records); if (error) throw error; return `Pelanggaran untuk ${records.length} siswa berhasil dicatat.`;
                 }
@@ -333,20 +369,38 @@ const MassInputPage: React.FC = () => {
                     const attendanceSummary = `Sakit: ${data.attendanceRecords.filter(r => r.status === 'Sakit').length}, Izin: ${data.attendanceRecords.filter(r => r.status === 'Izin').length}, Alpha: ${data.attendanceRecords.filter(r => r.status === 'Alpha').length}.`;
                     return { studentId: data.student.id, studentName: data.student.name, academicSummary, behaviorSummary, attendanceSummary };
                 });
-                const systemInstruction = `Anda adalah seorang guru wali kelas yang bijaksana dan suportif. Tugas Anda adalah menulis paragraf "Catatan Wali Kelas" untuk setiap siswa berdasarkan data yang diberikan. Catatan harus holistik, memotivasi, dan dalam satu paragraf (3-5 kalimat). Jawab dalam format JSON yang valid.
-                
-                Format JSON yang diharapkan:
-                {
-                  "notes": [
-                    { "studentId": "ID_SISWA", "teacherNote": "Isi catatan..." }
-                  ]
-                }`;
-                const prompt = `Buatkan "Catatan Wali Kelas" untuk setiap siswa dalam daftar JSON berikut. Data Siswa: ${JSON.stringify(studentDataForPrompt)}`;
-                // const responseSchema = { type: Type.OBJECT, properties: { notes: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { studentId: { type: Type.STRING }, teacherNote: { type: Type.STRING } }, required: ["studentId", "teacherNote"] } } }, required: ["notes"] };
+                const systemInstruction = `Anda adalah wali kelas yang menulis catatan rapor SINGKAT. ATURAN KETAT:
+1. Setiap catatan HANYA 2-3 kalimat (maksimal 40 kata per siswa)
+2. Format: [Penilaian singkat]. [Saran/motivasi].
+3. TIDAK perlu menyebutkan angka/data yang sudah ada
+4. Langsung, to the point, tidak bertele-tele
+5. Bahasa Indonesia formal tapi hangat
+
+Format JSON yang diharapkan:
+{
+  "notes": [
+    { "studentId": "ID_SISWA", "teacherNote": "Catatan singkat 2-3 kalimat..." }
+  ]
+}`;
+                const prompt = `Buat catatan wali kelas SINGKAT (2-3 kalimat saja per siswa) untuk:
+${JSON.stringify(studentDataForPrompt.map(s => ({ id: s.studentId, nama: s.studentName, ringkasan: s.academicSummary.split('.')[0] })))}
+
+Contoh output yang benar:
+"Ananda menunjukkan kemajuan baik dalam belajar. Terus tingkatkan semangat dan keaktifan di kelas."`;
 
                 const parsedResponse = await generateOpenRouterJson<{ notes: { studentId: string; teacherNote: string }[] }>(prompt, systemInstruction);
                 const parsedNotes = parsedResponse.notes;
-                teacherNotesMap = new Map(parsedNotes.map(item => [item.studentId, item.teacherNote.replace(/\\n/g, ' ')]));
+
+                // Clean up notes - ensure they're concise
+                teacherNotesMap = new Map(parsedNotes.map(item => {
+                    let note = item.teacherNote.replace(/\\n/g, ' ').trim();
+                    // Limit to 3 sentences max
+                    const sentences = note.split(/[.!?]+/).filter(s => s.trim().length > 0);
+                    if (sentences.length > 3) {
+                        note = sentences.slice(0, 3).join('. ').trim() + '.';
+                    }
+                    return [item.studentId, note];
+                }));
             }
             setExportProgress("70%"); toast.info("Menyusun file PDF...");
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' }); let isFirstPage = true;
@@ -368,10 +422,24 @@ const MassInputPage: React.FC = () => {
         if (!selectedClass || !subjectGradeInfo.subject) { toast.warning("Pilih kelas dan mata pelajaran."); return; }
         if (selectedStudentIds.size === 0) { toast.warning("Pilih setidaknya satu siswa untuk mencetak."); return; }
         setIsExporting(true); toast.info("Membuat rekap nilai...");
+
+        // Ensure logos are loaded
+        await ensureLogosLoaded();
+
         const doc = new jsPDF(); const className = classes?.find(c => c.id === selectedClass)?.name;
-        doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.text(`Rekap Nilai: ${subjectGradeInfo.subject}`, 14, 22);
-        doc.setFontSize(12); doc.setFont('helvetica', 'normal'); doc.text(`Kelas: ${className}`, 14, 30);
-        doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 38);
+        const pageWidth = doc.internal.pageSize.getWidth();
+
+        // Add header with logos
+        let y = addPdfHeader(doc, { orientation: 'portrait' });
+
+        // Title
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text(`Rekap Nilai: ${subjectGradeInfo.subject}`, pageWidth / 2, y, { align: 'center' });
+        y += 8;
+        doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+        doc.text(`Kelas: ${className}`, 14, y);
+        doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, pageWidth - 14, y, { align: 'right' });
+        const tableStartY = y + 8;
 
         const { data: allSubjectGrades } = await supabase
             .from('academic_records')
@@ -400,13 +468,13 @@ const MassInputPage: React.FC = () => {
                 return rowData;
             });
 
-        autoTable(doc, { startY: 45, head, body: tableData, theme: 'grid', headStyles: { fillColor: '#0284c7' } });
+        autoTable(doc, { startY: tableStartY, head, body: tableData, theme: 'grid', headStyles: { fillColor: '#0284c7' } });
         doc.save(`Nilai_${subjectGradeInfo.subject.replace(/\s/g, '_')}_${className}.pdf`);
         toast.success("Rekap nilai berhasil diunduh."); setIsExporting(false);
     };
 
     const handleConfirmDelete = () => {
-        const recordIdsToDelete = (existingGrades || [])
+        const recordIdsToDelete = (filteredExistingGrades || [])
             .filter(g => selectedStudentIds.has(g.student_id))
             .map(g => g.id);
         deleteGrades(recordIdsToDelete);
@@ -533,7 +601,7 @@ const MassInputPage: React.FC = () => {
                                     handleStudentSelect={handleStudentSelect}
                                     scores={scores}
                                     handleScoreChange={handleScoreChange}
-                                    existingGrades={existingGrades}
+                                    existingGrades={mode === 'delete_subject_grade' ? filteredExistingGrades : existingGrades}
                                 />
                             </>
                         )}

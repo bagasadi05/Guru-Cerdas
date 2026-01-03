@@ -1,5 +1,6 @@
 import './styles/designSystem.css';
 import './styles/accessibility.css';
+import './styles/print.css';
 
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
@@ -14,7 +15,8 @@ import { QueryClient } from '@tanstack/query-core';
 import ErrorBoundary from './components/ErrorBoundary';
 import { OfflineBanner, SyncProvider, UploadManagerProvider } from './components/StatusIndicators';
 import { GlobalSearchProvider, GlobalSearchModal } from './components/SearchSystem';
-import { TourProvider, HelpButton, HelpCenter } from './components/OnboardingHelp';
+import { TourProvider, HelpButton } from './components/OnboardingHelp';
+import { SimpleHelpCenter } from './components/SimpleHelpCenter';
 import { KeyboardShortcutsProvider, KeyboardShortcutsPanel, useKeyboardShortcuts } from './components/AdvancedFeatures';
 import { AccessibilityProvider } from './components/ui/AccessibilityFeatures';
 import { UploadProgressProvider } from './components/ui/PerformanceIndicators';
@@ -25,7 +27,9 @@ import { useSessionTimeout } from './hooks/useSessionTimeout';
 import { SessionTimeoutWarning } from './components/ui/SessionTimeoutWarning';
 import { cleanupExpiredBackups } from './utils/dataBackup';
 import { supabase } from './services/supabase';
-import helpArticles from './data/helpArticles';
+import { I18nProvider } from './utils/i18n';
+import { SkipToMainContent } from './utils/pageAccessibility';
+import { SemesterProvider } from './contexts/SemesterContext';
 
 // Start cleanup scheduler on app load
 startCleanupScheduler();
@@ -132,23 +136,27 @@ function App() {
         <ThemeProvider>
           <AccessibilityProvider>
             <AuthProvider>
-              <ToastProvider>
-                <SyncProvider>
-                  <UploadManagerProvider>
-                    <UploadProgressProvider>
-                      <UndoToastProvider>
-                        <KeyboardShortcutsProvider>
-                          <Suspense fallback={loadingSpinner}>
-                            <BrowserRouter>
-                              <AppContent />
-                            </BrowserRouter>
-                          </Suspense>
-                        </KeyboardShortcutsProvider>
-                      </UndoToastProvider>
-                    </UploadProgressProvider>
-                  </UploadManagerProvider>
-                </SyncProvider>
-              </ToastProvider>
+              <I18nProvider>
+                <ToastProvider>
+                  <SyncProvider>
+                    <SemesterProvider>
+                      <UploadManagerProvider>
+                        <UploadProgressProvider>
+                          <UndoToastProvider>
+                            <KeyboardShortcutsProvider>
+                              <Suspense fallback={loadingSpinner}>
+                                <BrowserRouter>
+                                  <AppContent />
+                                </BrowserRouter>
+                              </Suspense>
+                            </KeyboardShortcutsProvider>
+                          </UndoToastProvider>
+                        </UploadProgressProvider>
+                      </UploadManagerProvider>
+                    </SemesterProvider>
+                  </SyncProvider>
+                </ToastProvider>
+              </I18nProvider>
             </AuthProvider>
           </AccessibilityProvider>
         </ThemeProvider>
@@ -316,61 +324,63 @@ function AppContent() {
   };
 
   return (
-    <GlobalSearchProvider onSearch={handleSearch}>
-      <TourProvider>
-        <Routes>
-          <Route path="/" element={<RoleSelectionPage />} />
-          <Route path="/guru-login" element={<LoginPage />} />
-          <Route path="/portal-login" element={<PortalLoginPage />} />
-          <Route path="/portal/:studentId" element={<ParentPortalPage />} />
+    <>
+      <SkipToMainContent />
+      <GlobalSearchProvider onSearch={handleSearch}>
+        <TourProvider>
+          <Routes>
+            <Route path="/" element={<RoleSelectionPage />} />
+            <Route path="/guru-login" element={<LoginPage />} />
+            <Route path="/portal-login" element={<PortalLoginPage />} />
+            <Route path="/portal/:studentId" element={<ParentPortalPage />} />
 
-          <Route element={<PrivateRoutes />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/absensi" element={<AttendancePage />} />
-            <Route path="/siswa" element={<StudentsPage />} />
-            <Route path="/siswa/:studentId" element={<StudentDetailPage />} />
-            <Route path="/jadwal" element={<SchedulePage />} />
-            <Route path="/pengaturan" element={<SettingsPage />} />
-            <Route path="/tugas" element={<TasksPage />} />
-            <Route path="/input-massal" element={<MassInputPage />} />
-            <Route path="/input-nilai-cepat" element={<BulkGradeInputPage />} />
-            <Route path="/sampah" element={<TrashPage />} />
-            <Route path="/riwayat" element={<ActionHistoryPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-          </Route>
+            <Route element={<PrivateRoutes />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/absensi" element={<AttendancePage />} />
+              <Route path="/siswa" element={<StudentsPage />} />
+              <Route path="/siswa/:studentId" element={<StudentDetailPage />} />
+              <Route path="/jadwal" element={<SchedulePage />} />
+              <Route path="/pengaturan" element={<SettingsPage />} />
+              <Route path="/tugas" element={<TasksPage />} />
+              <Route path="/input-massal" element={<MassInputPage />} />
+              <Route path="/input-nilai-cepat" element={<BulkGradeInputPage />} />
+              <Route path="/sampah" element={<TrashPage />} />
+              <Route path="/riwayat" element={<ActionHistoryPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+            </Route>
 
-          {/* Report page has no main layout */}
-          <Route path="/cetak-rapot/:studentId" element={<ReportPage />} />
+            {/* Report page has no main layout */}
+            <Route path="/cetak-rapot/:studentId" element={<ReportPage />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
 
-        <PwaPrompt />
-        <OfflineBanner />
-        <GlobalSearchModal onSelect={handleSearchResult} />
-        <HelpButton onClick={() => setShowHelp(true)} />
-        <HelpCenter
-          isOpen={showHelp}
-          onClose={() => setShowHelp(false)}
-          articles={helpArticles}
-        />
-        <KeyboardShortcutsPanel isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
-
-        {/* Session Timeout Warning */}
-        {session && (
-          <SessionTimeoutWarning
-            isOpen={isWarningVisible}
-            remainingSeconds={remainingSeconds}
-            onExtend={extendSession}
-            onLogout={() => {
-              logout();
-              navigate('/guru-login');
-            }}
+          <PwaPrompt />
+          <OfflineBanner />
+          <GlobalSearchModal onSelect={handleSearchResult} />
+          <HelpButton onClick={() => setShowHelp(true)} />
+          <SimpleHelpCenter
+            isOpen={showHelp}
+            onClose={() => setShowHelp(false)}
           />
-        )}
-      </TourProvider>
-    </GlobalSearchProvider>
+          <KeyboardShortcutsPanel isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
+
+          {/* Session Timeout Warning */}
+          {session && (
+            <SessionTimeoutWarning
+              isOpen={isWarningVisible}
+              remainingSeconds={remainingSeconds}
+              onExtend={extendSession}
+              onLogout={() => {
+                logout();
+                navigate('/guru-login');
+              }}
+            />
+          )}
+        </TourProvider>
+      </GlobalSearchProvider>
+    </>
   );
 }
 

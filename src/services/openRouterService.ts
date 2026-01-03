@@ -1,8 +1,12 @@
-
-import { isAiEnabled } from './supabase';
-
 const OPENROUTER_API_KEY = process.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_OPENROUTER_API_KEY || '';
-const MODEL_NAME = "xiaomi/mimo-v2-flash:free";
+
+// Priority list of FREE models to try in order
+const FALLBACK_MODELS = [
+    "google/gemini-2.0-flash-exp:free",      // Primary: Fast & Smart
+    "meta-llama/llama-3.2-3b-instruct:free", // Fallback 1: Reliable
+    "qwen/qwen-2.5-7b-instruct:free",        // Fallback 2: Good alternative
+    "xiaomi/mimo-v2-flash:free"              // Legacy/Extra fallback
+];
 
 export interface OpenRouterMessage {
     role: 'user' | 'assistant' | 'system';
@@ -17,7 +21,7 @@ export interface OpenRouterResponse {
 }
 
 /**
- * Generates content using the OpenRouter API.
+ * Generates content using the OpenRouter API with robust fallback and retry logic.
  * 
  * @param messages The conversation history to send to the model.
  * @param useReasoning Whether to enable reasoning capabilities (if supported by the model).
@@ -25,52 +29,92 @@ export interface OpenRouterResponse {
  */
 export async function generateOpenRouterContent(
     messages: OpenRouterMessage[],
-    useReasoning: boolean = true
+    _useReasoning: boolean = true
 ): Promise<OpenRouterResponse> {
     if (!OPENROUTER_API_KEY) {
         throw new Error("OpenRouter API Key is missing. Please check your .env configuration.");
     }
 
-    try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json",
-                // "HTTP-Referer": window.location.origin, // Optional: for OpenRouter analytics
-                // "X-Title": "Portal Guru" // Optional: for OpenRouter analytics
-            },
-            body: JSON.stringify({
-                model: MODEL_NAME,
-                messages: messages,
-                reasoning: useReasoning ? { enabled: true } : undefined,
-                temperature: 0.7, // Adjust as needed
-                // response_format: { type: "json_object" } // Check model support for JSON mode if needed, Mimo might rely on prompt
-            })
-        });
+    let lastError: any = null;
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`OpenRouter API Error: ${response.status} ${response.statusText} - ${errorText}`);
+    // Iterate through models
+    for (const model of FALLBACK_MODELS) {
+        try {
+            // Attempt to call API with current model
+            // Add a small retry loop for the SAME model in case of temporary glitches (non-429)
+            // But for 429, we usually want to switch models fast unless we want to wait huge delay.
+            // Here we just try each model once per call to keep UI responsive, 
+            // relying on the model switch availability effectively acting as retries.
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s hard timeout
+
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                    "Content-Type": "application/json",
+                    // "HTTP-Referer": window.location.origin, // Optional: for OpenRouter analytics
+                    // "X-Title": "Portal Guru" // Optional: for OpenRouter analytics
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: messages,
+                    // reasoning: useReasoning ? { enabled: true } : undefined, // Reasoning support varies by model, safer to omit for generic fallback
+                    temperature: 0.7,
+                }),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (response.status === 429) {
+                console.warn(`Model ${model} rate limited (429). Switch to next model.`);
+                lastError = new Error(`Rate limit exceeded for ${model}`);
+                continue; // Try next model immediately
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                // If 5xx error, also try next model
+                if (response.status >= 500) {
+                    console.warn(`Model ${model} server error (${response.status}). Switch to next model.`);
+                    lastError = new Error(`Server error ${response.status} from ${model}`);
+                    continue;
+                }
+                throw new Error(`OpenRouter API Error (${model}): ${response.status} ${response.statusText} - ${errorText}`);
+            }
+
+            // If success, return immediately
+            return await response.json();
+
+        } catch (error: any) {
+            console.warn(`Failed with model ${model}:`, error);
+            lastError = error;
+            // If it's a timeout or network error, continue to next model
+            if (error.name === 'AbortError' || error.message.includes('fetch')) {
+                continue;
+            }
+            // If it's a critical application error (like invalid key), maybe stop? 
+            // But generally safer to try all.
         }
-
-        return await response.json();
-    } catch (error) {
-        console.error("Failed to generate content via OpenRouter:", error);
-        throw error;
     }
+
+    // If we're here, all models failed
+    console.error("All AI models failed.", lastError);
+    throw new Error("Layanan AI sedang sibuk atau tidak tersedia. Silakan coba beberapa saat lagi.");
 }
 
 /**
  * Helper to extract the assistant's text content from the response.
  */
 export function getAssistantContent(response: OpenRouterResponse): string {
-    return response.choices[0]?.message?.content || '';
+    return response.choices && response.choices[0] ? response.choices[0].message?.content || '' : '';
 }
 
 /**
  * Wrapper for JSON generation commands.
- * Note: Not all free models support 'json_object' natively, so proper prompting is key.
+ * Automatically tries to parse JSON and handles markdown cleanup.
  */
 export async function generateOpenRouterJson<T>(
     prompt: string,
@@ -83,18 +127,18 @@ export async function generateOpenRouterJson<T>(
     }
 
     // Force JSON in prompt for models that don't support response_format: json_object strictly
-    const jsonPrompt = `${prompt}\n\nIMPORTANT: Respond ONLY with valid JSON. Do not include markdown formatting like \`\`\`json.`;
+    const jsonPrompt = `${prompt}\n\nIMPORTANT: Respond ONLY with valid JSON. Do not include markdown formatting like \`\`\`json. The response should be a raw JSON object string.`;
 
     messages.push({ role: 'user', content: jsonPrompt });
 
-    const response = await generateOpenRouterContent(messages, false); // Reasoning often breaks strict JSON output
+    const response = await generateOpenRouterContent(messages, false);
     let content = getAssistantContent(response);
 
     // Robust JSON extraction:
-    // 1. Remove markdown code blocks (just in case)
-    // 2. Find the outer-most curly braces to ignore preamble/postscript
-    content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    // 1. Remove markdown code blocks
+    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
 
+    // 2. Find the outer-most curly braces to ignore preamble/postscript
     const firstBrace = content.indexOf('{');
     const lastBrace = content.lastIndexOf('}');
 
@@ -102,11 +146,13 @@ export async function generateOpenRouterJson<T>(
         content = content.substring(firstBrace, lastBrace + 1);
     }
 
+    // 3. Try parsing
     try {
         return JSON.parse(content) as T;
-    } catch (e) {
-        console.error("Failed to parse JSON from OpenRouter response. Content:", content);
-        console.error("Parse Error details:", e);
-        throw new Error("AI did not return valid JSON.");
+    } catch (e: any) {
+        // Last ditch effort: regex for partial valid objects? 
+        // For now, just logging is safer.
+        console.error("JSON Parse Error. Content was:", content, e);
+        throw new Error("Respon AI tidak valid (JSON corrupt).");
     }
 }

@@ -1,81 +1,199 @@
-import { Database } from '../services/database.types';
+/**
+ * @fileoverview Central export point for all type definitions
+ * 
+ * This file serves as the main entry point for importing types throughout
+ * the application. Import types from here instead of individual type files.
+ * 
+ * @example
+ * ```typescript
+ * import type { StudentRow, DashboardQueryData } from '@/types';
+ * import { AttendanceStatus } from '@/types';
+ * ```
+ * 
+ * @module types
+ */
 
-// Core database types
-export type StudentRow = Database['public']['Tables']['students']['Row'];
-export type ClassRow = Database['public']['Tables']['classes']['Row'];
-export type AttendanceRow = Database['public']['Tables']['attendance']['Row'];
-export type AttendanceInsert = Database['public']['Tables']['attendance']['Insert'];
-export type TaskRow = Database['public']['Tables']['tasks']['Row'];
-export type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
-export type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
-export type ViolationRow = Database['public']['Tables']['violations']['Row'];
+// =============================================================================
+// DATABASE TYPES (using 'export type' for isolatedModules compatibility)
+// =============================================================================
 
-// Enums
-export enum AttendanceStatus {
-    Hadir = 'Hadir',
-    Izin = 'Izin',
-    Sakit = 'Sakit',
-    Alpha = 'Alpha',
-}
+export type {
+    // Row types
+    StudentRow,
+    ClassRow,
+    AttendanceRow,
+    TaskRow,
+    ScheduleRow,
+    AcademicRecordRow,
+    ViolationRow,
+    ReportRow,
+    QuizPointRow,
+    CommunicationRow,
+    AcademicYearRow,
+    SemesterRow,
 
-export enum TaskStatus {
-    todo = 'todo',
-    in_progress = 'in_progress',
-    done = 'done',
-}
+    // Insert types
+    AttendanceInsert,
+    StudentInsert,
+    ClassInsert,
+    TaskInsert,
+    ScheduleInsert,
+    AcademicRecordInsert,
+    ViolationInsert,
+    ReportInsert,
+    QuizPointInsert,
+    CommunicationInsert,
+    AcademicYearInsert,
+    SemesterInsert,
 
-// Composite types
-export type StudentWithClass = StudentRow & {
-    classes: Pick<ClassRow, 'name'> | null
-};
+    // Update types
+    StudentUpdate,
+    ClassUpdate,
+    AttendanceUpdate,
+    TaskUpdate,
+    ScheduleUpdate,
+    AcademicRecordUpdate,
+    ViolationUpdate,
+    ReportUpdate,
+    QuizPointUpdate,
+    CommunicationUpdate,
+    AcademicYearUpdate,
+    SemesterUpdate,
 
-export type AttendanceRecord = {
-    id?: string;
-    status: AttendanceStatus;
-    note: string;
-};
+    // Composite types
+    StudentWithClass,
+    StudentListItem,
+    ClassListItem,
+    AcademicRecordSummary,
+    ViolationSummary,
+    WeeklyAttendance,
+    DailyAttendanceSummary,
 
-// Validation types
-export type ValidationRule = {
-    validate: (value: any) => boolean;
-    message: string;
-};
+    // Database type for direct access
+    Database,
+} from './database';
 
-export type ValidationRules = Record<string, ValidationRule[]>;
+// =============================================================================
+// ENUM TYPES (enums are values, use regular export)
+// =============================================================================
 
-// Export types
-export type ExportFormat = 'pdf' | 'excel' | 'csv';
-export type ExportColumn = {
+export {
+    AttendanceStatus,
+    ATTENDANCE_STATUS_VALUES,
+    TaskStatus,
+    TaskPriority,
+    ExportFormat,
+    InputMode,
+    SortDirection,
+    StudentFilter,
+    DayOfWeek,
+    WEEKDAYS,
+    ViewMode,
+    ModalMode,
+    ToastType,
+} from './enums';
+
+// =============================================================================
+// API TYPES
+// =============================================================================
+
+export type {
+    DashboardQueryData,
+    StudentInsightItem,
+    AiInsight,
+    StoredInsight,
+    AiStudentSummary,
+    ExportColumn,
+    ExportableStudentData,
+    ExportableAttendanceData,
+    SearchResult,
+    ValidationRule,
+    ValidationRules,
+    ValidationResult,
+    FormValidationState,
+    QueueItem,
+    SyncStatus,
+    BackupData,
+    AiAnalysis,
+} from './api';
+
+export { QueuePriority } from './api';
+
+// =============================================================================
+// COMPONENT TYPES
+// =============================================================================
+
+export type {
+    ClassNameProps,
+    ChildrenProps,
+    BaseComponentProps,
+    StudentViewProps,
+    SortConfig,
+    StudentTableProps,
+    ModalBaseProps,
+    ConfirmModalProps,
+    StudentDetailModalState,
+    FormInputProps,
+    SelectOption,
+    SkeletonProps,
+    EmptyStateProps,
+    ErrorStateProps,
+    BulkAction,
+    ContextMenuAction,
+    ExportFormatType,
+    ExportModalProps,
+    StudentMutationVars,
+    ReportMutationVars,
+    AcademicMutationVars,
+    QuizMutationVars,
+    ViolationMutationVars,
+    CommunicationMutationVars,
+} from './components';
+
+// =============================================================================
+// FORM TYPES
+// =============================================================================
+
+export type {
+    FieldError,
+    FormValidationState as FormValidationStateForm,
+    ValidationRuleConfig,
+    StudentFormData,
+    StudentFormState,
+    ClassFormData,
+    ClassFormState,
+    AttendanceStatusValue,
+    AttendanceEntryData,
+    BulkAttendanceFormData,
+    AcademicRecordFormData,
+    BulkGradeFormData,
+    ViolationFormData,
+    TaskFormData,
+    ScheduleFormData,
+    CommunicationFormData,
+    ReportFormData,
+    UseFormStateReturn,
+    FieldRegistration,
+} from './forms';
+
+// =============================================================================
+// LEGACY TYPES (for backward compatibility)
+// =============================================================================
+
+/**
+ * @deprecated Use ExportColumn from './api' instead
+ */
+export type ExportColumnLegacy = {
     key: string;
     label: string;
     selected: boolean;
 };
 
-// Search types
-export type SearchResult = {
-    id: string;
-    type: 'student' | 'class' | 'attendance' | 'task';
-    title: string;
-    subtitle: string;
-    metadata?: Record<string, any>;
+/**
+ * Attendance record for local state management.
+ */
+export type AttendanceRecord = {
+    id?: string;
+    status: import('./enums').AttendanceStatus;
+    note: string;
 };
-
-// Backup types
-export type BackupData = {
-    version: string;
-    timestamp: string;
-    students: StudentRow[];
-    classes: ClassRow[];
-    attendance: AttendanceRow[];
-    tasks: TaskRow[];
-    schedules: ScheduleRow[];
-    academic_records: AcademicRecordRow[];
-    violations: ViolationRow[];
-};
-
-export type AiAnalysis = {
-    perfect_attendance: string[];
-    frequent_absentees: { student_name: string; absent_days: number; }[];
-    pattern_warnings: { pattern_description: string; implicated_students: string[]; }[];
-};
-

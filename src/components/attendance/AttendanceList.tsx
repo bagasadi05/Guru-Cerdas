@@ -3,6 +3,7 @@ import { StudentRow, AttendanceRecord, AttendanceStatus } from '../../types';
 import { statusOptions } from '../../constants';
 import { InfoIcon, PencilIcon, Share2Icon } from '../Icons';
 import { createWhatsAppLink, generateAttendanceMessage } from '../../utils/whatsappUtils';
+import { getStudentAvatar } from '../../utils/avatarUtils';
 
 interface AttendanceListProps {
     students: StudentRow[];
@@ -27,7 +28,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         <div className="flex items-center gap-4 flex-grow min-w-0">
                             <span className="text-slate-300 dark:text-slate-600 font-bold font-mono w-8 text-right flex-shrink-0 text-sm">{index + 1}</span>
                             <div className="relative">
-                                <img src={student.avatar_url} alt={student.name} className="w-12 h-12 rounded-xl object-cover border-2 border-white dark:border-slate-700 shadow-sm" />
+                                <img src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name)} alt={student.name} className="w-12 h-12 rounded-xl object-cover border-2 border-white dark:border-slate-700 shadow-sm" />
                                 {record?.status && (() => {
                                     const statusOpt = statusOptions.find(opt => opt.value === record.status);
                                     if (!statusOpt) return null;

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, TrendingUpIcon, CheckCircleIcon, PencilIcon, TrashIcon, FilterIcon, HistoryIcon, TagIcon, AlertTriangleIcon, StarIcon } from 'lucide-react';
+import { PlusIcon, TrendingUpIcon, CheckCircleIcon, PencilIcon, TrashIcon, HistoryIcon, TagIcon, AlertTriangleIcon, StarIcon } from 'lucide-react';
 import { QuizPointRow } from './types';
 
 // Point Categories with labels and colors
@@ -38,8 +38,8 @@ const CategoryFilter: React.FC<{
             <button
                 onClick={() => onSelect('all')}
                 className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${selectedCategory === 'all'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
             >
                 Semua
@@ -49,8 +49,8 @@ const CategoryFilter: React.FC<{
                     key={key}
                     onClick={() => onSelect(key as PointCategory)}
                     className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all flex items-center gap-1 ${selectedCategory === key
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                 >
                     <span>{icon}</span>
@@ -73,7 +73,8 @@ const PointsStats: React.FC<{ records: QuizPointRow[] }> = ({ records }) => {
         }, {} as Record<string, number>);
 
         const bySubject = available.reduce((acc, r) => {
-            acc[r.subject] = (acc[r.subject] || 0) + 1;
+            const subject = r.subject || 'Lainnya';
+            acc[subject] = (acc[subject] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
 
@@ -111,9 +112,11 @@ const PointsStats: React.FC<{ records: QuizPointRow[] }> = ({ records }) => {
 // Used Points History Component
 const UsedPointsHistory: React.FC<{ records: QuizPointRow[] }> = ({ records }) => {
     const usedRecords = useMemo(() =>
-        records.filter(r => r.is_used).sort((a, b) =>
-            new Date(b.used_at || b.quiz_date).getTime() - new Date(a.used_at || a.quiz_date).getTime()
-        ), [records]);
+        records.filter(r => r.is_used).sort((a, b) => {
+            const dateA = a.used_at || a.quiz_date || a.created_at;
+            const dateB = b.used_at || b.quiz_date || b.created_at;
+            return new Date(dateB).getTime() - new Date(dateA).getTime();
+        }), [records]);
 
     if (usedRecords.length === 0) return null;
 
@@ -149,10 +152,11 @@ const SubjectPointsOverview: React.FC<{ records: QuizPointRow[] }> = ({ records 
     const subjectStats = useMemo(() => {
         const available = records.filter(r => !r.is_used);
         const stats = available.reduce((acc, r) => {
-            if (!acc[r.subject]) {
-                acc[r.subject] = { available: 0, used: 0 };
+            const subject = r.subject || 'Lainnya';
+            if (!acc[subject]) {
+                acc[subject] = { available: 0, used: 0 };
             }
-            acc[r.subject].available += 1;
+            acc[subject].available += 1;
             return acc;
         }, {} as Record<string, { available: number; used: number }>);
 
@@ -182,8 +186,8 @@ const SubjectPointsOverview: React.FC<{ records: QuizPointRow[] }> = ({ records 
                         <div
                             key={subject}
                             className={`p-3 rounded-lg ${canApplyMore
-                                    ? 'bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700/50'
-                                    : 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                                ? 'bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700/50'
+                                : 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
                                 }`}
                         >
                             <p className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{subject}</p>
@@ -223,7 +227,11 @@ const ActivityPointsHistory: React.FC<{
         if (categoryFilter !== 'all') {
             filtered = filtered.filter(r => r.category === categoryFilter);
         }
-        return [...filtered].sort((a, b) => new Date(b.quiz_date).getTime() - new Date(a.quiz_date).getTime());
+        return [...filtered].sort((a, b) => {
+            const dateA = a.quiz_date || a.created_at;
+            const dateB = b.quiz_date || b.created_at;
+            return new Date(dateB).getTime() - new Date(dateA).getTime();
+        });
     }, [records, categoryFilter]);
 
     if (filteredRecords.length === 0) {
@@ -237,15 +245,6 @@ const ActivityPointsHistory: React.FC<{
             </div>
         );
     }
-
-    const getCategoryStyle = (category: PointCategory | null) => {
-        if (!category) return { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-400' };
-        const cat = POINT_CATEGORIES[category];
-        return {
-            bg: `bg-${cat.color}-100 dark:bg-${cat.color}-900/30`,
-            text: `text-${cat.color}-600 dark:text-${cat.color}-400`
-        };
-    };
 
     return (
         <div className="space-y-3">
@@ -271,12 +270,12 @@ const ActivityPointsHistory: React.FC<{
                                 )}
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                {record.subject} &middot; {new Date(record.quiz_date).toLocaleDateString('id-ID')}
+                                {record.subject || 'N/A'} &middot; {new Date(record.quiz_date || record.created_at).toLocaleDateString('id-ID')}
                             </p>
                         </div>
                         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(record)} aria-label="Edit Poin" disabled={!isOnline}><PencilIcon className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 dark:text-red-400" onClick={() => onDelete(record.id)} aria-label="Hapus Poin" disabled={!isOnline}><TrashIcon className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 dark:text-red-400" onClick={() => onDelete(Number(record.id))} aria-label="Hapus Poin" disabled={!isOnline}><TrashIcon className="h-4 w-4" /></Button>
                         </div>
                     </div>
                 );
@@ -351,8 +350,8 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                 <button
                     onClick={() => setViewMode('available')}
                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${viewMode === 'available'
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                 >
                     <StarIcon className="w-4 h-4 inline mr-1" />
@@ -361,8 +360,8 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                 <button
                     onClick={() => setViewMode('overview')}
                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${viewMode === 'overview'
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                 >
                     <TagIcon className="w-4 h-4 inline mr-1" />
@@ -371,8 +370,8 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                 <button
                     onClick={() => setViewMode('history')}
                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${viewMode === 'history'
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                 >
                     <HistoryIcon className="w-4 h-4 inline mr-1" />

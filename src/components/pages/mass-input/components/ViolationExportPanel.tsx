@@ -6,8 +6,8 @@ import { ClassRow, ViolationRow, StudentRow } from '../types';
 import { exportBulkViolationsToPDF, exportBulkViolationsToExcel } from '../../../../services/violationExport';
 import { useToast } from '../../../../hooks/useToast';
 import { SemesterSelector } from '../../../ui/SemesterSelector';
-import { SemesterType, filterBySemester, getCurrentSemester } from '../../../../utils/semesterUtils';
 import { useUserSettings } from '../../../../hooks/useUserSettings';
+import { useSemester } from '../../../../contexts/SemesterContext';
 import { Checkbox } from '../../../ui/Checkbox';
 
 type StudentFilter = 'all' | 'selected' | 'unselected';
@@ -32,8 +32,15 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
     isLoadingViolations
 }) => {
     const toast = useToast();
-    const [semesterFilter, setSemesterFilter] = useState<SemesterType>(getCurrentSemester().semester);
+    const { activeSemester } = useSemester();
+    const [semesterFilter, setSemesterFilter] = useState<string>(activeSemester?.id || 'all');
     const { schoolName } = useUserSettings();
+
+    useEffect(() => {
+        if (activeSemester?.id) {
+            setSemesterFilter(activeSemester.id);
+        }
+    }, [activeSemester]);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
@@ -82,7 +89,10 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
     };
 
     const filteredViolations = useMemo(() => {
-        const bySemester = filterBySemester(existingViolations || [], semesterFilter, 'date');
+        let bySemester = existingViolations || [];
+        if (semesterFilter !== 'all') {
+            bySemester = bySemester.filter(v => v.semester_id === semesterFilter);
+        }
         if (selectedStudentIds.size === 0) return bySemester;
         return bySemester.filter(v => selectedStudentIds.has(v.student_id));
     }, [existingViolations, semesterFilter, selectedStudentIds]);

@@ -11,6 +11,7 @@ import { Modal } from '../ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { ChildDevelopmentAnalytics } from '../ui/ChildDevelopmentAnalytics';
 import { generateReportCardPDF } from '../exports/generateReportCardPDF';
+import { getStudentAvatar } from '../../utils/avatarUtils';
 
 // Explicit Interfaces to replace Json types
 export interface PortalStudentInfo {
@@ -316,7 +317,7 @@ const PortalHeader: React.FC<{
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/20">
                     <div className="flex items-center gap-4">
                         <img
-                            src={student.avatar_url || ''}
+                            src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name)}
                             alt={student.name}
                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-3 border-white/50 shadow-xl bg-slate-200"
                         />

@@ -300,3 +300,272 @@ textarea:focus-visible {
         overflow-x: hidden;
     }
 }
+
+/* ============================================
+   ENHANCED ACCESSIBILITY IMPROVEMENTS
+   ============================================ */
+
+/* Better Contrast Ratio for Secondary Text */
+/* WCAG AA requires 4.5:1 for normal text */
+.text-accessible {
+    color: #475569;
+    /* slate-600 - 7:1 contrast on white */
+}
+
+.dark .text-accessible {
+    color: #cbd5e1;
+    /* slate-300 - 8:1 contrast on dark */
+}
+
+/* High contrast secondary text alternatives */
+.text-secondary-accessible {
+    color: #64748b;
+    /* slate-500 - 4.6:1 contrast on white */
+}
+
+.dark .text-secondary-accessible {
+    color: #94a3b8;
+    /* slate-400 - 4.5:1 contrast on dark */
+}
+
+/* Improved muted text for better readability */
+.text-muted-improved {
+    color: #52525b;
+    /* zinc-600 */
+}
+
+.dark .text-muted-improved {
+    color: #a1a1aa;
+    /* zinc-400 */
+}
+
+/* ============================================
+   FOCUS STATES - CONSISTENT ACROSS ALL ELEMENTS
+   ============================================ */
+
+/* Global focus ring - always visible for keyboard users */
+:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+
+.dark :focus-visible {
+    outline-color: #818cf8;
+}
+
+/* Enhanced focus for interactive elements */
+button:focus-visible,
+[role="button"]:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+.dark button:focus-visible,
+.dark [role="button"]:focus-visible {
+    outline-color: #818cf8;
+    box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
+}
+
+/* Links focus */
+a:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Form inputs focus */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark textarea:focus-visible {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+}
+
+/* Tab focus */
+[role="tab"]:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: -2px;
+    z-index: 1;
+}
+
+/* Card/container focus when interactive */
+.focus-container:focus-visible,
+[role="listitem"]:focus-visible,
+[role="option"]:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+/* Checkbox and radio focus */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+
+/* Focus within for compound components */
+.focus-within-ring:focus-within {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+
+/* ============================================
+   ARIA LABEL HELPER CLASSES
+   ============================================ */
+
+/* Visually hidden but accessible to screen readers */
+.a11y-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Required field indicator */
+.required::after {
+    content: '*';
+    color: #dc2626;
+    margin-left: 4px;
+}
+
+/* Error state for form fields */
+.a11y-error {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
+/* Success state */
+.a11y-success {
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+}
+
+/* ============================================
+   LIVE REGIONS FOR ANNOUNCEMENTS
+   ============================================ */
+
+/* Announcement container for screen readers */
+.a11y-announcer {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* ============================================
+   EMPTY STATE STYLING
+   ============================================ */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    background: linear-gradient(to bottom, transparent, rgba(99, 102, 241, 0.02));
+    border-radius: 1rem;
+    border: 2px dashed #e2e8f0;
+}
+
+.dark .empty-state {
+    border-color: #334155;
+    background: linear-gradient(to bottom, transparent, rgba(99, 102, 241, 0.05));
+}
+
+.empty-state-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dark .empty-state-icon {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+}
+
+.empty-state-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.dark .empty-state-title {
+    color: #f1f5f9;
+}
+
+.empty-state-description {
+    font-size: 0.875rem;
+    color: #64748b;
+    max-width: 300px;
+    margin-bottom: 1rem;
+}
+
+.dark .empty-state-description {
+    color: #94a3b8;
+}
+
+/* First Time User Guidance */
+.first-time-hint {
+    background: linear-gradient(to right, #eef2ff, #faf5ff);
+    border: 1px solid #c7d2fe;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.dark .first-time-hint {
+    background: linear-gradient(to right, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.first-time-hint-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   MOTION PREFERENCES
+   ============================================ */
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

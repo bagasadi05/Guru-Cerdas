@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { staggerContainerVariants, statsCardVariants } from '../../utils/animations';
 import { useAuth } from '../../hooks/useAuth';
 import { useScheduleNotifications } from '../../hooks/useScheduleNotifications';
 // Card components removed - not currently used
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarIcon, UsersIcon, BookOpenIcon, ClockIcon, BrainCircuitIcon, CheckSquareIcon, AlertTriangleIcon, CheckCircleIcon, UserMinusIcon, ClipboardPenIcon, PlusIcon, SearchIcon, SettingsIcon, SparklesIcon, ActivityIcon } from '../Icons';
+import { CalendarIcon, UsersIcon, BookOpenIcon, ClockIcon, BrainCircuitIcon, CheckSquareIcon, AlertTriangleIcon, CheckCircleIcon, UserMinusIcon, ClipboardPenIcon, PlusIcon, SearchIcon, SettingsIcon, SparklesIcon } from '../Icons';
 import { Button } from '../ui/Button';
 // import { Type } from '@google/genai';
 // import { ai } from '../../services/supabase';
@@ -23,6 +25,11 @@ import ParentMessagesWidget from '../dashboard/ParentMessagesWidget';
 import { ClassAnalyticsSection } from '../dashboard/ClassAnalyticsSection';
 import { LeaderboardCard } from '../gamification/LeaderboardCard';
 import { transformToGameData } from '../../services/gamificationService';
+import { AnimatedCounter } from '../ui/AnimatedCounter';
+import { QuickActionCards } from '../dashboard/QuickActionCards';
+import ActivityFeedWidget from '../dashboard/ActivityFeedWidget';
+import { Reminder } from '../dashboard/SmartReminders';
+import { ActivityItem } from '../dashboard/RecentActivityTimeline';
 
 type TaskRow = Database['public']['Tables']['tasks']['Row'];
 type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
@@ -37,8 +44,10 @@ type DashboardQueryData = {
     classes: Pick<ClassRow, 'id' | 'name'>[];
     dailyAttendanceSummary: { present: number; total: number };
     weeklyAttendance: WeeklyAttendance[];
-    academicRecords: Pick<Database['public']['Tables']['academic_records']['Row'], 'student_id' | 'subject' | 'score' | 'assessment_name'>[];
+    academicRecords: Pick<Database['public']['Tables']['academic_records']['Row'], 'student_id' | 'subject' | 'score' | 'assessment_name' | 'created_at'>[];
     violations: Pick<Database['public']['Tables']['violations']['Row'], 'student_id' | 'points'>[];
+    recentTasks: Pick<TaskRow, 'id' | 'title' | 'created_at' | 'status'>[];
+    todayAttendanceRecords: { created_at: string; status: string; count: number }[];
 };
 
 type AiInsight = {
@@ -61,7 +70,7 @@ const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> =
 
     const [
         studentsRes, tasksRes, scheduleRes, classesRes, dailyAttendanceRes,
-        weeklyAttendanceRes, academicRecordsRes, violationsRes
+        weeklyAttendanceRes, academicRecordsRes, violationsRes, recentTasksRes, todayAttendanceRecordsRes
     ] = await Promise.all([
         supabase.from('students').select('id, name, avatar_url, class_id').eq('user_id', userId),
         supabase.from('tasks').select('*').eq('user_id', userId).is('deleted_at', null).neq('status', 'done').order('due_date'),
@@ -69,8 +78,10 @@ const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> =
         supabase.from('classes').select('id, name').eq('user_id', userId),
         supabase.from('attendance').select('status', { count: 'exact' }).eq('user_id', userId).eq('date', today),
         supabase.from('attendance').select('date, status').eq('user_id', userId).gte('date', last5Days[0]).lte('date', last5Days[4]),
-        supabase.from('academic_records').select('student_id, subject, score, assessment_name').eq('user_id', userId),
-        supabase.from('violations').select('student_id, points').eq('user_id', userId)
+        supabase.from('academic_records').select('student_id, subject, score, assessment_name, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
+        supabase.from('violations').select('student_id, points').eq('user_id', userId),
+        supabase.from('tasks').select('id, title, created_at, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
+        supabase.from('attendance').select('created_at, status').eq('user_id', userId).eq('date', today).order('created_at', { ascending: false }).limit(10)
     ]);
 
     const errors = [studentsRes, tasksRes, scheduleRes, classesRes, dailyAttendanceRes, academicRecordsRes, violationsRes]
@@ -101,6 +112,16 @@ const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> =
         weeklyAttendance,
         academicRecords: academicRecordsRes.data || [],
         violations: violationsRes.data || [],
+        recentTasks: recentTasksRes.data || [],
+        todayAttendanceRecords: todayAttendanceRecordsRes.data?.reduce((acc: { created_at: string; status: string; count: number }[], record) => {
+            const existing = acc.find(a => a.created_at === record.created_at && a.status === record.status);
+            if (existing) {
+                existing.count++;
+            } else {
+                acc.push({ created_at: record.created_at || '', status: record.status || '', count: 1 });
+            }
+            return acc;
+        }, []) || [],
     };
 };
 
@@ -120,40 +141,7 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
     // Get today's date in YYYY-MM-DD format
     const getTodayDate = () => new Date().toISOString().split('T')[0];
 
-    // Load cached insight on mount
-    useEffect(() => {
-        const stored = localStorage.getItem(AI_INSIGHT_STORAGE_KEY);
-        if (stored) {
-            try {
-                const parsed: StoredInsight = JSON.parse(stored);
-                const today = getTodayDate();
-
-                if (parsed.date === today) {
-                    // Same day - use cached insight
-                    setInsight(parsed.insight);
-                    setLastGeneratedDate(parsed.date);
-                } else {
-                    // Different day - clear old insight and auto-generate new one
-                    setLastGeneratedDate(parsed.date);
-                    if (dashboardData) {
-                        generateInsight();
-                    }
-                }
-            } catch (e) {
-                console.error('Error parsing stored insight:', e);
-            }
-        }
-    }, [dashboardData]);
-
-    // Auto-generate insight if new day and data is available
-    useEffect(() => {
-        const today = getTodayDate();
-        if (dashboardData && lastGeneratedDate && lastGeneratedDate !== today && !isLoading && !insight) {
-            generateInsight();
-        }
-    }, [dashboardData, lastGeneratedDate]);
-
-    const generateInsight = async () => {
+    const generateInsight = React.useCallback(async () => {
         if (!dashboardData) return;
         setIsLoading(true);
         setError(null);
@@ -198,7 +186,43 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [dashboardData]);
+
+
+    // Load cached insight on mount
+    useEffect(() => {
+        const stored = localStorage.getItem(AI_INSIGHT_STORAGE_KEY);
+        if (stored) {
+            try {
+                const parsed: StoredInsight = JSON.parse(stored);
+                const today = getTodayDate();
+
+                if (parsed.date === today) {
+                    // Same day - use cached insight
+                    setInsight(parsed.insight);
+                    setLastGeneratedDate(parsed.date);
+                } else {
+                    // Different day - clear old insight and auto-generate new one
+                    setLastGeneratedDate(parsed.date);
+                    if (dashboardData) {
+                        generateInsight();
+                    }
+                }
+            } catch (e) {
+                console.error('Error parsing stored insight:', e);
+            }
+        }
+    }, [dashboardData, generateInsight]);
+
+    // Auto-generate insight if new day and data is available
+    useEffect(() => {
+        const today = getTodayDate();
+        if (dashboardData && lastGeneratedDate && lastGeneratedDate !== today && !isLoading && !insight) {
+            generateInsight();
+        }
+    }, [dashboardData, lastGeneratedDate, isLoading, insight, generateInsight]);
+
+
 
     if (isLoading) {
         return <div className="space-y-4"><Skeleton className="h-4 w-1/2" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-3/4" /></div>;
@@ -211,7 +235,7 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
     if (!insight) {
         return (
             <div className="text-center py-8">
-                <Button onClick={generateInsight} disabled={isLoading || !dashboardData} className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 rounded-full px-6">
+                <Button onClick={generateInsight} disabled={isLoading || !dashboardData} className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-0 shadow-lg shadow-green-900/20 transition-all hover:scale-105 rounded-full px-6">
                     <SparklesIcon className="w-4 h-4 mr-2" />
                     Buat Wawasan Harian AI
                 </Button>
@@ -256,99 +280,7 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
     );
 };
 
-const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data }) => {
-    const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
-    const chartHeight = 160;
-    const barWidth = 32;
-    const gap = 24;
 
-    return (
-        <div className="w-full h-full flex justify-center items-end pb-2">
-            <svg width="100%" height={chartHeight} aria-label="Grafik absensi mingguan" className="overflow-visible">
-                <defs>
-                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" className="text-indigo-500 dark:text-indigo-400" stopColor="currentColor" />
-                        <stop offset="100%" className="text-violet-600 dark:text-violet-500" stopColor="currentColor" />
-                    </linearGradient>
-                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                        <feMerge>
-                            <feMergeNode in="coloredBlur" />
-                            <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                    </filter>
-                </defs>
-                {data.map((day, index) => {
-                    const barHeight = day.present_percentage > 0 ? (day.present_percentage / 100) * (chartHeight - 40) : 4;
-                    const x = index * (barWidth + gap) + (gap);
-                    const y = chartHeight - barHeight - 20;
-                    const isHovered = hoveredIndex === index;
-
-                    return (
-                        <g key={day.day}
-                            onMouseEnter={() => setHoveredIndex(index)}
-                            onMouseLeave={() => setHoveredIndex(null)}
-                            className="cursor-pointer group">
-
-                            {/* Background track */}
-                            <rect
-                                x={x}
-                                y={20}
-                                width={barWidth}
-                                height={chartHeight - 40}
-                                rx="6"
-                                className="fill-slate-100 dark:fill-slate-800/50"
-                            />
-
-                            {/* Active Bar */}
-                            <rect
-                                x={x}
-                                y={y}
-                                width={barWidth}
-                                height={barHeight}
-                                fill="url(#barGradient)"
-                                rx="6"
-                                filter={isHovered ? "url(#glow)" : ""}
-                                className="transition-all duration-300 animate-grow-bar"
-                                style={{ transformOrigin: 'bottom', animationDelay: `${index * 100}ms` }}
-                            />
-
-                            {/* Label */}
-                            <text
-                                x={x + barWidth / 2}
-                                y={chartHeight}
-                                textAnchor="middle"
-                                fontSize="11"
-                                fontWeight="600"
-                                className={`transition-colors duration-300 ${isHovered ? 'fill-indigo-500 dark:fill-indigo-400' : 'fill-slate-400 dark:fill-slate-500'}`}
-                            >
-                                {day.day.slice(0, 3)}
-                            </text>
-
-                            {/* Tooltip */}
-                            {isHovered && (
-                                <g className="transition-opacity duration-300 animate-fade-in" style={{ opacity: 1 }}>
-                                    <rect x={x + barWidth / 2 - 20} y={y - 36} width={40} height={28} rx="6" className="fill-slate-800 dark:fill-white shadow-xl" />
-                                    <text
-                                        x={x + barWidth / 2}
-                                        y={y - 18}
-                                        textAnchor="middle"
-                                        fontSize="11"
-                                        fontWeight="bold"
-                                        className="fill-white dark:fill-slate-900"
-                                    >
-                                        {Math.round(day.present_percentage)}%
-                                    </text>
-                                    <path d={`M${x + barWidth / 2 - 5},${y - 8} L${x + barWidth / 2 + 5},${y - 8} L${x + barWidth / 2},${y - 3} Z`} className="fill-slate-800 dark:fill-white" />
-                                </g>
-                            )}
-                        </g>
-                    );
-                })}
-            </svg>
-        </div>
-    );
-};
 
 const DashboardPage: React.FC = () => {
     const { user } = useAuth();
@@ -415,13 +347,15 @@ const DashboardPage: React.FC = () => {
     const defaultSubject = uniqueSubjects.length > 0 ? uniqueSubjects[0] : '';
     useEffect(() => {
         if (defaultSubject && !subjectForCompletionCheck) {
-            setSubjectForCompletionCheck(defaultSubject);
+            const timer = setTimeout(() => {
+                setSubjectForCompletionCheck(defaultSubject);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [defaultSubject, subjectForCompletionCheck]);
 
-    useEffect(() => {
-        setAssessmentForCompletionCheck('');
-    }, [subjectForCompletionCheck]);
+    // Cleanup: Remove the second useEffect that clears assessment on subject change
+    // as we now handle it in handleSubjectChange
 
     const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSubjectForCompletionCheck(e.target.value);
@@ -449,7 +383,7 @@ const DashboardPage: React.FC = () => {
                 .filter(s => !gradedStudentIds.has(s.id))
                 .map(s => ({
                     ...s,
-                    className: classMap.get(s.class_id) || 'N/A',
+                    className: classMap.get(s.class_id ?? '') || 'N/A',
                     missingAssessment: assessmentForCompletionCheck
                 }));
         } else {
@@ -463,7 +397,7 @@ const DashboardPage: React.FC = () => {
 
                 return {
                     ...s,
-                    className: classMap.get(s.class_id) || 'N/A',
+                    className: classMap.get(s.class_id ?? '') || 'N/A',
                     missingAssessments: missingAssessments
                 };
             })
@@ -485,22 +419,20 @@ const DashboardPage: React.FC = () => {
         return Math.round(((totalStudentsForCheck - studentsMissingGrade.length) / totalStudentsForCheck) * 100);
     }, [totalStudentsForCheck, studentsMissingGrade.length]);
 
-    const handleNavigateToStudent = (studentId: string) => {
-        navigate(`/siswa/${studentId}`, { state: { openTab: 'grades' } });
-    }
+
 
     const handleOpenMassInput = () => {
         if (!subjectForCompletionCheck) return;
 
-        let classIdToPass = selectedClassForCheck;
+        let classIdToPass: string | null = selectedClassForCheck || null;
         if (!classIdToPass && studentsMissingGrade.length > 0) {
             classIdToPass = studentsMissingGrade[0].class_id;
         }
 
         let assessmentToPass = assessmentForCompletionCheck;
         if (!assessmentToPass && studentsMissingGrade.length > 0 && 'missingAssessments' in studentsMissingGrade[0]) {
-            // @ts-expect-error - missingAssessments type varies
-            assessmentToPass = studentsMissingGrade[0].missingAssessments[0];
+            const missingStudent = studentsMissingGrade[0] as { missingAssessments: string[] };
+            assessmentToPass = missingStudent.missingAssessments[0] ?? '';
         }
 
         navigate('/input-massal', {
@@ -514,6 +446,114 @@ const DashboardPage: React.FC = () => {
             }
         });
     };
+
+    // Generate smart reminders based on data
+    const smartReminders: Reminder[] = useMemo(() => {
+        if (!data) return [];
+        const reminders: Reminder[] = [];
+
+        // Check for unrecorded attendance today
+        const { students = [], dailyAttendanceSummary } = data;
+        const attendanceRecorded = dailyAttendanceSummary?.total || 0;
+        if (students.length > 0 && attendanceRecorded < students.length) {
+            reminders.push({
+                id: 'attendance-incomplete',
+                type: 'warning',
+                title: 'Absensi Belum Lengkap',
+                message: `${students.length - attendanceRecorded} siswa belum diabsen hari ini`,
+                action: { label: 'Isi Sekarang', link: '/absensi' },
+                dismissible: true,
+            });
+        }
+
+        // Check for pending tasks
+        const pendingTasks = data.tasks?.filter(t => t.status !== 'done').length || 0;
+        if (pendingTasks > 5) {
+            reminders.push({
+                id: 'tasks-pending',
+                type: 'info',
+                title: `${pendingTasks} Tugas Pending`,
+                message: 'Beberapa tugas belum diselesaikan',
+                action: { label: 'Lihat Tugas', link: '/tugas' },
+                dismissible: true,
+            });
+        }
+
+        // Check for low attendance
+        const attendancePercentage = students.length > 0
+            ? Math.round((dailyAttendanceSummary?.present || 0) / students.length * 100)
+            : 100;
+        if (attendancePercentage < 70 && attendanceRecorded > 0) {
+            reminders.push({
+                id: 'low-attendance',
+                type: 'urgent',
+                title: 'Kehadiran Rendah!',
+                message: `Hanya ${attendancePercentage}% siswa hadir hari ini`,
+                action: { label: 'Cek Details', link: '/absensi' },
+                dismissible: false,
+            });
+        }
+
+        return reminders;
+    }, [data]);
+
+    // Generate recent activities from REAL data
+    const recentActivities: ActivityItem[] = useMemo(() => {
+        const activities: ActivityItem[] = [];
+
+        // 1. Attendance activities from today
+        if (data?.dailyAttendanceSummary?.total && data.dailyAttendanceSummary.total > 0) {
+            const latestAttendance = data.todayAttendanceRecords?.[0];
+            activities.push({
+                id: 'activity-attendance-today',
+                type: 'attendance',
+                title: 'Absensi Tercatat',
+                description: `${data.dailyAttendanceSummary.present} dari ${data.students?.length || 0} siswa hadir hari ini`,
+                timestamp: latestAttendance?.created_at ? new Date(latestAttendance.created_at) : new Date(),
+            });
+        }
+
+        // 2. Recent grades/academic records
+        const recentGrades = data?.academicRecords?.slice(0, 3) || [];
+        recentGrades.forEach((record, index) => {
+            if (record.created_at) {
+                activities.push({
+                    id: `activity-grade-${index}`,
+                    type: 'grade',
+                    title: 'Nilai Diinput',
+                    description: `${record.subject} - ${record.assessment_name || 'Penilaian'} (Skor: ${record.score})`,
+                    timestamp: new Date(record.created_at),
+                });
+            }
+        });
+
+        // 3. Recent tasks created
+        const recentTasks = data?.recentTasks?.slice(0, 3) || [];
+        recentTasks.forEach((task, index) => {
+            if (task.created_at) {
+                activities.push({
+                    id: `activity-task-${index}`,
+                    type: 'task',
+                    title: task.status === 'done' ? 'Tugas Selesai' : 'Tugas Dibuat',
+                    description: task.title,
+                    timestamp: new Date(task.created_at),
+                });
+            }
+        });
+
+        // Sort by timestamp (newest first) and limit to 5
+        return activities
+            .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+            .slice(0, 5);
+    }, [data]);
+
+    // Dismiss reminder handler
+    const [dismissedReminders, setDismissedReminders] = useState<Set<string>>(new Set());
+    const handleDismissReminder = (id: string) => {
+        setDismissedReminders(prev => new Set([...prev, id]));
+    };
+
+    const activeReminders = smartReminders.filter(r => !dismissedReminders.has(r.id));
 
     if (isLoading) return <DashboardPageSkeleton />;
 
@@ -544,7 +584,7 @@ const DashboardPage: React.FC = () => {
     ];
 
     return (
-        <div className="w-full min-h-full p-4 lg:p-8 flex flex-col space-y-6 lg:space-y-8 bg-transparent max-w-7xl mx-auto pb-32 lg:pb-12 animate-fade-in-up" style={{ zoom: 1.1 }}>
+        <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 lg:space-y-8 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
             <header className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight font-serif bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
@@ -568,31 +608,59 @@ const DashboardPage: React.FC = () => {
                 {/* Left Column */}
                 <div className="xl:col-span-9 space-y-4 sm:space-y-6">
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {stats.map(stat => (
-                            <Link to={stat.link} key={stat.label} className="group block h-full">
-                                <div className="glass-card rounded-2xl p-5 h-full flex flex-col justify-between group-hover:-translate-y-1 transition-all duration-300 relative overflow-hidden border border-white/20 dark:border-white/5 shadow-lg shadow-slate-200/50 dark:shadow-black/20 hover:shadow-xl hover:shadow-indigo-500/10">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                    <div className="flex items-start justify-between mb-4 relative z-10">
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-lg text-white transform group-hover:scale-110 transition-transform duration-300`}>
-                                            <stat.icon className="w-6 h-6" />
+                    <motion.div
+                        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                        variants={staggerContainerVariants}
+                        initial="initial"
+                        animate="animate"
+                    >
+                        {stats.map((stat, index) => (
+                            <motion.div
+                                key={stat.label}
+                                variants={statsCardVariants}
+                                whileHover="hover"
+                                custom={index}
+                            >
+                                <Link to={stat.link} className="group block h-full">
+                                    <div className="glass-card rounded-2xl p-5 h-full flex flex-col justify-between card-hover-glow relative overflow-hidden border border-white/20 dark:border-white/5 shadow-lg shadow-slate-200/50 dark:shadow-black/20">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                        <div className="flex items-start justify-between mb-4 relative z-10">
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-lg text-white transform group-hover:scale-110 transition-transform duration-300`}>
+                                                <stat.icon className="w-6 h-6" />
+                                            </div>
+                                        </div>
+                                        <div className="relative z-10">
+                                            <div className="text-3xl font-bold text-slate-800 dark:text-white leading-none mb-2 tracking-tight">
+                                                {typeof stat.value === 'number' ? (
+                                                    <AnimatedCounter
+                                                        value={stat.value}
+                                                        duration={1500}
+                                                        className="text-3xl font-bold"
+                                                    />
+                                                ) : (
+                                                    stat.value
+                                                )}
+                                            </div>
+                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">{stat.label}</p>
+                                            {stat.subValue && <p className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-lg inline-block">{stat.subValue}</p>}
                                         </div>
                                     </div>
-                                    <div className="relative z-10">
-                                        <p className="text-3xl font-bold text-slate-800 dark:text-white leading-none mb-2 tracking-tight">{stat.value}</p>
-                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">{stat.label}</p>
-                                        {stat.subValue && <p className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-lg inline-block">{stat.subValue}</p>}
-                                    </div>
-                                </div>
-                            </Link>
+                                </Link>
+                            </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
+
+                    {/* Quick Action Cards */}
+                    <QuickActionCards
+                        pendingGrades={studentsMissingGrade.length}
+                        incompleteTasks={tasks.length}
+                    />
 
                     {/* AI Insight */}
-                    <div className="glass-card rounded-3xl p-0 overflow-hidden border border-indigo-500/20 shadow-xl shadow-indigo-500/5">
-                        <div className="p-6 border-b border-white/10 bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-transparent">
+                    <div className="glass-card rounded-3xl p-0 overflow-hidden border border-green-500/20 shadow-xl shadow-green-500/5">
+                        <div className="p-6 border-b border-white/10 bg-gradient-to-r from-green-500/10 via-emerald-500/5 to-transparent">
                             <h3 className="flex items-center gap-2 font-bold text-xl text-slate-800 dark:text-white tracking-wide">
-                                <BrainCircuitIcon className="w-6 h-6 text-indigo-500" />
+                                <BrainCircuitIcon className="w-6 h-6 text-green-500" />
                                 Analisis Cerdas Harian
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Wawasan berbasis AI untuk performa kelas Anda.</p>
@@ -604,21 +672,11 @@ const DashboardPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Attendance Chart */}
-                        <div className="glass-card rounded-3xl p-0 overflow-hidden flex flex-col">
-                            <div className="p-6 border-b border-slate-200/50 dark:border-white/5">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-lg text-slate-800 dark:text-white tracking-wide">Tren Kehadiran</h3>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Statistik 5 hari terakhir</p>
-                                    </div>
-                                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-                                        <ActivityIcon className="w-5 h-5 text-slate-400" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="p-6 flex-1 flex items-end justify-center min-h-[200px]">
-                                <WeeklyAttendanceChart data={weeklyAttendance} />
-                            </div>
+                        {/* Attendance Chart - Replaced with Widget */}
+                        <div className="flex flex-col">
+                            <AttendanceStatsWidget
+                                weeklyData={weeklyAttendance}
+                            />
                         </div>
 
                         {/* Grade Audit */}
@@ -689,8 +747,7 @@ const DashboardPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Attendance Statistics Widget */}
-                    <AttendanceStatsWidget />
+
 
                     {/* Class Analytics */}
                     {data && data.classes.length > 0 && (
@@ -736,7 +793,7 @@ const DashboardPage: React.FC = () => {
                                 <div className="relative p-6">
                                     {todaySchedule.length > 0 ? (
                                         <div className="space-y-0 pl-4 border-l-2 border-slate-200 dark:border-slate-800 ml-3">
-                                            {todaySchedule.map((item, index) => {
+                                            {todaySchedule.map((item) => {
                                                 const now = currentTime;
                                                 const [startH, startM] = item.start_time.split(':').map(Number);
                                                 const [endH, endM] = item.end_time.split(':').map(Number);
@@ -829,6 +886,13 @@ const DashboardPage: React.FC = () => {
 
                     {/* Parent Messages Widget */}
                     <ParentMessagesWidget />
+
+                    {/* Activity Feed (Reminders + Timeline) */}
+                    <ActivityFeedWidget
+                        reminders={activeReminders}
+                        activities={recentActivities}
+                        onDismissReminder={handleDismissReminder}
+                    />
                 </div>
             </div>
 
@@ -847,7 +911,7 @@ const DashboardPage: React.FC = () => {
                         </div>
                     </Link>
                     <button
-                        onClick={() => (window as any).toggleSearch?.()}
+                        onClick={() => (window as unknown as { toggleSearch?: () => void }).toggleSearch?.()}
                         className="flex items-center gap-3 pr-1 group"
                     >
                         <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg shadow-black/10 text-sm font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
@@ -858,7 +922,7 @@ const DashboardPage: React.FC = () => {
                         </div>
                     </button>
                     <button
-                        onClick={() => (window as any).toggleAiChat?.()}
+                        onClick={() => (window as unknown as { toggleAiChat?: () => void }).toggleAiChat?.()}
                         className="flex items-center gap-3 pr-1 group"
                     >
                         <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg shadow-black/10 text-sm font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">

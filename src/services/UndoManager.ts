@@ -9,6 +9,7 @@ import { supabase } from './supabase';
 import { restore, restoreBulk, SoftDeleteEntity } from './SoftDeleteService';
 
 export type ActionType = 'create' | 'update' | 'delete' | 'bulk_delete';
+export type StateRecord = Record<string, unknown>;
 
 export interface UndoableAction {
     id: string;
@@ -16,7 +17,7 @@ export interface UndoableAction {
     actionType: ActionType;
     entity: SoftDeleteEntity;
     entityIds: string[];
-    previousState?: Record<string, any>[];
+    previousState?: StateRecord[];
     createdAt: Date;
     expiresAt: Date;
     undone: boolean;
@@ -31,6 +32,7 @@ export interface ActionHistoryItem {
     description: string;
     createdAt: Date;
     canUndo: boolean;
+    previousState?: StateRecord[];
 }
 
 // In-memory action store (for quick access to recent undoable actions)
@@ -57,7 +59,7 @@ export async function recordAction(
     actionType: ActionType,
     entity: SoftDeleteEntity,
     entityIds: string[],
-    previousState?: Record<string, any>[],
+    previousState?: StateRecord[],
     description?: string,
     timeoutMs: number = DEFAULT_UNDO_TIMEOUT_MS
 ): Promise<UndoableAction> {
@@ -88,7 +90,7 @@ export async function recordAction(
             action_type: actionType,
             entity_type: entity,
             affected_ids: entityIds,
-            previous_state: previousState || null,
+            previous_state: (previousState as any) || null,
             expires_at: expiresAt.toISOString(),
             can_undo: true,
         });
@@ -121,10 +123,11 @@ function generateDescription(actionType: ActionType, entity: SoftDeleteEntity, c
         students: { singular: 'siswa', plural: 'siswa' },
         classes: { singular: 'kelas', plural: 'kelas' },
         attendance: { singular: 'absensi', plural: 'absensi' },
-        tasks: { singular: 'tugas', plural: 'tugas' },
     };
 
-    const entityName = count > 1 ? entityNames[entity].plural : entityNames[entity].singular;
+    const entityName = entityNames[entity]
+        ? (count > 1 ? entityNames[entity].plural : entityNames[entity].singular)
+        : String(entity);
 
     switch (actionType) {
         case 'delete':
@@ -157,7 +160,7 @@ export async function undo(actionId: string): Promise<{ success: boolean; error?
                 .single();
 
             if (error || !data) {
-                return { success: false, error: 'Aksi tidak ditemukan' };
+                return { success: false, error: error?.message || 'Aksi tidak ditemukan' };
             }
 
             // Map database columns to our interface
@@ -167,18 +170,21 @@ export async function undo(actionId: string): Promise<{ success: boolean; error?
                 actionType: data.action_type as ActionType,
                 entity: data.entity_type as SoftDeleteEntity,
                 entityIds: data.affected_ids || [],
-                previousState: data.previous_state as Record<string, any>[] | undefined,
-                createdAt: new Date(data.created_at),
-                expiresAt: new Date(data.expires_at),
-                undone: !data.can_undo, // can_undo is the inverse of undone
+                previousState: (data.previous_state as StateRecord[]) || undefined,
+                createdAt: new Date(data.created_at || 0),
+                expiresAt: new Date(data.expires_at ?? 0),
+                undone: !(data.can_undo ?? true), // can_undo is the inverse of undone
                 description: generateDescription(
                     data.action_type as ActionType,
                     data.entity_type as SoftDeleteEntity,
                     (data.affected_ids || []).length
                 ),
             };
-        } catch (error) {
-            return { success: false, error: 'Gagal mengambil data aksi' };
+        } catch (err) {
+            return {
+                success: false,
+                error: err instanceof Error ? err.message : 'Gagal mengambil data aksi'
+            };
         }
     }
 
@@ -260,24 +266,62 @@ export async function undo(actionId: string): Promise<{ success: boolean; error?
 /**
  * Get action history for a user
  */
+export interface ActionHistoryFilters {
+    type?: ActionType | 'all';
+    entity?: SoftDeleteEntity | 'all';
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+}
+
+/**
+ * Get action history for a user with filters
+ */
 export async function getActionHistory(
     userId: string,
     limit: number = 20,
-    offset: number = 0
-): Promise<ActionHistoryItem[]> {
+    offset: number = 0,
+    filters: ActionHistoryFilters = {}
+): Promise<{ items: ActionHistoryItem[]; total: number }> {
     try {
-        const { data, error } = await supabase
+        let query = supabase
             .from('action_history')
-            .select('*')
+            .select('*', { count: 'exact' })
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .range(offset, offset + limit - 1);
+
+        // Apply filters
+        if (filters.type && filters.type !== 'all') {
+            query = query.eq('action_type', filters.type);
+        }
+
+        if (filters.entity && filters.entity !== 'all') {
+            query = query.eq('entity_type', filters.entity);
+        }
+
+        if (filters.startDate) {
+            query = query.gte('created_at', filters.startDate);
+        }
+
+        if (filters.endDate) {
+            // Add 1 day to include the end date fully
+            const nextDay = new Date(filters.endDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            query = query.lt('created_at', nextDay.toISOString());
+        }
+
+        if (filters.search) {
+            query = query.ilike('description', `%${filters.search}%`);
+        }
+
+        const { data, error, count } = await query;
 
         if (error) throw error;
 
         const now = new Date();
 
-        return (data || []).map(item => ({
+        const items = (data || []).map(item => ({
             id: item.id,
             actionType: item.action_type as ActionType,
             entity: item.entity_type as SoftDeleteEntity,
@@ -287,12 +331,15 @@ export async function getActionHistory(
                 item.entity_type as SoftDeleteEntity,
                 (item.affected_ids || []).length
             ),
-            createdAt: new Date(item.created_at),
-            canUndo: item.can_undo && new Date(item.expires_at) > now,
+            createdAt: new Date(item.created_at || 0),
+            canUndo: (item.can_undo || false) && new Date(item.expires_at ?? 0) > now,
+            previousState: (item.previous_state as StateRecord[]) || undefined,
         }));
+
+        return { items, total: count || 0 };
     } catch (error) {
         console.error('Failed to get action history:', error);
-        return [];
+        return { items: [], total: 0 };
     }
 }
 
@@ -319,7 +366,7 @@ export function getUndoTimeRemaining(actionId: string): number {
 /**
  * Clear old actions from memory
  */
-function cleanupOldActions(): void {
+export function cleanupOldActions(): void {
     const now = Date.now();
     const expiredThreshold = now - (60 * 60 * 1000); // 1 hour ago
 

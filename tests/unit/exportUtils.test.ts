@@ -58,7 +58,7 @@ describe('exportToExcel', () => {
     it('should warn and not export if data is null/undefined', () => {
         const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
-        // @ts-ignore
+        // @ts-expect-error - Testing invalid input
         exportToExcel(null, 'test');
 
         expect(consoleSpy).toHaveBeenCalledWith('No data to export');

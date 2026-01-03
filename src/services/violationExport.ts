@@ -7,6 +7,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { ViolationRow } from '../components/pages/student/types';
+import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 
 interface ViolationExportOptions {
     studentName: string;
@@ -18,38 +19,40 @@ interface ViolationExportOptions {
 /**
  * Export Violations to a Formal PDF Report
  */
-export const exportViolationsToPDF = (options: ViolationExportOptions) => {
+export const exportViolationsToPDF = async (options: ViolationExportOptions) => {
     const { studentName, className, schoolName, violations } = options;
+
+    // Ensure logos are loaded
+    await ensureLogosLoaded();
+
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
 
-    // -- Header --
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(schoolName.toUpperCase(), 105, 15, { align: 'center' });
+    // -- Header with Logos --
+    let y = addPdfHeader(doc, { schoolName, orientation: 'portrait' });
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    // Placeholder address if we don't have it in options, typically hardcoded or from config
-    // For now we keep it simple or empty if unknown. Use a line separator.
-    doc.line(14, 20, 196, 20);
-
+    // -- Title --
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('LAPORAN PELANGGARAN SISWA', 105, 30, { align: 'center' });
+    doc.text('LAPORAN PELANGGARAN SISWA', pageWidth / 2, y, { align: 'center' });
+    y += 10;
 
     // -- Student Info --
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Nama Siswa : ${studentName}`, 14, 40);
+    doc.text(`Nama Siswa : ${studentName}`, 14, y);
+    y += 5;
     if (className) {
-        doc.text(`Kelas      : ${className}`, 14, 45);
+        doc.text(`Kelas      : ${className}`, 14, y);
+        y += 5;
     }
     const dateStr = new Date().toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
     });
-    doc.text(`Tanggal    : ${dateStr}`, 14, className ? 50 : 45);
+    doc.text(`Tanggal    : ${dateStr}`, 14, y);
+    const tableStartY = y + 8;
 
     // -- Table --
     const tableBody = violations.map((v, index) => [
@@ -63,7 +66,7 @@ export const exportViolationsToPDF = (options: ViolationExportOptions) => {
     ]);
 
     autoTable(doc, {
-        startY: className ? 55 : 50,
+        startY: tableStartY,
         head: [['No', 'Tanggal', 'Pelanggaran', 'Poin', 'Kategori', 'Status']],
         body: tableBody,
         theme: 'grid',
@@ -151,7 +154,7 @@ interface StudentInfo {
     id: string;
     name: string;
     gender?: string;
-    avatar_url?: string;
+    avatar_url?: string | null;
 }
 
 interface BulkViolationExportOptions {
@@ -164,9 +167,14 @@ interface BulkViolationExportOptions {
 /**
  * Export Class Violations to PDF - One Page Per Student (Report Card Style)
  */
-export const exportBulkViolationsToPDF = (options: BulkViolationExportOptions) => {
+export const exportBulkViolationsToPDF = async (options: BulkViolationExportOptions) => {
     const { className, schoolName, violations, students } = options;
+
+    // Ensure logos are loaded
+    await ensureLogosLoaded();
+
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
 
     // Create student lookup map
     const studentInfoMap = new Map(students.map(s => [s.id, s]));
@@ -179,7 +187,6 @@ export const exportBulkViolationsToPDF = (options: BulkViolationExportOptions) =
         groupedByStudent.set(v.student_id, existing);
     });
 
-    // Sort students alphabetically
     // Sort students alphabetically
     const sortedStudentIds = Array.from(groupedByStudent.keys()).sort((a, b) => {
         const nameA = studentInfoMap.get(a)?.name || '';
@@ -196,7 +203,6 @@ export const exportBulkViolationsToPDF = (options: BulkViolationExportOptions) =
     let isFirstPage = true;
 
     // Generate one page per student
-    // Generate one page per student
     sortedStudentIds.forEach(studentId => {
         const studentViolations = groupedByStudent.get(studentId) || [];
         const studentInfo = studentInfoMap.get(studentId);
@@ -209,19 +215,14 @@ export const exportBulkViolationsToPDF = (options: BulkViolationExportOptions) =
         }
         isFirstPage = false;
 
-        // -- Header / School Identity --
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text(schoolName.toUpperCase(), 105, 15, { align: 'center' });
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.line(14, 20, 196, 20);
+        // -- Header with Logos --
+        let y = addPdfHeader(doc, { schoolName, orientation: 'portrait' });
 
         // -- Title --
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text('LAPORAN PELANGGARAN SISWA', 105, 30, { align: 'center' });
+        doc.text('LAPORAN PELANGGARAN SISWA', pageWidth / 2, y, { align: 'center' });
+        y += 10;
 
         // -- Student Info Box --
         doc.setFontSize(10);
@@ -230,7 +231,7 @@ export const exportBulkViolationsToPDF = (options: BulkViolationExportOptions) =
         const labelX = 14;
         const colonX = 45;
         const valueX = 47;
-        let currentY = 42;
+        let currentY = y; // Use y position from logo header
         const lineHeight = 6;
 
         // Nama Siswa

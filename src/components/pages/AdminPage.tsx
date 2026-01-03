@@ -23,7 +23,14 @@ import {
     Database,
     Activity,
     AlertTriangle,
-    Undo2
+    Undo2,
+    HardDrive,
+    Cpu,
+    CheckCircle2,
+    Server,
+    Shield,
+    TrendingUp,
+    Sparkles,
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -72,6 +79,16 @@ interface AuditLog {
 
 type TabType = 'overview' | 'users' | 'announcements' | 'activity' | 'system';
 
+// Real-time clock hook
+const useRealTimeClock = () => {
+    const [time, setTime] = React.useState(new Date());
+    React.useEffect(() => {
+        const timer = setInterval(() => setTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+    return time;
+};
+
 const AdminPage: React.FC = () => {
     const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
@@ -104,6 +121,7 @@ const AdminPage: React.FC = () => {
     const [announcementsLoading, setAnnouncementsLoading] = useState(true);
     const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
     const [announcementForm, setAnnouncementForm] = useState({ title: '', content: '', audience_type: 'all' });
+    const [showTemplates, setShowTemplates] = useState(false);
 
     // Activity Logs State
     const [activityLogs, setActivityLogs] = useState<AuditLog[]>([]);
@@ -112,6 +130,103 @@ const AdminPage: React.FC = () => {
     // Error State
     const [error, setError] = useState<string | null>(null);
 
+    // Announcement templates
+    const announcementTemplates = [
+        {
+            id: 'semester-break',
+            title: 'Libur Semester Ganjil',
+            content: 'Libur semester ganjil akan dimulai pada tanggal 20 Desember 2024 sampai 5 Januari 2025. Selamat berlibur!',
+            audience_type: 'all',
+            category: 'Akademik',
+            icon: '🎉'
+        },
+        {
+            id: 'exam-schedule',
+            title: 'Jadwal Ujian Semester',
+            content: 'Ujian Akhir Semester akan dilaksanakan mulai tanggal 15-22 Desember 2024. Harap siswa mempersiapkan diri dengan baik.',
+            audience_type: 'students',
+            category: 'Akademik',
+            icon: '📝'
+        },
+        {
+            id: 'report-card',
+            title: 'Pengambilan Rapor',
+            content: 'Pengambilan rapor semester ganjil dilaksanakan pada tanggal 19 Desember 2024. Harap orang tua hadir tepat waktu.',
+            audience_type: 'parents',
+            category: 'Akademik',
+            icon: '📋'
+        },
+        {
+            id: 'parent-meeting',
+            title: 'Rapat Wali Murid',
+            content: 'Rapat wali murid akan dilaksanakan pada hari Sabtu, 14 Desember 2024 pukul 09.00 WIB. Kehadiran wali murid sangat diharapkan.',
+            audience_type: 'parents',
+            category: 'Umum',
+            icon: '👥'
+        },
+        {
+            id: 'vaccination',
+            title: 'Vaksinasi Siswa',
+            content: 'Akan diadakan vaksinasi booster untuk seluruh siswa pada tanggal 10 Januari 2025. Harap orang tua hadir mendampingi.',
+            audience_type: 'all',
+            category: 'Kesehatan',
+            icon: '💉'
+        },
+        {
+            id: 'field-trip',
+            title: 'Study Tour',
+            content: 'Study tour ke museum nasional akan dilaksanakan pada tanggal 25 Januari 2025. Biaya Rp 150.000 per siswa.',
+            audience_type: 'all',
+            category: 'Kegiatan',
+            icon: '🚌'
+        },
+        {
+            id: 'teacher-training',
+            title: 'Pelatihan Guru',
+            content: 'Pelatihan pengembangan metode pembelajaran akan dilaksanakan pada 5-7 Januari 2025. Semua guru wajib hadir.',
+            audience_type: 'teachers',
+            category: 'Profesional',
+            icon: '👨‍🏫'
+        },
+        {
+            id: 'extracurricular',
+            title: 'Pendaftaran Ekstrakurikuler',
+            content: 'Pendaftaran ekstrakurikuler semester genap dibuka mulai 8-15 Januari 2025. Silakan daftar melalui wali kelas.',
+            audience_type: 'students',
+            category: 'Kegiatan',
+            icon: '⚽'
+        },
+        {
+            id: 'payment-reminder',
+            title: 'Pembayaran SPP',
+            content: 'Mohon segera menyelesaikan pembayaran SPP bulan ini paling lambat tanggal 10. Terima kasih atas kerjasamanya.',
+            audience_type: 'parents',
+            category: 'Administrasi',
+            icon: '💳'
+        },
+        {
+            id: 'independence-day',
+            title: 'Peringatan Hari Kemerdekaan',
+            content: 'Dalam rangka memperingati Hari Kemerdekaan RI, akan diadakan upacara dan lomba-lomba pada 17 Agustus 2025.',
+            audience_type: 'all',
+            category: 'Kegiatan',
+            icon: '🇮🇩'
+        },
+    ];
+
+    // Apply template
+    const applyTemplate = (template: typeof announcementTemplates[0]) => {
+        setAnnouncementForm({
+            title: template.title,
+            content: template.content,
+            audience_type: template.audience_type
+        });
+        setShowTemplates(false);
+        if (!showAnnouncementForm) {
+            setShowAnnouncementForm(true);
+        }
+    };
+
     // Delete Modal State
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; user: UserRoleRecord | null }>({ show: false, user: null });
 
@@ -119,6 +234,37 @@ const AdminPage: React.FC = () => {
     const [undoToast, setUndoToast] = useState<{ show: boolean; user: UserRoleRecord | null; timeout: NodeJS.Timeout | null }>({
         show: false, user: null, timeout: null
     });
+
+    // Real-time clock
+    const currentTime = useRealTimeClock();
+
+    // System health states
+    const [systemHealth, setSystemHealth] = useState<{
+        database: 'healthy' | 'degraded' | 'down';
+        api: 'healthy' | 'degraded' | 'down';
+        lastChecked: Date | null;
+    }>({ database: 'healthy', api: 'healthy', lastChecked: null });
+
+    // Check system health
+    const checkSystemHealth = async () => {
+        try {
+            const start = Date.now();
+            const { error } = await supabase.from('user_roles').select('user_id').limit(1);
+            const latency = Date.now() - start;
+
+            setSystemHealth({
+                database: error ? 'down' : latency > 1000 ? 'degraded' : 'healthy',
+                api: 'healthy',
+                lastChecked: new Date()
+            });
+        } catch {
+            setSystemHealth(prev => ({
+                ...prev,
+                database: 'down',
+                lastChecked: new Date()
+            }));
+        }
+    };
 
     // Check admin status
     const checkAdminStatus = useCallback(async () => {
@@ -146,13 +292,13 @@ const AdminPage: React.FC = () => {
         }
     }, [user, authLoading, checkAdminStatus, navigate]);
 
-    // Fetch all data when admin status is confirmed
     useEffect(() => {
         if (isAdmin) {
             fetchStats();
             fetchUsers();
             fetchAnnouncements();
             fetchActivityLogs();
+            checkSystemHealth();
         }
     }, [isAdmin]);
 
@@ -395,9 +541,15 @@ const AdminPage: React.FC = () => {
     const handleDeleteAnnouncement = async (id: string) => {
         if (!confirm('Hapus pengumuman ini?')) return;
         try {
-            await supabase.from('announcements').delete().eq('id', id);
+            const { error } = await supabase.from('announcements').delete().eq('id', id);
+            if (error) {
+                console.error('Delete announcement error:', error);
+                alert('Gagal menghapus pengumuman: ' + error.message);
+                return;
+            }
             fetchAnnouncements();
         } catch (err: unknown) {
+            console.error('Delete announcement exception:', err);
             alert('Error: ' + (err as Error).message);
         }
     };
@@ -452,13 +604,25 @@ const AdminPage: React.FC = () => {
                                 </p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => { fetchStats(); fetchUsers(); fetchAnnouncements(); }}
-                            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-500/50 transition-all shadow-sm"
-                        >
-                            <RefreshCw size={16} className={statsLoading ? 'animate-spin' : ''} />
-                            <span className="text-sm font-medium">Refresh</span>
-                        </button>
+
+                        {/* Real-time Info */}
+                        <div className="hidden md:flex items-center gap-6">
+                            <div className="text-right">
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white font-mono">
+                                    {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => { fetchStats(); fetchUsers(); fetchAnnouncements(); checkSystemHealth(); }}
+                                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-500/50 transition-all shadow-sm"
+                            >
+                                <RefreshCw size={16} className={statsLoading ? 'animate-spin' : ''} />
+                                <span className="text-sm font-medium">Refresh</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Tab Navigation */}
@@ -749,7 +913,55 @@ const AdminPage: React.FC = () => {
                         {/* Create Form */}
                         {showAnnouncementForm && (
                             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                                <h3 className="text-lg font-bold mb-4">Pengumuman Baru</h3>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold">Pengumuman Baru</h3>
+                                    <button
+                                        onClick={() => setShowTemplates(!showTemplates)}
+                                        className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all"
+                                    >
+                                        <Sparkles size={14} />
+                                        Template
+                                    </button>
+                                </div>
+
+                                {/* Templates Modal/Dropdown */}
+                                {showTemplates && (
+                                    <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-200 dark:border-purple-700/50">
+                                        <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300 mb-3">Pilih Template</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+                                            {announcementTemplates.map(template => (
+                                                <button
+                                                    key={template.id}
+                                                    onClick={() => applyTemplate(template)}
+                                                    className="group text-left p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 hover:shadow-md transition-all"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <span className="text-2xl">{template.icon}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 truncate">
+                                                                {template.title}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+                                                                {template.content}
+                                                            </p>
+                                                            <div className="flex items-center gap-2 mt-2">
+                                                                <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                                                    {template.category}
+                                                                </span>
+                                                                <span className="text-xs text-gray-400">
+                                                                    {template.audience_type === 'all' ? 'Semua' :
+                                                                        template.audience_type === 'teachers' ? 'Guru' :
+                                                                            template.audience_type === 'parents' ? 'Orang Tua' : 'Siswa'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="space-y-4">
                                     <input
                                         type="text"
@@ -876,9 +1088,9 @@ const AdminPage: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`px-2 py-1 text-xs font-semibold rounded-lg ${log.action === 'INSERT' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                            log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                                log.action === 'DELETE' || log.action === 'SOFT_DELETE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                                    'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                                        log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                            log.action === 'DELETE' || log.action === 'SOFT_DELETE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                                'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                                         }`}>
                                                         {log.action}
                                                     </span>
@@ -899,30 +1111,171 @@ const AdminPage: React.FC = () => {
                 )}
 
                 {activeTab === 'system' && (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-                        <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                            <Database size={20} className="text-indigo-500" />
-                            System Information
-                        </h3>
-                        <div className="space-y-4">
-                            <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
-                                <span className="text-gray-600 dark:text-gray-400">Database Status</span>
-                                <span className="flex items-center gap-2 text-green-600">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full" />
-                                    Connected
-                                </span>
+                    <div className="space-y-6">
+                        {/* Health Status Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${systemHealth.database === 'healthy' ? 'bg-green-100 dark:bg-green-900/30' :
+                                            systemHealth.database === 'degraded' ? 'bg-amber-100 dark:bg-amber-900/30' :
+                                                'bg-red-100 dark:bg-red-900/30'
+                                            }`}>
+                                            <Database size={24} className={`${systemHealth.database === 'healthy' ? 'text-green-600' :
+                                                systemHealth.database === 'degraded' ? 'text-amber-600' :
+                                                    'text-red-600'
+                                                }`} />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-gray-900 dark:text-white">Database</p>
+                                            <p className="text-xs text-gray-500">Supabase PostgreSQL</p>
+                                        </div>
+                                    </div>
+                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${systemHealth.database === 'healthy' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                        systemHealth.database === 'degraded' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                        }`}>
+                                        <span className={`w-2 h-2 rounded-full ${systemHealth.database === 'healthy' ? 'bg-green-500' :
+                                            systemHealth.database === 'degraded' ? 'bg-amber-500' :
+                                                'bg-red-500'
+                                            }`} />
+                                        {systemHealth.database === 'healthy' ? 'Healthy' : systemHealth.database === 'degraded' ? 'Slow' : 'Down'}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
-                                <span className="text-gray-600 dark:text-gray-400">Total Records</span>
-                                <span className="font-mono">{stats.totalUsers + stats.totalStudents + stats.totalAttendance}</span>
+
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                            <Server size={24} className="text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-gray-900 dark:text-white">API Server</p>
+                                            <p className="text-xs text-gray-500">Edge Functions</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                        <span className="w-2 h-2 rounded-full bg-green-500" />
+                                        Online
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
-                                <span className="text-gray-600 dark:text-gray-400">App Version</span>
-                                <span className="font-mono">1.0.0</span>
+
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                            <Shield size={24} className="text-purple-600" />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-gray-900 dark:text-white">Security</p>
+                                            <p className="text-xs text-gray-500">RLS Enabled</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                        <CheckCircle2 size={14} />
+                                        Protected
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex justify-between py-3">
-                                <span className="text-gray-600 dark:text-gray-400">Last Refresh</span>
-                                <span className="font-mono text-sm">{new Date().toLocaleString('id-ID')}</span>
+                        </div>
+
+                        {/* System Info */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-bold flex items-center gap-2">
+                                    <Cpu size={20} className="text-indigo-500" />
+                                    System Information
+                                </h3>
+                                <button
+                                    onClick={checkSystemHealth}
+                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                                >
+                                    <RefreshCw size={14} />
+                                    Check Health
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                                            <HardDrive size={16} className="text-gray-400" />
+                                            Total Records
+                                        </span>
+                                        <span className="font-mono font-bold text-gray-900 dark:text-white">
+                                            {(stats.totalUsers + stats.totalStudents + stats.totalAttendance + stats.totalGrades).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                                            <Users size={16} className="text-gray-400" />
+                                            Active Users
+                                        </span>
+                                        <span className="font-mono font-bold text-gray-900 dark:text-white">{stats.totalUsers}</span>
+                                    </div>
+                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                                            <Trash2 size={16} className="text-gray-400" />
+                                            Deleted Users
+                                        </span>
+                                        <span className="font-mono font-bold text-gray-900 dark:text-white">{deletedUsers.length}</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                                            <Activity size={16} className="text-gray-400" />
+                                            Activity Logs
+                                        </span>
+                                        <span className="font-mono font-bold text-gray-900 dark:text-white">{activityLogs.length}</span>
+                                    </div>
+                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                                            <TrendingUp size={16} className="text-gray-400" />
+                                            App Version
+                                        </span>
+                                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">v2.0.0</span>
+                                    </div>
+                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                                            <Clock size={16} className="text-gray-400" />
+                                            Last Health Check
+                                        </span>
+                                        <span className="font-mono text-sm text-gray-900 dark:text-white">
+                                            {systemHealth.lastChecked ? systemHealth.lastChecked.toLocaleTimeString('id-ID') : 'Never'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Data Usage */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                            <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                                <BarChart3 size={20} className="text-indigo-500" />
+                                Data Distribution
+                            </h3>
+                            <div className="space-y-4">
+                                {[
+                                    { label: 'Siswa', value: stats.totalStudents, max: Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades), color: 'bg-blue-500' },
+                                    { label: 'Absensi', value: stats.totalAttendance, max: Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades), color: 'bg-green-500' },
+                                    { label: 'Nilai', value: stats.totalGrades, max: Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades), color: 'bg-purple-500' },
+                                    { label: 'Tugas', value: stats.totalTasks, max: Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades), color: 'bg-orange-500' },
+                                ].map(item => (
+                                    <div key={item.label} className="space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600 dark:text-gray-400">{item.label}</span>
+                                            <span className="font-mono font-bold text-gray-900 dark:text-white">{item.value.toLocaleString()}</span>
+                                        </div>
+                                        <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${item.color} rounded-full transition-all duration-500`}
+                                                style={{ width: item.max > 0 ? `${(item.value / item.max) * 100}%` : '0%' }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>

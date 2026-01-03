@@ -11,12 +11,12 @@ import {
     ArrowUpIcon,
     ArrowDownIcon,
     MinusIcon,
-    FilterIcon,
-    DownloadIcon,
     RefreshCwIcon,
     HelpCircle,
     ExternalLink
 } from 'lucide-react';
+import { Database } from '../../services/database.types';
+import { GraduationCapIcon, BookOpenIcon, AlertCircleIcon } from '../Icons';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
@@ -48,6 +48,25 @@ interface DailyAttendance {
     sakit: number;
     alpha: number;
     total: number;
+}
+
+
+type Student = Database['public']['Tables']['students']['Row'];
+
+interface AtRiskItem {
+    student: Student;
+    reason: 'attendance' | 'academic' | 'both';
+    details: string;
+}
+
+// type AcademicRecord = Database['public']['Tables']['academic_records']['Row'];
+
+interface GradeDistribution {
+    label: string;
+    range: string;
+    count: number;
+    color: string;
+    percentage: number;
 }
 
 const AnalyticsPage: React.FC = () => {
@@ -118,7 +137,8 @@ const AnalyticsPage: React.FC = () => {
             if (selectedClassId !== 'all') {
                 studentsQuery = studentsQuery.eq('class_id', selectedClassId);
             }
-            const { data: students } = await studentsQuery;
+            const { data: studentsData } = await studentsQuery;
+            const students = (studentsData as unknown as Student[]) || [];
 
             // Fetch attendance
             let attendanceQuery = supabase
@@ -137,12 +157,77 @@ const AnalyticsPage: React.FC = () => {
                 .select('*')
                 .eq('user_id', user!.id);
 
-            return { classes: classes || [], students: students || [], attendance: attendance || [], tasks: tasks || [] };
+            // Fetch academic records
+            const { data: academicRecords } = await supabase
+                .from('academic_records')
+                .select('*')
+                .eq('user_id', user!.id);
+
+            return { classes: classes || [], students: students || [], attendance: attendance || [], tasks: tasks || [], academicRecords: academicRecords || [] };
         },
         enabled: !!user,
     });
 
-    const { classes = [], students = [], attendance = [], tasks = [] } = data || {};
+    const { classes = [], tasks = [] } = data || {};
+    const students = useMemo(() => data?.students || [], [data?.students]);
+    const attendance = useMemo(() => data?.attendance || [], [data?.attendance]);
+    const academicRecords = useMemo(() => data?.academicRecords || [], [data?.academicRecords]);
+
+    // Calculate grade stats
+    const gradeStats = useMemo(() => {
+        const studentIds = new Set(students.map(s => s.id));
+        const filteredRecords = selectedClassId === 'all'
+            ? academicRecords
+            : academicRecords.filter(r => studentIds.has(r.student_id));
+
+        const distribution: GradeDistribution[] = [
+            { label: 'A', range: '90-100', count: 0, color: '#22c55e', percentage: 0 },
+            { label: 'B', range: '80-89', count: 0, color: '#3b82f6', percentage: 0 },
+            { label: 'C', range: '70-79', count: 0, color: '#eab308', percentage: 0 },
+            { label: 'D', range: '60-69', count: 0, color: '#f97316', percentage: 0 },
+            { label: 'E', range: '<60', count: 0, color: '#ef4444', percentage: 0 },
+        ];
+
+        // Group by average score per student
+        const studentAverages = new Map<string, { total: number; count: number }>();
+
+        filteredRecords.forEach(r => {
+            if (!studentIds.has(r.student_id)) return;
+            const current = studentAverages.get(r.student_id) || { total: 0, count: 0 };
+            studentAverages.set(r.student_id, {
+                total: current.total + r.score,
+                count: current.count + 1
+            });
+        });
+
+        let totalStudentsWithGrades = 0;
+        let totalSum = 0;
+
+        studentAverages.forEach(avg => {
+            const finalScore = avg.total / avg.count;
+            totalSum += finalScore;
+            totalStudentsWithGrades++;
+
+            if (finalScore >= 90) distribution[0].count++;
+            else if (finalScore >= 80) distribution[1].count++;
+            else if (finalScore >= 70) distribution[2].count++;
+            else if (finalScore >= 60) distribution[3].count++;
+            else distribution[4].count++;
+        });
+
+        // Calculate percentages
+        distribution.forEach(d => {
+            d.percentage = totalStudentsWithGrades > 0
+                ? Math.round((d.count / totalStudentsWithGrades) * 100)
+                : 0;
+        });
+
+        const overallAverage = totalStudentsWithGrades > 0
+            ? Math.round(totalSum / totalStudentsWithGrades)
+            : 0;
+
+        return { distribution, overallAverage, totalStudentsWithGrades };
+    }, [academicRecords, students, selectedClassId]);
 
     // Calculate attendance stats
     const attendanceStats = useMemo((): AttendanceStats => {
@@ -186,28 +271,88 @@ const AnalyticsPage: React.FC = () => {
         }).sort((a, b) => b.attendanceRate - a.attendanceRate);
     }, [classes, students, attendance]);
 
+    // Calculate At Risk Students
+    const atRiskStudents = useMemo(() => {
+        const risks: AtRiskItem[] = [];
+
+        // Helper to get student grade
+        const getStudentAvg = (studentId: string) => {
+            const records = academicRecords.filter(r => r.student_id === studentId);
+            if (records.length === 0) return null;
+            return records.reduce((sum, r) => sum + r.score, 0) / records.length;
+        };
+
+        // Helper to get student attendance
+        const getStudentAttendance = (studentId: string) => {
+            const records = attendance.filter(a => a.student_id === studentId);
+            if (records.length === 0) return null;
+            const hadir = records.filter(r => r.status === 'Hadir').length;
+            return (hadir / records.length) * 100;
+        };
+
+        students.forEach(student => {
+            if (selectedClassId !== 'all' && student.class_id !== selectedClassId) return;
+
+            const avg = getStudentAvg(student.id);
+            const att = getStudentAttendance(student.id);
+
+            const isLowGrade = avg !== null && avg < 65;
+            const isLowAtt = att !== null && att < 75;
+
+            if (isLowGrade && isLowAtt) {
+                risks.push({ student, reason: 'both', details: `Nilai: ${avg?.toFixed(0)}, Hadir: ${att?.toFixed(0)}%` });
+            } else if (isLowGrade) {
+                risks.push({ student, reason: 'academic', details: `Rata-rata Nilai: ${avg?.toFixed(0)}` });
+            } else if (isLowAtt) {
+                risks.push({ student, reason: 'attendance', details: `Kehadiran: ${att?.toFixed(0)}%` });
+            }
+        });
+
+        return risks.slice(0, 5); // Limit to 5 for widget
+    }, [students, academicRecords, attendance, selectedClassId]);
+
     // Calculate daily attendance for chart
     const dailyAttendance = useMemo((): DailyAttendance[] => {
-        const byDate = new Map<string, DailyAttendance>();
         const studentIds = new Set(students.map(s => s.id));
+        const daysToCheck = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
 
+        // 1. Initialize map with all dates in range
+        const fullRangeMap = new Map<string, DailyAttendance>();
+        const now = new Date();
+
+        for (let i = 0; i < daysToCheck; i++) {
+            const d = new Date();
+            d.setDate(now.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            fullRangeMap.set(dateStr, {
+                date: dateStr,
+                hadir: 0,
+                izin: 0,
+                sakit: 0,
+                alpha: 0,
+                total: 0
+            });
+        }
+
+        // 2. Fill with actual data
         attendance
             .filter(a => selectedClassId === 'all' || studentIds.has(a.student_id))
             .forEach(a => {
                 const date = a.date;
-                if (!byDate.has(date)) {
-                    byDate.set(date, { date, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
+                // Only count if within our generated range
+                if (fullRangeMap.has(date)) {
+                    const day = fullRangeMap.get(date)!;
+                    day.total++;
+                    if (a.status === 'Hadir') day.hadir++;
+                    else if (a.status === 'Izin') day.izin++;
+                    else if (a.status === 'Sakit') day.sakit++;
+                    else if (a.status === 'Alpha') day.alpha++;
                 }
-                const day = byDate.get(date)!;
-                day.total++;
-                if (a.status === 'Hadir') day.hadir++;
-                else if (a.status === 'Izin') day.izin++;
-                else if (a.status === 'Sakit') day.sakit++;
-                else if (a.status === 'Alpha') day.alpha++;
             });
 
-        return Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date)).slice(-30);
-    }, [attendance, students, selectedClassId]);
+        return Array.from(fullRangeMap.values())
+            .sort((a, b) => a.date.localeCompare(b.date));
+    }, [attendance, students, selectedClassId, dateRange]);
 
     // Task stats
     const taskStats = useMemo(() => {
@@ -394,7 +539,7 @@ const AnalyticsPage: React.FC = () => {
                                 const totalHeight = maxTotal > 0 ? (day.total / maxTotal) * chartHeight : 0;
                                 const hadirHeight = day.total > 0 ? (day.hadir / day.total) * totalHeight : 0;
                                 const tidakHadirHeight = totalHeight - hadirHeight;
-                                const showLabel = i % labelInterval === 0 || i === data.length - 1;
+
 
                                 return (
                                     <div
@@ -664,6 +809,105 @@ const AnalyticsPage: React.FC = () => {
         );
     };
 
+
+
+    const AtRiskWidget = ({ students }: { students: AtRiskItem[] }) => {
+        if (students.length === 0) return null;
+
+        return (
+            <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg border-l-4 border-l-rose-500 overflow-hidden mb-6">
+                <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 bg-rose-50/50 dark:bg-rose-900/10">
+                    <CardTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+                        <AlertCircleIcon className="w-5 h-5" />
+                        Perlu Perhatian ({students.length})
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {students.map((item, index) => (
+                            <div key={index} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
+                                        ${item.reason === 'both' ? 'bg-rose-100 text-rose-600' :
+                                            item.reason === 'academic' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+                                        {item.student.name.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-slate-800 dark:text-gray-200 text-sm">{item.student.name}</h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">{item.details}</p>
+                                    </div>
+                                </div>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                                    <ExternalLink className="w-4 h-4 text-slate-400" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    };
+
+    const GradeDistributionChart = ({ data, average }: { data: GradeDistribution[]; average: number }) => {
+        return (
+            <div className="relative">
+                <div className="flex items-end justify-between mb-6 px-2">
+                    <div className="text-center">
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white">{average}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Rata-rata</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-sm font-medium text-slate-600 dark:text-gray-300">
+                            Total {data.reduce((a, b) => a + b.count, 0)} Siswa
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Dinilai</p>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    {data.map((item, index) => (
+                        <div key={index} className="group relative">
+                            <div className="flex items-center justify-between text-sm mb-1.5">
+                                <span className="font-semibold text-slate-700 dark:text-gray-200 w-8">{item.label}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400 absolute left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Range: {item.range}
+                                </span>
+                                <span className="font-bold text-slate-900 dark:text-white">
+                                    {item.count} <span className="text-slate-400 font-normal text-xs ml-0.5">({item.percentage}%)</span>
+                                </span>
+                            </div>
+                            <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full rounded-full transition-all duration-1000 ease-out relative"
+                                    style={{
+                                        width: `${item.percentage}%`,
+                                        backgroundColor: item.color
+                                    }}
+                                >
+                                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {average < 75 && (
+                    <div className="mt-6 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex gap-3">
+                        <div className="p-2 bg-amber-100 dark:bg-amber-800/40 rounded-lg h-fit">
+                            <AlertCircleIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300 mb-1">Perhatian Akademik</h4>
+                            <p className="text-xs text-amber-700 dark:text-amber-400/80 leading-relaxed">
+                                Rata-rata nilai kelas di bawah 75. Pertimbangkan untuk mengadakan remedial atau kelas tambahan untuk materi yang sulit.
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     if (isLoading) {
         return <AnalyticsPageSkeleton />;
     }
@@ -693,7 +937,7 @@ const AnalyticsPage: React.FC = () => {
                     </Select>
                     <Select
                         value={dateRange}
-                        onChange={(e) => setDateRange(e.target.value as any)}
+                        onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
                         className="flex-1 min-w-[100px] sm:min-w-[120px] sm:flex-none"
                     >
                         <option value="7d">7 Hari</option>
@@ -769,14 +1013,42 @@ const AnalyticsPage: React.FC = () => {
                 />
             </div>
 
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Academic & Attendance Overview Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Academic Stats - New! */}
+                <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg lg:col-span-1">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <GraduationCapIcon className="w-5 h-5 text-indigo-600" />
+                            Distribusi Nilai
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {gradeStats.totalStudentsWithGrades > 0 ? (
+                            <GradeDistributionChart data={gradeStats.distribution} average={gradeStats.overallAverage} />
+                        ) : (
+                            <div className="h-64 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl">
+                                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-full mb-3">
+                                    <BookOpenIcon className="w-6 h-6 text-slate-400" />
+                                </div>
+                                <p className="text-sm font-medium text-slate-900 dark:text-white">Belum Ada Data Nilai</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
+                                    Input nilai tugas atau ujian untuk melihat analisis ini.
+                                </p>
+                                <Button variant="outline" size="sm" className="bg-white dark:bg-slate-800">
+                                    Input Nilai
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
                 {/* Attendance Trend */}
-                <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
+                <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg lg:col-span-2">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <BarChart3Icon className="w-5 h-5 text-indigo-600" />
-                            Kehadiran 30 Hari Terakhir
+                            Tren Kehadiran (30 Hari)
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -786,12 +1058,19 @@ const AnalyticsPage: React.FC = () => {
                                 subtitle={`Data kehadiran ${selectedClassId === 'all' ? 'semua kelas' : classes.find(c => c.id === selectedClassId)?.name || ''} – ${new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`}
                             />
                         ) : (
-                            <div className="h-32 flex items-center justify-center text-slate-500">
+                            <div className="h-64 flex items-center justify-center text-slate-500 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl">
                                 Tidak ada data kehadiran
                             </div>
                         )}
                     </CardContent>
                 </Card>
+            </div>
+
+            {/* At Risk Alert (Conditional) */}
+            <AtRiskWidget students={atRiskStudents} />
+
+            {/* Secondary Row for Pie Chart and others */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                 {/* Attendance Distribution */}
                 <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">

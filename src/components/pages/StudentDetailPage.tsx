@@ -41,6 +41,7 @@ import { useStudentMutations } from './student/hooks/useStudentMutations';
 import { useConfetti } from '../../hooks/useConfetti';
 import { StudentDetailPageSkeleton } from '../skeletons/PageSkeletons';
 import { getStudentAvatar } from '../../utils/avatarUtils';
+import { useUserSettings } from '../../hooks/useUserSettings';
 
 const generateAccessCode = (): string => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No 0, O, 1, I
@@ -66,6 +67,7 @@ const StudentDetailPage = () => {
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [subjectToApply, setSubjectToApply] = useState('');
+    const { kkm } = useUserSettings();
 
     useEffect(() => {
         if (location.state?.openTab) {
@@ -434,7 +436,7 @@ const StudentDetailPage = () => {
                     <div className="flex items-center gap-2 self-start md:self-center">
                         <Button variant="outline" onClick={() => setModalState({ type: 'editStudent', data: student })} disabled={!isOnline} className="bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white"><UserCircleIcon className="w-4 h-4 mr-2" />Edit Profil</Button>
                         <Link to={`/cetak-rapot/${studentId}`}><Button variant="outline" className="bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white"><FileTextIcon className="w-4 h-4 mr-2" />Cetak Rapor</Button></Link>
-                        <Button onClick={() => setModalState({ type: 'portalAccess' })} className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20"><KeyRoundIcon className="w-4 h-4 mr-2" />Akses Portal</Button>
+                        <Button onClick={() => setModalState({ type: 'portalAccess' })} className="bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/20"><KeyRoundIcon className="w-4 h-4 mr-2" />Akses Portal</Button>
                     </div>
                 </header>
 
@@ -472,7 +474,7 @@ const StudentDetailPage = () => {
                             </div>
                         </div>
                         <TabsContent value="grades" className="p-0">
-                            <GradesTab records={academicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} />
+                            <GradesTab records={academicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} kkm={kkm} />
                         </TabsContent>
                         <TabsContent value="activity" className="p-0">
                             <ActivityTab quizPoints={quizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} />
@@ -698,12 +700,12 @@ const StudentDetailPage = () => {
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-center">Bagikan kode akses ini kepada orang tua atau wali siswa.</p>
 
                                 {student.access_code ? (
-                                    <div className="w-full max-w-sm p-6 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 shadow-inner border border-indigo-200 dark:border-indigo-800 text-center mb-6">
-                                        <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-200 mb-2">Kode Akses Siswa</p>
-                                        <div className="bg-white/80 dark:bg-black/40 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 mb-2">
-                                            <p className="text-3xl font-mono font-bold tracking-[0.2em] text-indigo-700 dark:text-indigo-300">{student.access_code}</p>
+                                    <div className="w-full max-w-sm p-6 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 shadow-inner border border-green-200 dark:border-green-800 text-center mb-6">
+                                        <p className="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">Kode Akses Siswa</p>
+                                        <div className="bg-white/80 dark:bg-black/40 p-3 rounded-lg border border-green-100 dark:border-green-800 mb-2">
+                                            <p className="text-3xl font-mono font-bold tracking-[0.2em] text-green-700 dark:text-green-300">{student.access_code}</p>
                                         </div>
-                                        <p className="text-xs text-indigo-600 dark:text-indigo-400">Kode ini bersifat rahasia.</p>
+                                        <p className="text-xs text-green-600 dark:text-green-400">Kode ini bersifat rahasia.</p>
                                     </div>
                                 ) : (
                                     <div className="text-center py-8 mb-6">

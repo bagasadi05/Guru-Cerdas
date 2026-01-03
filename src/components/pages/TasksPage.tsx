@@ -19,7 +19,6 @@ import { useToast } from '../../hooks/useToast';
 import { TasksPageSkeleton } from '../skeletons/PageSkeletons';
 import { MoreVertical, Loader2, PlayCircle, Circle, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import { ValidationService } from '../../services/ValidationService';
-import { recordAction } from '../../services/UndoManager';
 import { ValidationRules } from '../../types';
 
 // Native date helpers
@@ -42,7 +41,6 @@ const fetchTasks = async (userId: string): Promise<TaskRow[]> => {
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
-        .is('deleted_at', null)  // Filter out soft-deleted tasks
         .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -352,12 +350,12 @@ const TasksPage: React.FC = () => {
 
     const deleteTaskMutation = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await supabase.from('tasks').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+            const { error } = await supabase.from('tasks').delete().eq('id', id);
             if (error) throw error;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            toast.success('Tugas berhasil dihapus. Lihat Sampah untuk memulihkan.');
+            toast.success('Tugas berhasil dihapus');
         },
         onError: () => toast.error('Gagal menghapus tugas'),
     });
@@ -471,7 +469,7 @@ const TasksPage: React.FC = () => {
     }
 
     return (
-        <div className="w-full min-h-full p-4 sm:p-6 lg:p-8 flex flex-col space-y-8 bg-transparent max-w-7xl mx-auto pb-32 lg:pb-12 animate-fade-in-up">
+        <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 lg:space-y-8 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 <div>
