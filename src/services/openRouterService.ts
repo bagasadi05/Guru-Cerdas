@@ -54,6 +54,7 @@ export async function generateOpenRouterContent(
                 headers: {
                     "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
                     "Content-Type": "application/json",
+                    "Accept": "application/json",
                     // "HTTP-Referer": window.location.origin, // Optional: for OpenRouter analytics
                     // "X-Title": "Portal Guru" // Optional: for OpenRouter analytics
                 },
