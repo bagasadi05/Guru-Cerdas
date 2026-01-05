@@ -9,6 +9,8 @@ interface ClassData {
     name: string;
 }
 
+import { SemesterWithYear } from '../../contexts/SemesterContext';
+
 interface AttendanceExportModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -19,6 +21,12 @@ interface AttendanceExportModalProps {
     classes?: ClassData[];
     selectedExportClass: string;
     setSelectedExportClass: (classId: string) => void;
+    // New props for semester export
+    exportScope: 'month' | 'semester';
+    setExportScope: (scope: 'month' | 'semester') => void;
+    semesters?: SemesterWithYear[];
+    selectedSemesterId: string;
+    setSelectedSemesterId: (id: string) => void;
 }
 
 export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
@@ -30,7 +38,12 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
     setExportMonth,
     classes = [],
     selectedExportClass,
-    setSelectedExportClass
+    setSelectedExportClass,
+    exportScope = 'month',
+    setExportScope,
+    semesters = [],
+    selectedSemesterId,
+    setSelectedSemesterId
 }) => {
     return (
         <Modal title="Export Laporan Absensi" isOpen={isOpen} onClose={onClose}>
@@ -55,8 +68,59 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
 
                 {/* Month Picker */}
                 <div>
-                    <label htmlFor="export-month" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Bulan & Tahun</label>
-                    <Input id="export-month" type="month" value={exportMonth} onChange={e => setExportMonth(e.target.value)} className="h-12" />
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">Periode Laporan</label>
+                        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                            <button
+                                type="button"
+                                onClick={() => setExportScope('month')}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${exportScope === 'month'
+                                    ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                                    }`}
+                            >
+                                Bulanan
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setExportScope('semester')}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${exportScope === 'semester'
+                                    ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                                    }`}
+                            >
+                                Semester
+                            </button>
+                        </div>
+                    </div>
+
+                    {exportScope === 'month' ? (
+                        <Input
+                            id="export-month"
+                            type="month"
+                            value={exportMonth}
+                            onChange={e => setExportMonth(e.target.value)}
+                            className="h-12"
+                        />
+                    ) : (
+                        <Select
+                            id="export-semester"
+                            value={selectedSemesterId}
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedSemesterId(e.target.value)}
+                            className="h-12"
+                        >
+                            <option value="" disabled>Pilih Semester</option>
+                            {semesters.map((s: SemesterWithYear) => {
+                                const yearLabel = s.academic_years ? `${s.academic_years.name} ` : '';
+                                const semesterLabel = s.semester_number === 1 ? 'Ganjil' : 'Genap';
+                                return (
+                                    <option key={s.id} value={s.id}>
+                                        {yearLabel}{semesterLabel} ({new Date(s.start_date).getFullYear()})
+                                    </option>
+                                );
+                            })}
+                        </Select>
+                    )}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
