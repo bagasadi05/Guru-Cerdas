@@ -3,6 +3,8 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { SemesterSelector } from '../ui/SemesterSelector';
+
 
 interface ClassData {
     id: string;
@@ -21,13 +23,12 @@ interface AttendanceExportModalProps {
     classes?: ClassData[];
     selectedExportClass: string;
     setSelectedExportClass: (classId: string) => void;
-    // New props for semester export
-    exportScope: 'month' | 'semester';
-    setExportScope: (scope: 'month' | 'semester') => void;
-    semesters?: SemesterWithYear[];
-    selectedSemesterId: string;
-    setSelectedSemesterId: (id: string) => void;
+    exportPeriod: 'monthly' | 'semester';
+    setExportPeriod: (period: 'monthly' | 'semester') => void;
+    exportSemesterId: string | null;
+    setExportSemesterId: (id: string | null) => void;
 }
+
 
 export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
     isOpen,
@@ -39,12 +40,12 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
     classes = [],
     selectedExportClass,
     setSelectedExportClass,
-    exportScope = 'month',
-    setExportScope,
-    semesters = [],
-    selectedSemesterId,
-    setSelectedSemesterId
+    exportPeriod,
+    setExportPeriod,
+    exportSemesterId,
+    setExportSemesterId
 }) => {
+
     return (
         <Modal title="Export Laporan Absensi" isOpen={isOpen} onClose={onClose}>
             <div className="space-y-4">
@@ -66,62 +67,41 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
                     </Select>
                 </div>
 
-                {/* Month Picker */}
-                <div>
-                    <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">Periode Laporan</label>
-                        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-                            <button
-                                type="button"
-                                onClick={() => setExportScope('month')}
-                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${exportScope === 'month'
-                                    ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                                    }`}
-                            >
-                                Bulanan
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setExportScope('semester')}
-                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${exportScope === 'semester'
-                                    ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                                    }`}
-                            >
-                                Semester
-                            </button>
-                        </div>
-                    </div>
-
-                    {exportScope === 'month' ? (
-                        <Input
-                            id="export-month"
-                            type="month"
-                            value={exportMonth}
-                            onChange={e => setExportMonth(e.target.value)}
-                            className="h-12"
-                        />
-                    ) : (
-                        <Select
-                            id="export-semester"
-                            value={selectedSemesterId}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedSemesterId(e.target.value)}
-                            className="h-12"
-                        >
-                            <option value="" disabled>Pilih Semester</option>
-                            {semesters.map((s: SemesterWithYear) => {
-                                const yearLabel = s.academic_years ? `${s.academic_years.name} ` : '';
-                                const semesterLabel = s.semester_number === 1 ? 'Ganjil' : 'Genap';
-                                return (
-                                    <option key={s.id} value={s.id}>
-                                        {yearLabel}{semesterLabel} ({new Date(s.start_date).getFullYear()})
-                                    </option>
-                                );
-                            })}
-                        </Select>
-                    )}
+                {/* Period Type Selection */}
+                <div className="flex gap-4 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <button
+                        type="button"
+                        onClick={() => setExportPeriod('monthly')}
+                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${exportPeriod === 'monthly' ? 'bg-white shadow text-indigo-600 dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                    >
+                        Bulanan
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setExportPeriod('semester')}
+                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${exportPeriod === 'semester' ? 'bg-white shadow text-indigo-600 dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                    >
+                        Satu Semester
+                    </button>
                 </div>
+
+                {/* Period Filter Inputs */}
+                {exportPeriod === 'monthly' ? (
+                    <div>
+                        <label htmlFor="export-month" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Bulan & Tahun</label>
+                        <Input id="export-month" type="month" value={exportMonth} onChange={e => setExportMonth(e.target.value)} className="h-12" />
+                    </div>
+                ) : (
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Pilih Semester</label>
+                        <SemesterSelector
+                            value={exportSemesterId || ''}
+                            onChange={(id) => setExportSemesterId(id === 'all' ? null : id)}
+                            includeAllOption={false}
+                            className="h-12 w-full"
+                        />
+                    </div>
+                )}
 
                 <div className="flex justify-end gap-3 pt-4">
                     <Button type="button" variant="ghost" onClick={onClose} disabled={isExporting}>Batal</Button>

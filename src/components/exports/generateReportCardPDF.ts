@@ -29,10 +29,15 @@ const loadImage = (url: string): Promise<string> => {
     });
 };
 
-export const generateReportCardPDF = async (data: PortalData): Promise<void> => {
+export const generateReportCardPDF = async (data: PortalData, semesterId?: string): Promise<void> => {
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Filter attendance records by semester if semesterId provided
+    const filteredAttendance = semesterId
+        ? data.attendanceRecords.filter(r => (r as any).semester_id === semesterId)
+        : data.attendanceRecords;
 
     // Get school info from data
     const schoolName = data.schoolInfo?.school_name || 'Sekolah';
@@ -160,10 +165,11 @@ export const generateReportCardPDF = async (data: PortalData): Promise<void> => 
     doc.setFont('helvetica', 'bold');
     doc.text('B. Kehadiran', leftCol, finalY);
 
-    const hadir = data.attendanceRecords.filter(r => r.status === 'Hadir').length;
-    const sakit = data.attendanceRecords.filter(r => r.status === 'Sakit').length;
-    const izin = data.attendanceRecords.filter(r => r.status === 'Izin').length;
-    const alpha = data.attendanceRecords.filter(r => r.status === 'Alpha').length;
+    // Use filtered attendance for semester-specific statistics
+    const hadir = filteredAttendance.filter(r => r.status === 'Hadir').length;
+    const sakit = filteredAttendance.filter(r => r.status === 'Sakit').length;
+    const izin = filteredAttendance.filter(r => r.status === 'Izin').length;
+    const alpha = filteredAttendance.filter(r => r.status === 'Alpha').length;
 
     autoTable(doc, {
         startY: finalY + 4,

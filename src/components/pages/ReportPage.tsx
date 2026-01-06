@@ -12,6 +12,7 @@ import { createWhatsAppLink, generateReportMessage } from '../../utils/whatsappU
 import jsPDF from 'jspdf';
 import { useToast } from '../../hooks/useToast';
 import FloatingActionButton from '../ui/FloatingActionButton';
+import { useSemester } from '../../contexts/SemesterContext';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -50,10 +51,25 @@ const ReportPage: React.FC = () => {
     // New State for Customization
     const [customNote, setCustomNote] = useState('');
     const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
-    const [semester, setSemester] = useState('Ganjil');
-    const [academicYear, setAcademicYear] = useState(`${new Date().getFullYear()} / ${new Date().getFullYear() + 1}`);
+    const { semesters, activeSemester, activeAcademicYear } = useSemester();
+    const [selectedSemesterId, setSelectedSemesterId] = useState<string>('');
+    const [academicYear, setAcademicYear] = useState('');
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+
+    // Initialize with active semester
+    useEffect(() => {
+        if (activeSemester && !selectedSemesterId) {
+            setSelectedSemesterId(activeSemester.id);
+            setAcademicYear(activeAcademicYear?.name || `${new Date().getFullYear()} / ${new Date().getFullYear() + 1}`);
+        }
+    }, [activeSemester]);
+
+    // Derived semester name for display
+    const semesterName = useMemo(() => {
+        const sem = semesters.find(s => s.id === selectedSemesterId);
+        return sem ? (sem.semester_number % 2 !== 0 ? 'Ganjil' : 'Genap') : 'Ganjil';
+    }, [semesters, selectedSemesterId]);
 
     const { data, isLoading, isError, error } = useQuery<ReportData>({
         queryKey: ['reportData', studentId, user?.id],
@@ -154,7 +170,13 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
             await ensureLogoLoaded();
 
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            generateStudentReport(doc, data, customNote, reportDate, semester, academicYear, user);
+            generateStudentReport(doc, {
+                ...data,
+                academicRecords: filteredAcademicRecords,
+                attendanceRecords: filteredAttendance,
+                quizPoints: filteredQuizPoints,
+                violations: filteredViolations
+            }, customNote, reportDate, semesterName, academicYear, user);
             doc.save(`Rapor_${data.student.name}.pdf`);
             toast.success("Rapor berhasil diunduh sebagai PDF!");
         } catch (e: unknown) {
@@ -162,11 +184,17 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
         }
     };
 
+    const filteredAcademicRecords = useMemo(() => {
+        if (!data) return [];
+        if (!selectedSemesterId) return data.academicRecords;
+        return data.academicRecords.filter(r => r.semester_id === selectedSemesterId);
+    }, [data, selectedSemesterId]);
+
     const academicRecordsBySubject = useMemo((): Record<string, AcademicRecordRow[]> => {
         if (!data) return {};
         const filtered = showAllSubjects
-            ? data.academicRecords
-            : data.academicRecords.filter(r => selectedSubjects.has(r.subject || 'Lainnya'));
+            ? filteredAcademicRecords
+            : filteredAcademicRecords.filter(r => selectedSubjects.has(r.subject || 'Lainnya'));
 
         return filtered.reduce((acc: Record<string, AcademicRecordRow[]>, record: AcademicRecordRow) => {
             const subject = record.subject || 'Lainnya';
@@ -174,15 +202,32 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
             acc[subject].push(record);
             return acc;
         }, {} as Record<string, AcademicRecordRow[]>);
-    }, [data, showAllSubjects, selectedSubjects]);
+    }, [filteredAcademicRecords, showAllSubjects, selectedSubjects]);
+
+    const filteredAttendance = useMemo(() => {
+        if (!data) return [];
+        if (!selectedSemesterId) return data.attendanceRecords;
+        return data.attendanceRecords.filter(r => r.semester_id === selectedSemesterId);
+    }, [data, selectedSemesterId]);
+
+    const filteredQuizPoints = useMemo(() => {
+        if (!data) return [];
+        if (!selectedSemesterId) return data.quizPoints;
+        return data.quizPoints.filter(r => r.semester_id === selectedSemesterId);
+    }, [data, selectedSemesterId]);
+
+    const filteredViolations = useMemo(() => {
+        if (!data) return [];
+        if (!selectedSemesterId) return data.violations;
+        return data.violations.filter(r => r.semester_id === selectedSemesterId);
+    }, [data, selectedSemesterId]);
 
     const attendanceSummary = useMemo(() => {
-        if (!data) return { Sakit: 0, Izin: 0, Alpha: 0 };
-        return data.attendanceRecords.reduce((acc, record) => {
+        return filteredAttendance.reduce((acc, record) => {
             if (record.status !== 'Hadir') { (acc as any)[record.status] = ((acc as any)[record.status] || 0) + 1; }
             return acc;
         }, { Sakit: 0, Izin: 0, Alpha: 0 });
-    }, [data]);
+    }, [filteredAttendance]);
 
     if (isLoading) return <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950"><div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>;
     if (isError) return <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950 text-red-500">Error: {error.message}</div>;
@@ -225,12 +270,15 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                 Semester
                             </label>
                             <select
-                                value={semester}
-                                onChange={(e) => setSemester(e.target.value)}
-                                className="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                                value={selectedSemesterId}
+                                onChange={(e) => setSelectedSemesterId(e.target.value)}
+                                className="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all font-medium text-sm"
                             >
-                                <option value="Ganjil">Ganjil</option>
-                                <option value="Genap">Genap</option>
+                                {semesters.map(sem => (
+                                    <option key={sem.id} value={sem.id}>
+                                        {sem.academic_years?.name} - {sem.semester_number % 2 !== 0 ? 'Ganjil' : 'Genap'}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -328,7 +376,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                     </Button>
 
                     <a
-                        href={createWhatsAppLink(data.student.parent_phone || '', generateReportMessage(data.student.name, Math.round(data.academicRecords.reduce((a, b) => a + b.score, 0) / (data.academicRecords.length || 1)), semester))}
+                        href={createWhatsAppLink(data.student.parent_phone || '', generateReportMessage(data.student.name, Math.round(data.academicRecords.reduce((a, b) => a + b.score, 0) / (data.academicRecords.length || 1)), semesterName))}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full flex items-center justify-center bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20 h-12 rounded-xl text-base font-bold transition-all"
@@ -415,7 +463,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                     <span className="font-bold text-indigo-700 dark:text-indigo-400">Tahun Ajaran</span>
                                     <span className="font-medium text-slate-800 dark:text-slate-200">: {academicYear}</span>
                                     <span className="font-bold text-indigo-700 dark:text-indigo-400">Semester</span>
-                                    <span className="font-medium text-slate-800 dark:text-slate-200">: {semester}</span>
+                                    <span className="font-medium text-slate-800 dark:text-slate-200">: {semesterName}</span>
                                 </div>
                             </div>
                         </div>
@@ -478,8 +526,8 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                 <h3 className="text-base font-bold mb-3 border-b-2 border-indigo-500 dark:border-indigo-400 pb-1 uppercase tracking-wide text-indigo-700 dark:text-indigo-400">C. Catatan Perilaku</h3>
                                 <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 min-h-[120px] text-sm bg-indigo-50/50 dark:bg-indigo-900/10">
                                     <ul className="list-disc list-inside space-y-2">
-                                        {(data.violations || []).length > 0
-                                            ? (data.violations || []).map(v => <li key={v.id} className="text-slate-700 dark:text-slate-300">{v.description}</li>)
+                                        {(data.violations || []).filter(v => !selectedSemesterId || v.semester_id === selectedSemesterId).length > 0
+                                            ? (data.violations || []).filter(v => !selectedSemesterId || v.semester_id === selectedSemesterId).map(v => <li key={v.id} className="text-slate-700 dark:text-slate-300">{v.description}</li>)
                                             : <li className="italic text-slate-600 dark:text-slate-400">Siswa menunjukkan sikap yang baik dan terpuji selama pembelajaran.</li>
                                         }
                                     </ul>
@@ -488,7 +536,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                         </section>
 
                         {/* --- QUIZ POINTS (NEW) --- */}
-                        {(data.quizPoints || []).length > 0 && (
+                        {filteredQuizPoints.length > 0 && (
                             <section className="mb-8">
                                 <h3 className="text-base font-bold mb-3 border-b-2 border-indigo-500 dark:border-indigo-400 pb-1 uppercase tracking-wide text-indigo-700 dark:text-indigo-400">D. Keaktifan & Prestasi</h3>
                                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
@@ -502,7 +550,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {data.quizPoints.map((q, index) => (
+                                            {filteredQuizPoints.map((q, index) => (
                                                 <tr key={q.id} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border-b border-slate-100 dark:border-slate-800">
                                                     <td className="p-3 text-center text-slate-600 dark:text-slate-400">{index + 1}</td>
                                                     <td className="p-3 text-slate-800 dark:text-slate-200">{q.reason}</td>
@@ -519,7 +567,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                         {/* --- TEACHER NOTE --- */}
                         <section className="mb-12">
                             <h3 className="text-base font-bold mb-3 border-b-2 border-indigo-500 dark:border-indigo-400 pb-1 uppercase tracking-wide text-indigo-700 dark:text-indigo-400">
-                                {(data.quizPoints || []).length > 0 ? 'E. Catatan Wali Kelas' : 'D. Catatan Wali Kelas'}
+                                {filteredQuizPoints.length > 0 ? 'E. Catatan Wali Kelas' : 'D. Catatan Wali Kelas'}
                             </h3>
                             <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-6 min-h-[100px] text-sm italic bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/10 dark:to-purple-900/10 font-serif leading-relaxed text-slate-700 dark:text-slate-300 shadow-sm text-justify">
                                 {customNote || "Tidak ada catatan khusus."}

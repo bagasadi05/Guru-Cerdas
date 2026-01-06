@@ -42,6 +42,8 @@ import { useConfetti } from '../../hooks/useConfetti';
 import { StudentDetailPageSkeleton } from '../skeletons/PageSkeletons';
 import { getStudentAvatar } from '../../utils/avatarUtils';
 import { useUserSettings } from '../../hooks/useUserSettings';
+import { useSemester } from '../../contexts/SemesterContext';
+import { SemesterSelector } from '../ui/SemesterSelector';
 
 const generateAccessCode = (): string => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No 0, O, 1, I
@@ -68,6 +70,17 @@ const StudentDetailPage = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [subjectToApply, setSubjectToApply] = useState('');
     const { kkm } = useUserSettings();
+    const { activeSemester } = useSemester();
+
+    // Initialize with activeSemester ID, will update when data loads
+    const [selectedSemesterId, setSelectedSemesterId] = useState<string | null>(() => activeSemester?.id || null);
+
+    // Initialize selectedSemesterId when activeSemester loads (if not already set)
+    useEffect(() => {
+        if (activeSemester && !selectedSemesterId) {
+            setSelectedSemesterId(activeSemester.id);
+        }
+    }, [activeSemester]);
 
     useEffect(() => {
         if (location.state?.openTab) {
@@ -216,13 +229,26 @@ const StudentDetailPage = () => {
         setModalState({ type: 'confirmDelete', title: 'Konfirmasi Hapus', message: 'Apakah Anda yakin ingin menghapus data ini secara permanen?', onConfirm: () => deleteMutation.mutate({ table, id }), isPending: deleteMutation.isPending });
     };
 
+    // Filter attendance by selected semester
+    const filteredAttendance = useMemo(() => {
+        if (!studentDetails?.attendanceRecords) return [];
+        if (!selectedSemesterId) return studentDetails.attendanceRecords;
+        return studentDetails.attendanceRecords.filter(r => r.semester_id === selectedSemesterId);
+    }, [studentDetails?.attendanceRecords, selectedSemesterId]);
+
     const attendanceSummary = useMemo(() => {
         const summary = { Hadir: 0, Izin: 0, Sakit: 0, Alpha: 0 };
-        studentDetails?.attendanceRecords.forEach(rec => { summary[rec.status as AttendanceStatus]++; });
+        filteredAttendance.forEach(rec => { summary[rec.status as AttendanceStatus]++; });
         return summary;
-    }, [studentDetails?.attendanceRecords]);
+    }, [filteredAttendance]);
 
-    const totalViolationPoints = useMemo(() => studentDetails?.violations.reduce((sum, v) => sum + v.points, 0) || 0, [studentDetails?.violations]);
+    const filteredViolations = useMemo(() => {
+        if (!studentDetails?.violations) return [];
+        if (!selectedSemesterId) return studentDetails.violations;
+        return studentDetails.violations.filter(r => r.semester_id === selectedSemesterId);
+    }, [studentDetails, selectedSemesterId]);
+
+    const totalViolationPoints = useMemo(() => filteredViolations.reduce((sum, v) => sum + v.points, 0) || 0, [filteredViolations]);
     const unreadMessagesCount = useMemo(() => studentDetails?.communications.filter(m => m.sender === 'parent' && !m.is_read).length || 0, [studentDetails?.communications]);
 
     const handleCopyAccessCode = () => {
@@ -440,6 +466,18 @@ const StudentDetailPage = () => {
                     </div>
                 </header>
 
+                {/* Semester Selector */}
+                <div className="mt-6 mb-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-xl p-3 border border-gray-200 dark:border-white/10 animate-fade-in-up">
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter Semester:</span>
+                    <SemesterSelector
+                        value={selectedSemesterId || 'all'}
+                        onChange={(semId) => setSelectedSemesterId(semId === 'all' ? null : semId)}
+                        size="sm"
+                        includeAllOption={true}
+                        className="min-w-[200px]"
+                    />
+                </div>
+
 
 
                 <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
@@ -481,7 +519,7 @@ const StudentDetailPage = () => {
                         </TabsContent>
                         <TabsContent value="violations" className="p-0">
                             <ViolationsTab
-                                violations={violations}
+                                violations={filteredViolations}
                                 onAdd={() => setModalState({ type: 'violation', mode: 'add', data: null })}
                                 onEdit={(r) => setModalState({ type: 'violation', mode: 'edit', data: r })}
                                 onDelete={(id) => handleDelete('violations', id)}
@@ -512,7 +550,7 @@ const StudentDetailPage = () => {
                                         status: a.status,
                                         date: a.date
                                     })),
-                                    violations: violations.map((v: ViolationRow) => ({
+                                    violations: filteredViolations.map((v: ViolationRow) => ({
                                         description: v.description,
                                         points: v.points,
                                         date: v.date

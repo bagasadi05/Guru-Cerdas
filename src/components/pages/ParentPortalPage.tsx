@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { ChildDevelopmentAnalytics } from '../ui/ChildDevelopmentAnalytics';
 import { generateReportCardPDF } from '../exports/generateReportCardPDF';
 import { getStudentAvatar } from '../../utils/avatarUtils';
+import { useSemester } from '../../contexts/SemesterContext';
+import { SemesterSelector } from '../ui/SemesterSelector';
 
 // Explicit Interfaces to replace Json types
 export interface PortalStudentInfo {
@@ -37,6 +39,7 @@ export interface PortalAttendance {
     date: string;
     status: 'Hadir' | 'Izin' | 'Sakit' | 'Alpha';
     notes: string | null;
+    semester_id: string | null;
 }
 export interface PortalAcademicRecord {
     id: string;
@@ -51,6 +54,7 @@ export interface PortalViolation {
     type: string;
     points: number;
     description: string | null;
+    semester_id: string | null;
 }
 export interface PortalQuizPoint {
     id: string;
@@ -526,14 +530,17 @@ export const ParentPortalPage: React.FC = () => {
     const accessCode = sessionStorage.getItem('portal_access_code');
     const toast = useToast();
     const queryClient = useQueryClient();
+    const { activeSemester } = useSemester();
 
     const [settingsOpen, setSettingsOpen] = useState(false);
+    // Initialize with activeSemester ID, will update when data loads
+    const [selectedSemesterId, setSelectedSemesterId] = useState<string | null>(() => activeSemester?.id || null);
 
     // PDF Download handler
     const handleDownloadPDF = async () => {
         if (data) {
             try {
-                await generateReportCardPDF(data);
+                await generateReportCardPDF(data, selectedSemesterId || undefined);
                 toast.success("PDF berhasil diunduh.");
             } catch (error) {
                 console.error("Failed to generate PDF", error);
@@ -584,17 +591,30 @@ export const ParentPortalPage: React.FC = () => {
         navigate('/', { replace: true });
     };
 
+    // Filter attendance by selected semester
+    const filteredAttendance = useMemo(() => {
+        if (!data) return [];
+        if (!selectedSemesterId) return data.attendanceRecords;
+        return data.attendanceRecords.filter(r => r.semester_id === selectedSemesterId);
+    }, [data, selectedSemesterId]);
+
     const attendanceSummary = useMemo(() => {
         if (!data) return { present: 0, sick: 0, permission: 0, absent: 0 };
         return {
-            present: data.attendanceRecords.filter(r => r.status === 'Hadir').length,
-            sick: data.attendanceRecords.filter(r => r.status === 'Sakit').length,
-            permission: data.attendanceRecords.filter(r => r.status === 'Izin').length,
-            absent: data.attendanceRecords.filter(r => r.status === 'Alpha').length
+            present: filteredAttendance.filter(r => r.status === 'Hadir').length,
+            sick: filteredAttendance.filter(r => r.status === 'Sakit').length,
+            permission: filteredAttendance.filter(r => r.status === 'Izin').length,
+            absent: filteredAttendance.filter(r => r.status === 'Alpha').length
         }
-    }, [data]);
+    }, [data, filteredAttendance]);
 
-    const totalViolationPoints = useMemo(() => data?.violations.reduce((sum, v) => sum + v.points, 0) || 0, [data]);
+    const filteredViolations = useMemo(() => {
+        if (!data) return [];
+        if (!selectedSemesterId) return data.violations;
+        return data.violations.filter(r => r.semester_id === selectedSemesterId);
+    }, [data, selectedSemesterId]);
+
+    const totalViolationPoints = useMemo(() => filteredViolations.reduce((sum, v) => sum + v.points, 0) || 0, [filteredViolations]);
     const averageScore = useMemo(() => {
         if (!data || data.academicRecords.length === 0) return 'N/A';
         const total = data.academicRecords.reduce((sum, r) => sum + r.score, 0);
@@ -626,6 +646,18 @@ export const ParentPortalPage: React.FC = () => {
             />
 
             <main className="relative z-10 -mt-8 px-4 sm:px-6 pb-12 max-w-7xl mx-auto">
+                {/* Semester Selector */}
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-xl p-3 border border-white/20 animate-fade-in-up">
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter Semester:</span>
+                    <SemesterSelector
+                        value={selectedSemesterId || 'all'}
+                        onChange={(semId) => setSelectedSemesterId(semId === 'all' ? null : semId)}
+                        size="sm"
+                        includeAllOption={true}
+                        className="min-w-[200px]"
+                    />
+                </div>
+
                 {/* Summary Section */}
                 <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-up">
                     <StatCard icon={BarChartIcon} label="Rata-rata Nilai" value={averageScore} colorClass="bg-gradient-to-br from-purple-500 to-indigo-500" />
@@ -991,23 +1023,25 @@ export const ParentPortalPage: React.FC = () => {
                                         Catatan Pelanggaran
                                     </h3>
                                     <div className="space-y-3">
-                                        {violations.length > 0 ? violations.map(v => (
-                                            <div key={v.id} className="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-900/30">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <span className="bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 text-xs font-bold px-2 py-1 rounded-md">{new Date(v.date).toLocaleDateString('id-ID')}</span>
-                                                    <span className="font-bold text-rose-600 dark:text-rose-400">+{v.points} Poin</span>
+                                        {filteredViolations.length > 0 ? (
+                                            filteredViolations.map((v) => (
+                                                <div key={v.id} className="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-900/30">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className="bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 text-xs font-bold px-2 py-1 rounded-md">{new Date(v.date).toLocaleDateString('id-ID')}</span>
+                                                        <span className="font-bold text-rose-600 dark:text-rose-400">+{v.points} Poin</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${v.type === 'Berat' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                                                            v.type === 'Sedang' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
+                                                                'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                            }`}>
+                                                            {v.type}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-2">{v.description || '-'}</p>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${v.type === 'Berat' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
-                                                        v.type === 'Sedang' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
-                                                            'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                        }`}>
-                                                        {v.type}
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-2">{v.description || '-'}</p>
-                                            </div>
-                                        )) : (
+                                            ))
+                                        ) : (
                                             <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                                                 <CheckCircleIcon className="w-12 h-12 text-emerald-500 mx-auto mb-3 opacity-50" />
                                                 <p className="text-slate-600 dark:text-slate-400 font-medium">Tidak ada catatan pelanggaran.</p>
@@ -1024,7 +1058,7 @@ export const ParentPortalPage: React.FC = () => {
                             <CommunicationPanel communications={communications} student={student} teacher={teacher} />
                         </TabsContent>
                     </Tabs>
-                </GlassCard>
+                </GlassCard >
             </main >
         </div >
     );

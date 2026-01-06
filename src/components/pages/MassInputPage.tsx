@@ -4,6 +4,7 @@ import { supabase } from '../../services/supabase';
 import { generateOpenRouterJson } from '../../services/openRouterService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
+import { useSemester } from '../../contexts/SemesterContext';
 import { Database } from '../../services/database.types';
 import { Button } from '../ui/Button';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
@@ -31,6 +32,7 @@ import { GradeDistributionChart } from '../ui/GradeDistributionChart';
 const MassInputPage: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const { activeSemester, activeAcademicYear } = useSemester(); // Get context
     const toast = useToast();
     const isOnline = useOfflineStatus();
     const location = useLocation();
@@ -335,15 +337,17 @@ const MassInputPage: React.FC = () => {
         } finally { setIsParsing(false); }
     };
 
-    const fetchReportDataForStudent = async (studentId: string, userId: string): Promise<ReportDataType> => {
+    const fetchReportDataForStudent = async (studentId: string, userId: string, semesterId: string): Promise<ReportDataType> => {
         const studentRes = await supabase.from('students').select('*, classes(id, name)').eq('id', studentId).eq('user_id', userId).single();
         if (studentRes.error) throw new Error(studentRes.error.message);
+
+        // Parallel fetch with semester filtering
         const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes] = await Promise.all([
-            supabase.from('reports').select('*').eq('student_id', studentId),
-            supabase.from('attendance').select('*').eq('student_id', studentId),
-            supabase.from('academic_records').select('*').eq('student_id', studentId),
-            supabase.from('violations').select('*').eq('student_id', studentId),
-            supabase.from('quiz_points').select('*').eq('student_id', studentId)
+            supabase.from('reports').select('*').eq('student_id', studentId).eq('semester_id', semesterId),
+            supabase.from('attendance').select('*').eq('student_id', studentId).eq('semester_id', semesterId),
+            supabase.from('academic_records').select('*').eq('student_id', studentId).eq('semester_id', semesterId),
+            supabase.from('violations').select('*').eq('student_id', studentId).eq('semester_id', semesterId),
+            supabase.from('quiz_points').select('*').eq('student_id', studentId).eq('semester_id', semesterId)
         ]) as any;
         const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes].map((r: any) => r.error).filter((e: any) => e !== null);
         if (errors.length > 0) throw new Error(errors.map((e: any) => e!.message).join(', '));
@@ -357,7 +361,8 @@ const MassInputPage: React.FC = () => {
         const studentsToPrint = studentsData.filter(s => selectedStudentIds.has(s.id));
         try {
             setExportProgress("10%"); toast.info("Mengambil data siswa...");
-            const allReportData = await Promise.all(studentsToPrint.map(student => fetchReportDataForStudent(student.id, user!.id)));
+            if (!activeSemester?.id) { throw new Error("Semester aktif tidak ditemukan."); }
+            const allReportData = await Promise.all(studentsToPrint.map(student => fetchReportDataForStudent(student.id, user!.id, activeSemester.id)));
             setExportProgress("40%"); toast.info("Membuat catatan guru...");
             let teacherNotesMap: Map<string, string>;
             if (noteMethod === 'template') {
@@ -408,7 +413,12 @@ Contoh output yang benar:
                 const reportData = allReportData[i];
                 const teacherNote = teacherNotesMap.get(reportData.student.id) || "Catatan tidak dapat dibuat.";
                 if (!isFirstPage) doc.addPage(); isFirstPage = false;
-                generateStudentReport(doc, reportData, teacherNote, new Date().toISOString().slice(0, 10), 'Ganjil', `${new Date().getFullYear()} / ${new Date().getFullYear() + 1}`, user);
+
+                // Use actual academic year and semester name from context, dynamic dates
+                const semName = activeSemester.semester_number % 2 !== 0 ? 'Ganjil' : 'Genap';
+                const acadYear = activeAcademicYear?.name || `${new Date().getFullYear()} / ${new Date().getFullYear() + 1}`;
+
+                generateStudentReport(doc, reportData, teacherNote, new Date().toISOString().slice(0, 10), semName, acadYear, user);
                 setExportProgress(`${Math.round(70 + ((i + 1) / studentsToPrint.length) * 30)}%`);
             }
             doc.save(`Rapor_Massal_${classes?.find(c => c.id === selectedClass)?.name || 'Kelas'}.pdf`);
