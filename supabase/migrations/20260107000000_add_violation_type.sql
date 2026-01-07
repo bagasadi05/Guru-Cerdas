@@ -1,0 +1,1 @@
+ALTER TABLE violations ADD COLUMN IF NOT EXISTS type text;

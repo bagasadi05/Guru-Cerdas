@@ -7,7 +7,7 @@
 
 import { supabase } from './supabase';
 
-export type SoftDeleteEntity = 'students' | 'classes' | 'attendance';
+export type SoftDeleteEntity = 'students' | 'classes' | 'attendance' | 'violations' | 'quiz_points' | 'academic_records';
 
 export interface SoftDeleteResult {
     success: boolean;
@@ -226,6 +226,9 @@ export async function cleanupExpired(): Promise<{
         students: 0,
         classes: 0,
         attendance: 0,
+        violations: 0,
+        quiz_points: 0,
+        academic_records: 0,
     };
 
     try {

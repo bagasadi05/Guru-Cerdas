@@ -123,6 +123,9 @@ function generateDescription(actionType: ActionType, entity: SoftDeleteEntity, c
         students: { singular: 'siswa', plural: 'siswa' },
         classes: { singular: 'kelas', plural: 'kelas' },
         attendance: { singular: 'absensi', plural: 'absensi' },
+        violations: { singular: 'pelanggaran', plural: 'pelanggaran' },
+        quiz_points: { singular: 'poin keaktifan', plural: 'poin keaktifan' },
+        academic_records: { singular: 'nilai', plural: 'nilai' },
     };
 
     const entityName = entityNames[entity]

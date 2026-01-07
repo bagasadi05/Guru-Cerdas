@@ -28,6 +28,7 @@ import { Step2_StudentList } from './mass-input/components/Step2_StudentList';
 import { Step2_Footer } from './mass-input/components/Step2_Footer';
 import { ViolationExportPanel } from './mass-input/components/ViolationExportPanel';
 import { GradeDistributionChart } from '../ui/GradeDistributionChart';
+import { recordAction } from '../../services/UndoManager';
 
 const MassInputPage: React.FC = () => {
     const { user } = useAuth();
@@ -237,13 +238,17 @@ const MassInputPage: React.FC = () => {
                 case 'quiz': {
                     if (!quizInfo.name || !quizInfo.subject || selectedStudentIds.size === 0) throw new Error("Informasi aktivitas dan siswa harus diisi.");
                     const records: Database['public']['Tables']['quiz_points']['Insert'][] = Array.from(selectedStudentIds).map((student_id: string) => ({
-                        reason: `${quizInfo.name} - ${quizInfo.subject}`,
-                        type: 'quiz',
+                        quiz_name: quizInfo.name,
+                        subject: quizInfo.subject,
+                        quiz_date: quizInfo.date,
                         student_id,
                         user_id: user.id,
                         points: 1,
                     }));
-                    const { error } = await supabase.from('quiz_points').insert(records); if (error) throw error; return `Poin keaktifan untuk ${records.length} siswa berhasil disimpan.`;
+                    const { data, error } = await supabase.from('quiz_points').insert(records).select();
+                    if (error) throw error;
+                    await recordAction(user.id, 'create', 'quiz_points', data.map(d => d.id));
+                    return `Poin keaktifan untuk ${records.length} siswa berhasil disimpan.`;
                 }
                 case 'subject_grade': {
                     if (!subjectGradeInfo.subject || !subjectGradeInfo.assessment_name || gradedCount === 0) throw new Error("Mata pelajaran, nama penilaian, dan setidaknya satu nilai harus diisi.");
@@ -271,8 +276,9 @@ const MassInputPage: React.FC = () => {
                                 user_id: user.id
                             };
                         });
-                    const { error } = await supabase.from('academic_records').upsert(records);
+                    const { data, error } = await supabase.from('academic_records').upsert(records).select();
                     if (error) throw error;
+                    await recordAction(user.id, 'create', 'academic_records', data.map(d => d.id));
                     return `Nilai untuk ${records.length} siswa berhasil disimpan.`;
                 }
                 case 'violation': {
@@ -285,7 +291,10 @@ const MassInputPage: React.FC = () => {
                         student_id,
                         user_id: user.id
                     }));
-                    const { error } = await supabase.from('violations').insert(records); if (error) throw error; return `Pelanggaran untuk ${records.length} siswa berhasil dicatat.`;
+                    const { data, error } = await supabase.from('violations').insert(records).select();
+                    if (error) throw error;
+                    await recordAction(user.id, 'create', 'violations', data.map(d => d.id));
+                    return `Pelanggaran untuk ${records.length} siswa berhasil dicatat.`;
                 }
             }
         },

@@ -259,23 +259,35 @@ export type Database = {
       }
       quiz_points: {
         Row: {
+          category: string | null
           created_at: string
           id: string
+          is_used: boolean | null
+          max_points: number | null
           points: number
-          semester_id?: string | null
-          reason: string
+          quiz_date: string | null
+          quiz_name: string | null
+          semester_id: string | null
           student_id: string
-          type: string
+          subject: string | null
+          used_at: string | null
+          used_for_subject: string | null
           user_id: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           id?: string
+          is_used?: boolean | null
+          max_points?: number | null
           points: number
+          quiz_date?: string | null
+          quiz_name?: string | null
           semester_id?: string | null
-          reason: string
           student_id: string
-          type: string
+          subject?: string | null
+          used_at?: string | null
+          used_for_subject?: string | null
           user_id: string
         }
         Update: {
