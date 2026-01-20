@@ -227,7 +227,7 @@ export type StudentWithClass = StudentRow & {
 /**
  * Minimal student data for list views and selection.
  */
-export type StudentListItem = Pick<StudentRow, 'id' | 'name' | 'avatar_url' | 'class_id'>;
+export type StudentListItem = Pick<StudentRow, 'id' | 'name' | 'class_id'>;
 
 /**
  * Minimal class data for dropdowns and references.

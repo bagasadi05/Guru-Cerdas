@@ -48,6 +48,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                 .from('classes')
                 .select('id, name')
                 .eq('user_id', user!.id)
+                .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
             return data || [];
@@ -62,7 +63,8 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
             const { data, error } = await supabase
                 .from('students')
                 .select('id, class_id')
-                .eq('user_id', user!.id);
+                .eq('user_id', user!.id)
+                .is('deleted_at', null);
             if (error) throw error;
             return data || [];
         },

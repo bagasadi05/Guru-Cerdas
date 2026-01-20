@@ -239,9 +239,14 @@ textarea:focus-visible {
 
 /* Mobile bottom nav enhancements */
 .mobile-bottom-nav {
+    height: 68px;
     -webkit-user-select: none;
     user-select: none;
     touch-action: manipulation;
+}
+
+.mobile-bottom-nav .safe-area-inset-bottom {
+    height: 68px;
 }
 
 /* Animate fade in up for more menu */

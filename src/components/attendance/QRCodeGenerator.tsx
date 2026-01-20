@@ -63,7 +63,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                 width: 300,
                 margin: 2,
                 color: {
-                    dark: '#1e1b4b',
+                    dark: '#065f46',
                     light: '#ffffff',
                 },
                 errorCorrectionLevel: 'M',
@@ -141,7 +141,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                         {/* Timer Badge */}
                         <div className={`absolute -top-2 -right-2 px-3 py-1 rounded-full text-xs font-bold ${timeLeft === 'Expired'
                                 ? 'bg-red-500 text-white'
-                                : 'bg-indigo-600 text-white'
+                                : 'bg-green-600 text-white'
                             }`}>
                             {timeLeft}
                         </div>
@@ -195,11 +195,11 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                 </div>
 
                 {/* Instructions */}
-                <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
-                    <h4 className="font-medium text-indigo-700 dark:text-indigo-300 mb-2">
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                    <h4 className="font-medium text-green-700 dark:text-green-300 mb-2">
                         Cara Penggunaan:
                     </h4>
-                    <ol className="text-sm text-indigo-600 dark:text-indigo-400 space-y-1 list-decimal list-inside">
+                    <ol className="text-sm text-green-600 dark:text-green-400 space-y-1 list-decimal list-inside">
                         <li>Tampilkan QR ini di layar kelas</li>
                         <li>Siswa scan menggunakan aplikasi kamera</li>
                         <li>Absensi otomatis tercatat</li>

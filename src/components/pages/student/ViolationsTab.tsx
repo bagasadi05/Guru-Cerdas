@@ -331,8 +331,8 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                         Export
                     </DropdownTrigger>
                     <DropdownContent>
-                        <DropdownItem onClick={() => {
-                            exportViolationsToPDF({
+                        <DropdownItem onClick={async () => {
+                            await exportViolationsToPDF({
                                 studentName: studentName || 'Siswa',
                                 className: 'Fase F', // Placeholder, ideally passed from parent
                                 schoolName: user?.school_name || 'Sekolah',
@@ -342,8 +342,8 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                         }} icon={<FileTextIcon className="w-4 h-4 text-red-500" />}>
                             Export PDF (Formal)
                         </DropdownItem>
-                        <DropdownItem onClick={() => {
-                            exportViolationsToExcel({
+                        <DropdownItem onClick={async () => {
+                            await exportViolationsToExcel({
                                 studentName: studentName || 'Siswa',
                                 className: 'Fase F', // Placeholder
                                 schoolName: user?.school_name || 'Sekolah',

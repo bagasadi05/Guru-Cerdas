@@ -13,7 +13,10 @@ import {
     MinusIcon,
     RefreshCwIcon,
     HelpCircle,
-    ExternalLink
+    ExternalLink,
+    Shield,
+    Zap,
+    Download,
 } from 'lucide-react';
 import { Database } from '../../services/database.types';
 import { GraduationCapIcon, BookOpenIcon, AlertCircleIcon } from '../Icons';
@@ -22,6 +25,8 @@ import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
 import AnalyticsPageSkeleton from '../skeletons/AnalyticsPageSkeleton';
 import { useTour } from '../OnboardingHelp';
+import AnalyticsExportModal, { ExportOptions } from './analytics/AnalyticsExportModal';
+import { generateAnalyticsPdf } from '../../utils/analyticsPdfGenerator';
 
 // Types
 interface AttendanceStats {
@@ -75,6 +80,8 @@ const AnalyticsPage: React.FC = () => {
     // Onboarding Tour
     const { start } = useTour();
 
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
     React.useEffect(() => {
         const steps = [
             {
@@ -125,7 +132,8 @@ const AnalyticsPage: React.FC = () => {
             const { data: classes } = await supabase
                 .from('classes')
                 .select('id, name')
-                .eq('user_id', user!.id);
+                .eq('user_id', user!.id)
+                .is('deleted_at', null);
 
             // Fetch students
             let studentsQuery = supabase
@@ -163,7 +171,35 @@ const AnalyticsPage: React.FC = () => {
                 .select('*')
                 .eq('user_id', user!.id);
 
-            return { classes: classes || [], students: students || [], attendance: attendance || [], tasks: tasks || [], academicRecords: academicRecords || [] };
+            // Fetch violations
+            let violationsQuery = supabase
+                .from('violations')
+                .select('*')
+                .eq('user_id', user!.id);
+            if (startDate) {
+                violationsQuery = violationsQuery.gte('date', startDate.toISOString().split('T')[0]);
+            }
+            const { data: violations } = await violationsQuery;
+
+            // Fetch quiz points
+            let quizPointsQuery = supabase
+                .from('quiz_points')
+                .select('*')
+                .eq('user_id', user!.id);
+            if (startDate) {
+                quizPointsQuery = quizPointsQuery.gte('created_at', startDate.toISOString());
+            }
+            const { data: quizPoints } = await quizPointsQuery;
+
+            return {
+                classes: classes || [],
+                students: students || [],
+                attendance: attendance || [],
+                tasks: tasks || [],
+                academicRecords: academicRecords || [],
+                violations: violations || [],
+                quizPoints: quizPoints || [],
+            };
         },
         enabled: !!user,
     });
@@ -172,6 +208,8 @@ const AnalyticsPage: React.FC = () => {
     const students = useMemo(() => data?.students || [], [data?.students]);
     const attendance = useMemo(() => data?.attendance || [], [data?.attendance]);
     const academicRecords = useMemo(() => data?.academicRecords || [], [data?.academicRecords]);
+    const violations = useMemo(() => data?.violations || [], [data?.violations]);
+    const quizPoints = useMemo(() => data?.quizPoints || [], [data?.quizPoints]);
 
     // Calculate grade stats
     const gradeStats = useMemo(() => {
@@ -370,6 +408,113 @@ const AnalyticsPage: React.FC = () => {
         const female = students.filter(s => s.gender === 'Perempuan').length;
         return { male, female, total: students.length };
     }, [students]);
+
+    // Violations stats
+    const violationsStats = useMemo(() => {
+        const studentIds = new Set(students.map(s => s.id));
+        const filtered = selectedClassId === 'all'
+            ? violations
+            : violations.filter(v => studentIds.has(v.student_id));
+
+        // Group by type
+        const byType: Record<string, number> = {};
+        let totalPoints = 0;
+
+        filtered.forEach(v => {
+            const type = v.type || 'Lainnya';
+            byType[type] = (byType[type] || 0) + 1;
+            totalPoints += v.points || 0;
+        });
+
+        // Get top violators
+        const studentViolations: Record<string, { count: number; points: number }> = {};
+        filtered.forEach(v => {
+            if (!studentViolations[v.student_id]) {
+                studentViolations[v.student_id] = { count: 0, points: 0 };
+            }
+            studentViolations[v.student_id].count++;
+            studentViolations[v.student_id].points += v.points || 0;
+        });
+
+        const topViolators = Object.entries(studentViolations)
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 5)
+            .map(([studentId, data]) => {
+                const student = students.find(s => s.id === studentId);
+                return { student, ...data };
+            });
+
+        return {
+            total: filtered.length,
+            totalPoints,
+            byType: Object.entries(byType).map(([type, count]) => ({ type, count })),
+            topViolators,
+        };
+    }, [violations, students, selectedClassId]);
+
+    // Quiz points stats
+    const quizPointsStats = useMemo(() => {
+        const studentIds = new Set(students.map(s => s.id));
+        const filtered = selectedClassId === 'all'
+            ? quizPoints
+            : quizPoints.filter(q => studentIds.has(q.student_id));
+
+        const totalPoints = filtered.reduce((sum, q) => sum + (q.points || 0), 0);
+        const avgPoints = filtered.length > 0 ? Math.round(totalPoints / filtered.length) : 0;
+
+        // Group by category
+        const byCategory: Record<string, { count: number; points: number }> = {};
+        filtered.forEach(q => {
+            const cat = q.category || 'Lainnya';
+            if (!byCategory[cat]) {
+                byCategory[cat] = { count: 0, points: 0 };
+            }
+            byCategory[cat].count++;
+            byCategory[cat].points += q.points || 0;
+        });
+
+        // Top engaged students
+        const studentPoints: Record<string, number> = {};
+        filtered.forEach(q => {
+            studentPoints[q.student_id] = (studentPoints[q.student_id] || 0) + (q.points || 0);
+        });
+
+        const topEngaged = Object.entries(studentPoints)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([studentId, points]) => {
+                const student = students.find(s => s.id === studentId);
+                return { student, points };
+            });
+
+        return {
+            total: filtered.length,
+            totalPoints,
+            avgPoints,
+            byCategory: Object.entries(byCategory).map(([category, data]) => ({ category, ...data })),
+            topEngaged,
+        };
+    }, [quizPoints, students, selectedClassId]);
+
+
+
+    const processExport = async (options: ExportOptions) => {
+        const analyticsData = {
+            students,
+            classStats,
+            attendanceStats,
+            gradeStats,
+            taskStats,
+            violationsStats,
+            quizPointsStats,
+            atRiskStudents,
+            genderStats,
+            selectedClassLabel,
+            dateRangeLabel
+        };
+
+        await generateAnalyticsPdf(analyticsData, options);
+    };
 
     const StatCard = ({
         title,
@@ -908,266 +1053,460 @@ const AnalyticsPage: React.FC = () => {
         );
     };
 
+    const dateRangeLabel = {
+        '7d': '7 Hari',
+        '30d': '30 Hari',
+        '90d': '90 Hari',
+        all: 'Semua',
+    }[dateRange];
+
+    const selectedClassLabel = selectedClassId === 'all'
+        ? 'Semua Kelas'
+        : classes.find(cls => cls.id === selectedClassId)?.name || 'Kelas Dipilih';
+
     if (isLoading) {
         return <AnalyticsPageSkeleton />;
     }
 
     return (
-        <div className="min-h-screen p-4 md:p-8 space-y-6 animate-fade-in pb-24 lg:pb-8">
-            {/* Header */}
-            <header className="flex flex-col gap-4">
-                <div>
-                    <h1 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white">
-                        Dashboard Analitik
-                    </h1>
-                    <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-1">
-                        Ringkasan data siswa, kehadiran, dan tugas Anda
-                    </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <Select
-                        value={selectedClassId}
-                        onChange={(e) => setSelectedClassId(e.target.value)}
-                        className="flex-1 min-w-[120px] sm:min-w-[150px] sm:flex-none"
-                    >
-                        <option value="all">Semua Kelas</option>
-                        {classes.map(cls => (
-                            <option key={cls.id} value={cls.id}>{cls.name}</option>
-                        ))}
-                    </Select>
-                    <Select
-                        value={dateRange}
-                        onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
-                        className="flex-1 min-w-[100px] sm:min-w-[120px] sm:flex-none"
-                    >
-                        <option value="7d">7 Hari</option>
-                        <option value="30d">30 Hari</option>
-                        <option value="90d">90 Hari</option>
-                        <option value="all">Semua</option>
-                    </Select>
-                    <Button variant="outline" size="sm" onClick={() => refetch()} className="flex-shrink-0">
-                        <RefreshCwIcon className="w-4 h-4" />
-                    </Button>
-                </div>
-            </header>
+        <>
+            <div className="min-h-screen p-4 md:p-8 space-y-6 animate-fade-in pb-24 lg:pb-8">
+                {/* Header */}
+                <header className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <h1 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white">
+                                Dashboard Analitik
+                            </h1>
+                            <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-1">
+                                Ringkasan data siswa, kehadiran, dan tugas Anda
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2 mt-3">
+                                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium">
+                                    <UsersIcon className="w-4 h-4 text-indigo-500" />
+                                    Kelas: {selectedClassLabel}
+                                </span>
+                                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium">
+                                    <CalendarIcon className="w-4 h-4 text-indigo-500" />
+                                    Rentang: {dateRangeLabel}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setIsExportModalOpen(true)} className="px-4 gap-2">
+                                <Download className="w-4 h-4" />
+                                <span className="hidden sm:inline">Export Laporan</span>
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => refetch()} className="px-4 gap-2">
+                                <RefreshCwIcon className="w-4 h-4" />
+                                <span className="hidden sm:inline">Refresh</span>
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200/70 dark:border-slate-700/60 bg-white dark:bg-slate-900 shadow-sm p-3 sm:p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                Filter Analitik
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                <Select
+                                    value={selectedClassId}
+                                    onChange={(e) => setSelectedClassId(e.target.value)}
+                                    className="flex-1 min-w-[160px] sm:min-w-[180px] sm:flex-none"
+                                >
+                                    <option value="all">Semua Kelas</option>
+                                    {classes.map(cls => (
+                                        <option key={cls.id} value={cls.id}>{cls.name}</option>
+                                    ))}
+                                </Select>
+                                <Select
+                                    value={dateRange}
+                                    onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
+                                    className="flex-1 min-w-[140px] sm:min-w-[160px] sm:flex-none"
+                                >
+                                    <option value="7d">7 Hari</option>
+                                    <option value="30d">30 Hari</option>
+                                    <option value="90d">90 Hari</option>
+                                    <option value="all">Semua</option>
+                                </Select>
+                            </div>
+                        </div>
+                    </div>
+                </header>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                    title="Total Siswa"
-                    value={students.length}
-                    subtitle={`${genderStats.male} Laki-laki, ${genderStats.female} Perempuan`}
-                    icon={UsersIcon}
-                    color="indigo"
-                    tooltip="Jumlah total siswa yang terdaftar di semua kelas Anda"
-                    actionLabel="Lihat Daftar Siswa"
-                    actionLink="#/siswa"
-                />
-                <StatCard
-                    title="Kehadiran Siswa"
-                    value={`${attendanceStats.hadirRate}%`}
-                    subtitle={`${attendanceStats.hadir} dari ${attendanceStats.total} catatan`}
-                    icon={CalendarIcon}
-                    trend={attendanceStats.hadirRate >= 80 ? 'up' : attendanceStats.hadirRate >= 60 ? 'neutral' : 'down'}
-                    color="green"
-                    tooltip="Persentase siswa yang hadir dari total kehadiran yang tercatat. Target minimal 90% untuk kategori Sangat Baik."
-                    interpretation={
-                        attendanceStats.hadirRate >= 90
-                            ? { text: 'Sangat Baik!', status: 'good' }
-                            : attendanceStats.hadirRate >= 75
-                                ? { text: 'Cukup Baik', status: 'warning' }
-                                : { text: 'Perlu Perhatian', status: 'danger' }
-                    }
-                    actionLabel="Tandai Kehadiran Hari Ini"
-                    actionLink="#/absensi"
-                />
-                <StatCard
-                    title="Total Kelas"
-                    value={classes.length}
-                    subtitle="Kelas aktif"
-                    icon={BarChart3Icon}
-                    color="blue"
-                    tooltip="Jumlah kelas yang Anda kelola saat ini"
-                    actionLabel="Kelola Kelas"
-                    actionLink="#/siswa"
-                />
-                <StatCard
-                    title="Tugas Selesai"
-                    value={`${taskStats.done}/${taskStats.total}`}
-                    subtitle={taskStats.overdue > 0 ? `${taskStats.overdue} terlambat` : 'Semua on track'}
-                    icon={TrendingUpIcon}
-                    trend={taskStats.overdue > 0 ? 'down' : 'up'}
-                    color={taskStats.overdue > 0 ? 'amber' : 'green'}
-                    tooltip="Jumlah tugas yang sudah diselesaikan dari total tugas yang Anda buat"
-                    interpretation={
-                        taskStats.total === 0
-                            ? undefined
-                            : taskStats.done === taskStats.total
-                                ? { text: 'Semua Selesai!', status: 'good' }
-                                : taskStats.overdue > 0
-                                    ? { text: 'Ada yang Terlambat', status: 'warning' }
-                                    : { text: 'Sedang Berjalan', status: 'good' }
-                    }
-                    actionLabel="Lihat Semua Tugas"
-                    actionLink="#/tugas"
-                />
-            </div>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StatCard
+                        title="Total Siswa"
+                        value={students.length}
+                        subtitle={`${genderStats.male} Laki-laki, ${genderStats.female} Perempuan`}
+                        icon={UsersIcon}
+                        color="indigo"
+                        tooltip="Jumlah total siswa yang terdaftar di semua kelas Anda"
+                        actionLabel="Lihat Daftar Siswa"
+                        actionLink="#/siswa"
+                    />
+                    <StatCard
+                        title="Kehadiran Siswa"
+                        value={`${attendanceStats.hadirRate}%`}
+                        subtitle={`${attendanceStats.hadir} dari ${attendanceStats.total} catatan`}
+                        icon={CalendarIcon}
+                        trend={attendanceStats.hadirRate >= 80 ? 'up' : attendanceStats.hadirRate >= 60 ? 'neutral' : 'down'}
+                        color="green"
+                        tooltip="Persentase siswa yang hadir dari total kehadiran yang tercatat. Target minimal 90% untuk kategori Sangat Baik."
+                        interpretation={
+                            attendanceStats.hadirRate >= 90
+                                ? { text: 'Sangat Baik!', status: 'good' }
+                                : attendanceStats.hadirRate >= 75
+                                    ? { text: 'Cukup Baik', status: 'warning' }
+                                    : { text: 'Perlu Perhatian', status: 'danger' }
+                        }
+                        actionLabel="Tandai Kehadiran Hari Ini"
+                        actionLink="#/absensi"
+                    />
+                    <StatCard
+                        title="Total Kelas"
+                        value={classes.length}
+                        subtitle="Kelas aktif"
+                        icon={BarChart3Icon}
+                        color="blue"
+                        tooltip="Jumlah kelas yang Anda kelola saat ini"
+                        actionLabel="Kelola Kelas"
+                        actionLink="#/siswa"
+                    />
+                    <StatCard
+                        title="Tugas Selesai"
+                        value={`${taskStats.done}/${taskStats.total}`}
+                        subtitle={taskStats.overdue > 0 ? `${taskStats.overdue} terlambat` : 'Semua on track'}
+                        icon={TrendingUpIcon}
+                        trend={taskStats.overdue > 0 ? 'down' : 'up'}
+                        color={taskStats.overdue > 0 ? 'amber' : 'green'}
+                        tooltip="Jumlah tugas yang sudah diselesaikan dari total tugas yang Anda buat"
+                        interpretation={
+                            taskStats.total === 0
+                                ? undefined
+                                : taskStats.done === taskStats.total
+                                    ? { text: 'Semua Selesai!', status: 'good' }
+                                    : taskStats.overdue > 0
+                                        ? { text: 'Ada yang Terlambat', status: 'warning' }
+                                        : { text: 'Sedang Berjalan', status: 'good' }
+                        }
+                        actionLabel="Lihat Semua Tugas"
+                        actionLink="#/tugas"
+                    />
+                </div>
 
-            {/* Academic & Attendance Overview Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Academic Stats - New! */}
-                <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg lg:col-span-1">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <GraduationCapIcon className="w-5 h-5 text-indigo-600" />
-                            Distribusi Nilai
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {gradeStats.totalStudentsWithGrades > 0 ? (
-                            <GradeDistributionChart data={gradeStats.distribution} average={gradeStats.overallAverage} />
-                        ) : (
-                            <div className="h-64 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl">
-                                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-full mb-3">
-                                    <BookOpenIcon className="w-6 h-6 text-slate-400" />
+                {/* Academic & Attendance Overview Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Academic Stats - New! */}
+                    <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg lg:col-span-1">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <GraduationCapIcon className="w-5 h-5 text-indigo-600" />
+                                Distribusi Nilai
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {gradeStats.totalStudentsWithGrades > 0 ? (
+                                <GradeDistributionChart data={gradeStats.distribution} average={gradeStats.overallAverage} />
+                            ) : (
+                                <div className="h-64 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl">
+                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-full mb-3">
+                                        <BookOpenIcon className="w-6 h-6 text-slate-400" />
+                                    </div>
+                                    <p className="text-sm font-medium text-slate-900 dark:text-white">Belum Ada Data Nilai</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
+                                        Input nilai tugas atau ujian untuk melihat analisis ini.
+                                    </p>
+                                    <Button variant="outline" size="sm" className="bg-white dark:bg-slate-800">
+                                        Input Nilai
+                                    </Button>
                                 </div>
-                                <p className="text-sm font-medium text-slate-900 dark:text-white">Belum Ada Data Nilai</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
-                                    Input nilai tugas atau ujian untuk melihat analisis ini.
-                                </p>
-                                <Button variant="outline" size="sm" className="bg-white dark:bg-slate-800">
-                                    Input Nilai
-                                </Button>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                {/* Attendance Trend */}
-                <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg lg:col-span-2">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <BarChart3Icon className="w-5 h-5 text-indigo-600" />
-                            Tren Kehadiran (30 Hari)
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {dailyAttendance.length > 0 ? (
-                            <SimpleBarChart
-                                data={dailyAttendance}
-                                subtitle={`Data kehadiran ${selectedClassId === 'all' ? 'semua kelas' : classes.find(c => c.id === selectedClassId)?.name || ''} – ${new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`}
+                    {/* Attendance Trend */}
+                    <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <BarChart3Icon className="w-5 h-5 text-indigo-600" />
+                                Tren Kehadiran (30 Hari)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {dailyAttendance.length > 0 ? (
+                                <SimpleBarChart
+                                    data={dailyAttendance}
+                                    subtitle={`Data kehadiran ${selectedClassId === 'all' ? 'semua kelas' : classes.find(c => c.id === selectedClassId)?.name || ''} – ${new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`}
+                                />
+                            ) : (
+                                <div className="h-64 flex items-center justify-center text-slate-500 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl">
+                                    Tidak ada data kehadiran
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* At Risk Alert (Conditional) */}
+                <AtRiskWidget students={atRiskStudents} />
+
+                {/* Secondary Row for Pie Chart and others */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                    {/* Attendance Distribution */}
+                    <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <PieChartIcon className="w-5 h-5 text-indigo-600" />
+                                Rincian Kehadiran Siswa
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <SimplePieChart
+                                data={[
+                                    { label: 'Hadir', value: attendanceStats.hadir, color: '#22c55e' },
+                                    { label: 'Izin', value: attendanceStats.izin, color: '#3b82f6' },
+                                    { label: 'Sakit', value: attendanceStats.sakit, color: '#f59e0b' },
+                                    { label: 'Alpha', value: attendanceStats.alpha, color: '#ef4444' },
+                                ]}
                             />
-                        ) : (
-                            <div className="h-64 flex items-center justify-center text-slate-500 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl">
-                                Tidak ada data kehadiran
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                        </CardContent>
+                    </Card>
 
-            {/* At Risk Alert (Conditional) */}
-            <AtRiskWidget students={atRiskStudents} />
+                    {/* Violations Analytics */}
+                    <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Shield className="w-5 h-5 text-red-500" />
+                                Analitik Pelanggaran
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {violationsStats.total > 0 ? (
+                                <div className="space-y-4">
+                                    {/* Summary stats */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">
+                                            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{violationsStats.total}</p>
+                                            <p className="text-xs text-red-500 dark:text-red-400">Total Pelanggaran</p>
+                                        </div>
+                                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-center">
+                                            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{violationsStats.totalPoints}</p>
+                                            <p className="text-xs text-orange-500 dark:text-orange-400">Total Poin</p>
+                                        </div>
+                                    </div>
 
-            {/* Secondary Row for Pie Chart and others */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    {/* By type breakdown */}
+                                    {violationsStats.byType.length > 0 && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Per Kategori</p>
+                                            <div className="space-y-2">
+                                                {violationsStats.byType.slice(0, 4).map((item, i) => (
+                                                    <div key={i} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                                                        <span className="text-sm text-slate-700 dark:text-slate-300">{item.type}</span>
+                                                        <span className="text-sm font-bold text-red-600 dark:text-red-400">{item.count}x</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
 
-                {/* Attendance Distribution */}
+                                    {/* Top violators */}
+                                    {violationsStats.topViolators.length > 0 && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Siswa dengan Pelanggaran Terbanyak</p>
+                                            <div className="space-y-1">
+                                                {violationsStats.topViolators.slice(0, 3).map((item, i) => (
+                                                    <div key={i} className="flex items-center justify-between text-sm">
+                                                        <span className="text-slate-600 dark:text-slate-400 truncate">{item.student?.name || 'Unknown'}</span>
+                                                        <span className="text-red-600 dark:text-red-400 font-medium">{item.count} pelanggaran</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="h-48 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl">
+                                    <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-full mb-3">
+                                        <Shield className="w-6 h-6 text-green-500" />
+                                    </div>
+                                    <p className="text-sm font-medium text-slate-900 dark:text-white">Tidak Ada Pelanggaran</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                        Semua siswa berperilaku baik! 🎉
+                                    </p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Quiz Points Analytics Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Quiz Points / Engagement */}
+                    <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Zap className="w-5 h-5 text-amber-500" />
+                                Keaktifan Siswa
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {quizPointsStats.total > 0 ? (
+                                <div className="space-y-4">
+                                    {/* Summary stats */}
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-center">
+                                            <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{quizPointsStats.total}</p>
+                                            <p className="text-[10px] text-amber-500 dark:text-amber-400">Total Entri</p>
+                                        </div>
+                                        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-xl text-center">
+                                            <p className="text-xl font-bold text-green-600 dark:text-green-400">{quizPointsStats.totalPoints}</p>
+                                            <p className="text-[10px] text-green-500 dark:text-green-400">Total Poin</p>
+                                        </div>
+                                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-center">
+                                            <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{quizPointsStats.avgPoints}</p>
+                                            <p className="text-[10px] text-blue-500 dark:text-blue-400">Rata-rata</p>
+                                        </div>
+                                    </div>
+
+                                    {/* By category */}
+                                    {quizPointsStats.byCategory.length > 0 && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Per Kategori</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {quizPointsStats.byCategory.slice(0, 5).map((item, i) => (
+                                                    <span key={i} className="px-3 py-1.5 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-700 dark:text-amber-300 rounded-full text-xs font-medium">
+                                                        {item.category}: {item.points} poin
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Top engaged students */}
+                                    {quizPointsStats.topEngaged.length > 0 && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Siswa Paling Aktif</p>
+                                            <div className="space-y-1">
+                                                {quizPointsStats.topEngaged.slice(0, 3).map((item, i) => (
+                                                    <div key={i} className="flex items-center justify-between text-sm">
+                                                        <span className="flex items-center gap-2">
+                                                            {i === 0 && <span className="text-amber-500">🏆</span>}
+                                                            {i === 1 && <span className="text-slate-400">🥈</span>}
+                                                            {i === 2 && <span className="text-orange-400">🥉</span>}
+                                                            <span className="text-slate-600 dark:text-slate-400 truncate">{item.student?.name || 'Unknown'}</span>
+                                                        </span>
+                                                        <span className="text-amber-600 dark:text-amber-400 font-medium">{item.points} poin</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="h-48 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl">
+                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-full mb-3">
+                                        <Zap className="w-6 h-6 text-slate-400" />
+                                    </div>
+                                    <p className="text-sm font-medium text-slate-900 dark:text-white">Belum Ada Data Keaktifan</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                        Input poin kuis untuk melihat analisis ini.
+                                    </p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Class Comparison */}
                 <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <PieChartIcon className="w-5 h-5 text-indigo-600" />
-                            Rincian Kehadiran Siswa
+                            <UsersIcon className="w-5 h-5 text-indigo-600" />
+                            Ranking Kelas
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <SimplePieChart
-                            data={[
-                                { label: 'Hadir', value: attendanceStats.hadir, color: '#22c55e' },
-                                { label: 'Izin', value: attendanceStats.izin, color: '#3b82f6' },
-                                { label: 'Sakit', value: attendanceStats.sakit, color: '#f59e0b' },
-                                { label: 'Alpha', value: attendanceStats.alpha, color: '#ef4444' },
-                            ]}
-                        />
+                        <div className="space-y-4">
+                            {classStats.map((cls, index) => (
+                                <div key={cls.id} className="flex items-center gap-4">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
+                                        {index + 1}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="font-medium text-slate-900 dark:text-white">{cls.name}</span>
+                                            <span className="text-sm text-slate-500">{cls.studentCount} siswa</span>
+                                        </div>
+                                        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${cls.attendanceRate >= 80 ? 'bg-green-500' :
+                                                    cls.attendanceRate >= 60 ? 'bg-amber-500' : 'bg-red-500'
+                                                    }`}
+                                                style={{ width: `${cls.attendanceRate}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <span className={`text-lg font-bold ${cls.attendanceRate >= 80 ? 'text-green-500' :
+                                        cls.attendanceRate >= 60 ? 'text-amber-500' : 'text-red-500'
+                                        }`}>
+                                        {cls.attendanceRate}%
+                                    </span>
+                                </div>
+                            ))}
+                            {classStats.length === 0 && (
+                                <div className="text-center py-8 text-slate-500">
+                                    Tidak ada data kelas
+                                </div>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
+
+                {/* Task Overview */}
+                <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <TrendingUpIcon className="w-5 h-5 text-indigo-600" />
+                            Status Tugas
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-xl text-center">
+                                <p className="text-3xl font-bold text-slate-700 dark:text-slate-300">{taskStats.todo}</p>
+                                <p className="text-sm text-slate-500">Belum Dikerjakan</p>
+                            </div>
+                            <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-center">
+                                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{taskStats.inProgress}</p>
+                                <p className="text-sm text-blue-600 dark:text-blue-400">Sedang Dikerjakan</p>
+                            </div>
+                            <div className="p-4 bg-green-100 dark:bg-green-900/30 rounded-xl text-center">
+                                <p className="text-3xl font-bold text-green-600 dark:text-green-400">{taskStats.done}</p>
+                                <p className="text-sm text-green-600 dark:text-green-400">Selesai</p>
+                            </div>
+                            <div className="p-4 bg-red-100 dark:bg-red-900/30 rounded-xl text-center">
+                                <p className="text-3xl font-bold text-red-600 dark:text-red-400">{taskStats.overdue}</p>
+                                <p className="text-sm text-red-600 dark:text-red-400">Terlambat</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+
             </div>
 
-            {/* Class Comparison */}
-            <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <UsersIcon className="w-5 h-5 text-indigo-600" />
-                        Ranking Kelas
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        {classStats.map((cls, index) => (
-                            <div key={cls.id} className="flex items-center gap-4">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
-                                    {index + 1}
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="font-medium text-slate-900 dark:text-white">{cls.name}</span>
-                                        <span className="text-sm text-slate-500">{cls.studentCount} siswa</span>
-                                    </div>
-                                    <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-500 ${cls.attendanceRate >= 80 ? 'bg-green-500' :
-                                                cls.attendanceRate >= 60 ? 'bg-amber-500' : 'bg-red-500'
-                                                }`}
-                                            style={{ width: `${cls.attendanceRate}%` }}
-                                        />
-                                    </div>
-                                </div>
-                                <span className={`text-lg font-bold ${cls.attendanceRate >= 80 ? 'text-green-500' :
-                                    cls.attendanceRate >= 60 ? 'text-amber-500' : 'text-red-500'
-                                    }`}>
-                                    {cls.attendanceRate}%
-                                </span>
-                            </div>
-                        ))}
-                        {classStats.length === 0 && (
-                            <div className="text-center py-8 text-slate-500">
-                                Tidak ada data kelas
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Task Overview */}
-            <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <TrendingUpIcon className="w-5 h-5 text-indigo-600" />
-                        Status Tugas
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-xl text-center">
-                            <p className="text-3xl font-bold text-slate-700 dark:text-slate-300">{taskStats.todo}</p>
-                            <p className="text-sm text-slate-500">Belum Dikerjakan</p>
-                        </div>
-                        <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-center">
-                            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{taskStats.inProgress}</p>
-                            <p className="text-sm text-blue-600 dark:text-blue-400">Sedang Dikerjakan</p>
-                        </div>
-                        <div className="p-4 bg-green-100 dark:bg-green-900/30 rounded-xl text-center">
-                            <p className="text-3xl font-bold text-green-600 dark:text-green-400">{taskStats.done}</p>
-                            <p className="text-sm text-green-600 dark:text-green-400">Selesai</p>
-                        </div>
-                        <div className="p-4 bg-red-100 dark:bg-red-900/30 rounded-xl text-center">
-                            <p className="text-3xl font-bold text-red-600 dark:text-red-400">{taskStats.overdue}</p>
-                            <p className="text-sm text-red-600 dark:text-red-400">Terlambat</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+            <AnalyticsExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                onExport={processExport}
+                selectedClassLabel={selectedClassLabel}
+                dateRangeLabel={dateRangeLabel}
+            />
+        </>
     );
 };
 

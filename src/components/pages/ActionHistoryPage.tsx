@@ -27,6 +27,10 @@ import {
     ClipboardCheck,
     Eye,
     TrendingUp,
+    Award,
+    GraduationCap,
+    FileText,
+    Download,
 } from 'lucide-react';
 import {
     getActionHistory,
@@ -105,6 +109,24 @@ const entityConfig: Record<SoftDeleteEntity, {
         color: 'text-green-500',
         bgColor: 'bg-green-500/10',
     },
+    violations: {
+        label: 'Pelanggaran',
+        icon: <AlertTriangle className="w-4 h-4" />,
+        color: 'text-red-500',
+        bgColor: 'bg-red-500/10',
+    },
+    quiz_points: {
+        label: 'Poin Kuis',
+        icon: <Award className="w-4 h-4" />,
+        color: 'text-amber-500',
+        bgColor: 'bg-amber-500/10',
+    },
+    academic_records: {
+        label: 'Nilai Akademik',
+        icon: <GraduationCap className="w-4 h-4" />,
+        color: 'text-indigo-500',
+        bgColor: 'bg-indigo-500/10',
+    },
 };
 
 // Entity labels (for backward compatibility)
@@ -112,6 +134,9 @@ const entityLabels: Record<SoftDeleteEntity, string> = {
     students: 'Siswa',
     classes: 'Kelas',
     attendance: 'Absensi',
+    violations: 'Pelanggaran',
+    quiz_points: 'Poin Kuis',
+    academic_records: 'Nilai Akademik',
 };
 
 const ActionHistoryPage: React.FC = () => {
@@ -128,6 +153,8 @@ const ActionHistoryPage: React.FC = () => {
     const [showInfo, setShowInfo] = useState(false);
     const [viewDetailItem, setViewDetailItem] = useState<ActionHistoryItem | null>(null);
     const [confirmClearHistory, setConfirmClearHistory] = useState(false);
+    const [showExport, setShowExport] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const pageSize = 20;
 
     // Fetch action history
@@ -181,11 +208,18 @@ const ActionHistoryPage: React.FC = () => {
         },
     });
 
-    // Statistics
+    // Statistics with action type breakdown
     const stats = useMemo(() => {
+        const createCount = actions.filter(a => a.actionType === 'create').length;
+        const updateCount = actions.filter(a => a.actionType === 'update').length;
+        const deleteCount = actions.filter(a => a.actionType === 'delete' || a.actionType === 'bulk_delete').length;
+
         return {
             total: totalCount,
-            undoable: actions.filter(a => a.canUndo).length
+            undoable: actions.filter(a => a.canUndo).length,
+            create: createCount,
+            update: updateCount,
+            delete: deleteCount,
         };
     }, [actions, totalCount]);
 
@@ -274,6 +308,51 @@ const ActionHistoryPage: React.FC = () => {
         setPage(0);
     };
 
+    // Export to CSV
+    const handleExport = async (format: 'csv' | 'json') => {
+        setIsExporting(true);
+        try {
+            const exportData = actions.map(action => ({
+                tanggal: new Date(action.createdAt).toLocaleDateString('id-ID'),
+                waktu: new Date(action.createdAt).toLocaleTimeString('id-ID'),
+                tipe: actionTypeConfig[action.actionType]?.labelPast || action.actionType,
+                entitas: entityLabels[action.entity] || action.entity,
+                deskripsi: action.description,
+                dapat_dibatalkan: action.canUndo ? 'Ya' : 'Tidak',
+            }));
+
+            if (format === 'csv') {
+                const headers = ['Tanggal', 'Waktu', 'Tipe Aksi', 'Entitas', 'Deskripsi', 'Dapat Dibatalkan'];
+                const csv = [
+                    headers.join(','),
+                    ...exportData.map(row =>
+                        [row.tanggal, row.waktu, row.tipe, row.entitas, `"${row.deskripsi}"`, row.dapat_dibatalkan].join(',')
+                    )
+                ].join('\n');
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `riwayat-aksi-${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+            } else {
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `riwayat-aksi-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+            }
+
+            toast.success(`Berhasil export ${actions.length} riwayat aksi`);
+            setShowExport(false);
+        } catch (error) {
+            toast.error('Gagal export data');
+            console.error('Export error:', error);
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     const hasActiveFilters = filterType !== 'all' || filterEntity !== 'all' || dateRange.start || dateRange.end || searchQuery;
     const activeFilterCount = [
         filterType !== 'all',
@@ -314,6 +393,17 @@ const ActionHistoryPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {data?.items && data.items.length > 0 && (
+                            <Button
+                                onClick={() => setShowExport(true)}
+                                variant="outline"
+                                className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                            >
+                                <Download className="w-4 h-4 mr-2" />
+                                Export
+                            </Button>
+                        )}
+
                         <button
                             onClick={() => setShowInfo(true)}
                             className="p-2.5 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors shadow-sm"
@@ -336,28 +426,61 @@ const ActionHistoryPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Simplified Stats Cards */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Enhanced Stats Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {/* Total */}
                     <div className="bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
                                 <Activity className="w-5 h-5 text-indigo-500" />
                             </div>
-                            <div className="text-3xl font-bold text-slate-900 dark:text-white">{totalCount}</div>
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">{totalCount}</div>
                         </div>
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-2">Total Aksi</div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-2">Total</div>
                     </div>
 
+                    {/* Create */}
                     <div className="bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                                <RotateCcw className="w-5 h-5 text-emerald-500" />
+                                <PlusCircle className="w-5 h-5 text-emerald-500" />
                             </div>
-                            <div className="text-sm font-medium text-slate-500 dark:text-slate-400 text-right">
-                                {stats.undoable > 0 ? `${stats.undoable} di halaman ini` : 'N/A'}
-                            </div>
+                            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.create}</div>
                         </div>
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-2">Dapat Dibatalkan</div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-2">Dibuat</div>
+                    </div>
+
+                    {/* Update */}
+                    <div className="bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                                <Edit3 className="w-5 h-5 text-blue-500" />
+                            </div>
+                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.update}</div>
+                        </div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-2">Diupdate</div>
+                    </div>
+
+                    {/* Delete */}
+                    <div className="bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                                <Trash2 className="w-5 h-5 text-red-500" />
+                            </div>
+                            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.delete}</div>
+                        </div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-2">Dihapus</div>
+                    </div>
+
+                    {/* Undoable */}
+                    <div className="bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                                <RotateCcw className="w-5 h-5 text-amber-500" />
+                            </div>
+                            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.undoable}</div>
+                        </div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-2">Undo</div>
                     </div>
                 </div>
 
@@ -513,72 +636,77 @@ const ActionHistoryPage: React.FC = () => {
                                     </span>
                                 </div>
 
-                                <div className="space-y-3">
-                                    {groupActions.map(action => {
-                                        const config = actionTypeConfig[action.actionType];
-                                        const entity = entityConfig[action.entity];
+                                <div className="relative">
+                                    {/* Timeline Line */}
+                                    <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gradient-to-b from-indigo-500/50 via-slate-300 dark:via-slate-600 to-transparent" />
 
-                                        return (
-                                            <div
-                                                key={action.id}
-                                                className={`group flex items-center gap-4 p-4 bg-white dark:bg-slate-800/40 border rounded-2xl hover:shadow-md transition-all ${action.canUndo
-                                                    ? 'border-emerald-200 dark:border-emerald-500/20'
-                                                    : 'border-slate-200 dark:border-slate-700/50'
-                                                    }`}
-                                            >
-                                                {/* Icon */}
-                                                <div className={`w-12 h-12 rounded-xl ${config.bgColor} flex items-center justify-center ${config.color} flex-shrink-0`}>
-                                                    {config.icon}
-                                                </div>
+                                    <div className="space-y-3 relative">
+                                        {groupActions.map((action) => {
+                                            const config = actionTypeConfig[action.actionType];
+                                            const entity = entityConfig[action.entity];
 
-                                                {/* Content */}
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-slate-900 dark:text-white truncate">
-                                                        {action.description}
-                                                    </p>
-                                                    <div className="flex items-center flex-wrap gap-2 mt-1.5">
-                                                        <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${config.bgColor} ${config.color}`}>
-                                                            {config.label}
-                                                        </span>
-                                                        <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${entity?.bgColor || 'bg-slate-100 dark:bg-slate-800'} ${entity?.color || 'text-slate-500'}`}>
-                                                            {entityLabels[action.entity] || action.entity}
-                                                        </span>
-                                                        <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                                                            <Clock className="w-3 h-3" />
-                                                            {formatRelativeTime(action.createdAt)}
-                                                        </span>
+                                            return (
+                                                <div
+                                                    key={action.id}
+                                                    className={`group flex items-center gap-4 p-4 bg-white dark:bg-slate-800/40 border rounded-2xl hover:shadow-md transition-all ${action.canUndo
+                                                        ? 'border-emerald-200 dark:border-emerald-500/20'
+                                                        : 'border-slate-200 dark:border-slate-700/50'
+                                                        }`}
+                                                >
+                                                    {/* Icon */}
+                                                    <div className={`w-12 h-12 rounded-xl ${config.bgColor} flex items-center justify-center ${config.color} flex-shrink-0`}>
+                                                        {config.icon}
+                                                    </div>
+
+                                                    {/* Content */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-semibold text-slate-900 dark:text-white truncate">
+                                                            {action.description}
+                                                        </p>
+                                                        <div className="flex items-center flex-wrap gap-2 mt-1.5">
+                                                            <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${config.bgColor} ${config.color}`}>
+                                                                {config.label}
+                                                            </span>
+                                                            <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${entity?.bgColor || 'bg-slate-100 dark:bg-slate-800'} ${entity?.color || 'text-slate-500'}`}>
+                                                                {entityLabels[action.entity] || action.entity}
+                                                            </span>
+                                                            <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                                                                <Clock className="w-3 h-3" />
+                                                                {formatRelativeTime(action.createdAt)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Actions */}
+                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                        <button
+                                                            onClick={() => setViewDetailItem(action)}
+                                                            className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                                                            title="Lihat Detail"
+                                                        >
+                                                            <Eye className="w-5 h-5" />
+                                                        </button>
+
+                                                        {action.canUndo ? (
+                                                            <button
+                                                                onClick={() => undoMutation.mutate(action.id)}
+                                                                disabled={undoMutation.isPending}
+                                                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50"
+                                                            >
+                                                                <RotateCcw className={`w-4 h-4 ${undoMutation.isPending ? 'animate-spin' : ''}`} />
+                                                                Undo
+                                                            </button>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs">
+                                                                <XCircle className="w-4 h-4" />
+                                                                <span className="hidden sm:inline">Tidak dapat dibatalkan</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-
-                                                {/* Actions */}
-                                                <div className="flex items-center gap-2 flex-shrink-0">
-                                                    <button
-                                                        onClick={() => setViewDetailItem(action)}
-                                                        className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
-                                                        title="Lihat Detail"
-                                                    >
-                                                        <Eye className="w-5 h-5" />
-                                                    </button>
-
-                                                    {action.canUndo ? (
-                                                        <button
-                                                            onClick={() => undoMutation.mutate(action.id)}
-                                                            disabled={undoMutation.isPending}
-                                                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50"
-                                                        >
-                                                            <RotateCcw className={`w-4 h-4 ${undoMutation.isPending ? 'animate-spin' : ''}`} />
-                                                            Undo
-                                                        </button>
-                                                    ) : (
-                                                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs">
-                                                            <XCircle className="w-4 h-4" />
-                                                            <span className="hidden sm:inline">Tidak dapat dibatalkan</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -766,6 +894,64 @@ const ActionHistoryPage: React.FC = () => {
                             </div>
                         </div>
                     )}
+                </Modal>
+
+                {/* Export Modal */}
+                <Modal
+                    isOpen={showExport}
+                    onClose={() => setShowExport(false)}
+                    title="Export Riwayat Aksi"
+                    icon={<FileText className="w-5 h-5 text-indigo-500" />}
+                >
+                    <div className="space-y-4">
+                        <p className="text-slate-600 dark:text-slate-400">
+                            Export <strong className="text-slate-900 dark:text-white">{actions.length} riwayat aksi</strong> yang ada di halaman ini.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => handleExport('csv')}
+                                disabled={isExporting}
+                                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all group"
+                            >
+                                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                                    <FileText className="w-7 h-7 text-emerald-500" />
+                                </div>
+                                <div className="text-center">
+                                    <div className="font-bold text-slate-900 dark:text-white">CSV</div>
+                                    <div className="text-xs text-slate-500">Untuk Excel</div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => handleExport('json')}
+                                disabled={isExporting}
+                                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all group"
+                            >
+                                <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                                    <Download className="w-7 h-7 text-blue-500" />
+                                </div>
+                                <div className="text-center">
+                                    <div className="font-bold text-slate-900 dark:text-white">JSON</div>
+                                    <div className="text-xs text-slate-500">Untuk Developer</div>
+                                </div>
+                            </button>
+                        </div>
+
+                        {isExporting && (
+                            <div className="flex items-center justify-center gap-2 py-3 text-indigo-600 dark:text-indigo-400">
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span>Mengexport data...</span>
+                            </div>
+                        )}
+
+                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                            <p className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                                <Info className="w-4 h-4 flex-shrink-0" />
+                                Export hanya mencakup riwayat di halaman ini ({actions.length} dari {totalCount} total).
+                            </p>
+                        </div>
+                    </div>
                 </Modal>
             </div >
         </div >

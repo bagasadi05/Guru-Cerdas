@@ -3,15 +3,17 @@ import { supabase } from '../../services/supabase';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
-import { Card, CardTitle, CardDescription } from '../ui/Card';
+import { CardTitle, CardDescription } from '../ui/Card';
 import { PlusIcon, TrashIcon, CheckCircleIcon, LockIcon, CalendarIcon, ChevronDownIcon, ChevronRightIcon, AlertCircleIcon } from 'lucide-react';
 import { AcademicYearRow, SemesterRow } from '../../types';
+import { SettingsCard } from './SettingsCard';
 
 interface AcademicYearWithSemesters extends AcademicYearRow {
     semesters: SemesterRow[];
 }
 
 export const SemesterManagement: React.FC = () => {
+    const { user, loading: authLoading } = useAuth();
     const [years, setYears] = useState<AcademicYearWithSemesters[]>([]);
     const [loading, setLoading] = useState(true);
     const [creatingYear, setCreatingYear] = useState(false);
@@ -23,11 +25,26 @@ export const SemesterManagement: React.FC = () => {
     const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
 
     const toast = useToast();
-    const { user } = useAuth();
 
     const fetchData = React.useCallback(async () => {
+        if (!user || !user.id) return;
         setLoading(true);
+        console.log('Fetching academic data for user:', user.id);
+
+        // Safety timeout to prevent infinite loading
+        const timeoutId = setTimeout(() => {
+            setLoading(prev => {
+                if (prev) {
+                    toast.error('Request timeout. Silakan coba lagi.');
+                    return false;
+                }
+                return prev;
+            });
+        }, 10000);
+
         try {
+            // Remove explicit .eq('user_id') since RLS handles it. 
+            // This simplifies the query and avoids potential redundant filtering issues.
             const { data: yearsData, error: yearsError } = await supabase
                 .from('academic_years')
                 .select('*')
@@ -42,9 +59,13 @@ export const SemesterManagement: React.FC = () => {
 
             if (semestersError) throw semestersError;
 
-            const combined: AcademicYearWithSemesters[] = yearsData.map(year => ({
+            // Safeguard against null data
+            const validYears = yearsData || [];
+            const validSemesters = semestersData || [];
+
+            const combined: AcademicYearWithSemesters[] = validYears.map(year => ({
                 ...year,
-                semesters: semestersData.filter(s => s.academic_year_id === year.id)
+                semesters: validSemesters.filter(s => s.academic_year_id === year.id)
             }));
 
             setYears(combined);
@@ -56,14 +77,19 @@ export const SemesterManagement: React.FC = () => {
             console.error('Error fetching academic data:', error);
             toast.error('Gagal memuat data akademik.');
         } finally {
+            clearTimeout(timeoutId);
             setLoading(false);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [user?.id, toast]); // Depend on user.id string, not user object
 
     useEffect(() => {
+        if (authLoading) return;
+        if (!user || !user.id) {
+            setLoading(false);
+            return;
+        }
         fetchData();
-    }, [fetchData]);
+    }, [authLoading, user?.id, fetchData]); // Depend on user.id string
 
     const toggleYearExpand = (yearId: string) => {
         setExpandedYears(prev => {
@@ -75,6 +101,11 @@ export const SemesterManagement: React.FC = () => {
     };
 
     const handleCreateYear = async () => {
+        if (!user) {
+            toast.error('Sesi tidak valid.');
+            return;
+        }
+
         if (!newYearName || !newYearStart || !newYearEnd) {
             toast.error('Mohon lengkapi semua field.');
             return;
@@ -88,7 +119,7 @@ export const SemesterManagement: React.FC = () => {
                     start_date: newYearStart,
                     end_date: newYearEnd,
                     is_active: false,
-                    user_id: user?.id
+                    user_id: user.id
                 })
                 .select()
                 .single();
@@ -158,30 +189,17 @@ export const SemesterManagement: React.FC = () => {
 
     const handleActivateSemester = async (semesterId: string, yearId: string) => {
         try {
-            // Transaction-like update:
-            // 1. Deactivate all semesters
-            // 2. Activate target semester
-            // 3. Update academic years active status based on this
+            // Use RPC for atomic update
+            const { error } = await supabase.rpc('activate_semester', {
+                p_semester_id: semesterId,
+                p_year_id: yearId
+            });
 
-            // Supabase doesn't support multi-table transactions easily in client lib without RPC.
-            // We'll do it sequentially.
-
-            // Deactivate all semesters
-            await supabase.from('semesters').update({ is_active: false }).neq('id', 'placeholder'); // Simple logic usually update all
-
-            // Activate target
-            const { error } = await supabase.from('semesters').update({ is_active: true }).eq('id', semesterId);
             if (error) throw error;
-
-            // Update academic years: Activate the one containing this semester, deactivate others
-            await supabase.from('academic_years').update({ is_active: false }).neq('id', 'placeholder');
-            await supabase.from('academic_years').update({ is_active: true }).eq('id', yearId);
 
             toast.success('Semester aktif diperbarui.');
             fetchData();
-            // Force reload page to update context? Or Context listens to Supabase realtime? 
-            // Context polls or needs manual refresh. We'll rely on reload for now or expose refresh in context.
-            // Ideally trigger context refresh.
+            // Force reload to update app context state widely
             window.location.reload();
         } catch (error) {
             console.error('Error activating semester:', error);
@@ -224,10 +242,14 @@ export const SemesterManagement: React.FC = () => {
     };
 
     return (
-        <Card className="p-6">
+        <SettingsCard className="p-6">
+            {/* Header with subtle loader */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <CardTitle>Manajemen Semester</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                        Manajemen Semester
+                        {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>}
+                    </CardTitle>
                     <CardDescription>Atur Tahun Ajaran dan Semester Aktif</CardDescription>
                 </div>
                 <Button onClick={() => setCreatingYear(!creatingYear)}>
@@ -270,17 +292,24 @@ export const SemesterManagement: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex justify-end gap-2">
-                        <Button variant="ghost" onClick={() => setCreatingYear(false)}>Batal</Button>
+                        <Button variant="ghost" onClick={() => setCreatingYear(false)} className="px-6">Batal</Button>
                         <Button onClick={handleCreateYear}>Simpan</Button>
                     </div>
                 </div>
             )}
 
             <div className="space-y-4">
-                {loading ? (
-                    <div className="text-center py-8 text-gray-400">Memuat data...</div>
-                ) : years.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400">Belum ada data tahun ajaran.</div>
+                {years.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                        {loading ? 'Sedang sinkronisasi data...' : 'Belum ada data tahun ajaran.'}
+                        {!loading && (
+                            <div className="mt-2">
+                                <Button variant="outline" size="sm" onClick={() => fetchData()}>
+                                    Muat Ulang
+                                </Button>
+                            </div>
+                        )}
+                    </div>
                 ) : (
                     years.map(year => (
                         <div key={year.id} className={`border rounded-xl transition-all ${year.is_active ? 'border-indigo-200 bg-indigo-50/30 dark:border-indigo-900/50 dark:bg-indigo-900/10' : 'border-slate-200 dark:border-slate-700'}`}>
@@ -368,6 +397,6 @@ export const SemesterManagement: React.FC = () => {
                     Mengunci semester akan mencegah perubahan data pada semester tersebut.
                 </p>
             </div>
-        </Card>
+        </SettingsCard>
     );
 };

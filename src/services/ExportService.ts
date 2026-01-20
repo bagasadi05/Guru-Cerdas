@@ -5,9 +5,7 @@
  * Includes progress tracking and error handling.
  */
 
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import { getJsPDF, getAutoTable, getXLSX } from '../utils/dynamicImports';
 
 export type ExportFormat = 'pdf' | 'excel' | 'csv';
 
@@ -77,6 +75,10 @@ export async function exportToPDF(options: ExportOptions): Promise<ExportResult>
         } = options;
 
         onProgress?.(10);
+
+        // Dynamically import jsPDF
+        const { default: jsPDF } = await getJsPDF();
+        const { default: autoTable } = await getAutoTable();
 
         // Create PDF document
         const doc = new jsPDF({
@@ -183,6 +185,9 @@ export async function exportToExcel(options: ExportOptions): Promise<ExportResul
         } = options;
 
         onProgress?.(10);
+
+        // Dynamically import XLSX
+        const XLSX = await getXLSX();
 
         // Create workbook
         const wb = XLSX.utils.book_new();

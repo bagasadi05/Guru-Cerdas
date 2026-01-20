@@ -445,6 +445,24 @@ export const useDashboard = () => {
     return context;
 };
 
+const loadWidgetsFromStorage = (
+    storageKey: string,
+    defaultWidgets: Omit<DashboardWidget, 'position'>[]
+): DashboardWidget[] => {
+    if (typeof localStorage === 'undefined') {
+        return defaultWidgets.map((w, i) => ({ ...w, position: i }));
+    }
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) {
+        return defaultWidgets.map((w, i) => ({ ...w, position: i }));
+    }
+    try {
+        return JSON.parse(stored) as DashboardWidget[];
+    } catch {
+        return defaultWidgets.map((w, i) => ({ ...w, position: i }));
+    }
+};
+
 interface DashboardProviderProps {
     children: React.ReactNode;
     defaultWidgets: Omit<DashboardWidget, 'position'>[];
@@ -456,22 +474,9 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({
     defaultWidgets,
     storageKey = 'dashboard_layout'
 }) => {
-    const [widgets, setWidgets] = useState<DashboardWidget[]>([]);
-
-    // Load from storage
-    useEffect(() => {
-        const stored = localStorage.getItem(storageKey);
-        if (stored) {
-            try {
-                setWidgets(JSON.parse(stored));
-            } catch {
-                // Use defaults
-                setWidgets(defaultWidgets.map((w, i) => ({ ...w, position: i })));
-            }
-        } else {
-            setWidgets(defaultWidgets.map((w, i) => ({ ...w, position: i })));
-        }
-    }, [storageKey, defaultWidgets]);
+    const [widgets, setWidgets] = useState<DashboardWidget[]>(() =>
+        loadWidgetsFromStorage(storageKey, defaultWidgets)
+    );
 
     const addWidget = useCallback((widget: Omit<DashboardWidget, 'id' | 'position'>) => {
         const newWidget: DashboardWidget = {

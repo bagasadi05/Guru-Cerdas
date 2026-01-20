@@ -102,7 +102,7 @@ Aplikasi ini dibangun dengan teknologi web modern dan mendukung fitur **Progress
 - **Node.js** >= 18.0.0
 - **npm** >= 9.0.0 atau **pnpm**
 - Akun [Supabase](https://supabase.com/)
-- API Key [OpenRouter](https://openrouter.ai/) (opsional, untuk fitur AI)
+- API Key [OpenRouter](https://openrouter.ai/) (opsional, untuk fitur AI via proxy)
 
 ### Quick Start
 
@@ -123,8 +123,14 @@ Aplikasi ini dibangun dengan teknologi web modern dan mendukung fitur **Progress
    ```env
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   # Recommended: use server-side proxy in production
+   VITE_OPENROUTER_PROXY_URL=https://your-domain.vercel.app/api/openrouter
+   # Local-only fallback (avoid in production)
    VITE_OPENROUTER_API_KEY=your_openrouter_api_key
    ```
+   Untuk proxy (Vercel), set environment variable server-side:
+   - `OPENROUTER_API_KEY`
+   - `OPENROUTER_ALLOWED_ORIGIN` (opsional)
 
 4. **Setup database**
    

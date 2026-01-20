@@ -10,11 +10,10 @@ import { Button } from '../ui/Button';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { ArrowLeftIcon } from '../Icons';
 import { violationList } from '../../services/violations.data';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 // import { Type } from '@google/genai';
 import { generateStudentReport, ReportData as ReportDataType } from '../../services/pdfGenerator';
+import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
 import { Modal } from '../ui/Modal';
 import { ExcelImporter } from '../ui/ExcelImporter';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -289,7 +288,8 @@ const MassInputPage: React.FC = () => {
                         points: selectedViolation.points,
                         type: selectedViolation.code,
                         student_id,
-                        user_id: user.id
+                        user_id: user.id,
+                        teacher_id: user.id
                     }));
                     const { data, error } = await supabase.from('violations').insert(records).select();
                     if (error) throw error;
@@ -334,6 +334,11 @@ const MassInputPage: React.FC = () => {
             // const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema } });
             // const responseText = response.text || "[]";
             const parsedResults = await generateOpenRouterJson<ReviewDataItem[]>(prompt, systemInstruction);
+
+            if (!Array.isArray(parsedResults)) {
+                throw new Error("Format respon AI tidak valid (bukan list).");
+            }
+
             const newScores: Record<string, string> = {}; let matchedCount = 0;
             parsedResults.forEach(item => {
                 const student = studentsData.find(s => s.name.toLowerCase() === item.studentName.toLowerCase());
@@ -417,6 +422,7 @@ Contoh output yang benar:
                 }));
             }
             setExportProgress("70%"); toast.info("Menyusun file PDF...");
+            const { default: jsPDF } = await getJsPDF();
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' }); let isFirstPage = true;
             for (let i = 0; i < allReportData.length; i++) {
                 const reportData = allReportData[i];
@@ -427,7 +433,7 @@ Contoh output yang benar:
                 const semName = activeSemester.semester_number % 2 !== 0 ? 'Ganjil' : 'Genap';
                 const acadYear = activeAcademicYear?.name || `${new Date().getFullYear()} / ${new Date().getFullYear() + 1}`;
 
-                generateStudentReport(doc, reportData, teacherNote, new Date().toISOString().slice(0, 10), semName, acadYear, user);
+                await generateStudentReport(doc, reportData, teacherNote, new Date().toISOString().slice(0, 10), semName, acadYear, user);
                 setExportProgress(`${Math.round(70 + ((i + 1) / studentsToPrint.length) * 30)}%`);
             }
             doc.save(`Rapor_Massal_${classes?.find(c => c.id === selectedClass)?.name || 'Kelas'}.pdf`);
@@ -445,6 +451,8 @@ Contoh output yang benar:
         // Ensure logos are loaded
         await ensureLogosLoaded();
 
+        const { default: jsPDF } = await getJsPDF();
+        const { default: autoTable } = await getAutoTable();
         const doc = new jsPDF(); const className = classes?.find(c => c.id === selectedClass)?.name;
         const pageWidth = doc.internal.pageSize.getWidth();
 

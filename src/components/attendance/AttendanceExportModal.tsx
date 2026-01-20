@@ -72,14 +72,14 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
                     <button
                         type="button"
                         onClick={() => setExportPeriod('monthly')}
-                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${exportPeriod === 'monthly' ? 'bg-white shadow text-indigo-600 dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${exportPeriod === 'monthly' ? 'bg-white shadow text-green-600 dark:bg-slate-700 dark:text-green-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
                     >
                         Bulanan
                     </button>
                     <button
                         type="button"
                         onClick={() => setExportPeriod('semester')}
-                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${exportPeriod === 'semester' ? 'bg-white shadow text-indigo-600 dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${exportPeriod === 'semester' ? 'bg-white shadow text-green-600 dark:bg-slate-700 dark:text-green-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
                     >
                         Satu Semester
                     </button>

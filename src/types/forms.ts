@@ -118,7 +118,7 @@ export interface ClassFormState {
 /**
  * Attendance status options.
  */
-export type AttendanceStatusValue = 'Hadir' | 'Izin' | 'Sakit' | 'Alpha';
+export type AttendanceStatusValue = 'Hadir' | 'Izin' | 'Sakit' | 'Alpha' | 'Libur';
 
 /**
  * Single attendance entry form data.

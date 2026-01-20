@@ -20,16 +20,50 @@ import { TasksPageSkeleton } from '../skeletons/PageSkeletons';
 import { MoreVertical, Loader2, PlayCircle, Circle, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import { ValidationService } from '../../services/ValidationService';
 import { ValidationRules } from '../../types';
+import { EmptyError } from '../EmptyStates';
 
 // Native date helpers
-const formatDateDisplay = (date: Date) => {
+const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+// Parse YYYY-MM-DD as a local date to avoid timezone shifts.
+const parseDateOnly = (value: string) => {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
+};
+
+const formatDateInputValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const normalizeDueDateForInput = (dueDate: string | null) => {
+    if (!dueDate) return '';
+    if (isDateOnly(dueDate)) return dueDate;
+    const parsed = new Date(dueDate);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return formatDateInputValue(parsed);
+};
+
+const formatDateDisplay = (dueDate: string) => {
+    const date = isDateOnly(dueDate) ? parseDateOnly(dueDate) : new Date(dueDate);
+    if (Number.isNaN(date.getTime())) return '-';
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     return `${date.getDate()} ${months[date.getMonth()]}`;
 };
 
 const isOverdue = (dueDate: string | null) => {
     if (!dueDate) return false;
-    return new Date(dueDate) < new Date();
+    const now = new Date();
+    if (isDateOnly(dueDate)) {
+        const date = parseDateOnly(dueDate);
+        const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+        return endOfDay < now;
+    }
+    const parsed = new Date(dueDate);
+    if (Number.isNaN(parsed.getTime())) return false;
+    return parsed < now;
 };
 
 type TaskRow = Database['public']['Tables']['tasks']['Row'];
@@ -178,7 +212,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                                 : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400'
                                 }`}>
                                 {overdue ? <AlertTriangle className="w-3 h-3" /> : <CalendarIcon className="w-3 h-3" />}
-                                {formatDateDisplay(new Date(task.due_date))}
+                                {formatDateDisplay(task.due_date)}
                             </div>
                         )}
 
@@ -313,11 +347,14 @@ const TasksPage: React.FC = () => {
     const [status, setStatus] = useState<TaskStatus>('todo');
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const { data: tasks = [], isLoading } = useQuery({
+    const { data: tasks = [], isLoading, isError, error, refetch, isFetching } = useQuery({
         queryKey: ['tasks', user?.id],
         queryFn: () => fetchTasks(user!.id),
         enabled: !!user,
     });
+    const taskLoadErrorMessage = error instanceof Error
+        ? error.message
+        : 'Gagal memuat tugas. Silakan coba lagi.';
 
     const createTaskMutation = useMutation({
         mutationFn: async (task: TaskInsert) => {
@@ -417,7 +454,7 @@ const TasksPage: React.FC = () => {
         setEditingTask(task);
         setTitle(task.title);
         setDescription(task.description || '');
-        setDueDate(task.due_date || '');
+        setDueDate(normalizeDueDateForInput(task.due_date));
         setStatus(task.status);
         setIsModalOpen(true);
     };
@@ -467,9 +504,42 @@ const TasksPage: React.FC = () => {
     if (isLoading) {
         return <TasksPageSkeleton />;
     }
+    if (isError && tasks.length === 0) {
+        return (
+            <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 lg:space-y-8 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
+                <EmptyError
+                    message={taskLoadErrorMessage}
+                    onRetry={() => refetch()}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 lg:space-y-8 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
+            {isError && (
+                <div className="rounded-2xl border border-red-200/60 dark:border-red-500/30 bg-red-50/60 dark:bg-red-500/10 px-4 py-3 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
+                                <AlertTriangle className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-red-700 dark:text-red-300">Gagal memuat tugas</p>
+                                <p className="text-xs text-red-600/80 dark:text-red-400/80">{taskLoadErrorMessage}</p>
+                            </div>
+                        </div>
+                        <Button
+                            onClick={() => refetch()}
+                            disabled={isFetching}
+                            className="self-start sm:self-auto bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                        >
+                            {isFetching && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            Coba Lagi
+                        </Button>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 <div>
@@ -600,7 +670,7 @@ const TasksPage: React.FC = () => {
             </div>
 
             {/* Empty State */}
-            {tasks.length === 0 && (
+            {tasks.length === 0 && !isError && (
                 <div className="text-center py-16 bg-slate-100/50 dark:bg-slate-800/30 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
                     <div className="w-20 h-20 mx-auto rounded-2xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center mb-4">
                         <CheckSquareIcon className="w-10 h-10 text-slate-400 dark:text-slate-600" />

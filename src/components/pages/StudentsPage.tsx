@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useDeferredValue } from 'react';
 import { triggerSuccessConfetti } from '../../utils/confetti';
 
 import { Link } from 'react-router-dom';
@@ -82,6 +82,7 @@ const StudentsPage: React.FC = () => {
     const queryClient = useQueryClient();
 
     const [searchTerm, setSearchTerm] = useState('');
+    const deferredSearchTerm = useDeferredValue(searchTerm);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [activeClassId, setActiveClassId] = useState<string>('');
     const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
@@ -106,8 +107,8 @@ const StudentsPage: React.FC = () => {
         queryFn: async (): Promise<StudentsPageData | null> => {
             if (!user) return null;
             const [classesRes, studentsRes] = await Promise.all([
-                supabase.from('classes').select('*').eq('user_id', user.id).order('name'),
-                supabase.from('students').select('*').eq('user_id', user.id),
+                supabase.from('classes').select('*').eq('user_id', user.id).is('deleted_at', null).order('name'),
+                supabase.from('students').select('*').eq('user_id', user.id).is('deleted_at', null),
             ]);
             if (classesRes.error) throw new Error(classesRes.error.message);
             if (studentsRes.error) throw new Error(studentsRes.error.message);
@@ -213,8 +214,8 @@ const StudentsPage: React.FC = () => {
     const studentsForActiveClass = useMemo(() => {
         let filtered = students.filter(student => student.class_id === activeClassId);
 
-        if (searchTerm) {
-            const lowerTerm = searchTerm.toLowerCase();
+        if (deferredSearchTerm) {
+            const lowerTerm = deferredSearchTerm.toLowerCase();
             filtered = filtered.filter(student =>
                 student.name.toLowerCase().includes(lowerTerm) ||
                 (student.access_code && student.access_code.toLowerCase().includes(lowerTerm))
@@ -244,7 +245,7 @@ const StudentsPage: React.FC = () => {
             const comparison = String(aValue).localeCompare(String(bValue), 'id-ID', { numeric: true });
             return sortConfig.direction === 'asc' ? comparison : -comparison;
         });
-    }, [searchTerm, students, activeClassId, sortConfig, genderFilter, accessCodeFilter]);
+    }, [deferredSearchTerm, students, activeClassId, sortConfig, genderFilter, accessCodeFilter]);
 
     const handleSort = (key: string) => {
         setSortConfig(current => ({

@@ -2,11 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
+import { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { ImageUploader } from '../ui/ImageUploader';
 import { supabase } from '../../services/supabase';
+import { SettingsCard } from './SettingsCard';
+
+const getStoragePath = (url: string | undefined | null) => {
+    if (!url) return null;
+    if (url.includes('pravatar.cc')) return null;
+    try {
+        const parts = url.split('/teacher_assets/');
+        if (parts.length < 2) return null;
+        return parts[1];
+    } catch (e) {
+        console.error('Error parsing storage URL', e);
+        return null;
+    }
+};
 
 const ProfileSection: React.FC = () => {
     const { user, updateUser } = useAuth();
@@ -41,10 +55,26 @@ const ProfileSection: React.FC = () => {
             .getPublicUrl(filePath);
 
         if (publicUrlData.publicUrl) {
+            const oldAvatarUrl = user.avatarUrl;
+
             const { error: updateUserError } = await updateUser({ avatar_url: publicUrlData.publicUrl });
             if (updateUserError) {
+                // Determine if we should delete the new file since update failed? 
+                // For now, focus on the user request: "potensi file orphan" refers to old files. 
+                // But cleaning up the new file if update fails is also good hygiene.
+                const newPath = getStoragePath(publicUrlData.publicUrl);
+                if (newPath) await supabase.storage.from('teacher_assets').remove([newPath]);
                 throw updateUserError;
             }
+
+            // Delete old file if exists
+            if (oldAvatarUrl) {
+                const oldPath = getStoragePath(oldAvatarUrl);
+                if (oldPath) {
+                    await supabase.storage.from('teacher_assets').remove([oldPath]);
+                }
+            }
+
             toast.success("Foto profil berhasil diperbarui!");
         } else {
             throw new Error("Tidak bisa mendapatkan URL publik untuk foto.");
@@ -54,11 +84,26 @@ const ProfileSection: React.FC = () => {
     const handleAvatarDelete = async () => {
         if (!user) return;
 
+        const oldAvatarUrl = user.avatarUrl;
+
         // Reset to default avatar
         const { error } = await updateUser({ avatar_url: '' });
         if (error) {
             throw error;
         }
+
+        // Delete file from storage
+        if (oldAvatarUrl) {
+            const oldPath = getStoragePath(oldAvatarUrl);
+            if (oldPath) {
+                const { error: storageError } = await supabase.storage.from('teacher_assets').remove([oldPath]);
+                if (storageError) {
+                    console.error('Failed to remove file from storage:', storageError);
+                    // Just log, don't throw, since user profile is already updated logic-wise
+                }
+            }
+        }
+
         toast.success("Foto profil berhasil dihapus!");
     };
 
@@ -73,8 +118,8 @@ const ProfileSection: React.FC = () => {
     };
 
     return (
-        <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
+        <SettingsCard className="overflow-hidden">
+            <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
                 <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Profil Pengguna</CardTitle>
                 <CardDescription className="text-base">Perbarui informasi profil dan foto identitas Anda.</CardDescription>
             </CardHeader>
@@ -140,13 +185,13 @@ const ProfileSection: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">
-                        <Button type="submit" disabled={!isOnline} className="h-11 px-8 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-500/20 transition-all hover:scale-[1.02]">
+                        <Button type="submit" disabled={!isOnline} className="px-8 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-500/20 transition-all hover:scale-[1.02]">
                             Simpan Perubahan
                         </Button>
                     </div>
                 </form>
             </CardContent>
-        </Card>
+        </SettingsCard>
     );
 };
 

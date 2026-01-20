@@ -7,7 +7,7 @@
  * @module exportUtils
  */
 
-import * as XLSX from 'xlsx';
+import { getXLSX } from './dynamicImports';
 
 /**
  * Exports an array of data to an Excel file
@@ -37,12 +37,13 @@ import * as XLSX from 'xlsx';
  * 
  * @since 1.0.0
  */
-export const exportToExcel = (data: any[], fileName: string, sheetName: string = 'Sheet1') => {
+export const exportToExcel = async (data: any[], fileName: string, sheetName: string = 'Sheet1') => {
     if (!data || data.length === 0) {
         console.warn("No data to export");
         return;
     }
 
+    const XLSX = await getXLSX();
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(data);
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
@@ -365,12 +366,13 @@ export const exportAttendanceToExcel = async (
  * 
  * @since 1.0.0
  */
-export const exportClassGradesToExcel = (
+export const exportClassGradesToExcel = async (
     className: string,
     students: { id: string; name: string }[],
     academicRecords: any[],
     fileName: string
 ) => {
+    const XLSX = await getXLSX();
     const wb = XLSX.utils.book_new();
     const ws_data: any[][] = [];
 
@@ -504,13 +506,14 @@ export const exportClassGradesToExcel = (
  * 
  * @since 1.0.0
  */
-export const exportClassSummaryToExcel = (
+export const exportClassSummaryToExcel = async (
     className: string,
     students: { id: string; name: string; gender: string }[],
     attendanceData: any[],
     academicRecords: any[],
     fileName: string
 ) => {
+    const XLSX = await getXLSX();
     const wb = XLSX.utils.book_new();
     const ws_data: any[][] = [];
 

@@ -17,6 +17,7 @@ import { AttendanceStatus } from '../../types/enums';
 export interface Template {
     id: string;
     name: string;
+    shortName: string;
     description: string;
     icon: React.ReactNode;
     color: string;
@@ -33,6 +34,7 @@ const templates: Template[] = [
     {
         id: 'all-present',
         name: 'Semua Hadir',
+        shortName: 'Hadir',
         description: 'Tandai semua siswa hadir',
         icon: <CheckCircle className="w-4 h-4" />,
         color: 'text-emerald-500',
@@ -43,6 +45,7 @@ const templates: Template[] = [
     {
         id: 'all-absent',
         name: 'Semua Alpha',
+        shortName: 'Alpha',
         description: 'Tandai semua siswa alpha',
         icon: <XCircle className="w-4 h-4" />,
         color: 'text-red-500',
@@ -53,16 +56,18 @@ const templates: Template[] = [
     {
         id: 'weekend',
         name: 'Libur',
-        description: 'Kosongkan untuk hari libur',
+        shortName: 'Libur',
+        description: 'Tandai semua siswa sebagai hari libur',
         icon: <CalendarOff className="w-4 h-4" />,
         color: 'text-purple-500',
         hoverColor: 'hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-purple-600',
-        defaultStatus: AttendanceStatus.Hadir,
-        applyToAll: false,
+        defaultStatus: AttendanceStatus.Libur,
+        applyToAll: true,
     },
     {
         id: 'morning-rush',
         name: 'Hadir Pagi',
+        shortName: 'Sisa',
         description: 'Tandai sisa siswa hadir',
         icon: <Clock className="w-4 h-4" />,
         color: 'text-orange-500',
@@ -73,10 +78,11 @@ const templates: Template[] = [
     {
         id: 'quick-check',
         name: 'Cek Cepat',
+        shortName: 'Cek',
         description: 'Tandai yang belum diisi sebagai hadir',
         icon: <Zap className="w-4 h-4" />,
-        color: 'text-indigo-500',
-        hoverColor: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600',
+        color: 'text-emerald-500',
+        hoverColor: 'hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600',
         defaultStatus: AttendanceStatus.Hadir,
         applyToAll: false,
     },
@@ -92,7 +98,7 @@ export const QuickTemplateIcons: React.FC<QuickTemplateIconsProps> = ({
                     key={template.id}
                     onClick={() => onApplyTemplate(template)}
                     className={`
-                        flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all duration-200
+                        flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all duration-200
                         ${template.color} ${template.hoverColor}
                         active:scale-95 text-xs sm:text-sm font-medium
                     `}
@@ -100,7 +106,8 @@ export const QuickTemplateIcons: React.FC<QuickTemplateIconsProps> = ({
                     aria-label={template.name}
                 >
                     {template.icon}
-                    <span className="hidden lg:inline">{template.name}</span>
+                    <span className="sm:hidden text-[10px] leading-tight">{template.shortName}</span>
+                    <span className="hidden sm:inline">{template.name}</span>
                 </button>
             ))}
         </div>

@@ -8,11 +8,18 @@ import { getStudentAvatar } from '../../utils/avatarUtils';
 interface AttendanceListProps {
     students: StudentRow[];
     attendanceRecords: Record<string, AttendanceRecord>;
+    selectedDate: string;
     onStatusChange: (studentId: string, status: AttendanceStatus) => void;
     onNoteClick: (studentId: string, currentNote: string) => void;
 }
 
-export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attendanceRecords, onStatusChange, onNoteClick }) => {
+export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attendanceRecords, selectedDate, onStatusChange, onNoteClick }) => {
+    const formattedDate = new Date(`${selectedDate}T00:00:00`).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+
     return (
         <div className="space-y-3">
             {students.map((student, index) => {
@@ -21,14 +28,21 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                 return (
                     <div
                         key={student.id}
-                        className={`group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all duration-300 card-interactive animate-list-item`}
+                        id={`student-${student.id}`}
+                        className={`group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-green-200 dark:hover:border-green-500/30 transition-all duration-300 card-interactive animate-list-item`}
                         style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
                     >
                         {/* Student Info */}
                         <div className="flex items-center gap-4 flex-grow min-w-0">
                             <span className="text-slate-300 dark:text-slate-600 font-bold font-mono w-8 text-right flex-shrink-0 text-sm">{index + 1}</span>
                             <div className="relative">
-                                <img src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name)} alt={student.name} className="w-12 h-12 rounded-xl object-cover border-2 border-white dark:border-slate-700 shadow-sm" />
+                                <img
+                                    src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name)}
+                                    alt={student.name}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="w-12 h-12 rounded-xl object-cover border-2 border-white dark:border-slate-700 shadow-sm"
+                                />
                                 {record?.status && (() => {
                                     const statusOpt = statusOptions.find(opt => opt.value === record.status);
                                     if (!statusOpt) return null;
@@ -46,7 +60,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                             <div className="min-w-0">
                                 <h4 className="font-semibold text-base text-slate-800 dark:text-white truncate">{student.name}</h4>
                                 {record?.note ? (
-                                    <p className="text-xs text-indigo-500 font-medium truncate flex items-center gap-1 mt-0.5 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-md w-fit">
+                                    <p className="text-xs text-green-600 font-medium truncate flex items-center gap-1 mt-0.5 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-md w-fit">
                                         <InfoIcon className="w-3 h-3" /> {record.note}
                                     </p>
                                 ) : (
@@ -94,8 +108,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                 className={`
                                     w-10 h-10 flex items-center justify-center rounded-xl transition-all ml-1 border border-transparent
                                     ${record?.note
-                                        ? 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
-                                        : 'text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                        ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                        : 'text-slate-400 hover:text-green-600 hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }
                                 `}
                                 title="Catatan"
@@ -103,7 +117,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                 <PencilIcon className="w-5 h-5" />
                             </button>
                             <a
-                                href={createWhatsAppLink(student.parent_phone || '', generateAttendanceMessage(student.name, record?.status || 'Belum Diabsen', new Date().toLocaleDateString('id-ID')))}
+                                href={createWhatsAppLink(student.parent_phone || '', generateAttendanceMessage(student.name, record?.status || 'Belum Diabsen', formattedDate))}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-10 h-10 flex items-center justify-center rounded-xl transition-all ml-1 border border-transparent text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"

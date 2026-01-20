@@ -38,7 +38,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
     isSubmitting, isDeleting,
     scores, students, subjectGradeInfo, className, existingViolations, onShowChart
 }) => {
-    const handleExportExcel = () => {
+    const handleExportExcel = async () => {
         if (!scores || !students) return;
 
         const data = students.map(s => ({
@@ -47,19 +47,23 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
             score: scores[s.id] || '',
         }));
 
-        exportGradesToExcel(data, {
-            filename: `nilai_${subjectGradeInfo?.subject || 'mapel'}_${subjectGradeInfo?.assessment_name || 'penilaian'}.xlsx`,
-            subject: subjectGradeInfo?.subject,
-            assessmentName: subjectGradeInfo?.assessment_name,
-            className: className,
-            includeStats: true,
-        });
+        try {
+            await exportGradesToExcel(data, {
+                filename: `nilai_${subjectGradeInfo?.subject || 'mapel'}_${subjectGradeInfo?.assessment_name || 'penilaian'}.xlsx`,
+                subject: subjectGradeInfo?.subject,
+                assessmentName: subjectGradeInfo?.assessment_name,
+                className: className,
+                includeStats: true,
+            });
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Gagal export nilai.');
+        }
     };
 
     const { user } = useAuth();
     const toast = useToast();
 
-    const handleViolationExport = (type: 'pdf' | 'excel') => {
+    const handleViolationExport = async (type: 'pdf' | 'excel') => {
         if (!existingViolations || !students) return;
 
         const options = {
@@ -70,10 +74,10 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
         };
 
         if (type === 'pdf') {
-            exportViolationsToPDF(options);
+            await exportViolationsToPDF(options);
             toast.success('Mengunduh Laporan Pelanggaran (PDF)...');
         } else {
-            exportViolationsToExcel(options);
+            await exportViolationsToExcel(options);
             toast.success('Mengunduh Laporan Pelanggaran (Excel)...');
         }
     };

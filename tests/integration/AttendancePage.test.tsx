@@ -78,10 +78,11 @@ describe('AttendancePage Integration', () => {
 
 describe('Attendance Status Logic', () => {
     it('should have all status types', () => {
-        const statuses = ['Hadir', 'Izin', 'Sakit', 'Alpha'];
-        expect(statuses.length).toBe(4);
+        const statuses = ['Hadir', 'Izin', 'Sakit', 'Alpha', 'Libur'];
+        expect(statuses.length).toBe(5);
         expect(statuses).toContain('Hadir');
         expect(statuses).toContain('Alpha');
+        expect(statuses).toContain('Libur');
     });
 
     it('should calculate attendance statistics', () => {

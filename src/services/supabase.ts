@@ -15,8 +15,8 @@ import type { Database } from './database.types'; // This will be generated from
 
 // --- IMPORTANT ---
 // The credentials below have been provided to make the application runnable.
-// In a production environment, you should use environment variables
-// (e.g., process.env.SUPABASE_URL) to keep your credentials secure.
+// In a production environment, use environment variables and avoid exposing
+// server-only secrets to the client bundle.
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -51,9 +51,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Centralized Google GenAI Client - DEPRECATED in favor of OpenRouter
-// Note: We use process.env.GEMINI_API_KEY because it is defined in vite.config.ts
-const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || '';
-const openRouterKey = process.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_OPENROUTER_API_KEY || '';
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+const openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+const openRouterProxyUrl = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
 
 /**
  * Flag indicating whether AI features are enabled.
@@ -78,7 +78,7 @@ const openRouterKey = process.env.VITE_OPENROUTER_API_KEY || import.meta.env.VIT
  * 
  * @since 1.0.0
  */
-export const isAiEnabled = !!apiKey || !!openRouterKey;
+export const isAiEnabled = !!apiKey || !!openRouterKey || !!openRouterProxyUrl;
 
 if (!isAiEnabled) {
     console.warn("AI API Keys are not set. AI features will not work.");

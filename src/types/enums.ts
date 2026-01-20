@@ -28,6 +28,8 @@ export enum AttendanceStatus {
     Sakit = 'Sakit',
     /** Student is absent without permission */
     Alpha = 'Alpha',
+    /** Day is a holiday */
+    Libur = 'Libur',
 }
 
 /**

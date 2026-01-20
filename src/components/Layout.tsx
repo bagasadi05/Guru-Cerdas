@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import { HomeIcon, UsersIcon, CalendarIcon, ClipboardIcon, LogoutIcon, SettingsIcon, GraduationCapIcon, CheckSquareIcon, ClipboardPenIcon, MoreHorizontalIcon } from './Icons';
-import { Trash2, History, BarChart3, ShieldCheck } from 'lucide-react';
+import { Trash2, History, BarChart3, ShieldCheck, Trophy } from 'lucide-react';
 import ThemeToggle from './ui/ThemeToggle';
 import GreetingRobot from './GreetingRobot';
 import { useSound } from '../hooks/useSound';
@@ -17,17 +17,36 @@ import { useParentMessageNotifications } from '../hooks/useParentMessageNotifica
 import PullToRefresh from './ui/PullToRefresh';
 import { useQueryClient } from '@tanstack/react-query';
 
-const navItems = [
-    { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
-    { href: '/absensi', label: 'Rekap Absensi', icon: ClipboardIcon },
-    { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
-    { href: '/jadwal', label: 'Jadwal Mengajar', icon: CalendarIcon },
-    { href: '/tugas', label: 'Manajemen Tugas', icon: CheckSquareIcon },
-    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/input-massal', label: 'Input Cepat', icon: ClipboardPenIcon },
-    { href: '/sampah', label: 'Sampah', icon: Trash2 },
-    { href: '/riwayat', label: 'Riwayat Aksi', icon: History },
-    { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
+const navSections = [
+    {
+        id: 'primary',
+        label: 'Utama',
+        items: [
+            { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
+            { href: '/absensi', label: 'Rekap Absensi', icon: ClipboardIcon },
+            { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
+            { href: '/jadwal', label: 'Jadwal Mengajar', icon: CalendarIcon },
+            { href: '/tugas', label: 'Manajemen Tugas', icon: CheckSquareIcon },
+            { href: '/input-massal', label: 'Input Cepat', icon: ClipboardPenIcon },
+        ],
+    },
+    {
+        id: 'insights',
+        label: 'Analitik & Kegiatan',
+        items: [
+            { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+            { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
+        ],
+    },
+    {
+        id: 'system',
+        label: 'Sistem',
+        items: [
+            { href: '/riwayat', label: 'Riwayat Aksi', icon: History },
+            { href: '/sampah', label: 'Sampah', icon: Trash2 },
+            { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
+        ],
+    },
 ];
 
 // Main 4 items for mobile bottom nav (reduced from 6 for better UX)
@@ -42,8 +61,9 @@ const mobileNavItems = [
 const moreMenuItems = [
     { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
     { href: '/input-massal', label: 'Input Cepat', icon: ClipboardPenIcon },
-    { href: '/sampah', label: 'Sampah', icon: Trash2 },
+    { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
     { href: '/riwayat', label: 'Riwayat Aksi', icon: History },
+    { href: '/sampah', label: 'Sampah', icon: Trash2 },
     { href: '/pengaturan', label: 'Pengaturan', icon: SettingsIcon },
 ];
 
@@ -72,10 +92,23 @@ const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
         checkAdmin();
     }, [user]);
 
-    const displayNavItems = [
-        ...navItems,
-        ...(isAdmin ? [{ href: '/admin', label: 'Admin Panel', icon: ShieldCheck }] : [])
-    ];
+    const displaySections = navSections.map((section) => ({
+        ...section,
+        items: [...section.items],
+    }));
+
+    if (isAdmin) {
+        const systemSection = displaySections.find((section) => section.id === 'system');
+        if (systemSection) {
+            systemSection.items.push({ href: '/admin', label: 'Panel Admin', icon: ShieldCheck });
+        } else {
+            displaySections.push({
+                id: 'system',
+                label: 'Sistem',
+                items: [{ href: '/admin', label: 'Panel Admin', icon: ShieldCheck }],
+            });
+        }
+    }
 
     const handleLogout = async () => {
         if (onLinkClick) {
@@ -131,36 +164,48 @@ const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
                     </div>
 
                     {/* Navigation */}
-                    <nav id="navigation" className="flex-1 space-y-1 overflow-y-auto scrollbar-hide pr-1" aria-label="Main navigation">
-                        {displayNavItems.map((item) => (
-                            <NavLink
-                                key={item.href}
-                                to={item.href}
-                                end={item.href === '/dashboard'}
-                                onClick={() => {
-                                    playClick();
-                                    if (onLinkClick) onLinkClick();
-                                }}
-                                className={({ isActive }) =>
-                                    `relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group overflow-hidden ${isActive
-                                        ? 'text-white shadow-lg shadow-green-600/20'
-                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
-                                    }`
-                                }
+                    <nav id="navigation" className="flex-1 space-y-5 overflow-y-auto scrollbar-hide pr-1" aria-label="Main navigation">
+                        {displaySections.map((section, sectionIndex) => (
+                            <div
+                                key={section.id}
+                                className={sectionIndex === 0 ? '' : 'pt-4 border-t border-slate-200/70 dark:border-white/5'}
                             >
-                                {({ isActive }) => (
-                                    <>
-                                        {isActive && (
-                                            <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 z-0"></div>
-                                        )}
-                                        {isActive && (
-                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/50 rounded-r-full blur-[1px]"></div>
-                                        )}
-                                        <item.icon className={`w-5 h-5 relative z-10 transition-transform duration-300 ${isActive ? 'scale-110 text-white' : 'group-hover:scale-110 group-hover:text-green-600 dark:group-hover:text-green-400'}`} />
-                                        <span className={`relative z-10 text-sm tracking-wide ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
-                                    </>
-                                )}
-                            </NavLink>
+                                <p className="px-4 pb-2 text-[9px] font-medium uppercase tracking-[0.18em] text-slate-500/80 dark:text-slate-500/70">
+                                    {section.label}
+                                </p>
+                                <div className="space-y-1">
+                                    {section.items.map((item) => (
+                                        <NavLink
+                                            key={item.href}
+                                            to={item.href}
+                                            end={item.href === '/dashboard'}
+                                            onClick={() => {
+                                                playClick();
+                                                if (onLinkClick) onLinkClick();
+                                            }}
+                                            className={({ isActive }) =>
+                                                `relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${isActive
+                                                    ? 'text-white shadow-lg shadow-green-600/20'
+                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                                                }`
+                                            }
+                                        >
+                                            {({ isActive }) => (
+                                                <>
+                                                    {isActive && (
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 z-0"></div>
+                                                    )}
+                                                    {isActive && (
+                                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/50 rounded-r-full blur-[1px]"></div>
+                                                    )}
+                                                    <item.icon className={`w-5 h-5 relative z-10 transition-transform duration-300 ${isActive ? 'scale-110 text-white' : 'group-hover:scale-110 group-hover:text-green-600 dark:group-hover:text-green-400'}`} />
+                                                    <span className={`relative z-10 text-sm tracking-wide ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
+                                                </>
+                                            )}
+                                        </NavLink>
+                                    ))}
+                                </div>
+                            </div>
                         ))}
                     </nav>
 
@@ -256,6 +301,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     };
 
     const location = useLocation();
+    const isPathActive = (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`);
+    const isMoreMenuActive = moreMenuItems.some((item) => isPathActive(item.href));
+    const isMoreMenuHighlighted = isMoreMenuOpen || isMoreMenuActive;
 
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950/50">
@@ -267,8 +315,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             {/* Background Gradients */}
             <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[100px]"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/5 rounded-full blur-[100px]"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500/5 rounded-full blur-[100px]"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[100px]"></div>
             </div>
 
             {showGreeting && user && (
@@ -385,31 +433,51 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         {isMoreMenuOpen && (
                             <div className="fixed bottom-20 right-4 z-50 animate-fade-in-up">
                                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden min-w-[220px]">
-                                    {moreMenuItems.map((item, index) => (
-                                        <button
-                                            key={item.href}
-                                            onClick={() => {
-                                                playClick();
-                                                navigate(item.href);
-                                                setIsMoreMenuOpen(false);
-                                            }}
-                                            className={`flex items-center gap-3 w-full px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${index !== moreMenuItems.length - 1 ? 'border-b border-slate-100 dark:border-slate-800' : ''
-                                                }`}
-                                            style={{ minHeight: '48px' }}
-                                        >
-                                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                                                <item.icon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                                            </div>
-                                            <span className="font-medium text-slate-700 dark:text-slate-300">{item.label}</span>
-                                        </button>
-                                    ))}
+                                    {moreMenuItems.map((item, index) => {
+                                        const isActive = isPathActive(item.href);
+                                        return (
+                                            <button
+                                                key={item.href}
+                                                onClick={() => {
+                                                    playClick();
+                                                    navigate(item.href);
+                                                    setIsMoreMenuOpen(false);
+                                                }}
+                                                className={`flex items-center gap-3 w-full px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${isActive
+                                                    ? 'bg-green-50/70 dark:bg-green-500/10'
+                                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                    } ${index !== moreMenuItems.length - 1 ? 'border-b border-slate-100 dark:border-slate-800' : ''
+                                                    }`}
+                                                style={{ minHeight: '48px' }}
+                                            >
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isActive
+                                                    ? 'bg-green-100 dark:bg-green-500/20'
+                                                    : 'bg-slate-100 dark:bg-slate-800'
+                                                    }`}
+                                                >
+                                                    <item.icon className={`w-5 h-5 ${isActive
+                                                        ? 'text-green-600 dark:text-green-300'
+                                                        : 'text-slate-600 dark:text-slate-400'
+                                                        }`}
+                                                    />
+                                                </div>
+                                                <span className={`font-medium ${isActive
+                                                    ? 'text-green-700 dark:text-green-200'
+                                                    : 'text-slate-700 dark:text-slate-300'
+                                                    }`}
+                                                >
+                                                    {item.label}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
 
                         {/* Bottom Navigation Bar */}
                         <nav className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-                            <div className="w-full grid grid-cols-5 items-center justify-items-center px-2 safe-area-inset-bottom" style={{ height: '68px' }}>
+                            <div className="w-full grid grid-cols-5 items-center justify-items-center px-2 safe-area-inset-bottom">
                                 {mobileNavItems.map((item) => (
                                     <NavLink
                                         key={item.href}
@@ -420,8 +488,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                                             setIsMoreMenuOpen(false);
                                         }}
                                         className={({ isActive }) =>
-                                            `flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all duration-300 active:scale-95 touch-manipulation ${isActive
-                                                ? 'text-indigo-600 dark:text-indigo-400'
+                                            `flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all duration-300 active:scale-95 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${isActive
+                                                ? 'text-green-600 dark:text-green-400'
                                                 : 'text-slate-400 dark:text-slate-500'
                                             }`
                                         }
@@ -429,10 +497,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                                     >
                                         {({ isActive }) => (
                                             <>
-                                                <div className={`relative p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-indigo-50 dark:bg-indigo-500/15 -translate-y-0.5' : ''}`}>
+                                                <div className={`relative p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-green-50 dark:bg-green-500/15 -translate-y-0.5' : ''}`}>
                                                     <item.icon className={`w-6 h-6 transition-transform ${isActive ? 'scale-105' : 'scale-100'}`} />
                                                 </div>
-                                                <span className={`text-[10px] leading-tight transition-all ${isActive ? 'font-bold opacity-100' : 'font-medium opacity-70'}`}>{item.label}</span>
+                                                <span className={`text-[11px] leading-tight transition-all ${isActive ? 'font-bold opacity-100' : 'font-medium opacity-70'}`}>{item.label}</span>
                                             </>
                                         )}
                                     </NavLink>
@@ -444,18 +512,19 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                                         playClick();
                                         setIsMoreMenuOpen(!isMoreMenuOpen);
                                     }}
-                                    className={`flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all duration-300 active:scale-95 touch-manipulation ${isMoreMenuOpen
-                                        ? 'text-indigo-600 dark:text-indigo-400'
+                                    className={`flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all duration-300 active:scale-95 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${isMoreMenuHighlighted
+                                        ? 'text-green-600 dark:text-green-400'
                                         : 'text-slate-400 dark:text-slate-500'
                                         }`}
                                     style={{ minWidth: '48px', minHeight: '48px' }}
                                     aria-label="More options"
                                     aria-expanded={isMoreMenuOpen}
+                                    aria-current={isMoreMenuActive ? 'page' : undefined}
                                 >
-                                    <div className={`relative p-2 rounded-xl transition-all duration-300 ${isMoreMenuOpen ? 'bg-indigo-50 dark:bg-indigo-500/15 -translate-y-0.5' : ''}`}>
-                                        <MoreHorizontalIcon className={`w-6 h-6 transition-transform ${isMoreMenuOpen ? 'scale-105' : 'scale-100'}`} />
+                                    <div className={`relative p-2 rounded-xl transition-all duration-300 ${isMoreMenuHighlighted ? 'bg-green-50 dark:bg-green-500/15 -translate-y-0.5' : ''}`}>
+                                        <MoreHorizontalIcon className={`w-6 h-6 transition-transform ${isMoreMenuHighlighted ? 'scale-105' : 'scale-100'}`} />
                                     </div>
-                                    <span className={`text-[10px] leading-tight transition-all ${isMoreMenuOpen ? 'font-bold opacity-100' : 'font-medium opacity-70'}`}>Lainnya</span>
+                                    <span className={`text-[11px] leading-tight transition-all ${isMoreMenuHighlighted ? 'font-bold opacity-100' : 'font-medium opacity-70'}`}>Lainnya</span>
                                 </button>
                             </div>
                         </nav>

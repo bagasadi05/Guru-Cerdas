@@ -9,6 +9,7 @@ describe('AttendanceStats Component', () => {
         [AttendanceStatus.Izin]: 5,
         [AttendanceStatus.Sakit]: 3,
         [AttendanceStatus.Alpha]: 2,
+        [AttendanceStatus.Libur]: 0,
     };
 
     it('renders all status counts correctly', () => {

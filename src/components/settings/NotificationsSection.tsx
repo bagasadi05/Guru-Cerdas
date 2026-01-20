@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { Database } from '../../services/database.types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
+import { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Switch } from '../ui/Switch';
 import { BellIcon, ClockIcon, CheckSquareIcon, CalendarIcon } from '../Icons';
 import { PlayCircle, Upload, Volume, Volume2, Smartphone } from 'lucide-react';
@@ -25,10 +25,15 @@ import {
     SoundType
 } from '../../services/notificationSoundSettings';
 import { Capacitor } from '@capacitor/core';
-import RingtonePicker from '../../plugins/RingtonePicker';
+import { SettingsCard } from './SettingsCard';
 
 type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
 type ScheduleWithClassName = ScheduleRow & { className?: string };
+
+const loadRingtonePicker = async () => {
+    const module = await import('../../plugins/RingtonePicker');
+    return module.default;
+};
 
 const NotificationsSection: React.FC = () => {
     const { enableScheduleNotifications, disableScheduleNotifications, user, isNotificationsEnabled } = useAuth();
@@ -60,7 +65,8 @@ const NotificationsSection: React.FC = () => {
         }
 
         try {
-            const result = await RingtonePicker.openPicker({
+            const ringtonePicker = await loadRingtonePicker();
+            const result = await ringtonePicker.openPicker({
                 type: 'notification',
                 title: 'Pilih Nada Notifikasi',
                 currentUri: systemRingtoneUri || undefined,
@@ -82,7 +88,7 @@ const NotificationsSection: React.FC = () => {
                     toast.success(`Nada dipilih: ${result.title}`);
 
                     // Preview the selected ringtone
-                    RingtonePicker.previewSound({ uri: result.uri });
+                    ringtonePicker.previewSound({ uri: result.uri });
                 }
             }
         } catch (error) {
@@ -102,7 +108,8 @@ const NotificationsSection: React.FC = () => {
             const { data: classes, error: classesError } = await supabase
                 .from('classes')
                 .select('id, name')
-                .eq('user_id', user!.id);
+                .eq('user_id', user!.id)
+                .is('deleted_at', null);
 
             if (scheduleError || classesError) {
                 throw scheduleError || classesError;
@@ -112,7 +119,7 @@ const NotificationsSection: React.FC = () => {
 
             return schedule.map(item => ({
                 ...item,
-                className: classMap.get(item.class_id) || item.class_id
+                className: item.class_id ? (classMap.get(item.class_id) || item.class_id) : undefined
             }));
         },
         enabled: !!user
@@ -196,8 +203,8 @@ const NotificationsSection: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Schedule Notifications */}
-            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
-                <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
+            <SettingsCard className="overflow-hidden">
+                <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
                     <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Preferensi Notifikasi</CardTitle>
                     <CardDescription className="text-base">Kelola bagaimana Anda menerima pemberitahuan penting.</CardDescription>
                 </CardHeader>
@@ -278,11 +285,11 @@ const NotificationsSection: React.FC = () => {
                         />
                     </div>
                 </CardContent>
-            </Card>
+            </SettingsCard>
 
             {/* Notification Sound Picker */}
-            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
-                <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
+            <SettingsCard className="overflow-hidden">
+                <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
                     <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
                         Nada Notifikasi
                     </CardTitle>
@@ -458,7 +465,7 @@ const NotificationsSection: React.FC = () => {
                         💡 Tip: Upload file audio MP3, WAV, atau OGG (maks. 1MB) untuk nada custom
                     </p>
                 </CardContent>
-            </Card>
+            </SettingsCard>
         </div>
     );
 };

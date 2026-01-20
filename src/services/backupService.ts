@@ -249,27 +249,63 @@ export const importBackup = async (file: File, userId: string): Promise<void> =>
                 // We will use UPSERT for safety against foreign key constraints during partial failures, 
                 // but we really should insert Classes -> Students -> Records.
 
+                const scopeUserId = <T extends Record<string, any>>(rows: T[]): T[] => {
+                    let mismatch = false;
+                    for (const row of rows) {
+                        if (!row || typeof row !== 'object') continue;
+                        if (Object.prototype.hasOwnProperty.call(row, 'user_id')) {
+                            const rowUserId = row.user_id;
+                            if (rowUserId && rowUserId !== userId) {
+                                mismatch = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (mismatch) {
+                        throw new Error('Backup user_id does not match the current user.');
+                    }
+
+                    return rows.map(row => {
+                        if (!row || typeof row !== 'object') return row;
+                        if (Object.prototype.hasOwnProperty.call(row, 'user_id')) {
+                            return { ...row, user_id: userId };
+                        }
+                        return row;
+                    });
+                };
+
+                const scopedClasses = scopeUserId(backup.data.classes || []);
+                const scopedStudents = scopeUserId(backup.data.students || []);
+                const scopedAttendance = scopeUserId(backup.data.attendance || []);
+                const scopedAcademicRecords = scopeUserId(backup.data.academic_records || []);
+                const scopedViolations = scopeUserId(backup.data.violations || []);
+                const scopedQuizPoints = scopeUserId(backup.data.quiz_points || []);
+                const scopedReports = scopeUserId(backup.data.reports || []);
+                const scopedTasks = scopeUserId(backup.data.tasks || []);
+                const scopedSchedules = scopeUserId(backup.data.schedules || []);
+
                 // 1. Upsert Classes
-                if (backup.data.classes.length > 0) {
-                    const { error } = await supabase.from('classes').upsert(backup.data.classes);
+                if (scopedClasses.length > 0) {
+                    const { error } = await supabase.from('classes').upsert(scopedClasses);
                     if (error) throw error;
                 }
 
                 // 2. Upsert Students
-                if (backup.data.students.length > 0) {
-                    const { error } = await supabase.from('students').upsert(backup.data.students);
+                if (scopedStudents.length > 0) {
+                    const { error } = await supabase.from('students').upsert(scopedStudents);
                     if (error) throw error;
                 }
 
                 // 3. Upsert Records (Parallel)
                 const promises = [];
-                if (backup.data.attendance?.length > 0) promises.push(supabase.from('attendance').upsert(backup.data.attendance));
-                if (backup.data.academic_records?.length > 0) promises.push(supabase.from('academic_records').upsert(backup.data.academic_records));
-                if (backup.data.violations?.length > 0) promises.push(supabase.from('violations').upsert(backup.data.violations));
-                if (backup.data.quiz_points?.length > 0) promises.push(supabase.from('quiz_points').upsert(backup.data.quiz_points));
-                if (backup.data.reports?.length > 0) promises.push(supabase.from('reports').upsert(backup.data.reports));
-                if (backup.data.tasks?.length > 0) promises.push(supabase.from('tasks').upsert(backup.data.tasks));
-                if (backup.data.schedules?.length > 0) promises.push(supabase.from('schedules').upsert(backup.data.schedules));
+                if (scopedAttendance.length > 0) promises.push(supabase.from('attendance').upsert(scopedAttendance));
+                if (scopedAcademicRecords.length > 0) promises.push(supabase.from('academic_records').upsert(scopedAcademicRecords));
+                if (scopedViolations.length > 0) promises.push(supabase.from('violations').upsert(scopedViolations));
+                if (scopedQuizPoints.length > 0) promises.push(supabase.from('quiz_points').upsert(scopedQuizPoints));
+                if (scopedReports.length > 0) promises.push(supabase.from('reports').upsert(scopedReports));
+                if (scopedTasks.length > 0) promises.push(supabase.from('tasks').upsert(scopedTasks));
+                if (scopedSchedules.length > 0) promises.push(supabase.from('schedules').upsert(scopedSchedules));
 
                 const results = await Promise.all(promises);
                 const errors = results.map(r => r.error).filter(Boolean);

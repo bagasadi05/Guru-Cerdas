@@ -8,7 +8,7 @@
  * @since 1.0.0
  */
 
-import * as XLSX from 'xlsx';
+import { getXLSX } from '../utils/dynamicImports';
 
 /**
  * Column mapping configuration
@@ -84,6 +84,7 @@ const GENDER_MAPPINGS: Record<string, 'Laki-laki' | 'Perempuan'> = {
  * Parse Excel or CSV file and extract data
  */
 export const parseFile = async (file: File): Promise<{ headers: string[]; rows: any[][] }> => {
+    const XLSX = await getXLSX();
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
 
@@ -241,6 +242,7 @@ export const generateTemplate = async (format: 'xlsx' | 'csv' = 'xlsx'): Promise
     const TOTAL_ROWS = 30; // Pre-formatted rows for teachers
 
     if (format === 'csv') {
+        const XLSX = await getXLSX();
         // Simple CSV for compatibility
         const templateData = [['Nama Siswa', 'Jenis Kelamin', 'Kelas']];
         for (let i = 1; i <= TOTAL_ROWS; i++) {

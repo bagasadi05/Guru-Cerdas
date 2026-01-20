@@ -15,7 +15,11 @@ precacheAndRoute(self.__WB_MANIFEST);
 
 // Cache Supabase API responses (NetworkFirst - try network, fallback to cache)
 registerRoute(
-    ({ url }) => url.hostname.includes('supabase'),
+    ({ url, request }) =>
+        url.hostname.includes('supabase') &&
+        request.method === 'GET' &&
+        !request.headers.has('authorization') &&
+        !request.headers.has('apikey'),
     new NetworkFirst({
         cacheName: 'supabase-api-cache',
         plugins: [
@@ -169,6 +173,10 @@ function clearScheduledTaskNotifications() {
     taskTimeoutIds = [];
 }
 
+async function clearSupabaseCache() {
+    await caches.delete('supabase-api-cache');
+}
+
 self.addEventListener('message', (event) => {
     if (event.data) {
         if (event.data.type === 'SCHEDULE_UPDATED') {
@@ -177,6 +185,8 @@ self.addEventListener('message', (event) => {
             clearScheduledNotifications();
         } else if (event.data.type === 'TASKS_UPDATED') {
             scheduleTaskNotifications(event.data.payload);
+        } else if (event.data.type === 'CLEAR_SUPABASE_CACHE') {
+            event.waitUntil(clearSupabaseCache());
         }
     }
 });

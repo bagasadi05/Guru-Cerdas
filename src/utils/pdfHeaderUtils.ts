@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import type jsPDF from 'jspdf';
 
 // Base64 encoded logos - these will be loaded from public folder
 let logoSekolahBase64: string | null = null;

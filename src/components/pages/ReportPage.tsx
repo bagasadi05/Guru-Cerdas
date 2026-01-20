@@ -9,7 +9,7 @@ import { generateStudentReport, ReportData, ensureLogoLoaded } from '../../servi
 import { Button } from '../ui/Button';
 import { PrinterIcon, ArrowLeftIcon, GraduationCapIcon, SettingsIcon, CalendarIcon, PencilIcon, ChevronDownIcon, ChevronUpIcon, SparklesIcon, Share2Icon } from '../Icons';
 import { createWhatsAppLink, generateReportMessage } from '../../utils/whatsappUtils';
-import jsPDF from 'jspdf';
+import { getJsPDF } from '../../utils/dynamicImports';
 import { useToast } from '../../hooks/useToast';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import { useSemester } from '../../contexts/SemesterContext';
@@ -169,8 +169,9 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
             // Ensure logo is loaded before generating PDF
             await ensureLogoLoaded();
 
+            const { default: jsPDF } = await getJsPDF();
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            generateStudentReport(doc, {
+            await generateStudentReport(doc, {
                 ...data,
                 academicRecords: filteredAcademicRecords,
                 attendanceRecords: filteredAttendance,

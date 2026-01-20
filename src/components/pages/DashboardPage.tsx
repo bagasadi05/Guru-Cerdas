@@ -7,6 +7,7 @@ import { useScheduleNotifications } from '../../hooks/useScheduleNotifications';
 import { Link, useNavigate } from 'react-router-dom';
 import { CalendarIcon, UsersIcon, BookOpenIcon, ClockIcon, BrainCircuitIcon, CheckSquareIcon, AlertTriangleIcon, CheckCircleIcon, UserMinusIcon, ClipboardPenIcon, PlusIcon, SearchIcon, SettingsIcon, SparklesIcon } from '../Icons';
 import { Button } from '../ui/Button';
+import { EmptyError } from '../EmptyStates';
 // import { Type } from '@google/genai';
 // import { ai } from '../../services/supabase';
 import { generateOpenRouterJson } from '../../services/openRouterService';
@@ -56,6 +57,33 @@ type AiInsight = {
     class_focus_suggestion: string;
 };
 
+const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+const parseDateOnly = (value: string) => {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
+};
+
+const formatTaskDueDate = (dueDate: string) => {
+    const date = isDateOnly(dueDate) ? parseDateOnly(dueDate) : new Date(dueDate);
+    if (Number.isNaN(date.getTime())) return '-';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return `${date.getDate()} ${months[date.getMonth()]}`;
+};
+
+const isTaskOverdue = (dueDate: string | null) => {
+    if (!dueDate) return false;
+    const now = new Date();
+    if (isDateOnly(dueDate)) {
+        const date = parseDateOnly(dueDate);
+        const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+        return endOfDay < now;
+    }
+    const parsed = new Date(dueDate);
+    if (Number.isNaN(parsed.getTime())) return false;
+    return parsed < now;
+};
+
 const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> => {
     const today = new Date().toISOString().slice(0, 10);
     const todayDay = new Date().toLocaleDateString('id-ID', { weekday: 'long' });
@@ -72,10 +100,10 @@ const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> =
         studentsRes, tasksRes, scheduleRes, classesRes, dailyAttendanceRes,
         weeklyAttendanceRes, academicRecordsRes, violationsRes, recentTasksRes, todayAttendanceRecordsRes
     ] = await Promise.all([
-        supabase.from('students').select('id, name, avatar_url, class_id').eq('user_id', userId),
-        supabase.from('tasks').select('*').eq('user_id', userId).is('deleted_at', null).neq('status', 'done').order('due_date'),
+        supabase.from('students').select('id, name, avatar_url, class_id').eq('user_id', userId).is('deleted_at', null),
+        supabase.from('tasks').select('*').eq('user_id', userId).neq('status', 'done').order('due_date'),
         supabase.from('schedules').select('*').eq('user_id', userId).eq('day', todayDay as Database['public']['Tables']['schedules']['Row']['day']).order('start_time'),
-        supabase.from('classes').select('id, name').eq('user_id', userId),
+        supabase.from('classes').select('id, name').eq('user_id', userId).is('deleted_at', null),
         supabase.from('attendance').select('status', { count: 'exact' }).eq('user_id', userId).eq('date', today),
         supabase.from('attendance').select('date, status').eq('user_id', userId).gte('date', last5Days[0]).lte('date', last5Days[4]),
         supabase.from('academic_records').select('student_id, subject, score, assessment_name, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
@@ -84,18 +112,29 @@ const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> =
         supabase.from('attendance').select('created_at, status').eq('user_id', userId).eq('date', today).order('created_at', { ascending: false }).limit(10)
     ]);
 
-    const errors = [studentsRes, tasksRes, scheduleRes, classesRes, dailyAttendanceRes, academicRecordsRes, violationsRes]
+    const errors = [
+        studentsRes,
+        tasksRes,
+        scheduleRes,
+        classesRes,
+        dailyAttendanceRes,
+        weeklyAttendanceRes,
+        academicRecordsRes,
+        violationsRes,
+        recentTasksRes,
+        todayAttendanceRecordsRes,
+    ]
         .map(res => res.error).filter((e): e is NonNullable<typeof e> => e !== null);
     if (errors.length > 0) throw new Error(errors.map(e => e.message).join(', '));
 
     const presentCount = dailyAttendanceRes.data?.filter(a => a.status === 'Hadir').length || 0;
-    const totalStudents = studentsRes.data?.length || 1;
+    const totalStudents = studentsRes.data?.length || 0;
 
     // Calculate weekly attendance from raw data
     const weeklyAttendance: WeeklyAttendance[] = last5Days.map(date => {
         const dayAttendance = weeklyAttendanceRes.data?.filter(a => a.date === date) || [];
         const presentOnDay = dayAttendance.filter(a => a.status === 'Hadir').length;
-        const total = dayAttendance.length || totalStudents;
+        const total = totalStudents || dayAttendance.length;
         const dayName = new Date(date).toLocaleDateString('id-ID', { weekday: 'long' });
         return {
             day: dayName,
@@ -126,17 +165,27 @@ const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> =
 };
 
 const AI_INSIGHT_STORAGE_KEY = 'portal_guru_ai_insight';
+const getInsightStorageKey = (userId?: string | null) => (
+    userId ? `${AI_INSIGHT_STORAGE_KEY}:${userId}` : AI_INSIGHT_STORAGE_KEY
+);
 
 interface StoredInsight {
     date: string; // YYYY-MM-DD format
     insight: AiInsight;
 }
 
-const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }> = ({ dashboardData }) => {
+const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null; userId?: string | null }> = ({ dashboardData, userId }) => {
     const [insight, setInsight] = useState<AiInsight | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [lastGeneratedDate, setLastGeneratedDate] = useState<string | null>(null);
+    const storageKey = getInsightStorageKey(userId);
+
+    useEffect(() => {
+        setInsight(null);
+        setLastGeneratedDate(null);
+        setError(null);
+    }, [storageKey]);
 
     // Get today's date in YYYY-MM-DD format
     const getTodayDate = () => new Date().toISOString().split('T')[0];
@@ -147,7 +196,21 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
         setError(null);
         try {
             const { students, academicRecords, violations, dailyAttendanceSummary } = dashboardData;
-            const studentMap = new Map(dashboardData.students.map(s => [s.name, s.id]));
+            const normalizedName = (name: string) => name.trim().toLowerCase();
+            const studentNameToIds = new Map<string, string[]>();
+            students.forEach(student => {
+                const key = normalizedName(student.name);
+                const existing = studentNameToIds.get(key);
+                if (existing) {
+                    existing.push(student.id);
+                } else {
+                    studentNameToIds.set(key, [student.id]);
+                }
+            });
+            const resolveStudentId = (name: string) => {
+                const ids = studentNameToIds.get(normalizedName(name));
+                return ids && ids.length === 1 ? ids[0] : undefined;
+            };
 
             const systemInstruction = `Anda adalah asisten guru AI yang cerdas dan proaktif. Analisis data yang diberikan dan hasilkan ringkasan dalam format JSON yang valid. Fokus pada menyoroti pencapaian positif, area yang memerlukan perhatian, dan saran umum. Gunakan Bahasa Indonesia.
             
@@ -169,14 +232,20 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
 
             const enrichedInsight = {
                 ...parsedInsight,
-                positive_highlights: parsedInsight.positive_highlights.map(h => ({ ...h, student_id: studentMap.get(h.student_name) })),
-                areas_for_attention: parsedInsight.areas_for_attention.map(a => ({ ...a, student_id: studentMap.get(a.student_name) }))
+                positive_highlights: (parsedInsight.positive_highlights || []).map(h => ({
+                    ...h,
+                    student_id: resolveStudentId(h.student_name)
+                })),
+                areas_for_attention: (parsedInsight.areas_for_attention || []).map(a => ({
+                    ...a,
+                    student_id: resolveStudentId(a.student_name)
+                }))
             };
 
             // Save to localStorage with today's date
             const today = getTodayDate();
             const storedData: StoredInsight = { date: today, insight: enrichedInsight };
-            localStorage.setItem(AI_INSIGHT_STORAGE_KEY, JSON.stringify(storedData));
+            localStorage.setItem(storageKey, JSON.stringify(storedData));
 
             setInsight(enrichedInsight);
             setLastGeneratedDate(today);
@@ -186,12 +255,12 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
         } finally {
             setIsLoading(false);
         }
-    }, [dashboardData]);
+    }, [dashboardData, storageKey]);
 
 
     // Load cached insight on mount
     useEffect(() => {
-        const stored = localStorage.getItem(AI_INSIGHT_STORAGE_KEY);
+        const stored = localStorage.getItem(storageKey);
         if (stored) {
             try {
                 const parsed: StoredInsight = JSON.parse(stored);
@@ -212,7 +281,7 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
                 console.error('Error parsing stored insight:', e);
             }
         }
-    }, [dashboardData, generateInsight]);
+    }, [dashboardData, generateInsight, storageKey]);
 
     // Auto-generate insight if new day and data is available
     useEffect(() => {
@@ -252,7 +321,14 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
                     <div><p className="font-bold text-slate-800 dark:text-slate-200">Siswa Berprestasi</p>
                         {insight.positive_highlights.map(item => (
                             <p key={item.student_name} className="text-slate-600 dark:text-slate-400 mt-1">
-                                <Link to={`/siswa/${item.student_id}`} className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">{item.student_name}</Link>: <MarkdownText text={item.reason} />
+                                {item.student_id ? (
+                                    <Link to={`/siswa/${item.student_id}`} className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                        {item.student_name}
+                                    </Link>
+                                ) : (
+                                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">{item.student_name}</span>
+                                )}
+                                : <MarkdownText text={item.reason} />
                             </p>
                         ))}
                     </div>
@@ -264,7 +340,14 @@ const AiDashboardInsight: React.FC<{ dashboardData: DashboardQueryData | null }>
                     <div><p className="font-bold text-slate-800 dark:text-slate-200">Perlu Perhatian</p>
                         {insight.areas_for_attention.map(item => (
                             <p key={item.student_name} className="text-slate-600 dark:text-slate-400 mt-1">
-                                <Link to={`/siswa/${item.student_id}`} className="font-semibold text-amber-600 dark:text-amber-400 hover:underline">{item.student_name}</Link>: <MarkdownText text={item.reason} />
+                                {item.student_id ? (
+                                    <Link to={`/siswa/${item.student_id}`} className="font-semibold text-amber-600 dark:text-amber-400 hover:underline">
+                                        {item.student_name}
+                                    </Link>
+                                ) : (
+                                    <span className="font-semibold text-amber-600 dark:text-amber-400">{item.student_name}</span>
+                                )}
+                                : <MarkdownText text={item.reason} />
                             </p>
                         ))}
                     </div>
@@ -295,11 +378,14 @@ const DashboardPage: React.FC = () => {
         return () => clearInterval(timerId);
     }, []);
 
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
         queryKey: ['dashboardData', user?.id],
         queryFn: () => fetchDashboardData(user!.id),
         enabled: !!user,
     });
+    const dashboardErrorMessage = error instanceof Error
+        ? error.message
+        : 'Gagal memuat data dashboard. Silakan coba lagi.';
 
     // Sync schedule with Service Worker for notifications
     useScheduleNotifications(data?.schedule || []);
@@ -510,6 +596,7 @@ const DashboardPage: React.FC = () => {
                 title: 'Absensi Tercatat',
                 description: `${data.dailyAttendanceSummary.present} dari ${data.students?.length || 0} siswa hadir hari ini`,
                 timestamp: latestAttendance?.created_at ? new Date(latestAttendance.created_at) : new Date(),
+                link: '/absensi',
             });
         }
 
@@ -523,6 +610,7 @@ const DashboardPage: React.FC = () => {
                     title: 'Nilai Diinput',
                     description: `${record.subject} - ${record.assessment_name || 'Penilaian'} (Skor: ${record.score})`,
                     timestamp: new Date(record.created_at),
+                    link: '/analytics',
                 });
             }
         });
@@ -537,6 +625,7 @@ const DashboardPage: React.FC = () => {
                     title: task.status === 'done' ? 'Tugas Selesai' : 'Tugas Dibuat',
                     description: task.title,
                     timestamp: new Date(task.created_at),
+                    link: '/tugas',
                 });
             }
         });
@@ -556,6 +645,16 @@ const DashboardPage: React.FC = () => {
     const activeReminders = smartReminders.filter(r => !dismissedReminders.has(r.id));
 
     if (isLoading) return <DashboardPageSkeleton />;
+    if (isError && !data) {
+        return (
+            <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 lg:space-y-8 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
+                <EmptyError
+                    message={dashboardErrorMessage}
+                    onRetry={() => refetch()}
+                />
+            </div>
+        );
+    }
 
     const { students = [], tasks = [], schedule = [], classes = [], dailyAttendanceSummary, weeklyAttendance = [] } = data || {};
     const todaySchedule = schedule.map(item => ({ ...item, className: classes.find(c => c.id === item.class_id)?.name || item.class_id }));
@@ -585,6 +684,28 @@ const DashboardPage: React.FC = () => {
 
     return (
         <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 lg:space-y-8 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
+            {isError && (
+                <div className="rounded-2xl border border-red-200/60 dark:border-red-500/30 bg-red-50/60 dark:bg-red-500/10 px-4 py-3 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
+                                <AlertTriangleIcon className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-red-700 dark:text-red-300">Gagal memuat data dashboard</p>
+                                <p className="text-xs text-red-600/80 dark:text-red-400/80">{dashboardErrorMessage}</p>
+                            </div>
+                        </div>
+                        <Button
+                            onClick={() => refetch()}
+                            disabled={isFetching}
+                            className="self-start sm:self-auto bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                        >
+                            {isFetching ? 'Memuat...' : 'Coba Lagi'}
+                        </Button>
+                    </div>
+                </div>
+            )}
             <header className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight font-serif bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
@@ -666,7 +787,7 @@ const DashboardPage: React.FC = () => {
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Wawasan berbasis AI untuk performa kelas Anda.</p>
                         </div>
                         <div className="p-6 bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm">
-                            <AiDashboardInsight dashboardData={data || null} />
+                            <AiDashboardInsight dashboardData={data || null} userId={user?.id} />
                         </div>
                     </div>
 
@@ -864,10 +985,10 @@ const DashboardPage: React.FC = () => {
                                                     <p className="font-semibold text-slate-800 dark:text-white line-clamp-1 group-hover:text-amber-500 transition-colors">{task.title}</p>
                                                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1.5">
                                                         <ClockIcon className="w-3.5 h-3.5" />
-                                                        Jatuh tempo: {task.due_date ? new Date(task.due_date).toLocaleDateString('id-ID') : 'Tidak ada'}
+                                                        Jatuh tempo: {task.due_date ? formatTaskDueDate(task.due_date) : 'Tidak ada'}
                                                     </p>
                                                 </div>
-                                                <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${task.due_date && new Date(task.due_date) < new Date() ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`}></div>
+                                                <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${isTaskOverdue(task.due_date) ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`}></div>
                                             </div>
                                         </div>
                                     )) : (

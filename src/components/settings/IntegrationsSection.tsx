@@ -4,10 +4,11 @@ import { useToast } from '../../hooks/useToast';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
+import { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { DownloadCloudIcon } from '../Icons';
 import * as ics from 'ics';
+import { SettingsCard } from './SettingsCard';
 
 const IntegrationsSection: React.FC = () => {
     const { user } = useAuth();
@@ -33,16 +34,26 @@ const IntegrationsSection: React.FC = () => {
             return;
         }
 
-        const dayToICalDay: Record<string, 'MO' | 'TU' | 'WE' | 'TH' | 'FR'> = {
+        const dayToICalDay: Record<string, 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU'> = {
             'Senin': 'MO',
             'Selasa': 'TU',
             'Rabu': 'WE',
             'Kamis': 'TH',
             'Jumat': 'FR',
+            'Sabtu': 'SA',
+            'Minggu': 'SU',
         };
         const dayNameToIndex: Record<string, number> = { 'Minggu': 0, 'Senin': 1, 'Selasa': 2, 'Rabu': 3, 'Kamis': 4, 'Jumat': 5, 'Sabtu': 6 };
 
-        const events: ics.EventAttributes[] = scheduleData.map(item => {
+        const invalidDays = scheduleData.filter(item => !dayToICalDay[item.day] || dayNameToIndex[item.day] === undefined);
+        if (invalidDays.length > 0) {
+            toast.warning(`Beberapa jadwal punya hari tidak dikenal dan diabaikan (${invalidDays.length}).`);
+        }
+
+        const events: ics.EventAttributes[] = scheduleData
+            .filter(item => dayToICalDay[item.day] && dayNameToIndex[item.day] !== undefined)
+            .map(item => {
+                const icalDay = dayToICalDay[item.day];
             const [startHour, startMinute] = item.start_time.split(':').map(Number);
             const [endHour, endMinute] = item.end_time.split(':').map(Number);
 
@@ -62,7 +73,7 @@ const IntegrationsSection: React.FC = () => {
             const month = eventDate.getMonth() + 1;
             const day = eventDate.getDate();
 
-            const recurrenceRule = `FREQ=WEEKLY;BYDAY=${dayToICalDay[item.day]}`;
+            const recurrenceRule = `FREQ=WEEKLY;BYDAY=${icalDay}`;
 
             return {
                 uid: `guru-pwa-${item.id}@myapp.com`,
@@ -75,7 +86,12 @@ const IntegrationsSection: React.FC = () => {
                 startOutputType: 'local',
                 endOutputType: 'local',
             };
-        });
+            });
+
+        if (events.length === 0) {
+            toast.warning("Tidak ada jadwal valid untuk diekspor.");
+            return;
+        }
 
         ics.createEvents(events, (error, value) => {
             if (error) {
@@ -95,8 +111,8 @@ const IntegrationsSection: React.FC = () => {
     };
 
     return (
-        <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
+        <SettingsCard className="overflow-hidden">
+            <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
                 <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Integrasi Eksternal</CardTitle>
                 <CardDescription className="text-base">Hubungkan dan sinkronkan data Anda dengan layanan lain.</CardDescription>
             </CardHeader>
@@ -111,13 +127,13 @@ const IntegrationsSection: React.FC = () => {
                             <p className="text-sm text-slate-500 dark:text-slate-400">Unduh jadwal Anda untuk Google Calendar, Apple Calendar, atau Outlook.</p>
                         </div>
                     </div>
-                    <Button onClick={handleExport} variant="outline" disabled={!isOnline} className="border-slate-200 hover:bg-white hover:text-green-600 transition-colors">
+                    <Button onClick={handleExport} variant="outline" disabled={!isOnline} className="px-6 border-slate-200 hover:bg-white hover:text-green-600 transition-colors">
                         <DownloadCloudIcon className="w-4 h-4 mr-2" />
                         Ekspor
                     </Button>
                 </div>
             </CardContent>
-        </Card>
+        </SettingsCard>
     );
 };
 

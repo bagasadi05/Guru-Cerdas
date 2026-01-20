@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Users,
-    UserCog,
     ShieldCheck,
     Loader2,
     AlertCircle,
@@ -11,83 +10,57 @@ import {
     X,
     RefreshCw,
     Search,
-    GraduationCap,
-    BookOpen,
-    Calendar,
     Megaphone,
     Trash2,
-    Plus,
-    Clock,
     BarChart3,
     Settings,
-    Database,
     Activity,
     AlertTriangle,
     Undo2,
     HardDrive,
     Cpu,
     CheckCircle2,
+    Database,
     Server,
     Shield,
     TrendingUp,
-    Sparkles,
+    ChevronDown,
+    Clock,
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
-// Types
-interface UserRoleRecord {
-    user_id: string;
-    role: string | null;
-    email: string | null;
-    full_name: string | null;
-    created_at?: string;
-    deleted_at?: string | null;
-}
+// Import from admin module
+import {
+    UserRoleRecord,
+    SystemStats,
+    Announcement,
+    AuditLog,
+    TabType,
+    SystemHealth,
+    useRealTimeClock,
+    getRoleBadgeClass,
+    OverviewTab,
+    AnnouncementsTab,
+} from './admin';
 
-interface SystemStats {
-    totalUsers: number;
-    totalClasses: number;
-    totalStudents: number;
-    totalAttendance: number;
-    totalGrades: number;
-    totalTasks: number;
-    admins: number;
-    teachers: number;
-    students: number;
-}
+const USER_PAGE_SIZE = 20;
+const LOG_PAGE_SIZE = 25;
 
-interface Announcement {
-    id: string;
-    title: string;
-    content: string;
-    audience_type: string | null;
-    date: string | null;
-    created_at: string | null;
-}
-
-interface AuditLog {
-    id: string;
-    created_at: string;
-    user_email: string | null;
-    table_name: string;
-    action: string;
-    record_id: string | null;
-    old_data: Record<string, unknown> | null;
-    new_data: Record<string, unknown> | null;
-}
-
-type TabType = 'overview' | 'users' | 'announcements' | 'activity' | 'system';
-
-// Real-time clock hook
-const useRealTimeClock = () => {
-    const [time, setTime] = React.useState(new Date());
-    React.useEffect(() => {
-        const timer = setInterval(() => setTime(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
-    return time;
+const roleLabelMap: Record<string, string> = {
+    admin: 'Admin',
+    teacher: 'Guru',
+    student: 'Siswa',
+    parent: 'Orang Tua',
+    user: 'Pengguna',
 };
+
+const getRoleLabel = (value?: string | null) => {
+    if (!value) return roleLabelMap.user;
+    return roleLabelMap[value] || value;
+};
+
+const sanitizeSearchTerm = (value: string) => value.replace(/[%_,()'"]/g, '').trim();
 
 const AdminPage: React.FC = () => {
     const { user, loading: authLoading } = useAuth();
@@ -103,7 +76,12 @@ const AdminPage: React.FC = () => {
     const [showDeletedUsers, setShowDeletedUsers] = useState(false);
     const [usersLoading, setUsersLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState<string>('all');
+    const [userPage, setUserPage] = useState(1);
+    const [userTotal, setUserTotal] = useState(0);
+    const [deletedPage, setDeletedPage] = useState(1);
+    const [deletedTotal, setDeletedTotal] = useState(0);
     const [editingUserId, setEditingUserId] = useState<string | null>(null);
     const [newRole, setNewRole] = useState<string>('');
     const [updating, setUpdating] = useState(false);
@@ -119,113 +97,17 @@ const AdminPage: React.FC = () => {
     // Announcements State
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [announcementsLoading, setAnnouncementsLoading] = useState(true);
-    const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
-    const [announcementForm, setAnnouncementForm] = useState({ title: '', content: '', audience_type: 'all' });
-    const [showTemplates, setShowTemplates] = useState(false);
 
     // Activity Logs State
     const [activityLogs, setActivityLogs] = useState<AuditLog[]>([]);
     const [logsLoading, setLogsLoading] = useState(true);
+    const [logSearchTerm, setLogSearchTerm] = useState('');
+    const [debouncedLogSearchTerm, setDebouncedLogSearchTerm] = useState('');
+    const [logPage, setLogPage] = useState(1);
+    const [logTotal, setLogTotal] = useState(0);
 
     // Error State
     const [error, setError] = useState<string | null>(null);
-
-    // Announcement templates
-    const announcementTemplates = [
-        {
-            id: 'semester-break',
-            title: 'Libur Semester Ganjil',
-            content: 'Libur semester ganjil akan dimulai pada tanggal 20 Desember 2024 sampai 5 Januari 2025. Selamat berlibur!',
-            audience_type: 'all',
-            category: 'Akademik',
-            icon: '🎉'
-        },
-        {
-            id: 'exam-schedule',
-            title: 'Jadwal Ujian Semester',
-            content: 'Ujian Akhir Semester akan dilaksanakan mulai tanggal 15-22 Desember 2024. Harap siswa mempersiapkan diri dengan baik.',
-            audience_type: 'students',
-            category: 'Akademik',
-            icon: '📝'
-        },
-        {
-            id: 'report-card',
-            title: 'Pengambilan Rapor',
-            content: 'Pengambilan rapor semester ganjil dilaksanakan pada tanggal 19 Desember 2024. Harap orang tua hadir tepat waktu.',
-            audience_type: 'parents',
-            category: 'Akademik',
-            icon: '📋'
-        },
-        {
-            id: 'parent-meeting',
-            title: 'Rapat Wali Murid',
-            content: 'Rapat wali murid akan dilaksanakan pada hari Sabtu, 14 Desember 2024 pukul 09.00 WIB. Kehadiran wali murid sangat diharapkan.',
-            audience_type: 'parents',
-            category: 'Umum',
-            icon: '👥'
-        },
-        {
-            id: 'vaccination',
-            title: 'Vaksinasi Siswa',
-            content: 'Akan diadakan vaksinasi booster untuk seluruh siswa pada tanggal 10 Januari 2025. Harap orang tua hadir mendampingi.',
-            audience_type: 'all',
-            category: 'Kesehatan',
-            icon: '💉'
-        },
-        {
-            id: 'field-trip',
-            title: 'Study Tour',
-            content: 'Study tour ke museum nasional akan dilaksanakan pada tanggal 25 Januari 2025. Biaya Rp 150.000 per siswa.',
-            audience_type: 'all',
-            category: 'Kegiatan',
-            icon: '🚌'
-        },
-        {
-            id: 'teacher-training',
-            title: 'Pelatihan Guru',
-            content: 'Pelatihan pengembangan metode pembelajaran akan dilaksanakan pada 5-7 Januari 2025. Semua guru wajib hadir.',
-            audience_type: 'teachers',
-            category: 'Profesional',
-            icon: '👨‍🏫'
-        },
-        {
-            id: 'extracurricular',
-            title: 'Pendaftaran Ekstrakurikuler',
-            content: 'Pendaftaran ekstrakurikuler semester genap dibuka mulai 8-15 Januari 2025. Silakan daftar melalui wali kelas.',
-            audience_type: 'students',
-            category: 'Kegiatan',
-            icon: '⚽'
-        },
-        {
-            id: 'payment-reminder',
-            title: 'Pembayaran SPP',
-            content: 'Mohon segera menyelesaikan pembayaran SPP bulan ini paling lambat tanggal 10. Terima kasih atas kerjasamanya.',
-            audience_type: 'parents',
-            category: 'Administrasi',
-            icon: '💳'
-        },
-        {
-            id: 'independence-day',
-            title: 'Peringatan Hari Kemerdekaan',
-            content: 'Dalam rangka memperingati Hari Kemerdekaan RI, akan diadakan upacara dan lomba-lomba pada 17 Agustus 2025.',
-            audience_type: 'all',
-            category: 'Kegiatan',
-            icon: '🇮🇩'
-        },
-    ];
-
-    // Apply template
-    const applyTemplate = (template: typeof announcementTemplates[0]) => {
-        setAnnouncementForm({
-            title: template.title,
-            content: template.content,
-            audience_type: template.audience_type
-        });
-        setShowTemplates(false);
-        if (!showAnnouncementForm) {
-            setShowAnnouncementForm(true);
-        }
-    };
 
     // Delete Modal State
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; user: UserRoleRecord | null }>({ show: false, user: null });
@@ -239,29 +121,40 @@ const AdminPage: React.FC = () => {
     const currentTime = useRealTimeClock();
 
     // System health states
-    const [systemHealth, setSystemHealth] = useState<{
-        database: 'healthy' | 'degraded' | 'down';
-        api: 'healthy' | 'degraded' | 'down';
-        lastChecked: Date | null;
-    }>({ database: 'healthy', api: 'healthy', lastChecked: null });
+    const [systemHealth, setSystemHealth] = useState<SystemHealth>({
+        database: 'healthy',
+        api: 'healthy',
+        lastChecked: null,
+        databaseLatencyMs: null,
+        apiLatencyMs: null
+    });
 
     // Check system health
     const checkSystemHealth = async () => {
         try {
-            const start = Date.now();
-            const { error } = await supabase.from('user_roles').select('user_id').limit(1);
-            const latency = Date.now() - start;
+            const dbStart = Date.now();
+            const { error: dbError } = await supabase.from('user_roles').select('user_id').limit(1);
+            const dbLatency = Date.now() - dbStart;
+
+            const apiStart = Date.now();
+            const { error: apiError } = await supabase.auth.getSession();
+            const apiLatency = Date.now() - apiStart;
 
             setSystemHealth({
-                database: error ? 'down' : latency > 1000 ? 'degraded' : 'healthy',
-                api: 'healthy',
-                lastChecked: new Date()
+                database: dbError ? 'down' : dbLatency > 1000 ? 'degraded' : 'healthy',
+                api: apiError ? 'down' : apiLatency > 1000 ? 'degraded' : 'healthy',
+                lastChecked: new Date(),
+                databaseLatencyMs: dbLatency,
+                apiLatencyMs: apiLatency
             });
         } catch {
             setSystemHealth(prev => ({
                 ...prev,
                 database: 'down',
-                lastChecked: new Date()
+                api: 'down',
+                lastChecked: new Date(),
+                databaseLatencyMs: null,
+                apiLatencyMs: null
             }));
         }
     };
@@ -292,15 +185,7 @@ const AdminPage: React.FC = () => {
         }
     }, [user, authLoading, checkAdminStatus, navigate]);
 
-    useEffect(() => {
-        if (isAdmin) {
-            fetchStats();
-            fetchUsers();
-            fetchAnnouncements();
-            fetchActivityLogs();
-            checkSystemHealth();
-        }
-    }, [isAdmin]);
+
 
     // Fetch system statistics
     const fetchStats = async () => {
@@ -314,7 +199,7 @@ const AdminPage: React.FC = () => {
                 { count: gradesCount },
                 { count: tasksCount }
             ] = await Promise.all([
-                supabase.from('user_roles').select('*', { count: 'exact', head: true }),
+                supabase.from('user_roles').select('*', { count: 'exact', head: true }).is('deleted_at', null),
                 supabase.from('classes').select('*', { count: 'exact', head: true }),
                 supabase.from('students').select('*', { count: 'exact', head: true }),
                 supabase.from('attendance').select('*', { count: 'exact', head: true }),
@@ -323,7 +208,7 @@ const AdminPage: React.FC = () => {
             ]);
 
             // Get role breakdown
-            const { data: roleData } = await supabase.from('user_roles').select('role');
+            const { data: roleData } = await supabase.from('user_roles').select('role').is('deleted_at', null);
             let admins = 0, teachers = 0, students = 0;
             roleData?.forEach(r => {
                 if (r.role === 'admin') admins++;
@@ -348,32 +233,61 @@ const AdminPage: React.FC = () => {
     };
 
     // Fetch users (active and deleted separately)
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setUsersLoading(true);
+        const safeSearch = sanitizeSearchTerm(debouncedSearchTerm);
+        const activeFrom = (userPage - 1) * USER_PAGE_SIZE;
+        const activeTo = activeFrom + USER_PAGE_SIZE - 1;
+        const deletedFrom = (deletedPage - 1) * USER_PAGE_SIZE;
+        const deletedTo = deletedFrom + USER_PAGE_SIZE - 1;
         try {
             // Fetch active users (not deleted)
-            const { data: activeData, error: activeError } = await supabase
+            let activeQuery = supabase
                 .from('user_roles')
-                .select('*')
-                .is('deleted_at', null)
-                .order('created_at', { ascending: false });
-            if (activeError) throw activeError;
-            setUsers(activeData || []);
+                .select('*', { count: 'exact' })
+                .is('deleted_at', null);
 
-            // Fetch deleted users
-            const { data: deletedData, error: deletedError } = await supabase
+            let deletedQuery = supabase
                 .from('user_roles')
-                .select('*')
-                .not('deleted_at', 'is', null)
-                .order('deleted_at', { ascending: false });
-            if (deletedError) throw deletedError;
-            setDeletedUsers(deletedData || []);
+                .select('*', { count: 'exact' })
+                .not('deleted_at', 'is', null);
+
+            if (safeSearch) {
+                activeQuery = activeQuery.or(`full_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
+                deletedQuery = deletedQuery.or(`full_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
+            }
+
+            if (roleFilter !== 'all') {
+                activeQuery = activeQuery.eq('role', roleFilter);
+                deletedQuery = deletedQuery.eq('role', roleFilter);
+            }
+
+            const [activeResult, deletedResult] = await Promise.all([
+                activeQuery
+                    .order('created_at', { ascending: false })
+                    .range(activeFrom, activeTo),
+                deletedQuery
+                    .order('deleted_at', { ascending: false })
+                    .range(deletedFrom, deletedTo)
+            ]);
+
+            if (activeResult.error) throw activeResult.error;
+            if (deletedResult.error) throw deletedResult.error;
+
+            setUsers(activeResult.data || []);
+            setUserTotal(activeResult.count || 0);
+            setDeletedUsers(deletedResult.data || []);
+            setDeletedTotal(deletedResult.count || 0);
         } catch (err: unknown) {
             setError((err as Error).message);
+            setUsers([]);
+            setDeletedUsers([]);
+            setUserTotal(0);
+            setDeletedTotal(0);
         } finally {
             setUsersLoading(false);
         }
-    };
+    }, [debouncedSearchTerm, userPage, deletedPage, roleFilter]);
 
     // Fetch announcements
     const fetchAnnouncements = async () => {
@@ -394,23 +308,33 @@ const AdminPage: React.FC = () => {
     };
 
     // Fetch activity logs
-    const fetchActivityLogs = async () => {
+    const fetchActivityLogs = useCallback(async () => {
         setLogsLoading(true);
+        const safeSearch = sanitizeSearchTerm(debouncedLogSearchTerm);
+        const logFrom = (logPage - 1) * LOG_PAGE_SIZE;
+        const logTo = logFrom + LOG_PAGE_SIZE - 1;
         try {
-            const { data, error } = await (supabase as any)
+            let query = (supabase as any)
                 .from('audit_logs')
-                .select('id, created_at, user_email, table_name, action, record_id, old_data, new_data')
-                .order('created_at', { ascending: false })
-                .limit(50);
+                .select('id, created_at, user_email, table_name, action, record_id, old_data, new_data', { count: 'exact' })
+                .order('created_at', { ascending: false });
+
+            if (safeSearch) {
+                query = query.or(`user_email.ilike.%${safeSearch}%,action.ilike.%${safeSearch}%,table_name.ilike.%${safeSearch}%,record_id.ilike.%${safeSearch}%`);
+            }
+
+            const { data, error, count } = await query.range(logFrom, logTo);
             if (error) throw error;
             setActivityLogs(data || []);
+            setLogTotal(count || 0);
         } catch (err) {
             console.error('Activity logs fetch error:', err);
             setActivityLogs([]);
+            setLogTotal(0);
         } finally {
             setLogsLoading(false);
         }
-    };
+    }, [debouncedLogSearchTerm, logPage]);
 
     // Log admin action
     const logAdminAction = async (tableName: string, action: string, recordId: string, oldData?: unknown, newData?: unknown) => {
@@ -429,19 +353,75 @@ const AdminPage: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        if (isAdmin) {
+            fetchStats();
+            fetchAnnouncements();
+            checkSystemHealth();
+        }
+    }, [isAdmin]);
+
+    useEffect(() => {
+        const handle = setTimeout(() => setDebouncedSearchTerm(searchTerm.trim()), 300);
+        return () => clearTimeout(handle);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        const handle = setTimeout(() => setDebouncedLogSearchTerm(logSearchTerm.trim()), 300);
+        return () => clearTimeout(handle);
+    }, [logSearchTerm]);
+
+    useEffect(() => {
+        if (isAdmin) {
+            fetchUsers();
+        }
+    }, [isAdmin, debouncedSearchTerm, roleFilter, userPage, deletedPage, fetchUsers]);
+
+    useEffect(() => {
+        if (isAdmin) {
+            fetchActivityLogs();
+        }
+    }, [isAdmin, debouncedLogSearchTerm, logPage, fetchActivityLogs]);
+
+    useEffect(() => {
+        const pageCount = Math.max(1, Math.ceil(userTotal / USER_PAGE_SIZE));
+        if (userPage > pageCount) {
+            setUserPage(pageCount);
+        }
+    }, [userTotal, userPage]);
+
+    useEffect(() => {
+        const pageCount = Math.max(1, Math.ceil(deletedTotal / USER_PAGE_SIZE));
+        if (deletedPage > pageCount) {
+            setDeletedPage(pageCount);
+        }
+    }, [deletedTotal, deletedPage]);
+
+    useEffect(() => {
+        const pageCount = Math.max(1, Math.ceil(logTotal / LOG_PAGE_SIZE));
+        if (logPage > pageCount) {
+            setLogPage(pageCount);
+        }
+    }, [logTotal, logPage]);
+
+
     // Update user role
     const handleUpdateRole = async (userId: string) => {
         if (!newRole) return;
         setUpdating(true);
         try {
+            const userToUpdate = users.find(u => u.user_id === userId) || null;
             const { error } = await supabase
                 .from('user_roles')
                 .update({ role: newRole as 'admin' | 'teacher' | 'student' | 'parent' })
                 .eq('user_id', userId);
             if (error) throw error;
-            setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, role: newRole } : u));
+            const updatedUser = userToUpdate ? { ...userToUpdate, role: newRole } : { user_id: userId, role: newRole };
+            await logAdminAction('user_roles', 'UPDATE_ROLE', userId, userToUpdate, updatedUser);
             setEditingUserId(null);
-            fetchStats(); // Refresh stats
+            fetchStats();
+            fetchUsers();
+            fetchActivityLogs();
         } catch (err: unknown) {
             alert('Error: ' + (err as Error).message);
         } finally {
@@ -460,22 +440,27 @@ const AdminPage: React.FC = () => {
 
         try {
             // Soft delete: set deleted_at timestamp
+            const deletedAt = new Date().toISOString();
             const { error } = await supabase
                 .from('user_roles')
-                .update({ deleted_at: new Date().toISOString() } as any)
+                .update({ deleted_at: deletedAt } as any)
                 .eq('user_id', userToDelete.user_id);
 
             if (error) throw error;
 
             // Log the action
-            logAdminAction('user_roles', 'SOFT_DELETE', userToDelete.user_id, userToDelete, null);
+            await logAdminAction(
+                'user_roles',
+                'SOFT_DELETE',
+                userToDelete.user_id,
+                userToDelete,
+                { ...userToDelete, deleted_at: deletedAt }
+            );
 
-            // Move to deleted list in UI
-            setUsers(prev => prev.filter(u => u.user_id !== userToDelete.user_id));
-            setDeletedUsers(prev => [...prev, { ...userToDelete, deleted_at: new Date().toISOString() }]);
             setDeleteModal({ show: false, user: null });
             fetchStats();
-            fetchActivityLogs(); // Refresh logs
+            fetchUsers();
+            fetchActivityLogs();
 
             // Show success toast
             setUndoToast({ show: true, user: userToDelete, timeout: null });
@@ -495,10 +480,16 @@ const AdminPage: React.FC = () => {
 
             if (error) throw error;
 
-            // Move back to active list
-            setDeletedUsers(prev => prev.filter(u => u.user_id !== userToRestore.user_id));
-            setUsers(prev => [...prev, { ...userToRestore, deleted_at: null }]);
+            await logAdminAction(
+                'user_roles',
+                'RESTORE',
+                userToRestore.user_id,
+                userToRestore,
+                { ...userToRestore, deleted_at: null }
+            );
             fetchStats();
+            fetchUsers();
+            fetchActivityLogs();
         } catch (err: unknown) {
             setError('Error: ' + (err as Error).message);
         }
@@ -506,32 +497,38 @@ const AdminPage: React.FC = () => {
 
     // Permanently delete user (cannot be undone)
     const permanentDeleteUser = async (userId: string) => {
-        if (!confirm('HAPUS PERMANEN? User tidak akan bisa dipulihkan!')) return;
+        if (!confirm('HAPUS PERMANEN? Pengguna tidak akan bisa dipulihkan!')) return;
 
         try {
+            const deletedUser = deletedUsers.find(u => u.user_id === userId) || null;
             await supabase.from('user_roles').delete().eq('user_id', userId);
-            setDeletedUsers(prev => prev.filter(u => u.user_id !== userId));
+            await logAdminAction('user_roles', 'DELETE', userId, deletedUser, null);
+            fetchStats();
+            fetchUsers();
+            fetchActivityLogs();
         } catch (err: unknown) {
             setError('Error: ' + (err as Error).message);
         }
     };
 
     // Create announcement
-    const handleCreateAnnouncement = async () => {
-        if (!announcementForm.title || !announcementForm.content) {
+    const handleCreateAnnouncement = async (form: { title: string; content: string; audience_type: string }) => {
+        if (!form.title || !form.content) {
             alert('Judul dan konten wajib diisi');
             return;
         }
         try {
-            const { error } = await supabase.from('announcements').insert({
-                title: announcementForm.title,
-                content: announcementForm.content,
-                audience_type: announcementForm.audience_type || 'all'
-            });
+            const { data, error } = await supabase.from('announcements').insert({
+                title: form.title,
+                content: form.content,
+                audience_type: form.audience_type || 'all'
+            }).select().single();
             if (error) throw error;
-            setAnnouncementForm({ title: '', content: '', audience_type: 'all' });
-            setShowAnnouncementForm(false);
+            if (data) {
+                await logAdminAction('announcements', 'INSERT', data.id, null, data);
+            }
             fetchAnnouncements();
+            fetchActivityLogs();
         } catch (err: unknown) {
             alert('Error: ' + (err as Error).message);
         }
@@ -541,47 +538,51 @@ const AdminPage: React.FC = () => {
     const handleDeleteAnnouncement = async (id: string) => {
         if (!confirm('Hapus pengumuman ini?')) return;
         try {
+            const announcement = announcements.find(a => a.id === id) || null;
             const { error } = await supabase.from('announcements').delete().eq('id', id);
             if (error) {
                 console.error('Delete announcement error:', error);
                 alert('Gagal menghapus pengumuman: ' + error.message);
                 return;
             }
+            await logAdminAction('announcements', 'DELETE', id, announcement, null);
             fetchAnnouncements();
+            fetchActivityLogs();
         } catch (err: unknown) {
             console.error('Delete announcement exception:', err);
             alert('Error: ' + (err as Error).message);
         }
     };
 
-    // Filtered users
-    const filteredUsers = useMemo(() => {
-        return users.filter(u => {
-            const matchesSearch =
-                (u.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                (u.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-            const matchesRole = roleFilter === 'all' || u.role === roleFilter;
-            return matchesSearch && matchesRole;
-        });
-    }, [users, searchTerm, roleFilter]);
-
     // Loading screen
     if (authLoading || isAdmin === null) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900">
                 <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 animate-pulse">Loading Admin Dashboard...</p>
+                <p className="text-gray-500 dark:text-gray-400 animate-pulse">Memuat Dasbor Admin...</p>
             </div>
         );
     }
 
     const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
-        { id: 'overview', label: 'Overview', icon: <BarChart3 size={18} /> },
-        { id: 'users', label: 'Users', icon: <Users size={18} /> },
+        { id: 'overview', label: 'Ringkasan', icon: <BarChart3 size={18} /> },
+        { id: 'users', label: 'Pengguna', icon: <Users size={18} /> },
         { id: 'announcements', label: 'Pengumuman', icon: <Megaphone size={18} /> },
-        { id: 'activity', label: 'Activity', icon: <Activity size={18} /> },
-        { id: 'system', label: 'System', icon: <Settings size={18} /> },
+        { id: 'activity', label: 'Aktivitas', icon: <Activity size={18} /> },
+        { id: 'system', label: 'Sistem', icon: <Settings size={18} /> },
     ];
+
+    const userPageCount = Math.max(1, Math.ceil(userTotal / USER_PAGE_SIZE));
+    const deletedPageCount = Math.max(1, Math.ceil(deletedTotal / USER_PAGE_SIZE));
+    const logPageCount = Math.max(1, Math.ceil(logTotal / LOG_PAGE_SIZE));
+
+    const userRangeStart = userTotal === 0 ? 0 : (userPage - 1) * USER_PAGE_SIZE + 1;
+    const userRangeEnd = userTotal === 0 ? 0 : Math.min(userRangeStart + users.length - 1, userTotal);
+    const deletedRangeStart = deletedTotal === 0 ? 0 : (deletedPage - 1) * USER_PAGE_SIZE + 1;
+    const deletedRangeEnd = deletedTotal === 0 ? 0 : Math.min(deletedRangeStart + deletedUsers.length - 1, deletedTotal);
+    const logRangeStart = logTotal === 0 ? 0 : (logPage - 1) * LOG_PAGE_SIZE + 1;
+    const logRangeEnd = logTotal === 0 ? 0 : Math.min(logRangeStart + activityLogs.length - 1, logTotal);
+    const distributionMax = Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades, stats.totalTasks);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950/20">
@@ -596,11 +597,11 @@ const AdminPage: React.FC = () => {
                             </div>
                             <div>
                                 <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
-                                    Admin Dashboard
+                                    Dasbor Admin
                                 </h1>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                    System Management Portal
+                                    Portal Manajemen Sistem
                                 </p>
                             </div>
                         </div>
@@ -616,11 +617,11 @@ const AdminPage: React.FC = () => {
                                 </p>
                             </div>
                             <button
-                                onClick={() => { fetchStats(); fetchUsers(); fetchAnnouncements(); checkSystemHealth(); }}
+                                onClick={() => { fetchStats(); fetchUsers(); fetchAnnouncements(); fetchActivityLogs(); checkSystemHealth(); }}
                                 className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-500/50 transition-all shadow-sm"
                             >
                                 <RefreshCw size={16} className={statsLoading ? 'animate-spin' : ''} />
-                                <span className="text-sm font-medium">Refresh</span>
+                                <span className="text-sm font-medium">Muat Ulang</span>
                             </button>
                         </div>
                     </div>
@@ -645,65 +646,11 @@ const AdminPage: React.FC = () => {
 
                 {/* Tab Content */}
                 {activeTab === 'overview' && (
-                    <div className="space-y-6">
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                            <StatCard icon={<Users size={20} />} label="Total Users" value={stats.totalUsers} color="indigo" loading={statsLoading} />
-                            <StatCard icon={<BookOpen size={20} />} label="Kelas" value={stats.totalClasses} color="blue" loading={statsLoading} />
-                            <StatCard icon={<GraduationCap size={20} />} label="Siswa" value={stats.totalStudents} color="green" loading={statsLoading} />
-                            <StatCard icon={<Calendar size={20} />} label="Absensi" value={stats.totalAttendance} color="orange" loading={statsLoading} />
-                            <StatCard icon={<BarChart3 size={20} />} label="Nilai" value={stats.totalGrades} color="purple" loading={statsLoading} />
-                            <StatCard icon={<Clock size={20} />} label="Tugas" value={stats.totalTasks} color="pink" loading={statsLoading} />
-                        </div>
-
-                        {/* Role Distribution */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <Activity size={20} className="text-indigo-500" />
-                                Distribusi Role Pengguna
-                            </h3>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-                                    <p className="text-3xl font-bold text-purple-600">{stats.admins}</p>
-                                    <p className="text-sm text-purple-600/70">Admin</p>
-                                </div>
-                                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                                    <p className="text-3xl font-bold text-blue-600">{stats.teachers}</p>
-                                    <p className="text-sm text-blue-600/70">Teacher</p>
-                                </div>
-                                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                                    <p className="text-3xl font-bold text-green-600">{stats.students}</p>
-                                    <p className="text-sm text-green-600/70">Student</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Quick Actions */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <Database size={20} className="text-indigo-500" />
-                                Quick Actions
-                            </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <button onClick={() => setActiveTab('users')} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group">
-                                    <UserCog size={24} className="text-gray-400 group-hover:text-indigo-500 mb-2" />
-                                    <p className="font-medium text-sm">Kelola Users</p>
-                                </button>
-                                <button onClick={() => setActiveTab('announcements')} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group">
-                                    <Megaphone size={24} className="text-gray-400 group-hover:text-indigo-500 mb-2" />
-                                    <p className="font-medium text-sm">Pengumuman</p>
-                                </button>
-                                <button onClick={() => navigate('/analytics')} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group">
-                                    <BarChart3 size={24} className="text-gray-400 group-hover:text-indigo-500 mb-2" />
-                                    <p className="font-medium text-sm">Analytics</p>
-                                </button>
-                                <button onClick={() => navigate('/pengaturan')} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group">
-                                    <Settings size={24} className="text-gray-400 group-hover:text-indigo-500 mb-2" />
-                                    <p className="font-medium text-sm">Settings</p>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <OverviewTab
+                        stats={stats}
+                        statsLoading={statsLoading}
+                        onTabChange={setActiveTab}
+                    />
                 )}
 
                 {activeTab === 'users' && (
@@ -716,20 +663,28 @@ const AdminPage: React.FC = () => {
                                     type="text"
                                     placeholder="Cari nama atau email..."
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value);
+                                        setUserPage(1);
+                                        setDeletedPage(1);
+                                    }}
                                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                                 />
                             </div>
                             <select
                                 value={roleFilter}
-                                onChange={(e) => setRoleFilter(e.target.value)}
+                                onChange={(e) => {
+                                    setRoleFilter(e.target.value);
+                                    setUserPage(1);
+                                    setDeletedPage(1);
+                                }}
                                 className="px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                             >
-                                <option value="all">Semua Role</option>
+                                <option value="all">Semua Peran</option>
                                 <option value="admin">Admin</option>
-                                <option value="teacher">Teacher</option>
-                                <option value="student">Student</option>
-                                <option value="parent">Parent</option>
+                                <option value="teacher">Guru</option>
+                                <option value="student">Siswa</option>
+                                <option value="parent">Orang Tua</option>
                             </select>
                         </div>
 
@@ -738,10 +693,10 @@ const AdminPage: React.FC = () => {
                             <table className="w-full">
                                 <thead className="bg-gray-50 dark:bg-gray-900/50">
                                     <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        <th className="px-6 py-4 text-left">User</th>
-                                        <th className="px-6 py-4 text-left">Role</th>
-                                        <th className="px-6 py-4 text-left">Joined</th>
-                                        <th className="px-6 py-4 text-right">Actions</th>
+                                        <th className="px-6 py-4 text-left">Pengguna</th>
+                                        <th className="px-6 py-4 text-left">Peran</th>
+                                        <th className="px-6 py-4 text-left">Bergabung</th>
+                                        <th className="px-6 py-4 text-right">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -751,13 +706,13 @@ const AdminPage: React.FC = () => {
                                                 <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
                                             </td>
                                         </tr>
-                                    ) : filteredUsers.length === 0 ? (
+                                    ) : users.length === 0 ? (
                                         <tr>
                                             <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                                                Tidak ada user ditemukan
+                                                Tidak ada pengguna ditemukan
                                             </td>
                                         </tr>
-                                    ) : filteredUsers.map((u) => (
+                                    ) : users.map((u) => (
                                         <tr key={u.user_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
@@ -765,7 +720,7 @@ const AdminPage: React.FC = () => {
                                                         {u.full_name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase() || 'U'}
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium text-gray-900 dark:text-white">{u.full_name || 'No Name'}</p>
+                                                        <p className="font-medium text-gray-900 dark:text-white">{u.full_name || 'Tanpa Nama'}</p>
                                                         <p className="text-xs text-gray-500">{u.email}</p>
                                                     </div>
                                                 </div>
@@ -779,9 +734,9 @@ const AdminPage: React.FC = () => {
                                                             className="px-3 py-1.5 text-sm border-2 border-indigo-500 rounded-lg bg-white dark:bg-gray-900"
                                                         >
                                                             <option value="admin">Admin</option>
-                                                            <option value="teacher">Teacher</option>
-                                                            <option value="student">Student</option>
-                                                            <option value="parent">Parent</option>
+                                                            <option value="teacher">Guru</option>
+                                                            <option value="student">Siswa</option>
+                                                            <option value="parent">Orang Tua</option>
                                                         </select>
                                                         <button onClick={() => handleUpdateRole(u.user_id)} disabled={updating} className="p-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600">
                                                             {updating ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -792,7 +747,7 @@ const AdminPage: React.FC = () => {
                                                     </div>
                                                 ) : (
                                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClass(u.role || 'user')}`}>
-                                                        {u.role || 'user'}
+                                                        {getRoleLabel(u.role)}
                                                     </span>
                                                 )}
                                             </td>
@@ -821,8 +776,33 @@ const AdminPage: React.FC = () => {
                             </table>
                         </div>
 
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+                            <p className="text-sm text-gray-500">
+                                Menampilkan {userRangeStart}-{userRangeEnd} dari {userTotal}
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setUserPage(prev => Math.max(1, prev - 1))}
+                                    disabled={userPage === 1 || usersLoading}
+                                    className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                                >
+                                    Sebelumnya
+                                </button>
+                                <span className="text-sm text-gray-500">
+                                    Halaman {userPage} dari {userPageCount}
+                                </span>
+                                <button
+                                    onClick={() => setUserPage(prev => Math.min(userPageCount, prev + 1))}
+                                    disabled={userPage >= userPageCount || usersLoading}
+                                    className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                                >
+                                    Berikutnya
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Deleted Users Toggle */}
-                        {deletedUsers.length > 0 && (
+                        {deletedTotal > 0 && (
                             <div className="border-t border-gray-100 dark:border-gray-700">
                                 <button
                                     onClick={() => setShowDeletedUsers(!showDeletedUsers)}
@@ -833,10 +813,10 @@ const AdminPage: React.FC = () => {
                                             <Trash2 size={16} className="text-red-500" />
                                         </div>
                                         <span className="font-medium text-gray-700 dark:text-gray-300">
-                                            Recycle Bin ({deletedUsers.length})
+                                            Tempat Sampah ({deletedTotal})
                                         </span>
                                     </div>
-                                    <span className={`text-gray-400 transition-transform ${showDeletedUsers ? 'rotate-180' : ''}`}>▼</span>
+                                    <ChevronDown className={`text-gray-400 transition-transform ${showDeletedUsers ? 'rotate-180' : ''}`} size={16} />
                                 </button>
 
                                 {showDeletedUsers && (
@@ -845,9 +825,9 @@ const AdminPage: React.FC = () => {
                                             <table className="w-full">
                                                 <thead className="bg-red-100/50 dark:bg-red-900/20">
                                                     <tr className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
-                                                        <th className="px-6 py-3 text-left">User</th>
-                                                        <th className="px-6 py-3 text-left">Dihapus</th>
-                                                        <th className="px-6 py-3 text-right">Actions</th>
+                                                        <th className="px-6 py-3 text-left">Pengguna</th>
+                                                        <th className="px-6 py-3 text-left">Terhapus</th>
+                                                        <th className="px-6 py-3 text-right">Aksi</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-red-100 dark:divide-red-900/30">
@@ -859,7 +839,7 @@ const AdminPage: React.FC = () => {
                                                                         {u.full_name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase() || 'U'}
                                                                     </div>
                                                                     <div>
-                                                                        <p className="font-medium text-gray-600 dark:text-gray-400 line-through">{u.full_name || 'No Name'}</p>
+                                                                        <p className="font-medium text-gray-600 dark:text-gray-400 line-through">{u.full_name || 'Tanpa Nama'}</p>
                                                                         <p className="text-xs text-gray-400">{u.email}</p>
                                                                     </div>
                                                                 </div>
@@ -874,7 +854,7 @@ const AdminPage: React.FC = () => {
                                                                         className="flex items-center gap-1 px-3 py-1.5 text-sm text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg"
                                                                     >
                                                                         <Undo2 size={14} />
-                                                                        Restore
+                                                                        Pulihkan
                                                                     </button>
                                                                     <button
                                                                         onClick={() => permanentDeleteUser(u.user_id)}
@@ -890,6 +870,30 @@ const AdminPage: React.FC = () => {
                                                 </tbody>
                                             </table>
                                         </div>
+                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4">
+                                            <p className="text-sm text-gray-500">
+                                                Menampilkan {deletedRangeStart}-{deletedRangeEnd} dari {deletedTotal}
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setDeletedPage(prev => Math.max(1, prev - 1))}
+                                                    disabled={deletedPage === 1 || usersLoading}
+                                                    className="px-3 py-2 text-sm bg-red-100/60 dark:bg-red-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
+                                                >
+                                                    Sebelumnya
+                                                </button>
+                                                <span className="text-sm text-gray-500">
+                                                    Halaman {deletedPage} dari {deletedPageCount}
+                                                </span>
+                                                <button
+                                                    onClick={() => setDeletedPage(prev => Math.min(deletedPageCount, prev + 1))}
+                                                    disabled={deletedPage >= deletedPageCount || usersLoading}
+                                                    className="px-3 py-2 text-sm bg-red-100/60 dark:bg-red-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
+                                                >
+                                                    Berikutnya
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -898,160 +902,48 @@ const AdminPage: React.FC = () => {
                 )}
 
                 {activeTab === 'announcements' && (
-                    <div className="space-y-6">
-                        {/* Create Button */}
-                        <div className="flex justify-end">
-                            <button
-                                onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
-                                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30"
-                            >
-                                <Plus size={18} />
-                                Buat Pengumuman
-                            </button>
-                        </div>
-
-                        {/* Create Form */}
-                        {showAnnouncementForm && (
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-bold">Pengumuman Baru</h3>
-                                    <button
-                                        onClick={() => setShowTemplates(!showTemplates)}
-                                        className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all"
-                                    >
-                                        <Sparkles size={14} />
-                                        Template
-                                    </button>
-                                </div>
-
-                                {/* Templates Modal/Dropdown */}
-                                {showTemplates && (
-                                    <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-200 dark:border-purple-700/50">
-                                        <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300 mb-3">Pilih Template</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
-                                            {announcementTemplates.map(template => (
-                                                <button
-                                                    key={template.id}
-                                                    onClick={() => applyTemplate(template)}
-                                                    className="group text-left p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 hover:shadow-md transition-all"
-                                                >
-                                                    <div className="flex items-start gap-3">
-                                                        <span className="text-2xl">{template.icon}</span>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 truncate">
-                                                                {template.title}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
-                                                                {template.content}
-                                                            </p>
-                                                            <div className="flex items-center gap-2 mt-2">
-                                                                <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                                                                    {template.category}
-                                                                </span>
-                                                                <span className="text-xs text-gray-400">
-                                                                    {template.audience_type === 'all' ? 'Semua' :
-                                                                        template.audience_type === 'teachers' ? 'Guru' :
-                                                                            template.audience_type === 'parents' ? 'Orang Tua' : 'Siswa'}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="space-y-4">
-                                    <input
-                                        type="text"
-                                        placeholder="Judul pengumuman"
-                                        value={announcementForm.title}
-                                        onChange={(e) => setAnnouncementForm(prev => ({ ...prev, title: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl"
-                                    />
-                                    <textarea
-                                        placeholder="Isi pengumuman..."
-                                        rows={4}
-                                        value={announcementForm.content}
-                                        onChange={(e) => setAnnouncementForm(prev => ({ ...prev, content: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl resize-none"
-                                    />
-                                    <select
-                                        value={announcementForm.audience_type}
-                                        onChange={(e) => setAnnouncementForm(prev => ({ ...prev, audience_type: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl"
-                                    >
-                                        <option value="all">Semua</option>
-                                        <option value="teachers">Guru</option>
-                                        <option value="parents">Orang Tua</option>
-                                        <option value="students">Siswa</option>
-                                    </select>
-                                    <div className="flex gap-3">
-                                        <button onClick={handleCreateAnnouncement} className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">
-                                            Simpan
-                                        </button>
-                                        <button onClick={() => setShowAnnouncementForm(false)} className="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl">
-                                            Batal
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Announcements List */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-                            {announcementsLoading ? (
-                                <div className="p-12 text-center">
-                                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
-                                </div>
-                            ) : announcements.length === 0 ? (
-                                <div className="p-12 text-center text-gray-500">
-                                    <Megaphone size={48} className="mx-auto mb-4 opacity-30" />
-                                    <p>Belum ada pengumuman</p>
-                                </div>
-                            ) : (
-                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                                    {announcements.map(a => (
-                                        <div key={a.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                                            <div className="flex justify-between items-start gap-4">
-                                                <div className="flex-1">
-                                                    <h4 className="font-bold text-gray-900 dark:text-white">{a.title}</h4>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{a.content}</p>
-                                                    <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                                                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">{a.audience_type || 'Semua'}</span>
-                                                        <span>{a.created_at ? new Date(a.created_at).toLocaleDateString('id-ID') : '-'}</span>
-                                                    </div>
-                                                </div>
-                                                <button onClick={() => handleDeleteAnnouncement(a.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <AnnouncementsTab
+                        announcements={announcements}
+                        announcementsLoading={announcementsLoading}
+                        onCreateAnnouncement={async (form) => {
+                            await handleCreateAnnouncement(form);
+                        }}
+                        onDeleteAnnouncement={handleDeleteAnnouncement}
+                    />
                 )}
 
                 {activeTab === 'activity' && (
                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                         <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <h3 className="text-lg font-bold flex items-center gap-2">
                                     <Activity size={20} className="text-indigo-500" />
-                                    Activity Logs
+                                    Log Aktivitas
                                 </h3>
                                 <button
                                     onClick={fetchActivityLogs}
                                     className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
                                 >
                                     <RefreshCw size={16} />
-                                    Refresh
+                                    Muat Ulang
                                 </button>
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">History semua aksi admin (50 terbaru)</p>
+                            <div className="mt-4 flex flex-col md:flex-row gap-3">
+                                <div className="flex-1 relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Cari log, pengguna, atau tabel..."
+                                        value={logSearchTerm}
+                                        onChange={(e) => {
+                                            setLogSearchTerm(e.target.value);
+                                            setLogPage(1);
+                                        }}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-sm text-gray-500 mt-3">Riwayat semua aksi admin</p>
                         </div>
 
                         {logsLoading ? (
@@ -1061,7 +953,7 @@ const AdminPage: React.FC = () => {
                         ) : activityLogs.length === 0 ? (
                             <div className="p-12 text-center text-gray-500">
                                 <Activity size={48} className="mx-auto mb-4 opacity-30" />
-                                <p>Belum ada activity log</p>
+                                <p>Belum ada log aktivitas</p>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
@@ -1069,10 +961,10 @@ const AdminPage: React.FC = () => {
                                     <thead className="bg-gray-50 dark:bg-gray-900/50">
                                         <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                             <th className="px-6 py-3 text-left">Waktu</th>
-                                            <th className="px-6 py-3 text-left">User</th>
-                                            <th className="px-6 py-3 text-left">Action</th>
-                                            <th className="px-6 py-3 text-left">Table</th>
-                                            <th className="px-6 py-3 text-left">Details</th>
+                                            <th className="px-6 py-3 text-left">Pengguna</th>
+                                            <th className="px-6 py-3 text-left">Aksi</th>
+                                            <th className="px-6 py-3 text-left">Tabel</th>
+                                            <th className="px-6 py-3 text-left">Detail</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -1084,11 +976,11 @@ const AdminPage: React.FC = () => {
                                                     })}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm">
-                                                    {log.user_email || 'System'}
+                                                    {log.user_email || 'Sistem'}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 text-xs font-semibold rounded-lg ${log.action === 'INSERT' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                        log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                    <span className={`px-2 py-1 text-xs font-semibold rounded-lg ${log.action === 'INSERT' || log.action === 'RESTORE' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                        log.action === 'UPDATE' || log.action === 'UPDATE_ROLE' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                                                             log.action === 'DELETE' || log.action === 'SOFT_DELETE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                                                                 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                                         }`}>
@@ -1107,6 +999,30 @@ const AdminPage: React.FC = () => {
                                 </table>
                             </div>
                         )}
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+                            <p className="text-sm text-gray-500">
+                                Menampilkan {logRangeStart}-{logRangeEnd} dari {logTotal}
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setLogPage(prev => Math.max(1, prev - 1))}
+                                    disabled={logPage === 1 || logsLoading}
+                                    className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                                >
+                                    Sebelumnya
+                                </button>
+                                <span className="text-sm text-gray-500">
+                                    Halaman {logPage} dari {logPageCount}
+                                </span>
+                                <button
+                                    onClick={() => setLogPage(prev => Math.min(logPageCount, prev + 1))}
+                                    disabled={logPage >= logPageCount || logsLoading}
+                                    className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                                >
+                                    Berikutnya
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -1129,6 +1045,9 @@ const AdminPage: React.FC = () => {
                                         <div>
                                             <p className="font-semibold text-gray-900 dark:text-white">Database</p>
                                             <p className="text-xs text-gray-500">Supabase PostgreSQL</p>
+                                            <p className="text-xs text-gray-500">
+                                                Latensi {systemHealth.databaseLatencyMs !== null ? `${systemHealth.databaseLatencyMs} ms` : '-'}
+                                            </p>
                                         </div>
                                     </div>
                                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${systemHealth.database === 'healthy' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
@@ -1139,7 +1058,7 @@ const AdminPage: React.FC = () => {
                                             systemHealth.database === 'degraded' ? 'bg-amber-500' :
                                                 'bg-red-500'
                                             }`} />
-                                        {systemHealth.database === 'healthy' ? 'Healthy' : systemHealth.database === 'degraded' ? 'Slow' : 'Down'}
+                                        {systemHealth.database === 'healthy' ? 'Sehat' : systemHealth.database === 'degraded' ? 'Lambat' : 'Offline'}
                                     </div>
                                 </div>
                             </div>
@@ -1151,13 +1070,22 @@ const AdminPage: React.FC = () => {
                                             <Server size={24} className="text-blue-600" />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-gray-900 dark:text-white">API Server</p>
-                                            <p className="text-xs text-gray-500">Edge Functions</p>
+                                            <p className="font-semibold text-gray-900 dark:text-white">API Supabase</p>
+                                            <p className="text-xs text-gray-500">Auth dan REST</p>
+                                            <p className="text-xs text-gray-500">
+                                                Latensi {systemHealth.apiLatencyMs !== null ? `${systemHealth.apiLatencyMs} ms` : '-'}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                        <span className="w-2 h-2 rounded-full bg-green-500" />
-                                        Online
+                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${systemHealth.api === 'healthy' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                        systemHealth.api === 'degraded' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                        }`}>
+                                        <span className={`w-2 h-2 rounded-full ${systemHealth.api === 'healthy' ? 'bg-green-500' :
+                                            systemHealth.api === 'degraded' ? 'bg-amber-500' :
+                                                'bg-red-500'
+                                            }`} />
+                                        {systemHealth.api === 'healthy' ? 'Sehat' : systemHealth.api === 'degraded' ? 'Lambat' : 'Offline'}
                                     </div>
                                 </div>
                             </div>
@@ -1169,13 +1097,13 @@ const AdminPage: React.FC = () => {
                                             <Shield size={24} className="text-purple-600" />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-gray-900 dark:text-white">Security</p>
-                                            <p className="text-xs text-gray-500">RLS Enabled</p>
+                                            <p className="font-semibold text-gray-900 dark:text-white">Keamanan</p>
+                                            <p className="text-xs text-gray-500">RLS Aktif</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                                         <CheckCircle2 size={14} />
-                                        Protected
+                                        Terlindungi
                                     </div>
                                 </div>
                             </div>
@@ -1186,14 +1114,14 @@ const AdminPage: React.FC = () => {
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-lg font-bold flex items-center gap-2">
                                     <Cpu size={20} className="text-indigo-500" />
-                                    System Information
+                                    Informasi Sistem
                                 </h3>
                                 <button
                                     onClick={checkSystemHealth}
                                     className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
                                 >
                                     <RefreshCw size={14} />
-                                    Check Health
+                                    Cek Kesehatan
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1201,49 +1129,49 @@ const AdminPage: React.FC = () => {
                                     <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
                                         <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                             <HardDrive size={16} className="text-gray-400" />
-                                            Total Records
+                                            Total Rekaman
                                         </span>
                                         <span className="font-mono font-bold text-gray-900 dark:text-white">
-                                            {(stats.totalUsers + stats.totalStudents + stats.totalAttendance + stats.totalGrades).toLocaleString()}
+                                            {(stats.totalUsers + stats.totalStudents + stats.totalAttendance + stats.totalGrades + stats.totalTasks).toLocaleString()}
                                         </span>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
                                         <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                             <Users size={16} className="text-gray-400" />
-                                            Active Users
+                                            Pengguna Aktif
                                         </span>
                                         <span className="font-mono font-bold text-gray-900 dark:text-white">{stats.totalUsers}</span>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
                                         <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                             <Trash2 size={16} className="text-gray-400" />
-                                            Deleted Users
+                                            Pengguna Terhapus
                                         </span>
-                                        <span className="font-mono font-bold text-gray-900 dark:text-white">{deletedUsers.length}</span>
+                                        <span className="font-mono font-bold text-gray-900 dark:text-white">{deletedTotal}</span>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
                                     <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
                                         <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                             <Activity size={16} className="text-gray-400" />
-                                            Activity Logs
+                                            Log Aktivitas
                                         </span>
-                                        <span className="font-mono font-bold text-gray-900 dark:text-white">{activityLogs.length}</span>
+                                        <span className="font-mono font-bold text-gray-900 dark:text-white">{logTotal}</span>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
                                         <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                             <TrendingUp size={16} className="text-gray-400" />
-                                            App Version
+                                            Versi Aplikasi
                                         </span>
                                         <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">v2.0.0</span>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
                                         <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                             <Clock size={16} className="text-gray-400" />
-                                            Last Health Check
+                                            Cek Kesehatan Terakhir
                                         </span>
                                         <span className="font-mono text-sm text-gray-900 dark:text-white">
-                                            {systemHealth.lastChecked ? systemHealth.lastChecked.toLocaleTimeString('id-ID') : 'Never'}
+                                            {systemHealth.lastChecked ? systemHealth.lastChecked.toLocaleTimeString('id-ID') : 'Belum Pernah'}
                                         </span>
                                     </div>
                                 </div>
@@ -1254,14 +1182,14 @@ const AdminPage: React.FC = () => {
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
                             <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
                                 <BarChart3 size={20} className="text-indigo-500" />
-                                Data Distribution
+                                Distribusi Data
                             </h3>
                             <div className="space-y-4">
                                 {[
-                                    { label: 'Siswa', value: stats.totalStudents, max: Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades), color: 'bg-blue-500' },
-                                    { label: 'Absensi', value: stats.totalAttendance, max: Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades), color: 'bg-green-500' },
-                                    { label: 'Nilai', value: stats.totalGrades, max: Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades), color: 'bg-purple-500' },
-                                    { label: 'Tugas', value: stats.totalTasks, max: Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades), color: 'bg-orange-500' },
+                                    { label: 'Siswa', value: stats.totalStudents, max: distributionMax, color: 'bg-blue-500' },
+                                    { label: 'Absensi', value: stats.totalAttendance, max: distributionMax, color: 'bg-green-500' },
+                                    { label: 'Nilai', value: stats.totalGrades, max: distributionMax, color: 'bg-purple-500' },
+                                    { label: 'Tugas', value: stats.totalTasks, max: distributionMax, color: 'bg-orange-500' },
                                 ].map(item => (
                                     <div key={item.label} className="space-y-2">
                                         <div className="flex justify-between text-sm">
@@ -1299,7 +1227,7 @@ const AdminPage: React.FC = () => {
                                     <AlertTriangle size={24} className="text-red-600 dark:text-red-400" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Hapus User?</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Hapus Pengguna?</h3>
                                     <p className="text-sm text-gray-500">Aksi ini tidak dapat dibatalkan secara permanen</p>
                                 </div>
                             </div>
@@ -1310,10 +1238,10 @@ const AdminPage: React.FC = () => {
                                         {deleteModal.user.full_name?.[0]?.toUpperCase() || deleteModal.user.email?.[0]?.toUpperCase() || 'U'}
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-gray-900 dark:text-white">{deleteModal.user.full_name || 'No Name'}</p>
+                                        <p className="font-semibold text-gray-900 dark:text-white">{deleteModal.user.full_name || 'Tanpa Nama'}</p>
                                         <p className="text-sm text-gray-500">{deleteModal.user.email}</p>
                                         <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${getRoleBadgeClass(deleteModal.user.role || 'user')}`}>
-                                            {deleteModal.user.role || 'user'}
+                                            {getRoleLabel(deleteModal.user.role)}
                                         </span>
                                     </div>
                                 </div>
@@ -1331,7 +1259,7 @@ const AdminPage: React.FC = () => {
                                     className="flex-1 px-4 py-2.5 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/30"
                                 >
                                     <Trash2 size={16} />
-                                    Hapus User
+                                    Hapus Pengguna
                                 </button>
                             </div>
                         </div>
@@ -1346,7 +1274,7 @@ const AdminPage: React.FC = () => {
                                 <Trash2 size={16} className="text-green-400" />
                             </div>
                             <div>
-                                <p className="font-medium">User dipindahkan ke Trash</p>
+                                <p className="font-medium">Pengguna dipindahkan ke Tempat Sampah</p>
                                 <p className="text-sm text-gray-400">{undoToast.user.email}</p>
                             </div>
                         </div>
@@ -1355,7 +1283,7 @@ const AdminPage: React.FC = () => {
                             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-medium transition-all"
                         >
                             <Undo2 size={16} />
-                            Undo
+                            Batalkan
                         </button>
                         <button
                             onClick={() => setUndoToast({ show: false, user: null, timeout: null })}
@@ -1368,51 +1296,6 @@ const AdminPage: React.FC = () => {
             </div>
         </div>
     );
-};
-
-// Stat Card Component
-interface StatCardProps {
-    icon: React.ReactNode;
-    label: string;
-    value: number;
-    color: 'indigo' | 'blue' | 'green' | 'orange' | 'purple' | 'pink';
-    loading?: boolean;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ icon, label, value, color, loading }) => {
-    const colorMap = {
-        indigo: 'from-indigo-500 to-indigo-600',
-        blue: 'from-blue-500 to-blue-600',
-        green: 'from-green-500 to-green-600',
-        orange: 'from-orange-500 to-orange-600',
-        purple: 'from-purple-500 to-purple-600',
-        pink: 'from-pink-500 to-pink-600'
-    };
-
-    return (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colorMap[color]} flex items-center justify-center text-white mb-3`}>
-                {icon}
-            </div>
-            {loading ? (
-                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-            ) : (
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{value.toLocaleString()}</p>
-            )}
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{label}</p>
-        </div>
-    );
-};
-
-// Role badge helper
-const getRoleBadgeClass = (role: string) => {
-    switch (role.toLowerCase()) {
-        case 'admin': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
-        case 'teacher': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
-        case 'student': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
-        case 'parent': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300';
-        default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300';
-    }
 };
 
 export default AdminPage;

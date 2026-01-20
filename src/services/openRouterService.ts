@@ -1,4 +1,5 @@
-const OPENROUTER_API_KEY = process.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_OPENROUTER_API_KEY || '';
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+const OPENROUTER_PROXY_URL = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
 
 // Priority list of FREE models to try in order
 const FALLBACK_MODELS = [
@@ -28,8 +29,8 @@ export async function generateOpenRouterContent(
     messages: OpenRouterMessage[],
     _useReasoning: boolean = true
 ): Promise<OpenRouterResponse> {
-    if (!OPENROUTER_API_KEY) {
-        throw new Error("OpenRouter API Key is missing. Please check your .env configuration.");
+    if (!OPENROUTER_API_KEY && !OPENROUTER_PROXY_URL) {
+        throw new Error("OpenRouter API Key or proxy URL is missing. Please check your .env configuration.");
     }
 
     let lastError: any = null;
@@ -46,10 +47,10 @@ export async function generateOpenRouterContent(
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s hard timeout
 
-            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            const response = await fetch(OPENROUTER_PROXY_URL || "https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                    ...(OPENROUTER_API_KEY ? { "Authorization": `Bearer ${OPENROUTER_API_KEY}` } : {}),
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                     // "HTTP-Referer": window.location.origin, // Optional: for OpenRouter analytics
@@ -136,12 +137,24 @@ export async function generateOpenRouterJson<T>(
     // 1. Remove markdown code blocks
     content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
 
-    // 2. Find the outer-most curly braces to ignore preamble/postscript
+    // 2. Find the outer-most JSON structure (Object or Array)
     const firstBrace = content.indexOf('{');
-    const lastBrace = content.lastIndexOf('}');
+    const firstBracket = content.indexOf('[');
 
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        content = content.substring(firstBrace, lastBrace + 1);
+    let start = -1;
+    let end = -1;
+
+    // Determine start based on which appears first
+    if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+        start = firstBrace;
+        end = content.lastIndexOf('}');
+    } else if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+        start = firstBracket;
+        end = content.lastIndexOf(']');
+    }
+
+    if (start !== -1 && end !== -1 && end > start) {
+        content = content.substring(start, end + 1);
     }
 
     // 3. Try parsing

@@ -1,6 +1,5 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { PortalData } from '../pages/ParentPortalPage';
+import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
+import type { PortalData } from '../pages/ParentPortalPage';
 
 // Helper to load image as base64
 const loadImage = (url: string): Promise<string> => {
@@ -30,6 +29,8 @@ const loadImage = (url: string): Promise<string> => {
 };
 
 export const generateReportCardPDF = async (data: PortalData, semesterId?: string): Promise<void> => {
+    const { default: jsPDF } = await getJsPDF();
+    const { default: autoTable } = await getAutoTable();
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();

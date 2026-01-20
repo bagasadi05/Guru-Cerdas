@@ -13,8 +13,7 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { TrendingUpIcon, TrendingDownIcon, MinusIcon, DownloadIcon } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { getHtml2Canvas, getJsPDF } from '../../utils/dynamicImports';
 
 interface AttendanceTrendData {
     label: string;
@@ -61,6 +60,7 @@ const exportToPNG = async (elementId: string, filename: string) => {
     const element = document.getElementById(elementId);
     if (!element) return;
 
+    const html2canvas = (await getHtml2Canvas()).default;
     const canvas = await html2canvas(element, {
         backgroundColor: '#ffffff',
         scale: 2,
@@ -76,12 +76,14 @@ const exportToPDF = async (elementId: string, filename: string) => {
     const element = document.getElementById(elementId);
     if (!element) return;
 
+    const html2canvas = (await getHtml2Canvas()).default;
     const canvas = await html2canvas(element, {
         backgroundColor: '#ffffff',
         scale: 2,
     });
 
     const imgData = canvas.toDataURL('image/png');
+    const { default: jsPDF } = await getJsPDF();
     const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'px',

@@ -116,6 +116,9 @@ export type StudentDetailsData = {
     violations: ViolationRow[];
     classes: ClassRow[];
     communications: CommunicationRow[];
+    studentExtracurriculars: (Database['public']['Tables']['student_extracurriculars']['Row'] & { extracurriculars: Database['public']['Tables']['extracurriculars']['Row'] | null })[];
+    extracurricularAttendance: Database['public']['Tables']['extracurricular_attendance']['Row'][];
+    extracurricularGrades: Database['public']['Tables']['extracurricular_grades']['Row'][];
 };
 
 export type ModalState =

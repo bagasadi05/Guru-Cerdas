@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import * as XLSX from 'xlsx';
+import { getXLSX } from '../utils/dynamicImports';
 
 export interface ParsedRow {
     [key: string]: string | number;
@@ -50,6 +50,7 @@ export const useExcelParser = () => {
         setError(null);
 
         try {
+            const XLSX = await getXLSX();
             const data = await file.arrayBuffer();
             const workbook = XLSX.read(data, { type: 'array' });
 
@@ -130,15 +131,18 @@ export const useExcelParser = () => {
     /**
      * Generate Excel template
      */
-    const generateTemplate = useCallback((
+    const generateTemplate = useCallback(async (
         columns: ExcelColumn[],
         sampleData?: ParsedRow[],
         options: {
             sheetName?: string;
             filename?: string;
         } = {}
-    ): void => {
+    ): Promise<void> => {
         const { sheetName = 'Template', filename = 'template.xlsx' } = options;
+
+        // Dynamically import XLSX
+        const XLSX = await getXLSX();
 
         // Create workbook
         const wb = XLSX.utils.book_new();
@@ -172,20 +176,21 @@ export const useExcelParser = () => {
     /**
      * Generate grade input template with student names
      */
-    const generateGradeTemplate = useCallback((
+    const generateGradeTemplate = useCallback(async (
         students: { id: string; name: string }[],
         options: {
             subject?: string;
             assessmentName?: string;
             filename?: string;
         } = {}
-    ): void => {
+    ): Promise<void> => {
         const {
             subject = 'Mata Pelajaran',
             assessmentName = 'Penilaian',
             filename = 'template_nilai.xlsx'
         } = options;
 
+        const XLSX = await getXLSX();
         const wb = XLSX.utils.book_new();
 
         // Info sheet

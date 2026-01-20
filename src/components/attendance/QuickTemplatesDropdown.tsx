@@ -58,14 +58,14 @@ const templates: Template[] = [
     },
     {
         id: 'weekend',
-        name: 'Libur Weekend',
-        description: 'Kosongkan untuk hari libur',
+        name: 'Hari Libur',
+        description: 'Tandai semua siswa sebagai hari libur',
         icon: <CalendarOff className="w-4 h-4" />,
         color: 'text-purple-600',
         bgColor: 'bg-purple-50 dark:bg-purple-900/20',
         borderColor: 'border-purple-200 dark:border-purple-700/50',
-        defaultStatus: AttendanceStatus.Hadir,
-        applyToAll: false,
+        defaultStatus: AttendanceStatus.Libur,
+        applyToAll: true,
     },
     {
         id: 'morning-rush',

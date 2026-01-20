@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EyeIcon, PencilIcon, TrashIcon, ClipboardIcon, MoreVerticalIcon, ChevronUpIcon, ChevronDownIcon } from '../Icons';
 import { getStudentAvatar } from '../../utils/avatarUtils';
@@ -17,6 +17,19 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     onSort
 }) => {
     const toast = useToast();
+    const windowSize = 40;
+    const [visibleCount, setVisibleCount] = useState(() => Math.min(windowSize, students.length));
+
+    useEffect(() => {
+        setVisibleCount(Math.min(windowSize, students.length));
+    }, [students.length, windowSize]);
+
+    const visibleStudents = useMemo(() => students.slice(0, visibleCount), [students, visibleCount]);
+    const hasMore = visibleCount < students.length;
+
+    const handleLoadMore = () => {
+        setVisibleCount(prev => Math.min(prev + windowSize, students.length));
+    };
 
     const renderSortIcon = (key: string) => {
         if (sortConfig.key !== key) return null;
@@ -51,7 +64,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {students.map((student) => (
+                        {visibleStudents.map((student) => (
                             <tr key={student.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group ${isSelected(student.id) ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}>
                                 <td className="px-6 py-4">
                                     <input
@@ -63,7 +76,13 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-4">
-                                        <img src={getStudentAvatar(student.avatar_url, student.gender, student.id)} alt="" className="w-10 h-10 rounded-full object-cover bg-gray-100 dark:bg-gray-700" />
+                                        <img
+                                            src={getStudentAvatar(student.avatar_url, student.gender, student.id)}
+                                            alt=""
+                                            loading="lazy"
+                                            decoding="async"
+                                            className="w-10 h-10 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
+                                        />
                                         <span className="font-medium text-gray-900 dark:text-white">{student.name}</span>
                                     </div>
                                 </td>
@@ -114,10 +133,16 @@ export const StudentTable: React.FC<StudentTableProps> = ({
 
             {/* Mobile List View */}
             <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
-                {students.map((student) => (
+                {visibleStudents.map((student) => (
                     <div key={student.id} className="p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" onClick={() => onAction(student, 'menu')}>
                         <div className="relative flex-shrink-0">
-                            <img src={getStudentAvatar(student.avatar_url, student.gender, student.id)} alt={student.name} className="w-12 h-12 rounded-full object-cover bg-gray-100 dark:bg-gray-700" />
+                            <img
+                                src={getStudentAvatar(student.avatar_url, student.gender, student.id)}
+                                alt={student.name}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-12 h-12 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
+                            />
                             <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center ${student.gender === 'Laki-laki' ? 'bg-blue-500' : 'bg-pink-500'}`}>
                                 <span className="text-white text-[8px] font-bold">{student.gender === 'Laki-laki' ? 'L' : 'P'}</span>
                             </div>
@@ -138,6 +163,16 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                     </div>
                 ))}
             </div>
+            {hasMore && (
+                <div className="flex justify-center py-4">
+                    <button
+                        onClick={handleLoadMore}
+                        className="px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                    >
+                        Tampilkan Lebih Banyak ({students.length - visibleCount} tersisa)
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

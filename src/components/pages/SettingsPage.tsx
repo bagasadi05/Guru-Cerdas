@@ -41,7 +41,7 @@ const SettingsPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50 dark:bg-slate-950/50 p-3 sm:p-4 md:p-8 font-sans pb-24 lg:pb-8">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-3 sm:p-4 md:p-8 font-sans pb-24 lg:pb-8">
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-8">
                 {/* Premium Header - Compact on mobile */}
                 <header className="relative p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-900 via-emerald-900 to-slate-900 text-white shadow-2xl shadow-green-900/20 overflow-hidden isolate">
@@ -53,25 +53,29 @@ const SettingsPage: React.FC = () => {
                         <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-green-100 to-emerald-200">
                             Pengaturan
                         </h1>
-                        <p className="mt-2 sm:mt-4 text-indigo-100/80 text-sm sm:text-lg max-w-2xl leading-relaxed">
+                        <p className="mt-2 sm:mt-4 text-emerald-100/80 text-sm sm:text-lg max-w-2xl leading-relaxed">
                             Kelola profil, tampilan, dan preferensi notifikasi Anda.
                         </p>
                     </div>
                 </header>
 
                 {/* Mobile Tab Navigation - Horizontal scroll */}
-                <div className="lg:hidden overflow-x-auto -mx-3 px-3 scrollbar-hide">
-                    <nav className="flex gap-2 p-1.5 rounded-xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-lg min-w-max">
+                <div className="lg:hidden overflow-x-auto -mx-3 px-3 scrollbar-hide relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-slate-50 to-transparent dark:from-slate-950 z-10"></div>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-slate-50 to-transparent dark:from-slate-950 z-10"></div>
+                    <nav className="flex gap-2 p-1.5 rounded-xl bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/70 dark:border-white/5 shadow-sm min-w-max relative z-0">
                         {navItems.map((item) => (
                             <button
                                 key={item.id}
                                 onClick={() => setActiveTab(item.id)}
+                                aria-current={activeTab === item.id ? 'page' : undefined}
                                 className={`
                                     flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all duration-300 whitespace-nowrap
                                     ${activeTab === item.id
-                                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/30'
+                                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md shadow-green-500/30 ring-1 ring-white/30'
                                         : 'text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-white/5'
                                     }
+                                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40
                                 `}
                             >
                                 <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -84,17 +88,19 @@ const SettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
                     {/* Desktop Navigation Sidebar - Hidden on mobile */}
                     <aside className="hidden lg:block lg:col-span-3 space-y-4">
-                        <nav className="flex flex-col gap-2 p-2 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-lg sticky top-4">
+                        <nav className="flex flex-col gap-2 p-2 rounded-2xl bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/70 dark:border-white/5 shadow-sm sticky top-4">
                             {navItems.map((item) => (
                                 <button
                                     key={item.id}
                                     onClick={() => setActiveTab(item.id)}
+                                    aria-current={activeTab === item.id ? 'page' : undefined}
                                     className={`
                                         group flex items-center gap-3 w-full text-left px-4 py-3.5 rounded-xl transition-all duration-300 relative overflow-hidden
                                         ${activeTab === item.id
-                                            ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/30'
+                                            ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md shadow-green-500/30 ring-1 ring-white/20'
                                             : 'text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                                         }
+                                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40
                                     `}
                                 >
                                     <item.icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${activeTab === item.id ? 'scale-110' : 'group-hover:scale-110'}`} />

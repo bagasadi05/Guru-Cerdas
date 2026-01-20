@@ -1,5 +1,4 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { getAutoTable, getJsPDF } from './dynamicImports';
 import { addPdfHeader, ensureLogosLoaded } from './pdfHeaderUtils';
 
 interface AttendanceRecord {
@@ -41,6 +40,8 @@ export const exportDailyAttendanceToPDF = async (
     // Ensure logos are loaded
     await ensureLogosLoaded();
 
+    const { default: jsPDF } = await getJsPDF();
+    const { default: autoTable } = await getAutoTable();
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -146,6 +147,8 @@ export const exportMonthlyAttendanceToPDF = async (
     // Ensure logos are loaded
     await ensureLogosLoaded();
 
+    const { default: jsPDF } = await getJsPDF();
+    const { default: autoTable } = await getAutoTable();
     const doc = new jsPDF('l', 'mm', 'a4'); // Landscape for monthly report
     const pageWidth = doc.internal.pageSize.getWidth();
 

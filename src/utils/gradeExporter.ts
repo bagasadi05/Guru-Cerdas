@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import { getXLSX } from './dynamicImports';
 
 interface ExportGradeData {
     studentName: string;
@@ -22,10 +22,10 @@ interface ExportOptions {
 /**
  * Export grade data to Excel file
  */
-export const exportGradesToExcel = (
+export const exportGradesToExcel = async (
     data: ExportGradeData[],
     options: ExportOptions = {}
-): void => {
+): Promise<void> => {
     const {
         filename = 'data_nilai.xlsx',
         sheetName = 'Data Nilai',
@@ -37,6 +37,7 @@ export const exportGradesToExcel = (
         kkm = 75,
     } = options;
 
+    const XLSX = await getXLSX();
     const wb = XLSX.utils.book_new();
 
     // Prepare main data
@@ -113,10 +114,11 @@ export const exportGradesToExcel = (
 /**
  * Export grade data to CSV
  */
-export const exportGradesToCSV = (
+export const exportGradesToCSV = async (
     data: ExportGradeData[],
     filename: string = 'data_nilai.csv'
-): void => {
+): Promise<void> => {
+    const XLSX = await getXLSX();
     const rows = data.map((item, index) => ({
         'No': index + 1,
         'Nama Siswa': item.studentName,

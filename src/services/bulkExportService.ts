@@ -1,6 +1,5 @@
 import { supabase } from './supabase';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { getAutoTable, getJsPDF } from '../utils/dynamicImports';
 
 /**
  * Export all student reports for a class as a single PDF with multiple pages.
@@ -34,6 +33,8 @@ export const exportAllClassReports = async (
         .single();
     const className = classData?.name || 'Kelas';
 
+    const { default: jsPDF } = await getJsPDF();
+    const { default: autoTable } = await getAutoTable();
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const totalStudents = students.length;

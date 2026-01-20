@@ -10,7 +10,7 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         queryKey: ['classes', user?.id],
         queryFn: async (): Promise<ClassRow[]> => {
             if (!user) return [];
-            const { data, error } = await supabase.from('classes').select('*').eq('user_id', user.id).order('name');
+            const { data, error } = await supabase.from('classes').select('*').eq('user_id', user.id).is('deleted_at', null).order('name');
             if (error) throw error; return data || [];
         },
         enabled: !!user,
@@ -20,7 +20,7 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         queryKey: ['studentsForMassInput', selectedClass],
         queryFn: async (): Promise<StudentRow[]> => {
             if (!selectedClass) return [];
-            const { data, error } = await supabase.from('students').select('*').eq('class_id', selectedClass).order('name');
+            const { data, error } = await supabase.from('students').select('*').eq('class_id', selectedClass).is('deleted_at', null).order('name');
             if (error) throw error; return data || [];
         },
         enabled: !!selectedClass

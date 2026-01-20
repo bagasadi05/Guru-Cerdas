@@ -3,9 +3,7 @@
  * Supports PDF (Formal Report) and Excel (Structured Data).
  */
 
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import { getAutoTable, getJsPDF, getXLSX } from '../utils/dynamicImports';
 import { ViolationRow } from '../components/pages/student/types';
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 
@@ -25,6 +23,8 @@ export const exportViolationsToPDF = async (options: ViolationExportOptions) => 
     // Ensure logos are loaded
     await ensureLogosLoaded();
 
+    const { default: jsPDF } = await getJsPDF();
+    const { default: autoTable } = await getAutoTable();
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -98,8 +98,9 @@ export const exportViolationsToPDF = async (options: ViolationExportOptions) => 
 /**
  * Export Violations to Excel
  */
-export const exportViolationsToExcel = (options: ViolationExportOptions) => {
+export const exportViolationsToExcel = async (options: ViolationExportOptions): Promise<void> => {
     const { studentName, className, schoolName, violations } = options;
+    const XLSX = await getXLSX();
     const wb = XLSX.utils.book_new();
 
     // 1. Header Information
@@ -173,6 +174,8 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
     // Ensure logos are loaded
     await ensureLogosLoaded();
 
+    const { default: jsPDF } = await getJsPDF();
+    const { default: autoTable } = await getAutoTable();
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 

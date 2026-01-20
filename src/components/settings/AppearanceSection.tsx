@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
+import { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { SunIcon, MoonIcon, CheckCircleIcon, RefreshCwIcon, SparklesIcon, ContrastIcon, ZapOffIcon, SmartphoneIcon } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Switch } from '../ui/Switch';
+import { SettingsCard } from './SettingsCard';
 
 const AppearanceSection: React.FC = () => {
     const { theme, setTheme } = useTheme();
@@ -34,8 +35,8 @@ const AppearanceSection: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
-                <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
+            <SettingsCard className="overflow-hidden">
+                <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
                     <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Tampilan Aplikasi</CardTitle>
                     <CardDescription className="text-base">Sesuaikan tema aplikasi dengan preferensi visual Anda.</CardDescription>
                 </CardHeader>
@@ -94,11 +95,11 @@ const AppearanceSection: React.FC = () => {
                         </button>
                     </div>
                 </CardContent>
-            </Card>
+            </SettingsCard>
 
             {/* Accessibility Section */}
-            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
-                <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
+            <SettingsCard className="overflow-hidden">
+                <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
                     <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400">Aksesibilitas</CardTitle>
                     <CardDescription className="text-base">Pengaturan untuk meningkatkan aksesibilitas aplikasi.</CardDescription>
                 </CardHeader>
@@ -151,11 +152,11 @@ const AppearanceSection: React.FC = () => {
                         />
                     </div>
                 </CardContent>
-            </Card>
+            </SettingsCard>
 
             {/* Onboarding Tour Section */}
-            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-xl rounded-2xl overflow-hidden">
-                <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
+            <SettingsCard className="overflow-hidden">
+                <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
                     <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400">Tutorial Aplikasi</CardTitle>
                     <CardDescription className="text-base">Pelajari fitur-fitur aplikasi dengan panduan interaktif.</CardDescription>
                 </CardHeader>
@@ -180,7 +181,7 @@ const AppearanceSection: React.FC = () => {
                         </Button>
                     </div>
                 </CardContent>
-            </Card>
+            </SettingsCard>
         </div>
     );
 };

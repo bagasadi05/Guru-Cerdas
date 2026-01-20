@@ -28,8 +28,10 @@ import { ActivityTab } from './student/ActivityTab';
 import { ViolationsTab } from './student/ViolationsTab';
 import { ReportsTab } from './student/ReportsTab';
 import { CommunicationTab } from './student/CommunicationTab';
+import { ExtracurricularTab } from './student/ExtracurricularTab';
+import { Trophy } from 'lucide-react';
 
-import { StudentDetailsData, ModalState, StudentMutationVars, ReportMutationVars, AcademicMutationVars, QuizMutationVars, ViolationMutationVars, CommunicationMutationVars, ClassRow, AcademicRecordRow, AttendanceRow, ViolationRow, QuizPointRow } from './student/types';
+import { StudentDetailsData, ModalState, StudentMutationVars, AcademicRecordRow, AttendanceRow, ViolationRow, QuizPointRow } from './student/types';
 import { EditStudentFormValues, ReportFormValues, AcademicFormValues, QuizFormValues, ViolationFormValues, CommunicationFormValues } from './student/schemas';
 import { EditStudentForm } from './student/forms/EditStudentForm';
 import { ReportForm } from './student/forms/ReportForm';
@@ -95,18 +97,21 @@ const StudentDetailPage = () => {
             const studentRes = await supabase.from('students').select('*').eq('id', studentId).eq('user_id', user.id).single();
             if (studentRes.error) throw new Error(studentRes.error.message);
 
-            const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, classesRes, commsRes] = await Promise.all([
+            const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, classesRes, commsRes, extracurricularsRes, exAttendanceRes, exGradesRes] = await Promise.all([
                 supabase.from('reports').select('*').eq('student_id', studentId),
                 supabase.from('attendance').select('*').eq('student_id', studentId),
                 supabase.from('academic_records').select('*').eq('student_id', studentId),
                 supabase.from('violations').select('*').eq('student_id', studentId),
                 supabase.from('quiz_points').select('*').eq('student_id', studentId),
-                supabase.from('classes').select('*').eq('user_id', user.id),
+                supabase.from('classes').select('*').eq('user_id', user.id).is('deleted_at', null),
                 supabase.from('communications').select('*').eq('student_id', studentId).eq('user_id', user.id).order('created_at', { ascending: true }),
+                supabase.from('student_extracurriculars').select('*, extracurriculars(*)').eq('student_id', studentId),
+                supabase.from('extracurricular_attendance').select('*').eq('student_id', studentId),
+                supabase.from('extracurricular_grades').select('*').eq('student_id', studentId),
             ]);
 
             // Combine error handling
-            const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, classesRes, commsRes].map(r => r.error).filter(Boolean);
+            const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, classesRes, commsRes, extracurricularsRes, exAttendanceRes, exGradesRes].map(r => r.error).filter(Boolean);
             if (errors.length > 0) throw new Error(errors.map(e => e!.message).join(', '));
 
             const studentData = studentRes.data;
@@ -123,7 +128,10 @@ const StudentDetailPage = () => {
                 quizPoints: quizPointsRes.data || [],
                 classes: classesRes.data || [],
                 communications: commsRes.data || [],
-            };
+                studentExtracurriculars: extracurricularsRes.data || [],
+                extracurricularAttendance: exAttendanceRes.data || [],
+                extracurricularGrades: exGradesRes.data || [],
+            } as StudentDetailsData;
         },
         enabled: !!studentId && !!user,
     });
@@ -154,9 +162,10 @@ const StudentDetailPage = () => {
     const handleReportSubmit = (data: ReportFormValues) => {
         if (!user || !studentId) return;
         const reportPayload = {
-            date: data.date,
             title: data.title,
-            notes: data.notes,
+            content: data.notes || '',
+            type: 'general',
+            date: data.date,
             student_id: studentId,
             user_id: user.id,
         };
@@ -196,7 +205,7 @@ const StudentDetailPage = () => {
             user_id: user.id,
         };
         if (modalState.type === 'quiz' && modalState.data?.id) {
-            quizMutation.mutate({ operation: 'edit', data: quizPayload, id: modalState.data.id });
+            quizMutation.mutate({ operation: 'edit', data: quizPayload, id: modalState.data.id as any });
         } else {
             quizMutation.mutate({ operation: 'add', data: quizPayload });
         }
@@ -209,8 +218,10 @@ const StudentDetailPage = () => {
             date: data.date,
             description: data.description,
             points: selectedViolation?.points || 0,
+            type: 'general',
             student_id: studentId,
             user_id: user.id,
+            follow_up_status: 'pending'
         };
         if (modalState.type === 'violation' && modalState.data?.id) {
             violationMutation.mutate({ operation: 'edit', data: violationPayload, id: modalState.data.id });
@@ -248,6 +259,24 @@ const StudentDetailPage = () => {
         return studentDetails.violations.filter(r => r.semester_id === selectedSemesterId);
     }, [studentDetails, selectedSemesterId]);
 
+    const filteredExtracurriculars = useMemo(() => {
+        if (!studentDetails?.studentExtracurriculars) return [];
+        if (!selectedSemesterId) return studentDetails.studentExtracurriculars;
+        return studentDetails.studentExtracurriculars.filter(r => r.semester_id === selectedSemesterId);
+    }, [studentDetails, selectedSemesterId]);
+
+    const filteredExAttendance = useMemo(() => {
+        if (!studentDetails?.extracurricularAttendance) return [];
+        if (!selectedSemesterId) return studentDetails.extracurricularAttendance;
+        return studentDetails.extracurricularAttendance.filter(r => r.semester_id === selectedSemesterId);
+    }, [studentDetails, selectedSemesterId]);
+
+    const filteredExGrades = useMemo(() => {
+        if (!studentDetails?.extracurricularGrades) return [];
+        if (!selectedSemesterId) return studentDetails.extracurricularGrades;
+        return studentDetails.extracurricularGrades.filter(r => r.semester_id === selectedSemesterId);
+    }, [studentDetails, selectedSemesterId]);
+
     const totalViolationPoints = useMemo(() => filteredViolations.reduce((sum, v) => sum + v.points, 0) || 0, [filteredViolations]);
     const unreadMessagesCount = useMemo(() => studentDetails?.communications.filter(m => m.sender === 'parent' && !m.is_read).length || 0, [studentDetails?.communications]);
 
@@ -264,8 +293,8 @@ const StudentDetailPage = () => {
             const { error } = await supabase
                 .from('violations')
                 .update({
-                    follow_up_status: status,
-                    follow_up_notes: notes
+                    // follow_up_status: status, // TODO: Add column to DB
+                    // follow_up_notes: notes // TODO: Add column to DB
                 })
                 .eq('id', violationId);
 
@@ -291,8 +320,8 @@ const StudentDetailPage = () => {
                 .from('communications')
                 .insert({
                     student_id: studentId!,
-                    user_id: user!.id,
-                    message,
+                    teacher_id: user!.id,
+                    content: message,
                     sender: 'teacher',
                     is_read: false
                 });
@@ -303,8 +332,8 @@ const StudentDetailPage = () => {
             const { error: updateError } = await supabase
                 .from('violations')
                 .update({
-                    parent_notified: true,
-                    parent_notified_at: new Date().toISOString()
+                    // parent_notified: true, // TODO: Add column to DB
+                    // parent_notified_at: new Date().toISOString() // TODO: Add column to DB
                 })
                 .eq('id', violation.id);
 
@@ -498,6 +527,10 @@ const StudentDetailPage = () => {
                                     <TabsTrigger value="grades">Nilai</TabsTrigger>
                                     <TabsTrigger value="activity">Keaktifan</TabsTrigger>
                                     <TabsTrigger value="violations">Pelanggaran</TabsTrigger>
+                                    <TabsTrigger value="extracurricular">
+                                        <Trophy className="w-4 h-4 mr-1.5 inline" />
+                                        Ekstrakurikuler
+                                    </TabsTrigger>
                                     <TabsTrigger value="reports">Catatan Guru</TabsTrigger>
                                     <TabsTrigger value="development">
                                         <BrainCircuitIcon className="w-4 h-4 mr-1.5 inline" />
@@ -527,6 +560,13 @@ const StudentDetailPage = () => {
                                 onNotifyParent={handleNotifyParent}
                                 studentName={student.name}
                                 isOnline={isOnline}
+                            />
+                        </TabsContent>
+                        <TabsContent value="extracurricular" className="p-0">
+                            <ExtracurricularTab
+                                studentExtracurriculars={filteredExtracurriculars}
+                                attendanceRecords={filteredExAttendance}
+                                grades={filteredExGrades}
                             />
                         </TabsContent>
                         <TabsContent value="reports" className="p-0">

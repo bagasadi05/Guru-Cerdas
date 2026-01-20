@@ -197,7 +197,14 @@ export async function getDeletedItems(
  * Get all deleted items across all entities
  */
 export async function getAllDeletedItems(userId: string): Promise<DeletedItem[]> {
-    const entities: SoftDeleteEntity[] = ['students', 'classes', 'attendance'];
+    const entities: SoftDeleteEntity[] = [
+        'students',
+        'classes',
+        'attendance',
+        'violations',
+        'quiz_points',
+        'academic_records',
+    ];
 
     const results = await Promise.all(
         entities.map(entity => getDeletedItems(entity, userId))
@@ -216,7 +223,14 @@ export async function cleanupExpired(): Promise<{
     deletedCounts: Record<SoftDeleteEntity, number>;
     error?: string;
 }> {
-    const entities: SoftDeleteEntity[] = ['students', 'classes', 'attendance'];
+    const entities: SoftDeleteEntity[] = [
+        'students',
+        'classes',
+        'attendance',
+        'violations',
+        'quiz_points',
+        'academic_records',
+    ];
     const RETENTION_DAYS = 30;
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DAYS);

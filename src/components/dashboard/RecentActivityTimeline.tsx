@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
     Clock,
     CheckCircle,
@@ -173,6 +174,32 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                     const colors = getActivityColor(activity.type);
                     const isLast = index === displayActivities.length - 1;
 
+                    const card = (
+                        <div className={`group p-3 rounded-xl border ${colors.border} ${colors.bg} transition-all ${activity.link ? 'hover:shadow-md cursor-pointer' : ''}`}>
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                    <h3 className={`font-semibold text-sm ${colors.text} mb-1`}>
+                                        {activity.title}
+                                    </h3>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                                        {activity.description}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <Clock className="w-3 h-3 text-gray-400" />
+                                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                            {formatTimeAgo(activity.timestamp)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Arrow indicator */}
+                                {activity.link && (
+                                    <ChevronRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                )}
+                            </div>
+                        </div>
+                    );
+
                     return (
                         <div
                             key={activity.id}
@@ -189,29 +216,15 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                             </div>
 
                             {/* Content Card */}
-                            <div className={`group p-3 rounded-xl border ${colors.border} ${colors.bg} hover:shadow-md transition-all cursor-pointer ml-2`}>
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className={`font-semibold text-sm ${colors.text} mb-1`}>
-                                            {activity.title}
-                                        </h3>
-                                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                                            {activity.description}
-                                        </p>
-                                        <div className="flex items-center gap-2 mt-2">
-                                            <Clock className="w-3 h-3 text-gray-400" />
-                                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                                {formatTimeAgo(activity.timestamp)}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Arrow indicator */}
-                                    {activity.link && (
-                                        <ChevronRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    )}
+                            {activity.link ? (
+                                <Link to={activity.link} className="ml-2 block">
+                                    {card}
+                                </Link>
+                            ) : (
+                                <div className="ml-2">
+                                    {card}
                                 </div>
-                            </div>
+                            )}
                         </div>
                     );
                 })}

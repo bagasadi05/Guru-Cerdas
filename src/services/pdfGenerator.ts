@@ -9,8 +9,8 @@
  * @since 1.0.0
  */
 
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import type jsPDF from 'jspdf';
+import { getAutoTable } from '../utils/dynamicImports';
 import { Database } from './database.types';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
@@ -196,7 +196,7 @@ export const ensureLogoLoaded = async (): Promise<void> => {
     await preloadLogos();
 };
 
-export const generateStudentReport = (
+export const generateStudentReport = async (
     doc: jsPDF,
     reportData: ReportData,
     teacherNote: string,
@@ -204,7 +204,8 @@ export const generateStudentReport = (
     semester: string,
     academicYear: string,
     user: AppUser | null
-) => {
+): Promise<void> => {
+    const { default: autoTable } = await getAutoTable();
     const { student, academicRecords, quizPoints, violations, attendanceRecords } = reportData;
 
     const PAGE_HEIGHT = doc.internal.pageSize.getHeight();

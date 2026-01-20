@@ -58,6 +58,7 @@ const TrashPage = lazy(() => import('@/components/pages/TrashPage'));
 const ActionHistoryPage = lazy(() => import('@/components/pages/ActionHistoryPage'));
 const AnalyticsPage = lazy(() => import('@/components/pages/AnalyticsPage'));
 const AdminPage = lazy(() => import('@/components/pages/AdminPage'));
+const ExtracurricularPage = lazy(() => import('@/components/pages/ExtracurricularPage'));
 
 
 // A wrapper for routes that require authentication.
@@ -221,7 +222,7 @@ function AppContent() {
             listener.remove();
           };
         }
-      } catch (error) {
+      } catch {
         console.log('Back button handler not available on this platform');
       }
     };
@@ -230,8 +231,26 @@ function AppContent() {
   }, [navigate]);
 
   // Real search handler using Supabase
-  const handleSearch = async (query: string, type: string, _filters: unknown[]) => {
+  const handleSearch = async (query: string, type: string) => {
     if (!query || query.length < 2) return [];
+
+    // Type definitions for search results
+    interface StudentSearchResult {
+      id: string;
+      name: string;
+      class_id: string | null;
+      classes: { name: string } | null;
+    }
+    interface ClassSearchResult {
+      id: string;
+      name: string;
+    }
+    interface ScheduleSearchResult {
+      id: string;
+      subject: string;
+      day: string;
+      classes: { name: string } | null;
+    }
 
     const results: { id: string; type: 'students' | 'classes' | 'schedule' | 'attendance' | 'tasks' | 'all'; title: string; subtitle: string }[] = [];
     const searchTerm = query.toLowerCase().trim();
@@ -242,11 +261,12 @@ function AppContent() {
         const { data: students } = await supabase
           .from('students')
           .select('id, name, class_id, classes(name)')
+          .is('deleted_at', null)
           .ilike('name', `%${searchTerm}%`)
           .limit(5);
 
         if (students) {
-          students.forEach((student: any) => {
+          (students as StudentSearchResult[]).forEach((student) => {
             results.push({
               id: student.id,
               type: 'students',
@@ -262,11 +282,12 @@ function AppContent() {
         const { data: classes } = await supabase
           .from('classes')
           .select('id, name')
+          .is('deleted_at', null)
           .ilike('name', `%${searchTerm}%`)
           .limit(3);
 
         if (classes) {
-          classes.forEach((cls: any) => {
+          (classes as ClassSearchResult[]).forEach((cls) => {
             results.push({
               id: cls.id,
               type: 'classes',
@@ -286,7 +307,7 @@ function AppContent() {
           .limit(3);
 
         if (schedules) {
-          schedules.forEach((schedule: any) => {
+          (schedules as unknown as ScheduleSearchResult[]).forEach((schedule) => {
             results.push({
               id: schedule.id,
               type: 'schedule',
@@ -347,6 +368,7 @@ function AppContent() {
               <Route path="/sampah" element={<TrashPage />} />
               <Route path="/riwayat" element={<ActionHistoryPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/ekstrakurikuler" element={<ExtracurricularPage />} />
               <Route path="/admin" element={<AdminPage />} />
             </Route>
 

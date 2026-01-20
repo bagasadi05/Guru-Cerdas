@@ -50,11 +50,12 @@ interface MigrationScript {
  */
 export async function exportEntity(
     entity: EntityType,
+    userId: string,
     options: ExportOptions = { format: 'json' }
 ): Promise<{ data: string; filename: string }> {
     logger.info(`Exporting ${entity}`, 'DataManagement');
 
-    let query = supabase.from(entity).select('*');
+    let query = supabase.from(entity).select('*').eq('user_id', userId);
 
     // Apply date range filter if provided
     if (options.dateRange) {
@@ -104,6 +105,7 @@ export async function exportEntity(
  * Export all entities (full backup)
  */
 export async function exportAllEntities(
+    userId: string,
     options: ExportOptions = { format: 'json', includeMetadata: true }
 ): Promise<{ data: string; filename: string }> {
     const entities: EntityType[] = ['students', 'attendance', 'tasks', 'schedules', 'academic_records'];
@@ -112,7 +114,7 @@ export async function exportAllEntities(
 
     for (const entity of entities) {
         try {
-            const { data } = await supabase.from(entity).select('*');
+            const { data } = await supabase.from(entity).select('*').eq('user_id', userId);
             allData[entity] = data || [];
             recordCounts[entity] = data?.length || 0;
         } catch {
@@ -152,6 +154,7 @@ export async function exportAllEntities(
  */
 export async function importEntity(
     entity: EntityType,
+    userId: string,
     fileContent: string,
     format: 'json' | 'csv' = 'json'
 ): Promise<ImportResult> {
@@ -183,11 +186,13 @@ export async function importEntity(
         }
     }).filter(Boolean);
 
+    const scopedRecords = applyUserId(validRecords, userId);
+
     // Batch insert
-    if (validRecords.length > 0) {
+    if (scopedRecords.length > 0) {
         const BATCH_SIZE = 100;
-        for (let i = 0; i < validRecords.length; i += BATCH_SIZE) {
-            const batch = validRecords.slice(i, i + BATCH_SIZE);
+        for (let i = 0; i < scopedRecords.length; i += BATCH_SIZE) {
+            const batch = scopedRecords.slice(i, i + BATCH_SIZE);
             const { error } = await supabase.from(entity).upsert(batch);
 
             if (error) {
@@ -215,7 +220,10 @@ export async function importEntity(
 /**
  * Import full backup
  */
-export async function importFullBackup(fileContent: string): Promise<Record<EntityType, ImportResult>> {
+export async function importFullBackup(
+    userId: string,
+    fileContent: string
+): Promise<Record<EntityType, ImportResult>> {
     const parsed = JSON.parse(fileContent);
 
     if (!parsed.metadata?.type || parsed.metadata.type !== 'full_backup') {
@@ -227,7 +235,7 @@ export async function importFullBackup(fileContent: string): Promise<Record<Enti
     for (const entity of Object.keys(parsed.data) as EntityType[]) {
         const entityData = parsed.data[entity];
         if (Array.isArray(entityData) && entityData.length > 0) {
-            results[entity] = await importEntity(entity, JSON.stringify(entityData));
+            results[entity] = await importEntity(entity, userId, JSON.stringify(entityData));
         } else {
             results[entity] = { success: 0, failed: 0, errors: [] };
         }
@@ -245,8 +253,8 @@ const BACKUP_STORAGE_KEY = 'portal_guru_backups';
 /**
  * Create a backup and store it locally
  */
-export async function createBackup(): Promise<BackupMetadata> {
-    const { data: backupData } = await exportAllEntities();
+export async function createBackup(userId: string): Promise<BackupMetadata> {
+    const { data: backupData } = await exportAllEntities(userId);
     const parsed = JSON.parse(backupData);
 
     const metadata: BackupMetadata = {
@@ -278,7 +286,10 @@ export async function listBackups(): Promise<BackupMetadata[]> {
 /**
  * Restore from a backup
  */
-export async function restoreBackup(backupId: string): Promise<Record<EntityType, ImportResult>> {
+export async function restoreBackup(
+    userId: string,
+    backupId: string
+): Promise<Record<EntityType, ImportResult>> {
     const backupData = await getBackupData(backupId);
 
     if (!backupData) {
@@ -289,7 +300,7 @@ export async function restoreBackup(backupId: string): Promise<Record<EntityType
         details: { action: 'RESTORE_BACKUP', backupId }
     });
 
-    return await importFullBackup(backupData);
+    return await importFullBackup(userId, backupData);
 }
 
 /**
@@ -415,6 +426,7 @@ async function removeBackup(id: string): Promise<void> {
  */
 export async function archiveOldRecords(
     entity: EntityType,
+    userId: string,
     beforeDate: Date,
     deleteAfterArchive: boolean = false
 ): Promise<{ archivedCount: number; deletedCount: number }> {
@@ -424,6 +436,7 @@ export async function archiveOldRecords(
     const { data: records, error: fetchError } = await supabase
         .from(entity)
         .select('*')
+        .eq('user_id', userId)
         .lt(dateColumn, beforeDate.toISOString());
 
     if (fetchError) {
@@ -454,6 +467,7 @@ export async function archiveOldRecords(
         const { error: deleteError } = await supabase
             .from(entity)
             .delete()
+            .eq('user_id', userId)
             .in('id', ids);
 
         if (!deleteError) {
@@ -483,14 +497,17 @@ export async function listArchives(): Promise<any[]> {
 /**
  * Restore archived data
  */
-export async function restoreArchive(archiveId: string): Promise<ImportResult> {
+export async function restoreArchive(
+    userId: string,
+    archiveId: string
+): Promise<ImportResult> {
     const archive = await getArchiveData(archiveId);
 
     if (!archive) {
         throw new Error('Archive not found');
     }
 
-    const result = await importEntity(archive.entity, JSON.stringify(archive.data));
+    const result = await importEntity(archive.entity, userId, JSON.stringify(archive.data));
 
     auditLog('ADMIN_ACTION', {
         details: { action: 'RESTORE_ARCHIVE', archiveId, entity: archive.entity }
@@ -705,6 +722,16 @@ function compareVersions(a: string, b: string): number {
 // ============================================
 // DATA VALIDATION
 // ============================================
+
+function applyUserId<T extends Record<string, any>>(records: T[], userId: string): T[] {
+    return records.map(record => {
+        if (!record || typeof record !== 'object') return record;
+        if (Object.prototype.hasOwnProperty.call(record, 'user_id')) {
+            return { ...record, user_id: userId };
+        }
+        return record;
+    });
+}
 
 const entityValidators: Record<EntityType, (record: any) => any> = {
     students: (record) => {

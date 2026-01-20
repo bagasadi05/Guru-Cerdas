@@ -9,17 +9,16 @@ import { Select } from '../ui/Select';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { ExcelImporter } from '../ui/ExcelImporter';
-import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, UploadIcon, DownloadIcon, TrashIcon, AlertTriangleIcon, KeyboardIcon, ChevronDownIcon, ChevronUpIcon } from '../Icons';
+import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, UploadIcon, TrashIcon, AlertTriangleIcon, KeyboardIcon } from '../Icons';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '../ui/Skeleton';
 import { Database } from '../../services/database.types';
 import { useKeyboardShortcuts, useGridNavigation } from '../../hooks/useKeyboardShortcuts';
 import { useAutosave } from '../../hooks/useAutosave';
 import { validateGrades, getGradeColorClass, calculateGradeStats, GradeEntry } from '../../utils/gradeValidator';
-import { VirtualList, WindowedList } from '../ui/VirtualList';
+import { VirtualList } from '../ui/VirtualList';
 import { KeyboardShortcutsHelp } from '../ui/KeyboardShortcutsHelp';
 import { EmptyGradesConfirmation, SaveSuccessModal, ClearAllConfirmation } from '../ui/GradeConfirmationModals';
-import { BulkGradeInputPageSkeleton } from '../ui/GradeInputSkeletons';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -63,7 +62,9 @@ const BulkGradeInputPage: React.FC = () => {
                 nextInput?.focus();
             },
             onEscape: () => {
-                document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                }
             },
         }
     );
@@ -107,6 +108,7 @@ const BulkGradeInputPage: React.FC = () => {
                 .from('classes')
                 .select('id, name')
                 .eq('user_id', user!.id)
+                .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
             return data as Pick<ClassRow, 'id' | 'name'>[];
@@ -122,6 +124,7 @@ const BulkGradeInputPage: React.FC = () => {
                 .from('students')
                 .select('id, name')
                 .eq('class_id', selectedClass)
+                .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
             return data as Pick<StudentRow, 'id' | 'name'>[];
@@ -252,13 +255,6 @@ const BulkGradeInputPage: React.FC = () => {
     const handleFillAllWith = (value: number) => {
         setGrades(prev => prev.map(g => ({ ...g, score: value })));
         toast.info(`Semua nilai diisi dengan ${value}`);
-    };
-
-    const requestClearAll = () => {
-        const filledCount = grades.filter(g => g.score !== '').length;
-        if (filledCount > 0) {
-            setShowClearConfirm(true);
-        }
     };
 
     const handleClearAll = () => {

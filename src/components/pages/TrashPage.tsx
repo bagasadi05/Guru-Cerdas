@@ -26,9 +26,14 @@ import {
     RefreshCw,
     Sparkles,
     Eye,
+    X,
+    ShieldAlert,
+    Star,
+    BarChart3,
 } from 'lucide-react';
 import {
     getAllDeletedItems,
+    getDeletedItems,
     restore,
     restoreBulk,
     permanentDelete,
@@ -70,14 +75,41 @@ const entityConfig: Record<SoftDeleteEntity, {
         bgColor: 'bg-green-500/10',
         borderColor: 'border-green-500/20',
     },
+    violations: {
+        label: 'Pelanggaran',
+        labelPlural: 'Pelanggaran',
+        icon: <ShieldAlert className="w-4 h-4" />,
+        color: 'text-red-500',
+        bgColor: 'bg-red-500/10',
+        borderColor: 'border-red-500/20',
+    },
+    quiz_points: {
+        label: 'Poin',
+        labelPlural: 'Poin',
+        icon: <Star className="w-4 h-4" />,
+        color: 'text-amber-500',
+        bgColor: 'bg-amber-500/10',
+        borderColor: 'border-amber-500/20',
+    },
+    academic_records: {
+        label: 'Nilai',
+        labelPlural: 'Nilai',
+        icon: <BarChart3 className="w-4 h-4" />,
+        color: 'text-indigo-500',
+        bgColor: 'bg-indigo-500/10',
+        borderColor: 'border-indigo-500/20',
+    },
 };
 
 // Sorting options
-type SortOption = 'newest' | 'oldest' | 'expiring';
+type SortOption = 'newest' | 'oldest' | 'expiring' | 'name_asc' | 'name_desc' | 'remaining';
 const sortOptions: { value: SortOption; label: string }[] = [
     { value: 'newest', label: 'Terbaru Dihapus' },
     { value: 'oldest', label: 'Terlama Dihapus' },
     { value: 'expiring', label: 'Segera Dihapus' },
+    { value: 'remaining', label: 'Sisa Waktu' },
+    { value: 'name_asc', label: 'Nama A-Z' },
+    { value: 'name_desc', label: 'Nama Z-A' },
 ];
 
 // Get display name for an item
@@ -90,6 +122,12 @@ function getItemDisplayName(item: DeletedItem): string {
             return data.name || data.nama || 'Kelas';
         case 'attendance':
             return `Absensi ${data.date || data.tanggal || ''}`;
+        case 'violations':
+            return data.description || data.jenis || 'Pelanggaran';
+        case 'quiz_points':
+            return data.activity || data.keterangan || 'Poin';
+        case 'academic_records':
+            return data.subject || data.mapel || 'Nilai';
         default:
             return 'Item';
     }
@@ -105,9 +143,22 @@ function getItemSubtitle(item: DeletedItem): string {
             return `${data.student_count || 0} siswa`;
         case 'attendance':
             return data.status || '';
+        case 'violations':
+            return `${data.points || 0} poin`;
+        case 'quiz_points':
+            return `${data.points || 0} poin`;
+        case 'academic_records':
+            return data.assessment_name || data.keterangan || '';
         default:
             return '';
     }
+}
+
+function getViolationRiskBadge(item: DeletedItem): string | null {
+    if (item.entity !== 'violations') return null;
+    const points = Number(item.data?.points ?? 0);
+    if (Number.isNaN(points)) return null;
+    return points >= 50 ? 'Risiko Tinggi' : null;
 }
 
 const TrashPage: React.FC = () => {
@@ -124,15 +175,29 @@ const TrashPage: React.FC = () => {
 
     const [confirmEmptyTrash, setConfirmEmptyTrash] = useState(false);
     const [confirmRestoreAll, setConfirmRestoreAll] = useState(false);
+    const [confirmRestoreEntity, setConfirmRestoreEntity] = useState<SoftDeleteEntity | null>(null);
     const [sortBy, setSortBy] = useState<SortOption>('newest');
     const [showInfo, setShowInfo] = useState(false);
+    const [showExpiringOnly, setShowExpiringOnly] = useState(false);
 
-    // Fetch deleted items
-    const { data: deletedItems = [], isLoading } = useQuery({
-        queryKey: ['deleted-items', user?.id],
+    // Fetch deleted items for stats and list
+    const { data: allDeletedItems = [], isLoading: isStatsLoading } = useQuery({
+        queryKey: ['deleted-items-all', user?.id],
         queryFn: () => getAllDeletedItems(user!.id),
         enabled: !!user,
     });
+
+    const { data: visibleItems = [], isLoading: isListLoading } = useQuery({
+        queryKey: ['deleted-items', user?.id, filterEntity],
+        queryFn: () => {
+            if (!user) return Promise.resolve([]);
+            if (filterEntity === 'all') return getAllDeletedItems(user.id);
+            return getDeletedItems(filterEntity as SoftDeleteEntity, user.id);
+        },
+        enabled: !!user,
+    });
+
+    const isLoading = isListLoading || isStatsLoading;
 
     // Restore mutation
     const restoreMutation = useMutation({
@@ -142,6 +207,7 @@ const TrashPage: React.FC = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             queryClient.invalidateQueries({ queryKey: ['students'] });
             queryClient.invalidateQueries({ queryKey: ['classes'] });
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
@@ -168,6 +234,7 @@ const TrashPage: React.FC = () => {
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             queryClient.invalidateQueries({ queryKey: ['students'] });
             queryClient.invalidateQueries({ queryKey: ['classes'] });
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
@@ -188,6 +255,7 @@ const TrashPage: React.FC = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             setConfirmDeleteId(null);
             toast.success('Item dihapus permanen');
         },
@@ -206,6 +274,7 @@ const TrashPage: React.FC = () => {
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             setSelectedItems(new Set());
             setConfirmBulkDelete(false);
             setConfirmEmptyTrash(false);
@@ -218,13 +287,19 @@ const TrashPage: React.FC = () => {
 
     // Filter, search, and sort
     const filteredItems = useMemo(() => {
-        const items = deletedItems.filter(item => {
+        const items = visibleItems.filter(item => {
             if (filterEntity !== 'all' && item.entity !== filterEntity) {
+                return false;
+            }
+            if (showExpiringOnly && item.daysRemaining > 7) {
                 return false;
             }
             if (searchQuery) {
                 const displayName = getItemDisplayName(item).toLowerCase();
-                if (!displayName.includes(searchQuery.toLowerCase())) {
+                const subtitle = getItemSubtitle(item).toLowerCase();
+                const entityLabel = entityConfig[item.entity].label.toLowerCase();
+                const searchTarget = `${displayName} ${subtitle} ${entityLabel}`;
+                if (!searchTarget.includes(searchQuery.toLowerCase())) {
                     return false;
                 }
             }
@@ -240,13 +315,19 @@ const TrashPage: React.FC = () => {
                     return new Date(a.deletedAt).getTime() - new Date(b.deletedAt).getTime();
                 case 'expiring':
                     return a.daysRemaining - b.daysRemaining;
+                case 'remaining':
+                    return a.daysRemaining - b.daysRemaining;
+                case 'name_asc':
+                    return getItemDisplayName(a).localeCompare(getItemDisplayName(b), 'id-ID');
+                case 'name_desc':
+                    return getItemDisplayName(b).localeCompare(getItemDisplayName(a), 'id-ID');
                 default:
                     return 0;
             }
         });
 
         return items;
-    }, [deletedItems, filterEntity, searchQuery, sortBy]);
+    }, [visibleItems, filterEntity, searchQuery, sortBy, showExpiringOnly]);
 
     // Group by entity
     const groupedItems = useMemo(() => {
@@ -254,6 +335,9 @@ const TrashPage: React.FC = () => {
             students: [],
             classes: [],
             attendance: [],
+            violations: [],
+            quiz_points: [],
+            academic_records: [],
         };
 
         filteredItems.forEach(item => {
@@ -266,14 +350,17 @@ const TrashPage: React.FC = () => {
     // Stats
     const stats = useMemo(() => {
         return {
-            total: deletedItems.length,
-            students: deletedItems.filter(i => i.entity === 'students').length,
-            classes: deletedItems.filter(i => i.entity === 'classes').length,
-            attendance: deletedItems.filter(i => i.entity === 'attendance').length,
-            expiringToday: deletedItems.filter(i => i.daysRemaining <= 1).length,
-            expiringThisWeek: deletedItems.filter(i => i.daysRemaining <= 7).length,
+            total: allDeletedItems.length,
+            students: allDeletedItems.filter(i => i.entity === 'students').length,
+            classes: allDeletedItems.filter(i => i.entity === 'classes').length,
+            attendance: allDeletedItems.filter(i => i.entity === 'attendance').length,
+            violations: allDeletedItems.filter(i => i.entity === 'violations').length,
+            quiz_points: allDeletedItems.filter(i => i.entity === 'quiz_points').length,
+            academic_records: allDeletedItems.filter(i => i.entity === 'academic_records').length,
+            expiringToday: allDeletedItems.filter(i => i.daysRemaining <= 1).length,
+            expiringThisWeek: allDeletedItems.filter(i => i.daysRemaining <= 7).length,
         };
-    }, [deletedItems]);
+    }, [allDeletedItems]);
 
     // Toggle item selection
     const toggleSelect = (id: string) => {
@@ -300,8 +387,15 @@ const TrashPage: React.FC = () => {
         return filteredItems.filter(i => selectedItems.has(i.id));
     }, [filteredItems, selectedItems]);
 
+    const restoreEntityItems = useMemo(() => {
+        if (!confirmRestoreEntity) return [];
+        return groupedItems[confirmRestoreEntity] || [];
+    }, [confirmRestoreEntity, groupedItems]);
+
+    const hasActiveFilters = searchQuery || filterEntity !== 'all' || showExpiringOnly;
+
     const itemToDelete = confirmDeleteId
-        ? deletedItems.find(i => i.id === confirmDeleteId)
+        ? visibleItems.find(i => i.id === confirmDeleteId) || allDeletedItems.find(i => i.id === confirmDeleteId)
         : null;
 
     // Format relative time
@@ -326,10 +420,15 @@ const TrashPage: React.FC = () => {
                 const total = Object.values(result.deletedCounts).reduce((a, b) => a + b, 0);
                 toast.info(`${total} item kadaluarsa (>30 hari) telah dibersihkan otomatis.`);
                 queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+                queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             }
         };
         performCleanup();
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    React.useEffect(() => {
+        setSelectedItems(new Set());
+    }, [filterEntity]);
 
     // Render item details
     const renderItemDetails = (item: DeletedItem) => {
@@ -504,7 +603,7 @@ const TrashPage: React.FC = () => {
                     </div>
 
                     {selectedItems.size > 0 && (
-                        <div className="flex items-center gap-2 animate-fade-in">
+                        <div className="hidden md:flex items-center gap-2 animate-fade-in">
                             <span className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
                                 {selectedItems.size} dipilih
                             </span>
@@ -527,6 +626,92 @@ const TrashPage: React.FC = () => {
                                 Hapus
                             </Button>
                         </div>
+                    )}
+                </div>
+
+                {selectedItems.size > 0 && (
+                    <div className="md:hidden fixed bottom-4 left-4 right-4 z-20">
+                        <div className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 shadow-xl rounded-2xl px-4 py-3">
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                {selectedItems.size} dipilih
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    onClick={() => restoreBulkMutation.mutate(selectedItemsArray)}
+                                    disabled={restoreBulkMutation.isPending}
+                                    size="sm"
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                >
+                                    <RotateCcw className="w-4 h-4 mr-1.5" />
+                                    Pulihkan
+                                </Button>
+                                <Button
+                                    onClick={() => setConfirmBulkDelete(true)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-1.5" />
+                                    Hapus
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Filter Chips */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        onClick={() => setFilterEntity('all')}
+                        aria-pressed={filterEntity === 'all'}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${filterEntity === 'all'
+                            ? 'bg-indigo-600 text-white border-indigo-600'
+                            : 'bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/50'
+                            }`}
+                    >
+                        Semua ({stats.total})
+                    </button>
+
+                    {Object.entries(entityConfig).map(([key, config]) => (
+                        <button
+                            key={key}
+                            onClick={() => setFilterEntity(filterEntity === key ? 'all' : key as SoftDeleteEntity)}
+                            aria-pressed={filterEntity === key}
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${filterEntity === key
+                                ? `border-transparent ${config.bgColor} ${config.color} ring-2 ring-indigo-500/40`
+                                : 'bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/50'
+                                }`}
+                        >
+                            <span className="inline-flex items-center gap-1.5">
+                                {config.icon}
+                                {config.labelPlural} ({stats[key as SoftDeleteEntity]})
+                            </span>
+                        </button>
+                    ))}
+
+                    <button
+                        onClick={() => setShowExpiringOnly(prev => !prev)}
+                        aria-pressed={showExpiringOnly}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${showExpiringOnly
+                            ? 'bg-red-500 text-white border-red-500'
+                            : 'bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/50 hover:border-red-300 dark:hover:border-red-500/50'
+                            }`}
+                    >
+                        Segera Hapus ({stats.expiringThisWeek})
+                    </button>
+
+                    {hasActiveFilters && (
+                        <button
+                            onClick={() => {
+                                setSearchQuery('');
+                                setFilterEntity('all');
+                                setShowExpiringOnly(false);
+                            }}
+                            className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border border-slate-200 dark:border-slate-700/50 text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white bg-white dark:bg-slate-800/50"
+                        >
+                            <X className="w-4 h-4" />
+                            Reset Filter
+                        </button>
                     )}
                 </div>
 
@@ -568,15 +753,26 @@ const TrashPage: React.FC = () => {
 
                             return (
                                 <div key={entity} className="animate-fade-in">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className={`w-8 h-8 rounded-xl ${config.bgColor} flex items-center justify-center ${config.color}`}>
-                                            {config.icon}
-                                        </div>
-                                        <h3 className="font-bold text-lg text-slate-900 dark:text-white">{config.labelPlural}</h3>
-                                        <span className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
-                                            {items.length}
-                                        </span>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className={`w-8 h-8 rounded-xl ${config.bgColor} flex items-center justify-center ${config.color}`}>
+                                        {config.icon}
                                     </div>
+                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">{config.labelPlural}</h3>
+                                    <span className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
+                                        {items.length}
+                                    </span>
+                                    {items.length > 0 && (
+                                        <Button
+                                            onClick={() => setConfirmRestoreEntity(entity as SoftDeleteEntity)}
+                                            size="sm"
+                                            variant="ghost"
+                                            className="ml-auto text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                        >
+                                            <RotateCcw className="w-4 h-4 mr-1.5" />
+                                            Pulihkan Semua {config.labelPlural}
+                                        </Button>
+                                    )}
+                                </div>
 
                                     <div className="grid gap-3">
                                         {items.map(item => (
@@ -599,9 +795,16 @@ const TrashPage: React.FC = () => {
                                                 </div>
 
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-slate-900 dark:text-white truncate">
-                                                        {getItemDisplayName(item)}
-                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-semibold text-slate-900 dark:text-white truncate">
+                                                            {getItemDisplayName(item)}
+                                                        </p>
+                                                        {getViolationRiskBadge(item) && (
+                                                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/20">
+                                                                {getViolationRiskBadge(item)}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="flex items-center gap-3 mt-1">
                                                         {getItemSubtitle(item) && (
                                                             <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -690,7 +893,7 @@ const TrashPage: React.FC = () => {
                             </li>
                         </ul>
                         <p className="text-xs text-slate-500 dark:text-slate-500 pt-2 border-t border-slate-200 dark:border-slate-700">
-                            Catatan: Data Siswa, Kelas, dan Absensi mendukung fitur Sampah. Tugas dihapus langsung secara permanen.
+                            Catatan: Sampah mendukung Siswa, Kelas, Absensi, Pelanggaran, Poin, dan Nilai. Tugas dihapus langsung secara permanen.
                         </p>
                     </div>
                 </Modal>
@@ -834,7 +1037,7 @@ const TrashPage: React.FC = () => {
                                 Batal
                             </Button>
                             <Button
-                                onClick={() => bulkPermanentDeleteMutation.mutate(deletedItems)}
+                                onClick={() => bulkPermanentDeleteMutation.mutate(allDeletedItems)}
                                 disabled={bulkPermanentDeleteMutation.isPending}
                                 className="bg-red-600 hover:bg-red-700 text-white"
                             >
@@ -869,7 +1072,7 @@ const TrashPage: React.FC = () => {
                                 Batal
                             </Button>
                             <Button
-                                onClick={() => restoreBulkMutation.mutate(deletedItems)}
+                                onClick={() => restoreBulkMutation.mutate(allDeletedItems)}
                                 disabled={restoreBulkMutation.isPending}
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
                             >
@@ -877,6 +1080,54 @@ const TrashPage: React.FC = () => {
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                 )}
                                 Pulihkan Semua
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+
+                {/* Confirm Restore Entity Modal */}
+                <Modal
+                    isOpen={!!confirmRestoreEntity}
+                    onClose={() => setConfirmRestoreEntity(null)}
+                    title="Pulihkan Kategori"
+                    icon={<RotateCcw className="w-5 h-5 text-emerald-500" />}
+                >
+                    <div className="space-y-4">
+                        <p className="text-slate-600 dark:text-slate-400">
+                            Apakah Anda yakin ingin memulihkan{' '}
+                            <strong className="text-slate-900 dark:text-white">
+                                {restoreEntityItems.length} item
+                            </strong>{' '}
+                            dari kategori{' '}
+                            <strong className="text-slate-900 dark:text-white">
+                                {confirmRestoreEntity ? entityConfig[confirmRestoreEntity].labelPlural : ''}
+                            </strong>
+                            ?
+                        </p>
+                        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                            <p className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                                <RotateCcw className="w-4 h-4" />
+                                Item akan dikembalikan ke tempat semula.
+                            </p>
+                        </div>
+                        <div className="flex justify-end gap-3 pt-2">
+                            <Button variant="ghost" onClick={() => setConfirmRestoreEntity(null)}>
+                                Batal
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    if (restoreEntityItems.length > 0) {
+                                        restoreBulkMutation.mutate(restoreEntityItems);
+                                    }
+                                    setConfirmRestoreEntity(null);
+                                }}
+                                disabled={restoreBulkMutation.isPending || restoreEntityItems.length === 0}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            >
+                                {restoreBulkMutation.isPending && (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                )}
+                                Pulihkan Kategori
                             </Button>
                         </div>
                     </div>

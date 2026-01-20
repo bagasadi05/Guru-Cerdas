@@ -90,8 +90,8 @@ const calculateWeeklyAttendance = (
         // Count students marked as present
         const presentOnDay = dayAttendance.filter(a => a.status === 'Hadir').length;
 
-        // Use day's attendance count or total students as denominator
-        const total = dayAttendance.length || totalStudents;
+        // Use total students as denominator to avoid inflated percentages
+        const total = totalStudents || dayAttendance.length;
 
         // Get day name for display
         const dayName = new Date(date).toLocaleDateString('id-ID', { weekday: 'long' });
@@ -143,15 +143,15 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         // Fetch students with minimal fields needed for dashboard
         supabase
             .from('students')
-            .select('id, name, avatar_url, class_id')
-            .eq('user_id', userId),
+            .select('id, name, class_id')
+            .eq('user_id', userId)
+            .is('deleted_at', null),
 
         // Fetch active tasks (not deleted, not completed)
         supabase
             .from('tasks')
             .select('*')
             .eq('user_id', userId)
-            .is('deleted_at', null)
             .neq('status', 'done')
             .order('due_date'),
 
@@ -163,11 +163,11 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             .eq('day', todayDay as Database['public']['Tables']['schedules']['Row']['day'])
             .order('start_time'),
 
-        // Fetch all classes
         supabase
             .from('classes')
             .select('id, name')
-            .eq('user_id', userId),
+            .eq('user_id', userId)
+            .is('deleted_at', null),
 
         // Fetch today's attendance for summary
         supabase
@@ -204,6 +204,7 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         scheduleRes,
         classesRes,
         dailyAttendanceRes,
+        weeklyAttendanceRes,
         academicRecordsRes,
         violationsRes
     ]

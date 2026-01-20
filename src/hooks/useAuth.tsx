@@ -29,6 +29,8 @@ type ScheduleWithClassName = Database['public']['Tables']['schedules']['Row'] & 
   className?: string;
 };
 
+let notificationListenerRegistered = false;
+
 /**
  * Check if running on native mobile platform
  */
@@ -83,22 +85,25 @@ const scheduleNotifications = async (schedule: ScheduleWithClassName[]): Promise
       localStorage.setItem('portal_guru_schedule', JSON.stringify(schedule));
 
       // Add listener for when notification fires (to re-schedule for next week)
-      LocalNotifications.addListener('localNotificationReceived', async (notification) => {
-        console.log('Notification received:', notification);
-        // Re-schedule notifications for next week
-        const storedSchedule = localStorage.getItem('portal_guru_schedule');
-        if (storedSchedule) {
-          try {
-            const scheduleData = JSON.parse(storedSchedule);
-            // Small delay before re-scheduling
-            setTimeout(() => {
-              scheduleNotifications(scheduleData);
-            }, 1000);
-          } catch (e) {
-            console.error('Error re-scheduling notifications:', e);
+      if (!notificationListenerRegistered) {
+        LocalNotifications.addListener('localNotificationReceived', async (notification) => {
+          console.log('Notification received:', notification);
+          // Re-schedule notifications for next week
+          const storedSchedule = localStorage.getItem('portal_guru_schedule');
+          if (storedSchedule) {
+            try {
+              const scheduleData = JSON.parse(storedSchedule);
+              // Small delay before re-scheduling
+              setTimeout(() => {
+                scheduleNotifications(scheduleData);
+              }, 1000);
+            } catch (e) {
+              console.error('Error re-scheduling notifications:', e);
+            }
           }
-        }
-      });
+        });
+        notificationListenerRegistered = true;
+      }
 
       // Schedule notifications for each class
       const notifications = schedule.map((item, index) => {
@@ -361,6 +366,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsNotificationsEnabled(false);
   };
 
+  const clearSupabaseCache = async () => {
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration?.active) {
+        registration.active.postMessage({ type: 'CLEAR_SUPABASE_CACHE' });
+      }
+    }
+
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter(key => key === 'supabase-api-cache').map(key => caches.delete(key)));
+    }
+  };
+
   const value: AuthContextType = {
     session,
     user,
@@ -380,6 +399,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout: async () => {
       await disableScheduleNotifications();
       await supabase.auth.signOut();
+      await clearSupabaseCache();
     },
     updateUser: (data) => supabase.auth.updateUser({
       password: data.password,

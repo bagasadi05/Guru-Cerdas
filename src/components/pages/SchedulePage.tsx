@@ -18,13 +18,12 @@ import { useToast } from '../../hooks/useToast';
 import { Database } from '../../services/database.types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import * as ics from 'ics';
 import { ValidationService } from '../../services/ValidationService';
 import { ValidationRules } from '../../types';
 import { SchedulePageSkeleton } from '../skeletons/PageSkeletons';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
+import { getJsPDF } from '../../utils/dynamicImports';
 import { WeeklyScheduleView } from '../schedule/WeeklyScheduleView';
 import { LayoutGridIcon, ListIcon } from '../Icons';
 
@@ -232,7 +231,7 @@ const SchedulePage: React.FC = () => {
     const { data: classes } = useQuery({
         queryKey: ['classes', user?.id],
         queryFn: async () => {
-            const { data, error } = await supabase.from('classes').select('*').eq('user_id', user!.id).order('name');
+            const { data, error } = await supabase.from('classes').select('*').eq('user_id', user!.id).is('deleted_at', null).order('name');
             if (error) throw error;
             return data || [];
         },
@@ -390,6 +389,7 @@ const SchedulePage: React.FC = () => {
         // Ensure logos are loaded
         await ensureLogosLoaded();
 
+        const { default: jsPDF } = await getJsPDF();
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
@@ -656,7 +656,7 @@ const SchedulePage: React.FC = () => {
             return;
         }
 
-        const { data: classes, error } = await supabase.from('classes').select('id, name').eq('user_id', user!.id);
+        const { data: classes, error } = await supabase.from('classes').select('id, name').eq('user_id', user!.id).is('deleted_at', null);
         if (error) {
             toast.error("Gagal mengambil data kelas untuk notifikasi.");
             setIsEnablingNotifications(false);
@@ -811,7 +811,7 @@ const SchedulePage: React.FC = () => {
                                                     isPast={status === 'past'}
                                                     onEdit={handleOpenEditModal}
                                                     onDuplicate={(item) => {
-                                                        setFormData({ day: item.day, start_time: item.start_time, end_time: item.end_time, subject: `${item.subject} (Copy)`, class_id: item.class_id });
+                                                        setFormData({ day: item.day, start_time: item.start_time, end_time: item.end_time, subject: `${item.subject} (Copy)`, class_id: item.class_id, teacher_id: item.teacher_id });
                                                         setModalState({ isOpen: true, mode: 'add', data: null });
                                                     }}
                                                     onDelete={handleDeleteClick}

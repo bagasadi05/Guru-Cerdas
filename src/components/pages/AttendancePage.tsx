@@ -1,5 +1,5 @@
 import { AttendancePageSkeleton } from '../skeletons/PageSkeletons';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -15,7 +15,6 @@ import {
     SearchIcon,
     CheckCircleIcon,
     InfoIcon,
-    XCircleIcon,
     LayoutGridIcon,
     ListIcon,
     UsersIcon,
@@ -27,17 +26,16 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import BottomSheet from '../ui/BottomSheet';
-import { AttendanceRecord, AttendanceStatus, AttendanceInsert, AiAnalysis } from '../../types';
+import { AttendanceRecord, AttendanceStatus, AttendanceInsert, AiAnalysis, StudentRow, ClassRow, AttendanceRow } from '../../types';
 import { statusOptions } from '../../constants';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 // OpenRouter API is used directly via fetch - no SDK import needed
 import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../utils/confetti';
 
 // Sub-components
 import { AttendanceHeader } from '../attendance/AttendanceHeader';
-import { AttendanceStats } from '../attendance/AttendanceStats';
+// import { AttendanceStats } from '../attendance/AttendanceStats';
 import { AttendanceList } from '../attendance/AttendanceList';
 import { AttendanceExportModal } from '../attendance/AttendanceExportModal';
 import { AiAnalysisModal } from '../attendance/AiAnalysisModal';
@@ -46,11 +44,10 @@ import { EmptyState } from '../ui/EmptyState';
 import { QRCodeGenerator } from '../attendance/QRCodeGenerator';
 import { QuickTemplateIcons } from '../attendance/QuickTemplateIcons';
 import { AttendanceStreakIndicator } from '../attendance/AttendanceStreakIndicator';
-import { QuickNotePresets } from '../attendance/QuickNotePresets';
+// import { QuickNotePresets } from '../attendance/QuickNotePresets';
 
 const AttendancePage: React.FC = () => {
     // Force HMR update
-    const [lateThreshold, setLateThreshold] = useState('07:00');
     const { user } = useAuth();
     const toast = useToast();
     const isOnline = useOfflineStatus();
@@ -70,14 +67,30 @@ const AttendancePage: React.FC = () => {
         }
     }, [activeSemester, selectedSemesterId]);
 
+    const selectedSemester = useMemo(() => {
+        if (!selectedSemesterId) return null;
+        return semesters.find(semester => semester.id === selectedSemesterId) || null;
+    }, [semesters, selectedSemesterId]);
+
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [selectedDate, setSelectedDate] = useState<string>(today);
+    const [calendarMonth, setCalendarMonth] = useState<string>(today.slice(0, 7));
+
+    // Ensure selectedDate stays within semester bounds
+    useEffect(() => {
+        if (!selectedSemester) return;
+        if (selectedDate < selectedSemester.start_date || selectedDate > selectedSemester.end_date) {
+            setSelectedDate(selectedSemester.start_date);
+        }
+    }, [selectedDate, selectedSemester]);
+
     const [attendanceRecords, setAttendanceRecords] = useState<Record<string, AttendanceRecord>>({});
     const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
     const [isDatePickerOpen, setDatePickerOpen] = useState(false);
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [noteText, setNoteText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    const deferredSearchQuery = useDeferredValue(searchQuery);
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -91,7 +104,11 @@ const AttendancePage: React.FC = () => {
         if (activeSemester && !exportSemesterId) {
             setExportSemesterId(activeSemester.id);
         }
-    }, [activeSemester]);
+    }, [activeSemester, exportSemesterId]);
+
+    useEffect(() => {
+        setCalendarMonth(selectedDate.slice(0, 7));
+    }, [selectedDate]);
 
     const [isAiModalOpen, setIsAiModalOpen] = useState(false);
     const [aiAnalysisResult, setAiAnalysisResult] = useState<AiAnalysis | null>(null);
@@ -103,7 +120,7 @@ const AttendancePage: React.FC = () => {
     const { data: classes, isLoading: isLoadingClasses } = useQuery({
         queryKey: ['classes', user?.id],
         queryFn: async () => {
-            const { data, error } = await supabase.from('classes').select('*').eq('user_id', user!.id);
+            const { data, error } = await supabase.from('classes').select('*').eq('user_id', user!.id).is('deleted_at', null);
             if (error) throw error;
             return data || [];
         },
@@ -120,7 +137,7 @@ const AttendancePage: React.FC = () => {
         queryKey: ['studentsForAttendance', selectedClass],
         queryFn: async () => {
             if (!selectedClass || !user) return [];
-            const { data: studentsData, error: studentsError } = await supabase.from('students').select('*').eq('class_id', selectedClass).eq('user_id', user.id).order('name', { ascending: true });
+            const { data: studentsData, error: studentsError } = await supabase.from('students').select('*').eq('class_id', selectedClass).eq('user_id', user.id).is('deleted_at', null).order('name', { ascending: true });
             if (studentsError) throw studentsError;
             return studentsData || [];
         },
@@ -133,10 +150,10 @@ const AttendancePage: React.FC = () => {
             if (!students || students.length === 0) return {};
             const { data: attendanceData, error: attendanceError } = await supabase.from('attendance').select('*').eq('date', selectedDate).in('student_id', students.map(s => s.id));
             if (attendanceError) throw attendanceError;
-            return (attendanceData || []).reduce((acc, record: any) => {
+            return (attendanceData || []).reduce<Record<string, AttendanceRecord>>((acc, record) => {
                 acc[record.student_id] = { id: record.id, status: record.status as AttendanceStatus, note: record.notes || '' };
                 return acc;
-            }, {} as Record<string, AttendanceRecord>);
+            }, {});
         },
         enabled: !!students && students.length > 0,
     });
@@ -144,6 +161,35 @@ const AttendancePage: React.FC = () => {
     useEffect(() => {
         setAttendanceRecords(existingAttendance || {});
     }, [existingAttendance]);
+
+    const calendarRange = useMemo(() => {
+        const [year, monthNum] = calendarMonth.split('-').map(Number);
+        if (!year || !monthNum) return null;
+        const monthStart = `${year}-${String(monthNum).padStart(2, '0')}-01`;
+        const monthEnd = new Date(year, monthNum, 0).toISOString().split('T')[0];
+        if (!selectedSemester) return { start: monthStart, end: monthEnd };
+
+        const start = monthStart < selectedSemester.start_date ? selectedSemester.start_date : monthStart;
+        const end = monthEnd > selectedSemester.end_date ? selectedSemester.end_date : monthEnd;
+        if (start > end) return null;
+        return { start, end };
+    }, [calendarMonth, selectedSemester]);
+
+    const { data: calendarAttendance = [] } = useQuery({
+        queryKey: ['attendanceCalendar', selectedClass, calendarRange?.start, calendarRange?.end],
+        queryFn: async () => {
+            if (!students || students.length === 0 || !calendarRange) return [];
+            const { data, error } = await supabase
+                .from('attendance')
+                .select('*')
+                .gte('date', calendarRange.start)
+                .lte('date', calendarRange.end)
+                .in('student_id', students.map(student => student.id));
+            if (error) throw error;
+            return data || [];
+        },
+        enabled: !!students && students.length > 0 && !!calendarRange,
+    });
 
     const { mutate: saveAttendance, isPending: isSaving } = useMutation<
         { synced: boolean },
@@ -223,8 +269,56 @@ const AttendancePage: React.FC = () => {
 
     const filteredStudents = useMemo(() => {
         if (!students) return [];
-        return students.filter(student => student.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    }, [students, searchQuery]);
+        return students.filter(student => student.name.toLowerCase().includes(deferredSearchQuery.toLowerCase()));
+    }, [students, deferredSearchQuery]);
+
+    const calendarSummaryRecords = useMemo(() => {
+        const grouped = new Map<string, AttendanceStatus[]>();
+        calendarAttendance.forEach((record: AttendanceRow) => {
+            const list = grouped.get(record.date) || [];
+            list.push(record.status as AttendanceStatus);
+            grouped.set(record.date, list);
+        });
+
+        const priority = [
+            AttendanceStatus.Alpha,
+            AttendanceStatus.Sakit,
+            AttendanceStatus.Izin,
+            AttendanceStatus.Hadir,
+            AttendanceStatus.Libur,
+        ];
+
+        return Array.from(grouped.entries()).map(([date, statuses]) => {
+            const counts: Record<AttendanceStatus, number> = {
+                [AttendanceStatus.Hadir]: 0,
+                [AttendanceStatus.Izin]: 0,
+                [AttendanceStatus.Sakit]: 0,
+                [AttendanceStatus.Alpha]: 0,
+                [AttendanceStatus.Libur]: 0,
+            };
+
+            statuses.forEach((status) => {
+                counts[status] += 1;
+            });
+
+            const nonLiburCount = statuses.filter(status => status !== AttendanceStatus.Libur).length;
+            if (nonLiburCount === 0) {
+                return { date, status: AttendanceStatus.Libur };
+            }
+
+            let selectedStatus = AttendanceStatus.Hadir;
+            let maxCount = -1;
+            priority.forEach((status) => {
+                const count = status === AttendanceStatus.Libur ? 0 : counts[status];
+                if (count > maxCount) {
+                    maxCount = count;
+                    selectedStatus = status;
+                }
+            });
+
+            return { date, status: selectedStatus };
+        });
+    }, [calendarAttendance]);
 
     const handleSaveNote = () => {
         if (selectedStudents.size === 0) return;
@@ -255,59 +349,115 @@ const AttendancePage: React.FC = () => {
         toast.success(`${unmarkedStudents.length} siswa ditandai Hadir`);
     };
 
-    const markAllAsPresent = () => {
-        if (!students) return;
-        const updatedRecords: Record<string, AttendanceRecord> = {};
-        students.forEach(student => {
-            updatedRecords[student.id] = { status: AttendanceStatus.Hadir, note: '' };
-        });
-        setAttendanceRecords(updatedRecords);
-        toast.success(`Semua siswa ditandai Hadir`);
-    };
+    const streakRange = useMemo(() => {
+        if (selectedSemester) {
+            return { start: selectedSemester.start_date, end: selectedSemester.end_date };
+        }
+        const end = selectedDate;
+        const startDate = new Date(`${selectedDate}T00:00:00`);
+        startDate.setDate(startDate.getDate() - 30);
+        const start = startDate.toISOString().split('T')[0];
+        return { start, end };
+    }, [selectedDate, selectedSemester]);
 
-    const markAllAsAlpha = () => {
-        if (!students) return;
-        const updatedRecords: Record<string, AttendanceRecord> = {};
-        students.forEach(student => {
-            updatedRecords[student.id] = { status: AttendanceStatus.Alpha, note: '' };
-        });
-        setAttendanceRecords(updatedRecords);
-        toast.warning(`Semua siswa ditandai Alpha`);
-    };
+    const { data: attendanceHistory = [] } = useQuery({
+        queryKey: ['attendanceHistory', selectedClass, streakRange.start, streakRange.end],
+        queryFn: async () => {
+            if (!students || students.length === 0) return [];
+            const { data, error } = await supabase
+                .from('attendance')
+                .select('*')
+                .gte('date', streakRange.start)
+                .lte('date', streakRange.end)
+                .in('student_id', students.map(student => student.id));
+            if (error) throw error;
+            return data || [];
+        },
+        enabled: !!students && students.length > 0,
+    });
 
-    // Calculate attendance streaks
+    // Calculate attendance streaks with real historical data
     const attendanceStreaks = useMemo(() => {
-        if (!students || students.length === 0) return [];
+        if (!students || students.length === 0 || attendanceHistory.length === 0) return [];
 
-        // This is a simplified version - you might want to fetch actual historical data
-        return students.map(student => {
-            const record = attendanceRecords[student.id];
-            // Mock data for demonstration - replace with actual streak calculation
-            const mockStreak = Math.floor(Math.random() * 30);
-            const mockRate = 75 + Math.random() * 25;
-
-            return {
-                studentId: student.id,
-                studentName: student.name,
-                currentStreak: record?.status === 'Hadir' ? mockStreak : 0,
-                longestStreak: mockStreak + 5,
-                attendanceRate: mockRate,
-            };
+        const recordsByStudent = new Map<string, AttendanceRow[]>();
+        attendanceHistory.forEach((record: AttendanceRow) => {
+            const list = recordsByStudent.get(record.student_id) || [];
+            list.push(record);
+            recordsByStudent.set(record.student_id, list);
         });
-    }, [students, attendanceRecords]);
+
+        const parseDate = (dateStr: string) => new Date(`${dateStr}T00:00:00`);
+        const dateKey = (date: Date) => date.toISOString().split('T')[0];
+
+        return students
+            .map((student) => {
+                const records = recordsByStudent.get(student.id) || [];
+                if (records.length === 0) return null;
+
+                records.sort((a, b) => a.date.localeCompare(b.date));
+
+                const total = records.length;
+                const presentCount = records.filter(record => record.status === AttendanceStatus.Hadir).length;
+                const attendanceRate = total > 0 ? (presentCount / total) * 100 : 0;
+
+                let longestStreak = 0;
+                let currentRun = 0;
+                let prevDate: Date | null = null;
+                let prevWasPresent = false;
+
+                records.forEach((record) => {
+                    const currentDate = parseDate(record.date);
+                    const isPresent = record.status === AttendanceStatus.Hadir;
+                    const isConsecutive = prevDate
+                        ? (currentDate.getTime() - prevDate.getTime()) / 86400000 === 1
+                        : false;
+
+                    if (isPresent) {
+                        if (prevWasPresent && isConsecutive) {
+                            currentRun += 1;
+                        } else {
+                            currentRun = 1;
+                        }
+                        longestStreak = Math.max(longestStreak, currentRun);
+                    } else {
+                        currentRun = 0;
+                    }
+
+                    prevDate = currentDate;
+                    prevWasPresent = isPresent;
+                });
+
+                const statusByDate = new Map<string, AttendanceStatus>();
+                records.forEach((record) => {
+                    statusByDate.set(record.date, record.status as AttendanceStatus);
+                });
+
+                let currentStreak = 0;
+                let cursor = parseDate(selectedDate);
+                while (true) {
+                    const status = statusByDate.get(dateKey(cursor));
+                    if (status !== AttendanceStatus.Hadir) break;
+                    currentStreak += 1;
+                    cursor.setDate(cursor.getDate() - 1);
+                }
+
+                return {
+                    studentId: student.id,
+                    studentName: student.name,
+                    currentStreak,
+                    longestStreak,
+                    attendanceRate,
+                };
+            })
+            .filter((streak): streak is NonNullable<typeof streak> => Boolean(streak));
+    }, [attendanceHistory, selectedDate, students]);
 
     // Handle template application
-    const handleApplyTemplate = (template: any) => {
+    const handleApplyTemplate = (template: { defaultStatus: AttendanceStatus, applyToAll: boolean }) => {
         if (!students) return;
 
         const newRecords = { ...attendanceRecords };
-
-        if (template.id === 'weekend') {
-            // Clear all attendance
-            setAttendanceRecords({});
-            toast.info('Absensi dikosongkan untuk hari libur');
-            return;
-        }
 
         if (template.applyToAll) {
             // Apply to all students
@@ -430,15 +580,15 @@ const AttendancePage: React.FC = () => {
         }
 
         const [studentsRes, attendanceRes, classesRes] = await Promise.all([
-            supabase.from('students').select('*').eq('user_id', user.id),
+            supabase.from('students').select('*').eq('user_id', user.id).is('deleted_at', null),
             supabase.from('attendance').select('*').eq('user_id', user.id).gte('date', startDate).lte('date', endDate),
-            supabase.from('classes').select('id, name').eq('user_id', user.id),
+            supabase.from('classes').select('id, name').eq('user_id', user.id).is('deleted_at', null),
         ]);
 
         if (studentsRes.error || attendanceRes.error || classesRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
 
         const classMap = new Map((classesRes.data || []).map(c => [c.id, { name: c.name }]));
-        const studentsWithClasses = (studentsRes.data || []).map((s: any) => ({
+        const studentsWithClasses = (studentsRes.data || []).map((s: StudentRow) => ({
             ...s,
             classes: classMap.get(s.class_id) || null
         }));
@@ -465,16 +615,16 @@ const AttendancePage: React.FC = () => {
                 exportTitle = `Absensi ${monthName} ${year}`;
             } else {
                 const semester = semesters.find(s => s.id === exportSemesterId);
-                exportTitle = `Absensi Semester ${semester?.type === 'odd' ? 'Ganjil' : 'Genap'} ${semester?.academic_year?.name || ''}`;
+                exportTitle = `Absensi Semester ${semester?.semester_number === 1 ? 'Ganjil' : 'Genap'} ${semester?.academic_years?.name || ''}`;
             }
 
-            let studentsByClass = classes.map((c: any) => ({
+            let studentsByClass = classes.map((c: ClassRow) => ({
                 ...c,
-                students: students.filter((s: any) => s.class_id === c.id).sort((a: any, b: any) => a.name.localeCompare(b.name))
-            })).filter((c: any) => c.students.length > 0);
+                students: students.filter((s: StudentRow) => s.class_id === c.id).sort((a: StudentRow, b: StudentRow) => a.name.localeCompare(b.name))
+            })).filter((c) => c.students.length > 0);
 
             if (selectedExportClass !== 'all') {
-                studentsByClass = studentsByClass.filter((c: any) => c.id === selectedExportClass);
+                studentsByClass = studentsByClass.filter((c: ClassRow) => c.id === selectedExportClass);
             }
 
             if (exportPeriod === 'monthly' && format === 'pdf') {
@@ -484,6 +634,8 @@ const AttendancePage: React.FC = () => {
                 const daysInMonth = new Date(year, monthNum, 0).getDate();
                 const monthName = new Date(year, monthNum - 1).toLocaleString('id-ID', { month: 'long' });
 
+                const { default: jsPDF } = await getJsPDF();
+                const { default: autoTable } = await getAutoTable();
                 const doc = new jsPDF({ orientation: 'landscape' });
                 const pageHeight = doc.internal.pageSize.getHeight();
                 const pageWidth = doc.internal.pageSize.getWidth();
@@ -507,25 +659,26 @@ const AttendancePage: React.FC = () => {
                     // but to save tokens/complexity I will simplify or copy relevant parts.
 
                     // Re-implementing specific monthly table logic
-                    const head = [['No', 'Nama Siswa', ...Array.from({ length: daysInMonth }, (_, i) => String(i + 1)), 'H', 'S', 'I', 'A']];
-                    const body = classData.students.map((student: any, index: number) => {
+                    const head = [['No', 'Nama Siswa', ...Array.from({ length: daysInMonth }, (_, i) => String(i + 1)), 'H', 'S', 'I', 'A', 'L']];
+                    const body = classData.students.map((student: StudentRow, index: number) => {
                         const row = [String(index + 1), student.name];
-                        let h = 0, s = 0, i = 0, a = 0;
+                        let h = 0, s = 0, i = 0, a = 0, l = 0;
                         for (let day = 1; day <= daysInMonth; day++) {
                             const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                            const record = attendance.find((att: any) => att.student_id === student.id && att.date === dateStr);
+                            const record = attendance.find((att: AttendanceRow) => att.student_id === student.id && att.date === dateStr);
                             if (record) {
-                                const statusChar = { Hadir: 'H', Sakit: 'S', Izin: 'I', Alpha: 'A' }[record.status as string] || '-';
+                                const statusChar = { Hadir: 'H', Sakit: 'S', Izin: 'I', Alpha: 'A', Libur: 'L' }[record.status as string] || '-';
                                 row.push(statusChar);
                                 if (record.status === 'Hadir') h++;
                                 else if (record.status === 'Sakit') s++;
                                 else if (record.status === 'Izin') i++;
                                 else if (record.status === 'Alpha') a++;
+                                else if (record.status === 'Libur') l++;
                             } else {
                                 row.push('-');
                             }
                         }
-                        row.push(String(h), String(s), String(i), String(a));
+                        row.push(String(h), String(s), String(i), String(a), String(l));
                         return row;
                     });
 
@@ -539,7 +692,7 @@ const AttendancePage: React.FC = () => {
                         alternateRowStyles: { fillColor: '#f8fafc' },
                         columnStyles: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 40, fontStyle: 'bold' } },
                         didDrawCell: (data: any) => {
-                            const statusColors: Record<string, string> = { 'S': '#3b82f6', 'I': '#f59e0b', 'A': '#ef4444', 'H': '#dcfce7' };
+                            const statusColors: Record<string, string> = { 'S': '#3b82f6', 'I': '#f59e0b', 'A': '#ef4444', 'H': '#dcfce7', 'L': '#a78bfa' };
                             const cellText = data.cell.text[0];
                             if (data.column.index > 1 && data.column.index < daysInMonth + 2 && statusColors[cellText]) {
                                 if (cellText === 'H') { doc.setFillColor(statusColors[cellText]); doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F'); doc.setTextColor('#166534'); }
@@ -549,7 +702,6 @@ const AttendancePage: React.FC = () => {
                         }
                     });
                     // Footer
-                    const pageCount = (doc as any).internal.getNumberOfPages();
                     doc.setFontSize(8); doc.setTextColor('#94a3b8');
                     doc.text(`Dicetak dari PortalGuru pada ${new Date().toLocaleDateString('id-ID')}`, 14, pageHeight - 10);
                 }
@@ -564,6 +716,8 @@ const AttendancePage: React.FC = () => {
             } else if (exportPeriod === 'semester' && format === 'pdf') {
                 // SEMESTER PDF LOGIC (Summary)
                 await ensureLogosLoaded();
+                const { default: jsPDF } = await getJsPDF();
+                const { default: autoTable } = await getAutoTable();
                 const doc = new jsPDF({ orientation: 'portrait' });
                 const pageHeight = doc.internal.pageSize.getHeight();
                 const pageWidth = doc.internal.pageSize.getWidth();
@@ -580,12 +734,12 @@ const AttendancePage: React.FC = () => {
                     yPos += 10;
 
                     const head = [['No', 'Nama Siswa', 'H', 'S', 'I', 'A', '% Kehadiran']];
-                    const body = classData.students.map((student: any, index: number) => {
-                        const studentAttendance = attendance.filter((a: any) => a.student_id === student.id);
-                        const h = studentAttendance.filter((a: any) => a.status === 'Hadir').length;
-                        const s = studentAttendance.filter((a: any) => a.status === 'Sakit').length;
-                        const i = studentAttendance.filter((a: any) => a.status === 'Izin').length;
-                        const a = studentAttendance.filter((a: any) => a.status === 'Alpha').length;
+                    const body = classData.students.map((student: StudentRow, index: number) => {
+                        const studentAttendance = attendance.filter((a: AttendanceRow) => a.student_id === student.id);
+                        const h = studentAttendance.filter((a: AttendanceRow) => a.status === 'Hadir').length;
+                        const s = studentAttendance.filter((a: AttendanceRow) => a.status === 'Sakit').length;
+                        const i = studentAttendance.filter((a: AttendanceRow) => a.status === 'Izin').length;
+                        const a = studentAttendance.filter((a: AttendanceRow) => a.status === 'Alpha').length;
                         const total = h + s + i + a;
                         const percentage = total > 0 ? Math.round((h / total) * 100) : 0;
                         return [String(index + 1), student.name, String(h), String(s), String(i), String(a), `${percentage}%`];
@@ -815,7 +969,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
                                 <CalendarIcon className="w-5 h-5 sm:w-7 sm:h-7" />
                             </div>
                             <div className="text-left flex-1 min-w-0">
-                                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-100 mb-0.5 sm:mb-1">Tanggal Absensi</p>
+                                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-green-100 mb-0.5 sm:mb-1">Tanggal Absensi</p>
                                 <h2 className="text-base sm:text-2xl font-bold text-white leading-tight">
                                     {new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                 </h2>
@@ -878,9 +1032,9 @@ Berikan respon dalam format JSON dengan struktur berikut:
                             const element = document.getElementById(`student-${studentId}`);
                             if (element) {
                                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                element.classList.add('ring-2', 'ring-indigo-500');
+                                element.classList.add('ring-2', 'ring-green-500');
                                 setTimeout(() => {
-                                    element.classList.remove('ring-2', 'ring-indigo-500');
+                                    element.classList.remove('ring-2', 'ring-green-500');
                                 }, 2000);
                             }
                         }}
@@ -918,7 +1072,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
                                         onClick={() => setIsQrModalOpen(true)}
                                         size="sm"
                                         variant="ghost"
-                                        className="text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 px-2 sm:px-3"
+                                        className="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 px-2 sm:px-3"
                                         aria-label="Generate QR Code"
                                     >
                                         <QrCodeIcon className="w-4 h-4 sm:mr-1.5" />
@@ -927,7 +1081,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
                                     <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 ml-1">
                                         <button
                                             onClick={() => setViewMode('list')}
-                                            className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                            className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                                             aria-label="Tampilan daftar"
                                             aria-pressed={viewMode === 'list'}
                                         >
@@ -935,7 +1089,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
                                         </button>
                                         <button
                                             onClick={() => setViewMode('calendar')}
-                                            className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'calendar' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                            className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'calendar' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                                             aria-label="Tampilan kalender"
                                             aria-pressed={viewMode === 'calendar'}
                                         >
@@ -960,14 +1114,14 @@ Berikan respon dalam format JSON dengan struktur berikut:
                                 placeholder="Cari nama siswa..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 h-9 text-sm bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-indigo-500"
+                                className="pl-9 h-9 text-sm bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-green-500"
                                 aria-label="Cari siswa berdasarkan nama"
                             />
                         </div>
                     </div>
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                         {unmarkedStudents.length > 0 && viewMode === 'list' && (
-                            <Button onClick={markRestAsPresent} size="sm" variant="ghost" className="w-full sm:w-auto text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20 font-medium">
+                            <Button onClick={markRestAsPresent} size="sm" variant="ghost" className="w-full sm:w-auto text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 font-medium">
                                 <CheckCircleIcon className="w-4 h-4 mr-2" />
                                 Tandai Sisa Hadir ({unmarkedStudents.length})
                             </Button>
@@ -987,16 +1141,16 @@ Berikan respon dalam format JSON dengan struktur berikut:
                         />
                     ) : viewMode === 'calendar' ? (
                         <AttendanceCalendar
-                            records={Object.entries(attendanceRecords).map(([id, rec]) => ({
-                                date: selectedDate,
-                                status: rec.status
-                            }))}
+                            records={calendarSummaryRecords}
+                            selectedDate={selectedDate}
                             onDateClick={(date) => setSelectedDate(date)}
+                            onMonthChange={(date) => setCalendarMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`)}
                         />
                     ) : (
                         <AttendanceList
                             students={filteredStudents}
                             attendanceRecords={attendanceRecords}
+                            selectedDate={selectedDate}
                             onStatusChange={handleStatusChange}
                             onNoteClick={(studentId, currentNote) => {
                                 setNoteText(currentNote);
@@ -1009,12 +1163,12 @@ Berikan respon dalam format JSON dengan struktur berikut:
 
                 {/* Fixed Save Button */}
                 {students && students.length > 0 && (
-                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-30 flex justify-center animate-fade-in-up">
+                    <div className="fixed bottom-[68px] lg:bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-30 flex justify-center animate-fade-in-up">
                         <div className="w-full max-w-7xl">
                             <Button
                                 onClick={handleSave}
                                 disabled={isSaving}
-                                className="w-full h-14 text-lg font-bold shadow-xl shadow-indigo-500/30 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 border-none rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                className="w-full h-14 text-lg font-bold shadow-xl shadow-emerald-500/30 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-none rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
                             </Button>
@@ -1036,7 +1190,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
                     <textarea
                         value={noteText}
                         onChange={(e) => setNoteText(e.target.value)}
-                        className="w-full h-32 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                        className="w-full h-32 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                         placeholder="Contoh: Pulang cepat karena urusan keluarga..."
                     />
                     <div className="flex justify-end gap-2">
@@ -1064,9 +1218,9 @@ Berikan respon dalam format JSON dengan struktur berikut:
 
             <BottomSheet isOpen={isDatePickerOpen} onClose={() => setDatePickerOpen(false)} title="Pilih Tanggal Absensi">
                 <div className="space-y-6 pb-6">
-                    <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/50 flex items-start gap-3">
-                        <InfoIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-indigo-800 dark:text-indigo-200">
+                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-100 dark:border-green-800/50 flex items-start gap-3">
+                        <InfoIcon className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-green-800 dark:text-green-200">
                             Anda sedang melihat data absensi untuk tanggal <span className="font-bold">{new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>.
                         </p>
                     </div>
@@ -1080,8 +1234,8 @@ Berikan respon dalam format JSON dengan struktur berikut:
                                     setDatePickerOpen(false);
                                 }}
                                 className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate === today
-                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200'
+                                    ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-500/30'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-green-400 dark:hover:border-green-500 text-slate-700 dark:text-slate-200'
                                     }`}
                             >
                                 <CalendarIcon className="w-5 h-5" />
@@ -1096,8 +1250,8 @@ Berikan respon dalam format JSON dengan struktur berikut:
                                     setDatePickerOpen(false);
                                 }}
                                 className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate !== today && new Date(selectedDate).getTime() === new Date(new Date().setDate(new Date().getDate() - 1)).getTime()
-                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 text-slate-700 dark:text-slate-200'
+                                    ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-500/30'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-green-400 dark:hover:border-green-500 text-slate-700 dark:text-slate-200'
                                     }`}
                             >
                                 <span className="font-bold">Kemarin</span>
