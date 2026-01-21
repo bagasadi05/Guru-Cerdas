@@ -440,7 +440,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
+      },
+      communications: {
+        Row: {
+          created_at: string
+          id: string
+          student_id: string
+          teacher_id: string
+          user_id: string
+          content: string
+          sender: 'teacher' | 'parent'
+          is_read: boolean
+          parent_id: string | null
+          attachment_url: string | null
+          attachment_type: 'image' | 'document' | null
+          attachment_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          student_id: string
+          teacher_id: string
+          user_id?: string
+          content: string
+          sender: 'teacher' | 'parent'
+          is_read?: boolean
+          parent_id?: string | null
+          attachment_url?: string | null
+          attachment_type?: 'image' | 'document' | null
+          attachment_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          student_id?: string
+          teacher_id?: string
+          user_id?: string
+          content?: string
+          sender?: 'teacher' | 'parent'
+          is_read?: boolean
+          parent_id?: string | null
+          attachment_url?: string | null
+          attachment_type?: 'image' | 'document' | null
+          attachment_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
       extracurricular_attendance: {
         Row: {
           created_at: string
@@ -956,6 +1009,8 @@ export type Database = {
           nis: string
           nisn: string
           photo_url: string
+          avatar_url?: string
+          access_code?: string
           status: string
           updated_at: string | null
           user_id: string
@@ -975,6 +1030,8 @@ export type Database = {
           nis: string
           nisn: string
           photo_url: string
+          avatar_url?: string
+          access_code?: string
           status?: string
           updated_at?: string | null
           user_id: string
@@ -994,6 +1051,8 @@ export type Database = {
           nis?: string
           nisn?: string
           photo_url?: string
+          avatar_url?: string
+          access_code?: string
           status?: string
           updated_at?: string | null
           user_id?: string
@@ -1179,6 +1238,14 @@ export type Database = {
         Args: {
           p_semester_id: string
           p_year_id: string
+        }
+        Returns: undefined
+      }
+      apply_quiz_points_to_grade: {
+        Args: {
+          student_id_param: string
+          subject_param: string
+          user_id_param: string
         }
         Returns: undefined
       }

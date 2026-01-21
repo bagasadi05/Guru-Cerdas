@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { CardTitle } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { MessageSquareIcon, UsersIcon, CheckCircleIcon, PencilIcon, TrashIcon, SendIcon, SearchIcon, FileTextIcon, ChevronDownIcon, XCircleIcon, CameraIcon, LinkIcon } from '../../Icons';
+import { MessageSquareIcon, UsersIcon, CheckCircleIcon, PencilIcon, TrashIcon, SendIcon, SearchIcon, FileTextIcon, ChevronDownIcon, XCircleIcon } from '../../Icons';
 import { CommunicationRow } from './types';
 import { MESSAGE_TEMPLATES, TEMPLATE_CATEGORIES, MessageTemplate, applyTemplate } from '../../../data/messageTemplates';
 
@@ -64,7 +64,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
             // Apply search query
             if (searchQuery.trim()) {
                 const query = searchQuery.toLowerCase();
-                return msg.message.toLowerCase().includes(query);
+                return (msg.message || '').toLowerCase().includes(query);
             }
 
             return true;

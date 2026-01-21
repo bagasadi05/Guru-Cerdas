@@ -289,8 +289,7 @@ const MassInputPage: React.FC = () => {
                         points: selectedViolation.points,
                         type: selectedViolation.code,
                         student_id,
-                        user_id: user.id,
-                        teacher_id: user.id
+                        user_id: user.id
                     }));
                     const { data, error } = await supabase.from('violations').insert(records).select();
                     if (error) throw error;

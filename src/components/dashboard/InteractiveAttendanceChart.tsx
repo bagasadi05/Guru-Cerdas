@@ -1,32 +1,57 @@
 /**
  * Interactive Attendance Chart Component
  * 
- * Enhanced version with tooltips, click interactions, and export
+ * Enhanced version with tooltips, click interactions, date range filter, and export
  */
 
-import React, { useState } from 'react';
-import { TrendingUp, Download, Info } from 'lucide-react';
+import React, { useState, useMemo, memo } from 'react';
+import { TrendingUp, Download, Info, Calendar, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface AttendanceData {
     day: string;
     present_percentage: number;
     present?: number;
     total?: number;
+    date?: string; // Added for date filtering
 }
+
+type DateRangeOption = '5days' | '7days' | '14days' | '30days';
 
 interface InteractiveAttendanceChartProps {
     data: AttendanceData[];
     onBarClick?: (day: string) => void;
     showExport?: boolean;
+    showDateFilter?: boolean;
+    onDateRangeChange?: (range: DateRangeOption) => void;
+    initialDateRange?: DateRangeOption;
 }
 
-export const InteractiveAttendanceChart: React.FC<InteractiveAttendanceChartProps> = ({
+const InteractiveAttendanceChartBase: React.FC<InteractiveAttendanceChartProps> = ({
     data,
     onBarClick,
     showExport = true,
+    showDateFilter = false,
+    onDateRangeChange,
+    initialDateRange = '5days',
 }) => {
     const [hoveredDay, setHoveredDay] = useState<string | null>(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+    const [selectedRange, setSelectedRange] = useState<DateRangeOption>(initialDateRange);
+    const [showRangeDropdown, setShowRangeDropdown] = useState(false);
+
+    const rangeLabels: Record<DateRangeOption, string> = useMemo(() => ({
+        '5days': '5 Hari',
+        '7days': '7 Hari',
+        '14days': '14 Hari',
+        '30days': '30 Hari',
+    }), []);
+
+    const handleRangeChange = (range: DateRangeOption) => {
+        setSelectedRange(range);
+        setShowRangeDropdown(false);
+        onDateRangeChange?.(range);
+    };
 
     const maxPercentage = Math.max(...data.map(d => d.present_percentage), 100);
 
@@ -94,16 +119,50 @@ export const InteractiveAttendanceChart: React.FC<InteractiveAttendanceChartProp
                         <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                     </button>
                 )}
+
+                {/* Date Range Filter */}
+                {showDateFilter && (
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowRangeDropdown(!showRangeDropdown)}
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                            aria-label="Pilih rentang waktu"
+                        >
+                            <Calendar className="w-4 h-4" />
+                            <span>{rangeLabels[selectedRange]}</span>
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showRangeDropdown ? 'rotate-180' : ''}`} />
+                        </button>
+                        <AnimatePresence>
+                            {showRangeDropdown && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 min-w-[120px]"
+                                >
+                                    {(Object.keys(rangeLabels) as DateRangeOption[]).map((range) => (
+                                        <button
+                                            key={range}
+                                            onClick={() => handleRangeChange(range)}
+                                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg ${selectedRange === range ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : ''}`}
+                                        >
+                                            {rangeLabels[range]}
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                )}
             </div>
 
-            {/* Chart */}
-            <div className="relative h-48 flex items-end justify-between gap-2">
-                {data.map((item, index) => {
+            {/* Chart with responsive height */}
+            <div className="relative h-36 sm:h-48 md:h-56 flex items-end justify-between gap-1 sm:gap-2">
+                {data.map((item) => {
                     const height = (item.present_percentage / maxPercentage) * 100;
                     const isHovered = hoveredDay === item.day;
                     const isLow = item.present_percentage < 70;
                     const isMedium = item.present_percentage >= 70 && item.present_percentage < 85;
-                    const isHigh = item.present_percentage >= 85;
 
                     return (
                         <div
@@ -207,3 +266,9 @@ export const InteractiveAttendanceChart: React.FC<InteractiveAttendanceChartProp
         </div>
     );
 };
+
+// Export with React.memo for performance optimization
+export const InteractiveAttendanceChart = memo(InteractiveAttendanceChartBase);
+
+// Also export types for consumers
+export type { DateRangeOption, AttendanceData, InteractiveAttendanceChartProps };

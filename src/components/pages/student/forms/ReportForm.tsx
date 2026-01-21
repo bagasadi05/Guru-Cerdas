@@ -6,7 +6,7 @@ import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
 import { ReportRow } from '../types';
 import { REPORT_CATEGORIES, COMMON_TAGS, ReportCategory } from '../ReportsTab';
-import { UploadIcon, XIcon, ImageIcon, FileTextIcon } from 'lucide-react';
+import { UploadIcon, XIcon, FileTextIcon } from 'lucide-react';
 
 interface ReportFormProps {
     defaultValues: ReportRow | null;
@@ -27,7 +27,8 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
             date: defaultValues?.date || new Date().toISOString().slice(0, 10),
             title: defaultValues?.title || '',
             notes: defaultValues?.notes || '',
-            category: defaultValues?.category || null,
+            // Cast to any because DB type is string but schema is strict enum
+            category: (defaultValues?.category as any) || null,
             tags: defaultValues?.tags || [],
         }
     });
@@ -89,8 +90,8 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
                         <label
                             key={key}
                             className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedCategory === key
-                                    ? `border-${cat.color}-500 bg-${cat.color}-50 dark:bg-${cat.color}-900/30`
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                ? `border-${cat.color}-500 bg-${cat.color}-50 dark:bg-${cat.color}-900/30`
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                 }`}
                         >
                             <input
@@ -129,8 +130,8 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
                     rows={4}
                     placeholder="Tuliskan catatan lengkap..."
                     className={`w-full px-3 py-2 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 ${errors.notes
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                            : 'border-gray-200 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500'
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                        : 'border-gray-200 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500'
                         }`}
                 />
                 {errors.notes && <p className="text-red-500 text-xs mt-1">{errors.notes.message}</p>}
@@ -146,8 +147,8 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
                             type="button"
                             onClick={() => handleToggleTag(tag)}
                             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${selectedTags.includes(tag)
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                                 }`}
                         >
                             #{tag}

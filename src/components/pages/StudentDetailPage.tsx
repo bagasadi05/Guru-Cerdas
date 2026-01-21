@@ -6,15 +6,14 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, AlertCircleIcon, FileTextIcon, UserCircleIcon, BrainCircuitIcon, CameraIcon, ShieldAlertIcon, PlusIcon, BookOpenIcon, SparklesIcon, MessageSquareIcon, KeyRoundIcon, CopyIcon, CopyCheckIcon, Share2Icon, PrinterIcon } from '../Icons';
+import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, AlertCircleIcon, FileTextIcon, UserCircleIcon, BrainCircuitIcon, CameraIcon, ShieldAlertIcon, PlusIcon, BookOpenIcon, SparklesIcon, MessageSquareIcon, KeyRoundIcon, CopyIcon, CopyCheckIcon } from '../Icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Modal } from '../ui/Modal';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { Database } from '../../services/database.types';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
-import { Skeleton } from '../ui/Skeleton';
 import { optimizeImage } from '../utils/image';
 import { violationList } from '../../services/violations.data';
 import { ChildDevelopmentAnalysisTab } from './ChildDevelopmentAnalysisTab';
@@ -82,7 +81,7 @@ const StudentDetailPage = () => {
         if (activeSemester && !selectedSemesterId) {
             setSelectedSemesterId(activeSemester.id);
         }
-    }, [activeSemester]);
+    }, [activeSemester, selectedSemesterId]);
 
     useEffect(() => {
         if (location.state?.openTab) {
@@ -163,7 +162,7 @@ const StudentDetailPage = () => {
         if (!user || !studentId) return;
         const reportPayload = {
             title: data.title,
-            content: data.notes || '',
+            notes: data.notes || '',
             type: 'general',
             date: data.date,
             student_id: studentId,
@@ -248,8 +247,13 @@ const StudentDetailPage = () => {
     }, [studentDetails?.attendanceRecords, selectedSemesterId]);
 
     const attendanceSummary = useMemo(() => {
-        const summary = { Hadir: 0, Izin: 0, Sakit: 0, Alpha: 0 };
-        filteredAttendance.forEach(rec => { summary[rec.status as AttendanceStatus]++; });
+        const summary = { Hadir: 0, Izin: 0, Sakit: 0, Alpha: 0, Libur: 0 };
+        filteredAttendance.forEach(rec => {
+            const status = rec.status as AttendanceStatus;
+            if (status in summary) {
+                summary[status as keyof typeof summary]++;
+            }
+        });
         return summary;
     }, [filteredAttendance]);
 
@@ -459,7 +463,7 @@ const StudentDetailPage = () => {
     if (isError) return <div className="flex items-center justify-center h-screen">Error: {(queryError as Error).message}</div>;
     if (!studentDetails || !studentDetails.student) return null;
 
-    const { student, reports, academicRecords, quizPoints, violations, classes, communications } = studentDetails;
+    const { student, reports, academicRecords, quizPoints, classes, communications } = studentDetails;
 
 
     return (

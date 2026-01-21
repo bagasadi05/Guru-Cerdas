@@ -81,7 +81,9 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
 
     const communicationMutation = useMutation({
         mutationFn: async (vars: CommunicationMutationVars) => {
-            const { error } = await supabase.from('communications').update(vars.data).eq('id', vars.id);
+            const { error } = await supabase.from('communications').update({
+                content: vars.data.message
+            }).eq('id', vars.id);
             if (error) throw error;
         },
         ...mutationOptions
@@ -172,7 +174,8 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             const { error } = await supabase.from('communications').insert({
                 student_id: studentId,
                 user_id: user.id,
-                message: params.message,
+                teacher_id: user.id, // Add required teacher_id
+                content: params.message, // Map message to content
                 sender: 'teacher',
                 is_read: false,
                 attachment_url: attachmentUrl,
