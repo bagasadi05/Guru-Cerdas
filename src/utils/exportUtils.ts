@@ -10,6 +10,35 @@
 import { getXLSX } from './dynamicImports';
 
 /**
+ * Type definitions for export utilities
+ */
+
+/** Generic export row type - key-value pairs for Excel export */
+export type ExportRow = Record<string, string | number | boolean | null | undefined>;
+
+/** Student data for export functions */
+export interface ExportStudent {
+    id: string;
+    name: string;
+    gender?: string;
+}
+
+/** Attendance record for export functions */
+export interface ExportAttendanceRecord {
+    student_id: string;
+    date: string;
+    status: 'Hadir' | 'Sakit' | 'Izin' | 'Alpha' | string;
+}
+
+/** Academic record for export functions */
+export interface ExportAcademicRecord {
+    student_id: string;
+    subject: string;
+    assessment_name?: string;
+    score: number;
+}
+
+/**
  * Exports an array of data to an Excel file
  * 
  * This is a general-purpose Excel exporter which converts an array of objects
@@ -37,7 +66,7 @@ import { getXLSX } from './dynamicImports';
  * 
  * @since 1.0.0
  */
-export const exportToExcel = async (data: any[], fileName: string, sheetName: string = 'Sheet1') => {
+export const exportToExcel = async (data: ExportRow[], fileName: string, sheetName: string = 'Sheet1') => {
     if (!data || data.length === 0) {
         console.warn("No data to export");
         return;
@@ -118,8 +147,8 @@ export const exportToExcel = async (data: any[], fileName: string, sheetName: st
  * @since 2.0.0
  */
 export const exportAttendanceToExcel = async (
-    classData: { name: string; students: any[] },
-    attendanceData: any[],
+    classData: { name: string; students: ExportStudent[] },
+    attendanceData: ExportAttendanceRecord[],
     monthName: string,
     year: number,
     monthIndex: number,
@@ -230,7 +259,7 @@ export const exportAttendanceToExcel = async (
     const row6 = worksheet.getRow(6);
     row6.values = row6Data;
     row6.height = 20;
-    row6.eachCell((cell, colNum) => {
+    row6.eachCell((cell, _colNum) => {
         cell.font = { bold: true, color: { argb: 'FFFFFF' } };
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA726' } };
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -262,7 +291,7 @@ export const exportAttendanceToExcel = async (
         for (let d = 1; d <= 31; d++) {
             if (d <= daysInMonth) {
                 const dateStr = `${year}-${String(monthIndex).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const record = attendanceData.find((att: any) => att.student_id === student.id && att.date === dateStr);
+                const record = attendanceData.find((att) => att.student_id === student.id && att.date === dateStr);
 
                 if (record) {
                     const statusMap: Record<string, string> = { 'Hadir': 'H', 'Sakit': 'S', 'Izin': 'I', 'Alpha': 'A' };
@@ -369,12 +398,12 @@ export const exportAttendanceToExcel = async (
 export const exportClassGradesToExcel = async (
     className: string,
     students: { id: string; name: string }[],
-    academicRecords: any[],
+    academicRecords: ExportAcademicRecord[],
     fileName: string
 ) => {
     const XLSX = await getXLSX();
     const wb = XLSX.utils.book_new();
-    const ws_data: any[][] = [];
+    const ws_data: (string | number)[][] = [];
 
     // Header
     ws_data.push(["REKAP NILAI SISWA"]);
@@ -509,13 +538,13 @@ export const exportClassGradesToExcel = async (
 export const exportClassSummaryToExcel = async (
     className: string,
     students: { id: string; name: string; gender: string }[],
-    attendanceData: any[],
-    academicRecords: any[],
+    attendanceData: ExportAttendanceRecord[],
+    academicRecords: ExportAcademicRecord[],
     fileName: string
 ) => {
     const XLSX = await getXLSX();
     const wb = XLSX.utils.book_new();
-    const ws_data: any[][] = [];
+    const ws_data: (string | number)[][] = [];
 
     // Header
     ws_data.push(["LAPORAN RINGKASAN KELAS"]);

@@ -1102,35 +1102,56 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          deleted_at: string | null
           description: string
+          evidence_url: string | null
+          follow_up_notes: string | null
+          follow_up_status: string | null
           id: string
+          parent_notified: boolean | null
+          parent_notified_at: string | null
           points: number
+          semester_id: string | null
+          severity: string | null
           student_id: string
-          teacher_id: string
           type: string | null
-          updated_at: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
-          date?: string
+          date: string
+          deleted_at?: string | null
           description: string
+          evidence_url?: string | null
+          follow_up_notes?: string | null
+          follow_up_status?: string | null
           id?: string
+          parent_notified?: boolean | null
+          parent_notified_at?: string | null
           points: number
+          semester_id?: string | null
+          severity?: string | null
           student_id: string
-          teacher_id: string
           type?: string | null
-          updated_at?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
           date?: string
+          deleted_at?: string | null
           description?: string
+          evidence_url?: string | null
+          follow_up_notes?: string | null
+          follow_up_status?: string | null
           id?: string
+          parent_notified?: boolean | null
+          parent_notified_at?: string | null
           points?: number
+          semester_id?: string | null
+          severity?: string | null
           student_id?: string
-          teacher_id?: string
           type?: string | null
-          updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -1138,6 +1159,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "violations_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: false
+            referencedRelation: "semesters"
             referencedColumns: ["id"]
           },
         ]

@@ -178,15 +178,24 @@ export function clearHighlights(): void {
     document.querySelectorAll('.touch-target-highlight').forEach(el => el.remove());
 }
 
+// Extend Window interface for touch audit utilities
+declare global {
+    interface Window {
+        auditTouchTargets?: () => AuditResult;
+        highlightTouchIssues?: (result?: AuditResult) => AuditResult;
+        clearTouchHighlights?: () => void;
+    }
+}
+
 // Attach to window for console usage
 if (typeof window !== 'undefined') {
-    (window as any).auditTouchTargets = runTouchTargetAudit;
-    (window as any).highlightTouchIssues = (result?: AuditResult) => {
+    window.auditTouchTargets = runTouchTargetAudit;
+    window.highlightTouchIssues = (result?: AuditResult) => {
         const auditResult = result || auditTouchTargets();
         highlightIssues(auditResult);
         return auditResult;
     };
-    (window as any).clearTouchHighlights = clearHighlights;
+    window.clearTouchHighlights = clearHighlights;
 }
 
 export default {

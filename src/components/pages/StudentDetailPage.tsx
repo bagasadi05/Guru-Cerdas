@@ -293,8 +293,8 @@ const StudentDetailPage = () => {
             const { error } = await supabase
                 .from('violations')
                 .update({
-                    // follow_up_status: status, // TODO: Add column to DB
-                    // follow_up_notes: notes // TODO: Add column to DB
+                    follow_up_status: status,
+                    follow_up_notes: notes
                 })
                 .eq('id', violationId);
 
@@ -332,8 +332,8 @@ const StudentDetailPage = () => {
             const { error: updateError } = await supabase
                 .from('violations')
                 .update({
-                    // parent_notified: true, // TODO: Add column to DB
-                    // parent_notified_at: new Date().toISOString() // TODO: Add column to DB
+                    parent_notified: true,
+                    parent_notified_at: new Date().toISOString()
                 })
                 .eq('id', violation.id);
 

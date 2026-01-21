@@ -244,10 +244,10 @@ export function validateData<T>(schema: z.ZodSchema<T>, data: unknown): Validati
     }
 
     const errors: Record<string, string[]> = {};
-    // Zod v4 uses 'issues' instead of 'errors'
-    const issues = (result.error as any).issues || (result.error as any).errors || [];
-    issues.forEach((issue: any) => {
-        const path = (issue.path || []).join('.');
+    // Use ZodError's issues array (works in both v3 and v4)
+    const issues = result.error.issues;
+    issues.forEach((issue) => {
+        const path = issue.path.join('.') || '_root';
         if (!errors[path]) {
             errors[path] = [];
         }
