@@ -131,18 +131,14 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                     {/* Violation Export Button */}
                     {mode === 'violation' && existingViolations && existingViolations.length > 0 && (
                         <DropdownMenu>
-                            <DropdownTrigger>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="relative gap-2 bg-gradient-to-r from-orange-500/10 to-amber-500/10 border-orange-500/30 text-orange-500 dark:text-orange-400 hover:from-orange-500/20 hover:to-amber-500/20 hover:border-orange-500/50 transition-all duration-300"
-                                >
-                                    <DownloadIcon className="w-4 h-4" />
-                                    <span>Export Data</span>
-                                    <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30">
-                                        {existingViolations.length}
-                                    </span>
-                                </Button>
+                            <DropdownTrigger className="relative inline-flex items-center gap-2 bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-500/30 text-orange-500 dark:text-orange-400 hover:from-orange-500/20 hover:to-amber-500/20 hover:border-orange-500/50 transition-all duration-300 text-sm px-3 py-1.5 rounded-lg font-medium">
+
+                                <DownloadIcon className="w-4 h-4" />
+                                <span>Export Data</span>
+                                <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30">
+                                    {existingViolations.length}
+                                </span>
+
                             </DropdownTrigger>
                             <DropdownContent className="min-w-[180px]">
                                 <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
@@ -206,6 +202,6 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                     )}
                 </div>
             </div>
-        </footer>
+        </footer >
     );
 };

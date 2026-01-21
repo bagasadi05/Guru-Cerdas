@@ -4,7 +4,7 @@ import { Checkbox } from '../../../ui/Checkbox';
 import { SearchIcon, CheckSquareIcon, BarChartIcon } from '../../../Icons';
 import { FilterPills } from './FilterPills';
 import { StudentRow, InputMode, StudentFilter, AcademicRecordRow } from '../types';
-import { useGridNavigation } from '../../../../hooks/useKeyboardShortcuts';
+import { useGridNavigation } from '../../../../hooks/useGridNavigation';
 import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortField, SortDirection, GroupBy } from '../../../ui/StudentSortControls';
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
 

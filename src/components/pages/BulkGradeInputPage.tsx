@@ -13,7 +13,8 @@ import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, UploadIcon, TrashIcon, AlertT
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '../ui/Skeleton';
 import { Database } from '../../services/database.types';
-import { useKeyboardShortcuts, useGridNavigation } from '../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcutsLegacy';
+import { useGridNavigation } from '../../hooks/useGridNavigation';
 import { useAutosave } from '../../hooks/useAutosave';
 import { validateGrades, getGradeColorClass, calculateGradeStats, GradeEntry } from '../../utils/gradeValidator';
 import { VirtualList } from '../ui/VirtualList';

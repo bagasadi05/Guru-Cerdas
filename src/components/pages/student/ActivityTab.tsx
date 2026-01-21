@@ -23,7 +23,7 @@ interface ActivityTabProps {
     quizPoints: QuizPointRow[];
     onAdd: () => void;
     onEdit: (record: QuizPointRow) => void;
-    onDelete: (id: number) => void;
+    onDelete: (id: string | number) => void;
     onApplyPoints: () => void;
     isOnline: boolean;
 }
@@ -275,7 +275,7 @@ const ActivityPointsHistory: React.FC<{
                         </div>
                         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(record)} aria-label="Edit Poin" disabled={!isOnline}><PencilIcon className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 dark:text-red-400" onClick={() => onDelete(Number(record.id))} aria-label="Hapus Poin" disabled={!isOnline}><TrashIcon className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 dark:text-red-400" onClick={() => onDelete(record.id)} aria-label="Hapus Poin" disabled={!isOnline}><TrashIcon className="h-4 w-4" /></Button>
                         </div>
                     </div>
                 );

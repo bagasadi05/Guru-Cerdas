@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { generateOpenRouterJson } from '../../services/openRouterService';
@@ -243,6 +243,7 @@ const MassInputPage: React.FC = () => {
                         student_id,
                         user_id: user.id,
                         points: 1,
+                        max_points: 1,
                     }));
                     const { data, error } = await supabase.from('quiz_points').insert(records).select();
                     if (error) throw error;
