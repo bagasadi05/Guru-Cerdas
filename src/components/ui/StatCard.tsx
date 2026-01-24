@@ -84,7 +84,7 @@ export const StatCard: React.FC<StatCardProps> = ({
     sm: {
       container: 'p-3 min-h-[100px]',
       icon: 'w-8 h-8',
-      iconSize: 'w-4 h-4',
+      innerIconSize: 'w-4 h-4',
       value: 'text-2xl',
       label: 'text-[10px]',
       subValue: 'text-xs'
@@ -92,7 +92,7 @@ export const StatCard: React.FC<StatCardProps> = ({
     md: {
       container: 'p-4 min-h-[120px]',
       icon: 'w-10 h-10',
-      iconSize: 'w-5 h-5',
+      innerIconSize: 'w-5 h-5',
       value: 'text-[28px]',
       label: 'text-xs',
       subValue: 'text-xs'
@@ -100,7 +100,7 @@ export const StatCard: React.FC<StatCardProps> = ({
     lg: {
       container: 'p-5',
       icon: 'w-12 h-12',
-      iconSize: 'w-6 h-6',
+      innerIconSize: 'w-6 h-6',
       value: 'text-3xl',
       label: 'text-sm',
       subValue: 'text-sm'
@@ -108,6 +108,19 @@ export const StatCard: React.FC<StatCardProps> = ({
   };
 
   const sizes = sizeClasses[size];
+
+  // Render value with optional animation
+  const renderValue = (className: string) => (
+    typeof value === 'number' && animated ? (
+      <AnimatedCounter
+        value={value}
+        duration={1500}
+        className={className}
+      />
+    ) : (
+      value
+    )
+  );
 
   // Layout variations
   const renderCenteredLayout = () => (
@@ -117,20 +130,12 @@ export const StatCard: React.FC<StatCardProps> = ({
       
       {/* Icon */}
       <div className={`${sizes.icon} rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center mb-2 shadow-lg relative z-10`}>
-        <Icon className={`${sizes.iconSize} text-white`} />
+        <Icon className={`${sizes.innerIconSize} text-white`} />
       </div>
       
       {/* Value */}
       <span className={`${sizes.value} font-extrabold leading-none text-slate-800 dark:text-white relative z-10`}>
-        {typeof value === 'number' && animated ? (
-          <AnimatedCounter
-            value={value}
-            duration={1500}
-            className={sizes.value}
-          />
-        ) : (
-          value
-        )}
+        {renderValue(sizes.value)}
       </span>
       
       {/* Label */}
@@ -155,22 +160,14 @@ export const StatCard: React.FC<StatCardProps> = ({
       {/* Icon container */}
       <div className="flex items-start justify-between mb-4 relative z-10">
         <div className={`${sizes.icon} rounded-2xl flex items-center justify-center bg-gradient-to-br ${gradient} shadow-lg text-white transform group-hover:scale-110 transition-transform duration-300`}>
-          <Icon className={`${sizes.iconSize}`} />
+          <Icon className={`${sizes.innerIconSize}`} />
         </div>
       </div>
 
       {/* Content */}
       <div className="relative z-10">
         <div className={`${sizes.value} font-bold text-slate-800 dark:text-white leading-none mb-2 tracking-tight`}>
-          {typeof value === 'number' && animated ? (
-            <AnimatedCounter
-              value={value}
-              duration={1500}
-              className={sizes.value}
-            />
-          ) : (
-            value
-          )}
+          {renderValue(sizes.value)}
         </div>
         <p className={`${sizes.label} font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1`}>
           {label}

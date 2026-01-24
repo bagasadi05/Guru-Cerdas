@@ -8,14 +8,12 @@
  */
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import {
     UsersIcon,
     BookOpenIcon,
     CalendarIcon,
     CheckSquareIcon
 } from '../Icons';
-import { staggerContainerVariants } from '../../utils/animations';
 import { StatCard } from '../ui/StatCard';
 import type { DashboardQueryData } from '../../types';
 
@@ -133,11 +131,8 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
     ];
 
     return (
-        <motion.div
+        <div
             className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-            variants={staggerContainerVariants}
-            initial="initial"
-            animate="animate"
         >
             {stats.map((stat, index) => (
                 <StatCard
@@ -154,7 +149,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                     className="rounded-2xl card-hover-glow border-white/20 dark:border-white/5 shadow-lg shadow-slate-200/50 dark:shadow-black/20"
                 />
             ))}
-        </motion.div>
+        </div>
     );
 };
 
