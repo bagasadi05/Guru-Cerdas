@@ -8,7 +8,6 @@
  */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     UsersIcon,
@@ -16,8 +15,8 @@ import {
     CalendarIcon,
     CheckSquareIcon
 } from '../Icons';
-import { staggerContainerVariants, statsCardVariants } from '../../utils/animations';
-import { AnimatedCounter } from '../ui/AnimatedCounter';
+import { staggerContainerVariants } from '../../utils/animations';
+import { StatCard } from '../ui/StatCard';
 import type { DashboardQueryData } from '../../types';
 
 // =============================================================================
@@ -141,49 +140,19 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
             animate="animate"
         >
             {stats.map((stat, index) => (
-                <motion.div
+                <StatCard
                     key={stat.label}
-                    variants={statsCardVariants}
-                    whileHover="hover"
-                    custom={index}
-                >
-                    <Link to={stat.link} className="group block h-full">
-                        <div className="glass-card rounded-2xl p-5 h-full flex flex-col justify-between card-hover-glow relative overflow-hidden border border-white/20 dark:border-white/5 shadow-lg shadow-slate-200/50 dark:shadow-black/20">
-                            {/* Hover overlay effect */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                            {/* Icon container */}
-                            <div className="flex items-start justify-between mb-4 relative z-10">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-lg text-white transform group-hover:scale-110 transition-transform duration-300`}>
-                                    <stat.icon className="w-6 h-6" />
-                                </div>
-                            </div>
-
-                            {/* Content */}
-                            <div className="relative z-10">
-                                <div className="text-3xl font-bold text-slate-800 dark:text-white leading-none mb-2 tracking-tight">
-                                    {typeof stat.value === 'number' ? (
-                                        <AnimatedCounter
-                                            value={stat.value}
-                                            duration={1500}
-                                            className="text-3xl font-bold"
-                                        />
-                                    ) : (
-                                        stat.value
-                                    )}
-                                </div>
-                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-                                    {stat.label}
-                                </p>
-                                {stat.subValue && (
-                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-lg inline-block">
-                                        {stat.subValue}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </Link>
-                </motion.div>
+                    label={stat.label}
+                    value={stat.value}
+                    icon={stat.icon}
+                    gradient={stat.color}
+                    subValue={stat.subValue}
+                    link={stat.link}
+                    size="lg"
+                    layout="split"
+                    animationIndex={index}
+                    className="rounded-2xl card-hover-glow border-white/20 dark:border-white/5 shadow-lg shadow-slate-200/50 dark:shadow-black/20"
+                />
             ))}
         </motion.div>
     );
