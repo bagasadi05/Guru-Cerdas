@@ -135,7 +135,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
 
     return (
         <motion.div
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"
             variants={staggerContainerVariants}
             initial="initial"
             animate="animate"
@@ -148,13 +148,13 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                     custom={index}
                 >
                     <Link to={stat.link} className="group block h-full">
-                        <div className="glass-card rounded-2xl p-5 h-full flex flex-col justify-between card-hover-glow relative overflow-hidden border border-white/20 dark:border-white/5 shadow-lg shadow-slate-200/50 dark:shadow-black/20">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 h-full flex flex-col justify-between relative overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm transition-all duration-200 group-hover:shadow-md group-hover:-translate-y-0.5">
                             {/* Hover overlay effect */}
                             <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                             {/* Icon container */}
                             <div className="flex items-start justify-between mb-4 relative z-10">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-lg text-white transform group-hover:scale-110 transition-transform duration-300`}>
+                                <div className={`w-11 h-11 rounded-lg flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-sm text-white transform group-hover:scale-105 transition-transform duration-300`}>
                                     <stat.icon className="w-6 h-6" />
                                 </div>
                             </div>

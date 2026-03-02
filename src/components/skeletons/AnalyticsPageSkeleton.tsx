@@ -6,6 +6,8 @@ import { Skeleton } from '../ui/Skeleton';
  * Shows loading placeholders for stats, charts, and data tables
  */
 const AnalyticsPageSkeleton: React.FC = () => {
+    const barHeights = Array.from({ length: 15 }, (_, i) => 20 + ((i * 13) % 80));
+
     return (
         <div className="min-h-screen p-4 md:p-8 space-y-6 animate-pulse pb-24 lg:pb-8">
             {/* Header */}
@@ -43,11 +45,11 @@ const AnalyticsPageSkeleton: React.FC = () => {
                 <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg">
                     <Skeleton className="h-6 w-48 mb-4" />
                     <div className="flex items-end gap-1 h-40">
-                        {[...Array(15)].map((_, i) => (
+                        {barHeights.map((height, i) => (
                             <Skeleton
                                 key={i}
                                 className="flex-1"
-                                style={{ height: `${Math.random() * 100 + 20}%` }}
+                                style={{ height: `${height}%` }}
                             />
                         ))}
                     </div>

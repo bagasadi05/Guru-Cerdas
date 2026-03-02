@@ -46,7 +46,7 @@ type ScheduleMutationVars =
 
 const FormInputWrapper: React.FC<{ children: React.ReactNode; label: string; icon: React.FC<{ className?: string }> }> = ({ children, label, icon: Icon }) => (
     <div>
-        <label className="block text-sm font-bold text-slate-700 dark:text-gray-200 mb-2">{label}</label>
+        <label className="block text-sm font-semibold text-slate-700 dark:text-gray-200 mb-2">{label}</label>
         <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <Icon className="h-5 w-5 text-slate-400 dark:text-gray-400" />
@@ -61,17 +61,17 @@ const NotificationPrompt: React.FC<{
     isLoading: boolean;
 }> = ({ onEnable, isLoading }) => {
     return (
-        <div className="relative z-10 bg-green-50 dark:bg-white/5 backdrop-blur-lg rounded-2xl border border-green-200 dark:border-white/10 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 animate-fade-in">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                    <BellIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-300" />
+        <div className="relative z-10 bg-emerald-50 dark:bg-emerald-500/10 backdrop-blur-lg rounded-2xl border border-emerald-200 dark:border-emerald-500/20 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6 animate-fade-in">
+            <div className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <BellIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-300" />
                 </div>
                 <div>
-                    <h4 className="font-bold text-slate-800 dark:text-white">Jangan Lewatkan Jadwal</h4>
-                    <p className="text-sm text-slate-600 dark:text-gray-300">Aktifkan notifikasi untuk mendapatkan pengingat 5 menit sebelum kelas dimulai.</p>
+                    <h4 className="font-semibold text-slate-800 dark:text-white text-sm">Jangan Lewatkan Jadwal</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">Aktifkan notifikasi untuk pengingat 5 menit sebelum kelas.</p>
                 </div>
             </div>
-            <Button onClick={onEnable} disabled={isLoading} className="w-full sm:w-auto flex-shrink-0 bg-green-600 hover:bg-green-700 text-white border-none shadow-lg shadow-green-500/20">
+            <Button onClick={onEnable} disabled={isLoading} size="sm" className="w-full sm:w-auto flex-shrink-0">
                 {isLoading ? 'Mengaktifkan...' : 'Aktifkan Notifikasi'}
             </Button>
         </div>
@@ -108,13 +108,23 @@ const getColorForSubject = (subject: string): string => {
     return colors[Math.abs(hash) % colors.length];
 };
 
+const formatTime = (time: string): string => {
+    if (!time) return '';
+    const [h = '', m = ''] = time.split(':');
+    return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+};
+
+const formatTimeRange = (start: string, end: string): string => (
+    `${formatTime(start)} - ${formatTime(end)}`
+);
+
 const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, isOngoing, isPast, onEdit, onDuplicate, onDelete, getDuration }) => {
     const colorClass = useMemo(() => getColorForSubject(item.subject), [item.subject]);
 
     return (
         <div
             className={`
-            group relative overflow-hidden rounded-2xl transition-all duration-300
+            group relative overflow-hidden rounded-2xl transition-all duration-200
             bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 hover:border-green-300 dark:hover:border-slate-700 shadow-sm hover:shadow-md
             ${isOngoing ? 'ring-1 ring-green-500/50' : ''}
             flex flex-col border-l-4 ${colorClass}
@@ -123,14 +133,16 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, isOngoing, isPast, on
             <div className="p-4 flex flex-col h-full gap-4">
                 {/* Top Row: Time & Checkbox */}
                 <div className="flex justify-between items-start">
-                    <div className="schedule-time-badge flex items-center gap-2">
-                        <ClockIcon className="w-3 h-3" />
-                        <span className="text-[10px] sm:text-xs font-semibold tracking-wide">{item.start_time} - {item.end_time}</span>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                        <ClockIcon className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                        <span className="text-xs font-semibold font-mono text-slate-600 dark:text-slate-300">
+                            {formatTimeRange(item.start_time, item.end_time)}
+                        </span>
                     </div>
 
                     <DropdownMenu>
-                        <DropdownTrigger className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition-colors">
-                            <MoreVerticalIcon className="w-3.5 h-3.5" />
+                        <DropdownTrigger className="w-11 h-11 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition-colors">
+                            <MoreVerticalIcon className="w-4 h-4" />
                         </DropdownTrigger>
                         <DropdownContent>
                             <DropdownItem icon={<EditIcon className="w-4 h-4" />} onClick={() => onEdit(item)}>Edit</DropdownItem>
@@ -239,6 +251,23 @@ const SchedulePage: React.FC = () => {
     });
 
     const schedule = useMemo(() => rawSchedule || [], [rawSchedule]);
+    const scheduleByDay = useMemo(() => {
+        const map: Record<string, ScheduleRow[]> = {};
+        daysOfWeek.forEach(day => {
+            map[day] = [];
+        });
+        schedule.forEach(item => {
+            if (map[item.day]) {
+                map[item.day].push(item);
+            }
+        });
+        daysOfWeek.forEach(day => {
+            if (map[day].length > 1) {
+                map[day].sort((a, b) => a.start_time.localeCompare(b.start_time));
+            }
+        });
+        return map;
+    }, [schedule]);
 
     useEffect(() => {
         if (isError) {
@@ -249,26 +278,27 @@ const SchedulePage: React.FC = () => {
     useEffect(() => {
         const conflicts: { day: string; time: string; subjects: string[] }[] = [];
         daysOfWeek.forEach(day => {
-            const daySchedule = schedule.filter(s => s.day === day).sort((a, b) => a.start_time.localeCompare(b.start_time));
+            const daySchedule = scheduleByDay[day] || [];
             for (let i = 0; i < daySchedule.length - 1; i++) {
                 const current = daySchedule[i];
                 const next = daySchedule[i + 1];
                 const currentEnd = current.end_time;
                 const nextStart = next.start_time;
                 if (currentEnd > nextStart) {
-                    const existingConflict = conflicts.find(c => c.day === day && c.time === `${nextStart}-${currentEnd}`);
+                    const conflictTime = formatTimeRange(nextStart, currentEnd);
+                    const existingConflict = conflicts.find(c => c.day === day && c.time === conflictTime);
                     if (existingConflict) {
                         if (!existingConflict.subjects.includes(next.subject)) {
                             existingConflict.subjects.push(next.subject);
                         }
                     } else {
-                        conflicts.push({ day, time: `${nextStart}-${currentEnd}`, subjects: [current.subject, next.subject] });
+                        conflicts.push({ day, time: conflictTime, subjects: [current.subject, next.subject] });
                     }
                 }
             }
         });
         setConflictWarnings(conflicts);
-    }, [schedule]);
+    }, [scheduleByDay]);
 
     const scheduleMutation = useMutation({
         mutationFn: async (scheduleData: ScheduleMutationVars) => {
@@ -445,7 +475,7 @@ const SchedulePage: React.FC = () => {
         // --- DRAW SCHEDULE CARDS ---
 
         daysOfWeek.forEach((day) => {
-            const itemsForDay = schedule.filter(item => item.day === day).sort((a, b) => a.start_time.localeCompare(b.start_time));
+            const itemsForDay = scheduleByDay[day] || [];
             if (itemsForDay.length === 0) return;
 
             // Determine column (Zig-zag fill: Left, Right, Left, Right or filling shortest column)
@@ -677,9 +707,9 @@ const SchedulePage: React.FC = () => {
     };
 
     if (pageLoading) return <SchedulePageSkeleton />;
-    const inputStyles = "pl-10 bg-gray-50 border-gray-300 text-gray-900 focus:bg-white focus:border-blue-500 dark:bg-white/10 dark:border-white/20 dark:placeholder:text-gray-400 dark:text-white dark:focus:bg-white/20 dark:focus:border-purple-400 rounded-xl";
+    const inputStyles = "pl-10 min-h-[44px] bg-white border-slate-300 text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-white/10 dark:border-white/20 dark:placeholder:text-gray-400 dark:text-white dark:focus:bg-white/20 dark:focus:border-emerald-400 dark:focus:ring-emerald-400/30 rounded-xl";
 
-    const currentDaySchedule = schedule.filter(s => s.day === selectedDay).sort((a, b) => a.start_time.localeCompare(b.start_time));
+    const currentDaySchedule = scheduleByDay[selectedDay] || [];
 
     return (
         <div className="w-full min-h-full bg-slate-50 dark:bg-[#0B1120] text-slate-800 dark:text-white pb-24 animate-fade-in-up">
@@ -691,10 +721,38 @@ const SchedulePage: React.FC = () => {
                             Kelola dan pantau jadwal mengajar Anda.
                         </p>
                     </div>
-                    <div className="flex gap-2 self-end md:self-center">
-                        <Button onClick={handleAnalyzeSchedule} variant="outline" size="sm" disabled={!isOnline || schedule.length === 0} className="rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white"><BrainCircuitIcon className="w-4 h-4 mr-2 text-emerald-500 dark:text-emerald-400" />Analisis AI</Button>
-                        <Button onClick={handleExportPdf} variant="outline" size="sm" className="rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white"><DownloadCloudIcon className="w-4 h-4 mr-2" />PDF</Button>
-                        <Button onClick={handleExportToIcs} variant="outline" size="sm" className="rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white"><CalendarIcon className="w-4 h-4 mr-2" />ICS</Button>
+                    <div className="flex flex-wrap gap-2 self-end md:self-center">
+                        <Button
+                            onClick={handleAnalyzeSchedule}
+                            variant="outline"
+                            size="sm"
+                            disabled={!isOnline || schedule.length === 0}
+                            aria-label="Analisis AI"
+                            className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white"
+                        >
+                            <BrainCircuitIcon className="w-4 h-4 sm:mr-2 text-emerald-500 dark:text-emerald-400" />
+                            <span className="hidden sm:inline">Analisis AI</span>
+                        </Button>
+                        <Button
+                            onClick={handleExportPdf}
+                            variant="outline"
+                            size="sm"
+                            aria-label="Ekspor PDF"
+                            className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white"
+                        >
+                            <DownloadCloudIcon className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">PDF</span>
+                        </Button>
+                        <Button
+                            onClick={handleExportToIcs}
+                            variant="outline"
+                            size="sm"
+                            aria-label="Ekspor ICS"
+                            className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white"
+                        >
+                            <CalendarIcon className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">ICS</span>
+                        </Button>
                     </div>
                 </header>
 
@@ -720,7 +778,7 @@ const SchedulePage: React.FC = () => {
 
                 {/* Day Selector & List (Visible on all screens) */}
                 <div className="space-y-6">
-                    <div className="grid grid-cols-6 gap-3">
+                    <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-6 sm:gap-3 lg:gap-4 sm:overflow-visible sm:pb-0">
                         {daysOfWeek.map((day) => {
                             const isToday = day === new Date().toLocaleDateString('id-ID', { weekday: 'long' });
                             const isSelected = selectedDay === day;
@@ -730,16 +788,17 @@ const SchedulePage: React.FC = () => {
                                     key={day}
                                     onClick={() => setSelectedDay(day)}
                                     className={`
-                                        relative p-4 rounded-2xl transition-all duration-300
-                                        flex flex-col items-center justify-center gap-1.5
+                                        relative flex flex-col items-center justify-center gap-1.5
+                                        min-w-[52px] h-16 flex-shrink-0 snap-center rounded-2xl transition-all duration-300
+                                        sm:min-w-0 sm:w-full sm:h-[72px] lg:h-[80px]
                                         ${isSelected
-                                            ? 'bg-[#10B981] text-white shadow-lg shadow-green-500/30 scale-[1.02]'
+                                            ? 'bg-[#10B981] text-white shadow-lg shadow-green-500/30'
                                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50'
                                         }
                                     `}
                                 >
-                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-green-100' : 'text-slate-400 dark:text-slate-500'}`}>{day.substring(0, 3)}</span>
-                                    <span className="text-2xl font-bold">{getDayNumber(day)}</span>
+                                    <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-widest ${isSelected ? 'text-green-100' : 'text-slate-400 dark:text-slate-500'}`}>{day.substring(0, 3)}</span>
+                                    <span className="text-xl sm:text-2xl font-bold">{getDayNumber(day)}</span>
                                     {isToday && <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${isSelected ? 'bg-white' : 'bg-green-500'}`}></span>}
                                 </button>
                             );
@@ -747,12 +806,14 @@ const SchedulePage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                            <span className="bg-[#10B981] text-white px-3 py-1 rounded-lg text-sm font-medium">
+                        <h2 className="flex items-center gap-2">
+                            <span className="inline-flex items-center px-2.5 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-sm font-medium rounded-lg">
                                 {viewMode === 'daily' ? `${currentDaySchedule.length} Sesi` : 'Mingguan'}
                             </span>
-                            <span className="text-slate-400 dark:text-slate-600">|</span>
-                            <span>{viewMode === 'daily' ? selectedDay : 'Ringkasan Minggu Ini'}</span>
+                            <span className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full" />
+                            <span className="text-lg font-semibold text-slate-800 dark:text-white">
+                                {viewMode === 'daily' ? selectedDay : 'Ringkasan Minggu Ini'}
+                            </span>
                         </h2>
 
                         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
@@ -778,16 +839,16 @@ const SchedulePage: React.FC = () => {
                     ) : (
                         <>
                             {currentDaySchedule.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-16 text-center bg-white dark:bg-[#0F172A] rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 shadow-sm">
-                                    <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4 animate-pulse">
-                                        <CalendarIcon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                                <div className="flex flex-col items-center justify-center py-12 sm:py-16 px-4 text-center bg-white dark:bg-[#0F172A] rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 shadow-sm">
+                                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center mb-4">
+                                        <CalendarIcon className="w-7 h-7 text-slate-400 dark:text-slate-600" />
                                     </div>
-                                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1">Kosong</h3>
-                                    <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto mb-4">
-                                        Tidak ada jadwal untuk hari ini.
+                                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">Tidak Ada Jadwal</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[240px] mx-auto mb-4">
+                                        Belum ada jadwal untuk hari {selectedDay}. Tambahkan jadwal pertama Anda.
                                     </p>
                                     <Button onClick={() => handleOpenAddModal()} variant="outline" size="sm" className="rounded-full border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
-                                        <PlusIcon className="w-3.5 h-3.5 mr-2" /> Tambah
+                                        <PlusIcon className="w-4 h-4 mr-1.5" /> Tambah Jadwal
                                     </Button>
                                 </div>
                             ) : (
@@ -829,13 +890,13 @@ const SchedulePage: React.FC = () => {
 
             <FloatingActionButton
                 position="bottom-right"
-                offset={{ bottom: 88, right: 16 }}
-                size={64}
+                offset={{ bottom: 96, right: 16 }}
+                size={56}
                 onClick={() => handleOpenAddModal()}
-                className="z-40 shadow-xl shadow-blue-500/20 lg:hidden"
+                className="z-40 shadow-lg shadow-emerald-500/25 lg:hidden"
             >
                 <div className="flex items-center gap-2">
-                    <PlusIcon className="w-6 h-6" />
+                    <PlusIcon className="w-5 h-5" />
                     <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 text-base font-medium whitespace-nowrap">
                         Tambah Jadwal
                     </span>

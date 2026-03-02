@@ -183,6 +183,8 @@ const ActionableRecommendation: React.FC<{
   onStartAction?: () => void;
 }> = ({ title, description, priority, category, actions, onStartAction }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const isLongDescription = description.length > 150;
 
   const priorityStyles = {
     high: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10',
@@ -197,7 +199,7 @@ const ActionableRecommendation: React.FC<{
   };
 
   return (
-    <div className={`rounded-xl border-2 ${priorityStyles[priority]} overflow-hidden`}>
+    <div className={`rounded-xl border-2 shadow-sm ${priorityStyles[priority]} overflow-hidden`}>
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -209,9 +211,17 @@ const ActionableRecommendation: React.FC<{
         </div>
 
         <h4 className="font-bold text-gray-900 dark:text-white mb-1">{title}</h4>
-        <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className={`text-sm text-gray-600 dark:text-gray-400 ${!isDescriptionExpanded && isLongDescription ? 'line-clamp-3' : ''}`}>
           <MarkdownText text={description} />
         </div>
+        {isLongDescription && (
+          <button
+            onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+            className="mt-1 text-xs text-blue-500 hover:underline"
+          >
+            {isDescriptionExpanded ? 'Tutup' : 'Baca selengkapnya â†’'}
+          </button>
+        )}
 
         <button
           onClick={() => setIsExpanded(!isExpanded)}

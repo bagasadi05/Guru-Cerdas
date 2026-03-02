@@ -99,20 +99,20 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
     const maxGrade = Math.max(...classStats.map(c => c.averageGrade), 100);
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-sm">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
             >
                 <div className="flex items-center gap-2">
-                    <BarChartIcon className="w-5 h-5 text-indigo-500" />
+                    <BarChartIcon className="w-5 h-5 text-emerald-500" />
                     <h3 className="font-semibold text-slate-900 dark:text-white">Analisis Kelas</h3>
                 </div>
                 {isOpen ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
             </button>
 
             {isOpen && (
-                <div className="p-5 border-t border-slate-100 dark:border-slate-800 space-y-6">
+                <div className="p-4 border-t border-slate-200/60 dark:border-slate-700/60 space-y-6">
                     {/* Class Comparison Chart Content */}
                     <div className="space-y-4">
                         {classStats.map((cls) => (
@@ -128,19 +128,19 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
                                 {/* Grade Bar */}
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs text-slate-500 w-16">Rata-rata</span>
-                                    <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+                                            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500"
                                             style={{ width: `${(cls.averageGrade / maxGrade) * 100}%` }}
                                         />
                                     </div>
-                                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 w-8 text-right">{cls.averageGrade}</span>
+                                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400 w-8 text-right">{cls.averageGrade}</span>
                                 </div>
 
                                 {/* Attendance Bar */}
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs text-slate-500 w-16">Kehadiran</span>
-                                    <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-gradient-to-r from-emerald-500 to-green-500 rounded-full transition-all duration-500"
                                             style={{ width: `${cls.attendanceRate}%` }}
@@ -153,9 +153,9 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
                     </div>
 
                     {/* Legend */}
-                    <div className="flex justify-center gap-6 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex justify-center gap-6 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
                         <div className="flex items-center gap-1.5">
-                            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
+                            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-600" />
                             <span className="text-xs text-slate-500">Rata-rata Nilai</span>
                         </div>
                         <div className="flex items-center gap-1.5">

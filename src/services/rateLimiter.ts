@@ -1,6 +1,14 @@
 /**
  * Rate Limiter Service
- * Prevents excessive API calls and protects against abuse
+ *
+ * Prevents excessive API calls using an in-memory sliding window.
+ *
+ * Security note: client-side rate limiting is a UX guard, not a security boundary.
+ * For true enforcement, pair this with Supabase RLS policies and Vercel serverless
+ * rate limiting (see api/openrouter.ts which already enforces server-side limits).
+ *
+ * In-memory storage is intentional — localStorage can be cleared/manipulated by
+ * end users, which would defeat the purpose of rate limiting auth endpoints.
  */
 
 import { logger } from './logger';
@@ -15,9 +23,7 @@ interface RateLimitEntry {
     resetTime: number;
 }
 
-const RATE_LIMIT_STORAGE_KEY = 'portal_guru_rate_limits';
 
-// Default configurations for different endpoints
 const defaultConfigs: Record<string, RateLimitConfig> = {
     'auth': { maxRequests: 5, windowMs: 60000 },        // 5 requests per minute for auth
     'api': { maxRequests: 100, windowMs: 60000 },       // 100 requests per minute for general API
@@ -30,10 +36,6 @@ const defaultConfigs: Record<string, RateLimitConfig> = {
 class RateLimiter {
     private limits: Map<string, RateLimitEntry> = new Map();
     private configs: Map<string, RateLimitConfig> = new Map(Object.entries(defaultConfigs));
-
-    constructor() {
-        this.loadFromStorage();
-    }
 
     /**
      * Set custom rate limit configuration for an endpoint
@@ -81,7 +83,6 @@ class RateLimiter {
         // Increment count
         entry.count++;
         this.limits.set(key, entry);
-        this.saveToStorage();
 
         return true;
     }
@@ -118,7 +119,6 @@ class RateLimiter {
      */
     reset(endpoint: string) {
         this.limits.delete(endpoint);
-        this.saveToStorage();
     }
 
     /**
@@ -126,43 +126,8 @@ class RateLimiter {
      */
     resetAll() {
         this.limits.clear();
-        this.saveToStorage();
     }
 
-    /**
-     * Save rate limits to localStorage
-     */
-    private saveToStorage() {
-        try {
-            const data = Object.fromEntries(this.limits);
-            localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify(data));
-        } catch {
-            // Ignore storage errors
-        }
-    }
-
-    /**
-     * Load rate limits from localStorage
-     */
-    private loadFromStorage() {
-        try {
-            const stored = localStorage.getItem(RATE_LIMIT_STORAGE_KEY);
-            if (stored) {
-                const data = JSON.parse(stored);
-                this.limits = new Map(Object.entries(data));
-
-                // Clean up expired entries
-                const now = Date.now();
-                for (const [key, entry] of this.limits) {
-                    if ((entry as RateLimitEntry).resetTime < now) {
-                        this.limits.delete(key);
-                    }
-                }
-            }
-        } catch {
-            this.limits = new Map();
-        }
-    }
 }
 
 // Singleton instance

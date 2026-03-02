@@ -515,13 +515,14 @@ export const PerformanceMonitor: React.FC<{ enabled?: boolean }> = ({ enabled = 
         renderCount: 0
     });
     const frameRef = useRef(0);
-    const lastTimeRef = useRef(performance.now());
+    const lastTimeRef = useRef(0);
     const renderCountRef = useRef(0);
 
     useEffect(() => {
         if (!enabled) return;
 
         let animationId: number;
+        lastTimeRef.current = performance.now();
 
         const measureFPS = () => {
             const now = performance.now();

@@ -305,7 +305,7 @@ export const ChildDevelopmentAnalytics: React.FC<ChildAnalyticsProps> = ({
         }
 
         return result;
-    }, [academicStats, attendanceStats, behaviorStats, studentName]);
+    }, [academicStats, attendanceStats, behaviorStats, studentName, academicRecords.length]);
 
     // Subject breakdown for detailed analysis
     const subjectBreakdown = useMemo(() => {

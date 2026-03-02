@@ -52,7 +52,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Centralized Google GenAI Client - DEPRECATED in favor of OpenRouter
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-const openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+// NOTE: Never read VITE_OPENROUTER_API_KEY here — key is server-side only.
 const openRouterProxyUrl = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
 
 /**
@@ -78,7 +78,7 @@ const openRouterProxyUrl = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
  * 
  * @since 1.0.0
  */
-export const isAiEnabled = !!apiKey || !!openRouterKey || !!openRouterProxyUrl;
+export const isAiEnabled = !!openRouterProxyUrl;
 
 if (!isAiEnabled) {
     console.warn("AI API Keys are not set. AI features will not work.");

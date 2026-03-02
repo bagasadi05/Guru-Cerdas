@@ -8,15 +8,38 @@ interface jsPDFWithAutoTable extends jsPDF {
 }
 
 interface AnalyticsData {
-    students: any[];
-    classStats: any[];
-    attendanceStats: any;
-    gradeStats: any;
-    taskStats: any;
-    violationsStats: any;
-    quizPointsStats: any;
-    atRiskStudents: any[];
-    genderStats: any;
+    students: Record<string, unknown>[];
+    classStats: Record<string, unknown>[];
+    attendanceStats: {
+        total: number;
+        hadir: number;
+        hadirRate: number;
+        izin: number;
+        sakit: number;
+        alpha: number;
+    };
+    gradeStats: {
+        overallAverage: number;
+        totalStudentsWithGrades: number;
+        distribution: { label: string; range: string; count: number; percentage: number }[];
+    };
+    taskStats: {
+        total: number;
+        completed: number;
+        overdue: number;
+        completionRate: number;
+    };
+    violationsStats: {
+        total: number;
+        totalPoints: number;
+        byType: { type: string; count: number }[];
+    };
+    quizPointsStats: {
+        total: number;
+        byCategory: { category: string; count: number; points: number }[];
+    };
+    atRiskStudents: { student?: { name?: string }; reason?: string; details?: string }[];
+    genderStats: { male: number; female: number };
     selectedClassLabel: string;
     dateRangeLabel: string;
 }
@@ -91,7 +114,7 @@ export const generateAnalyticsPdf = async (data: AnalyticsData, options: ExportO
 
         // Gender & Risk Summary
         const riskText = data.atRiskStudents.length > 0
-            ? `Perlu Perhatian: ${data.atRiskStudents.map((i: any) => i.student?.name).join(', ')}`
+            ? `Perlu Perhatian: ${data.atRiskStudents.map((i) => i.student?.name).join(', ')}`
             : 'Tidak ada siswa berisiko tinggi.';
 
         doc.setFontSize(10);
@@ -106,7 +129,7 @@ export const generateAnalyticsPdf = async (data: AnalyticsData, options: ExportO
             autoTable(doc, {
                 startY: finalY + 2,
                 head: [['Nama Siswa', 'Kategori Risiko', 'Detail']],
-                body: data.atRiskStudents.map((item: any) => [
+                body: data.atRiskStudents.map((item) => [
                     item.student?.name || 'Unknown',
                     item.reason === 'attendance' ? 'Kehadiran Buruk' : item.reason === 'academic' ? 'Nilai Rendah' : 'Kombinasi',
                     item.details
@@ -166,7 +189,7 @@ export const generateAnalyticsPdf = async (data: AnalyticsData, options: ExportO
         doc.text(`Rata-rata Kelas: ${data.gradeStats.overallAverage} (dari ${data.gradeStats.totalStudentsWithGrades} siswa)`, 15, finalY);
         finalY += 5;
 
-        const gradeDist = data.gradeStats.distribution.map((d: any) => [
+        const gradeDist = data.gradeStats.distribution.map((d) => [
             d.label, d.range, d.count, `${d.percentage}%`
         ]);
 
@@ -198,7 +221,7 @@ export const generateAnalyticsPdf = async (data: AnalyticsData, options: ExportO
         doc.text(`Total Pelanggaran: ${data.violationsStats.total} Kasus (${data.violationsStats.totalPoints} Poin)`, 15, finalY);
         finalY += 5;
 
-        const violData = data.violationsStats.byType.map((v: any) => [v.type, v.count]);
+        const violData = data.violationsStats.byType.map((v) => [v.type, v.count]);
 
         autoTable(doc, {
             startY: finalY,
@@ -222,7 +245,7 @@ export const generateAnalyticsPdf = async (data: AnalyticsData, options: ExportO
         doc.text('6. Keaktifan & Poin', 15, finalY);
         finalY += 5;
 
-        const actData = data.quizPointsStats.byCategory.map((c: any) => [c.category, c.count, c.points]);
+        const actData = data.quizPointsStats.byCategory.map((c) => [c.category, c.count, c.points]);
 
         autoTable(doc, {
             startY: finalY,

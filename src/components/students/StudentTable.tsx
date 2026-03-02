@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { EyeIcon, PencilIcon, TrashIcon, ClipboardIcon, MoreVerticalIcon, ChevronUpIcon, ChevronDownIcon } from '../Icons';
+import { EyeIcon, PencilIcon, TrashIcon, ClipboardIcon, MoreVerticalIcon, ChevronUpIcon, ChevronDownIcon, KeyRoundIcon } from '../Icons';
 import { getStudentAvatar } from '../../utils/avatarUtils';
 import { useToast } from '../../hooks/useToast';
 import { StudentTableProps } from './types';
@@ -19,13 +19,9 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     const toast = useToast();
     const windowSize = 40;
     const [visibleCount, setVisibleCount] = useState(() => Math.min(windowSize, students.length));
-
-    useEffect(() => {
-        setVisibleCount(Math.min(windowSize, students.length));
-    }, [students.length, windowSize]);
-
-    const visibleStudents = useMemo(() => students.slice(0, visibleCount), [students, visibleCount]);
-    const hasMore = visibleCount < students.length;
+    const clampedCount = Math.min(visibleCount, students.length);
+    const visibleStudents = useMemo(() => students.slice(0, clampedCount), [students, clampedCount]);
+    const hasMore = clampedCount < students.length;
 
     const handleLoadMore = () => {
         setVisibleCount(prev => Math.min(prev + windowSize, students.length));
@@ -33,7 +29,8 @@ export const StudentTable: React.FC<StudentTableProps> = ({
 
     const renderSortIcon = (key: string) => {
         if (sortConfig.key !== key) return null;
-        return sortConfig.direction === 'asc' ? <ChevronUpIcon className="w-4 h-4 inline ml-1" /> : <ChevronDownIcon className="w-4 h-4 inline ml-1" />;
+        const iconClass = 'w-4 h-4 inline ml-1 text-emerald-600 dark:text-emerald-400';
+        return sortConfig.direction === 'asc' ? <ChevronUpIcon className={iconClass} /> : <ChevronDownIcon className={iconClass} />;
     };
 
     return (
@@ -48,16 +45,16 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                     type="checkbox"
                                     checked={isAllSelected}
                                     onChange={toggleAll}
-                                    className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                 />
                             </th>
-                            <th className="px-6 py-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none" onClick={() => onSort('name')}>
+                            <th className={`px-6 py-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none ${sortConfig.key === 'name' ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`} onClick={() => onSort('name')}>
                                 Siswa {renderSortIcon('name')}
                             </th>
-                            <th className="px-6 py-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none" onClick={() => onSort('gender')}>
+                            <th className={`px-6 py-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none ${sortConfig.key === 'gender' ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`} onClick={() => onSort('gender')}>
                                 Gender {renderSortIcon('gender')}
                             </th>
-                            <th className="px-6 py-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none" onClick={() => onSort('access_code')}>
+                            <th className={`px-6 py-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none ${sortConfig.key === 'access_code' ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`} onClick={() => onSort('access_code')}>
                                 Kode Akses {renderSortIcon('access_code')}
                             </th>
                             <th className="px-6 py-4 font-semibold text-gray-900 dark:text-white text-right">Aksi</th>
@@ -65,13 +62,13 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {visibleStudents.map((student) => (
-                            <tr key={student.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group ${isSelected(student.id) ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}>
+                            <tr key={student.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group ${isSelected(student.id) ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''}`}>
                                 <td className="px-6 py-4">
                                     <input
                                         type="checkbox"
                                         checked={isSelected(student.id)}
                                         onChange={() => toggleItem(student.id)}
-                                        className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                     />
                                 </td>
                                 <td className="px-6 py-4">
@@ -102,19 +99,22 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                             </code>
                                             <button
                                                 onClick={() => { navigator.clipboard.writeText(student.access_code || ''); toast.success("Disalin!"); }}
-                                                className="text-gray-400 hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100"
+                                                className="text-gray-400 hover:text-emerald-600 transition-colors opacity-0 group-hover:opacity-100"
                                                 title="Salin"
                                             >
                                                 <ClipboardIcon className="w-4 h-4" />
                                             </button>
                                         </div>
                                     ) : (
-                                        <span className="text-gray-400 italic text-xs">Belum ada kode</span>
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-medium border border-amber-200 dark:border-amber-900/30">
+                                            <KeyRoundIcon className="w-3 h-3" />
+                                            Butuh Kode
+                                        </span>
                                     )}
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                        <Link to={`/siswa/${student.id}`} className="p-2 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+                                        <Link to={`/siswa/${student.id}`} className="p-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
                                             <EyeIcon className="w-4 h-4" />
                                         </Link>
                                         <button onClick={() => onAction(student, 'edit')} className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
@@ -153,7 +153,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                 {student.access_code ? (
                                     <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">{student.access_code}</span>
                                 ) : (
-                                    <span className="text-xs text-gray-400">No Code</span>
+                                    <span className="text-xs text-amber-600 dark:text-amber-400">Butuh Kode</span>
                                 )}
                             </div>
                         </div>
@@ -167,9 +167,9 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                 <div className="flex justify-center py-4">
                     <button
                         onClick={handleLoadMore}
-                        className="px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
                     >
-                        Tampilkan Lebih Banyak ({students.length - visibleCount} tersisa)
+                        Tampilkan Lebih Banyak ({students.length - clampedCount} tersisa)
                     </button>
                 </div>
             )}

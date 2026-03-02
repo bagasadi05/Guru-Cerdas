@@ -128,8 +128,8 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [calendarDays, recordMap, year, month]);
 
-    return (
-            <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden ${className}`}>
+        return (
+            <div className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden ${className}`}>
             {/* Header */}
             <div className="p-4 bg-gradient-to-r from-green-500 to-emerald-600">
                 <div className="flex items-center justify-between mb-4">
@@ -209,8 +209,8 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                                 key={day}
                                 onClick={() => onDateClick?.(dateStr)}
                                 className={`
-                                    aspect-square rounded-lg flex items-center justify-center text-sm font-medium
-                                    transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                                    aspect-square min-h-[44px] min-w-[44px] rounded-lg flex items-center justify-center text-sm font-medium
+                                    transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2
                                     ${isSelected ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-slate-900' : ''}
                                     ${!isSelected && today ? 'ring-2 ring-emerald-400 ring-offset-2 dark:ring-offset-slate-900' : ''}
                                     ${status

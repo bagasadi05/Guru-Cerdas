@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import {
     LineChart,
     Line,
@@ -109,7 +109,8 @@ export const InteractiveAttendanceTrendChart: React.FC<InteractiveAttendanceTren
     className = '',
 }) => {
     const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
-    const chartId = `chart-attendance-${Date.now()}`;
+    const chartId = useId();
+    const chartDomId = `chart-attendance-${chartId}`;
 
     const trend = React.useMemo(() => {
         if (data.length < 2) return 0;
@@ -120,7 +121,7 @@ export const InteractiveAttendanceTrendChart: React.FC<InteractiveAttendanceTren
 
     return (
         <div
-            id={chartId}
+            id={chartDomId}
             className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 ${className}`}
         >
             {/* Header */}
@@ -145,7 +146,7 @@ export const InteractiveAttendanceTrendChart: React.FC<InteractiveAttendanceTren
                 {/* Export Buttons */}
                 <div className="flex gap-2">
                     <button
-                        onClick={() => exportToPNG(chartId, 'attendance-trend')}
+                        onClick={() => exportToPNG(chartDomId, 'attendance-trend')}
                         className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         title="Export to PNG"
                         aria-label="Export chart to PNG"
@@ -153,7 +154,7 @@ export const InteractiveAttendanceTrendChart: React.FC<InteractiveAttendanceTren
                         <DownloadIcon className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
                     <button
-                        onClick={() => exportToPDF(chartId, 'attendance-trend')}
+                        onClick={() => exportToPDF(chartDomId, 'attendance-trend')}
                         className="px-3 py-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-medium transition-colors"
                         aria-label="Export chart to PDF"
                     >
@@ -227,11 +228,12 @@ export const InteractiveGradeDistributionChart: React.FC<InteractiveGradeDistrib
     className = '',
 }) => {
     const [selectedBar, setSelectedBar] = useState<number | null>(null);
-    const chartId = `chart-grade-${Date.now()}`;
+    const chartId = useId();
+    const chartDomId = `chart-grade-${chartId}`;
 
     return (
         <div
-            id={chartId}
+            id={chartDomId}
             className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 ${className}`}
         >
             {/* Header */}
@@ -241,7 +243,7 @@ export const InteractiveGradeDistributionChart: React.FC<InteractiveGradeDistrib
                 {/* Export Buttons */}
                 <div className="flex gap-2">
                     <button
-                        onClick={() => exportToPNG(chartId, 'grade-distribution')}
+                        onClick={() => exportToPNG(chartDomId, 'grade-distribution')}
                         className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         title="Export to PNG"
                         aria-label="Export chart to PNG"
@@ -249,7 +251,7 @@ export const InteractiveGradeDistributionChart: React.FC<InteractiveGradeDistrib
                         <DownloadIcon className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
                     <button
-                        onClick={() => exportToPDF(chartId, 'grade-distribution')}
+                        onClick={() => exportToPDF(chartDomId, 'grade-distribution')}
                         className="px-3 py-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-medium transition-colors"
                         aria-label="Export chart to PDF"
                     >

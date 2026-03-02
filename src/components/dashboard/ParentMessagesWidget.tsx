@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
-import { MessageSquareIcon, UsersIcon, ChevronRightIcon, CheckCircleIcon, ClockIcon, InboxIcon } from '../Icons';
+import { MessageSquareIcon, UsersIcon, ChevronRightIcon, ClockIcon, InboxIcon } from '../Icons';
 import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
 
 interface ParentMessageWithStudent {
     id: string;
@@ -90,7 +91,7 @@ const ParentMessagesWidget: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="glass-card rounded-3xl p-0 overflow-hidden border border-slate-200/50 dark:border-white/5">
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
                 <div className="p-6 border-b border-slate-200/50 dark:border-white/5">
                     <Skeleton className="h-6 w-48" />
                 </div>
@@ -112,12 +113,12 @@ const ParentMessagesWidget: React.FC = () => {
     const { messages = [], unreadCount = 0 } = data || {};
 
     return (
-        <div className="glass-card rounded-3xl p-0 overflow-hidden border border-slate-200/50 dark:border-white/5 shadow-xl shadow-slate-200/30 dark:shadow-black/20">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
             {/* Header */}
-            <div className="p-6 border-b border-slate-200/50 dark:border-white/5 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-transparent">
+            <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-emerald-500/10">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center shadow-sm">
                             <MessageSquareIcon className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -144,22 +145,20 @@ const ParentMessagesWidget: React.FC = () => {
             {/* Messages List */}
             <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
                 {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
-                            <InboxIcon className="w-8 h-8 text-slate-400 dark:text-slate-500" />
-                        </div>
-                        <p className="text-slate-500 dark:text-slate-400 font-medium">Belum ada pesan</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                            Pesan dari orang tua akan muncul di sini
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={<InboxIcon />}
+                        title="Belum ada pesan"
+                        description="Pesan dari orang tua akan muncul di sini."
+                        actionLabel="Hubungi Orang Tua"
+                        onAction={() => navigate('/siswa')}
+                    />
                 ) : (
                     <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                         {messages.map((msg) => (
                             <li key={msg.id}>
                                 <button
                                     onClick={() => handleMessageClick(msg.student_id)}
-                                    className="w-full p-4 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left group"
+                                    className="w-full p-4 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
                                 >
                                     {/* Avatar */}
                                     <div className="relative flex-shrink-0">
@@ -170,7 +169,7 @@ const ParentMessagesWidget: React.FC = () => {
                                                 className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-800 shadow-sm"
                                             />
                                         ) : (
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm">
                                                 {msg.student_name.charAt(0).toUpperCase()}
                                             </div>
                                         )}
@@ -206,12 +205,12 @@ const ParentMessagesWidget: React.FC = () => {
 
             {/* Footer */}
             {messages.length > 0 && (
-                <div className="p-4 border-t border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+                <div className="p-4 border-t border-slate-200/60 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/40">
                     <Link to="/siswa" className="block">
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="w-full text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                            className="w-full text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
                         >
                             <UsersIcon className="w-4 h-4 mr-2" />
                             Lihat Semua Siswa

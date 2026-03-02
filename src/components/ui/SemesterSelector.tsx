@@ -1,6 +1,6 @@
 import React from 'react';
 import { Select } from './Select';
-import { CalendarIcon, LockIcon } from 'lucide-react';
+import { CalendarIcon, LockIcon, ChevronDownIcon } from 'lucide-react';
 import { useSemester } from '../../contexts/SemesterContext';
 
 
@@ -26,7 +26,7 @@ export const SemesterSelector: React.FC<SemesterSelectorProps> = ({
     const { semesters, isLoading } = useSemester();
 
     const sizeClasses = size === 'sm'
-        ? 'h-8 text-sm pl-8'
+        ? 'h-9 text-sm pl-9'
         : 'h-10 text-sm pl-10';
 
 
@@ -36,14 +36,14 @@ export const SemesterSelector: React.FC<SemesterSelectorProps> = ({
         <div className={`relative inline-flex items-center gap-2 ${className}`}>
             {showIcon && (
                 <CalendarIcon
-                    className={`absolute left-2.5 z-10 text-indigo-500 ${size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'}`}
+                    className={`absolute left-3 z-10 text-emerald-500 pointer-events-none ${size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'}`}
                 />
             )}
             <Select
                 value={value || ''}
                 onChange={(e) => onChange(e.target.value)}
                 disabled={disabled || isLoading}
-                className={`${sizeClasses} ${showIcon ? '' : 'pl-3'} pr-8 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white cursor-pointer`}
+                className={`${sizeClasses} ${showIcon ? '' : 'pl-3'} pr-9 rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white cursor-pointer appearance-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900`}
             >
                 {includeAllOption && <option value="all">Semua Semester</option>}
 
@@ -66,6 +66,7 @@ export const SemesterSelector: React.FC<SemesterSelectorProps> = ({
             {value && activeSemester && value === activeSemester.id && (
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-slate-800" title="Semester Aktif" />
             )}
+            <ChevronDownIcon className={`absolute right-3 text-slate-400 pointer-events-none ${size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'}`} />
         </div>
     );
 };

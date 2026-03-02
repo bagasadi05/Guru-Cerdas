@@ -37,7 +37,7 @@ const CategoryFilter: React.FC<{
         <div className="flex flex-wrap gap-2 mb-4">
             <button
                 onClick={() => onSelect('all')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${selectedCategory === 'all'
+                className={`px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-full transition-all ${selectedCategory === 'all'
                     ? 'bg-indigo-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
@@ -48,7 +48,7 @@ const CategoryFilter: React.FC<{
                 <button
                     key={key}
                     onClick={() => onSelect(key as PointCategory)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all flex items-center gap-1 ${selectedCategory === key
+                    className={`px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-full transition-all flex items-center gap-1 ${selectedCategory === key
                         ? 'bg-indigo-600 text-white'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
@@ -236,12 +236,14 @@ const ActivityPointsHistory: React.FC<{
 
     if (filteredRecords.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center text-gray-400">
-                <CheckCircleIcon className="w-16 h-16 mb-4 text-gray-600" />
-                <h4 className="text-lg font-semibold">
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-4">
+                    <CheckCircleIcon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                </div>
+                <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                     {categoryFilter !== 'all' ? 'Tidak Ada Poin untuk Kategori Ini' : 'Tidak Ada Poin Keaktifan'}
                 </h4>
-                <p className="text-sm">Poin yang Anda tambahkan akan muncul di sini.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Poin yang Anda tambahkan akan muncul di sini.</p>
             </div>
         );
     }
@@ -330,7 +332,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
     const availablePoints = useMemo(() => quizPoints.filter(r => !r.is_used).length, [quizPoints]);
 
     return (
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div>
@@ -349,7 +351,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
             <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <button
                     onClick={() => setViewMode('available')}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${viewMode === 'available'
+                    className={`px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-lg transition-all ${viewMode === 'available'
                         ? 'bg-indigo-600 text-white'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
@@ -359,7 +361,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                 </button>
                 <button
                     onClick={() => setViewMode('overview')}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${viewMode === 'overview'
+                    className={`px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-lg transition-all ${viewMode === 'overview'
                         ? 'bg-indigo-600 text-white'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
@@ -369,7 +371,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                 </button>
                 <button
                     onClick={() => setViewMode('history')}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${viewMode === 'history'
+                    className={`px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-lg transition-all ${viewMode === 'history'
                         ? 'bg-indigo-600 text-white'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}

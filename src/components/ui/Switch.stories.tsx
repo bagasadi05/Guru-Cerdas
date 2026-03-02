@@ -172,38 +172,40 @@ export const SettingsPanel: Story = {
  * Demonstrates external control of switch state.
  */
 export const Controlled: Story = {
-  render: () => {
-    const [isEnabled, setIsEnabled] = React.useState(false);
+  render: () => <ControlledSwitchStory />,
+};
 
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Switch
-            id="controlled-switch"
-            checked={isEnabled}
-            onChange={(e) => setIsEnabled(e.target.checked)}
-          />
-          <label htmlFor="controlled-switch" style={{ fontSize: '0.875rem', cursor: 'pointer' }}>
-            Feature is {isEnabled ? 'enabled' : 'disabled'}
-          </label>
-        </div>
-        <button
-          onClick={() => setIsEnabled(!isEnabled)}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            borderRadius: '0.375rem',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-          }}
-        >
-          Toggle from button
-        </button>
+const ControlledSwitchStory: React.FC = () => {
+  const [isEnabled, setIsEnabled] = React.useState(false);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <Switch
+          id="controlled-switch"
+          checked={isEnabled}
+          onChange={(e) => setIsEnabled(e.target.checked)}
+        />
+        <label htmlFor="controlled-switch" style={{ fontSize: '0.875rem', cursor: 'pointer' }}>
+          Feature is {isEnabled ? 'enabled' : 'disabled'}
+        </label>
       </div>
-    );
-  },
+      <button
+        onClick={() => setIsEnabled(!isEnabled)}
+        style={{
+          padding: '0.5rem 1rem',
+          backgroundColor: '#3b82f6',
+          color: 'white',
+          borderRadius: '0.375rem',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '0.875rem',
+        }}
+      >
+        Toggle from button
+      </button>
+    </div>
+  );
 };
 
 /**

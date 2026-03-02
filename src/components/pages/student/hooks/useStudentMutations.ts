@@ -10,7 +10,13 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
 
     const mutationOptions = {
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['studentDetails', studentId] });
+            // Invalidate all student-specific query keys used by StudentDetailPage
+            queryClient.invalidateQueries({ queryKey: ['studentProfile', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentStats', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentGrades', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentQuizzes', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentReports', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
             queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
             onSuccessCloseModal();
             toast.success("Data berhasil disimpan!");
@@ -124,7 +130,12 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             if (error) throw error;
         },
         onSuccess: (_d, v) => {
-            queryClient.invalidateQueries({ queryKey: ['studentDetails', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentProfile', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentStats', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentGrades', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentQuizzes', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentReports', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
             onSuccessCloseModal();
             toast.success(`Data dari tabel ${v.table} berhasil dihapus.`);
         },

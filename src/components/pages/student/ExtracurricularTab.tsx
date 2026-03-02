@@ -20,15 +20,18 @@ export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
 }) => {
     if (studentExtracurriculars.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-                <Trophy className="w-16 h-16 mb-4 opacity-50" />
-                <p>Siswa ini belum mengikuti ekstrakurikuler apapun.</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-4">
+                    <Trophy className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                </div>
+                <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Tidak Ada Ekstrakurikuler</h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Siswa ini belum mengikuti ekstrakurikuler apapun.</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-4 sm:p-6">
             <div className="grid gap-6 md:grid-cols-2">
                 {studentExtracurriculars.map((enrollment) => {
                     const ekskul = enrollment.extracurriculars;

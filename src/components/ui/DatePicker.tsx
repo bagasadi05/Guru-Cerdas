@@ -31,11 +31,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     useEffect(() => {
         if (value) {
             const date = new Date(value);
-            if (!isNaN(date.getTime())) {
+            if (!isNaN(date.getTime()) && date.getTime() !== currentMonth.getTime()) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setCurrentMonth(date);
             }
         }
-    }, [value]);
+    }, [value, currentMonth]);
 
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();

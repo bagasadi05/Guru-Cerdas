@@ -41,6 +41,22 @@ interface MigrationScript {
     down: () => Promise<void>;
 }
 
+interface ArchiveRecord {
+    id: string;
+    entity: EntityType;
+    archivedAt: string;
+    beforeDate: string;
+    recordCount: number;
+    data: Record<string, unknown>[];
+}
+
+interface ArchiveSummary {
+    id: string;
+    entity: EntityType;
+    archivedAt: string;
+    recordCount: number;
+}
+
 // ============================================
 // BULK EXPORT
 // ============================================
@@ -179,8 +195,8 @@ export async function importEntity(
     const validRecords = records.map((record, index) => {
         try {
             return validateAndTransformRecord(entity, record);
-        } catch (e: any) {
-            result.errors.push({ row: index + 1, message: e.message });
+        } catch (e: unknown) {
+            result.errors.push({ row: index + 1, message: e instanceof Error ? e.message : String(e) });
             result.failed++;
             return null;
         }
@@ -356,7 +372,7 @@ async function getBackupList(): Promise<BackupMetadata[]> {
             const getAllRequest = store.getAll();
 
             getAllRequest.onsuccess = () => {
-                const backups = getAllRequest.result.map((b: any) => b.metadata);
+                const backups = getAllRequest.result.map((b: { metadata: BackupMetadata }) => b.metadata);
                 resolve(backups.sort((a: BackupMetadata, b: BackupMetadata) =>
                     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
                 ));
@@ -490,7 +506,7 @@ export async function archiveOldRecords(
 /**
  * List archived data
  */
-export async function listArchives(): Promise<any[]> {
+export async function listArchives(): Promise<ArchiveSummary[]> {
     return await getArchiveList();
 }
 
@@ -516,7 +532,7 @@ export async function restoreArchive(
     return result;
 }
 
-async function storeArchive(archive: any): Promise<void> {
+async function storeArchive(archive: ArchiveRecord): Promise<void> {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open('portal_guru_db', 1);
 
@@ -540,7 +556,7 @@ async function storeArchive(archive: any): Promise<void> {
     });
 }
 
-async function getArchiveList(): Promise<any[]> {
+async function getArchiveList(): Promise<ArchiveSummary[]> {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open('portal_guru_db', 1);
 
@@ -557,7 +573,7 @@ async function getArchiveList(): Promise<any[]> {
             const getAllRequest = store.getAll();
 
             getAllRequest.onsuccess = () => {
-                const archives = getAllRequest.result.map((a: any) => ({
+                const archives = getAllRequest.result.map((a: ArchiveRecord): ArchiveSummary => ({
                     id: a.id,
                     entity: a.entity,
                     archivedAt: a.archivedAt,
@@ -572,7 +588,7 @@ async function getArchiveList(): Promise<any[]> {
     });
 }
 
-async function getArchiveData(id: string): Promise<any> {
+async function getArchiveData(id: string): Promise<ArchiveRecord | null> {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open('portal_guru_db', 1);
 
@@ -588,17 +604,7 @@ async function getArchiveData(id: string): Promise<any> {
             const store = tx.objectStore('archives');
             const getRequest = store.get(id);
 
-            getRequest.onsuccess = () => resolve(getRequest.result);
-            getRequest.onerror = () => reject(getRequest.error);
-        };
-
-        request.onerror = () => reject(request.error);
-    });
-}
-
-// ============================================
-// DATA MIGRATION
-// ============================================
+            getRequest.onsuccess = () => resolve((getRequest.result as ArchiveRecord) ?? null);
 
 const MIGRATION_VERSION_KEY = 'portal_guru_migration_version';
 
@@ -733,7 +739,7 @@ function applyUserId<T extends Record<string, any>>(records: T[], userId: string
     });
 }
 
-const entityValidators: Record<EntityType, (record: any) => any> = {
+const entityValidators: Record<EntityType, (record: Record<string, unknown>) => Record<string, unknown>> = {
     students: (record) => {
         if (!record.name || typeof record.name !== 'string') {
             throw new Error('Invalid name');
@@ -807,7 +813,7 @@ const entityValidators: Record<EntityType, (record: any) => any> = {
     }
 };
 
-function validateAndTransformRecord(entity: EntityType, record: any): any {
+function validateAndTransformRecord(entity: EntityType, record: Record<string, unknown>): Record<string, unknown> {
     const validator = entityValidators[entity];
     if (!validator) {
         throw new Error(`Unknown entity: ${entity}`);

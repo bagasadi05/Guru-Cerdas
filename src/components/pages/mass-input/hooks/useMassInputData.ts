@@ -3,7 +3,7 @@ import { supabase } from '../../../../services/supabase';
 import { ClassRow, StudentRow, AcademicRecordRow, ViolationRow } from '../types';
 import { useAuth } from '../../../../hooks/useAuth';
 
-export const useMassInputData = (selectedClass: string, subject?: string, assessmentName?: string, mode?: string) => {
+export const useMassInputData = (selectedClass: string, subject?: string, assessmentName?: string, mode?: string, semesterId?: string) => {
     const { user } = useAuth();
 
     const { data: classes, isLoading: isLoadingClasses } = useQuery({
@@ -39,14 +39,20 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
     });
 
     const { data: assessmentNames } = useQuery({
-        queryKey: ['assessmentNames', selectedClass, subject],
+        queryKey: ['assessmentNames', selectedClass, subject, studentsData?.length ?? 0, semesterId],
         queryFn: async (): Promise<string[]> => {
             if (!selectedClass || !subject || !studentsData) return [];
-            const { data, error } = await supabase
+            let query = supabase
                 .from('academic_records')
                 .select('assessment_name')
                 .eq('subject', subject)
                 .in('student_id', studentsData?.map(s => s.id) || []);
+
+            if (semesterId) {
+                query = query.eq('semester_id', semesterId);
+            }
+
+            const { data, error } = await query;
             if (error) throw error;
             const names = ((data as { assessment_name: string | null }[]) || []).map((item) => item.assessment_name).filter((name): name is string => name !== null);
             return [...new Set(names)].sort();
@@ -55,15 +61,21 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
     });
 
     const { data: existingGrades, isLoading: isLoadingGrades } = useQuery({
-        queryKey: ['existingGrades', selectedClass, subject, assessmentName],
+        queryKey: ['existingGrades', selectedClass, subject, assessmentName, semesterId],
         queryFn: async (): Promise<AcademicRecordRow[]> => {
             if (!selectedClass || !subject || !assessmentName || !studentsData) return [];
-            const { data, error } = await supabase
+            let query = supabase
                 .from('academic_records')
                 .select('*')
                 .eq('subject', subject)
                 .eq('assessment_name', assessmentName)
                 .in('student_id', studentsData?.map(s => s.id) || []);
+
+            if (semesterId) {
+                query = query.eq('semester_id', semesterId);
+            }
+
+            const { data, error } = await query;
             if (error) throw error; return data || [];
         },
         enabled: !!selectedClass && !!subject && !!assessmentName && !!studentsData && (mode === 'subject_grade' || mode === 'delete_subject_grade'),

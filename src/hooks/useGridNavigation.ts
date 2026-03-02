@@ -107,6 +107,6 @@ export const useGridNavigation = <T extends HTMLElement>(
         registerRef,
         handleKeyDown,
         focusItem,
-        currentIndex: currentIndex.current,
+        // Note: currentIndex should not be accessed in render
     };
 };

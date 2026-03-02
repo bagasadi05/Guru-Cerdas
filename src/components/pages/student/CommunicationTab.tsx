@@ -239,11 +239,13 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
             {/* Messages Area */}
             <div className="flex-1 min-h-[200px] max-h-[450px] overflow-y-auto space-y-4 p-4 bg-gray-50 dark:bg-black/20">
                 {filteredCommunications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                    <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 dark:text-slate-400">
                         {searchQuery || filter !== 'all' ? (
                             <>
-                                <SearchIcon className="w-12 h-12 mb-2 opacity-50" />
-                                <p className="text-sm">Tidak ada pesan yang cocok</p>
+                                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-3">
+                                    <SearchIcon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                                </div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Tidak ada pesan yang cocok</p>
                                 <button
                                     onClick={() => { setSearchQuery(''); setFilter('all'); }}
                                     className="text-xs text-blue-600 dark:text-blue-400 mt-2 hover:underline"
@@ -253,8 +255,10 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                             </>
                         ) : (
                             <>
-                                <MessageSquareIcon className="w-12 h-12 mb-2 opacity-50" />
-                                <p className="text-sm">Belum ada pesan</p>
+                                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-3">
+                                    <MessageSquareIcon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                                </div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Belum ada pesan</p>
                                 <p className="text-xs">Mulai percakapan dengan mengirim pesan</p>
                             </>
                         )}
@@ -433,7 +437,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                                 value={newMessage}
                                 onChange={e => setNewMessage(e.target.value)}
                                 placeholder="Ketik pesan..."
-                                className="w-full min-h-[44px] max-h-32 px-4 py-3 text-sm rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full min-h-[48px] max-h-32 px-4 py-3 text-sm rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 disabled={!isOnline || isSending}
                                 rows={newMessage.split('\n').length > 3 ? 4 : Math.max(1, newMessage.split('\n').length)}
                             />

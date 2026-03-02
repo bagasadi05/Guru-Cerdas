@@ -1,9 +1,13 @@
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+// NOTE: Never read VITE_OPENROUTER_API_KEY here — VITE_ prefix embeds it into the
+// client bundle. API key lives server-side only in api/openrouter.ts.
 const OPENROUTER_PROXY_URL = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
 
 // Priority list of FREE models to try in order
 const FALLBACK_MODELS = [
-    "xiaomi/mimo-v2-flash:free"              // Primary: User selected
+    "google/gemini-2.0-flash-exp:free",
+    "meta-llama/llama-3.2-3b-instruct:free",
+    "qwen/qwen-2.5-7b-instruct:free",
+    "xiaomi/mimo-v2-flash:free"
 ];
 
 export interface OpenRouterMessage {
@@ -29,8 +33,8 @@ export async function generateOpenRouterContent(
     messages: OpenRouterMessage[],
     _useReasoning: boolean = true
 ): Promise<OpenRouterResponse> {
-    if (!OPENROUTER_API_KEY && !OPENROUTER_PROXY_URL) {
-        throw new Error("OpenRouter API Key or proxy URL is missing. Please check your .env configuration.");
+    if (!OPENROUTER_PROXY_URL) {
+        throw new Error("VITE_OPENROUTER_PROXY_URL is not set. Please configure the serverless proxy URL in your .env file.");
     }
 
     let lastError: any = null;
@@ -47,14 +51,13 @@ export async function generateOpenRouterContent(
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s hard timeout
 
-            const response = await fetch(OPENROUTER_PROXY_URL || "https://openrouter.ai/api/v1/chat/completions", {
+            const response = await fetch(OPENROUTER_PROXY_URL, {
                 method: "POST",
                 headers: {
-                    ...(OPENROUTER_API_KEY ? { "Authorization": `Bearer ${OPENROUTER_API_KEY}` } : {}),
+                    // No Authorization header here — the serverless proxy (api/openrouter.ts)
+                    // injects the OPENROUTER_API_KEY server-side.
                     "Content-Type": "application/json",
                     "Accept": "application/json",
-                    // "HTTP-Referer": window.location.origin, // Optional: for OpenRouter analytics
-                    // "X-Title": "Portal Guru" // Optional: for OpenRouter analytics
                 },
                 body: JSON.stringify({
                     model: model,
@@ -87,11 +90,11 @@ export async function generateOpenRouterContent(
             // If success, return immediately
             return await response.json();
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.warn(`Failed with model ${model}:`, error);
-            lastError = error;
+            lastError = error instanceof Error ? error : new Error(String(error));
             // If it's a timeout or network error, continue to next model
-            if (error.name === 'AbortError' || error.message.includes('fetch')) {
+            if (lastError.name === 'AbortError' || lastError.message.includes('fetch')) {
                 continue;
             }
             // If it's a critical application error (like invalid key), maybe stop? 

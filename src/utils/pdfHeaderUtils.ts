@@ -68,23 +68,23 @@ export function addPdfHeader(
     } = options;
 
     const pageWidth = orientation === 'portrait' ? 210 : 297;
-    const margin = 15;
-    const logoSize = 18;
-    let y = 15;
+    const margin = 14;
+    const logoSize = 20;
+    let y = 18;
 
-    // Add logo sekolah (left)
+    // Add logo sekolah (left) - perfectly aligned
     if (logoSekolahBase64) {
         try {
-            doc.addImage(logoSekolahBase64, 'PNG', margin, y - 3, logoSize, logoSize);
+            doc.addImage(logoSekolahBase64, 'PNG', margin, y - 5, logoSize, logoSize);
         } catch (e) {
             console.warn('Failed to add school logo:', e);
         }
     }
 
-    // Add logo kemenag (right)
+    // Add logo kemenag (right) - perfectly aligned
     if (logoKemenagBase64) {
         try {
-            doc.addImage(logoKemenagBase64, 'PNG', pageWidth - margin - logoSize, y - 3, logoSize, logoSize);
+            doc.addImage(logoKemenagBase64, 'PNG', pageWidth - margin - logoSize, y - 5, logoSize, logoSize);
         } catch (e) {
             console.warn('Failed to add kemenag logo:', e);
         }
@@ -97,32 +97,41 @@ export function addPdfHeader(
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.text('KEMENTERIAN AGAMA REPUBLIK INDONESIA', centerX, y, { align: 'center' });
-    y += 4;
+    y += 5;
 
     // School name - main title
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(schoolName.toUpperCase(), centerX, y + 2, { align: 'center' });
-    y += 7;
+    doc.text(schoolName.toUpperCase(), centerX, y, { align: 'center' });
+    y += 6;
 
     // School address
     if (showSubtitle) {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text(schoolAddress, centerX, y + 2, { align: 'center' });
-        y += 5;
+        
+        // Split address if too long
+        const maxWidth = pageWidth - (2 * margin) - 40; // Account for logos
+        const addressLines = doc.splitTextToSize(schoolAddress, maxWidth);
+        
+        addressLines.forEach((line: string) => {
+            doc.text(line, centerX, y, { align: 'center' });
+            y += 3.5;
+        });
+        
+        y += 1;
     }
 
-    // Add horizontal line
-    y += 5;
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
+    // Add double horizontal line (professional look)
     y += 2;
-    doc.setLineWidth(0.2);
+    doc.setLineWidth(0.8);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 1;
+    doc.setLineWidth(0.3);
     doc.line(margin, y, pageWidth - margin, y);
 
     // Return Y position for content to start
-    return y + 8;
+    return y + 6;
 }
 
 /**

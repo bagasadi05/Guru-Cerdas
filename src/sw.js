@@ -177,6 +177,121 @@ async function clearSupabaseCache() {
     await caches.delete('supabase-api-cache');
 }
 
+// ============================================
+// BACKGROUND SYNC
+// ============================================
+
+const SYNC_QUEUE_DB = 'sync-queue-db';
+const SYNC_QUEUE_STORE = 'pending-requests';
+
+// Initialize IndexedDB for background sync queue
+async function openSyncDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(SYNC_QUEUE_DB, 1);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(SYNC_QUEUE_STORE)) {
+                db.createObjectStore(SYNC_QUEUE_STORE, { keyPath: 'id', autoIncrement: true });
+            }
+        };
+    });
+}
+
+// Add failed request to sync queue
+async function addToSyncQueue(request, data) {
+    const db = await openSyncDB();
+    const tx = db.transaction(SYNC_QUEUE_STORE, 'readwrite');
+    const store = tx.objectStore(SYNC_QUEUE_STORE);
+    
+    const item = {
+        url: request.url,
+        method: request.method,
+        headers: [...request.headers.entries()],
+        body: data,
+        timestamp: Date.now(),
+    };
+    
+    await store.add(item);
+}
+
+// Get all pending sync items
+async function getSyncQueue() {
+    const db = await openSyncDB();
+    const tx = db.transaction(SYNC_QUEUE_STORE, 'readonly');
+    const store = tx.objectStore(SYNC_QUEUE_STORE);
+    
+    return new Promise((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+// Remove item from sync queue
+async function removeFromSyncQueue(id) {
+    const db = await openSyncDB();
+    const tx = db.transaction(SYNC_QUEUE_STORE, 'readwrite');
+    const store = tx.objectStore(SYNC_QUEUE_STORE);
+    await store.delete(id);
+}
+
+// Handle background sync
+async function handleBackgroundSync() {
+    try {
+        const queue = await getSyncQueue();
+        
+        for (const item of queue) {
+            try {
+                const headers = new Headers(item.headers);
+                const response = await fetch(item.url, {
+                    method: item.method,
+                    headers,
+                    body: item.body ? JSON.stringify(item.body) : undefined,
+                });
+                
+                if (response.ok) {
+                    await removeFromSyncQueue(item.id);
+                    
+                    // Notify clients of successful sync
+                    const clients = await self.clients.matchAll();
+                    clients.forEach(client => {
+                        client.postMessage({
+                            type: 'SYNC_SUCCESS',
+                            payload: { id: item.id, url: item.url }
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Sync failed for item:', item.id, error);
+            }
+        }
+    } catch (error) {
+        console.error('Background sync error:', error);
+    }
+}
+
+// Register sync event handler
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'sync-data') {
+        event.waitUntil(handleBackgroundSync());
+    }
+});
+
+// Periodic background sync (requires registration in client)
+self.addEventListener('periodicsync', (event) => {
+    if (event.tag === 'periodic-sync-data') {
+        event.waitUntil(handleBackgroundSync());
+    }
+});
+
+// ============================================
+// MESSAGE HANDLERS
+// ============================================
+
 self.addEventListener('message', (event) => {
     if (event.data) {
         if (event.data.type === 'SCHEDULE_UPDATED') {
@@ -187,6 +302,10 @@ self.addEventListener('message', (event) => {
             scheduleTaskNotifications(event.data.payload);
         } else if (event.data.type === 'CLEAR_SUPABASE_CACHE') {
             event.waitUntil(clearSupabaseCache());
+        } else if (event.data.type === 'QUEUE_SYNC_REQUEST') {
+            event.waitUntil(addToSyncQueue(event.data.request, event.data.data));
+        } else if (event.data.type === 'TRIGGER_SYNC') {
+            event.waitUntil(handleBackgroundSync());
         }
     }
 });

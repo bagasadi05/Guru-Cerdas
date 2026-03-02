@@ -20,6 +20,36 @@ interface StudentSortControlsProps {
     className?: string;
 }
 
+interface SortButtonProps {
+    field: SortField;
+    label: string;
+    isActive: boolean;
+    direction: SortDirection;
+    onClick: (field: SortField) => void;
+}
+
+const SortButton: React.FC<SortButtonProps> = ({ field, label, isActive, direction, onClick }) => {
+    return (
+        <button
+            onClick={() => onClick(field)}
+            className={`
+                flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                ${isActive
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                }
+            `}
+        >
+            {label}
+            {isActive && (
+                direction === 'asc'
+                    ? <ChevronUpIcon className="w-3 h-3" />
+                    : <ChevronDownIcon className="w-3 h-3" />
+            )}
+        </button>
+    );
+};
+
 /**
  * Sorting and grouping controls for student lists
  */
@@ -44,38 +74,33 @@ export const StudentSortControls: React.FC<StudentSortControlsProps> = ({
         }
     };
 
-    const SortButton: React.FC<{ field: SortField; label: string }> = ({ field, label }) => {
-        const isActive = sortConfig.field === field;
-        return (
-            <button
-                onClick={() => handleSortClick(field)}
-                className={`
-                    flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
-                    ${isActive
-                        ? 'bg-indigo-500 text-white'
-                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                    }
-                `}
-            >
-                {label}
-                {isActive && (
-                    sortConfig.direction === 'asc'
-                        ? <ChevronUpIcon className="w-3 h-3" />
-                        : <ChevronDownIcon className="w-3 h-3" />
-                )}
-            </button>
-        );
-    };
-
     return (
         <div className={`flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-3 ${className}`}>
             {/* Sort Controls */}
             <div className="flex items-center gap-1 flex-wrap">
                 <span className="text-xs text-gray-400 mr-1 whitespace-nowrap">Urutkan:</span>
                 <div className="flex items-center gap-1">
-                    <SortButton field="index" label="No" />
-                    <SortButton field="name" label="Nama" />
-                    <SortButton field="score" label="Nilai" />
+                    <SortButton
+                        field="index"
+                        label="No"
+                        isActive={sortConfig.field === 'index'}
+                        direction={sortConfig.direction}
+                        onClick={handleSortClick}
+                    />
+                    <SortButton
+                        field="name"
+                        label="Nama"
+                        isActive={sortConfig.field === 'name'}
+                        direction={sortConfig.direction}
+                        onClick={handleSortClick}
+                    />
+                    <SortButton
+                        field="score"
+                        label="Nilai"
+                        isActive={sortConfig.field === 'score'}
+                        direction={sortConfig.direction}
+                        onClick={handleSortClick}
+                    />
                 </div>
             </div>
 
@@ -168,7 +193,8 @@ export const GroupHeader: React.FC<{
 export function sortStudents<T extends { id: string; name: string }>(
     students: T[],
     scores: Record<string, string | number>,
-    config: SortConfig
+    config: SortConfig,
+    originalOrder?: T[]
 ): T[] {
     return [...students].sort((a, b) => {
         let comparison = 0;
@@ -177,19 +203,32 @@ export function sortStudents<T extends { id: string; name: string }>(
             case 'name':
                 comparison = a.name.localeCompare(b.name);
                 break;
-            case 'score':
-                const scoreA = parseFloat(String(scores[a.id] || '')) || -1;
-                const scoreB = parseFloat(String(scores[b.id] || '')) || -1;
+            case 'score': {
+                const rawA = scores[a.id];
+                const rawB = scores[b.id];
+                const hasA = rawA !== undefined && rawA !== '';
+                const hasB = rawB !== undefined && rawB !== '';
+                const scoreA = hasA ? parseFloat(String(rawA)) : Number.NEGATIVE_INFINITY;
+                const scoreB = hasB ? parseFloat(String(rawB)) : Number.NEGATIVE_INFINITY;
                 comparison = scoreA - scoreB;
                 break;
-            case 'status':
+            }
+            case 'status': {
                 const hasScoreA = scores[a.id] !== undefined && scores[a.id] !== '';
                 const hasScoreB = scores[b.id] !== undefined && scores[b.id] !== '';
                 comparison = (hasScoreA ? 1 : 0) - (hasScoreB ? 1 : 0);
                 break;
-            case 'index':
+            }
+            case 'index': {
+                // Restore original order using the reference array
+                const ref = originalOrder || students;
+                const indexA = ref.findIndex(s => s.id === a.id);
+                const indexB = ref.findIndex(s => s.id === b.id);
+                comparison = indexA - indexB;
+                break;
+            }
             default:
-                return 0; // Keep original order
+                return 0;
         }
 
         return config.direction === 'asc' ? comparison : -comparison;

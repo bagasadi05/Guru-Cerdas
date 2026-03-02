@@ -9,7 +9,7 @@
  * @since 2.0.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNetworkStatus, useNetworkQuality } from '../../hooks/useNetworkStatus';
 import { networkResilience } from '../../services/networkResilience';
 
@@ -278,21 +278,34 @@ export function NetworkStatusIndicator({
 
 export function OfflineBanner() {
   const { isOnline } = useNetworkStatus();
-  const [wasOffline, setWasOffline] = useState(false);
   const [showReconnected, setShowReconnected] = useState(false);
+  const wasOfflineRef = useRef(false);
+  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleOffline = useCallback(() => {
+    wasOfflineRef.current = true;
+  }, []);
+
+  const handleOnline = useCallback(() => {
+    if (wasOfflineRef.current) {
+      setShowReconnected(true);
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = setTimeout(() => {
+        setShowReconnected(false);
+      }, 3000);
+      wasOfflineRef.current = false;
+    }
+  }, []);
 
   useEffect(() => {
-    if (!isOnline) {
-      setWasOffline(true);
-    } else if (wasOffline) {
-      setShowReconnected(true);
-      const timer = setTimeout(() => {
-        setShowReconnected(false);
-        setWasOffline(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isOnline, wasOffline]);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+    };
+  }, [handleOffline, handleOnline]);
 
   if (isOnline && !showReconnected) {
     return null;

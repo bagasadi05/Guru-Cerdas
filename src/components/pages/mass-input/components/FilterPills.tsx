@@ -11,6 +11,7 @@ export const FilterPills: React.FC<{
             <button
                 key={value}
                 onClick={() => onFilterChange(value)}
+                aria-pressed={currentValue === value}
                 className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-full transition-colors whitespace-nowrap ${currentValue === value
                     ? 'bg-purple-500 text-white'
                     : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20'

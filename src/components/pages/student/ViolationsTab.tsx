@@ -121,27 +121,27 @@ const ViolationStats: React.FC<{ violations: ViolationRow[] }> = ({ violations }
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
             <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30">
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.totalPoints}</p>
-                <p className="text-xs text-red-500">Total Poin</p>
+                <p className="text-[11px] text-red-500 truncate" title="Total Poin">Total Poin</p>
             </div>
             <div className="p-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800/30">
                 <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.bySeverity.ringan}</p>
-                <p className="text-xs text-yellow-500">Ringan</p>
+                <p className="text-[11px] text-yellow-500 truncate" title="Ringan">Ringan</p>
             </div>
             <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/30">
                 <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.bySeverity.sedang}</p>
-                <p className="text-xs text-orange-500">Sedang</p>
+                <p className="text-[11px] text-orange-500 truncate" title="Sedang">Sedang</p>
             </div>
             <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30">
                 <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.bySeverity.berat}</p>
-                <p className="text-xs text-rose-500">Berat</p>
+                <p className="text-[11px] text-rose-500 truncate" title="Berat">Berat</p>
             </div>
             <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
                 <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{stats.pending}</p>
-                <p className="text-xs text-gray-500">Pending</p>
+                <p className="text-[11px] text-gray-500 truncate" title="Pending">Pending</p>
             </div>
             <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.notified}</p>
-                <p className="text-xs text-blue-500">Notifikasi</p>
+                <p className="text-[11px] text-blue-500 truncate" title="Notifikasi">Notifikasi</p>
             </div>
         </div>
     );
@@ -316,7 +316,7 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     }, [violations, severityFilter, statusFilter, semesterFilter]);
 
     return (
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div>
@@ -444,12 +444,14 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                         })}
                     </div>
                 ) : (
-                    <div className="text-center py-16 text-gray-400">
-                        <ShieldAlertIcon className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                        <h4 className="font-semibold">
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-4">
+                            <ShieldAlertIcon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                        </div>
+                        <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                             {violations.length === 0 ? 'Tidak Ada Pelanggaran' : 'Tidak Ada Hasil Filter'}
                         </h4>
-                        <p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
                             {violations.length === 0
                                 ? 'Siswa ini memiliki catatan perilaku yang bersih.'
                                 : 'Coba ubah filter untuk melihat pelanggaran lainnya.'}

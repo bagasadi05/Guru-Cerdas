@@ -94,7 +94,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => mode === 'subject_grade' ? setScores({}) : setSelectedStudentIds(new Set())}
-                            className="text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                            className="text-gray-400 hover:text-red-600 dark:hover:text-white hover:bg-red-50 dark:hover:bg-white/10 transition-colors"
                         >
                             <XCircleIcon className="w-4 h-4 mr-1" /> Bersihkan
                         </Button>

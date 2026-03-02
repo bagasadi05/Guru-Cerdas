@@ -36,9 +36,10 @@ export const OnboardingTooltip: React.FC<OnboardingTooltipProps> = ({
     const [position, setPosition] = useState({ top: 0, left: 0 });
     const tooltipRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
+    React.useLayoutEffect(() => {
         if (step.position === 'center' || !step.target) {
             // Center on screen
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setPosition({
                 top: window.innerHeight / 2 - 100,
                 left: window.innerWidth / 2 - 175
@@ -79,6 +80,7 @@ export const OnboardingTooltip: React.FC<OnboardingTooltipProps> = ({
         left = Math.max(16, Math.min(left, window.innerWidth - tooltipRect.width - 16));
         top = Math.max(16, Math.min(top, window.innerHeight - tooltipRect.height - 16));
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPosition({ top, left });
     }, [step]);
 
@@ -163,9 +165,10 @@ export const OnboardingTooltip: React.FC<OnboardingTooltipProps> = ({
 const HighlightOverlay: React.FC<{ target: string }> = ({ target }) => {
     const [rect, setRect] = useState<DOMRect | null>(null);
 
-    useEffect(() => {
+    React.useLayoutEffect(() => {
         const el = document.querySelector(target);
         if (el) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setRect(el.getBoundingClientRect());
         }
     }, [target]);

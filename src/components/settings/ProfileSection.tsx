@@ -30,9 +30,17 @@ const ProfileSection: React.FC = () => {
     const [schoolName, setSchoolName] = useState(user?.school_name || '');
 
     useEffect(() => {
-        setName(user?.name || '');
-        setSchoolName(user?.school_name || '');
-    }, [user]);
+        if (user) {
+            if (user.name !== name) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setName(user.name || '');
+            }
+            if (user.school_name !== schoolName) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setSchoolName(user.school_name || '');
+            }
+        }
+    }, [user, name, schoolName]);
 
     const handleAvatarUpload = async (file: File) => {
         if (!user) return;

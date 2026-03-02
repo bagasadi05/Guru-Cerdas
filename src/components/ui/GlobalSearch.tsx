@@ -91,26 +91,32 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
     const handleHistoryClick = useCallback((query: string) => {
         setSearchTerm(query);
         setShowHistory(false);
+        setActiveIndex(0);
     }, []);
 
     const handleSuggestionClick = useCallback((suggestion: string) => {
         setSearchTerm(suggestion);
+        setActiveIndex(0);
     }, []);
 
     useEffect(() => {
         if (isOpen) {
-            inputRef.current?.focus();
-            setShowHistory(true);
+            setTimeout(() => {
+                inputRef.current?.focus();
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setShowHistory(true);
+            }, 0);
         } else {
-            setSearchTerm('');
-            setActiveIndex(0);
-            setActiveTab('all');
+            setTimeout(() => {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setSearchTerm('');
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setActiveIndex(0);
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setActiveTab('all');
+            }, 0);
         }
     }, [isOpen]);
-
-    useEffect(() => {
-        setActiveIndex(0);
-    }, [searchTerm, activeTab]);
 
     useEffect(() => {
         if (resultsContainerRef.current) {
@@ -173,13 +179,13 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                         type="text"
                         placeholder="Cari siswa, kelas, tugas, atau jadwal..."
                         value={searchTerm}
-                        onChange={(e) => { setSearchTerm(e.target.value); setShowHistory(false); }}
+                        onChange={(e) => { setSearchTerm(e.target.value); setShowHistory(false); setActiveIndex(0); }}
                         className="w-full h-14 bg-transparent pl-12 pr-12 text-base md:text-lg border-b border-gray-200 dark:border-gray-700 focus:outline-none"
                         aria-label="Kotak Pencarian Global"
                     />
                     {searchTerm && (
                         <button
-                            onClick={() => setSearchTerm('')}
+                            onClick={() => { setSearchTerm(''); setActiveIndex(0); }}
                             className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
                         >
                             <XIcon className="h-5 w-5" />
@@ -193,7 +199,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                         {(['all', 'students', 'classes', 'tasks', 'schedules'] as SearchEntityType[]).map(type => (
                             <button
                                 key={type}
-                                onClick={() => setActiveTab(type)}
+                                onClick={() => { setActiveTab(type); setActiveIndex(0); }}
                                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${activeTab === type
                                         ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
                                         : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'

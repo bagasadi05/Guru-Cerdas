@@ -287,42 +287,44 @@ export const ManyTabs: Story = {
  * Demonstrates external control of tab state.
  */
 export const Controlled: Story = {
-  render: () => {
-    const [activeTab, setActiveTab] = React.useState('home');
+  render: () => <ControlledTabsStory />,
+};
 
-    return (
-      <div style={{ width: '600px' }}>
-        <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
-          <button
-            onClick={() => setActiveTab('home')}
-            style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', border: '1px solid #d1d5db' }}
-          >
-            Go to Home
-          </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', border: '1px solid #d1d5db' }}
-          >
-            Go to Settings
-          </button>
-        </div>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="home">Home</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
-          <TabsContent value="home" style={{ marginTop: '1rem' }}>
-            <Card><CardContent><p>Home content - Current tab: {activeTab}</p></CardContent></Card>
-          </TabsContent>
-          <TabsContent value="profile" style={{ marginTop: '1rem' }}>
-            <Card><CardContent><p>Profile content - Current tab: {activeTab}</p></CardContent></Card>
-          </TabsContent>
-          <TabsContent value="settings" style={{ marginTop: '1rem' }}>
-            <Card><CardContent><p>Settings content - Current tab: {activeTab}</p></CardContent></Card>
-          </TabsContent>
-        </Tabs>
+const ControlledTabsStory: React.FC = () => {
+  const [activeTab, setActiveTab] = React.useState('home');
+
+  return (
+    <div style={{ width: '600px' }}>
+      <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+        <button
+          onClick={() => setActiveTab('home')}
+          style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', border: '1px solid #d1d5db' }}
+        >
+          Go to Home
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', border: '1px solid #d1d5db' }}
+        >
+          Go to Settings
+        </button>
       </div>
-    );
-  },
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="home">Home</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="home" style={{ marginTop: '1rem' }}>
+          <Card><CardContent><p>Home content - Current tab: {activeTab}</p></CardContent></Card>
+        </TabsContent>
+        <TabsContent value="profile" style={{ marginTop: '1rem' }}>
+          <Card><CardContent><p>Profile content - Current tab: {activeTab}</p></CardContent></Card>
+        </TabsContent>
+        <TabsContent value="settings" style={{ marginTop: '1rem' }}>
+          <Card><CardContent><p>Settings content - Current tab: {activeTab}</p></CardContent></Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 };

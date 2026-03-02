@@ -132,4 +132,15 @@ dist-ssr
 
 .env
 *storybook.log
+
+# AI tool skill/config directories (auto-generated)
+.agent/
+.agents/
+.codex/
+.cursor/
+.gemini/
+
+# Test artifacts
+test-export.pdf
+test-export.xlsx
 storybook-static

@@ -87,11 +87,11 @@ export const SmartReminders: React.FC<SmartRemindersProps> = ({
         <div className="space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Bell className="w-5 h-5 text-indigo-500" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-emerald-500" />
                     Pengingat Pintar
                 </h2>
-                <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-semibold">
+                <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-semibold">
                     {reminders.length} item
                 </span>
             </div>
@@ -104,7 +104,7 @@ export const SmartReminders: React.FC<SmartRemindersProps> = ({
                         return (
                             <div
                                 key={reminder.id}
-                                className={`relative p-4 rounded-2xl border-2 ${style.bgColor} ${style.borderColor} ${style.textColor} animate-pulse-subtle`}
+                                className={`relative p-4 rounded-xl border ${style.bgColor} ${style.borderColor} ${style.textColor} animate-pulse-subtle`}
                             >
                                 <div className="flex items-start gap-3">
                                     <div className="flex-shrink-0 mt-0.5">

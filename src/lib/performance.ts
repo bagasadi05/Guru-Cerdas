@@ -5,7 +5,7 @@
  * including memoization helpers and render tracking in development.
  */
 
-import { useRef, useEffect, useCallback, DependencyList } from 'react';
+import { useRef, useEffect, useCallback, DependencyList, useState } from 'react';
 
 /**
  * Custom hook that returns a stable callback reference
@@ -138,7 +138,7 @@ export function useRenderCount(componentName: string): number {
         }
     });
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
+    // eslint-disable-next-line react-hooks/refs
     return count.current;
 }
 
@@ -154,5 +154,3 @@ export function areArraysEqual<T>(a: T[], b: T[], compare?: (x: T, y: T) => bool
     return a.every((item, index) => item === b[index]);
 }
 
-// Need to import useState for useDebouncedValue
-import { useState } from 'react';

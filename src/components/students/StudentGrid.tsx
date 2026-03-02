@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../ui/Card';
 import { EyeIcon, KeyRoundIcon, MoreVerticalIcon } from '../Icons';
@@ -8,13 +8,9 @@ import { StudentViewProps } from './types';
 export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, toggleItem, onAction }) => {
     const windowSize = 24;
     const [visibleCount, setVisibleCount] = useState(() => Math.min(windowSize, students.length));
-
-    useEffect(() => {
-        setVisibleCount(Math.min(windowSize, students.length));
-    }, [students.length, windowSize]);
-
-    const visibleStudents = useMemo(() => students.slice(0, visibleCount), [students, visibleCount]);
-    const hasMore = visibleCount < students.length;
+    const clampedCount = Math.min(visibleCount, students.length);
+    const visibleStudents = useMemo(() => students.slice(0, clampedCount), [students, clampedCount]);
+    const hasMore = clampedCount < students.length;
 
     const handleLoadMore = () => {
         setVisibleCount(prev => Math.min(prev + windowSize, students.length));
@@ -29,13 +25,13 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                         className="relative p-0 group overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white dark:bg-gray-800 rounded-3xl"
                         style={{ animationDelay: `${index * 50}ms` }}
                     >
-                        <div className={`h-28 w-full bg-gradient-to-br ${student.gender === 'Laki-laki' ? 'from-sky-400 to-blue-600' : 'from-pink-400 to-rose-600'} opacity-90`}>
+                        <div className={`h-28 w-full bg-gradient-to-br ${student.gender === 'Laki-laki' ? 'from-slate-400/90 to-slate-600/90' : 'from-pink-300/90 to-rose-500/90'} opacity-90`}>
                             <div className="absolute top-3 left-3 z-10">
                                 <input
                                     type="checkbox"
                                     checked={isSelected(student.id)}
                                     onChange={(e) => { e.stopPropagation(); toggleItem(student.id); }}
-                                    className="w-5 h-5 rounded border-white/50 bg-white/20 text-indigo-600 focus:ring-indigo-500 checked:bg-indigo-600 checked:border-transparent transition-all cursor-pointer"
+                                    className="w-5 h-5 rounded border-white/50 bg-white/20 text-emerald-600 focus:ring-emerald-500 checked:bg-emerald-600 checked:border-transparent transition-all cursor-pointer"
                                 />
                             </div>
                             <div className="absolute top-3 right-3">
@@ -67,8 +63,9 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                                         {student.access_code}
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs font-medium border border-gray-200 dark:border-gray-700">
-                                        No Code
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-medium border border-amber-200 dark:border-amber-900/30">
+                                        <KeyRoundIcon className="w-3 h-3" />
+                                        Butuh Kode
                                     </span>
                                 )}
                             </div>
@@ -76,7 +73,7 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                             <div className="mt-5 w-full">
                                 <Link
                                     to={`/siswa/${student.id}`}
-                                    className="flex w-full items-center justify-center gap-2 py-2.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                                    className="flex w-full items-center justify-center gap-2 py-2.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
                                 >
                                     <EyeIcon className="w-4 h-4" />
                                     Lihat Detail
@@ -90,9 +87,9 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                 <div className="flex justify-center py-2">
                     <button
                         onClick={handleLoadMore}
-                        className="px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
                     >
-                        Tampilkan Lebih Banyak ({students.length - visibleCount} tersisa)
+                        Tampilkan Lebih Banyak ({students.length - clampedCount} tersisa)
                     </button>
                 </div>
             )}

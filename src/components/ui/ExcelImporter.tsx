@@ -32,27 +32,8 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
     const [columnMappings, setColumnMappings] = useState<Record<string, string>>({});
     const [step, setStep] = useState<'upload' | 'preview' | 'confirm'>('upload');
 
-    // Handle file drop
-    const handleDrop = useCallback(async (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-
-        const file = e.dataTransfer.files[0];
-        if (file) {
-            await handleFile(file);
-        }
-    }, []);
-
-    // Handle file selection
-    const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            await handleFile(file);
-        }
-    }, []);
-
     // Process file
-    const handleFile = async (file: File) => {
+    const handleFile = useCallback(async (file: File) => {
         const validTypes = [
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'application/vnd.ms-excel',
@@ -85,7 +66,26 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
         setColumnMappings(mappings);
 
         setStep('preview');
-    };
+    }, [columns, maxRows, parse]);
+
+    // Handle file drop
+    const handleDrop = useCallback(async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            await handleFile(file);
+        }
+    }, [handleFile]);
+
+    // Handle file selection
+    const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            await handleFile(file);
+        }
+    }, [handleFile]);
 
     // Download template
     const handleDownloadTemplate = () => {

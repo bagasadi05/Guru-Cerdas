@@ -17,6 +17,16 @@ import { useParentMessageNotifications } from '../hooks/useParentMessageNotifica
 import PullToRefresh from './ui/PullToRefresh';
 import { useQueryClient } from '@tanstack/react-query';
 
+// Enhanced Mobile Navigation Components
+import { useOrientation } from '../hooks/useOrientation';
+import { useHaptic } from '../hooks/useHaptic';
+import {
+  EnhancedMobileBottomNav,
+  MoreMenuBottomSheet,
+  LandscapeSideRail,
+  mobileNavItems,
+} from './mobile';
+
 const navSections = [
     {
         id: 'primary',
@@ -49,19 +59,12 @@ const navSections = [
     },
 ];
 
-// Main 4 items for mobile bottom nav (reduced from 6 for better UX)
-const mobileNavItems = [
-    { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
-    { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
-    { href: '/jadwal', label: 'Jadwal', icon: CalendarIcon },
-    { href: '/tugas', label: 'Tugas', icon: CheckSquareIcon },
-];
-
-// Items in the "More" menu
+// Items in the "More" menu (enhanced with Analytics) (enhanced with Analytics)
 const moreMenuItems = [
     { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
     { href: '/input-massal', label: 'Input Cepat', icon: ClipboardPenIcon },
     { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
+    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/riwayat', label: 'Riwayat Aksi', icon: History },
     { href: '/sampah', label: 'Sampah', icon: Trash2 },
     { href: '/pengaturan', label: 'Pengaturan', icon: SettingsIcon },
@@ -241,6 +244,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         await queryClient.invalidateQueries();
     }, [queryClient]);
 
+    // Enhanced Mobile Navigation Hooks
+    const { orientation, isPortrait, isLandscape } = useOrientation();
+    const { triggerHaptic } = useHaptic();
+
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -405,7 +412,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </div>
                 </header>
 
-                <main id="main-content" className="flex-1 overflow-hidden" role="main">
+                <main 
+                    id="main-content" 
+                    className={`flex-1 overflow-hidden ${
+                        isMobile && isLandscape ? 'pl-16' : ''
+                    }`} 
+                    role="main"
+                >
                     <PullToRefresh
                         onRefresh={handleRefresh}
                         className="h-full pb-20 lg:pb-6 px-4 lg:px-8 pt-4 lg:pt-6"
@@ -418,116 +431,34 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </PullToRefresh>
                 </main>
 
-                {/* Bottom Navigation for Mobile Only - Improved UX */}
+                {/* Enhanced Mobile Navigation */}
                 {isMobile && (
                     <>
-                        {/* More Menu Backdrop */}
-                        {isMoreMenuOpen && (
-                            <div
-                                className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
-                                onClick={() => setIsMoreMenuOpen(false)}
+                        {/* Bottom Sheet for More Menu */}
+                        <MoreMenuBottomSheet
+                            isOpen={isMoreMenuOpen}
+                            onClose={() => setIsMoreMenuOpen(false)}
+                            items={moreMenuItems}
+                        />
+
+                        {/* Portrait Mode: Enhanced Bottom Navigation */}
+                        {isPortrait && (
+                            <EnhancedMobileBottomNav
+                                moreMenuItems={moreMenuItems}
+                                isMoreMenuOpen={isMoreMenuOpen}
+                                onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
                             />
                         )}
 
-                        {/* More Menu */}
-                        {isMoreMenuOpen && (
-                            <div className="fixed bottom-20 right-4 z-50 animate-fade-in-up">
-                                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden min-w-[220px]">
-                                    {moreMenuItems.map((item, index) => {
-                                        const isActive = isPathActive(item.href);
-                                        return (
-                                            <button
-                                                key={item.href}
-                                                onClick={() => {
-                                                    playClick();
-                                                    navigate(item.href);
-                                                    setIsMoreMenuOpen(false);
-                                                }}
-                                                className={`flex items-center gap-3 w-full px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${isActive
-                                                    ? 'bg-green-50/70 dark:bg-green-500/10'
-                                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800'
-                                                    } ${index !== moreMenuItems.length - 1 ? 'border-b border-slate-100 dark:border-slate-800' : ''
-                                                    }`}
-                                                style={{ minHeight: '48px' }}
-                                            >
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isActive
-                                                    ? 'bg-green-100 dark:bg-green-500/20'
-                                                    : 'bg-slate-100 dark:bg-slate-800'
-                                                    }`}
-                                                >
-                                                    <item.icon className={`w-5 h-5 ${isActive
-                                                        ? 'text-green-600 dark:text-green-300'
-                                                        : 'text-slate-600 dark:text-slate-400'
-                                                        }`}
-                                                    />
-                                                </div>
-                                                <span className={`font-medium ${isActive
-                                                    ? 'text-green-700 dark:text-green-200'
-                                                    : 'text-slate-700 dark:text-slate-300'
-                                                    }`}
-                                                >
-                                                    {item.label}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                        {/* Landscape Mode: Side Rail Navigation */}
+                        {isLandscape && (
+                            <LandscapeSideRail
+                                navItems={mobileNavItems}
+                                moreMenuItems={moreMenuItems}
+                                isMoreMenuOpen={isMoreMenuOpen}
+                                onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                            />
                         )}
-
-                        {/* Bottom Navigation Bar */}
-                        <nav className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-                            <div className="w-full grid grid-cols-5 items-center justify-items-center px-2 safe-area-inset-bottom">
-                                {mobileNavItems.map((item) => (
-                                    <NavLink
-                                        key={item.href}
-                                        to={item.href}
-                                        end={item.href === '/dashboard'}
-                                        onClick={() => {
-                                            playClick();
-                                            setIsMoreMenuOpen(false);
-                                        }}
-                                        className={({ isActive }) =>
-                                            `flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all duration-300 active:scale-95 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${isActive
-                                                ? 'text-green-600 dark:text-green-400'
-                                                : 'text-slate-400 dark:text-slate-500'
-                                            }`
-                                        }
-                                        style={{ minWidth: '48px', minHeight: '48px' }}
-                                    >
-                                        {({ isActive }) => (
-                                            <>
-                                                <div className={`relative p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-green-50 dark:bg-green-500/15 -translate-y-0.5' : ''}`}>
-                                                    <item.icon className={`w-6 h-6 transition-transform ${isActive ? 'scale-105' : 'scale-100'}`} />
-                                                </div>
-                                                <span className={`text-[11px] leading-tight transition-all ${isActive ? 'font-bold opacity-100' : 'font-medium opacity-70'}`}>{item.label}</span>
-                                            </>
-                                        )}
-                                    </NavLink>
-                                ))}
-
-                                {/* More Button */}
-                                <button
-                                    onClick={() => {
-                                        playClick();
-                                        setIsMoreMenuOpen(!isMoreMenuOpen);
-                                    }}
-                                    className={`flex flex-col items-center justify-center gap-1 w-full h-full rounded-xl transition-all duration-300 active:scale-95 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${isMoreMenuHighlighted
-                                        ? 'text-green-600 dark:text-green-400'
-                                        : 'text-slate-400 dark:text-slate-500'
-                                        }`}
-                                    style={{ minWidth: '48px', minHeight: '48px' }}
-                                    aria-label="More options"
-                                    aria-expanded={isMoreMenuOpen}
-                                    aria-current={isMoreMenuActive ? 'page' : undefined}
-                                >
-                                    <div className={`relative p-2 rounded-xl transition-all duration-300 ${isMoreMenuHighlighted ? 'bg-green-50 dark:bg-green-500/15 -translate-y-0.5' : ''}`}>
-                                        <MoreHorizontalIcon className={`w-6 h-6 transition-transform ${isMoreMenuHighlighted ? 'scale-105' : 'scale-100'}`} />
-                                    </div>
-                                    <span className={`text-[11px] leading-tight transition-all ${isMoreMenuHighlighted ? 'font-bold opacity-100' : 'font-medium opacity-70'}`}>Lainnya</span>
-                                </button>
-                            </div>
-                        </nav>
                     </>
                 )}
             </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './Button';
 
@@ -12,14 +12,9 @@ interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, icon, maxWidth = 'max-w-lg' }) => {
-  const [mounted, setMounted] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
+  const isClient = typeof document !== 'undefined';
 
   useEffect(() => {
     if (isOpen) {
@@ -92,11 +87,11 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !isClient) return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in"
       aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
@@ -104,30 +99,27 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     >
       <div
         ref={modalRef}
-        className={`relative w-full ${maxWidth} sm:mx-4 animate-fade-in-up modal-glow-border max-h-[90vh] sm:max-h-[85vh] flex flex-col`}
+        className={`relative w-full ${maxWidth} mx-4 animate-fade-in-up max-h-[90vh] sm:max-h-[85vh] flex flex-col`}
         onClick={(e) => e.stopPropagation()}
         id="modal-container"
       >
-        <div className="relative overflow-hidden rounded-t-3xl sm:rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl border border-gray-200/20 dark:border-gray-700/50 flex flex-col max-h-[90vh] sm:max-h-[85vh]">
-          {/* Decorative Header Gradient */}
-          <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-purple-600 to-blue-500 opacity-10 dark:opacity-20 pointer-events-none" aria-hidden="true"></div>
-
-          <div className="relative p-6 border-b border-gray-200/80 dark:border-gray-800/60">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col max-h-[90vh] sm:max-h-[85vh]">
+          <div className="relative p-6 border-b border-slate-200/70 dark:border-slate-700/60">
+            <div className="flex justify-between items-center gap-4">
+              <div className="flex items-center gap-3">
                 {icon && (
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 text-white shadow-lg" aria-hidden="true">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500 text-white shadow-sm" aria-hidden="true">
                     {icon}
                   </div>
                 )}
-                <h2 id="modal-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h2>
+                <h2 id="modal-title" className="text-2xl font-bold text-slate-900 dark:text-slate-100 leading-tight">{title}</h2>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
                 aria-label="Close modal"
-                className="rounded-full text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                className="rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </Button>

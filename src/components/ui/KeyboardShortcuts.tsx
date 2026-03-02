@@ -32,12 +32,7 @@ const shortcuts: KeyboardShortcut[] = [
 
 export const KeyboardShortcutsPanel: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
+    const isClient = typeof document !== 'undefined';
 
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
@@ -68,7 +63,7 @@ export const KeyboardShortcutsPanel: React.FC = () => {
         };
     }, [isOpen]);
 
-    if (!isOpen || !mounted) return null;
+    if (!isOpen || !isClient) return null;
 
     const groupedShortcuts = shortcuts.reduce((acc, shortcut) => {
         if (!acc[shortcut.category]) {

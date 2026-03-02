@@ -6,6 +6,16 @@ import { Modal } from '../../../ui/Modal';
 import { XCircleIcon, ChevronDownIcon, SparklesIcon, ClipboardPasteIcon, SearchIcon, CheckIcon, UploadIcon } from '../../../Icons';
 import { violationList } from '../../../../services/violations.data';
 import { InputMode, ClassRow } from '../types';
+import { SemesterSelector } from '../../../ui/SemesterSelector';
+
+const CATEGORY_DEFAULT_NAMES: Record<string, string> = {
+    bertanya: 'Aktif bertanya di kelas',
+    menjawab: 'Menjawab pertanyaan guru',
+    presentasi: 'Presentasi tugas',
+    diskusi: 'Aktif dalam diskusi',
+    tugas: 'Mengerjakan tugas tambahan',
+    lainnya: 'Partisipasi aktif',
+};
 
 interface Step2_ConfigurationProps {
     mode: InputMode | null;
@@ -17,8 +27,8 @@ interface Step2_ConfigurationProps {
     isLoadingClasses: boolean;
     quizInfo: { name: string; subject: string; date: string };
     setQuizInfo: React.Dispatch<React.SetStateAction<{ name: string; subject: string; date: string }>>;
-    subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: 'ganjil' | 'genap' | '' };
-    setSubjectGradeInfo: React.Dispatch<React.SetStateAction<{ subject: string; assessment_name: string; notes: string; semester: 'ganjil' | 'genap' | '' }>>;
+    subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
+    setSubjectGradeInfo: React.Dispatch<React.SetStateAction<{ subject: string; assessment_name: string; notes: string; semester: string }>>;
     isCustomSubject: boolean;
     setIsCustomSubject: (isCustom: boolean) => void;
     uniqueSubjects: string[] | undefined;
@@ -112,20 +122,11 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                 key={cat.value}
                                                 type="button"
                                                 onClick={() => {
-                                                    // Set a default name based on category
-                                                    const defaultNames: Record<string, string> = {
-                                                        bertanya: 'Aktif bertanya di kelas',
-                                                        menjawab: 'Menjawab pertanyaan guru',
-                                                        presentasi: 'Presentasi tugas',
-                                                        diskusi: 'Aktif dalam diskusi',
-                                                        tugas: 'Mengerjakan tugas tambahan',
-                                                        lainnya: 'Partisipasi aktif',
-                                                    };
-                                                    setQuizInfo(p => ({ ...p, name: defaultNames[cat.value] || cat.label }));
+                                                    setQuizInfo(p => ({ ...p, name: CATEGORY_DEFAULT_NAMES[cat.value] || cat.label }));
                                                 }}
-                                                className={`flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all text-left ${quizInfo.name.toLowerCase().includes(cat.label.toLowerCase().slice(0, 4))
-                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
-                                                        : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-white dark:bg-slate-800'
+                                                className={`flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all text-left ${quizInfo.name === CATEGORY_DEFAULT_NAMES[cat.value]
+                                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
+                                                    : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-white dark:bg-slate-800'
                                                     }`}
                                             >
                                                 <span className="text-lg">{cat.icon}</span>
@@ -253,16 +254,13 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 </div>
                                 <div className="space-y-2">
                                     <label htmlFor="semester-select" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Semester</label>
-                                    <Select
-                                        id="semester-select"
+                                    <SemesterSelector
                                         value={subjectGradeInfo.semester}
-                                        onChange={e => setSubjectGradeInfo(p => ({ ...p, semester: e.target.value as 'ganjil' | 'genap' | '' }))}
-                                        className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 rounded-xl"
-                                    >
-                                        <option value="" className="text-slate-900">-- Pilih Semester --</option>
-                                        <option value="ganjil" className="text-slate-900">📗 Semester Ganjil (1)</option>
-                                        <option value="genap" className="text-slate-900">📘 Semester Genap (2)</option>
-                                    </Select>
+                                        onChange={(val) => setSubjectGradeInfo(p => ({ ...p, semester: val }))}
+                                        includeAllOption={false}
+                                        showIcon={true}
+                                        className="w-full"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label htmlFor="grade-notes" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Catatan (Opsional)</label>
@@ -460,16 +458,13 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 </div>
                                 <div className="space-y-2">
                                     <label htmlFor="delete-semester" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Semester</label>
-                                    <Select
-                                        id="delete-semester"
+                                    <SemesterSelector
                                         value={subjectGradeInfo.semester}
-                                        onChange={e => setSubjectGradeInfo(p => ({ ...p, semester: e.target.value as 'ganjil' | 'genap' | '' }))}
-                                        className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 rounded-xl"
-                                    >
-                                        <option value="" className="text-slate-900">-- Semua Semester --</option>
-                                        <option value="ganjil" className="text-slate-900">📗 Semester Ganjil (1)</option>
-                                        <option value="genap" className="text-slate-900">📘 Semester Genap (2)</option>
-                                    </Select>
+                                        onChange={(val) => setSubjectGradeInfo(p => ({ ...p, semester: val }))}
+                                        includeAllOption={true}
+                                        showIcon={true}
+                                        className="w-full"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label htmlFor="delete-assessment" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Nama Penilaian</label>

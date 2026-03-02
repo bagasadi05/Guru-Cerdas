@@ -24,7 +24,7 @@ interface SecurityEvent {
     userId?: string;
     ip?: string;
     userAgent?: string;
-    details?: any;
+    details?: unknown;
 }
 
 const SECURITY_LOG_KEY = 'portal_guru_security_log';
@@ -36,7 +36,7 @@ const MAX_SECURITY_LOGS = 100;
 export function logSecurityEvent(
     type: SecurityEventType,
     userId?: string,
-    details?: any
+    details?: unknown
 ) {
     const event: SecurityEvent = {
         type,

@@ -248,6 +248,11 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
     const [progress, setProgress] = useState(100);
     const progressRef = useRef<NodeJS.Timeout>();
 
+    const handleDismiss = useCallback(() => {
+        setIsExiting(true);
+        setTimeout(onDismiss, 200);
+    }, [onDismiss]);
+
     // Auto-dismiss timer with progress
     useEffect(() => {
         if (toast.duration && toast.duration > 0) {
@@ -270,12 +275,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
                 if (progressRef.current) clearTimeout(progressRef.current);
             };
         }
-    }, [toast.duration]);
-
-    const handleDismiss = () => {
-        setIsExiting(true);
-        setTimeout(onDismiss, 200);
-    };
+    }, [toast.duration, handleDismiss]);
 
     const iconMap = {
         success: <Check className="w-5 h-5 text-emerald-500" />,

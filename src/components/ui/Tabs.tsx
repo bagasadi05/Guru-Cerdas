@@ -57,9 +57,9 @@ export const TabsList: React.FC<TabsListProps> = ({ children, className, sticky 
     role="tablist"
     className={`
       inline-flex h-auto items-center justify-start sm:justify-center 
-      rounded-full bg-gray-100 dark:bg-black/20 p-1 
-      text-gray-600 dark:text-gray-300
-      ${sticky ? 'sticky top-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-sm' : ''}
+      rounded-xl bg-slate-100 dark:bg-slate-800 p-1 
+      text-slate-500 dark:text-slate-300
+      ${sticky ? 'sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-sm' : ''}
       ${className}
     `}
   >
@@ -75,7 +75,7 @@ export const TabsTrigger: React.FC<{ children: React.ReactNode, value: string, c
     <button
       onClick={() => setActiveTab(value)}
       data-state={isActive ? 'active' : 'inactive'}
-      className={`inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium ring-offset-white dark:ring-offset-gray-950 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-emerald-600 dark:data-[state=active]:bg-gradient-to-r dark:data-[state=active]:from-emerald-600 dark:data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-md flex-shrink-0 ${className}`}
+      className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 h-10 text-sm font-medium ring-offset-white dark:ring-offset-slate-900 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:text-slate-400 dark:data-[state=inactive]:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 flex-shrink-0 ${className}`}
       aria-selected={isActive}
       role="tab"
     >
@@ -95,7 +95,7 @@ export const TabsContent: React.FC<{ children: React.ReactNode, value: string, c
       key={value}
       role="tabpanel"
       data-state={isActive ? 'active' : 'inactive'}
-      className={`ring-offset-white dark:ring-offset-gray-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${className}`}
+      className={`ring-offset-white dark:ring-offset-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${className}`}
       style={style}
     >
       {children}

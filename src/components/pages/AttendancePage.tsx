@@ -2,6 +2,7 @@ import { AttendancePageSkeleton } from '../skeletons/PageSkeletons';
 import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
+import { generateOpenRouterJson } from '../../services/openRouterService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
@@ -41,6 +42,7 @@ import { AttendanceExportModal } from '../attendance/AttendanceExportModal';
 import { AiAnalysisModal } from '../attendance/AiAnalysisModal';
 import { AttendanceCalendar } from '../attendance/AttendanceCalendar';
 import { EmptyState } from '../ui/EmptyState';
+import { ErrorState } from '../ui/ErrorState';
 import { QRCodeGenerator } from '../attendance/QRCodeGenerator';
 import { QuickTemplateIcons } from '../attendance/QuickTemplateIcons';
 import { AttendanceStreakIndicator } from '../attendance/AttendanceStreakIndicator';
@@ -117,7 +119,7 @@ const AttendancePage: React.FC = () => {
     const [isResetModalOpen, setIsResetModalOpen] = useState(false);
     // Template dropdown is now inline, no modal state needed
 
-    const { data: classes, isLoading: isLoadingClasses } = useQuery({
+    const { data: classes, isLoading: isLoadingClasses, error: classesError, refetch: refetchClasses } = useQuery({
         queryKey: ['classes', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase.from('classes').select('*').eq('user_id', user!.id).is('deleted_at', null);
@@ -133,7 +135,7 @@ const AttendancePage: React.FC = () => {
         }
     }, [classes, selectedClass]);
 
-    const { data: students, isLoading: isLoadingStudents } = useQuery({
+    const { data: students, isLoading: isLoadingStudents, error: studentsError, refetch: refetchStudents } = useQuery({
         queryKey: ['studentsForAttendance', selectedClass],
         queryFn: async () => {
             if (!selectedClass || !user) return [];
@@ -145,17 +147,22 @@ const AttendancePage: React.FC = () => {
     });
 
     const { data: existingAttendance } = useQuery({
-        queryKey: ['attendanceData', selectedClass, selectedDate],
+        queryKey: ['attendanceData', user?.id, selectedDate],
         queryFn: async () => {
-            if (!students || students.length === 0) return {};
-            const { data: attendanceData, error: attendanceError } = await supabase.from('attendance').select('*').eq('date', selectedDate).in('student_id', students.map(s => s.id));
+            if (!user) return {};
+            const { data: attendanceData, error: attendanceError } = await supabase
+                .from('attendance')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('date', selectedDate);
+
             if (attendanceError) throw attendanceError;
             return (attendanceData || []).reduce<Record<string, AttendanceRecord>>((acc, record) => {
                 acc[record.student_id] = { id: record.id, status: record.status as AttendanceStatus, note: record.notes || '' };
                 return acc;
             }, {});
         },
-        enabled: !!students && students.length > 0,
+        enabled: !!user && !!selectedDate,
     });
 
     useEffect(() => {
@@ -176,19 +183,19 @@ const AttendancePage: React.FC = () => {
     }, [calendarMonth, selectedSemester]);
 
     const { data: calendarAttendance = [] } = useQuery({
-        queryKey: ['attendanceCalendar', selectedClass, calendarRange?.start, calendarRange?.end],
+        queryKey: ['attendanceCalendar', user?.id, calendarRange?.start, calendarRange?.end],
         queryFn: async () => {
-            if (!students || students.length === 0 || !calendarRange) return [];
+            if (!user || !calendarRange) return [];
             const { data, error } = await supabase
                 .from('attendance')
                 .select('*')
+                .eq('user_id', user.id)
                 .gte('date', calendarRange.start)
-                .lte('date', calendarRange.end)
-                .in('student_id', students.map(student => student.id));
+                .lte('date', calendarRange.end);
             if (error) throw error;
             return data || [];
         },
-        enabled: !!students && students.length > 0 && !!calendarRange,
+        enabled: !!user && !!calendarRange,
     });
 
     const { mutate: saveAttendance, isPending: isSaving } = useMutation<
@@ -212,9 +219,9 @@ const AttendancePage: React.FC = () => {
             }
         },
         onMutate: async (recordsToUpsert) => {
-            await queryClient.cancelQueries({ queryKey: ['attendanceData', selectedClass, selectedDate] });
-            const previousAttendance = queryClient.getQueryData<Record<string, AttendanceRecord>>(['attendanceData', selectedClass, selectedDate]);
-            queryClient.setQueryData(['attendanceData', selectedClass, selectedDate], (old: Record<string, AttendanceRecord> = {}) => {
+            await queryClient.cancelQueries({ queryKey: ['attendanceData', user?.id, selectedDate] });
+            const previousAttendance = queryClient.getQueryData<Record<string, AttendanceRecord>>(['attendanceData', user?.id, selectedDate]);
+            queryClient.setQueryData(['attendanceData', user?.id, selectedDate], (old: Record<string, AttendanceRecord> = {}) => {
                 const newData = { ...old };
                 recordsToUpsert.forEach(record => {
                     if (record.student_id) {
@@ -226,7 +233,7 @@ const AttendancePage: React.FC = () => {
             return { previousAttendance };
         },
         onError: (err: Error, newRecords, context) => {
-            queryClient.setQueryData(['attendanceData', selectedClass, selectedDate], context?.previousAttendance);
+            queryClient.setQueryData(['attendanceData', user?.id, selectedDate], context?.previousAttendance);
             toast.error(`Gagal menyimpan absensi: ${err.message}`);
         },
         onSuccess: (data, variables) => {
@@ -249,7 +256,8 @@ const AttendancePage: React.FC = () => {
             }
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ['attendanceData', selectedClass, selectedDate] });
+            queryClient.invalidateQueries({ queryKey: ['attendanceData', user?.id, selectedDate] });
+            queryClient.invalidateQueries({ queryKey: ['attendanceCalendar'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
         },
     });
@@ -434,7 +442,7 @@ const AttendancePage: React.FC = () => {
                 });
 
                 let currentStreak = 0;
-                let cursor = parseDate(selectedDate);
+                const cursor = parseDate(selectedDate);
                 while (true) {
                     const status = statusByDate.get(dateKey(cursor));
                     if (status !== AttendanceStatus.Hadir) break;
@@ -582,7 +590,7 @@ const AttendancePage: React.FC = () => {
         const [studentsRes, attendanceRes, classesRes] = await Promise.all([
             supabase.from('students').select('*').eq('user_id', user.id).is('deleted_at', null),
             supabase.from('attendance').select('*').eq('user_id', user.id).gte('date', startDate).lte('date', endDate),
-            supabase.from('classes').select('id, name').eq('user_id', user.id).is('deleted_at', null),
+            supabase.from('classes').select('*').eq('user_id', user.id).is('deleted_at', null),
         ]);
 
         if (studentsRes.error || attendanceRes.error || classesRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
@@ -822,89 +830,10 @@ Berikan respon dalam format JSON dengan struktur berikut:
   "pattern_warnings": [{"pattern_description": "deskripsi pola", "implicated_students": ["nama siswa"]}]
 }`;
 
-            // List of free models to try (in order of preference)
-            const freeModels = [
-                "google/gemini-2.0-flash-exp:free",
-                "meta-llama/llama-3.2-3b-instruct:free",
-                "qwen/qwen-2.5-7b-instruct:free"
-            ];
-
-            let lastError: Error | null = null;
-            let jsonData = null;
-
-            for (const model of freeModels) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-                    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                        method: "POST",
-                        headers: {
-                            "Authorization": `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-                            "Content-Type": "application/json",
-                            "HTTP-Referer": window.location.origin,
-                            "X-Title": "Portal Guru"
-                        },
-                        signal: controller.signal,
-                        body: JSON.stringify({
-                            "model": model,
-                            "messages": [
-                                {
-                                    "role": "user",
-                                    "content": prompt
-                                }
-                            ]
-                        })
-                    });
-
-                    clearTimeout(timeoutId);
-
-                    // If rate limited, try next model
-                    if (response.status === 429) {
-                        console.log(`Rate limited on ${model}, trying next...`);
-                        continue;
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(`OpenRouter API error: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    let responseText = result.choices?.[0]?.message?.content || '';
-
-                    // Strip markdown code block wrappers if present (```json ... ```)
-                    responseText = responseText.trim();
-                    if (responseText.startsWith('```')) {
-                        responseText = responseText.replace(/^```(?:json)?\s*\n?/, '');
-                        responseText = responseText.replace(/\n?```\s*$/, '');
-                    }
-
-                    // Try to extract JSON from the response
-                    try {
-                        jsonData = JSON.parse(responseText);
-                    } catch {
-                        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                        if (jsonMatch) {
-                            jsonData = JSON.parse(jsonMatch[0]);
-                        } else {
-                            throw new Error('Could not extract JSON from AI response');
-                        }
-                    }
-
-                    // Success! Break out of the loop
-                    break;
-                } catch (err) {
-                    lastError = err as Error;
-                    console.log(`Error with ${model}:`, err);
-                    // Continue to next model
-                }
-            }
-
-            if (jsonData) {
-                setAiAnalysisResult(jsonData);
-            } else {
-                throw lastError || new Error('All AI models failed');
-            }
+            // Routes through the secure serverless proxy (api/openrouter.ts).
+            // API key never touches the client bundle.
+            const jsonData = await generateOpenRouterJson<AiAnalysis>(prompt);
+            setAiAnalysisResult(jsonData);
         } catch (err: unknown) {
             toast.error("Gagal menganalisis data. Coba lagi dalam beberapa saat.");
             console.error(err);
@@ -915,8 +844,25 @@ Berikan respon dalam format JSON dengan struktur berikut:
 
     if (isLoadingClasses || isLoadingStudents) return <AttendancePageSkeleton />;
 
+    if (classesError || studentsError) {
+        return (
+            <div className="w-full min-h-full p-4 sm:p-6 lg:p-8">
+                <ErrorState
+                    title="Gagal memuat data absensi"
+                    message="Periksa koneksi internet Anda dan coba lagi."
+                    onRetry={() => {
+                        refetchClasses();
+                        refetchStudents();
+                    }}
+                    fullWidth
+                    className="max-w-xl"
+                />
+            </div>
+        );
+    }
+
     return (
-        <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col animate-fade-in-up">
+        <div className="w-full min-h-full p-4 sm:p-6 lg:p-8 flex flex-col animate-fade-in-up">
             <AttendanceHeader
                 onAnalyze={handleAnalyzeAttendance}
                 onExport={() => setIsExportModalOpen(true)}
@@ -925,15 +871,15 @@ Berikan respon dalam format JSON dengan struktur berikut:
 
             {/* Class Selector */}
             {classes && classes.length > 0 && (
-                <div className="mb-4">
+                <div className="mb-6">
                     <div className="flex flex-wrap items-center gap-2">
                         {classes.map((c) => (
                             <button
                                 key={c.id}
                                 onClick={() => setSelectedClass(c.id)}
-                                className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${selectedClass === c.id
-                                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/30 scale-105'
-                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-green-400 dark:hover:border-green-500 hover:text-green-600 dark:hover:text-green-400'
+                                className={`h-9 sm:h-10 px-4 rounded-full font-semibold text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${selectedClass === c.id
+                                    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
+                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400'
                                     }`}
                             >
                                 {c.name}
@@ -944,28 +890,28 @@ Berikan respon dalam format JSON dengan struktur berikut:
             )}
 
             {/* Semester Selector */}
-            <div className="mb-4 flex flex-wrap items-center gap-3">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                 <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Semester:</span>
                 <SemesterSelector
                     value={selectedSemesterId || 'all'}
                     onChange={(semId) => setSelectedSemesterId(semId === 'all' ? null : semId)}
                     size="sm"
                     includeAllOption={false}
-                    className="min-w-[200px]"
+                    className="w-full sm:w-[240px]"
                 />
             </div>
 
-            <div className="relative z-10 glass-card p-4 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none mb-6 transition-all rounded-2xl overflow-hidden">
+            <div className="relative z-10 glass-card p-4 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none mb-6 transition-all rounded-xl overflow-hidden">
                 <div
-                    className="group relative overflow-hidden w-full rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30 cursor-pointer"
+                    className="group relative overflow-hidden w-full rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30 cursor-pointer"
                     onClick={() => setDatePickerOpen(true)}
                 >
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
-                    <div className="relative p-4 sm:p-6 flex items-center justify-between gap-2">
+                    <div className="relative p-4 sm:p-6 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
-                            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner border border-white/20 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner border border-white/20 group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
                                 <CalendarIcon className="w-5 h-5 sm:w-7 sm:h-7" />
                             </div>
                             <div className="text-left flex-1 min-w-0">
@@ -978,7 +924,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
                         <div className="flex items-center gap-2 flex-shrink-0">
                             {selectedDate === today && <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
                             {selectedDate === today && <span className="sm:hidden inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-bold bg-white/20 text-white border border-white/20">HARI INI</span>}
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-colors">
+                            <div className="w-11 h-11 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-colors">
                                 <ChevronDownIcon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                             </div>
                         </div>
@@ -987,37 +933,37 @@ Berikan respon dalam format JSON dengan struktur berikut:
             </div>
 
             {/* Attendance Summary Stats Cards */}
-            <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-6">
-                <div className="glass-card p-3 sm:p-4 rounded-xl border border-emerald-200/50 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-800/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                <div className="glass-card p-4 rounded-xl border border-emerald-200/50 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-800/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500 flex items-center justify-center mb-1 sm:mb-2 shadow-lg shadow-emerald-500/30">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-emerald-500 flex items-center justify-center mb-2 shadow-lg shadow-emerald-500/30">
                         <span className="text-white font-bold text-sm sm:text-base">H</span>
                     </div>
-                    <span className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">{attendanceSummary.Hadir}</span>
+                    <span className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">{attendanceSummary.Hadir}</span>
                     <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Hadir</span>
                 </div>
-                <div className="glass-card p-3 sm:p-4 rounded-xl border border-blue-200/50 dark:border-blue-500/20 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                <div className="glass-card p-4 rounded-xl border border-blue-200/50 dark:border-blue-500/20 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500 flex items-center justify-center mb-1 sm:mb-2 shadow-lg shadow-blue-500/30">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-blue-500 flex items-center justify-center mb-2 shadow-lg shadow-blue-500/30">
                         <span className="text-white font-bold text-sm sm:text-base">S</span>
                     </div>
-                    <span className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{attendanceSummary.Sakit}</span>
+                    <span className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">{attendanceSummary.Sakit}</span>
                     <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Sakit</span>
                 </div>
-                <div className="glass-card p-3 sm:p-4 rounded-xl border border-amber-200/50 dark:border-amber-500/20 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-800/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                <div className="glass-card p-4 rounded-xl border border-amber-200/50 dark:border-amber-500/20 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-800/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
                     <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500 flex items-center justify-center mb-1 sm:mb-2 shadow-lg shadow-amber-500/30">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-amber-500 flex items-center justify-center mb-2 shadow-lg shadow-amber-500/30">
                         <span className="text-white font-bold text-sm sm:text-base">I</span>
                     </div>
-                    <span className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">{attendanceSummary.Izin}</span>
+                    <span className="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">{attendanceSummary.Izin}</span>
                     <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Izin</span>
                 </div>
-                <div className="glass-card p-3 sm:p-4 rounded-xl border border-rose-200/50 dark:border-rose-500/20 bg-gradient-to-br from-rose-50 to-rose-100/50 dark:from-rose-900/20 dark:to-rose-800/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                <div className="glass-card p-4 rounded-xl border border-rose-200/50 dark:border-rose-500/20 bg-gradient-to-br from-rose-50 to-rose-100/50 dark:from-rose-900/20 dark:to-rose-800/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
                     <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-rose-500 flex items-center justify-center mb-1 sm:mb-2 shadow-lg shadow-rose-500/30">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-rose-500 flex items-center justify-center mb-2 shadow-lg shadow-rose-500/30">
                         <span className="text-white font-bold text-sm sm:text-base">A</span>
                     </div>
-                    <span className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">{attendanceSummary.Alpha}</span>
+                    <span className="text-2xl sm:text-3xl font-bold text-rose-600 dark:text-rose-400">{attendanceSummary.Alpha}</span>
                     <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Alpha</span>
                 </div>
             </div>
@@ -1045,57 +991,57 @@ Berikan respon dalam format JSON dengan struktur berikut:
             <main className="bg-transparent flex flex-col pb-32">
                 {/* Bulk Actions Bar */}
                 {students && students.length > 0 && (
-                    <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">Aksi Cepat:</span>
-                            <div className="flex-1 flex items-center justify-between">
-                                {/* Template Icons - spread across available space */}
+                    <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                                <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">Aksi Cepat:</span>
+                                {/* Template Icons */}
                                 <QuickTemplateIcons
                                     onApplyTemplate={handleApplyTemplate}
                                 />
+                            </div>
 
-                                {/* Right side actions */}
-                                <div className="flex items-center gap-1 sm:gap-2">
-                                    <Button
-                                        onClick={handleResetAttendance}
-                                        size="sm"
-                                        variant="ghost"
-                                        className="text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20 px-2 sm:px-3"
-                                        aria-label="Reset absensi"
-                                        disabled={Object.keys(attendanceRecords).length === 0}
+                            {/* Right side actions */}
+                            <div className="flex items-center justify-between sm:justify-end gap-2">
+                                <Button
+                                    onClick={handleResetAttendance}
+                                    size="default"
+                                    variant="ghost"
+                                    className="text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20 px-3 text-sm"
+                                    aria-label="Reset absensi"
+                                    disabled={Object.keys(attendanceRecords).length === 0}
+                                >
+                                    <RotateCcw className="w-4 h-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">Reset</span>
+                                </Button>
+                                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
+                                <Button
+                                    onClick={() => setIsQrModalOpen(true)}
+                                    size="default"
+                                    variant="ghost"
+                                    className="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 px-3 text-sm"
+                                    aria-label="Generate QR Code"
+                                >
+                                    <QrCodeIcon className="w-4 h-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">QR Code</span>
+                                </Button>
+                                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 ml-0 sm:ml-1">
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={`w-10 h-10 rounded-md transition-colors ${viewMode === 'list' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                        aria-label="Tampilan daftar"
+                                        aria-pressed={viewMode === 'list'}
                                     >
-                                        <RotateCcw className="w-4 h-4 sm:mr-1.5" />
-                                        <span className="hidden sm:inline">Reset</span>
-                                    </Button>
-                                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
-                                    <Button
-                                        onClick={() => setIsQrModalOpen(true)}
-                                        size="sm"
-                                        variant="ghost"
-                                        className="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 px-2 sm:px-3"
-                                        aria-label="Generate QR Code"
+                                        <ListIcon className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('calendar')}
+                                        className={`w-10 h-10 rounded-md transition-colors ${viewMode === 'calendar' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                        aria-label="Tampilan kalender"
+                                        aria-pressed={viewMode === 'calendar'}
                                     >
-                                        <QrCodeIcon className="w-4 h-4 sm:mr-1.5" />
-                                        <span className="hidden sm:inline">QR Code</span>
-                                    </Button>
-                                    <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 ml-1">
-                                        <button
-                                            onClick={() => setViewMode('list')}
-                                            className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                                            aria-label="Tampilan daftar"
-                                            aria-pressed={viewMode === 'list'}
-                                        >
-                                            <ListIcon className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => setViewMode('calendar')}
-                                            className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'calendar' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                                            aria-label="Tampilan kalender"
-                                            aria-pressed={viewMode === 'calendar'}
-                                        >
-                                            <LayoutGridIcon className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                                        <LayoutGridIcon className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -1103,8 +1049,8 @@ Berikan respon dalam format JSON dengan struktur berikut:
                 )}
 
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 px-1">
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2 tracking-wide">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+                        <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2 tracking-wide">
                             Direktori Peserta Didik
                             <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold py-1 px-2.5 rounded-full border border-slate-200 dark:border-slate-700">{filteredStudents.length}</span>
                         </h3>
@@ -1114,14 +1060,14 @@ Berikan respon dalam format JSON dengan struktur berikut:
                                 placeholder="Cari nama siswa..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 h-9 text-sm bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-green-500"
+                                className="pl-10 h-12 text-base bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-green-500"
                                 aria-label="Cari siswa berdasarkan nama"
                             />
                         </div>
                     </div>
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                         {unmarkedStudents.length > 0 && viewMode === 'list' && (
-                            <Button onClick={markRestAsPresent} size="sm" variant="ghost" className="w-full sm:w-auto text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 font-medium">
+                            <Button onClick={markRestAsPresent} size="default" variant="primary" className="w-full sm:w-auto text-sm">
                                 <CheckCircleIcon className="w-4 h-4 mr-2" />
                                 Tandai Sisa Hadir ({unmarkedStudents.length})
                             </Button>
@@ -1137,7 +1083,16 @@ Berikan respon dalam format JSON dengan struktur berikut:
                             icon={<UsersIcon className="w-10 h-10" />}
                             title="Belum Ada Siswa"
                             description="Pilih kelas untuk memulai absensi atau tambahkan siswa baru terlebih dahulu."
-                            className="bg-white/50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700"
+                            className="bg-white/50 dark:bg-white/5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700"
+                        />
+                    ) : viewMode === 'list' && filteredStudents.length === 0 ? (
+                        <EmptyState
+                            icon={<UsersIcon className="w-10 h-10" />}
+                            title="Tidak ada hasil"
+                            description="Tidak ada siswa yang cocok dengan pencarian ini."
+                            actionLabel="Reset pencarian"
+                            onAction={() => setSearchQuery('')}
+                            className="bg-white/50 dark:bg-white/5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700"
                         />
                     ) : viewMode === 'calendar' ? (
                         <AttendanceCalendar
@@ -1168,7 +1123,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
                             <Button
                                 onClick={handleSave}
                                 disabled={isSaving}
-                                className="w-full h-14 text-lg font-bold shadow-xl shadow-emerald-500/30 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-none rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                className="w-full h-[52px] text-base sm:text-lg font-bold shadow-xl shadow-emerald-500/30 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-none rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
                             </Button>
@@ -1176,6 +1131,16 @@ Berikan respon dalam format JSON dengan struktur berikut:
                     </div>
                 )}
             </main>
+
+            {isSaving && (
+                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex items-center justify-center">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-xl border border-slate-200 dark:border-slate-800 text-center">
+                        <div className="w-12 h-12 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Menyimpan Absensi</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Mohon tunggu sebentar...</p>
+                    </div>
+                </div>
+            )}
 
             <AiAnalysisModal
                 isOpen={isAiModalOpen}

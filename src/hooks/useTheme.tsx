@@ -81,8 +81,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setResolvedTheme(e.matches ? 'dark' : 'light');
     };
 
-    // Set initial system theme
-    setResolvedTheme(mediaQuery.matches ? 'dark' : 'light');
+    // Set initial system theme (defer to avoid cascading renders)
+    Promise.resolve().then(() => {
+      setResolvedTheme(mediaQuery.matches ? 'dark' : 'light');
+    });
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
@@ -90,11 +92,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Update resolved theme when preference changes
   useEffect(() => {
-    if (themePreference === 'system') {
-      setResolvedTheme(getSystemTheme());
-    } else {
-      setResolvedTheme(themePreference);
-    }
+    Promise.resolve().then(() => {
+      if (themePreference === 'system') {
+        setResolvedTheme(getSystemTheme());
+      } else {
+        setResolvedTheme(themePreference);
+      }
+    });
   }, [themePreference]);
 
   // Apply theme to DOM with transition animation

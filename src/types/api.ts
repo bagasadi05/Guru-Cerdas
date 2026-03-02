@@ -43,6 +43,10 @@ export interface DashboardQueryData {
     academicRecords: AcademicRecordSummary[];
     /** Violation records for points calculation */
     violations: ViolationSummary[];
+    /** Recent tasks for activity feed */
+    recentTasks: Pick<TaskRow, 'id' | 'title' | 'created_at' | 'status'>[];
+    /** Recent attendance records for activity feed */
+    todayAttendanceRecords: { created_at: string; status: string; count: number }[];
 }
 
 // =============================================================================

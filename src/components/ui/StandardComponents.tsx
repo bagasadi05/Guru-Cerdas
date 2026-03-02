@@ -32,7 +32,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     }[maxWidth];
 
     return (
-        <div className={`w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 ${maxWidthClass} mx-auto pb-24 lg:pb-8 ${className}`}>
+        <div className={`w-full min-h-full p-4 md:p-6 lg:p-8 ${maxWidthClass} mx-auto pb-24 lg:pb-8 ${className}`}>
             {children}
         </div>
     );
@@ -53,9 +53,9 @@ export const Section: React.FC<SectionProps> = ({
     spacing = 'normal'
 }) => {
     const spacingClass = {
-        tight: 'space-y-3 sm:space-y-4',
-        normal: 'space-y-4 sm:space-y-6',
-        relaxed: 'space-y-6 sm:space-y-8',
+        tight: 'space-y-4',
+        normal: 'space-y-6',
+        relaxed: 'space-y-8',
     }[spacing];
 
     return (
@@ -81,20 +81,20 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({
     variant = 'default',
     padding = 'md'
 }) => {
-    const baseClasses = 'rounded-2xl';
+    const baseClasses = 'rounded-xl';
 
     const variantClasses = {
-        default: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm',
-        glass: 'glass-card border border-white/20 dark:border-white/10 shadow-lg',
-        stat: 'glass-card border border-white/20 dark:border-white/5 shadow-lg shadow-slate-200/50 dark:shadow-black/20 card-hover-glow',
-        interactive: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300',
+        default: 'bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 shadow-sm',
+        glass: 'glass-card border border-slate-200/50 dark:border-slate-700/50 shadow-sm',
+        stat: 'glass-card border border-slate-200/50 dark:border-slate-700/50 shadow-sm',
+        interactive: 'bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200',
     }[variant];
 
     const paddingClasses = {
         none: '',
         sm: 'p-3 sm:p-4',
-        md: 'p-4 sm:p-5 md:p-6',
-        lg: 'p-5 sm:p-6 md:p-8',
+        md: 'p-4 sm:p-5',
+        lg: 'p-5 sm:p-6',
     }[padding];
 
     return (
@@ -125,22 +125,22 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
     gradient = false
 }) => {
     const bgClass = gradient
-        ? 'bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-transparent'
+        ? 'bg-emerald-500/10'
         : '';
 
     return (
-        <div className={`p-4 sm:p-6 border-b border-slate-200/50 dark:border-white/5 ${bgClass} ${className}`}>
+        <div className={`p-4 border-b border-slate-200/70 dark:border-slate-700/60 ${bgClass} ${className}`}>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     {icon && (
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+                        <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center text-white shadow-sm">
                             {icon}
                         </div>
                     )}
                     <div>
-                        <h3 className="font-bold text-lg text-slate-800 dark:text-white">{title}</h3>
+                        <h3 className="font-semibold text-base text-slate-900 dark:text-white">{title}</h3>
                         {description && (
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{description}</p>
                         )}
                     </div>
                 </div>
@@ -169,7 +169,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     className = ''
 }) => {
     return (
-        <header className={`relative p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-600 via-emerald-600 to-green-800 text-white shadow-2xl shadow-green-900/20 overflow-hidden isolate ${className}`}>
+        <header className={`relative p-5 sm:p-8 md:p-12 rounded-2xl bg-gradient-to-br from-green-600 via-emerald-600 to-green-800 text-white shadow-2xl shadow-green-900/20 overflow-hidden isolate ${className}`}>
             {/* Decorative Elements */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/30 rounded-full blur-3xl -z-10"></div>
             <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/20 to-transparent -z-10"></div>
@@ -227,8 +227,8 @@ export const Grid: React.FC<GridProps> = ({
 
     const gapClass = {
         sm: 'gap-2 sm:gap-3',
-        md: 'gap-3 sm:gap-4 md:gap-6',
-        lg: 'gap-4 sm:gap-6 lg:gap-8',
+        md: 'gap-3 md:gap-4',
+        lg: 'gap-4 md:gap-4',
     }[gap];
 
     return (
@@ -264,7 +264,7 @@ export const StatCard: React.FC<StatCardProps> = ({
         <div className={`pg-stat-card group relative overflow-hidden ${className}`}>
             <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="flex items-start justify-between mb-4 relative z-10">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br ${color} shadow-lg text-white transform group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br ${color} shadow-sm text-white transform group-hover:scale-110 transition-transform duration-300`}>
                     {icon}
                 </div>
             </div>
@@ -276,7 +276,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                     {label}
                 </p>
                 {subValue && (
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-lg inline-block">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-full inline-block">
                         {subValue}
                     </p>
                 )}
@@ -435,16 +435,16 @@ export const Badge: React.FC<BadgeProps> = ({
     className = ''
 }) => {
     const variantClasses = {
-        primary: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
-        success: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
-        warning: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
-        error: 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400',
+        primary: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+        success: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+        warning: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
+        error: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
         neutral: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
     }[variant];
 
     const sizeClasses = {
-        sm: 'px-2 py-0.5 text-xs',
-        md: 'px-3 py-1 text-sm',
+        sm: 'px-2 py-0.5 text-xs font-bold',
+        md: 'px-3 py-1 text-sm font-semibold',
     }[size];
 
     return (

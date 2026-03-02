@@ -83,6 +83,13 @@ export const TourProvider: React.FC<{
             tourSteps[0]?.onEnter?.();
         }, [storageKey]);
 
+        const complete = useCallback(() => {
+            steps[currentStep]?.onExit?.();
+            setIsActive(false);
+            localStorage.setItem(storageKey, 'true');
+            onComplete?.();
+        }, [currentStep, steps, onComplete, storageKey]);
+
         const next = useCallback(() => {
             if (currentStep < steps.length - 1) {
                 steps[currentStep]?.onExit?.();
@@ -91,7 +98,7 @@ export const TourProvider: React.FC<{
             } else {
                 complete();
             }
-        }, [currentStep, steps]);
+        }, [currentStep, steps, complete]);
 
         const prev = useCallback(() => {
             if (currentStep > 0) {
@@ -106,13 +113,6 @@ export const TourProvider: React.FC<{
             setIsActive(false);
             localStorage.setItem(storageKey, 'true');
         }, [currentStep, steps, storageKey]);
-
-        const complete = useCallback(() => {
-            steps[currentStep]?.onExit?.();
-            setIsActive(false);
-            localStorage.setItem(storageKey, 'true');
-            onComplete?.();
-        }, [currentStep, steps, onComplete, storageKey]);
 
         const goTo = useCallback((step: number) => {
             if (step >= 0 && step < steps.length) {
@@ -558,6 +558,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, className = '' })
     const [isMuted, setIsMuted] = useState(false);
     const [progress, setProgress] = useState(0);
     const [duration, setDuration] = useState(0);
+    const currentTime = duration > 0 ? (progress / 100) * duration : 0;
 
     const togglePlay = () => {
         if (videoRef.current) {
@@ -661,7 +662,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, className = '' })
                                 {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                             </button>
                             <span className="text-sm text-white/80">
-                                {formatTime(videoRef.current?.currentTime || 0)} / {formatTime(duration)}
+                                {formatTime(currentTime)} / {formatTime(duration)}
                             </span>
                         </div>
                         <button onClick={toggleFullscreen} className="text-white">

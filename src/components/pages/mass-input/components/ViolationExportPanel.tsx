@@ -2,15 +2,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '../../../ui/Button';
 import { Select } from '../../../ui/Select';
 import { DownloadIcon, FileTextIcon, FileSpreadsheetIcon, ShieldAlertIcon, UsersIcon, SearchIcon, SparklesIcon } from '../../../Icons';
-import { ClassRow, ViolationRow, StudentRow } from '../types';
-import { exportBulkViolationsToPDF, exportBulkViolationsToExcel } from '../../../../services/violationExport';
+import { ClassRow, ViolationRow, StudentRow, StudentFilter } from '../types';
+import { exportBulkViolationsToExcel } from '../../../../services/violationExport';
 import { useToast } from '../../../../hooks/useToast';
 import { SemesterSelector } from '../../../ui/SemesterSelector';
 import { useUserSettings } from '../../../../hooks/useUserSettings';
 import { useSemester } from '../../../../contexts/SemesterContext';
 import { Checkbox } from '../../../ui/Checkbox';
-
-type StudentFilter = 'all' | 'selected' | 'unselected';
 
 interface ViolationExportPanelProps {
     classes: ClassRow[] | undefined;
@@ -21,6 +19,19 @@ interface ViolationExportPanelProps {
     studentsData: StudentRow[] | undefined;
     isLoadingViolations: boolean;
 }
+
+const StudentAvatar: React.FC<{ name: string; avatarUrl: string | null | undefined }> = ({ name, avatarUrl }) => {
+    const [imgError, setImgError] = useState(false);
+    const showFallback = !avatarUrl || imgError;
+
+    return showFallback ? (
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+            {name.charAt(0).toUpperCase()}
+        </div>
+    ) : (
+        <img src={avatarUrl} alt={name} className="w-9 h-9 rounded-full object-cover shrink-0" onError={() => setImgError(true)} />
+    );
+};
 
 export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
     classes,
@@ -33,14 +44,10 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
 }) => {
     const toast = useToast();
     const { activeSemester } = useSemester();
-    const [semesterFilter, setSemesterFilter] = useState<string>(activeSemester?.id || 'all');
+    const [semesterFilter, setSemesterFilter] = useState<string>(() => activeSemester?.id || 'all');
     const { schoolName } = useUserSettings();
 
-    useEffect(() => {
-        if (activeSemester?.id) {
-            setSemesterFilter(activeSemester.id);
-        }
-    }, [activeSemester]);
+    const effectiveSemesterFilter = semesterFilter === 'all' && activeSemester?.id ? activeSemester.id : semesterFilter;
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
@@ -49,7 +56,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
     const className = classes?.find(c => c.id === selectedClass)?.name || 'Kelas';
 
     useEffect(() => {
-        setSelectedStudentIds(new Set());
+        setTimeout(() => setSelectedStudentIds(new Set()), 0);
     }, [studentsData, selectedClass]);
 
     const filteredStudents = useMemo(() => {
@@ -90,12 +97,12 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
 
     const filteredViolations = useMemo(() => {
         let bySemester = existingViolations || [];
-        if (semesterFilter !== 'all') {
-            bySemester = bySemester.filter(v => v.semester_id === semesterFilter);
+        if (effectiveSemesterFilter !== 'all') {
+            bySemester = bySemester.filter(v => v.semester_id === effectiveSemesterFilter);
         }
         if (selectedStudentIds.size === 0) return bySemester;
         return bySemester.filter(v => selectedStudentIds.has(v.student_id));
-    }, [existingViolations, semesterFilter, selectedStudentIds]);
+    }, [existingViolations, effectiveSemesterFilter, selectedStudentIds]);
 
     const violationCount = filteredViolations.length;
     const totalPoints = filteredViolations.reduce((sum, v) => sum + v.points, 0);
@@ -111,22 +118,44 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
             return;
         }
 
-        const options = {
-            className: className,
-            schoolName: schoolName,
-            violations: filteredViolations,
-            students: studentsData.filter(s => selectedStudentIds.has(s.id)).map(s => ({
-                id: s.id,
-                name: s.name,
-                gender: s.gender,
-                avatar_url: s.avatar_url
-            }))
-        };
+        const selectedStudents = studentsData.filter(s => selectedStudentIds.has(s.id));
 
         if (type === 'pdf') {
-            exportBulkViolationsToPDF(options);
-            toast.success('Mengunduh Rekap Pelanggaran (PDF)...');
+            // Export each student to a separate PDF file
+            const { exportViolationsToPDF } = await import('../../../../services/violationExport');
+            
+            for (const student of selectedStudents) {
+                const studentViolations = filteredViolations.filter(v => v.student_id === student.id);
+                
+                if (studentViolations.length === 0) continue;
+                
+                // Type assertion: mass-input ViolationRow is compatible with student ViolationRow
+                await exportViolationsToPDF({
+                    studentName: student.name,
+                    className: className,
+                    schoolName: schoolName,
+                    violations: studentViolations as any
+                });
+                
+                // Small delay between downloads to prevent browser blocking
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            toast.success(`${selectedStudents.length} file PDF rapor pelanggaran berhasil diunduh!`);
         } else {
+            // Excel: still use bulk export as one file
+            const options = {
+                className: className,
+                schoolName: schoolName,
+                violations: filteredViolations as any,
+                students: selectedStudents.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    gender: s.gender,
+                    avatar_url: s.avatar_url
+                }))
+            };
+            
             toast.info('Memproses export Excel...');
             await exportBulkViolationsToExcel(options);
             toast.success('Rekap Pelanggaran (Excel) berhasil diunduh!');
@@ -264,27 +293,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                                         <Checkbox checked={selectedStudentIds.has(student.id)} onChange={() => handleToggleStudent(student.id)} />
                                     </div>
                                     <div className="col-span-7 flex items-center gap-3">
-                                        {/* Student Photo */}
-                                        {student.avatar_url ? (
-                                            <img
-                                                src={student.avatar_url}
-                                                alt={student.name}
-                                                className="w-9 h-9 rounded-full object-cover shrink-0"
-                                                onError={(e) => {
-                                                    // Fallback to initials if image fails to load
-                                                    e.currentTarget.style.display = 'none';
-                                                    if (e.currentTarget.nextElementSibling) {
-                                                        (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
-                                                    }
-                                                }}
-                                            />
-                                        ) : null}
-                                        <div
-                                            className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold text-sm shrink-0"
-                                            style={{ display: student.avatar_url ? 'none' : 'flex' }}
-                                        >
-                                            {student.name.charAt(0).toUpperCase()}
-                                        </div>
+                                        <StudentAvatar name={student.name} avatarUrl={student.avatar_url} />
                                         <span className="font-medium text-slate-800 dark:text-white uppercase text-sm">{student.name}</span>
                                     </div>
                                     <div className="col-span-4 text-right">

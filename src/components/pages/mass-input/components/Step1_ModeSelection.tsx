@@ -8,7 +8,7 @@ export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode)
             {/* Decorative background elements */}
             <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-emerald-500/30 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
             <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-green-500/30 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+            <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}></div>
 
             <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12 text-center md:text-left z-10">
                 <div className="flex-shrink-0 group">
@@ -36,7 +36,9 @@ export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode)
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {inputCards.map((card, index) => (
                     <div key={card.mode} onClick={() => handleModeSelect(card.mode)}
-                        className="group relative overflow-hidden bg-white dark:bg-slate-900 backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-500/50 hover:shadow-xl hover:shadow-green-500/10 dark:hover:shadow-green-500/20 shadow-sm"
+                        role="button" tabIndex={0} aria-label={card.title}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleModeSelect(card.mode); } }}
+                        className="group relative overflow-hidden bg-white dark:bg-slate-900 backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-500/50 hover:shadow-xl hover:shadow-green-500/10 dark:hover:shadow-green-500/20 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                         style={{ animationDelay: `${index * 100}ms` }}>
 
                         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 dark:from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -64,7 +66,9 @@ export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode)
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {exportCards.map((card, index) => (
                     <div key={card.mode} onClick={() => handleModeSelect(card.mode)}
-                        className="group relative overflow-hidden bg-white dark:bg-slate-900 backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/20 shadow-sm"
+                        role="button" tabIndex={0} aria-label={card.title}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleModeSelect(card.mode); } }}
+                        className="group relative overflow-hidden bg-white dark:bg-slate-900 backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/20 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                         style={{ animationDelay: `${(index + inputCards.length) * 100}ms` }}>
 
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 dark:from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>

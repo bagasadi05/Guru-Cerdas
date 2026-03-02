@@ -681,22 +681,25 @@ export const DonutChart: React.FC<DonutChartProps> = ({
     const total = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
 
     const segments = useMemo(() => {
-        let currentAngle = -90; // Start from top
-        return data.map((point, i) => {
-            const percentage = (point.value / total) * 100;
+        const initial = { segments: [] as Array<ChartDataPoint & { percentage: number; startAngle: number; endAngle: number; color: string }>, currentAngle: -90 };
+        return data.reduce((acc, point, i) => {
+            const percentage = total > 0 ? (point.value / total) * 100 : 0;
             const angle = (percentage / 100) * 360;
-            const startAngle = currentAngle;
-            const endAngle = currentAngle + angle;
-            currentAngle = endAngle;
-
-            return {
+            const startAngle = acc.currentAngle;
+            const endAngle = startAngle + angle;
+            const segment = {
                 ...point,
                 percentage,
                 startAngle,
                 endAngle,
-                color: point.color || chartColors.primary[i % chartColors.primary.length]
+                color: point.color || chartColors.primary[i % chartColors.primary.length],
             };
-        });
+
+            return {
+                segments: [...acc.segments, segment],
+                currentAngle: endAngle,
+            };
+        }, initial).segments;
     }, [data, total]);
 
     const describeArc = (startAngle: number, endAngle: number, radius: number, innerRadius: number = 0) => {

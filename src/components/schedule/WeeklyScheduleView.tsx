@@ -1,4 +1,5 @@
 import React from 'react';
+import { useMemo } from 'react';
 import { Database } from '../../services/database.types';
 import { ClockIcon, UsersIcon } from '../Icons';
 
@@ -31,12 +32,25 @@ const getColorForSubject = (subject: string): string => {
 };
 
 export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule, onEdit }) => {
+    const scheduleByDay = useMemo(() => {
+        const map = new Map<string, ScheduleRow[]>();
+        daysOfWeek.forEach(day => map.set(day, []));
+        schedule.forEach(item => {
+            const list = map.get(item.day);
+            if (list) list.push(item);
+        });
+        map.forEach(items => {
+            if (items.length > 1) {
+                items.sort((a, b) => a.start_time.localeCompare(b.start_time));
+            }
+        });
+        return map;
+    }, [schedule]);
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 animate-fade-in-up">
             {daysOfWeek.map(day => {
-                const daySchedule = schedule
-                    .filter(s => s.day === day)
-                    .sort((a, b) => a.start_time.localeCompare(b.start_time));
+                const daySchedule = scheduleByDay.get(day) || [];
 
                 return (
                     <div key={day} className="flex flex-col gap-3">

@@ -15,8 +15,8 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({ isOpen, onClos
         <Modal title="Analisis Kehadiran AI" isOpen={isOpen} onClose={onClose} icon={<BrainCircuitIcon className="h-5 w-5 text-green-500" />}>
             {isLoading ? (
                 <div className="text-center py-12">
-                    <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                    Menganalisis data...
+                    <div className="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">Menganalisis data...</p>
                 </div>
             ) : result ? (
                 <div className="space-y-4 text-sm">
@@ -40,7 +40,7 @@ export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({ isOpen, onClos
                     )}
                 </div>
             ) : (
-                <div className="text-center py-8 text-slate-500">Tidak ada hasil.</div>
+                <div className="text-center py-8 text-sm text-slate-500">Tidak ada hasil.</div>
             )}
         </Modal>
     );

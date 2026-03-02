@@ -237,7 +237,7 @@ export type ClassListItem = Pick<ClassRow, 'id' | 'name'>;
 /**
  * Academic record with minimal fields for aggregation.
  */
-export type AcademicRecordSummary = Pick<AcademicRecordRow, 'student_id' | 'subject' | 'score' | 'assessment_name'>;
+export type AcademicRecordSummary = Pick<AcademicRecordRow, 'student_id' | 'subject' | 'score' | 'assessment_name' | 'created_at'>;
 
 /**
  * Violation record with minimal fields for aggregation.

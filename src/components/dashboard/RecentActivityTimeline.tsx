@@ -17,6 +17,7 @@ import {
     Activity,
     ChevronRight
 } from 'lucide-react';
+import { EmptyState } from '../ui/EmptyState';
 
 export interface ActivityItem {
     id: string;
@@ -126,39 +127,33 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
 
     if (activities.length === 0) {
         return (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
                         <Activity className="w-5 h-5 text-white" />
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                         Aktivitas Terbaru
                     </h2>
                 </div>
-                <div className="text-center py-12">
-                    <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center mx-auto mb-4">
-                        <Clock className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">
-                        Belum ada aktivitas
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                        Aktivitas Anda akan muncul di sini
-                    </p>
-                </div>
+                <EmptyState
+                    icon={<Clock />}
+                    title="Belum ada aktivitas"
+                    description="Aktivitas Anda akan muncul di sini."
+                />
             </div>
         );
     }
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-sm">
                         <Activity className="w-5 h-5 text-white" />
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                         Aktivitas Terbaru
                     </h2>
                 </div>
@@ -232,10 +227,10 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
 
             {/* View All Button */}
             {activities.length > maxItems && (
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <button className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 rounded-lg text-sm font-semibold text-indigo-600 dark:text-indigo-400 transition-colors flex items-center justify-center gap-2 border border-indigo-200 dark:border-indigo-700/50">
+                <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-700/60">
+                    <button className="w-full px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg text-sm font-semibold text-emerald-600 dark:text-emerald-400 transition-colors flex items-center justify-center gap-2 border border-emerald-200 dark:border-emerald-700/50">
                         <span>Lihat Semua Aktivitas</span>
-                        <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-800 rounded-full text-xs">
+                        <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-800 rounded-full text-xs">
                             {activities.length}
                         </span>
                     </button>

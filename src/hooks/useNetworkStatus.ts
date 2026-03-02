@@ -41,17 +41,21 @@ export function useNetworkStatus() {
 
   // Update connection history
   useEffect(() => {
-    setConnectionHistory(prev => {
-      const newHistory = [...prev, status.isOnline];
-      // Keep only last 10 status changes
-      return newHistory.slice(-10);
-    });
+    // Defer setState calls to prevent cascading renders
+    const timer = setTimeout(() => {
+      setConnectionHistory(prev => {
+        const newHistory = [...prev, status.isOnline];
+        // Keep only last 10 status changes
+        return newHistory.slice(-10);
+      });
 
-    if (status.isOnline) {
-      setLastOnlineTime(new Date());
-    } else {
-      setLastOfflineTime(new Date());
-    }
+      if (status.isOnline) {
+        setLastOnlineTime(new Date());
+      } else {
+        setLastOfflineTime(new Date());
+      }
+    });
+    return () => clearTimeout(timer);
   }, [status.isOnline]);
 
   // Subscribe to network status changes

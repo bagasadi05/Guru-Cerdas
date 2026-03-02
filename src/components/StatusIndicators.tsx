@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
 import { Wifi, WifiOff, Cloud, CloudOff, Upload, Download, Check, X, Clock, RefreshCw, AlertTriangle, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 
 /**
@@ -122,14 +122,13 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onSync }) 
     const [lastSynced, setLastSynced] = useState<Date | null>(null);
     const [queuedOperations, setQueuedOperations] = useState<QueuedOperation[]>([]);
     const { isOnline } = useNetworkStatus();
-
-    useEffect(() => {
-        if (!isOnline) {
-            setStatus('offline');
-        } else if (queuedOperations.length > 0) {
-            setStatus('pending');
-        }
-    }, [isOnline, queuedOperations.length]);
+    const effectiveStatus: SyncStatus = !isOnline
+        ? 'offline'
+        : status === 'syncing' || status === 'error'
+            ? status
+            : queuedOperations.length > 0
+                ? 'pending'
+                : 'synced';
 
     const addToQueue = useCallback((operation: Omit<QueuedOperation, 'id' | 'timestamp'>) => {
         const newOp: QueuedOperation = {
@@ -164,13 +163,13 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onSync }) 
     // Auto-sync when back online
     useEffect(() => {
         if (isOnline && queuedOperations.length > 0) {
-            sync();
+            setTimeout(sync, 0);
         }
     }, [isOnline]);
 
     return (
         <SyncContext.Provider value={{
-            status,
+            status: effectiveStatus,
             lastSynced,
             pendingCount: queuedOperations.length,
             queuedOperations,
@@ -371,17 +370,33 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
     const { isOnline, quality } = useNetworkStatus();
     const { pendingCount, sync } = useSyncStatus();
     const [showReconnected, setShowReconnected] = useState(false);
-    const [wasOffline, setWasOffline] = useState(false);
+    const wasOfflineRef = useRef(false);
+    const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        if (!isOnline) {
-            setWasOffline(true);
-        } else if (wasOffline && isOnline) {
-            setShowReconnected(true);
-            setTimeout(() => setShowReconnected(false), 3000);
-            setWasOffline(false);
-        }
-    }, [isOnline, wasOffline]);
+        const handleOffline = () => {
+            wasOfflineRef.current = true;
+        };
+
+        const handleOnline = () => {
+            if (wasOfflineRef.current) {
+                setShowReconnected(true);
+                if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+                reconnectTimerRef.current = setTimeout(() => {
+                    setShowReconnected(false);
+                }, 3000);
+                wasOfflineRef.current = false;
+            }
+        };
+
+        window.addEventListener('offline', handleOffline);
+        window.addEventListener('online', handleOnline);
+        return () => {
+            window.removeEventListener('offline', handleOffline);
+            window.removeEventListener('online', handleOnline);
+            if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+        };
+    }, []);
 
     if (isOnline && !showReconnected) return null;
 

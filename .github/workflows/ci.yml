@@ -34,6 +34,9 @@ jobs:
         run: npm ci
 
       - name: Run TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: Run ESLint
         run: npm run lint
 
       - name: Check for unused dependencies
@@ -62,6 +65,9 @@ jobs:
 
       - name: Run tests
         run: npm test
+        env:
+          VITE_SUPABASE_URL: https://test.supabase.co
+          VITE_SUPABASE_ANON_KEY: test-anon-key
         
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -95,8 +101,8 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://test.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'test-anon-key' }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

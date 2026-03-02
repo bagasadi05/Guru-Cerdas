@@ -20,6 +20,8 @@ import { validateGrades, getGradeColorClass, calculateGradeStats, GradeEntry } f
 import { VirtualList } from '../ui/VirtualList';
 import { KeyboardShortcutsHelp } from '../ui/KeyboardShortcutsHelp';
 import { EmptyGradesConfirmation, SaveSuccessModal, ClearAllConfirmation } from '../ui/GradeConfirmationModals';
+import { useSemester } from '../../contexts/SemesterContext';
+import { SemesterSelector, SemesterLockedBanner } from '../ui/SemesterSelector';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -37,10 +39,12 @@ const BulkGradeInputPage: React.FC = () => {
     const toast = useToast();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { activeSemester, isLocked: isSemesterLocked } = useSemester();
 
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [selectedSubject, setSelectedSubject] = useState<string>(SUBJECTS[0]);
     const [assessmentName, setAssessmentName] = useState<string>('Ulangan Harian');
+    const [selectedSemester, setSelectedSemester] = useState<string>('');
     const [grades, setGrades] = useState<GradeEntry[]>([]);
     const [showImportModal, setShowImportModal] = useState(false);
     const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
@@ -50,6 +54,16 @@ const BulkGradeInputPage: React.FC = () => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [lastSaveCount, setLastSaveCount] = useState(0);
     const [kkm] = useState(DEFAULT_KKM);
+
+    // Default to active semester when it loads
+    useEffect(() => {
+        if (activeSemester && !selectedSemester) {
+            setSelectedSemester(activeSemester.id);
+        }
+    }, [activeSemester, selectedSemester]);
+
+    // Check if selected semester is locked
+    const semesterLocked = selectedSemester ? isSemesterLocked(selectedSemester) : false;
 
     // Refs for input navigation
     const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
@@ -71,12 +85,12 @@ const BulkGradeInputPage: React.FC = () => {
     );
 
     // Autosave
-    const autosaveKey = `bulk-grade-${selectedClass}-${selectedSubject}-${assessmentName}`;
+    const autosaveKey = `bulk-grade-${selectedClass}-${selectedSubject}-${assessmentName}-${selectedSemester}`;
     const { hasDraft, restoreDraft, clearDraft, lastSaved, getTimeSinceLastSave } = useAutosave({
         key: autosaveKey,
-        data: { grades, selectedSubject, assessmentName },
+        data: { grades, selectedSubject, assessmentName, selectedSemester },
         interval: 30000,
-        enabled: grades.some(g => g.score !== '') && !!selectedClass,
+        enabled: grades.some(g => g.score !== '') && !!selectedClass && !!selectedSemester,
     });
 
     // Check for draft on mount
@@ -133,19 +147,25 @@ const BulkGradeInputPage: React.FC = () => {
         enabled: !!selectedClass,
     });
 
-    // Check for existing grades
+    // Check for existing grades (filtered by semester)
     const { data: existingGrades } = useQuery({
-        queryKey: ['existingGrades', selectedClass, selectedSubject, assessmentName],
+        queryKey: ['existingGrades', selectedClass, selectedSubject, assessmentName, selectedSemester],
         queryFn: async () => {
-            const { data } = await supabase
+            let query = supabase
                 .from('academic_records')
                 .select('id, student_id, score')
                 .eq('subject', selectedSubject)
                 .eq('assessment_name', assessmentName)
                 .in('student_id', students?.map(s => s.id) || []);
+
+            if (selectedSemester) {
+                query = query.eq('semester_id', selectedSemester);
+            }
+
+            const { data } = await query;
             return data || [];
         },
-        enabled: !!selectedClass && !!students && students.length > 0,
+        enabled: !!selectedClass && !!students && students.length > 0 && !!selectedSemester,
     });
 
     // Initialize grades when students change
@@ -191,6 +211,7 @@ const BulkGradeInputPage: React.FC = () => {
                 assessment_name: assessmentName,
                 score: Number(e.score),
                 notes: '',
+                semester_id: selectedSemester || null,
             }));
 
             const { error } = await supabase.from('academic_records').upsert(records);
@@ -403,7 +424,7 @@ const BulkGradeInputPage: React.FC = () => {
                             </Button>
                         </div>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">Pilih Kelas</label>
                             {loadingClasses ? (
@@ -416,6 +437,16 @@ const BulkGradeInputPage: React.FC = () => {
                                     ))}
                                 </Select>
                             )}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Semester</label>
+                            <SemesterSelector
+                                value={selectedSemester}
+                                onChange={(val) => setSelectedSemester(val)}
+                                includeAllOption={false}
+                                showIcon={true}
+                                className="w-full"
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-1">Mata Pelajaran</label>
@@ -436,8 +467,13 @@ const BulkGradeInputPage: React.FC = () => {
                     </CardContent>
                 </Card>
 
+                {/* Semester Locked Banner */}
+                {semesterLocked && selectedSemester && (
+                    <SemesterLockedBanner isLocked={true} />
+                )}
+
                 {/* Quick Actions Toolbar */}
-                {selectedClass && grades.length > 0 && (
+                {selectedClass && grades.length > 0 && !semesterLocked && (
                     <div className="flex flex-wrap items-center gap-2 p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
                         <span className="text-sm text-gray-500 mr-2">Quick Fill:</span>
                         <Button size="sm" variant="outline" onClick={() => handleBulkFill(100)}>
@@ -544,8 +580,8 @@ const BulkGradeInputPage: React.FC = () => {
                     <div className="sticky bottom-4 lg:bottom-8">
                         <Button
                             onClick={handleSaveAll}
-                            disabled={saveMutation.isPending || filledCount === 0}
-                            className="w-full h-14 text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl shadow-indigo-500/30"
+                            disabled={saveMutation.isPending || filledCount === 0 || semesterLocked || !selectedSemester}
+                            className="w-full h-14 text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl shadow-indigo-500/30 disabled:opacity-50"
                         >
                             {saveMutation.isPending ? (
                                 <>

@@ -10,6 +10,16 @@
      * SPACING SCALE
      * ============================================ */
     --space-none: 0;
+    /* Audit scale (8px base) */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
     --space-2xs: 0.125rem;
     /* 2px */
     --space-xs: 0.25rem;
@@ -41,14 +51,14 @@
      * BORDER RADIUS
      * ============================================ */
     --radius-none: 0;
-    --radius-sm: 0.25rem;
-    /* 4px */
-    --radius-md: 0.5rem;
+    --radius-sm: 0.5rem;
     /* 8px */
-    --radius-lg: 0.75rem;
+    --radius-md: 0.75rem;
     /* 12px */
-    --radius-xl: 1rem;
+    --radius-lg: 1rem;
     /* 16px */
+    --radius-xl: 1.25rem;
+    /* 20px */
     --radius-2xl: 1.5rem;
     /* 24px */
     --radius-3xl: 2rem;
@@ -56,23 +66,23 @@
     --radius-full: 9999px;
 
     /* Component-specific radius */
-    --radius-button: var(--radius-md);
-    --radius-input: var(--radius-md);
-    --radius-card: var(--radius-xl);
-    --radius-modal: var(--radius-2xl);
+    --radius-button: var(--radius-sm);
+    --radius-input: var(--radius-sm);
+    --radius-card: var(--radius-md);
+    --radius-modal: var(--radius-lg);
     --radius-badge: var(--radius-full);
     --radius-avatar: var(--radius-full);
-    --radius-dropdown: var(--radius-xl);
-    --radius-tooltip: var(--radius-md);
+    --radius-dropdown: var(--radius-md);
+    --radius-tooltip: var(--radius-sm);
 
     /* ============================================
      * SHADOWS
      * ============================================ */
     --shadow-none: none;
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
@@ -83,44 +93,44 @@
     --shadow-error: 0 4px 14px rgba(239, 68, 68, 0.25);
 
     /* Component-specific shadows */
-    --shadow-card: var(--shadow-sm);
-    --shadow-card-hover: var(--shadow-lg);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-card-hover: var(--shadow-md);
     --shadow-button: var(--shadow-sm);
     --shadow-button-hover: var(--shadow-md);
-    --shadow-modal: var(--shadow-2xl);
+    --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.12);
     --shadow-dropdown: var(--shadow-lg);
     --shadow-tooltip: var(--shadow-lg);
+    --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
 
     /* ============================================
-     * COLORS - Primary (Green - Al-Irsyad)
-     * Based on logo color #195527 (dark forest green)
+     * COLORS - Primary (Green)
      * ============================================ */
     --color-primary-50: #f0fdf4;
     --color-primary-100: #dcfce7;
     --color-primary-200: #bbf7d0;
     --color-primary-300: #86efac;
     --color-primary-400: #4ade80;
-    --color-primary-500: #22c55e;
-    --color-primary-600: #16a34a;
-    --color-primary-700: #15803d;
-    --color-primary-800: #166534;
-    --color-primary-900: #14532d;
-    --color-primary-950: #052e16;
+    --color-primary-500: #10b981;
+    --color-primary-600: #059669;
+    --color-primary-700: #047857;
+    --color-primary-800: #065f46;
+    --color-primary-900: #064e3b;
+    --color-primary-950: #022c22;
 
     /* ============================================
-     * COLORS - Secondary (Emerald)
+     * COLORS - Secondary (Indigo Accent)
      * ============================================ */
-    --color-secondary-50: #ecfdf5;
-    --color-secondary-100: #d1fae5;
-    --color-secondary-200: #a7f3d0;
-    --color-secondary-300: #6ee7b7;
-    --color-secondary-400: #34d399;
-    --color-secondary-500: #10b981;
-    --color-secondary-600: #059669;
-    --color-secondary-700: #047857;
-    --color-secondary-800: #065f46;
-    --color-secondary-900: #064e3b;
-    --color-secondary-950: #022c22;
+    --color-secondary-50: #eef2ff;
+    --color-secondary-100: #e0e7ff;
+    --color-secondary-200: #c7d2fe;
+    --color-secondary-300: #a5b4fc;
+    --color-secondary-400: #818cf8;
+    --color-secondary-500: #6366f1;
+    --color-secondary-600: #4f46e5;
+    --color-secondary-700: #4338ca;
+    --color-secondary-800: #3730a3;
+    --color-secondary-900: #312e81;
+    --color-secondary-950: #1e1b4b;
 
     /* ============================================
      * COLORS - Neutral (Slate)
@@ -140,13 +150,13 @@
     /* ============================================
      * COLORS - Semantic
      * ============================================ */
-    --color-success-light: #d1fae5;
-    --color-success: #10b981;
-    --color-success-dark: #065f46;
+    --color-success-light: #dcfce7;
+    --color-success: #22c55e;
+    --color-success-dark: #166534;
 
-    --color-warning-light: #fef3c7;
-    --color-warning: #f59e0b;
-    --color-warning-dark: #92400e;
+    --color-warning-light: #fef9c3;
+    --color-warning: #eab308;
+    --color-warning-dark: #a16207;
 
     --color-error-light: #fee2e2;
     --color-error: #ef4444;
@@ -155,6 +165,20 @@
     --color-info-light: #dbeafe;
     --color-info: #3b82f6;
     --color-info-dark: #1e40af;
+
+    /* Accent colors */
+    --color-accent-purple: #8b5cf6;
+    --color-accent-blue: #3b82f6;
+    --color-accent-orange: #f59e0b;
+    --color-accent-indigo: #6366f1;
+
+    /* Surface colors (light mode defaults) */
+    --surface-bg: #f8fafc;
+    --surface-card: #ffffff;
+    --surface-hover: #f1f5f9;
+    --surface-border: #e2e8f0;
+    --surface-text: #0f172a;
+    --surface-text-secondary: #475569;
 
     /* ============================================
      * TYPOGRAPHY
@@ -258,6 +282,13 @@
     --shadow-success: 0 4px 14px rgba(16, 185, 129, 0.35);
     --shadow-warning: 0 4px 14px rgba(245, 158, 11, 0.35);
     --shadow-error: 0 4px 14px rgba(239, 68, 68, 0.35);
+
+    --surface-bg: #0f172a;
+    --surface-card: #1e293b;
+    --surface-hover: #334155;
+    --surface-border: #475569;
+    --surface-text: #f1f5f9;
+    --surface-text-secondary: #cbd5e1;
 }
 
 /* ============================================
@@ -2232,15 +2263,15 @@ html.theme-transitioning *::after {
 
 /* Standard Card - Use for all card containers */
 .pg-card {
-    background: white;
-    border-radius: var(--radius-card, 1.5rem);
-    border: 1px solid #e2e8f0;
-    box-shadow: var(--shadow-sm);
+    background: var(--surface-card);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--surface-border);
+    box-shadow: var(--shadow-card);
 }
 
 .dark .pg-card {
-    background: #0f172a;
-    border-color: #1e293b;
+    background: var(--surface-card);
+    border-color: var(--surface-border);
 }
 
 /* Interactive Card */
@@ -2249,28 +2280,28 @@ html.theme-transitioning *::after {
 }
 
 .pg-card-interactive:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-4px);
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
 }
 
 /* Stat Card */
 .pg-stat-card {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(16px);
+    background: var(--surface-card);
+    backdrop-filter: blur(12px);
     border-radius: var(--radius-card);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 1.25rem;
-    box-shadow: var(--shadow-lg);
-    transition: all 0.3s ease-out;
+    border: 1px solid var(--surface-border);
+    padding: 1rem;
+    box-shadow: var(--shadow-card);
+    transition: all 0.2s ease-out;
 }
 
 .dark .pg-stat-card {
-    background: rgba(15, 23, 42, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: var(--surface-card);
+    border-color: var(--surface-border);
 }
 
 .pg-stat-card:hover {
-    box-shadow: 0 0 30px rgba(99, 102, 241, 0.15);
+    box-shadow: var(--shadow-card-hover);
 }
 
 /* Primary Button */
@@ -2279,18 +2310,17 @@ html.theme-transitioning *::after {
     align-items: center;
     justify-content: center;
     padding: 0.5rem 1rem;
-    font-weight: 500;
-    border-radius: var(--radius-button, 0.5rem);
-    background: linear-gradient(to right, #4f46e5, #7c3aed);
+    font-weight: 600;
+    border-radius: var(--radius-button);
+    background: var(--color-primary-500);
     color: white;
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
-    transition: all 0.3s ease-out;
+    box-shadow: var(--shadow-button);
+    transition: all 0.2s ease-out;
 }
 
 .pg-btn-primary:hover {
-    background: linear-gradient(to right, #4338ca, #6d28d9);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+    background: var(--color-primary-600);
+    box-shadow: var(--shadow-button-hover);
 }
 
 /* Secondary Button */
@@ -2299,23 +2329,23 @@ html.theme-transitioning *::after {
     align-items: center;
     justify-content: center;
     padding: 0.5rem 1rem;
-    font-weight: 500;
-    border-radius: var(--radius-button, 0.5rem);
-    background: white;
-    border: 1px solid #e2e8f0;
-    color: #475569;
-    transition: all 0.3s ease-out;
+    font-weight: 600;
+    border-radius: var(--radius-button);
+    background: #334155;
+    border: 1px solid #334155;
+    color: #ffffff;
+    transition: all 0.2s ease-out;
 }
 
 .dark .pg-btn-secondary {
-    background: #1e293b;
+    background: #334155;
     border-color: #334155;
-    color: #e2e8f0;
+    color: #ffffff;
 }
 
 .pg-btn-secondary:hover {
-    background: #f8fafc;
-    border-color: #94a3b8;
+    background: #475569;
+    border-color: #475569;
 }
 
 .dark .pg-btn-secondary:hover {
@@ -2329,8 +2359,8 @@ html.theme-transitioning *::after {
     justify-content: center;
     padding: 0.5rem 1rem;
     font-weight: 500;
-    border-radius: var(--radius-button, 0.5rem);
-    color: #64748b;
+    border-radius: var(--radius-button);
+    color: var(--surface-text-secondary);
     transition: all 0.2s ease-out;
 }
 
@@ -2349,44 +2379,44 @@ html.theme-transitioning *::after {
 /* Standard Input */
 .pg-input {
     width: 100%;
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-input, 0.5rem);
-    border: 1px solid #e2e8f0;
-    background: white;
-    color: #0f172a;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-input);
+    border: 1px solid var(--surface-border);
+    background: var(--surface-card);
+    color: var(--surface-text);
     transition: all 0.2s ease-out;
 }
 
 .dark .pg-input {
-    background: #1e293b;
-    border-color: #334155;
-    color: #f1f5f9;
+    background: var(--surface-card);
+    border-color: var(--surface-border);
+    color: var(--surface-text);
 }
 
 .pg-input:focus {
     outline: none;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
 }
 
 /* Modal Container */
 .pg-modal {
-    background: white;
-    border-radius: var(--radius-modal, 2rem);
-    box-shadow: var(--shadow-2xl);
+    background: var(--surface-card);
+    border-radius: var(--radius-modal);
+    box-shadow: var(--shadow-modal);
     max-width: 90vw;
     max-height: 90vh;
     overflow: hidden;
 }
 
 .dark .pg-modal {
-    background: #0f172a;
+    background: var(--surface-card);
 }
 
 /* Section Container */
 .pg-section {
     padding: 1rem;
-    border-radius: var(--radius-card, 1.5rem);
+    border-radius: var(--radius-lg);
 }
 
 @media (min-width: 640px) {
@@ -2405,12 +2435,12 @@ html.theme-transitioning *::after {
 .pg-page {
     width: 100%;
     min-height: 100%;
-    padding: 0.75rem;
+    padding: 1rem;
 }
 
 @media (min-width: 640px) {
     .pg-page {
-        padding: 1rem;
+        padding: 1.5rem;
     }
 }
 
@@ -2430,44 +2460,44 @@ html.theme-transitioning *::after {
 .pg-badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.125rem 0.5rem;
+    padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     border-radius: 9999px;
 }
 
 .pg-badge-primary {
-    background: #eef2ff;
-    color: #4f46e5;
+    background: #dbeafe;
+    color: #2563eb;
 }
 
 .dark .pg-badge-primary {
-    background: rgba(99, 102, 241, 0.2);
-    color: #a5b4fc;
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
 }
 
 .pg-badge-success {
-    background: #ecfdf5;
-    color: #059669;
+    background: #dcfce7;
+    color: #16a34a;
 }
 
 .dark .pg-badge-success {
-    background: rgba(16, 185, 129, 0.2);
-    color: #6ee7b7;
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
 }
 
 .pg-badge-warning {
-    background: #fffbeb;
-    color: #d97706;
+    background: #fef9c3;
+    color: #ca8a04;
 }
 
 .dark .pg-badge-warning {
-    background: rgba(245, 158, 11, 0.2);
-    color: #fcd34d;
+    background: rgba(234, 179, 8, 0.2);
+    color: #fde047;
 }
 
 .pg-badge-error {
-    background: #fef2f2;
+    background: #fee2e2;
     color: #dc2626;
 }
 
@@ -2689,4 +2719,191 @@ html.theme-transitioning *::after {
 .smooth-scroll {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+}
+
+/* ============================================
+ * ENHANCED MOBILE NAVIGATION (2024)
+ * Improved touch targets, animations, and UX
+ * ============================================ */
+
+/* Enhanced Mobile Bottom Nav */
+.mobile-bottom-nav {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsive Typography Scale for Mobile Nav Labels */
+@media (max-width: 360px) {
+  .bottom-nav-label,
+  .mobile-bottom-nav span {
+    font-size: 12px !important;
+  }
+}
+
+@media (min-width: 361px) and (max-width: 767px) {
+  .bottom-nav-label,
+  .mobile-bottom-nav span {
+    font-size: 13px !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .bottom-nav-label,
+  .mobile-bottom-nav span {
+    font-size: 14px !important;
+  }
+}
+
+/* Landscape Mode: Hide bottom nav, show side rail */
+@media (orientation: landscape) and (max-height: 500px) {
+    /* Hide bottom nav in landscape */
+    .mobile-bottom-nav {
+        display: none !important;
+    }
+    
+    /* Adjust main content padding for side rail */
+    main {
+        padding-left: 4rem; /* 64px for side rail */
+    }
+    
+    /* Show side rail navigation */
+    .landscape-side-rail {
+        display: flex !important;
+    }
+}
+
+/* Portrait Mode: Show bottom nav, hide side rail */
+@media (orientation: portrait) {
+    .landscape-side-rail {
+        display: none !important;
+    }
+}
+
+/* Active indicator animations */
+@keyframes slideInTop {
+    from {
+        transform: translateX(-50%) scaleX(0);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) scaleX(1);
+        opacity: 1;
+    }
+}
+
+.bottom-nav-active-indicator {
+    animation: slideInTop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Touch feedback enhancement */
+.mobile-bottom-nav button:active,
+.mobile-bottom-nav a:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease-out;
+}
+
+/* Safe area handling for various devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .mobile-bottom-nav {
+        padding-bottom: max(env(safe-area-inset-bottom), 8px);
+    }
+}
+
+/* iPhone X+ notch support */
+@media only screen 
+  and (device-width: 375px) 
+  and (device-height: 812px) 
+  and (-webkit-device-pixel-ratio: 3) {
+    .mobile-bottom-nav {
+        padding-bottom: max(env(safe-area-inset-bottom), 20px);
+    }
+}
+
+/* Prevent layout shift during navigation */
+.mobile-bottom-nav * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+}
+
+/* Bottom Sheet Enhancements */
+.bottom-sheet-backdrop {
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+.bottom-sheet-container {
+    will-change: transform;
+    touch-action: pan-y;
+}
+
+/* Drag handle accessibility */
+.bottom-sheet-handle {
+    cursor: grab;
+}
+
+.bottom-sheet-handle:active {
+    cursor: grabbing;
+}
+
+/* Side Rail Navigation (Landscape) */
+.side-rail {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.side-rail::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+/* Tooltip positioning for side rail */
+.side-rail-tooltip {
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* Grid layout for more menu items */
+.more-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .more-menu-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* Prevent overscroll bounce on bottom sheet */
+.bottom-sheet-content {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Active state for mobile nav items with gradient */
+.mobile-nav-item-active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Micro-interaction: pulse on tap */
+@keyframes tapPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.mobile-nav-item:active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    animation: tapPulse 0.4s ease-out;
 }

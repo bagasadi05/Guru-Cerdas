@@ -112,8 +112,10 @@ export const useSyncQueue = () => {
                     return query.insert(payload);
                 case 'update':
                     // Assume payload is an array for multiple updates or an object for single update
-                    const updates = Array.isArray(payload) ? payload : [payload];
-                    return Promise.all(updates.map((item: any) => query.update(item).eq('id', item.id)));
+                    {
+                        const updates = Array.isArray(payload) ? payload : [payload];
+                        return Promise.all(updates.map((item: any) => query.update(item).eq('id', item.id)));
+                    }
                 case 'upsert':
                     return query.upsert(payload, onConflict ? { onConflict } : {});
                 case 'delete':

@@ -855,8 +855,8 @@ export function ExportPreviewModal<T>({
                             Pratinjau Data
                         </h3>
                         <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
+                            <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                                <table className="w-full min-w-[500px] text-sm">
                                     <thead className="bg-slate-50 dark:bg-slate-800">
                                         <tr>
                                             {previewColumns.map(col => (

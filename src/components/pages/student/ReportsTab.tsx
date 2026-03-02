@@ -104,10 +104,12 @@ const TimelineView: React.FC<{
 
     if (reports.length === 0) {
         return (
-            <div className="text-center py-16 text-gray-400">
-                <BookOpenIcon className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                <h4 className="font-semibold">Tidak Ada Catatan</h4>
-                <p>Belum ada catatan guru untuk siswa ini.</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-4">
+                    <BookOpenIcon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                </div>
+                <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Tidak Ada Catatan</h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Belum ada catatan guru untuk siswa ini.</p>
             </div>
         );
     }
@@ -274,7 +276,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
     const hasActiveFilters = searchQuery || categoryFilter !== 'all' || tagFilter;
 
     return (
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div>
@@ -425,10 +427,12 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
                             })}
                     </div>
                 ) : (
-                    <div className="text-center py-16 text-gray-400">
-                        <BookOpenIcon className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                        <h4 className="font-semibold">{reports.length === 0 ? 'Tidak Ada Catatan' : 'Tidak Ada Hasil'}</h4>
-                        <p>{reports.length === 0 ? 'Belum ada catatan untuk siswa ini.' : 'Coba ubah filter pencarian.'}</p>
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-4">
+                            <BookOpenIcon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                        </div>
+                        <h4 className="text-lg font-semibold text-slate-900 dark:text-white">{reports.length === 0 ? 'Tidak Ada Catatan' : 'Tidak Ada Hasil'}</h4>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{reports.length === 0 ? 'Belum ada catatan untuk siswa ini.' : 'Coba ubah filter pencarian.'}</p>
                     </div>
                 )
             )}

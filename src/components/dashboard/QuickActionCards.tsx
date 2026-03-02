@@ -71,22 +71,22 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                     Aksi Cepat
                 </h2>
                 <Clock className="w-5 h-5 text-gray-400" />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                 {quickActions.map((action) => (
                     <Link
                         key={action.id}
                         to={action.link}
-                        className={`group relative p-6 rounded-2xl ${action.bgColor} border-2 border-transparent hover:border-current hover:shadow-lg transition-all hover:-translate-y-1 active:scale-95 flex flex-col items-start h-full`}
+                        className={`group relative p-4 rounded-xl ${action.bgColor} border border-slate-200/60 dark:border-slate-700/60 hover:shadow-md transition-all hover:-translate-y-0.5 active:scale-[0.98] flex flex-col items-start h-full min-h-[120px]`}
                     >
                         <div className={`w-full ${action.color}`}>
                             {/* Icon */}
-                            <div className="mb-4 p-3 bg-white/50 dark:bg-black/10 rounded-xl inline-block backdrop-blur-sm">
+                            <div className="mb-4 p-3 bg-white/50 dark:bg-black/10 rounded-lg inline-block backdrop-blur-sm">
                                 {React.cloneElement(action.icon as React.ReactElement, { className: "w-6 h-6" })}
                             </div>
 
@@ -103,8 +103,8 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
                             {/* Count Badge */}
                             {action.count !== undefined && action.count > 0 && (
                                 <div className={`absolute top-4 right-4 px-2.5 py-1 rounded-full text-xs font-bold ${action.urgent
-                                    ? 'bg-red-500 text-white animate-pulse'
-                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                                    ? 'bg-red-500 text-white'
+                                    : 'bg-blue-500 text-white'
                                     } shadow-sm`}>
                                     {action.count}
                                 </div>

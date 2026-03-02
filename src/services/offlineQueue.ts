@@ -32,7 +32,7 @@ export type QueuedMutation = {
     id: string;
     table: keyof Database['public']['Tables'];
     operation: 'upsert' | 'insert' | 'update' | 'delete';
-    payload: any;
+    payload: Record<string, unknown>;
     onConflict?: string;
     status: MutationStatus;
     retryCount: number;

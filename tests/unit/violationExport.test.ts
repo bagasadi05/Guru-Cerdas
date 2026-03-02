@@ -1,38 +1,57 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { exportViolationsToPDF, exportViolationsToExcel } from '../../src/services/violationExport';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
 import { ViolationRow } from '../../src/components/pages/student/types';
 
-vi.mock('jspdf', () => {
-    const jsPDFInstance = {
-        setFontSize: vi.fn(),
-        setFont: vi.fn(),
-        text: vi.fn(),
-        line: vi.fn(),
-        save: vi.fn(),
-        lastAutoTable: { finalY: 100 }
+// Track calls for assertions
+const pdfCalls = {
+    setFontSize: vi.fn(),
+    setFont: vi.fn(),
+    text: vi.fn(),
+    save: vi.fn(),
+};
+
+// Create jsPDF as a proper class mock
+class MockJsPDF {
+    internal = {
+        pageSize: {
+            getWidth: () => 210,
+            getHeight: () => 297,
+        },
     };
-    const jsPDFMock = vi.fn(() => jsPDFInstance);
+    lastAutoTable = { finalY: 100 };
+    
+    setFontSize = pdfCalls.setFontSize;
+    setFont = pdfCalls.setFont;
+    text = pdfCalls.text;
+    save = pdfCalls.save;
+    line = vi.fn();
+    addImage = vi.fn();
+}
 
-    return {
-        default: jsPDFMock,
-        jsPDF: jsPDFMock
-    };
-});
-
-vi.mock('jspdf-autotable', () => ({
-    default: vi.fn(),
-}));
-
-vi.mock('xlsx', () => ({
+// Mock XLSX
+const mockXLSX = {
     utils: {
-        book_new: vi.fn(() => ({})),
+        book_new: vi.fn(() => ({ Sheets: {}, SheetNames: [] })),
         aoa_to_sheet: vi.fn(() => ({})),
         book_append_sheet: vi.fn(),
     },
     writeFile: vi.fn(),
+};
+
+// Mock autoTable
+const mockAutoTable = vi.fn();
+
+// Mock dynamicImports module
+vi.mock('../../src/utils/dynamicImports', () => ({
+    getJsPDF: vi.fn(() => Promise.resolve({ default: MockJsPDF })),
+    getAutoTable: vi.fn(() => Promise.resolve({ default: mockAutoTable })),
+    getXLSX: vi.fn(() => Promise.resolve(mockXLSX)),
+}));
+
+// Mock pdfHeaderUtils
+vi.mock('../../src/utils/pdfHeaderUtils', () => ({
+    addPdfHeader: vi.fn(() => 30),
+    ensureLogosLoaded: vi.fn(() => Promise.resolve()),
 }));
 
 describe('violationExport Service', () => {
@@ -65,17 +84,18 @@ describe('violationExport Service', () => {
         vi.clearAllMocks();
     });
 
-    it('should call jsPDF to export PDF', () => {
-        exportViolationsToPDF(mockOptions);
-        expect(jsPDF).toHaveBeenCalled();
-        // We can't easily check the instance methods without deeper mocking, 
-        // but verifying the constructor call confirms the function ran.
+    it('should call jsPDF to export PDF', async () => {
+        await exportViolationsToPDF(mockOptions);
+        // Verify the PDF methods were called
+        expect(pdfCalls.setFontSize).toHaveBeenCalled();
+        expect(pdfCalls.setFont).toHaveBeenCalled();
+        expect(pdfCalls.text).toHaveBeenCalled();
     });
 
-    it('should call xlsx to export Excel', () => {
-        exportViolationsToExcel(mockOptions);
-        expect(XLSX.utils.book_new).toHaveBeenCalled();
-        expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalled();
-        expect(XLSX.writeFile).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('.xlsx'));
+    it('should call xlsx to export Excel', async () => {
+        await exportViolationsToExcel(mockOptions);
+        expect(mockXLSX.utils.book_new).toHaveBeenCalled();
+        expect(mockXLSX.utils.aoa_to_sheet).toHaveBeenCalled();
+        expect(mockXLSX.writeFile).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('.xlsx'));
     });
 });

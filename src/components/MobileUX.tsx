@@ -767,35 +767,43 @@ const MobileContext = createContext<MobileContextValue>({
 export const useMobile = () => useContext(MobileContext);
 
 export const MobileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [isMobile, setIsMobile] = useState(false);
-    const [isTouch, setIsTouch] = useState(false);
-    const [safeAreaInsets, setSafeAreaInsets] = useState({ top: 0, bottom: 0, left: 0, right: 0 });
+    const [isMobile, setIsMobile] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.innerWidth < 768;
+    });
+    const [isTouch] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    });
+    const [safeAreaInsets, setSafeAreaInsets] = useState(() => {
+        if (typeof window === 'undefined') return { top: 0, bottom: 0, left: 0, right: 0 };
+        const style = getComputedStyle(document.documentElement);
+        return {
+            top: parseInt(style.getPropertyValue('--sat') || '0'),
+            bottom: parseInt(style.getPropertyValue('--sab') || '0'),
+            left: parseInt(style.getPropertyValue('--sal') || '0'),
+            right: parseInt(style.getPropertyValue('--sar') || '0'),
+        };
+    });
 
     useEffect(() => {
-        // Check if mobile
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-
-        // Check if touch device
-        setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
-
-        // Get safe area insets from CSS env()
         const computeSafeArea = () => {
             const style = getComputedStyle(document.documentElement);
             setSafeAreaInsets({
                 top: parseInt(style.getPropertyValue('--sat') || '0'),
                 bottom: parseInt(style.getPropertyValue('--sab') || '0'),
                 left: parseInt(style.getPropertyValue('--sal') || '0'),
-                right: parseInt(style.getPropertyValue('--sar') || '0')
+                right: parseInt(style.getPropertyValue('--sar') || '0'),
             });
         };
 
-        checkMobile();
-        computeSafeArea();
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+            computeSafeArea();
+        };
 
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     return (

@@ -225,7 +225,7 @@ async function syncItem(
     let error: any;
 
     switch (type) {
-        case 'CREATE':
+        case 'CREATE': {
             const { id: _, ...createData } = data;
             ({ data: result, error } = await (supabase
                 .from(table as any) as any)
@@ -233,8 +233,9 @@ async function syncItem(
                 .select()
                 .single());
             break;
+        }
 
-        case 'UPDATE':
+        case 'UPDATE': {
             const { _localTimestamp, ...updateData } = data;
             ({ data: result, error } = await (supabase
                 .from(table as any) as any)
@@ -243,16 +244,17 @@ async function syncItem(
                 .select()
                 .single());
             break;
+        }
 
-        case 'DELETE':
+        case 'DELETE': {
             ({ error } = await (supabase
                 .from(table as any) as any)
                 .delete()
                 .eq('id', data.id));
             result = { deleted: true };
             break;
+        }
     }
-
     if (error) {
         throw new Error(error.message);
     }

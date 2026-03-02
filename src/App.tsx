@@ -4,32 +4,25 @@ import './styles/print.css';
 
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
-import { AuthProvider, useAuth } from './hooks/useAuth';
-import { ThemeProvider } from './hooks/useTheme';
-import { ToastProvider } from './hooks/useToast';
-import { useSound } from './hooks/useSound';
+import { useAuth } from './hooks/useAuth';
+import { useClickSound } from './hooks/useClickSound';
 import Layout from './components/Layout';
 import PwaPrompt from './components/PwaPrompt';
-import { QueryClientProvider } from '@tanstack/react-query';
 import { QueryClient } from '@tanstack/query-core';
-import ErrorBoundary from './components/ErrorBoundary';
-import { OfflineBanner, SyncProvider, UploadManagerProvider } from './components/StatusIndicators';
+import { AppProviders } from './components/AppProviders';
+import { OfflineBanner } from './components/StatusIndicators';
 import { GlobalSearchProvider, GlobalSearchModal } from './components/SearchSystem';
 import { TourProvider, HelpButton } from './components/OnboardingHelp';
 import { SimpleHelpCenter } from './components/SimpleHelpCenter';
-import { KeyboardShortcutsProvider, KeyboardShortcutsPanel, useKeyboardShortcuts } from './components/AdvancedFeatures';
-import { AccessibilityProvider } from './components/ui/AccessibilityFeatures';
-import { UploadProgressProvider } from './components/ui/PerformanceIndicators';
-import { UndoToastProvider } from './components/ui/UndoToast';
+import { KeyboardShortcutsPanel, useKeyboardShortcuts } from './components/AdvancedFeatures';
 import { useNavigate } from 'react-router-dom';
 import { startCleanupScheduler } from './services/CleanupService';
 import { useSessionTimeout } from './hooks/useSessionTimeout';
 import { SessionTimeoutWarning } from './components/ui/SessionTimeoutWarning';
 import { cleanupExpiredBackups } from './utils/dataBackup';
-import { supabase } from './services/supabase';
-import { I18nProvider } from './utils/i18n';
+import { globalSearch } from './services/SearchService';
+import type { SearchResult } from './components/SearchSystem';
 import { SkipToMainContent } from './utils/pageAccessibility';
-import { SemesterProvider } from './contexts/SemesterContext';
 
 // Start cleanup scheduler on app load
 startCleanupScheduler();
@@ -90,79 +83,28 @@ const loadingSpinner = (
   </div>
 );
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
 function App() {
-  const { playClick } = useSound();
+  useClickSound();
+  const queryClientRef = React.useRef<QueryClient | null>(null);
+  if (!queryClientRef.current) {
+    queryClientRef.current = new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 1000 * 60 * 5, // 5 minutes
+          refetchOnWindowFocus: false,
+        },
+      },
+    });
+  }
 
-  React.useEffect(() => {
-    const handleGlobalClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      // Find the closest interactive element
-      const interactiveElement = target.closest('button, a, [role="button"], input, select, textarea, .glass-card') as HTMLElement | null;
-
-      if (interactiveElement) {
-        // Only play sound/animate if not already processing to avoid spam
-        if (interactiveElement.dataset.isAnimating === 'true') return;
-
-        playClick();
-
-        // Add animation class if it's not already animating
-        if (!interactiveElement.classList.contains('animate-subtle-pop')) {
-          interactiveElement.dataset.isAnimating = 'true';
-          interactiveElement.classList.add('animate-subtle-pop');
-
-          setTimeout(() => {
-            interactiveElement.classList.remove('animate-subtle-pop');
-            delete interactiveElement.dataset.isAnimating;
-          }, 400);
-        }
-      }
-    };
-
-    window.addEventListener('click', handleGlobalClick);
-    return () => window.removeEventListener('click', handleGlobalClick);
-  }, [playClick]);
   return (
-    // FIX: All errors in ErrorBoundary are fixed by changing state initialization to a class property.
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <AccessibilityProvider>
-            <AuthProvider>
-              <I18nProvider>
-                <ToastProvider>
-                  <SyncProvider>
-                    <SemesterProvider>
-                      <UploadManagerProvider>
-                        <UploadProgressProvider>
-                          <UndoToastProvider>
-                            <KeyboardShortcutsProvider>
-                              <Suspense fallback={loadingSpinner}>
-                                <BrowserRouter>
-                                  <AppContent />
-                                </BrowserRouter>
-                              </Suspense>
-                            </KeyboardShortcutsProvider>
-                          </UndoToastProvider>
-                        </UploadProgressProvider>
-                      </UploadManagerProvider>
-                    </SemesterProvider>
-                  </SyncProvider>
-                </ToastProvider>
-              </I18nProvider>
-            </AuthProvider>
-          </AccessibilityProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <AppProviders queryClient={queryClientRef.current}>
+      <Suspense fallback={loadingSpinner}>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </Suspense>
+    </AppProviders>
   );
 }
 
@@ -230,100 +172,30 @@ function AppContent() {
     setupBackButton();
   }, [navigate]);
 
-  // Real search handler using Supabase
-  const handleSearch = async (query: string, type: string) => {
-    if (!query || query.length < 2) return [];
+  // Search handler delegating to SearchService for proper fuzzy matching & relevance ranking
+  const handleSearch = React.useCallback(async (query: string, type: string): Promise<SearchResult[]> => {
+    if (!session?.user?.id || !query || query.length < 2) return [];
 
-    // Type definitions for search results
-    interface StudentSearchResult {
-      id: string;
-      name: string;
-      class_id: string | null;
-      classes: { name: string } | null;
-    }
-    interface ClassSearchResult {
-      id: string;
-      name: string;
-    }
-    interface ScheduleSearchResult {
-      id: string;
-      subject: string;
-      day: string;
-      classes: { name: string } | null;
-    }
-
-    const results: { id: string; type: 'students' | 'classes' | 'schedule' | 'attendance' | 'tasks' | 'all'; title: string; subtitle: string }[] = [];
-    const searchTerm = query.toLowerCase().trim();
+    // Map SearchSystem's 'schedule' to SearchService's 'schedules'
+    const entityType = (type === 'schedule' ? 'schedules' : type) as Parameters<typeof globalSearch>[2]['entityType'];
 
     try {
-      // Search students
-      if (type === 'all' || type === 'students') {
-        const { data: students } = await supabase
-          .from('students')
-          .select('id, name, class_id, classes(name)')
-          .is('deleted_at', null)
-          .ilike('name', `%${searchTerm}%`)
-          .limit(5);
+      const serviceResults = await globalSearch(session.user.id, query, { entityType, limit: 10 });
 
-        if (students) {
-          (students as StudentSearchResult[]).forEach((student) => {
-            results.push({
-              id: student.id,
-              type: 'students',
-              title: student.name,
-              subtitle: student.classes?.name || 'Tanpa Kelas',
-            });
-          });
-        }
-      }
-
-      // Search classes
-      if (type === 'all' || type === 'classes') {
-        const { data: classes } = await supabase
-          .from('classes')
-          .select('id, name')
-          .is('deleted_at', null)
-          .ilike('name', `%${searchTerm}%`)
-          .limit(3);
-
-        if (classes) {
-          (classes as ClassSearchResult[]).forEach((cls) => {
-            results.push({
-              id: cls.id,
-              type: 'classes',
-              title: cls.name,
-              subtitle: 'Kelas',
-            });
-          });
-        }
-      }
-
-      // Search schedules/subjects
-      if (type === 'all' || type === 'schedule') {
-        const { data: schedules } = await supabase
-          .from('schedules')
-          .select('id, subject, day, classes(name)')
-          .ilike('subject', `%${searchTerm}%`)
-          .limit(3);
-
-        if (schedules) {
-          (schedules as unknown as ScheduleSearchResult[]).forEach((schedule) => {
-            results.push({
-              id: schedule.id,
-              type: 'schedule',
-              title: schedule.subject,
-              subtitle: `${schedule.day} - ${schedule.classes?.name || ''}`,
-            });
-          });
-        }
-      }
-
-      return results;
+      return serviceResults.map(r => ({
+        id: r.id,
+        // Map 'schedules' back to SearchSystem's 'schedule'
+        type: (r.type === 'schedules' ? 'schedule' : r.type) as SearchResult['type'],
+        title: r.title,
+        subtitle: r.subtitle,
+        metadata: r.metadata,
+        relevance: r.relevance,
+      }));
     } catch (error) {
       console.error('Search error:', error);
       return [];
     }
-  };
+  }, [session?.user?.id]);
 
   const handleSearchResult = (result: { id: string; type: string }) => {
     switch (result.type) {

@@ -4,7 +4,23 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthContext } from '../src/hooks/useAuth';
 import { ToastProvider } from '../src/hooks/useToast';
+import { SemesterProvider } from '../src/contexts/SemesterContext';
 import { vi } from 'vitest';
+
+// Mock supabase to prevent errors in SemesterProvider
+vi.mock('../src/services/supabase', () => ({
+    supabase: {
+        from: vi.fn(() => ({
+            select: vi.fn(() => ({
+                order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                eq: vi.fn(() => ({
+                    eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                    order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
+            })),
+        })),
+    },
+}));
 
 const createTestQueryClient = () => new QueryClient({
     defaultOptions: {
@@ -32,9 +48,11 @@ export function renderWithProviders(ui: React.ReactElement, { user = { id: 'test
                 isNotificationsEnabled: false
             }}>
                 <ToastProvider>
-                    <MemoryRouter>
-                        {ui}
-                    </MemoryRouter>
+                    <SemesterProvider>
+                        <MemoryRouter>
+                            {ui}
+                        </MemoryRouter>
+                    </SemesterProvider>
                 </ToastProvider>
             </AuthContext.Provider>
         </QueryClientProvider>

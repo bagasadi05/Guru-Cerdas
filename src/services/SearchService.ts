@@ -116,14 +116,14 @@ const searchStudents = async (
 
     return students
         .map(student => {
-            const searchableText = `${student.name} ${student.access_code || ''} ${(student.classes as any)?.name || ''}`;
+            const searchableText = `${student.name} ${student.access_code || ''} ${(student.classes as { name: string } | null)?.name || ''}`;
             const relevance = calculateRelevance(query, searchableText, options.fuzzy);
 
             return {
                 id: student.id,
                 type: 'students' as SearchEntityType,
                 title: student.name,
-                subtitle: `${student.gender} • ${(student.classes as any)?.name || 'Tanpa Kelas'}`,
+                subtitle: `${student.gender} • ${(student.classes as { name: string } | null)?.name || 'Tanpa Kelas'}`,
                 description: student.access_code ? `Kode: ${student.access_code}` : undefined,
                 metadata: { gender: student.gender, classId: student.class_id },
                 relevance,
@@ -252,14 +252,14 @@ const searchSchedules = async (
 
     return schedules
         .map(schedule => {
-            const searchableText = `${schedule.subject} ${(schedule.classes as any)?.name || ''} ${dayLabels[schedule.day] || schedule.day}`;
+            const searchableText = `${schedule.subject} ${(schedule.classes as { name: string } | null)?.name || ''} ${dayLabels[schedule.day] || schedule.day}`;
             const relevance = calculateRelevance(query, searchableText, options.fuzzy);
 
             return {
                 id: schedule.id,
                 type: 'schedules' as SearchEntityType,
                 title: schedule.subject,
-                subtitle: `${dayLabels[schedule.day] || schedule.day} • ${(schedule.classes as any)?.name || ''}`,
+                subtitle: `${dayLabels[schedule.day] || schedule.day} • ${(schedule.classes as { name: string } | null)?.name || ''}`,
                 description: `${schedule.start_time} - ${schedule.end_time}`,
                 metadata: { day: schedule.day, classId: schedule.class_id },
                 relevance,

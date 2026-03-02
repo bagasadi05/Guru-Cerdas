@@ -443,16 +443,17 @@ const ONBOARDING_KEY = 'portal_guru_onboarding';
 export function useOnboarding(flowId: string, steps: OnboardingStep[]) {
     const [currentStep, setCurrentStep] = useState(0);
     const [isActive, setIsActive] = useState(false);
-    const [completed, setCompleted] = useState<Set<string>>(new Set());
-
-    // Load completed state
-    useEffect(() => {
+    const [completed, setCompleted] = useState<Set<string>>(() => {
+        if (typeof window === 'undefined') return new Set();
         const stored = localStorage.getItem(ONBOARDING_KEY);
-        if (stored) {
+        if (!stored) return new Set();
+        try {
             const parsed = JSON.parse(stored);
-            setCompleted(new Set(parsed.completed || []));
+            return new Set(parsed.completed || []);
+        } catch {
+            return new Set();
         }
-    }, []);
+    });
 
     // Check if this flow is already completed
     const isFlowCompleted = completed.has(flowId);
@@ -464,24 +465,7 @@ export function useOnboarding(flowId: string, steps: OnboardingStep[]) {
         }
     }, [isFlowCompleted]);
 
-    const next = useCallback(() => {
-        if (currentStep < steps.length - 1) {
-            setCurrentStep(prev => prev + 1);
-        } else {
-            complete();
-        }
-    }, [currentStep, steps.length]);
-
-    const previous = useCallback(() => {
-        if (currentStep > 0) {
-            setCurrentStep(prev => prev - 1);
-        }
-    }, [currentStep]);
-
-    const skip = useCallback(() => {
-        complete();
-    }, []);
-
+    // Define complete first since it's referenced by next and skip
     const complete = useCallback(() => {
         setIsActive(false);
         setCompleted(prev => {
@@ -492,6 +476,24 @@ export function useOnboarding(flowId: string, steps: OnboardingStep[]) {
             return next;
         });
     }, [flowId]);
+
+    const next = useCallback(() => {
+        if (currentStep < steps.length - 1) {
+            setCurrentStep(prev => prev + 1);
+        } else {
+            complete();
+        }
+    }, [currentStep, steps.length, complete]);
+
+    const previous = useCallback(() => {
+        if (currentStep > 0) {
+            setCurrentStep(prev => prev - 1);
+        }
+    }, [currentStep]);
+
+    const skip = useCallback(() => {
+        complete();
+    }, [complete]);
 
     const reset = useCallback(() => {
         setCompleted(prev => {
@@ -663,7 +665,10 @@ export function useNotificationPreferences() {
     useEffect(() => {
         const stored = localStorage.getItem(NOTIFICATION_PREFS_KEY);
         if (stored) {
-            setPreferences({ ...DEFAULT_PREFS, ...JSON.parse(stored) });
+            // Defer setState to prevent cascading renders
+            Promise.resolve().then(() => {
+                setPreferences({ ...DEFAULT_PREFS, ...JSON.parse(stored) });
+            });
         }
     }, []);
 
@@ -878,7 +883,11 @@ export interface KeyboardShortcut {
 
 export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[], enabled: boolean = true) {
     const shortcutsRef = useRef(shortcuts);
-    shortcutsRef.current = shortcuts;
+    
+    // Update ref in effect, not in render
+    useEffect(() => {
+        shortcutsRef.current = shortcuts;
+    }, [shortcuts]);
 
     useEffect(() => {
         if (!enabled) return;

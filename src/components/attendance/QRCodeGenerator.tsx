@@ -98,7 +98,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     // Generate QR on open
     useEffect(() => {
         if (isOpen && classId) {
-            generateQR();
+            setTimeout(generateQR, 0);
         }
     }, [isOpen, classId, date]);
 

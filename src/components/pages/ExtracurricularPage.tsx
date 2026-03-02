@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
@@ -45,6 +45,12 @@ const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
 const CATEGORIES = ['Olahraga', 'Seni', 'Akademik', 'Keagamaan', 'Lainnya'];
 const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
+const sortByEnrollmentName = (a: EnrollmentView, b: EnrollmentView) => a.name.localeCompare(b.name);
+const sortByClassThenName = (a: EnrollmentView, b: EnrollmentView) => {
+    const classCompare = (a.className || '').localeCompare(b.className || '');
+    if (classCompare !== 0) return classCompare;
+    return a.name.localeCompare(b.name);
+};
 
 const ExtracurricularPage: React.FC = () => {
     const { user } = useAuth();
@@ -195,7 +201,7 @@ const ExtracurricularPage: React.FC = () => {
     });
 
     // Fetch enrollments for selected extracurricular
-    const { data: enrollments = [] } = useQuery({
+    const { data: enrollments = [], isLoading: loadingEnrollments } = useQuery({
         queryKey: ['student_extracurriculars', selectedExtracurricular, activeSemester?.id],
         queryFn: async () => {
             const [studentRes, extraRes] = await Promise.all([
@@ -238,7 +244,7 @@ const ExtracurricularPage: React.FC = () => {
     });
 
     // Fetch attendance for selected extracurricular and date
-    const { data: attendanceRecords = [] } = useQuery({
+    const { data: attendanceRecords = [], isLoading: loadingAttendance } = useQuery({
         queryKey: ['extracurricular_attendance', selectedExtracurricular, selectedDate],
         queryFn: async () => {
             const { data, error } = await supabase
@@ -253,7 +259,7 @@ const ExtracurricularPage: React.FC = () => {
     });
 
     // Fetch grades for selected extracurricular
-    const { data: grades = [] } = useQuery({
+    const { data: grades = [], isLoading: loadingGrades } = useQuery({
         queryKey: ['extracurricular_grades', selectedExtracurricular, activeSemester?.id],
         queryFn: async () => {
             const { data, error } = await supabase
@@ -723,6 +729,10 @@ const ExtracurricularPage: React.FC = () => {
         return new Set(enrollments.map((e) => `${e.participantType}:${e.participantId}`));
     }, [enrollments]);
 
+    const enrollmentsSortedByName = useMemo(() => {
+        return [...enrollments].sort(sortByEnrollmentName);
+    }, [enrollments]);
+
     // Attendance status map for quick lookup
     const attendanceMap = useMemo(() => {
         const map: Record<string, string> = {};
@@ -760,11 +770,23 @@ const ExtracurricularPage: React.FC = () => {
         return Array.from(classSet).sort();
     }, [allExtracurricularStudents]);
 
-    // Filter extracurricular students by class
+    // Filter extracurricular students by class and search term
     const filteredExtraStudents = useMemo(() => {
-        if (studentClassFilter === 'all') return allExtracurricularStudents;
-        return allExtracurricularStudents.filter((s) => s.class_name === studentClassFilter);
-    }, [allExtracurricularStudents, studentClassFilter]);
+        let result = studentClassFilter === 'all' 
+            ? allExtracurricularStudents 
+            : allExtracurricularStudents.filter((s) => s.class_name === studentClassFilter);
+        
+        // Apply search filter
+        if (searchTerm.trim()) {
+            const search = searchTerm.toLowerCase();
+            result = result.filter((s) => 
+                s.name.toLowerCase().includes(search) ||
+                (s.class_name && s.class_name.toLowerCase().includes(search))
+            );
+        }
+        
+        return result;
+    }, [allExtracurricularStudents, studentClassFilter, searchTerm]);
 
     // ==================== ATTENDANCE LOGIC ====================
 
@@ -862,11 +884,7 @@ const ExtracurricularPage: React.FC = () => {
             const daysColumns = Array.from({ length: daysInMonth }, (_, i) => String(i + 1));
             const tableColumn = ["No", "Nama", "Kelas", ...daysColumns, "H", "S", "I", "A"];
 
-            const tableRows = enrollments.sort((a, b) => {
-                const classCompare = (a.className || '').localeCompare(b.className || '');
-                if (classCompare !== 0) return classCompare;
-                return a.name.localeCompare(b.name);
-            }).map((enrollment, index) => {
+            const tableRows = [...enrollments].sort(sortByClassThenName).map((enrollment, index) => {
                 const id = `${enrollment.participantType}:${enrollment.participantId}`;
                 let h = 0, s = 0, iz = 0, a = 0;
 
@@ -939,11 +957,7 @@ const ExtracurricularPage: React.FC = () => {
             const headers = ["No", "Nama Siswa", "Kelas", ...daysHeaders, "Hadir", "Sakit", "Izin", "Alpha"];
 
             // Data rows
-            const dataRows = enrollments.sort((a, b) => {
-                const classCompare = (a.className || '').localeCompare(b.className || '');
-                if (classCompare !== 0) return classCompare;
-                return a.name.localeCompare(b.name);
-            }).map((enrollment, index) => {
+            const dataRows = [...enrollments].sort(sortByClassThenName).map((enrollment, index) => {
                 const id = `${enrollment.participantType}:${enrollment.participantId}`;
                 let h = 0, s = 0, iz = 0, a = 0;
 
@@ -1050,6 +1064,36 @@ const ExtracurricularPage: React.FC = () => {
         XLSX.writeFile(workbook, `Nilai_Ekskul_${selectedExtracurricularData.name}_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
+    // ==================== KEYBOARD SHORTCUTS ====================
+    
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ctrl+S or Cmd+S: Save attendance (manual mode only)
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (!autoSaveAttendance && Object.keys(localAttendance).length > 0 && activeTab === 'attendance') {
+                    handleSaveAttendance();
+                    toast.success('💾 Shortcut: Presensi berhasil disimpan!');
+                }
+            }
+            
+            // Ctrl+E or Cmd+E: Export (when on attendance or grades tab)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                if (activeTab === 'attendance' && selectedExtracurricular && enrollments.length > 0) {
+                    handleExportPDF();
+                    toast.success('📄 Shortcut: Mengekspor PDF...');
+                } else if (activeTab === 'grades' && selectedExtracurricular && enrollments.length > 0) {
+                    handleExportGradesPDF();
+                    toast.success('📄 Shortcut: Mengekspor PDF...');
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [autoSaveAttendance, localAttendance, activeTab, selectedExtracurricular, enrollments.length]);
+
     // ==================== RENDER ====================
 
     return (
@@ -1080,21 +1124,23 @@ const ExtracurricularPage: React.FC = () => {
                 </button>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all whitespace-nowrap ${activeTab === tab.id
-                            ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
-                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-700'
-                            }`}
-                    >
-                        <tab.icon className="w-4 h-4" />
-                        {tab.label}
-                    </button>
-                ))}
+            {/* Tab Navigation - Sticky */}
+            <div className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-900 -mx-4 md:-mx-6 px-4 md:px-6 pt-2 pb-4">
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all whitespace-nowrap ${activeTab === tab.id
+                                ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
+                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-700'
+                                }`}
+                        >
+                            <tab.icon className="w-4 h-4" />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Search & Filters */}
@@ -1103,7 +1149,7 @@ const ExtracurricularPage: React.FC = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                         type="text"
-                        placeholder="Cari ekstrakurikuler..."
+                        placeholder={activeTab === 'students' ? 'Cari siswa ekstrakurikuler...' : 'Cari ekstrakurikuler...'}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
@@ -1151,15 +1197,17 @@ const ExtracurricularPage: React.FC = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={handleExportPDF}
-                            className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                            title="Export PDF"
+                            disabled={!selectedExtracurricular || enrollments.length === 0}
+                            className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={enrollments.length === 0 ? "Tidak ada data untuk di-export" : "Export PDF (Ctrl+E)"}
                         >
                             <FileText className="w-5 h-5" />
                         </button>
                         <button
                             onClick={handleExportExcel}
-                            className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                            title="Export Excel"
+                            disabled={!selectedExtracurricular || enrollments.length === 0}
+                            className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={enrollments.length === 0 ? "Tidak ada data untuk di-export" : "Export Excel"}
                         >
                             <FileSpreadsheet className="w-5 h-5" />
                         </button>
@@ -1398,6 +1446,16 @@ const ExtracurricularPage: React.FC = () => {
                                 <Users className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
                                 <p className="text-slate-500 dark:text-slate-400">Pilih ekstrakurikuler terlebih dahulu</p>
                             </div>
+                        ) : loadingEnrollments ? (
+                            <div className="p-4 space-y-2">
+                                {[...Array(5)].map((_, i) => (
+                                    <div key={i} className="flex items-center gap-4 p-4 bg-slate-100 dark:bg-slate-700/50 rounded-lg animate-pulse">
+                                        <div className="h-4 bg-slate-200 dark:bg-slate-600 rounded w-1/3"></div>
+                                        <div className="h-4 bg-slate-200 dark:bg-slate-600 rounded w-1/4"></div>
+                                        <div className="ml-auto h-8 w-20 bg-slate-200 dark:bg-slate-600 rounded"></div>
+                                    </div>
+                                ))}
+                            </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full">
@@ -1505,41 +1563,51 @@ const ExtracurricularPage: React.FC = () => {
                                                     Ringkasan Kehadiran
                                                 </h4>
                                                 <div className="flex flex-wrap items-center gap-3">
-                                                    <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700/50 p-1.5 rounded-lg border border-slate-200 dark:border-slate-600">
-                                                        <button
-                                                            onClick={() => {
-                                                                if (!autoSaveAttendance && pendingChangesCount > 0) {
-                                                                    if (!window.confirm('Ada perubahan belum disimpan. Nonaktifkan simpan otomatis akan menghapus perubahan lokal?')) {
-                                                                        return;
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">Mode Simpan:</span>
+                                                        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700/50 p-1.5 rounded-lg border border-slate-200 dark:border-slate-600 relative">
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (!autoSaveAttendance && pendingChangesCount > 0) {
+                                                                        if (!window.confirm('Ada ' + pendingChangesCount + ' perubahan belum disimpan. Beralih ke mode otomatis akan menghapus perubahan lokal. Lanjutkan?')) {
+                                                                            return;
+                                                                        }
+                                                                        setLocalAttendance({});
                                                                     }
-                                                                    setLocalAttendance({});
-                                                                }
-                                                                setAutoSaveAttendance(!autoSaveAttendance);
-                                                            }}
-                                                            className={`
-                                                                relative px-3 py-1.5 text-xs font-medium rounded-md transition-all
-                                                                ${autoSaveAttendance
-                                                                    ? 'bg-amber-100 text-amber-700 shadow-sm'
-                                                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                                                                }
-                                                            `}
-                                                        >
-                                                            Otomatis
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                setAutoSaveAttendance(false);
-                                                            }}
-                                                            className={`
-                                                                relative px-3 py-1.5 text-xs font-medium rounded-md transition-all
-                                                                ${!autoSaveAttendance
-                                                                    ? 'bg-amber-100 text-amber-700 shadow-sm'
-                                                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                                                                }
-                                                            `}
-                                                        >
-                                                            Manual
-                                                        </button>
+                                                                    setAutoSaveAttendance(true);
+                                                                }}
+                                                                title="Setiap perubahan langsung tersimpan ke database"
+                                                                className={`
+                                                                    relative px-3 py-1.5 text-xs font-medium rounded-md transition-all
+                                                                    ${autoSaveAttendance
+                                                                        ? 'bg-amber-100 text-amber-700 shadow-sm'
+                                                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                                                                    }
+                                                                `}
+                                                            >
+                                                                ⚡ Otomatis
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setAutoSaveAttendance(false);
+                                                                }}
+                                                                title="Klik tombol 'Simpan' untuk menyimpan semua perubahan sekaligus"
+                                                                className={`
+                                                                    relative px-3 py-1.5 text-xs font-medium rounded-md transition-all
+                                                                    ${!autoSaveAttendance
+                                                                        ? 'bg-amber-100 text-amber-700 shadow-sm'
+                                                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                                                                    }
+                                                                `}
+                                                            >
+                                                                ✋ Manual
+                                                            </button>
+                                                            {!autoSaveAttendance && pendingChangesCount > 0 && (
+                                                                <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                                                                    {pendingChangesCount}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     {!autoSaveAttendance && (
@@ -1565,6 +1633,7 @@ const ExtracurricularPage: React.FC = () => {
                                                                 onClick={handleSaveAttendance}
                                                                 disabled={pendingChangesCount === 0 || bulkAttendanceMutation.isPending}
                                                                 className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 disabled:cursor-not-allowed rounded-lg shadow-sm transition-all"
+                                                                title="Tekan Ctrl+S atau Cmd+S untuk simpan cepat"
                                                             >
                                                                 <Save className="w-3.5 h-3.5" />
                                                                 {bulkAttendanceMutation.isPending ? 'Menyimpan...' : `Simpan (${pendingChangesCount})`}
@@ -1635,7 +1704,7 @@ const ExtracurricularPage: React.FC = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                                                    {enrollments.sort((a, b) => a.name.localeCompare(b.name)).map((enrollment) => {
+                                                    {enrollmentsSortedByName.map((enrollment) => {
                                                         const key = `${enrollment.participantType}:${enrollment.participantId}`;
                                                         const currentStatus = mergedAttendance[key] || '';
 
@@ -1750,7 +1819,7 @@ const ExtracurricularPage: React.FC = () => {
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                enrollments.sort((a, b) => a.name.localeCompare(b.name)).map((enrollment) => {
+                                                enrollmentsSortedByName.map((enrollment) => {
                                                     const key = `${enrollment.participantType}:${enrollment.participantId}`;
                                                     const gradeData = gradesMap[key];
 

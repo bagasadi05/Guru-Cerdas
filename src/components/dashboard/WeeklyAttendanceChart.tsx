@@ -13,8 +13,8 @@ const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data })
             <svg width="100%" height={chartHeight} aria-label="Grafik absensi mingguan" className="overflow-visible">
                 <defs>
                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" className="text-indigo-500 dark:text-indigo-400" stopColor="currentColor" />
-                        <stop offset="100%" className="text-violet-600 dark:text-violet-500" stopColor="currentColor" />
+                        <stop offset="0%" className="text-emerald-500 dark:text-emerald-400" stopColor="currentColor" />
+                        <stop offset="100%" className="text-emerald-600 dark:text-emerald-500" stopColor="currentColor" />
                     </linearGradient>
                     <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
                         <feGaussianBlur stdDeviation="3" result="coloredBlur" />
@@ -66,7 +66,7 @@ const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data })
                                 textAnchor="middle"
                                 fontSize="11"
                                 fontWeight="600"
-                                className={`transition-colors duration-300 ${isHovered ? 'fill-indigo-500 dark:fill-indigo-400' : 'fill-slate-400 dark:fill-slate-500'}`}
+                                className={`transition-colors duration-300 ${isHovered ? 'fill-emerald-500 dark:fill-emerald-400' : 'fill-slate-400 dark:fill-slate-500'}`}
                             >
                                 {day.day.slice(0, 3)}
                             </text>

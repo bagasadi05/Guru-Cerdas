@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, BarChartIcon, PencilIcon, TrashIcon, TrendingUpIcon, FilterIcon, DownloadIcon, TargetIcon, UsersIcon, LockIcon } from 'lucide-react';
+import { PlusIcon, BarChartIcon, PencilIcon, TrashIcon, TrendingUpIcon, DownloadIcon, TargetIcon, UsersIcon, LockIcon } from 'lucide-react';
 import { AcademicRecordRow } from './types';
 import { GradeTrendChart } from '../../ui/GradeTrendChart';
 import { useSemester } from '../../../contexts/SemesterContext';
+import { SemesterSelector } from '../../ui/SemesterSelector';
 
 // Default KKM value - can be made configurable
 const DEFAULT_KKM = 75;
@@ -19,57 +20,10 @@ interface GradesTabProps {
     kkm?: number; // Kriteria Ketuntasan Minimal
 }
 
-// Semester/Period filter options
-type PeriodFilter = 'all' | 'semester1' | 'semester2' | 'thisMonth' | 'last3Months';
-
-const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
-    { value: 'all', label: 'Semua Waktu' },
-    { value: 'semester1', label: 'Semester 1 (Jul-Des)' },
-    { value: 'semester2', label: 'Semester 2 (Jan-Jun)' },
-    { value: 'thisMonth', label: 'Bulan Ini' },
-    { value: 'last3Months', label: '3 Bulan Terakhir' },
-];
-
-// Helper function to filter records by period
-const filterRecordsByPeriod = (records: AcademicRecordRow[], period: PeriodFilter): AcademicRecordRow[] => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    return records.filter(record => {
-        const recordDate = new Date(record.created_at);
-        const recordMonth = recordDate.getMonth();
-        const recordYear = recordDate.getFullYear();
-
-        // Check for explicit semester tag in notes
-        const notes = record.notes?.toLowerCase() || '';
-        const hasGanjilTag = notes.includes('[semester ganjil]');
-        const hasGenapTag = notes.includes('[semester genap]');
-
-        switch (period) {
-            case 'semester1':
-                // If record has explicit semester tag, use that
-                if (hasGanjilTag) return true;
-                if (hasGenapTag) return false;
-                // Otherwise fall back to date-based (July to December)
-                return recordMonth >= 6 && recordMonth <= 11;
-            case 'semester2':
-                // If record has explicit semester tag, use that
-                if (hasGenapTag) return true;
-                if (hasGanjilTag) return false;
-                // Otherwise fall back to date-based (January to June)
-                return recordMonth >= 0 && recordMonth <= 5;
-            case 'thisMonth':
-                return recordMonth === currentMonth && recordYear === currentYear;
-            case 'last3Months': {
-                const threeMonthsAgo = new Date(now);
-                threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-                return recordDate >= threeMonthsAgo;
-            }
-            default:
-                return true;
-        }
-    });
+// Helper function to filter records by semester_id
+const filterRecordsBySemester = (records: AcademicRecordRow[], semesterId: string): AcademicRecordRow[] => {
+    if (!semesterId || semesterId === 'all') return records;
+    return records.filter(record => record.semester_id === semesterId);
 };
 
 // Helper to predict final grade based on trend
@@ -245,30 +199,34 @@ const GradesSummary: React.FC<{ records: AcademicRecordRow[]; kkm: number }> = (
     if (!stats) return null;
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.avg}</p>
-                <p className="text-xs text-blue-500">Rata-rata</p>
+        <div className="space-y-3 mb-6">
+            <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
+                    <p className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.avg}</p>
+                    <p className="text-[11px] sm:text-xs text-blue-500">Rata-rata</p>
+                </div>
+                <div className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30">
+                    <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{stats.max}</p>
+                    <p className="text-[11px] sm:text-xs text-green-500">Tertinggi</p>
+                </div>
+                <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/30">
+                    <p className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.min}</p>
+                    <p className="text-[11px] sm:text-xs text-orange-500">Terendah</p>
+                </div>
             </div>
-            <div className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30">
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.max}</p>
-                <p className="text-xs text-green-500">Tertinggi</p>
-            </div>
-            <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/30">
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.min}</p>
-                <p className="text-xs text-orange-500">Terendah</p>
-            </div>
-            <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30">
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.total}</p>
-                <p className="text-xs text-purple-500">Total Nilai</p>
-            </div>
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.tuntas}</p>
-                <p className="text-xs text-emerald-500">Tuntas</p>
-            </div>
-            <div className="p-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-100 dark:border-cyan-800/30">
-                <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{stats.tuntasPercent}%</p>
-                <p className="text-xs text-cyan-500">Ketuntasan</p>
+            <div className="grid grid-cols-3 gap-2">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30">
+                    <p className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400">{stats.total}</p>
+                    <p className="text-[11px] sm:text-xs text-purple-500">Total Nilai</p>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
+                    <p className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">{stats.tuntas}</p>
+                    <p className="text-[11px] sm:text-xs text-emerald-500">Tuntas</p>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-100 dark:border-cyan-800/30">
+                    <p className="text-lg sm:text-xl font-bold text-cyan-600 dark:text-cyan-400">{stats.tuntasPercent}%</p>
+                    <p className="text-[11px] sm:text-xs text-cyan-500">Ketuntasan</p>
+                </div>
             </div>
         </div>
     );
@@ -298,10 +256,12 @@ const GradesPanel: React.FC<{
 
     if (subjects.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center text-gray-400">
-                <BarChartIcon className="w-16 h-16 mb-4 text-gray-600" />
-                <h4 className="text-lg font-semibold">Tidak Ada Data Nilai Mata Pelajaran</h4>
-                <p className="text-sm">Nilai yang Anda tambahkan akan muncul di sini.</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-4">
+                    <BarChartIcon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                </div>
+                <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Tidak Ada Data Nilai Mata Pelajaran</h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Nilai yang Anda tambahkan akan muncul di sini.</p>
             </div>
         );
     }
@@ -351,7 +311,7 @@ const GradesPanel: React.FC<{
                             {subjectRecords.map((record) => {
                                 const colors = getScoreColorClasses(record.score);
                                 return (
-                                    <div key={record.id} className={`group relative p-4 hover:bg-gray-100 dark:hover:bg-white/5 ${colors.bg}`}>
+                                    <div key={record.id} className={`group relative p-4 rounded-xl border border-transparent cursor-pointer transition-colors hover:bg-emerald-50/60 dark:hover:bg-emerald-900/10 hover:border-emerald-200/60 dark:hover:border-emerald-900/30 ${colors.bg}`}>
                                         <div className="flex items-center gap-4">
                                             <div className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-black text-2xl border-2 ${colors.border} ${colors.text} shadow-inner`}>
                                                 {record.score}
@@ -423,13 +383,13 @@ export const GradesTab: React.FC<GradesTabProps> = ({
     classAverages,
     kkm = DEFAULT_KKM
 }) => {
-    const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+    const [semesterFilter, setSemesterFilter] = useState<string>('all');
     const chartRef = useRef<HTMLDivElement>(null);
 
-    // Filter records based on selected period
+    // Filter records based on selected semester
     const filteredRecords = useMemo(() => {
-        return filterRecordsByPeriod(records, periodFilter);
-    }, [records, periodFilter]);
+        return filterRecordsBySemester(records, semesterFilter);
+    }, [records, semesterFilter]);
 
     // Export chart as image
     const handleExportChart = async () => {
@@ -466,19 +426,13 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                     <CardDescription>Daftar nilai sumatif atau formatif yang telah diinput.</CardDescription>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                    {/* Period Filter */}
-                    <div className="relative">
-                        <select
-                            value={periodFilter}
-                            onChange={(e) => setPeriodFilter(e.target.value as PeriodFilter)}
-                            className="pl-8 pr-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 appearance-none cursor-pointer"
-                        >
-                            {PERIOD_OPTIONS.map(opt => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
-                        <FilterIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    </div>
+                    {/* Semester Filter */}
+                    <SemesterSelector
+                        value={semesterFilter}
+                        onChange={(val) => setSemesterFilter(val)}
+                        includeAllOption={true}
+                        size="sm"
+                    />
 
                     {/* Export Button */}
                     <Button variant="outline" size="sm" onClick={handleExportChart} title="Export Chart">
@@ -496,11 +450,11 @@ export const GradesTab: React.FC<GradesTabProps> = ({
             {/* Summary Stats */}
             <GradesSummary records={filteredRecords} kkm={kkm} />
 
-            {/* Period Info */}
-            {periodFilter !== 'all' && (
+            {/* Semester Info */}
+            {semesterFilter !== 'all' && (
                 <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
                     <p className="text-sm text-blue-600 dark:text-blue-400">
-                        Menampilkan {filteredRecords.length} dari {records.length} nilai untuk periode: <strong>{PERIOD_OPTIONS.find(p => p.value === periodFilter)?.label}</strong>
+                        Menampilkan {filteredRecords.length} dari {records.length} nilai untuk semester yang dipilih
                     </p>
                 </div>
             )}

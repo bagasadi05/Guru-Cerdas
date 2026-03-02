@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -13,6 +14,7 @@ import {
     Activity
 } from 'lucide-react';
 import WeeklyAttendanceChart from './WeeklyAttendanceChart';
+import { EmptyState } from '../ui/EmptyState';
 
 interface AttendanceStatsProps {
     selectedDate?: string;
@@ -39,6 +41,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
     weeklyData
 }) => {
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     // Fetch classes
     const { data: classes = [] } = useQuery({
@@ -174,38 +177,42 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
 
     if (classStats.length === 0) {
         return (
-            <div className="glass-card p-6 rounded-2xl">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
-                        <CalendarIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                    <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                        <CalendarIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-slate-800 dark:text-white">Statistik Kehadiran</h3>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">Statistik Kehadiran</h3>
                         <p className="text-sm text-slate-500">{formattedDate}</p>
                     </div>
                 </div>
-                <p className="text-center text-slate-500 dark:text-slate-400 py-8">
-                    Belum ada data absensi untuk tanggal ini.
-                </p>
+                <EmptyState
+                    icon={<CalendarIcon />}
+                    title="Belum ada data absensi"
+                    description="Isi absensi untuk mulai melihat ringkasan kehadiran."
+                    actionLabel="Isi Absensi"
+                    onAction={() => navigate('/absensi')}
+                />
             </div>
         );
     }
 
     return (
-        <div className="glass-card p-6 rounded-2xl">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/30">
+                    <div className="p-3 bg-emerald-500 rounded-lg shadow-sm">
                         <CalendarIcon className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-lg text-slate-800 dark:text-white">Statistik Kehadiran</h3>
+                        <h3 className="font-semibold text-lg text-slate-900 dark:text-white">Statistik Kehadiran</h3>
                         <p className="text-sm text-slate-500">{formattedDate}</p>
                     </div>
                 </div>
                 <div className="text-right">
-                    <span className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                    <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                         {overallStats.percentage.toFixed(0)}%
                     </span>
                     <p className="text-xs text-slate-500">Kehadiran</p>
@@ -214,28 +221,28 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
 
             {/* Overall Stats */}
             <div className="grid grid-cols-4 gap-2 mb-6">
-                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center mb-2 shadow-lg">
                         <CheckCircleIcon className="w-5 h-5 text-white" />
                     </div>
                     <span className="text-[28px] font-extrabold leading-none text-emerald-600 dark:text-emerald-400">{overallStats.hadir}</span>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Hadir</p>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-2 shadow-lg">
                         <AlertTriangleIcon className="w-5 h-5 text-white" />
                     </div>
                     <span className="text-[28px] font-extrabold leading-none text-amber-600 dark:text-amber-400">{overallStats.sakit}</span>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Sakit</p>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center mb-2 shadow-lg">
                         <UsersIcon className="w-5 h-5 text-white" />
                     </div>
                     <span className="text-[28px] font-extrabold leading-none text-blue-600 dark:text-blue-400">{overallStats.izin}</span>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Izin</p>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-rose-50 dark:bg-rose-900/20 rounded-xl">
+                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-rose-50 dark:bg-rose-900/20 rounded-lg">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center mb-2 shadow-lg">
                         <XCircleIcon className="w-5 h-5 text-white" />
                     </div>
@@ -250,7 +257,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                 {classStats.map(stat => (
                     <div
                         key={stat.classId}
-                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                         <div className="flex items-center gap-3">
                             <span className="font-bold text-slate-800 dark:text-white">{stat.className}</span>
@@ -298,7 +305,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h4 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                    <Activity className="w-4 h-4 text-indigo-500" />
+                                <Activity className="w-4 h-4 text-emerald-500" />
                                     Tren Kehadiran Mingguan
                                 </h4>
                                 <p className="text-xs text-slate-500 mt-1">5 Hari Terakhir</p>

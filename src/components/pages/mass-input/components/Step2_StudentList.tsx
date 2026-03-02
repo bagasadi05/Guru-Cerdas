@@ -42,7 +42,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     // Apply sorting
     const sortedStudents = useMemo(() => {
         if (!students) return [];
-        return sortStudents(students, scores, sortConfig);
+        return sortStudents(students, scores, sortConfig, students);
     }, [students, scores, sortConfig]);
 
     // Apply grouping
@@ -144,6 +144,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 <Checkbox
                                                     checked={isAllSelected}
                                                     onChange={e => handleSelectAllStudents(e.target.checked)}
+                                                    aria-label="Pilih semua siswa"
                                                     className="border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                                                 />
                                             )}
@@ -245,90 +246,97 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
 
                         {/* Mobile View */}
                         <div className="md:hidden space-y-4">
-                            {flatStudentList.map((s: StudentRow) => {
-                                const globalIndex = flatStudentList.findIndex(st => st.id === s.id);
-                                const isSelected = selectedStudentIds.has(s.id);
-                                const gradeRecord = (mode === 'delete_subject_grade' || mode === 'academic_print') ? (existingGrades || []).find(g => g.student_id === s.id) : null;
-                                const hasGrade = !!gradeRecord;
-                                const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
+                            {groupedStudents.map((group) => (
+                                <React.Fragment key={group.title}>
+                                    {groupBy !== 'none' && (
+                                        <GroupHeader title={group.title} count={group.students.length} color={group.color} />
+                                    )}
+                                    {group.students.map((s: StudentRow) => {
+                                        const globalIndex = flatStudentList.findIndex(st => st.id === s.id);
+                                        const isSelected = selectedStudentIds.has(s.id);
+                                        const gradeRecord = (mode === 'delete_subject_grade' || mode === 'academic_print') ? (existingGrades || []).find(g => g.student_id === s.id) : null;
+                                        const hasGrade = !!gradeRecord;
+                                        const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
 
-                                return (
-                                    <div
-                                        key={s.id}
-                                        onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
-                                        className={`
+                                        return (
+                                            <div
+                                                key={s.id}
+                                                onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
+                                                className={`
                                             bg-white dark:bg-slate-800 rounded-2xl p-5 border transition-all duration-300
                                             ${(isSelected || hasScore)
-                                                ? 'bg-indigo-50 dark:bg-indigo-500/20 border-indigo-300 dark:border-indigo-500/30 shadow-lg shadow-indigo-500/10'
-                                                : 'border-slate-200 dark:border-white/10'
-                                            } 
+                                                        ? 'bg-green-50 dark:bg-green-500/20 border-green-300 dark:border-green-500/30 shadow-lg shadow-green-500/10'
+                                                        : 'border-slate-200 dark:border-white/10'
+                                                    } 
                                             ${mode !== 'subject_grade' ? 'cursor-pointer active:scale-95' : ''}
                                         `}
-                                    >
-                                        <div className="flex items-center gap-4 mb-4">
-                                            {mode !== 'subject_grade' && (
-                                                <Checkbox
-                                                    checked={isSelected}
-                                                    onChange={() => handleStudentSelect(s.id)}
-                                                    disabled={mode === 'delete_subject_grade' && !hasGrade}
-                                                    className="w-6 h-6 border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
-                                                />
-                                            )}
-                                            <img
-                                                src={s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random`}
-                                                alt={s.name}
-                                                className="w-14 h-14 rounded-full object-cover ring-2 ring-slate-200 dark:ring-white/20 shadow-md"
-                                            />
-                                            <div className="flex-grow min-w-0">
-                                                <p className="font-bold text-slate-900 dark:text-white text-lg truncate">{s.name}</p>
-                                                <p className="text-sm text-slate-500 dark:text-indigo-200/70 mt-0.5">No. {students.indexOf(s) + 1}</p>
-                                            </div>
-                                        </div>
-
-                                        {mode === 'subject_grade' ? (
-                                            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
-                                                <label className="text-sm font-bold text-indigo-600 dark:text-indigo-200 uppercase tracking-wide">Nilai</label>
-                                                <div className="flex-grow flex items-center gap-3">
-                                                    <Input
-                                                        ref={(el) => registerRef(globalIndex, el)}
-                                                        onKeyDown={(e) => handleKeyDown(e, globalIndex)}
-                                                        type="number"
-                                                        inputMode="numeric"
-                                                        min="0"
-                                                        max="100"
-                                                        value={scores[s.id] || ''}
-                                                        onChange={e => handleScoreChange(s.id, e.target.value)}
-                                                        placeholder=""
-                                                        className="flex-grow text-xl font-bold text-center h-12 bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl focus:ring-indigo-500"
-                                                    />
-                                                    {scores[s.id] && (
-                                                        <span className={`px-4 py-2 rounded-xl text-sm font-bold shadow-lg ${parseInt(scores[s.id]) >= 75 ? 'bg-emerald-500 text-white' : parseInt(scores[s.id]) >= 60 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'}`}>
-                                                            {parseInt(scores[s.id]) >= 75 ? 'Baik' : parseInt(scores[s.id]) >= 60 ? 'Cukup' : 'Kurang'}
-                                                        </span>
+                                            >
+                                                <div className="flex items-center gap-4 mb-4">
+                                                    {mode !== 'subject_grade' && (
+                                                        <Checkbox
+                                                            checked={isSelected}
+                                                            onChange={() => handleStudentSelect(s.id)}
+                                                            disabled={mode === 'delete_subject_grade' && !hasGrade}
+                                                            className="w-6 h-6 border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                        />
                                                     )}
+                                                    <img
+                                                        src={s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random`}
+                                                        alt={s.name}
+                                                        className="w-14 h-14 rounded-full object-cover ring-2 ring-slate-200 dark:ring-white/20 shadow-md"
+                                                    />
+                                                    <div className="flex-grow min-w-0">
+                                                        <p className="font-bold text-slate-900 dark:text-white text-lg truncate">{s.name}</p>
+                                                        <p className="text-sm text-slate-500 dark:text-indigo-200/70 mt-0.5">No. {globalIndex + 1}</p>
+                                                    </div>
                                                 </div>
+
+                                                {mode === 'subject_grade' ? (
+                                                    <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                                                        <label className="text-sm font-bold text-indigo-600 dark:text-indigo-200 uppercase tracking-wide">Nilai</label>
+                                                        <div className="flex-grow flex items-center gap-3">
+                                                            <Input
+                                                                ref={(el) => registerRef(globalIndex, el)}
+                                                                onKeyDown={(e) => handleKeyDown(e, globalIndex)}
+                                                                type="number"
+                                                                inputMode="numeric"
+                                                                min="0"
+                                                                max="100"
+                                                                value={scores[s.id] || ''}
+                                                                onChange={e => handleScoreChange(s.id, e.target.value)}
+                                                                placeholder=""
+                                                                className="flex-grow text-xl font-bold text-center h-12 bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl focus:ring-indigo-500"
+                                                            />
+                                                            {scores[s.id] && (
+                                                                <span className={`px-4 py-2 rounded-xl text-sm font-bold shadow-lg ${parseInt(scores[s.id]) >= 75 ? 'bg-emerald-500 text-white' : parseInt(scores[s.id]) >= 60 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'}`}>
+                                                                    {parseInt(scores[s.id]) >= 75 ? 'Baik' : parseInt(scores[s.id]) >= 60 ? 'Cukup' : 'Kurang'}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ) : (mode === 'academic_print' || mode === 'delete_subject_grade') ? (
+                                                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                                                        <span className="text-sm text-slate-600 dark:text-indigo-200">Nilai Saat Ini</span>
+                                                        <span className={`font-bold px-4 py-2 rounded-xl text-lg ${hasGrade ? 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-white border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/50 border border-slate-200 dark:border-white/5'}`}>
+                                                            {hasGrade ? gradeRecord?.score : 'N/A'}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                                                        <span className="text-sm text-slate-600 dark:text-indigo-200">Status</span>
+                                                        {isSelected ?
+                                                            <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-2 bg-emerald-50 dark:bg-emerald-400/10 px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-400/20">
+                                                                <CheckSquareIcon className="w-4 h-4" />Terpilih
+                                                            </span> :
+                                                            <span className="text-slate-400 dark:text-white/30 text-sm italic">Belum dipilih</span>
+                                                        }
+                                                    </div>
+                                                )}
                                             </div>
-                                        ) : (mode === 'academic_print' || mode === 'delete_subject_grade') ? (
-                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
-                                                <span className="text-sm text-slate-600 dark:text-indigo-200">Nilai Saat Ini</span>
-                                                <span className={`font-bold px-4 py-2 rounded-xl text-lg ${hasGrade ? 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-white border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/50 border border-slate-200 dark:border-white/5'}`}>
-                                                    {hasGrade ? gradeRecord?.score : 'N/A'}
-                                                </span>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
-                                                <span className="text-sm text-slate-600 dark:text-indigo-200">Status</span>
-                                                {isSelected ?
-                                                    <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-2 bg-emerald-50 dark:bg-emerald-400/10 px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-400/20">
-                                                        <CheckSquareIcon className="w-4 h-4" />Terpilih
-                                                    </span> :
-                                                    <span className="text-slate-400 dark:text-white/30 text-sm italic">Belum dipilih</span>
-                                                }
-                                            </div>
-                                        )}
-                                    </div>
-                                )
-                            })}
+                                        )
+                                    })}
+                                </React.Fragment>
+                            ))}
                         </div>
                     </>
                 ) : (

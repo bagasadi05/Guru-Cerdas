@@ -44,18 +44,16 @@ const SEARCH_HISTORY_KEY = 'portal_guru_search_history';
 const MAX_HISTORY = 10;
 
 export function useSearchHistory() {
-    const [history, setHistory] = useState<RecentSearch[]>([]);
-
-    useEffect(() => {
+    const [history, setHistory] = useState<RecentSearch[]>(() => {
+        if (typeof window === 'undefined') return [];
         const stored = localStorage.getItem(SEARCH_HISTORY_KEY);
-        if (stored) {
-            try {
-                setHistory(JSON.parse(stored));
-            } catch {
-                setHistory([]);
-            }
+        if (!stored) return [];
+        try {
+            return JSON.parse(stored);
+        } catch {
+            return [];
         }
-    }, []);
+    });
 
     const addToHistory = useCallback((search: Omit<RecentSearch, 'timestamp'>) => {
         setHistory(prev => {
@@ -248,12 +246,12 @@ export const GlobalSearchModal: React.FC<{
     const { history, removeFromHistory, clearHistory } = useSearchHistory();
     const inputRef = useRef<HTMLInputElement>(null);
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const clampedIndex = Math.min(selectedIndex, Math.max(results.length - 1, 0));
 
     // Focus input when opened
     useEffect(() => {
         if (isOpen) {
             inputRef.current?.focus();
-            setSelectedIndex(0);
         }
     }, [isOpen]);
 
@@ -265,9 +263,9 @@ export const GlobalSearchModal: React.FC<{
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             setSelectedIndex(prev => Math.max(prev - 1, 0));
-        } else if (e.key === 'Enter' && results[selectedIndex]) {
+        } else if (e.key === 'Enter' && results[clampedIndex]) {
             e.preventDefault();
-            handleSelect(results[selectedIndex]);
+            handleSelect(results[clampedIndex]);
         }
     };
 
@@ -365,7 +363,7 @@ export const GlobalSearchModal: React.FC<{
                                     <button
                                         key={result.id}
                                         onClick={() => handleSelect(result)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${index === selectedIndex
+                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${index === clampedIndex
                                             ? 'bg-indigo-50 dark:bg-indigo-900/30'
                                             : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                             }`}

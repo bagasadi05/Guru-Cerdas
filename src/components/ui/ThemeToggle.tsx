@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { Button } from './Button';
 import { SunIcon, MoonIcon } from '../Icons';
@@ -13,12 +13,7 @@ import { Monitor } from 'lucide-react';
  */
 const ThemeToggle: React.FC = () => {
   const { theme, themePreference, toggleTheme, isSystemTheme } = useTheme();
-  const [iconKey, setIconKey] = useState(0);
-
-  // Trigger animation when theme changes
-  useEffect(() => {
-    setIconKey(prev => prev + 1);
-  }, [themePreference]);
+  const iconKey = themePreference;
 
   const getIcon = () => {
     if (isSystemTheme) {

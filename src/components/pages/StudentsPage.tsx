@@ -6,25 +6,21 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
 import { Modal } from '../ui/Modal';
+import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
 import { useToast } from '../../hooks/useToast';
-import { GraduationCapIcon, UsersIcon, PlusIcon, PencilIcon, TrashIcon, AlertCircleIcon, LayoutGridIcon, ListIcon, KeyRoundIcon, SearchIcon, MoreVerticalIcon, EyeIcon, ClipboardIcon, FilterIcon, CheckCircleIcon, XCircleIcon, DownloadCloudIcon, PrinterIcon, ArrowRightIcon } from '../Icons';
+import { UsersIcon, PlusIcon, PencilIcon, TrashIcon, AlertCircleIcon, KeyRoundIcon, MoreVerticalIcon, EyeIcon, ClipboardIcon, DownloadCloudIcon, PrinterIcon, ArrowRightIcon } from '../Icons';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { Database } from '../../services/database.types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import StudentsPageSkeleton from '../skeletons/StudentsPageSkeleton';
-import { Card } from '../ui/Card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import BottomSheet from '../ui/BottomSheet';
 import { exportToExcel } from '../../utils/exportUtils';
 import { useBulkSelection, BulkActionBar, ExportPreviewModal, ExportFormat } from '../AdvancedFeatures';
-import { useSoftDelete } from '../../hooks/useSoftDelete';
-import { ExportPreviewModal as NewExportPreviewModal, ColumnConfig } from '../ui/ExportPreviewModal';
-import { exportData } from '../../services/ExportService';
 import { ImportModal } from '../ui/ImportModal';
 import { ParsedRow } from '../../services/ImportService';
-import { UploadCloudIcon, CheckCircle2, QrCode, MoreHorizontal } from 'lucide-react';
-import { getStudentAvatar } from '../../utils/avatarUtils';
+import { UploadCloudIcon } from 'lucide-react';
 import { StudentGrid } from '../students/StudentGrid';
 import { StudentTable } from '../students/StudentTable';
 import { StudentFilters } from '../students/StudentFilters';
@@ -92,6 +88,7 @@ const StudentsPage: React.FC = () => {
     const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
     const [studentModalMode, setStudentModalMode] = useState<'add' | 'edit'>('add');
     const [currentStudent, setCurrentStudent] = useState<StudentRow | null>(null);
+    const [genderSelection, setGenderSelection] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
 
     const [isClassModalOpen, setIsClassModalOpen] = useState(false);
     const [classModalMode, setClassModalMode] = useState<'add' | 'edit'>('add');
@@ -102,27 +99,40 @@ const StudentsPage: React.FC = () => {
     const [confirmModalState, setConfirmModalState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; confirmVariant?: 'default' | 'destructive', confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => { }, confirmVariant: 'destructive' });
     const [selectedStudentForActions, setSelectedStudentForActions] = useState<StudentRow | null>(null);
 
-    const { data, isLoading, isError, error: queryError } = useQuery({
-        queryKey: ['studentsPageData', user?.id],
-        queryFn: async (): Promise<StudentsPageData | null> => {
-            if (!user) return null;
-            const [classesRes, studentsRes] = await Promise.all([
-                supabase.from('classes').select('*').eq('user_id', user.id).is('deleted_at', null).order('name'),
-                supabase.from('students').select('*').eq('user_id', user.id).is('deleted_at', null),
-            ]);
-            if (classesRes.error) throw new Error(classesRes.error.message);
-            if (studentsRes.error) throw new Error(studentsRes.error.message);
-            return { classes: classesRes.data || [], students: studentsRes.data || [] };
+    const { data: classesData, isLoading: isLoadingClasses, isError: isClassesError, error: classesError } = useQuery({
+        queryKey: ['classes', user?.id],
+        queryFn: async () => {
+            if (!user) return [];
+            const { data, error } = await supabase.from('classes').select('*').eq('user_id', user.id).is('deleted_at', null).order('name');
+            if (error) throw new Error(error.message);
+            return data || [];
         },
         enabled: !!user,
     });
+
+    const { data: studentsData, isLoading: isLoadingStudents, isError: isStudentsError, error: studentsError } = useQuery({
+        queryKey: ['students', user?.id, activeClassId],
+        queryFn: async () => {
+            if (!user || !activeClassId) return [];
+            const { data, error } = await supabase.from('students').select('*').eq('user_id', user.id).eq('class_id', activeClassId).is('deleted_at', null);
+            if (error) throw new Error(error.message);
+            return data || [];
+        },
+        enabled: !!user && !!activeClassId,
+    });
+
+    const isLoading = isLoadingClasses || isLoadingStudents;
+    const isError = isClassesError || isStudentsError;
+    const queryError = classesError || studentsError;
+    const classes = classesData || [];
+    const students = studentsData || [];
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     useEffect(() => { if (isError) { toast.error(`Gagal memuat data: ${(queryError as Error).message}`); } }, [isError, queryError, toast]);
 
-    const { students = [], classes = [] } = data || {};
+
 
     useEffect(() => {
         if (classes && classes.length > 0 && !activeClassId) {
@@ -131,7 +141,10 @@ const StudentsPage: React.FC = () => {
     }, [classes, activeClassId]);
 
     const mutationOptions = {
-        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['studentsPageData'] }); },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['students'] });
+            queryClient.invalidateQueries({ queryKey: ['classes'] });
+        },
         onError: (error: Error) => toast.error(`Error: ${error.message}`),
     };
 
@@ -212,7 +225,8 @@ const StudentsPage: React.FC = () => {
     });
 
     const studentsForActiveClass = useMemo(() => {
-        let filtered = students.filter(student => student.class_id === activeClassId);
+        // Students are already filtered by activeClassId from the query
+        let filtered = students;
 
         if (deferredSearchTerm) {
             const lowerTerm = deferredSearchTerm.toLowerCase();
@@ -407,13 +421,18 @@ const StudentsPage: React.FC = () => {
 
     const handleOpenStudentModal = (mode: 'add' | 'edit', student: StudentRow | null = null) => {
         if (classes.length === 0) { toast.warning("Silakan tambah data kelas terlebih dahulu sebelum menambah siswa."); return; }
-        setStudentModalMode(mode); setCurrentStudent(student); setIsStudentModalOpen(true);
+        setStudentModalMode(mode);
+        setCurrentStudent(student);
+        setGenderSelection(student?.gender ?? 'Laki-laki');
+        setIsStudentModalOpen(true);
     };
 
     const handleStudentFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault(); if (!user) return;
         const formData = new FormData(e.currentTarget);
-        const name = formData.get('name') as string; const class_id = formData.get('class_id') as string; const gender = formData.get('gender') as 'Laki-laki' | 'Perempuan';
+        const name = formData.get('name') as string;
+        const class_id = formData.get('class_id') as string;
+        const gender = genderSelection;
         const bgColor = gender === 'Laki-laki' ? 'b6e3f4' : 'ffd5dc'; const avatar_url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name || Date.now())}&backgroundColor=${bgColor}`;
 
         if (studentModalMode === 'add') {
@@ -565,6 +584,10 @@ const StudentsPage: React.FC = () => {
         }
     };
 
+    const outlineActionClasses = 'h-11 px-3 sm:px-4 rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-600 shadow-sm';
+    const primaryActionClasses = 'h-11 px-4 rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white border-none';
+    const overflowTriggerClasses = 'h-11 w-11 p-0 rounded-xl items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm';
+
     return (
         <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -572,48 +595,124 @@ const StudentsPage: React.FC = () => {
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white font-serif">Manajemen Siswa</h1>
                     <p className="mt-2 text-gray-600 dark:text-gray-400">Kelola data siswa, kelas, dan kode akses.</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setIsImportFromTeacherModalOpen(true)}
-                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-600 shadow-sm"
-                        title="Import data kelas & siswa dari guru lain"
-                    >
-                        <UsersIcon className="w-4 h-4 mr-2" />Import Guru
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setIsImportModalOpen(true)}
-                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-600 shadow-sm"
-                        title="Import data siswa dari file Excel"
-                    >
-                        <UploadCloudIcon className="w-4 h-4 mr-2" />Import Excel
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleExportStudents}
-                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-600 shadow-sm"
-                    >
-                        <DownloadCloudIcon className="w-4 h-4 mr-2" /> Export
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setIsClassManageModalOpen(true)}
-                        className="rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-600 shadow-sm"
-                    >
-                        <PencilIcon className="w-4 h-4 mr-2" /> Kelola Kelas
-                    </Button>
-                    <Button
-                        size="sm"
-                        onClick={() => handleOpenStudentModal('add')}
-                        className="rounded-xl shadow-lg shadow-green-500/20 bg-green-600 hover:bg-green-700 text-white border-none"
-                    >
-                        <PlusIcon className="w-4 h-4 mr-2" /> Siswa Baru
-                    </Button>
+                <div className="flex items-center gap-3">
+                    {/* Desktop: show all actions */}
+                    <div className="hidden lg:flex items-center gap-3">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setIsImportFromTeacherModalOpen(true)}
+                            className={outlineActionClasses}
+                            title="Import data kelas & siswa dari guru lain"
+                        >
+                            <UsersIcon className="w-4 h-4 mr-2" />Import Guru
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setIsImportModalOpen(true)}
+                            className={outlineActionClasses}
+                            title="Import data siswa dari file Excel"
+                        >
+                            <UploadCloudIcon className="w-4 h-4 mr-2" />Import Excel
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleExportStudents}
+                            className={outlineActionClasses}
+                        >
+                            <DownloadCloudIcon className="w-4 h-4 mr-2" /> Export
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setIsClassManageModalOpen(true)}
+                            className={outlineActionClasses}
+                        >
+                            <PencilIcon className="w-4 h-4 mr-2" /> Kelola Kelas
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={() => handleOpenStudentModal('add')}
+                            className={primaryActionClasses}
+                        >
+                            <PlusIcon className="w-4 h-4 mr-2" /> Siswa Baru
+                        </Button>
+                    </div>
+
+                    {/* Tablet: 3 primary + overflow */}
+                    <div className="hidden sm:flex lg:hidden items-center gap-3">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setIsImportModalOpen(true)}
+                            className={outlineActionClasses}
+                            title="Import data siswa dari file Excel"
+                        >
+                            <UploadCloudIcon className="w-4 h-4 mr-2" />Import Excel
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleExportStudents}
+                            className={outlineActionClasses}
+                        >
+                            <DownloadCloudIcon className="w-4 h-4 mr-2" /> Export
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={() => handleOpenStudentModal('add')}
+                            className={primaryActionClasses}
+                        >
+                            <PlusIcon className="w-4 h-4 mr-2" /> Siswa Baru
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownTrigger className={overflowTriggerClasses}>
+                                <MoreVerticalIcon className="w-5 h-5" />
+                                <span className="sr-only">Menu tindakan</span>
+                            </DropdownTrigger>
+                            <DropdownContent align="right">
+                                <DropdownItem icon={<UsersIcon className="w-4 h-4" />} onClick={() => setIsImportFromTeacherModalOpen(true)}>
+                                    Import Guru
+                                </DropdownItem>
+                                <DropdownItem icon={<PencilIcon className="w-4 h-4" />} onClick={() => setIsClassManageModalOpen(true)}>
+                                    Kelola Kelas
+                                </DropdownItem>
+                            </DropdownContent>
+                        </DropdownMenu>
+                    </div>
+
+                    {/* Mobile: primary + overflow */}
+                    <div className="flex sm:hidden items-center gap-3">
+                        <Button
+                            size="sm"
+                            onClick={() => handleOpenStudentModal('add')}
+                            className={primaryActionClasses}
+                        >
+                            <PlusIcon className="w-4 h-4 mr-2" /> Siswa Baru
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownTrigger className={overflowTriggerClasses}>
+                                <MoreVerticalIcon className="w-5 h-5" />
+                                <span className="sr-only">Menu tindakan</span>
+                            </DropdownTrigger>
+                            <DropdownContent align="right">
+                                <DropdownItem icon={<UsersIcon className="w-4 h-4" />} onClick={() => setIsImportFromTeacherModalOpen(true)}>
+                                    Import Guru
+                                </DropdownItem>
+                                <DropdownItem icon={<UploadCloudIcon className="w-4 h-4" />} onClick={() => setIsImportModalOpen(true)}>
+                                    Import Excel
+                                </DropdownItem>
+                                <DropdownItem icon={<DownloadCloudIcon className="w-4 h-4" />} onClick={handleExportStudents}>
+                                    Export
+                                </DropdownItem>
+                                <DropdownItem icon={<PencilIcon className="w-4 h-4" />} onClick={() => setIsClassManageModalOpen(true)}>
+                                    Kelola Kelas
+                                </DropdownItem>
+                            </DropdownContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
             </header>
 
@@ -638,7 +737,7 @@ const StudentsPage: React.FC = () => {
                                 <TabsTrigger
                                     key={c.id}
                                     value={c.id}
-                                    className="data-[state=active]:bg-green-600 data-[state=active]:text-white dark:data-[state=active]:bg-green-500 dark:data-[state=active]:text-white bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-full px-5 py-2.5 transition-all shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white dark:data-[state=active]:bg-emerald-500 dark:data-[state=active]:text-white bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-full px-5 py-3 min-h-[44px] text-sm font-semibold transition-all shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
                                 >
                                     {c.name}
                                 </TabsTrigger>
@@ -661,15 +760,19 @@ const StudentsPage: React.FC = () => {
                             </div>
 
                             {studentsForActiveClass.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in bg-white dark:bg-gray-800/50 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
-                                    <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
-                                        <UsersIcon className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+                                <div className="flex flex-col items-center justify-center py-20 sm:py-24 px-4 text-center animate-fade-in bg-white dark:bg-gray-800/50 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                                    <div className="relative mb-6">
+                                        <span className="absolute -top-3 -left-4 w-10 h-10 bg-emerald-100/70 dark:bg-emerald-900/30 rounded-full blur-sm" />
+                                        <span className="absolute -bottom-3 -right-5 w-12 h-12 bg-sky-100/70 dark:bg-sky-900/20 rounded-full blur-sm" />
+                                        <div className="relative w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
+                                            <UsersIcon className="w-9 h-9 text-emerald-400 dark:text-emerald-300" />
+                                        </div>
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Tidak Ada Data Siswa</h3>
                                     <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
                                         Belum ada siswa di kelas ini atau tidak ada yang cocok dengan filter pencarian Anda.
                                     </p>
-                                    <Button onClick={() => handleOpenStudentModal('add')} className="rounded-xl shadow-lg shadow-green-500/20 bg-green-600 hover:bg-green-700 text-white">
+                                    <Button onClick={() => handleOpenStudentModal('add')} className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white">
                                         <PlusIcon className="w-4 h-4 mr-2" /> Tambah Siswa Baru
                                     </Button>
                                 </div>
@@ -744,7 +847,7 @@ const StudentsPage: React.FC = () => {
                                 setSelectedStudentForActions(null);
                             }}
                         >
-                            <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
+                            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                                 <KeyRoundIcon className="w-5 h-5" />
                             </div>
                             <div className="flex-grow">
@@ -797,11 +900,64 @@ const StudentsPage: React.FC = () => {
 
             {/* Student Modal */}
             <Modal isOpen={isStudentModalOpen} onClose={() => setIsStudentModalOpen(false)} title={studentModalMode === 'add' ? 'Tambah Siswa Baru' : 'Edit Siswa'}>
-                <form onSubmit={handleStudentFormSubmit} className="space-y-4">
-                    <div><label htmlFor="student-name">Nama Lengkap</label><Input id="student-name" name="name" defaultValue={currentStudent?.name || ''} required /></div>
-                    <div><label htmlFor="student-class">Kelas</label><Select id="student-class" name="class_id" defaultValue={currentStudent?.class_id || activeClassId} required>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</Select></div>
-                    <div><label>Jenis Kelamin</label><div className="flex gap-4 mt-2"><label className="flex items-center"><input type="radio" name="gender" value="Laki-laki" defaultChecked={currentStudent?.gender !== 'Perempuan'} className="form-radio" /><span className="ml-2">Laki-laki</span></label><label className="flex items-center"><input type="radio" name="gender" value="Perempuan" defaultChecked={currentStudent?.gender === 'Perempuan'} className="form-radio" /><span className="ml-2">Perempuan</span></label></div></div>
-                    <div className="flex justify-end gap-2 pt-4"><Button type="button" variant="ghost" onClick={() => setIsStudentModalOpen(false)}>Batal</Button><Button type="submit" disabled={isAddingStudent || isUpdatingStudent}>{isAddingStudent || isUpdatingStudent ? 'Menyimpan...' : 'Simpan'}</Button></div>
+                <form onSubmit={handleStudentFormSubmit} className="space-y-5">
+                    <div>
+                        <label htmlFor="student-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Nama Lengkap</label>
+                        <Input id="student-name" name="name" defaultValue={currentStudent?.name || ''} required />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="student-class" className="text-sm font-medium text-gray-700 dark:text-gray-300">Kelas</label>
+                            <Select id="student-class" name="class_id" defaultValue={currentStudent?.class_id || activeClassId} required>
+                                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </Select>
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Jenis Kelamin</label>
+                            <div className="grid grid-cols-2 gap-3 mt-2">
+                                <label className={`flex items-center justify-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${genderSelection === 'Laki-laki'
+                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                    }`}>
+                                    <input
+                                        type="radio"
+                                        name="gender"
+                                        value="Laki-laki"
+                                        checked={genderSelection === 'Laki-laki'}
+                                        onChange={() => setGenderSelection('Laki-laki')}
+                                        className="sr-only"
+                                    />
+                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${genderSelection === 'Laki-laki'
+                                        ? 'bg-emerald-500 text-white'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                        }`}>L</span>
+                                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Laki-laki</span>
+                                </label>
+                                <label className={`flex items-center justify-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${genderSelection === 'Perempuan'
+                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                    }`}>
+                                    <input
+                                        type="radio"
+                                        name="gender"
+                                        value="Perempuan"
+                                        checked={genderSelection === 'Perempuan'}
+                                        onChange={() => setGenderSelection('Perempuan')}
+                                        className="sr-only"
+                                    />
+                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${genderSelection === 'Perempuan'
+                                        ? 'bg-emerald-500 text-white'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                        }`}>P</span>
+                                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Perempuan</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4">
+                        <Button type="button" variant="ghost" onClick={() => setIsStudentModalOpen(false)}>Batal</Button>
+                        <Button type="submit" disabled={isAddingStudent || isUpdatingStudent}>{isAddingStudent || isUpdatingStudent ? 'Menyimpan...' : 'Simpan'}</Button>
+                    </div>
                 </form>
             </Modal>
 
@@ -812,9 +968,9 @@ const StudentsPage: React.FC = () => {
                         <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-black/20">
                             <span className="font-semibold">{c.name}</span>
                             <div className="flex items-center gap-1">
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setIsClassManageModalOpen(false); handleGenerateCodesClick(c); }} title="Buat kode akses massal"><KeyRoundIcon className="h-4 w-4 text-green-500" /></Button>
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setIsClassManageModalOpen(false); handleOpenClassModal('edit', c); }}><PencilIcon className="h-4 w-4" /></Button>
-                                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500" onClick={() => handleDeleteClassClick(c)}><TrashIcon className="h-4 w-4" /></Button>
+                                <Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => { setIsClassManageModalOpen(false); handleGenerateCodesClick(c); }} title="Buat kode akses massal"><KeyRoundIcon className="h-4 w-4 text-emerald-500" /></Button>
+                                <Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => { setIsClassManageModalOpen(false); handleOpenClassModal('edit', c); }}><PencilIcon className="h-4 w-4" /></Button>
+                                <Button size="icon" variant="ghost" className="h-10 w-10 text-red-500" onClick={() => handleDeleteClassClick(c)}><TrashIcon className="h-4 w-4" /></Button>
                             </div>
                         </div>
                     ))}

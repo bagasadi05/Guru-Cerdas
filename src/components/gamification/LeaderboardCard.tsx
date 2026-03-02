@@ -47,9 +47,9 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
     }
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-sm">
             {/* Header */}
-            <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
+            <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-amber-50/70 dark:bg-amber-900/20">
                 <div className="flex items-center justify-between">
                     <button
                         onClick={() => setIsOpen(!isOpen)}
@@ -66,7 +66,7 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
                             <select
                                 value={selectedClass}
                                 onChange={(e) => setSelectedClass(e.target.value)}
-                                className="appearance-none pl-3 pr-8 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                className="appearance-none pl-3 pr-8 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             >
                                 <option value="">Semua Kelas</option>
                                 {classes.map(c => (

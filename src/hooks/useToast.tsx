@@ -93,7 +93,8 @@ const ToastContainer: React.FC<{ toasts: Toast[]; onDismiss: (id: number) => voi
         const node = document.createElement('div');
         node.className = 'fixed top-5 right-5 z-[100] space-y-3';
         document.body.appendChild(node);
-        setPortalNode(node);
+        // Defer setState to prevent cascading renders
+        Promise.resolve().then(() => setPortalNode(node));
         return () => {
             document.body.removeChild(node);
         };

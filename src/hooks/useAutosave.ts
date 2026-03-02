@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 interface UseAutosaveOptions<T> {
     key: string;
@@ -35,33 +35,35 @@ export function useAutosave<T>({
     debounceMs = 1000,
 }: UseAutosaveOptions<T>) {
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
-    const [hasDraft, setHasDraft] = useState(false);
-    const [draftTimestamp, setDraftTimestamp] = useState<Date | null>(null);
     const dataRef = useRef(data);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     const storageKey = `autosave_${key}`;
-
-    // Update ref when data changes
-    useEffect(() => {
-        dataRef.current = data;
-    }, [data]);
-
-    // Check for existing draft on mount
-    useEffect(() => {
+    const initialDraft = useMemo(() => {
+        if (typeof window === 'undefined') {
+            return { hasDraft: false, draftTimestamp: null as Date | null };
+        }
         try {
             const saved = localStorage.getItem(storageKey);
             if (saved) {
                 const draft: DraftData<T> = JSON.parse(saved);
                 if (draft.version === DRAFT_VERSION) {
-                    setHasDraft(true);
-                    setDraftTimestamp(new Date(draft.timestamp));
+                    return { hasDraft: true, draftTimestamp: new Date(draft.timestamp) };
                 }
             }
         } catch {
             // Invalid draft, ignore
         }
+        return { hasDraft: false, draftTimestamp: null as Date | null };
     }, [storageKey]);
+
+    const [hasDraft, setHasDraft] = useState(initialDraft.hasDraft);
+    const [draftTimestamp, setDraftTimestamp] = useState<Date | null>(initialDraft.draftTimestamp);
+
+    // Update ref when data changes
+    useEffect(() => {
+        dataRef.current = data;
+    }, [data]);
 
     // Save to localStorage
     const saveDraft = useCallback(() => {

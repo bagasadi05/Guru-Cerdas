@@ -32,35 +32,54 @@ export const exportViolationsToPDF = async (options: ViolationExportOptions) => 
     let y = addPdfHeader(doc, { schoolName, orientation: 'portrait' });
 
     // -- Title --
-    doc.setFontSize(12);
+    y += 2;
+    doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
     doc.text('LAPORAN PELANGGARAN SISWA', pageWidth / 2, y, { align: 'center' });
     y += 10;
 
-    // -- Student Info --
+    // -- Student Info Section with proper alignment --
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Nama Siswa : ${studentName}`, 14, y);
-    y += 5;
-    if (className) {
-        doc.text(`Kelas      : ${className}`, 14, y);
-        y += 5;
-    }
+    
+    const labelX = 14;
+    const colonX = 47;
+    const valueX = 50;
+    const lineHeight = 6;
+
+    // Nama Siswa
+    doc.text('Nama Siswa', labelX, y);
+    doc.text(':', colonX, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(studentName.toUpperCase(), valueX, y);
+    doc.setFont('helvetica', 'normal');
+    y += lineHeight;
+
+    // Kelas
+    doc.text('Kelas', labelX, y);
+    doc.text(':', colonX, y);
+    doc.text(className || '-', valueX, y);
+    y += lineHeight;
+
+    // Tanggal
     const dateStr = new Date().toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
     });
-    doc.text(`Tanggal    : ${dateStr}`, 14, y);
-    const tableStartY = y + 8;
+    doc.text('Tanggal', labelX, y);
+    doc.text(':', colonX, y);
+    doc.text(dateStr, valueX, y);
+    
+    const tableStartY = y + 10;
 
-    // -- Table --
+    // -- Table with improved styling --
     const tableBody = violations.map((v, index) => [
         index + 1,
-        new Date(v.date).toLocaleDateString('id-ID'),
+        new Date(v.date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }),
         v.description,
         v.points,
-        v.severity ? (v.severity.charAt(0).toUpperCase() + v.severity.slice(1)) : '-', // Capitalize or dash
+        v.severity ? (v.severity.charAt(0).toUpperCase() + v.severity.slice(1)) : '-',
         v.follow_up_status === 'resolved' ? 'Selesai' :
             v.follow_up_status === 'in_progress' ? 'Proses' : 'Belum'
     ]);
@@ -70,26 +89,51 @@ export const exportViolationsToPDF = async (options: ViolationExportOptions) => 
         head: [['No', 'Tanggal', 'Pelanggaran', 'Poin', 'Kategori', 'Status']],
         body: tableBody,
         theme: 'grid',
-        headStyles: { fillColor: [50, 50, 50], textColor: 255 },
-        styles: { fontSize: 9 },
+        headStyles: { 
+            fillColor: [50, 50, 50], 
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center',
+            fontSize: 9
+        },
+        styles: { 
+            fontSize: 9,
+            cellPadding: 3,
+            lineColor: [0, 0, 0],
+            lineWidth: 0.1
+        },
         columnStyles: {
-            0: { cellWidth: 10 }, // No
-            1: { cellWidth: 25 }, // Tanggal
-            2: { cellWidth: 'auto' }, // Desc
-            3: { cellWidth: 15, halign: 'center' }, // Poin
-            4: { cellWidth: 20 }, // Category
-            5: { cellWidth: 20 }, // Status
+            0: { cellWidth: 10, halign: 'center' }, // No
+            1: { cellWidth: 24, halign: 'center' }, // Tanggal
+            2: { cellWidth: 'auto', halign: 'left' }, // Desc
+            3: { cellWidth: 13, halign: 'center' }, // Poin
+            4: { cellWidth: 20, halign: 'center' }, // Category
+            5: { cellWidth: 18, halign: 'center' }, // Status
         }
     });
 
-    // -- Footer / Signature --
-    // Force cast to any because lastAutoTable is added by the plugin
+    // -- Footer / Signature Section --
     const finalY = (doc as any).lastAutoTable?.finalY || 150;
 
-    if (finalY < 250) { // Check if space exists on this page
-        doc.text('Mengetahui,', 140, finalY + 20);
-        doc.text('Wali Kelas', 140, finalY + 25);
-        doc.text('(_______________________)', 140, finalY + 50);
+    if (finalY < 235) {
+        const signatureY = finalY + 15;
+        const signatureLineY = signatureY + 30;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        
+        // Right signature - Wali Kelas
+        const rightX = pageWidth - 50;
+        doc.text('Mengetahui,', rightX, signatureY, { align: 'center' });
+        doc.text('Wali Kelas', rightX, signatureY + 5, { align: 'center' });
+        
+        // Signature line
+        doc.line(rightX - 30, signatureLineY, rightX + 30, signatureLineY);
+        
+        // Name placeholder
+        doc.setFontSize(9);
+        doc.text('(', rightX - 30, signatureLineY + 5);
+        doc.text(')', rightX + 30, signatureLineY + 5);
     }
 
     doc.save(`Laporan_Pelanggaran_${studentName.replace(/\s+/g, '_')}.pdf`);
@@ -222,19 +266,20 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
         let y = addPdfHeader(doc, { schoolName, orientation: 'portrait' });
 
         // -- Title --
-        doc.setFontSize(12);
+        y += 2;
+        doc.setFontSize(13);
         doc.setFont('helvetica', 'bold');
         doc.text('LAPORAN PELANGGARAN SISWA', pageWidth / 2, y, { align: 'center' });
         y += 10;
 
-        // -- Student Info Box --
+        // -- Student Info Section with proper alignment --
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
 
         const labelX = 14;
-        const colonX = 45;
-        const valueX = 47;
-        let currentY = y; // Use y position from logo header
+        const colonX = 47;
+        const valueX = 50;
+        let currentY = y;
         const lineHeight = 6;
 
         // Nama Siswa
@@ -260,24 +305,14 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
         }
 
         // Tanggal
-        doc.text('Tanggal Cetak', labelX, currentY);
+        doc.text('Tanggal', labelX, currentY);
         doc.text(':', colonX, currentY);
         doc.text(dateStr, valueX, currentY);
-
-        // Summary box on the right
-        doc.setFillColor(245, 245, 245);
-        doc.roundedRect(140, 38, 56, 20, 2, 2, 'F');
-        doc.setFont('helvetica', 'bold');
-        doc.text('Total Pelanggaran', 168, 45, { align: 'center' });
-        doc.setFontSize(16);
-        doc.setTextColor(220, 38, 38); // Red color
-        doc.text(`${studentViolations.length} (${totalPoints} poin)`, 168, 54, { align: 'center' });
-        doc.setTextColor(0, 0, 0); // Reset to black
 
         // -- Violations Table --
         const tableBody = studentViolations.map((v, index) => [
             index + 1,
-            new Date(v.date).toLocaleDateString('id-ID'),
+            new Date(v.date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }),
             v.description,
             v.points,
             v.severity ? (v.severity.charAt(0).toUpperCase() + v.severity.slice(1)) : '-',
@@ -286,38 +321,55 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
         ]);
 
         autoTable(doc, {
-            startY: currentY + 12,
-            head: [['No', 'Tanggal', 'Deskripsi Pelanggaran', 'Poin', 'Kategori', 'Status']],
+            startY: currentY + 10,
+            head: [['No', 'Tanggal', 'Pelanggaran', 'Poin', 'Kategori', 'Status']],
             body: tableBody,
             theme: 'grid',
-            headStyles: { fillColor: [50, 50, 50], textColor: 255 },
-            styles: { fontSize: 9 },
+            headStyles: { 
+                fillColor: [50, 50, 50], 
+                textColor: 255,
+                fontStyle: 'bold',
+                halign: 'center',
+                fontSize: 9
+            },
+            styles: { 
+                fontSize: 9,
+                cellPadding: 3,
+                lineColor: [0, 0, 0],
+                lineWidth: 0.1
+            },
             columnStyles: {
-                0: { cellWidth: 10 },   // No
-                1: { cellWidth: 22 },   // Tanggal
-                2: { cellWidth: 'auto' }, // Desc
-                3: { cellWidth: 12, halign: 'center' }, // Poin
-                4: { cellWidth: 18 },   // Kategori
-                5: { cellWidth: 18 },   // Status
+                0: { cellWidth: 10, halign: 'center' },   // No
+                1: { cellWidth: 24, halign: 'center' },   // Tanggal
+                2: { cellWidth: 'auto', halign: 'left' }, // Desc
+                3: { cellWidth: 13, halign: 'center' }, // Poin
+                4: { cellWidth: 20, halign: 'center' },   // Kategori
+                5: { cellWidth: 18, halign: 'center' },   // Status
             }
         });
 
-        // -- Footer / Signature --
+        // -- Footer / Signature Section --
         const finalY = (doc as any).lastAutoTable?.finalY || 150;
 
-        if (finalY < 240) {
+        if (finalY < 235) {
+            const signatureY = finalY + 15;
+            const signatureLineY = signatureY + 30;
+            
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
 
-            // Left signature - Parent
-            doc.text('Mengetahui,', 35, finalY + 20, { align: 'center' });
-            doc.text('Orang Tua/Wali', 35, finalY + 25, { align: 'center' });
-            doc.text('(_______________________)', 35, finalY + 50, { align: 'center' });
-
-            // Right signature - Teacher/Coordinator
-            doc.text('Mengetahui,', 168, finalY + 20, { align: 'center' });
-            doc.text('Wali Kelas', 168, finalY + 25, { align: 'center' });
-            doc.text('(_______________________)', 168, finalY + 50, { align: 'center' });
+            // Right signature - Wali Kelas
+            const rightX = pageWidth - 50;
+            doc.text('Mengetahui,', rightX, signatureY, { align: 'center' });
+            doc.text('Wali Kelas', rightX, signatureY + 5, { align: 'center' });
+            
+            // Signature line
+            doc.line(rightX - 30, signatureLineY, rightX + 30, signatureLineY);
+            
+            // Name placeholder
+            doc.setFontSize(9);
+            doc.text('(', rightX - 30, signatureLineY + 5);
+            doc.text(')', rightX + 30, signatureLineY + 5);
         }
     });
 

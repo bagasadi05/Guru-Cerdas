@@ -29,6 +29,8 @@ export interface UseDashboardDataReturn {
     isLoading: boolean;
     /** Error object if the query failed */
     error: Error | null;
+    /** Whether the query encountered an error */
+    isError: boolean;
     /** Function to refetch the data */
     refetch: () => void;
     /** Whether a refetch is in progress */
@@ -138,12 +140,14 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         dailyAttendanceRes,
         weeklyAttendanceRes,
         academicRecordsRes,
-        violationsRes
+        violationsRes,
+        recentTasksRes,
+        todayAttendanceRecordsRes
     ] = await Promise.all([
         // Fetch students with minimal fields needed for dashboard
         supabase
             .from('students')
-            .select('id, name, class_id')
+            .select('id, name, class_id, avatar_url')
             .eq('user_id', userId)
             .is('deleted_at', null),
 
@@ -187,14 +191,33 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         // Fetch academic records for grade analysis
         supabase
             .from('academic_records')
-            .select('student_id, subject, score, assessment_name')
-            .eq('user_id', userId),
+            .select('student_id, subject, score, assessment_name, created_at')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(10),
 
         // Fetch violations for behavior analysis
         supabase
             .from('violations')
             .select('student_id, points')
+            .eq('user_id', userId),
+
+        // Fetch recent tasks for activity feed
+        supabase
+            .from('tasks')
+            .select('id, title, created_at, status')
             .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(5),
+
+        // Fetch recent attendance records for activity feed
+        supabase
+            .from('attendance')
+            .select('created_at, status')
+            .eq('user_id', userId)
+            .eq('date', today)
+            .order('created_at', { ascending: false })
+            .limit(10)
     ]);
 
     // Collect any errors from the queries
@@ -206,7 +229,9 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         dailyAttendanceRes,
         weeklyAttendanceRes,
         academicRecordsRes,
-        violationsRes
+        violationsRes,
+        recentTasksRes,
+        todayAttendanceRecordsRes
     ]
         .map(res => res.error)
         .filter((e): e is NonNullable<typeof e> => e !== null);
@@ -238,6 +263,16 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         weeklyAttendance,
         academicRecords: academicRecordsRes.data || [],
         violations: violationsRes.data || [],
+        recentTasks: recentTasksRes.data || [],
+        todayAttendanceRecords: todayAttendanceRecordsRes.data?.reduce((acc: { created_at: string; status: string; count: number }[], record) => {
+            const existing = acc.find(a => a.created_at === record.created_at && a.status === record.status);
+            if (existing) {
+                existing.count++;
+            } else {
+                acc.push({ created_at: record.created_at || '', status: record.status || '', count: 1 });
+            }
+            return acc;
+        }, []) || [],
     };
 };
 
@@ -275,6 +310,7 @@ export function useDashboardData(): UseDashboardDataReturn {
         data,
         isLoading,
         error,
+        isError,
         refetch,
         isRefetching
     } = useQuery({
@@ -291,6 +327,7 @@ export function useDashboardData(): UseDashboardDataReturn {
         data,
         isLoading,
         error: error as Error | null,
+        isError,
         refetch: () => { refetch(); },
         isRefetching,
     };

@@ -405,8 +405,8 @@ export const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
 
                             {/* Preview Table */}
                             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
+                                <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                                    <table className="w-full min-w-[500px]">
                                         <thead>
                                             <tr className="bg-slate-100 dark:bg-slate-800">
                                                 {selectedColumns.map(column => (

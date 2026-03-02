@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
 
 /**
  * Skeleton & Loading Components
@@ -431,18 +431,17 @@ export const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
     height,
     blurDataURL
 }) => {
-    const [isLoaded, setIsLoaded] = useState(false);
     const [isError, setIsError] = useState(false);
     const imgRef = useRef<HTMLImageElement>(null);
 
-    useEffect(() => {
+    // Generate blur placeholder if not provided
+    const defaultPlaceholder = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${width || 400} ${height || 300}'%3E%3Crect width='100%25' height='100%25' fill='%23E2E8F0'/%3E%3C/svg%3E`;
+
+    React.useLayoutEffect(() => {
         if (imgRef.current?.complete) {
             setIsLoaded(true);
         }
     }, []);
-
-    // Generate blur placeholder if not provided
-    const defaultPlaceholder = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${width || 400} ${height || 300}'%3E%3Crect width='100%25' height='100%25' fill='%23E2E8F0'/%3E%3C/svg%3E`;
 
     return (
         <div
@@ -557,8 +556,9 @@ export const ContentLoader: React.FC<ContentLoaderProps> = ({
     foregroundColor = '#f8fafc',
     children
 }) => {
-    const idClip = `clip-${Math.random().toString(36).substr(2, 9)}`;
-    const idGradient = `gradient-${Math.random().toString(36).substr(2, 9)}`;
+    const idBase = useId();
+    const idClip = `${idBase}-clip`;
+    const idGradient = `${idBase}-gradient`;
 
     return (
         <svg

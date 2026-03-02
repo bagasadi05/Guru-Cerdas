@@ -2,7 +2,7 @@ import React from 'react';
 import { useSound } from '../../hooks/useSound';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'destructive' | 'outline' | 'ghost';
+  variant?: 'default' | 'primary' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'success';
   size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
@@ -10,20 +10,23 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'default', children, onClick, ...props }, ref) => {
     const { playClick } = useSound();
     // Enhanced accessibility: improved focus ring, better contrast
-    const baseClasses = "relative overflow-hidden inline-flex items-center justify-center rounded-md text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950 focus-visible:ring-indigo-500 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed transform-gpu active:scale-95";
+    const baseClasses = "relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 ease-out min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed transform-gpu active:scale-[0.98]";
 
     const variantClasses = {
-      default: 'bg-gradient-to-r from-sky-500 via-sky-600 to-sky-500 text-white bg-[length:200%_auto] transition-all duration-500 ease-out hover:bg-[position:100%_0] hover:shadow-lg hover:shadow-sky-500/40 dark:from-purple-600 dark:via-blue-500 dark:to-purple-600 dark:hover:shadow-purple-500/40 hover:-translate-y-1',
-      destructive: 'bg-red-500 text-white hover:bg-red-600 transition-all duration-200 hover:shadow-lg hover:shadow-red-500/40 hover:-translate-y-0.5',
-      outline: 'ripple-dark bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:-translate-y-0.5',
-      ghost: 'ripple-dark hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105',
+      default: 'bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-md',
+      primary: 'bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-md',
+      secondary: 'bg-slate-700 text-white hover:bg-slate-600 hover:shadow-md',
+      success: 'bg-green-500 text-white hover:bg-green-600 hover:shadow-md',
+      destructive: 'bg-red-500 text-white hover:bg-red-600 hover:shadow-md',
+      outline: 'ripple-dark bg-transparent border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
+      ghost: 'ripple-dark bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
     };
 
     const sizeClasses = {
-      default: 'h-10 py-2 px-4',
-      sm: 'h-9 px-3 rounded-md',
-      lg: 'h-11 px-8 rounded-md',
-      icon: 'h-10 w-10',
+      default: 'h-11 sm:h-10 px-5 text-base',
+      sm: 'h-10 px-3 text-sm',
+      lg: 'h-12 px-6 text-base',
+      icon: 'h-11 w-11 sm:h-10 sm:w-10 p-0',
     };
 
     const handleRipple = (event: React.MouseEvent<HTMLButtonElement>) => {

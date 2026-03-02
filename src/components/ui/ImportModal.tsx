@@ -2,7 +2,6 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import {
-    UploadCloudIcon,
     FileSpreadsheetIcon,
     AlertTriangleIcon,
     CheckCircleIcon,
@@ -144,7 +143,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
         <div className="space-y-6">
             {/* Drop Zone */}
             <div
-                className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors cursor-pointer bg-slate-50 dark:bg-slate-900/50"
+                className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center hover:border-emerald-400 dark:hover:border-emerald-600 transition-all cursor-pointer bg-slate-50 dark:bg-slate-900/50 focus-within:ring-2 focus-within:ring-emerald-500/60 focus-within:ring-offset-2 focus-within:ring-offset-white dark:focus-within:ring-offset-slate-900 active:scale-[0.99]"
                 onClick={() => fileInputRef.current?.click()}
             >
                 <FileSpreadsheetIcon className="w-16 h-16 mx-auto text-slate-400 dark:text-slate-600 mb-4" />
@@ -276,9 +275,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     <div className="text-2xl font-bold text-slate-900 dark:text-white">{parsedRows.length}</div>
                     <div className="text-xs text-slate-500">Total Baris</div>
                 </div>
-                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl text-center">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{validCount}</div>
-                    <div className="text-xs text-green-600 dark:text-green-400">Valid</div>
+                <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl text-center">
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{validCount}</div>
+                    <div className="text-xs text-emerald-600 dark:text-emerald-400">Valid</div>
                 </div>
                 <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl text-center">
                     <div className="text-2xl font-bold text-red-600 dark:text-red-400">{invalidCount}</div>
@@ -306,7 +305,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                             >
                                 <td className="px-3 py-2">
                                     {row.isValid ? (
-                                        <CheckCircleIcon className="w-4 h-4 text-green-500" />
+                                        <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
                                     ) : (
                                         <XCircleIcon className="w-4 h-4 text-red-500" />
                                     )}
@@ -374,8 +373,8 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
     const renderCompleteStep = () => (
         <div className="space-y-6 text-center py-8">
-            <div className="w-20 h-20 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                <CheckCircleIcon className="w-10 h-10 text-green-600 dark:text-green-400" />
+            <div className="w-20 h-20 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
+                <CheckCircleIcon className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
             </div>
 
             <div>

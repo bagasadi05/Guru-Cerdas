@@ -41,10 +41,18 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
                 onRetry?.();
                 break;
             case 'refresh':
-                onRefresh?.() ?? window.location.reload();
+                if (onRefresh) {
+                    onRefresh();
+                } else {
+                    window.location.reload();
+                }
                 break;
             case 'login':
-                onLogin?.() ?? (window.location.href = '/login');
+                if (onLogin) {
+                    onLogin();
+                } else {
+                    window.location.href = '/login';
+                }
                 break;
             default:
                 onDismiss?.();

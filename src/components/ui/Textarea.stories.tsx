@@ -79,29 +79,31 @@ export const WithLabel: Story = {
  * Shows how to add a character counter.
  */
 export const WithCharacterCount: Story = {
-  render: () => {
-    const [text, setText] = React.useState('');
-    const maxLength = 200;
+  render: () => <TextareaWithCharacterCountStory />,
+};
 
-    return (
-      <div style={{ width: '400px' }}>
-        <label htmlFor="bio" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-          Bio
-        </label>
-        <Textarea
-          id="bio"
-          placeholder="Tell us about yourself..."
-          rows={4}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          maxLength={maxLength}
-        />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem', fontSize: '0.75rem', color: '#6b7280' }}>
-          {text.length} / {maxLength}
-        </div>
+const TextareaWithCharacterCountStory: React.FC = () => {
+  const [text, setText] = React.useState('');
+  const maxLength = 200;
+
+  return (
+    <div style={{ width: '400px' }}>
+      <label htmlFor="bio" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+        Bio
+      </label>
+      <Textarea
+        id="bio"
+        placeholder="Tell us about yourself..."
+        rows={4}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        maxLength={maxLength}
+      />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem', fontSize: '0.75rem', color: '#6b7280' }}>
+        {text.length} / {maxLength}
       </div>
-    );
-  },
+    </div>
+  );
 };
 
 /**

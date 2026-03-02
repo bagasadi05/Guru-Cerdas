@@ -42,8 +42,8 @@ export const useNativeNetwork = () => {
     }, []);
 
     useEffect(() => {
-        // Initial check
-        checkConnection();
+        // Initial check (async to avoid cascading renders)
+        Promise.resolve().then(() => checkConnection());
 
         if (Capacitor.isNativePlatform()) {
             // Native listener

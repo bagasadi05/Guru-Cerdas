@@ -44,9 +44,14 @@ describe('TasksPage', () => {
         renderWithProviders(<TasksPage />);
 
         await waitFor(() => {
-            expect(screen.getByText('To Do')).toBeInTheDocument();
-            expect(screen.getByText('In Progress')).toBeInTheDocument();
-            expect(screen.getByText('Selesai')).toBeInTheDocument();
+            // Use getAllByText since column headers appear multiple times
+            const todoElements = screen.getAllByText('To Do');
+            const inProgressElements = screen.getAllByText('In Progress');
+            const doneElements = screen.getAllByText('Selesai');
+            
+            expect(todoElements.length).toBeGreaterThan(0);
+            expect(inProgressElements.length).toBeGreaterThan(0);
+            expect(doneElements.length).toBeGreaterThan(0);
         }, { timeout: 3000 });
     });
 

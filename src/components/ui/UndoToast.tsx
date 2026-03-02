@@ -31,6 +31,13 @@ export const UndoToast: React.FC<UndoToastProps> = ({
     const [isVisible, setIsVisible] = useState(false);
     const [isExiting, setIsExiting] = useState(false);
 
+    const handleDismiss = useCallback(() => {
+        setIsExiting(true);
+        setTimeout(() => {
+            onDismiss();
+        }, 300);
+    }, [onDismiss]);
+
     // Animate in
     useEffect(() => {
         const timer = setTimeout(() => setIsVisible(true), 50);
@@ -50,13 +57,6 @@ export const UndoToast: React.FC<UndoToastProps> = ({
 
         return () => clearInterval(interval);
     }, [actionId]);
-
-    const handleDismiss = useCallback(() => {
-        setIsExiting(true);
-        setTimeout(() => {
-            onDismiss();
-        }, 300);
-    }, [onDismiss]);
 
     const handleUndo = useCallback(async () => {
         if (isUndoing || !canUndo(actionId)) return;

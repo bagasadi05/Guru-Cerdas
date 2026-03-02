@@ -63,17 +63,17 @@ export const spacingClasses = {
 export const radius = {
     /** 0px - Sharp corners */
     none: '0',
-    /** 4px - Subtle rounding */
-    sm: '0.25rem',
     /** 8px - Standard rounding (buttons, inputs) */
-    md: '0.5rem',
+    sm: '0.5rem',
     /** 12px - Medium rounding (cards, panels) */
-    lg: '0.75rem',
-    /** 16px - Large rounding (modals, sheets) */
-    xl: '1rem',
-    /** 24px - Extra large (feature cards) */
+    md: '0.75rem',
+    /** 16px - Large rounding (modals, sections) */
+    lg: '1rem',
+    /** 20px - Extra large (hero sections) */
+    xl: '1.25rem',
+    /** 24px - Prominent elements */
     '2xl': '1.5rem',
-    /** 32px - Prominent elements */
+    /** 32px - Extra prominent elements */
     '3xl': '2rem',
     /** 9999px - Full/pill shape */
     full: '9999px',
@@ -82,10 +82,10 @@ export const radius = {
 // Tailwind class mappings
 export const radiusClasses = {
     none: 'rounded-none',
-    sm: 'rounded',
-    md: 'rounded-lg',
-    lg: 'rounded-xl',
-    xl: 'rounded-2xl',
+    sm: 'rounded-lg',
+    md: 'rounded-xl',
+    lg: 'rounded-2xl',
+    xl: 'rounded-[1.25rem]',
     '2xl': 'rounded-3xl',
     '3xl': 'rounded-[2rem]',
     full: 'rounded-full',
@@ -93,14 +93,14 @@ export const radiusClasses = {
 
 // Component-specific radius standards
 export const componentRadius = {
-    /** Buttons - rounded-lg (0.5rem) */
-    button: radiusClasses.md,
-    /** Inputs - rounded-lg (0.5rem) */
-    input: radiusClasses.md,
-    /** Cards - rounded-xl (1rem) */
-    card: radiusClasses.lg,
-    /** Modals/Dialogs - rounded-2xl (1.5rem) */
-    modal: radiusClasses.xl,
+    /** Buttons - rounded-lg (0.5rem / 8px) */
+    button: radiusClasses.sm,
+    /** Inputs - rounded-lg (0.5rem / 8px) */
+    input: radiusClasses.sm,
+    /** Cards - rounded-xl (0.75rem / 12px) */
+    card: radiusClasses.md,
+    /** Modals/Dialogs - rounded-2xl (1rem / 16px) */
+    modal: radiusClasses.lg,
     /** Bottom sheets - rounded-t-2xl */
     bottomSheet: 'rounded-t-2xl',
     /** Badges/Pills - rounded-full */
@@ -128,16 +128,16 @@ export const shadows = {
     none: 'none',
     /** Extra small - subtle elevation */
     xs: '0 1px 2px rgba(0, 0, 0, 0.05)',
-    /** Small - card hover state */
-    sm: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
-    /** Medium - floating elements */
-    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    /** Large - dropdowns, tooltips */
-    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-    /** Extra large - modals */
-    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+    /** Small - pressed/low elevation */
+    sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
+    /** Medium - hover/raised */
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    /** Large - floating elements */
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    /** Extra large - overlays */
+    xl: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
     /** 2XL - prominent modals */
-    '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+    '2xl': '0 8px 24px rgba(0, 0, 0, 0.12)',
 } as const;
 
 // Tailwind class mappings
@@ -153,10 +153,10 @@ export const shadowClasses = {
 
 // Component-specific shadow standards
 export const componentShadow = {
-    /** Cards - shadow-sm, shadow-lg on hover */
-    card: { default: shadowClasses.sm, hover: shadowClasses.lg },
-    /** Buttons - shadow-sm, shadow-md on hover */
-    button: { default: shadowClasses.sm, hover: shadowClasses.md },
+    /** Cards - shadow-sm, shadow-md on hover */
+    card: { default: shadowClasses.sm, hover: shadowClasses.md },
+    /** Buttons - shadow-sm, shadow-sm on hover */
+    button: { default: shadowClasses.sm, hover: shadowClasses.sm },
     /** Modals - shadow-2xl */
     modal: shadowClasses['2xl'],
     /** Dropdowns - shadow-lg */
@@ -176,32 +176,32 @@ export const componentShadow = {
 export const colors = {
     // Primary palette
     primary: {
-        50: '#eef2ff',
-        100: '#e0e7ff',
-        200: '#c7d2fe',
-        300: '#a5b4fc',
-        400: '#818cf8',
-        500: '#6366f1', // Main primary
-        600: '#4f46e5',
-        700: '#4338ca',
-        800: '#3730a3',
-        900: '#312e81',
-        950: '#1e1b4b',
-    },
-
-    // Secondary/Accent palette
-    secondary: {
-        50: '#ecfdf5',
-        100: '#d1fae5',
-        200: '#a7f3d0',
-        300: '#6ee7b7',
-        400: '#34d399',
-        500: '#10b981', // Main secondary
+        50: '#f0fdf4',
+        100: '#dcfce7',
+        200: '#bbf7d0',
+        300: '#86efac',
+        400: '#4ade80',
+        500: '#10b981', // Main primary
         600: '#059669',
         700: '#047857',
         800: '#065f46',
         900: '#064e3b',
         950: '#022c22',
+    },
+
+    // Secondary/Accent palette (Indigo)
+    secondary: {
+        50: '#eef2ff',
+        100: '#e0e7ff',
+        200: '#c7d2fe',
+        300: '#a5b4fc',
+        400: '#818cf8',
+        500: '#6366f1',
+        600: '#4f46e5',
+        700: '#4338ca',
+        800: '#3730a3',
+        900: '#312e81',
+        950: '#1e1b4b',
     },
 
     // Neutral/Slate palette
@@ -221,14 +221,14 @@ export const colors = {
 
     // Semantic colors
     success: {
-        light: '#d1fae5',
-        main: '#10b981',
-        dark: '#065f46',
+        light: '#dcfce7',
+        main: '#22c55e',
+        dark: '#166534',
     },
     warning: {
-        light: '#fef3c7',
-        main: '#f59e0b',
-        dark: '#92400e',
+        light: '#fef9c3',
+        main: '#eab308',
+        dark: '#a16207',
     },
     error: {
         light: '#fee2e2',
@@ -240,35 +240,43 @@ export const colors = {
         main: '#3b82f6',
         dark: '#1e40af',
     },
+
+    // Accent colors
+    accent: {
+        purple: '#8b5cf6',
+        blue: '#3b82f6',
+        orange: '#f59e0b',
+        indigo: '#6366f1',
+    },
 } as const;
 
 // Tailwind color class mappings
 export const colorClasses = {
     primary: {
-        bg: 'bg-indigo-600',
-        bgHover: 'hover:bg-indigo-700',
-        bgLight: 'bg-indigo-50 dark:bg-indigo-900/20',
-        text: 'text-indigo-600 dark:text-indigo-400',
-        border: 'border-indigo-600',
-        ring: 'ring-indigo-500',
-    },
-    secondary: {
-        bg: 'bg-emerald-600',
-        bgHover: 'hover:bg-emerald-700',
+        bg: 'bg-emerald-500',
+        bgHover: 'hover:bg-emerald-600',
         bgLight: 'bg-emerald-50 dark:bg-emerald-900/20',
         text: 'text-emerald-600 dark:text-emerald-400',
-        border: 'border-emerald-600',
+        border: 'border-emerald-500',
         ring: 'ring-emerald-500',
     },
+    secondary: {
+        bg: 'bg-slate-700',
+        bgHover: 'hover:bg-slate-600',
+        bgLight: 'bg-slate-100 dark:bg-slate-800',
+        text: 'text-slate-700 dark:text-slate-300',
+        border: 'border-slate-600',
+        ring: 'ring-slate-500',
+    },
     success: {
-        bg: 'bg-green-600',
+        bg: 'bg-green-500',
         bgLight: 'bg-green-50 dark:bg-green-900/20',
         text: 'text-green-600 dark:text-green-400',
     },
     warning: {
-        bg: 'bg-amber-500',
-        bgLight: 'bg-amber-50 dark:bg-amber-900/20',
-        text: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-yellow-500',
+        bgLight: 'bg-yellow-50 dark:bg-yellow-900/20',
+        text: 'text-yellow-600 dark:text-yellow-400',
     },
     error: {
         bg: 'bg-red-600',
@@ -637,7 +645,7 @@ export const componentStyles = {
         'bg-white dark:bg-slate-800',
         'border border-slate-200 dark:border-slate-700',
         transitionClasses.all,
-        'hover:shadow-lg'
+        'hover:shadow-md'
     ),
 
     cardInteractive: cx(
@@ -654,9 +662,9 @@ export const componentStyles = {
         shadowClasses.sm,
         colorClasses.primary.bg,
         colorClasses.primary.bgHover,
-        'text-white font-medium',
+        'text-white font-semibold',
         transitionClasses.all,
-        'hover:shadow-md active:scale-95'
+        'active:scale-95'
     ),
 
     buttonSecondary: cx(
@@ -681,9 +689,9 @@ export const componentStyles = {
         'border border-slate-200 dark:border-slate-700',
         'bg-white dark:bg-slate-800',
         'text-slate-900 dark:text-slate-100',
-        'placeholder:text-slate-400',
+        'placeholder:text-slate-500',
         transitionClasses.all,
-        'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+        'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
     ),
 
     modal: cx(

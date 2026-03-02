@@ -88,6 +88,7 @@ const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({
                         text="Angka (0-9)"
                     />
                     <Requirement
+                        // eslint-disable-next-line no-useless-escape
                         met={/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)}
                         text="Karakter spesial (!@#$...)"
                     />

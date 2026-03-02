@@ -11,7 +11,8 @@ export const exportAllClassReports = async (
     semester: string,
     academicYear: string,
     teacherNote: string,
-    onProgress?: (current: number, total: number) => void
+    onProgress?: (current: number, total: number) => void,
+    semesterId?: string
 ): Promise<Blob> => {
     // Get all students in the class
     const { data: students, error } = await supabase
@@ -43,11 +44,21 @@ export const exportAllClassReports = async (
         const student = students[i];
         onProgress?.(i + 1, totalStudents);
 
-        // Fetch student data
+        // Fetch student data — filter by semester if provided
+        let academicQuery = supabase.from('academic_records').select('subject, score, assessment_name').eq('student_id', student.id);
+        let attendanceQuery = supabase.from('attendance').select('status, date').eq('student_id', student.id);
+        let violationsQuery = supabase.from('violations').select('description, points, date').eq('student_id', student.id);
+
+        if (semesterId) {
+            academicQuery = academicQuery.eq('semester_id', semesterId);
+            attendanceQuery = attendanceQuery.eq('semester_id', semesterId);
+            violationsQuery = violationsQuery.eq('semester_id', semesterId);
+        }
+
         const [academicRes, attendanceRes, violationsRes] = await Promise.all([
-            supabase.from('academic_records').select('subject, score, assessment_name').eq('student_id', student.id),
-            supabase.from('attendance').select('status, date').eq('student_id', student.id),
-            supabase.from('violations').select('description, points, date').eq('student_id', student.id),
+            academicQuery,
+            attendanceQuery,
+            violationsQuery,
         ]);
 
         const academicRecords = academicRes.data || [];

@@ -26,27 +26,24 @@ export async function safeApiCall<T>(
     while (attempt <= retries) {
         try {
             return await apiFn();
-        } catch (error: any) {
+        } catch (error: unknown) {
             attempt++;
-
+            const err = error instanceof Error ? error : new Error(String(error));
             // Log the error
             logger.error(
-                `API Call Failed (Attempt ${attempt}/${retries + 1}): ${error.message || 'Unknown error'}`,
-                error,
+                `API Call Failed (Attempt ${attempt}/${retries + 1}): ${err.message}`,
+                err,
                 {
                     context,
                     attempt,
                     retries,
-                    url: error?.config?.url || 'unknown',
-                    method: error?.config?.method || 'unknown'
                 },
                 context
             );
 
             // If we've exhausted retries, throw
             if (attempt > retries) {
-                // Optionally show toast here if we had access to toast function
-                throw error;
+                throw err;
             }
 
             // Wait before retry (exponential backoff)

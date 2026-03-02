@@ -68,18 +68,18 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
                 </div>
 
                 {/* Period Type Selection */}
-                <div className="flex gap-4 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
                     <button
                         type="button"
                         onClick={() => setExportPeriod('monthly')}
-                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${exportPeriod === 'monthly' ? 'bg-white shadow text-green-600 dark:bg-slate-700 dark:text-green-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                        className={`flex-1 h-10 text-sm font-semibold rounded-md transition-all ${exportPeriod === 'monthly' ? 'bg-white shadow text-emerald-600 dark:bg-slate-700 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
                     >
                         Bulanan
                     </button>
                     <button
                         type="button"
                         onClick={() => setExportPeriod('semester')}
-                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${exportPeriod === 'semester' ? 'bg-white shadow text-green-600 dark:bg-slate-700 dark:text-green-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                        className={`flex-1 h-10 text-sm font-semibold rounded-md transition-all ${exportPeriod === 'semester' ? 'bg-white shadow text-emerald-600 dark:bg-slate-700 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
                     >
                         Satu Semester
                     </button>

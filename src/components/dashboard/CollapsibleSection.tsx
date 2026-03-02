@@ -54,7 +54,7 @@ const CollapsibleSectionBase: React.FC<CollapsibleSectionProps> = ({
     };
 
     return (
-        <div className={`bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden ${className}`}>
+        <div className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-sm ${className}`}>
             {/* Header */}
             <button
                 onClick={toggleExpanded}
@@ -64,7 +64,7 @@ const CollapsibleSectionBase: React.FC<CollapsibleSectionProps> = ({
             >
                 <div className="flex items-center gap-3">
                     {icon && (
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 text-indigo-600 dark:text-indigo-400">
+                        <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                             {icon}
                         </div>
                     )}

@@ -25,10 +25,12 @@ export const AttendanceStreakIndicator: React.FC<AttendanceStreakIndicatorProps>
     onStudentClick,
 }) => {
     // Sort by current streak (highest first)
-    const topStreaks = [...streaks]
-        .filter(s => s.currentStreak > 0)
-        .sort((a, b) => b.currentStreak - a.currentStreak)
-        .slice(0, 5);
+    const topStreaks = React.useMemo(() => (
+        [...streaks]
+            .filter(s => s.currentStreak > 0)
+            .sort((a, b) => b.currentStreak - a.currentStreak)
+            .slice(0, 5)
+    ), [streaks]);
 
     if (topStreaks.length === 0) {
         return null;
@@ -49,13 +51,13 @@ export const AttendanceStreakIndicator: React.FC<AttendanceStreakIndicatorProps>
     };
 
     return (
-        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-2xl p-4 border border-orange-200 dark:border-orange-700/50 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-xl p-4 border border-orange-200 dark:border-orange-700/50 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
                     <Flame className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white">Achievement Streak</h3>
+                    <h3 className="font-bold text-gray-900 dark:text-white leading-tight">Achievement Streak</h3>
                     <p className="text-xs text-gray-600 dark:text-gray-400">Top kehadiran berturut-turut</p>
                 </div>
             </div>
@@ -65,10 +67,10 @@ export const AttendanceStreakIndicator: React.FC<AttendanceStreakIndicatorProps>
                     <div
                         key={streak.studentId}
                         onClick={() => onStudentClick?.(streak.studentId)}
-                        className="group flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl hover:shadow-md transition-all cursor-pointer border border-gray-100 dark:border-gray-700"
+                        className="group grid grid-cols-[28px_1fr_auto] items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-all cursor-pointer border border-gray-100 dark:border-gray-700"
                     >
                         {/* Rank Badge */}
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-lg shadow-yellow-500/30' :
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-lg shadow-yellow-500/30' :
                                 index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white shadow-lg shadow-gray-400/30' :
                                     index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-lg shadow-orange-500/30' :
                                         'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
@@ -77,7 +79,7 @@ export const AttendanceStreakIndicator: React.FC<AttendanceStreakIndicatorProps>
                         </div>
 
                         {/* Student Info */}
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0">
                             <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">
                                 {streak.studentName}
                             </p>
@@ -90,8 +92,8 @@ export const AttendanceStreakIndicator: React.FC<AttendanceStreakIndicatorProps>
 
                         {/* Streak Count */}
                         <div className="flex items-center gap-2">
-                            <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${getStreakColor(streak.currentStreak)} shadow-lg flex items-center gap-1.5`}>
-                                <span className="text-lg">{getStreakEmoji(streak.currentStreak)}</span>
+                            <div className={`px-2.5 py-1 rounded-full bg-gradient-to-r ${getStreakColor(streak.currentStreak)} shadow-md flex items-center gap-1.5`}>
+                                <span className="text-base">{getStreakEmoji(streak.currentStreak)}</span>
                                 <span className="font-bold text-white text-sm">
                                     {streak.currentStreak}
                                 </span>

@@ -647,7 +647,7 @@ export const UploadProgressIndicator: React.FC<UploadProgressIndicatorProps> = (
     // Auto-expand when new uploads start
     useEffect(() => {
         if (activeCount > 0) {
-            setIsExpanded(true);
+            setTimeout(() => setIsExpanded(true), 0);
         }
     }, [activeCount]);
 

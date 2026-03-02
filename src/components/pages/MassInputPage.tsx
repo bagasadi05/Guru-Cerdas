@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { generateOpenRouterJson } from '../../services/openRouterService';
@@ -37,12 +37,13 @@ const MassInputPage: React.FC = () => {
     const isOnline = useOfflineStatus();
     const location = useLocation();
     const navigate = useNavigate();
+    const isScoresDirty = useRef(false);
 
     const [step, setStep] = useState<Step>(1);
     const [mode, setMode] = useState<InputMode | null>(null);
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [quizInfo, setQuizInfo] = useState({ name: '', subject: '', date: new Date().toISOString().slice(0, 10) });
-    const [subjectGradeInfo, setSubjectGradeInfo] = useState({ subject: '', assessment_name: '', notes: '', semester: '' as 'ganjil' | 'genap' | '' });
+    const [subjectGradeInfo, setSubjectGradeInfo] = useState({ subject: '', assessment_name: '', notes: '', semester: '' });
     const [scores, setScores] = useState<Record<string, string>>({});
     const [pasteData, setPasteData] = useState('');
     const [isParsing, setIsParsing] = useState(false);
@@ -61,6 +62,7 @@ const MassInputPage: React.FC = () => {
     const [isCustomSubject, setIsCustomSubject] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
     const [showChartModal, setShowChartModal] = useState(false);
+    const [confirmDeleteText, setConfirmDeleteText] = useState('');
 
     // Use custom hook for data fetching
     const {
@@ -74,7 +76,14 @@ const MassInputPage: React.FC = () => {
         // isLoadingGrades,
         existingViolations,
         isLoadingViolations
-    } = useMassInputData(selectedClass, subjectGradeInfo.subject, subjectGradeInfo.assessment_name, mode || undefined);
+    } = useMassInputData(selectedClass, subjectGradeInfo.subject, subjectGradeInfo.assessment_name, mode || undefined, subjectGradeInfo.semester || undefined);
+
+    // Default semester to active semester when it's loaded
+    useEffect(() => {
+        if (activeSemester && !subjectGradeInfo.semester) {
+            setSubjectGradeInfo(prev => ({ ...prev, semester: activeSemester.id }));
+        }
+    }, [activeSemester, subjectGradeInfo.semester]);
 
     useEffect(() => {
         const prefill = location.state?.prefill;
@@ -105,13 +114,16 @@ const MassInputPage: React.FC = () => {
 
     useEffect(() => {
         if (mode === 'subject_grade' && existingGrades) {
-            const initialScores = existingGrades.reduce((acc: Record<string, string>, record: AcademicRecordRow) => {
-                acc[record.student_id] = String(record.score);
-                return acc;
-            }, {} as Record<string, string>);
-            setScores(initialScores);
+            if (!isScoresDirty.current) {
+                const initialScores = existingGrades.reduce((acc: Record<string, string>, record: AcademicRecordRow) => {
+                    acc[record.student_id] = String(record.score);
+                    return acc;
+                }, {} as Record<string, string>);
+                setScores(initialScores);
+            }
         } else if (mode !== 'subject_grade') {
             setScores(prev => Object.keys(prev).length === 0 ? prev : {});
+            isScoresDirty.current = false;
         }
     }, [existingGrades, mode]);
 
@@ -119,22 +131,11 @@ const MassInputPage: React.FC = () => {
     const filteredExistingGrades = useMemo(() => {
         if (!existingGrades) return [];
         if (!subjectGradeInfo.semester) return existingGrades;
-
+        // Already filtered by semester_id in the query hook,
+        // but for delete mode we keep client-side filter as safety
         return existingGrades.filter(record => {
-            const notes = record.notes?.toLowerCase() || '';
-            // Strict check: if the note explicitly mentions a semester, respect it.
-            // If the note does NOT mention any semester, include it as a potential match (backward compatibility).
-            const hasGanjil = notes.includes('semester ganjil');
-            const hasGenap = notes.includes('semester genap');
-
-            if (subjectGradeInfo.semester === 'ganjil') {
-                // Show if explicitly Ganjil OR (not explicitly Genap AND not explicitly Ganjil [handled by first condition])
-                // Simplified: Show if Ganjil OR (Not Genap AND Not Ganjil) -> Show if Ganjil OR No Semester Tag
-                return hasGanjil || (!hasGanjil && !hasGenap);
-            } else if (subjectGradeInfo.semester === 'genap') {
-                return hasGenap || (!hasGanjil && !hasGenap);
-            }
-            return true;
+            if (!record.semester_id) return false; // Skip records without semester_id
+            return record.semester_id === subjectGradeInfo.semester;
         });
     }, [existingGrades, subjectGradeInfo.semester]);
 
@@ -166,12 +167,16 @@ const MassInputPage: React.FC = () => {
 
     const handleBack = () => {
         setStep(1); setMode(null); setSelectedClass(''); setQuizInfo({ name: '', subject: '', date: new Date().toISOString().slice(0, 10) });
-        setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '', semester: '' }); setScores({}); setPasteData(''); setSelectedViolationCode('');
+        setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '', semester: activeSemester?.id || '' }); setScores({}); setPasteData(''); setSelectedViolationCode('');
         setViolationDate(new Date().toISOString().slice(0, 10)); setSelectedStudentIds(new Set()); setSearchTerm(''); setStudentFilter('all');
         setConfirmDeleteModal({ isOpen: false, count: 0 }); setIsCustomSubject(false);
+        setValidationErrors({}); setNoteMethod('ai');
+        setTemplateNote('Ananda [Nama Siswa] menunjukkan perkembangan yang baik semester ini. Terus tingkatkan semangat belajar dan jangan ragu bertanya jika ada kesulitan.');
+        setShowImportModal(false); setShowChartModal(false); setConfirmDeleteText('');
+        isScoresDirty.current = false;
     };
 
-    useEffect(() => { setSelectedStudentIds(new Set()); setScores({}); setSearchTerm(''); setStudentFilter('all'); }, [selectedClass]);
+    useEffect(() => { setSelectedStudentIds(new Set()); setScores({}); setSearchTerm(''); setStudentFilter('all'); isScoresDirty.current = false; }, [selectedClass]);
     useEffect(() => { setStudentFilter('all'); }, [mode]);
 
     const gradedCount = useMemo(() => Object.values(scores).filter((s: string) => s && s.trim() !== '').length, [scores]);
@@ -217,6 +222,7 @@ const MassInputPage: React.FC = () => {
     };
 
     const handleScoreChange = (studentId: string, value: string) => {
+        isScoresDirty.current = true;
         const numValue = Number(value);
         const errors = { ...validationErrors };
 
@@ -244,6 +250,7 @@ const MassInputPage: React.FC = () => {
                         user_id: user.id,
                         points: 1,
                         max_points: 1,
+                        semester_id: activeSemester?.id || null,
                     }));
                     const { data, error } = await supabase.from('quiz_points').insert(records).select();
                     if (error) throw error;
@@ -255,10 +262,6 @@ const MassInputPage: React.FC = () => {
                     if (Object.keys(validationErrors).length > 0) throw new Error("Perbaiki nilai yang tidak valid sebelum menyimpan.");
 
                     const existingGradesMap = new Map((existingGrades || []).map(g => [g.student_id, g.id]));
-                    // Prepare notes with semester info
-                    const semesterNote = subjectGradeInfo.semester
-                        ? `[Semester ${subjectGradeInfo.semester === 'ganjil' ? 'Ganjil' : 'Genap'}] ${subjectGradeInfo.notes}`
-                        : subjectGradeInfo.notes;
                     const records = Object.entries(scores)
                         .filter(([, score]: [string, string]) => score && score.trim() !== '')
                         .map(([student_id, score]: [string, string]) => {
@@ -270,10 +273,11 @@ const MassInputPage: React.FC = () => {
                                 id: existingGradesMap.get(student_id) || crypto.randomUUID(),
                                 subject: subjectGradeInfo.subject,
                                 assessment_name: subjectGradeInfo.assessment_name,
-                                notes: semesterNote,
+                                notes: subjectGradeInfo.notes || '',
                                 score: numScore,
                                 student_id,
-                                user_id: user.id
+                                user_id: user.id,
+                                semester_id: subjectGradeInfo.semester || null,
                             };
                         });
                     const { data, error } = await supabase.from('academic_records').upsert(records).select();
@@ -289,13 +293,16 @@ const MassInputPage: React.FC = () => {
                         points: selectedViolation.points,
                         type: selectedViolation.code,
                         student_id,
-                        user_id: user.id
+                        user_id: user.id,
+                        semester_id: activeSemester?.id || null,
                     }));
                     const { data, error } = await supabase.from('violations').insert(records).select();
                     if (error) throw error;
                     await recordAction(user.id, 'create', 'violations', data.map(d => d.id));
                     return `Pelanggaran untuk ${records.length} siswa berhasil dicatat.`;
                 }
+                default:
+                    throw new Error(`Mode "${mode}" tidak mendukung penyimpanan data.`);
             }
         },
         onSuccess: (message) => { toast.success(message || "Data berhasil disimpan!"); queryClient.invalidateQueries({ queryKey: ['studentDetails'] }); },
@@ -347,7 +354,15 @@ const MassInputPage: React.FC = () => {
             setScores(prev => ({ ...prev, ...newScores }));
             toast.success(`${matchedCount} dari ${parsedResults.length} nilai berhasil dicocokkan dan diisi.`);
         } catch (error) {
-            console.error("AI Parsing Error:", error); toast.error("Gagal memproses data. Pastikan format teks benar.");
+            console.error("AI Parsing Error:", error);
+            const errMsg = error instanceof Error ? error.message : '';
+            if (errMsg.includes('network') || errMsg.includes('fetch') || errMsg.includes('Failed to fetch')) {
+                toast.error("Gagal terhubung ke server AI. Periksa koneksi internet Anda.");
+            } else if (errMsg.includes('rate') || errMsg.includes('limit') || errMsg.includes('429')) {
+                toast.error("Batas permintaan AI tercapai. Coba lagi dalam beberapa saat.");
+            } else {
+                toast.error("Gagal memproses data. Pastikan format teks sesuai contoh yang diberikan.");
+            }
         } finally { setIsParsing(false); }
     };
 
@@ -359,9 +374,9 @@ const MassInputPage: React.FC = () => {
         const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes] = await Promise.all([
             supabase.from('reports').select('*').eq('student_id', studentId).eq('semester_id', semesterId),
             supabase.from('attendance').select('*').eq('student_id', studentId).eq('semester_id', semesterId),
-            supabase.from('academic_records').select('*').eq('student_id', studentId).eq('semester_id', semesterId),
-            supabase.from('violations').select('*').eq('student_id', studentId).eq('semester_id', semesterId),
-            supabase.from('quiz_points').select('*').eq('student_id', studentId).eq('semester_id', semesterId)
+            supabase.from('academic_records').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId),
+            supabase.from('violations').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId),
+            supabase.from('quiz_points').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId)
         ]) as any;
         const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes].map((r: any) => r.error).filter((e: any) => e !== null);
         if (errors.length > 0) throw new Error(errors.map((e: any) => e!.message).join(', '));
@@ -634,19 +649,19 @@ Contoh output yang benar:
                         )}
                     </div>
 
-                    <Modal isOpen={confirmDeleteModal.isOpen} onClose={() => setConfirmDeleteModal({ isOpen: false, count: 0 })} title="Konfirmasi Hapus Nilai">
+                    <Modal isOpen={confirmDeleteModal.isOpen} onClose={() => { setConfirmDeleteModal({ isOpen: false, count: 0 }); setConfirmDeleteText(''); }} title="Konfirmasi Hapus Nilai">
                         <div className="space-y-4">
                             <p className="text-sm text-gray-600 dark:text-gray-400">Anda akan menghapus <strong className="text-white">{confirmDeleteModal.count} data nilai</strong> untuk penilaian <strong className="text-white">"{subjectGradeInfo.assessment_name}"</strong>. Aksi ini tidak dapat dibatalkan.</p>
                             <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Ketik <strong className="text-red-500">HAPUS</strong> untuk mengonfirmasi:</p>
-                                <input type="text" id="delete-confirm-input" placeholder="Ketik HAPUS" className="w-full px-3 py-2 text-sm border rounded-md mb-3 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100" />
+                                <input type="text" value={confirmDeleteText} onChange={e => setConfirmDeleteText(e.target.value)} placeholder="Ketik HAPUS" className="w-full px-3 py-2 text-sm border rounded-md mb-3 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100" />
                             </div>
                             <div className="flex justify-end gap-2 pt-2">
-                                <Button type="button" variant="ghost" onClick={() => setConfirmDeleteModal({ isOpen: false, count: 0 })}>Batal</Button>
+                                <Button type="button" variant="ghost" onClick={() => { setConfirmDeleteModal({ isOpen: false, count: 0 }); setConfirmDeleteText(''); }}>Batal</Button>
                                 <Button type="button" variant="destructive" onClick={() => {
-                                    const input = document.getElementById('delete-confirm-input') as HTMLInputElement;
-                                    if (input && input.value === 'HAPUS') {
+                                    if (confirmDeleteText === 'HAPUS') {
                                         handleConfirmDelete();
+                                        setConfirmDeleteText('');
                                     } else {
                                         toast.error('Konfirmasi tidak valid. Ketik HAPUS dengan benar.');
                                     }
@@ -672,6 +687,7 @@ Contoh output yang benar:
 
                                     const studentMap = new Map(studentsData.map(s => [s.name.toLowerCase().trim(), s.id]));
                                     let matchedCount = 0;
+                                    let skippedNaN = 0;
                                     const newScores = { ...scores };
 
                                     data.forEach(row => {
@@ -680,14 +696,25 @@ Contoh output yang benar:
 
                                         const studentId = studentMap.get(name);
                                         if (studentId && score !== undefined && score !== '') {
-                                            newScores[studentId] = String(Math.min(100, Math.max(0, Number(score) || 0)));
+                                            const numScore = Number(score);
+                                            if (isNaN(numScore)) {
+                                                skippedNaN++;
+                                                return;
+                                            }
+                                            newScores[studentId] = String(Math.min(100, Math.max(0, numScore)));
                                             matchedCount++;
                                         }
                                     });
 
                                     setScores(newScores);
+                                    isScoresDirty.current = true;
                                     setShowImportModal(false);
-                                    toast.success(`${matchedCount} nilai berhasil diimport dari ${data.length} baris`);
+                                    const message = `${matchedCount} nilai berhasil diimport dari ${data.length} baris`;
+                                    if (skippedNaN > 0) {
+                                        toast.warning(`${message}. ${skippedNaN} baris dilewati karena nilai bukan angka.`);
+                                    } else {
+                                        toast.success(message);
+                                    }
                                 }}
                                 onCancel={() => setShowImportModal(false)}
                                 templateData={studentsData?.map(s => ({ id: s.id, name: s.name }))}

@@ -87,8 +87,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
     const { user } = useAuth();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const [notifications, setNotifications] = useState<Notification[]>(() => getNotifications());
+    const [unreadCount, setUnreadCount] = useState(() => getUnreadCount());
     const panelRef = useRef<HTMLDivElement>(null);
 
     // Load notifications and check for new ones
@@ -101,11 +101,16 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
     }, [user]);
 
     useEffect(() => {
-        refreshNotifications();
+        const initialTimer = setTimeout(() => {
+            refreshNotifications();
+        }, 0);
 
         // Check every 5 minutes
         const interval = setInterval(refreshNotifications, 5 * 60 * 1000);
-        return () => clearInterval(interval);
+        return () => {
+            clearInterval(interval);
+            clearTimeout(initialTimer);
+        };
     }, [refreshNotifications]);
 
     // Close panel when clicking outside

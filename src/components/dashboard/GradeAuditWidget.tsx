@@ -258,32 +258,31 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data }) => {
     // ==========================================================================
 
     return (
-        <div className="glass-card rounded-3xl p-0 overflow-hidden flex flex-col">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden flex flex-col border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
             {/* Header */}
-            <div className="p-6 border-b border-slate-200/50 dark:border-white/5 bg-gradient-to-r from-amber-500/5 to-transparent">
+            <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-amber-500/10">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="font-bold text-lg text-slate-800 dark:text-white tracking-wide">
+                        <h3 className="font-semibold text-lg text-slate-900 dark:text-white">
                             Audit Nilai
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Cek kelengkapan penilaian siswa
                         </p>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
                         <UserMinusIcon className="w-5 h-5 text-amber-500" />
                     </div>
                 </div>
             </div>
 
             {/* Content */}
-            <div className="p-6 flex-1 flex flex-col">
+            <div className="p-4 flex-1 flex flex-col">
                 {/* Filters */}
                 <div className="space-y-4 mb-4">
                     <Select
                         value={selectedClass}
                         onChange={(e) => setSelectedClass(e.target.value)}
-                        className="bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl"
                     >
                         <option value="">Semua Kelas</option>
                         {data.classes.map(c => (
@@ -295,7 +294,7 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data }) => {
                         <Select
                             value={subjectForCheck}
                             onChange={(e) => setSubjectForCheck(e.target.value)}
-                            className="flex-1 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl"
+                            className="flex-1"
                         >
                             <option value="" disabled>Mapel</option>
                             {uniqueSubjects.map((subject) => (
@@ -306,7 +305,7 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data }) => {
                         <Select
                             value={assessmentForCheck}
                             onChange={(e) => setAssessmentForCheck(e.target.value)}
-                            className="flex-1 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-xl"
+                            className="flex-1"
                             disabled={uniqueAssessmentsForSubject.length === 0}
                         >
                             <option value="">Semua</option>
@@ -321,18 +320,17 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data }) => {
                 {subjectForCheck ? (
                     <div className="flex-1">
                         {/* Progress Header */}
-                        <div className="flex justify-between text-xs mb-2 font-bold uppercase tracking-wider">
+                        <div className="flex justify-between text-xs mb-2 font-semibold uppercase tracking-wider">
                             <span className="text-slate-400">Progres</span>
-                            <span className={`${completionPercentage === 100 ? 'text-green-500' : 'text-indigo-500'}`}>
+                            <span className="text-emerald-600">
                                 {completionPercentage}%
                             </span>
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden mb-4">
+                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden mb-4">
                             <div
-                                className={`h-full rounded-full transition-all duration-1000 ease-out ${completionPercentage === 100 ? 'bg-green-500' : 'bg-indigo-500'
-                                    }`}
+                                className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-emerald-500 to-emerald-600"
                                 style={{ width: `${completionPercentage}%` }}
                             />
                         </div>
@@ -342,7 +340,8 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data }) => {
                             <div className="mt-auto">
                                 <Button
                                     onClick={handleOpenMassInput}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 rounded-xl"
+                                    variant="primary"
+                                    className="w-full"
                                     size="sm"
                                 >
                                     <ClipboardPenIcon className="w-4 h-4 mr-2" />
