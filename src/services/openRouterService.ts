@@ -1,6 +1,10 @@
-// NOTE: Never read VITE_OPENROUTER_API_KEY here — VITE_ prefix embeds it into the
-// client bundle. API key lives server-side only in api/openrouter.ts.
+// In production, all calls must go through the serverless proxy (api/openrouter.ts).
+// In local development, fall back to a direct call using VITE_OPENROUTER_API_KEY if
+// the proxy URL is not configured (key is only in local .env, never committed).
 const OPENROUTER_PROXY_URL = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
+const DEV_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+const IS_DEV = import.meta.env.DEV === true;
+const OPENROUTER_DIRECT_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Primary reasoning model + free fallbacks
 const PRIMARY_MODEL = 'arcee-ai/trinity-large-preview:free';
@@ -35,9 +39,19 @@ export async function generateOpenRouterContent(
     messages: OpenRouterMessage[],
     useReasoning: boolean = true
 ): Promise<OpenRouterResponse> {
-    if (!OPENROUTER_PROXY_URL) {
-        throw new Error("VITE_OPENROUTER_PROXY_URL is not set. Please configure the serverless proxy URL in your .env file.");
+    if (!OPENROUTER_PROXY_URL && !(IS_DEV && DEV_API_KEY)) {
+        throw new Error(
+            IS_DEV
+                ? "Set VITE_OPENROUTER_API_KEY in .env for local dev, or VITE_OPENROUTER_PROXY_URL for proxy mode."
+                : "VITE_OPENROUTER_PROXY_URL is not set. Please configure the serverless proxy URL in your .env file."
+        );
     }
+
+    // Resolve endpoint + headers based on environment
+    const endpoint = OPENROUTER_PROXY_URL || OPENROUTER_DIRECT_URL;
+    const authHeaders: Record<string, string> = (!OPENROUTER_PROXY_URL && DEV_API_KEY)
+        ? { "Authorization": `Bearer ${DEV_API_KEY}` }
+        : {};
 
     let lastError: any = null;
 
@@ -53,11 +67,10 @@ export async function generateOpenRouterContent(
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s hard timeout
 
-            const response = await fetch(OPENROUTER_PROXY_URL, {
+            const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
-                    // No Authorization header here — the serverless proxy (api/openrouter.ts)
-                    // injects the OPENROUTER_API_KEY server-side.
+                    ...authHeaders,
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                 },

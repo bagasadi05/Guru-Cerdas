@@ -54,6 +54,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 // NOTE: Never read VITE_OPENROUTER_API_KEY here — key is server-side only.
 const openRouterProxyUrl = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
+// In local dev only: direct key fallback (never bundled in production builds)
+const devApiKey = import.meta.env.DEV ? (import.meta.env.VITE_OPENROUTER_API_KEY || '') : '';
 
 /**
  * Flag indicating whether AI features are enabled.
@@ -78,7 +80,7 @@ const openRouterProxyUrl = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
  * 
  * @since 1.0.0
  */
-export const isAiEnabled = !!openRouterProxyUrl;
+export const isAiEnabled = !!openRouterProxyUrl || !!devApiKey;
 
 if (!isAiEnabled) {
     console.warn("AI API Keys are not set. AI features will not work.");
