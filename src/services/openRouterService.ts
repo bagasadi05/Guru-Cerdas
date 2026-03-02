@@ -2,8 +2,10 @@
 // client bundle. API key lives server-side only in api/openrouter.ts.
 const OPENROUTER_PROXY_URL = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
 
-// Priority list of FREE models to try in order
+// Primary reasoning model + free fallbacks
+const PRIMARY_MODEL = 'arcee-ai/trinity-large-preview:free';
 const FALLBACK_MODELS = [
+    PRIMARY_MODEL,
     "google/gemini-2.0-flash-exp:free",
     "meta-llama/llama-3.2-3b-instruct:free",
     "qwen/qwen-2.5-7b-instruct:free",
@@ -12,8 +14,10 @@ const FALLBACK_MODELS = [
 
 export interface OpenRouterMessage {
     role: 'user' | 'assistant' | 'system';
-    content: string;
-    reasoning_details?: any;
+    content: string | null;
+    // Returned by reasoning models; pass back unmodified in multi-turn conversations
+    // so the model can continue from where it left off.
+    reasoning_details?: unknown;
 }
 
 export interface OpenRouterResponse {
@@ -31,7 +35,7 @@ export interface OpenRouterResponse {
  */
 export async function generateOpenRouterContent(
     messages: OpenRouterMessage[],
-    _useReasoning: boolean = true
+    useReasoning: boolean = true
 ): Promise<OpenRouterResponse> {
     if (!OPENROUTER_PROXY_URL) {
         throw new Error("VITE_OPENROUTER_PROXY_URL is not set. Please configure the serverless proxy URL in your .env file.");
@@ -62,7 +66,8 @@ export async function generateOpenRouterContent(
                 body: JSON.stringify({
                     model: model,
                     messages: messages,
-                    // reasoning: useReasoning ? { enabled: true } : undefined, // Reasoning support varies by model, safer to omit for generic fallback
+                    // Enable reasoning for primary model; fallbacks may ignore it gracefully
+                    ...(useReasoning ? { reasoning: { enabled: true } } : {}),
                     temperature: 0.7,
                 }),
                 signal: controller.signal
@@ -111,7 +116,7 @@ export async function generateOpenRouterContent(
  * Helper to extract the assistant's text content from the response.
  */
 export function getAssistantContent(response: OpenRouterResponse): string {
-    return response.choices && response.choices[0] ? response.choices[0].message?.content || '' : '';
+    return response.choices && response.choices[0] ? response.choices[0].message?.content ?? '' : '';
 }
 
 /**
