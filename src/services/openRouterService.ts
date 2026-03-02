@@ -8,8 +8,6 @@ const FALLBACK_MODELS = [
     PRIMARY_MODEL,
     "google/gemini-2.0-flash-exp:free",
     "meta-llama/llama-3.2-3b-instruct:free",
-    "qwen/qwen-2.5-7b-instruct:free",
-    "xiaomi/mimo-v2-flash:free"
 ];
 
 export interface OpenRouterMessage {
