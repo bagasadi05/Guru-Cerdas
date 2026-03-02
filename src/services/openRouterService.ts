@@ -1,10 +1,12 @@
-// In production, all calls must go through the serverless proxy (api/openrouter.ts).
-// In local development, fall back to a direct call using VITE_OPENROUTER_API_KEY if
-// the proxy URL is not configured (key is only in local .env, never committed).
+// In production, calls go through the serverless proxy at /api/openrouter (same domain).
+// VITE_OPENROUTER_PROXY_URL can override this (e.g. for staging/custom domains).
+// In local dev, falls back to VITE_OPENROUTER_API_KEY for direct calls.
 const OPENROUTER_PROXY_URL = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
 const DEV_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
 const IS_DEV = import.meta.env.DEV === true;
 const OPENROUTER_DIRECT_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// Default to same-domain proxy — works on Vercel without any env var needed
+const DEFAULT_PROXY = '/api/openrouter';
 
 // Primary reasoning model + free fallbacks
 const PRIMARY_MODEL = 'arcee-ai/trinity-large-preview:free';
@@ -39,7 +41,7 @@ export async function generateOpenRouterContent(
     messages: OpenRouterMessage[],
     useReasoning: boolean = true
 ): Promise<OpenRouterResponse> {
-    if (!OPENROUTER_PROXY_URL && !(IS_DEV && DEV_API_KEY)) {
+    if (!OPENROUTER_PROXY_URL && !DEFAULT_PROXY && !(IS_DEV && DEV_API_KEY)) {
         throw new Error(
             IS_DEV
                 ? "Set VITE_OPENROUTER_API_KEY in .env for local dev, or VITE_OPENROUTER_PROXY_URL for proxy mode."
@@ -47,9 +49,12 @@ export async function generateOpenRouterContent(
         );
     }
 
-    // Resolve endpoint + headers based on environment
-    const endpoint = OPENROUTER_PROXY_URL || OPENROUTER_DIRECT_URL;
-    const authHeaders: Record<string, string> = (!OPENROUTER_PROXY_URL && DEV_API_KEY)
+    // Resolve endpoint + headers:
+    // 1. Explicit proxy URL (env var override)
+    // 2. Dev direct call with API key
+    // 3. Default same-domain proxy /api/openrouter (production Vercel)
+    const endpoint = OPENROUTER_PROXY_URL || (IS_DEV && DEV_API_KEY ? OPENROUTER_DIRECT_URL : DEFAULT_PROXY);
+    const authHeaders: Record<string, string> = (!OPENROUTER_PROXY_URL && IS_DEV && DEV_API_KEY)
         ? { "Authorization": `Bearer ${DEV_API_KEY}` }
         : {};
 
