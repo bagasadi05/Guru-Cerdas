@@ -196,7 +196,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             if (error) throw error;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['studentDetails', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
         },
         onError: (error: Error) => toast.error(error.message)
     });
@@ -215,7 +215,8 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             if (error) throw error;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['studentDetails', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentGrades', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentQuizzes', studentId] });
             onSuccessCloseModal();
             toast.success("Poin berhasil diterapkan dan nilai diperbarui!");
         },

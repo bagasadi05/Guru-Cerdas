@@ -154,9 +154,13 @@ const StudentDetailPage = () => {
     // Grades & Development Tab
     const shouldLoadGrades = activeTab === 'grades' || activeTab === 'development';
     const { data: academicRecords = [] } = useQuery({
-        queryKey: ['studentGrades', studentId],
+        queryKey: ['studentGrades', studentId, selectedSemesterId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('academic_records').select('*').eq('student_id', studentId!);
+            let query = supabase.from('academic_records').select('*').eq('student_id', studentId!);
+            if (selectedSemesterId) {
+                query = query.eq('semester_id', selectedSemesterId);
+            }
+            const { data, error } = await query;
             if (error) throw error;
             return (data || []) as AcademicRecordRow[];
         },
@@ -167,9 +171,13 @@ const StudentDetailPage = () => {
     // Activity (Quiz) & Development Tab
     const shouldLoadActivity = activeTab === 'activity' || activeTab === 'development';
     const { data: quizPoints = [] } = useQuery({
-        queryKey: ['studentQuizzes', studentId],
+        queryKey: ['studentQuizzes', studentId, selectedSemesterId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('quiz_points').select('*').eq('student_id', studentId!);
+            let query = supabase.from('quiz_points').select('*').eq('student_id', studentId!);
+            if (selectedSemesterId) {
+                query = query.eq('semester_id', selectedSemesterId);
+            }
+            const { data, error } = await query;
             if (error) throw error;
             return (data || []) as unknown as QuizPointRow[];
         },
@@ -443,7 +451,7 @@ const StudentDetailPage = () => {
     // Handler for notifying parent about a violation
     const handleNotifyParent = async (violation: ViolationRow) => {
         try {
-            if (!studentDetails?.student) return;
+            if (!studentDetails?.student || !user || !studentId) return;
 
             // Create a communication message about the violation
             const message = `[NOTIFIKASI PELANGGARAN]\n\nYth. Orang Tua/Wali ${studentDetails.student.name},\n\nKami informasikan bahwa anak Anda telah melakukan pelanggaran:\n\n📋 Jenis: ${violation.description}\n📅 Tanggal: ${new Date(violation.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\n⚠️ Poin: ${violation.points}\n\nMohon perhatian dan kerjasamanya untuk membimbing anak di rumah.\n\nTerima kasih.`;
@@ -452,8 +460,9 @@ const StudentDetailPage = () => {
             const { error: commError } = await supabase
                 .from('communications')
                 .insert({
-                    student_id: studentId!,
-                    teacher_id: user!.id,
+                    student_id: studentId,
+                    user_id: user.id,
+                    teacher_id: user.id,
                     content: message,
                     sender: 'teacher',
                     is_read: false
