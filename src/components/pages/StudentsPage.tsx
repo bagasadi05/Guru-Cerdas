@@ -28,6 +28,7 @@ import { IDCardPrintModal } from '../students/IDCardPrintModal';
 import { BulkMoveModal } from '../students/BulkMoveModal';
 import { ImportFromTeacherModal } from '../students/ImportFromTeacherModal';
 import { StudentRow, ClassRow } from '../students/types';
+import { isStudentNameValid, normalizeStudentName } from './student/utils/studentFormUtils';
 
 
 // Simplified data type for this page to improve performance
@@ -300,17 +301,21 @@ const StudentsPage: React.FC = () => {
         setConfirmModalState({
             isOpen: true,
             title: 'Hapus Siswa Terpilih',
-            message: `Apakah Anda yakin ingin menghapus ${ids.length} siswa terpilih secara permanen?`,
+            message: `Apakah Anda yakin ingin menghapus ${ids.length} siswa terpilih?`,
             onConfirm: async () => {
                 try {
-                    // Execute sequentially to avoid overloading or concurrent issues
-                    for (const id of ids) {
-                        await deleteStudent(id);
-                    }
+                    const { error } = await supabase
+                        .from('students')
+                        .update({ deleted_at: new Date().toISOString() })
+                        .in('id', ids);
+                    if (error) throw error;
+                    queryClient.invalidateQueries({ queryKey: ['students'] });
+                    queryClient.invalidateQueries({ queryKey: ['classes'] });
                     clearSelection();
                     setConfirmModalState(prev => ({ ...prev, isOpen: false }));
                     toast.success(`${ids.length} siswa berhasil dihapus.`);
                 } catch (error) {
+                    console.error("Bulk delete students failed:", error);
                     toast.error("Gagal menghapus beberapa siswa.");
                 }
             },
@@ -367,7 +372,8 @@ const StudentsPage: React.FC = () => {
                     const { error } = await supabase.from('students').upsert(studentsToUpdate);
                     if (error) throw error;
 
-                    queryClient.invalidateQueries({ queryKey: ['studentsPageData'] });
+                    queryClient.invalidateQueries({ queryKey: ['students'] });
+                    queryClient.invalidateQueries({ queryKey: ['classes'] });
                     toast.success(`${studentsToUpdate.length} kode akses baru berhasil dibuat!`);
                     clearSelection();
                     setConfirmModalState(prev => ({ ...prev, isOpen: false }));
@@ -430,8 +436,17 @@ const StudentsPage: React.FC = () => {
     const handleStudentFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault(); if (!user) return;
         const formData = new FormData(e.currentTarget);
-        const name = formData.get('name') as string;
+        const rawName = (formData.get('name') as string) || '';
+        if (!isStudentNameValid(rawName)) {
+            toast.error("Nama siswa tidak boleh kosong.");
+            return;
+        }
+        const name = normalizeStudentName(rawName);
         const class_id = formData.get('class_id') as string;
+        if (!class_id) {
+            toast.error("Kelas siswa wajib dipilih.");
+            return;
+        }
         const gender = genderSelection;
         const bgColor = gender === 'Laki-laki' ? 'b6e3f4' : 'ffd5dc'; const avatar_url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name || Date.now())}&backgroundColor=${bgColor}`;
 
@@ -567,7 +582,8 @@ const StudentsPage: React.FC = () => {
         const { error } = await supabase.from('students').insert(studentsToInsert);
         if (error) throw error;
 
-        queryClient.invalidateQueries({ queryKey: ['studentsPageData'] });
+        queryClient.invalidateQueries({ queryKey: ['students'] });
+        queryClient.invalidateQueries({ queryKey: ['classes'] });
         toast.success(`${studentsToInsert.length} siswa berhasil diimport!`);
         setIsImportModalOpen(false);
     };

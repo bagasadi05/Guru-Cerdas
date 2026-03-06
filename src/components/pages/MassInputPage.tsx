@@ -22,6 +22,7 @@ import { InputMode, Step, ReviewDataItem, StudentFilter, StudentRow, AcademicRec
 import { useMassInputData } from './mass-input/hooks/useMassInputData';
 import { Step1_ModeSelection } from './mass-input/components/Step1_ModeSelection';
 import { actionCards } from './mass-input/constants';
+import { getSemesterValidationError, normalizeAiScore } from './mass-input/validation';
 import { Step2_Configuration } from './mass-input/components/Step2_Configuration';
 import { Step2_StudentList } from './mass-input/components/Step2_StudentList';
 import { Step2_Footer } from './mass-input/components/Step2_Footer';
@@ -239,8 +240,11 @@ const MassInputPage: React.FC = () => {
     const { mutate: submitData, isPending: isSubmitting } = useMutation({
         mutationFn: async () => {
             if (!mode || !user) throw new Error("Mode atau pengguna tidak diatur");
+            const activeSemesterId = activeSemester?.id;
+            const subjectSemesterId = subjectGradeInfo.semester;
             switch (mode) {
                 case 'quiz': {
+                    if (!activeSemesterId) throw new Error("Semester aktif tidak ditemukan. Atur semester aktif terlebih dahulu.");
                     if (!quizInfo.name || !quizInfo.subject || selectedStudentIds.size === 0) throw new Error("Informasi aktivitas dan siswa harus diisi.");
                     const records: Database['public']['Tables']['quiz_points']['Insert'][] = Array.from(selectedStudentIds).map((student_id: string) => ({
                         quiz_name: quizInfo.name,
@@ -250,7 +254,7 @@ const MassInputPage: React.FC = () => {
                         user_id: user.id,
                         points: 1,
                         max_points: 1,
-                        semester_id: activeSemester?.id || null,
+                        semester_id: activeSemesterId,
                     }));
                     const { data, error } = await supabase.from('quiz_points').insert(records).select();
                     if (error) throw error;
@@ -258,6 +262,7 @@ const MassInputPage: React.FC = () => {
                     return `Poin keaktifan untuk ${records.length} siswa berhasil disimpan.`;
                 }
                 case 'subject_grade': {
+                    if (!subjectSemesterId) throw new Error("Pilih semester terlebih dahulu sebelum menyimpan nilai.");
                     if (!subjectGradeInfo.subject || !subjectGradeInfo.assessment_name || gradedCount === 0) throw new Error("Mata pelajaran, nama penilaian, dan setidaknya satu nilai harus diisi.");
                     if (Object.keys(validationErrors).length > 0) throw new Error("Perbaiki nilai yang tidak valid sebelum menyimpan.");
 
@@ -277,7 +282,7 @@ const MassInputPage: React.FC = () => {
                                 score: numScore,
                                 student_id,
                                 user_id: user.id,
-                                semester_id: subjectGradeInfo.semester || null,
+                                semester_id: subjectSemesterId,
                             };
                         });
                     const { data, error } = await supabase.from('academic_records').upsert(records).select();
@@ -286,6 +291,7 @@ const MassInputPage: React.FC = () => {
                     return `Nilai untuk ${records.length} siswa berhasil disimpan.`;
                 }
                 case 'violation': {
+                    if (!activeSemesterId) throw new Error("Semester aktif tidak ditemukan. Atur semester aktif terlebih dahulu.");
                     if (!selectedViolation || selectedStudentIds.size === 0) throw new Error("Jenis pelanggaran dan siswa harus dipilih.");
                     const records: Database['public']['Tables']['violations']['Insert'][] = Array.from(selectedStudentIds).map((student_id: string) => ({
                         date: violationDate,
@@ -294,7 +300,7 @@ const MassInputPage: React.FC = () => {
                         type: selectedViolation.code,
                         student_id,
                         user_id: user.id,
-                        semester_id: activeSemester?.id || null,
+                        semester_id: activeSemesterId,
                     }));
                     const { data, error } = await supabase.from('violations').insert(records).select();
                     if (error) throw error;
@@ -346,13 +352,33 @@ const MassInputPage: React.FC = () => {
                 throw new Error("Format respon AI tidak valid (bukan list).");
             }
 
-            const newScores: Record<string, string> = {}; let matchedCount = 0;
+            const newScores: Record<string, string> = {};
+            let matchedCount = 0;
+            let invalidScoreCount = 0;
             parsedResults.forEach(item => {
-                const student = studentsData.find(s => s.name.toLowerCase() === item.studentName.toLowerCase());
-                if (student) { newScores[student.id] = String(item.score); matchedCount++; }
+                const studentName = item?.studentName?.trim();
+                if (!studentName) return;
+                const normalizedScore = normalizeAiScore(item.score);
+                if (!normalizedScore) {
+                    invalidScoreCount++;
+                    return;
+                }
+                const student = studentsData.find(s => s.name.toLowerCase() === studentName.toLowerCase());
+                if (student) {
+                    newScores[student.id] = normalizedScore;
+                    matchedCount++;
+                }
             });
             setScores(prev => ({ ...prev, ...newScores }));
-            toast.success(`${matchedCount} dari ${parsedResults.length} nilai berhasil dicocokkan dan diisi.`);
+            if (matchedCount > 0 && invalidScoreCount > 0) {
+                toast.success(`${matchedCount} nilai berhasil diisi, ${invalidScoreCount} nilai AI diabaikan karena format/rentang tidak valid.`);
+            } else if (matchedCount > 0) {
+                toast.success(`${matchedCount} dari ${parsedResults.length} nilai berhasil dicocokkan dan diisi.`);
+            } else if (invalidScoreCount > 0) {
+                toast.warning(`${invalidScoreCount} nilai AI diabaikan karena format/rentang tidak valid (0-100).`);
+            } else {
+                toast.warning("Tidak ada data nilai yang cocok dengan daftar siswa.");
+            }
         } catch (error) {
             console.error("AI Parsing Error:", error);
             const errMsg = error instanceof Error ? error.message : '';
@@ -541,6 +567,8 @@ Contoh output yang benar:
         if (!isOnline) return "Fitur ini memerlukan koneksi internet.";
         if (isSubmitting || isExporting || isDeleting) return "Sedang memproses...";
         if (!selectedClass) return "Pilih kelas terlebih dahulu.";
+        const semesterValidationError = getSemesterValidationError(mode, subjectGradeInfo.semester, activeSemester?.id);
+        if (semesterValidationError) return semesterValidationError;
         switch (mode) {
             case 'subject_grade':
                 if (!subjectGradeInfo.subject || !subjectGradeInfo.assessment_name) return "Lengkapi mata pelajaran dan nama penilaian.";
@@ -560,7 +588,7 @@ Contoh output yang benar:
                 if (mode === 'academic_print' && !subjectGradeInfo.subject) return "Pilih mata pelajaran untuk dicetak."; break;
         }
         return '';
-    }, [isOnline, isSubmitting, isExporting, isDeleting, selectedClass, mode, subjectGradeInfo, gradedCount, quizInfo, selectedStudentIds, selectedViolationCode]);
+    }, [isOnline, isSubmitting, isExporting, isDeleting, selectedClass, mode, subjectGradeInfo, activeSemester?.id, gradedCount, quizInfo, selectedStudentIds, selectedViolationCode]);
 
     const isSubmitDisabled = !!submitButtonTooltip;
 
