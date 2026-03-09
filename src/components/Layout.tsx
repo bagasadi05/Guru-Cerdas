@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
-import { HomeIcon, UsersIcon, CalendarIcon, ClipboardIcon, LogoutIcon, SettingsIcon, GraduationCapIcon, CheckSquareIcon, ClipboardPenIcon, MoreHorizontalIcon } from './Icons';
+import { HomeIcon, UsersIcon, CalendarIcon, ClipboardIcon, LogoutIcon, SettingsIcon, GraduationCapIcon, CheckSquareIcon, ClipboardPenIcon } from './Icons';
 import { Trash2, History, BarChart3, ShieldCheck, Trophy } from 'lucide-react';
 import ThemeToggle from './ui/ThemeToggle';
 import GreetingRobot from './GreetingRobot';
@@ -19,7 +19,6 @@ import { useQueryClient } from '@tanstack/react-query';
 
 // Enhanced Mobile Navigation Components
 import { useOrientation } from '../hooks/useOrientation';
-import { useHaptic } from '../hooks/useHaptic';
 import {
   EnhancedMobileBottomNav,
   MoreMenuBottomSheet,
@@ -230,8 +229,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user } = useAuth();
-    const navigate = useNavigate();
-    const { playClick } = useSound();
     const { notifications, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
     useOnboarding(); // Hook used for side effects
 
@@ -245,8 +242,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }, [queryClient]);
 
     // Enhanced Mobile Navigation Hooks
-    const { orientation, isPortrait, isLandscape } = useOrientation();
-    const { triggerHaptic } = useHaptic();
+    const { isPortrait, isLandscape } = useOrientation();
 
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -310,7 +306,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const location = useLocation();
     const isPathActive = (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`);
     const isMoreMenuActive = moreMenuItems.some((item) => isPathActive(item.href));
-    const isMoreMenuHighlighted = isMoreMenuOpen || isMoreMenuActive;
 
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950/50">

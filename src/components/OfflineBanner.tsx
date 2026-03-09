@@ -4,7 +4,7 @@ import { useSyncQueue } from '../hooks/useSyncQueue';
 import { AlertTriangleIcon, RefreshCwIcon } from './Icons';
 
 const OfflineBanner: React.FC = () => {
-  const { isConnected: isOnline, wasOffline, connectionType } = useNativeNetwork();
+  const { isConnected: isOnline } = useNativeNetwork();
   const { pendingCount, isSyncing, processQueue } = useSyncQueue();
 
   if (isOnline && pendingCount === 0) {

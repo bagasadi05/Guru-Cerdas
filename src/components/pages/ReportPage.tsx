@@ -7,21 +7,14 @@ import { useAuth } from '../../hooks/useAuth';
 import { Database } from '../../services/database.types';
 import { generateStudentReport, ReportData, ensureLogoLoaded } from '../../services/pdfGenerator';
 import { Button } from '../ui/Button';
-import { PrinterIcon, ArrowLeftIcon, GraduationCapIcon, SettingsIcon, CalendarIcon, PencilIcon, ChevronDownIcon, ChevronUpIcon, SparklesIcon, Share2Icon } from '../Icons';
+import { PrinterIcon, ArrowLeftIcon, SettingsIcon, CalendarIcon, PencilIcon, SparklesIcon, Share2Icon } from '../Icons';
 import { createWhatsAppLink, generateReportMessage } from '../../utils/whatsappUtils';
 import { getJsPDF } from '../../utils/dynamicImports';
 import { useToast } from '../../hooks/useToast';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import { useSemester } from '../../contexts/SemesterContext';
 
-type StudentRow = Database['public']['Tables']['students']['Row'];
-type ClassRow = Database['public']['Tables']['classes']['Row'];
-type ReportRow = Database['public']['Tables']['reports']['Row'];
-type AttendanceRow = Database['public']['Tables']['attendance']['Row'];
 type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
-type ViolationRow = Database['public']['Tables']['violations']['Row'];
-type QuizPointRow = Database['public']['Tables']['quiz_points']['Row'];
-type StudentWithClass = StudentRow & { classes: Pick<ClassRow, 'id' | 'name'> | null };
 
 const fetchReportData = async (studentId: string, userId: string): Promise<ReportData> => {
     const studentRes = await supabase.from('students').select('*, classes(id, name)').eq('id', studentId).eq('user_id', userId).single();
@@ -63,7 +56,7 @@ const ReportPage: React.FC = () => {
             setSelectedSemesterId(activeSemester.id);
             setAcademicYear(activeAcademicYear?.name || `${new Date().getFullYear()} / ${new Date().getFullYear() + 1}`);
         }
-    }, [activeSemester]);
+    }, [activeSemester, activeAcademicYear?.name, selectedSemesterId]);
 
     // Derived semester name for display
     const semesterName = useMemo(() => {
@@ -146,6 +139,8 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
         if (allSubjects.length > 0 && selectedSubjects.size === 0) {
             setSelectedSubjects(new Set(allSubjects));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // selectedSubjects intentionally omitted: re-adding all subjects when user deselects all is not desired
     }, [allSubjects]);
 
     const toggleSubject = (subject: string) => {
@@ -203,7 +198,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
             acc[subject].push(record);
             return acc;
         }, {} as Record<string, AcademicRecordRow[]>);
-    }, [filteredAcademicRecords, showAllSubjects, selectedSubjects]);
+    }, [data, filteredAcademicRecords, showAllSubjects, selectedSubjects]);
 
     const filteredAttendance = useMemo(() => {
         if (!data) return [];

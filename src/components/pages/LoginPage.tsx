@@ -45,8 +45,8 @@ const LoginPage: React.FC = () => {
         try {
             const { error } = await login(data.email, data.password);
             if (error) throw error;
-        } catch (err: any) {
-            toast.error(err.message || 'Gagal untuk login.');
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Gagal untuk login.');
         } finally {
             setLoading(false);
         }
@@ -62,8 +62,8 @@ const LoginPage: React.FC = () => {
                 setFormMode('login');
                 resetSignup();
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Gagal untuk mendaftar.');
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Gagal untuk mendaftar.');
         } finally {
             setLoading(false);
         }
@@ -80,8 +80,8 @@ const LoginPage: React.FC = () => {
             toast.success(`Email pemulihan telah dikirim ke ${forgotEmail}. Silakan periksa kotak masuk Anda.`);
             setIsForgotModalOpen(false);
             setForgotEmail('');
-        } catch (err: any) {
-            toast.error(err.message || 'Gagal mengirim email pemulihan.');
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Gagal mengirim email pemulihan.');
         } finally {
             setForgotLoading(false);
         }

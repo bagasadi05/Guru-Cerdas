@@ -290,9 +290,10 @@ Berikan analisis dalam format JSON dengan struktur:
 
     return analysis;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('Error generating child development analysis:', error);
-    console.error('Error details:', error.message);
+    console.error('Error details:', errorMessage);
 
     // Use fallback analysis
     const validAcademicRecords = (data.academicRecords || []).filter(r => r && typeof r.score === 'number');

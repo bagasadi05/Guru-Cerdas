@@ -13,6 +13,7 @@ import {
 } from '../services/offlineQueueEnhanced';
 import { supabase } from '../services/supabase';
 import { logger } from '../services/logger';
+import { useToast } from './useToast';
 
 // ============================================
 // OFFLINE SYNC HOOK
@@ -35,6 +36,8 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
         onError
     } = options;
 
+    const toast = useToast();
+
     const [queue, setQueue] = useState<QueueItem[]>([]);
     const [isSyncing, setIsSyncing] = useState(false);
     const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
@@ -49,22 +52,8 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
     }, []);
 
     // Auto-sync when online
-    useEffect(() => {
-        if (!autoSync) return;
+    // Wait for sync definition below
 
-        const handleOnline = () => {
-            logger.info('Connection restored, triggering sync', 'useOfflineSync');
-            sync();
-        };
-
-        window.addEventListener('online', handleOnline);
-        return () => window.removeEventListener('online', handleOnline);
-    }, [autoSync]);
-
-    // Register background sync
-    useEffect(() => {
-        registerBackgroundSync();
-    }, []);
 
     // Sync function
     const sync = useCallback(async (): Promise<SyncResult[]> => {
@@ -105,6 +94,13 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
             setLastSyncTime(new Date());
             onSyncComplete?.(results);
 
+            if (results.length > 0) {
+                const successCount = results.filter(r => r.success).length;
+                if (successCount > 0) {
+                    toast.success(`Berhasil menyinkronkan ${successCount} data offline.`);
+                }
+            }
+
             return results;
         } catch (error) {
             const err = error instanceof Error ? error : new Error('Sync failed');
@@ -115,7 +111,25 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
             syncInProgressRef.current = false;
             setIsSyncing(false);
         }
-    }, [conflictStrategy, onConflict, onSyncComplete, onError]);
+    }, [conflictStrategy, onConflict, onSyncComplete, onError, toast]);
+
+    // Auto-sync when online
+    useEffect(() => {
+        if (!autoSync) return;
+
+        const handleOnline = () => {
+            logger.info('Connection restored, triggering sync', 'useOfflineSync');
+            sync();
+        };
+
+        window.addEventListener('online', handleOnline);
+        return () => window.removeEventListener('online', handleOnline);
+    }, [autoSync, sync]);
+
+    // Register background sync
+    useEffect(() => {
+        registerBackgroundSync();
+    }, []);
 
     // Add to queue
     const addToQueue = useCallback(async (

@@ -58,7 +58,7 @@ export async function generateOpenRouterContent(
         ? { "Authorization": `Bearer ${DEV_API_KEY}` }
         : {};
 
-    let lastError: any = null;
+    let lastError: Error | null = null;
 
     // Iterate through models
     for (const model of FALLBACK_MODELS) {
@@ -184,7 +184,7 @@ export async function generateOpenRouterJson<T>(
     // 3. Try parsing
     try {
         return JSON.parse(content) as T;
-    } catch (e: any) {
+    } catch (e: unknown) {
         // Last ditch effort: regex for partial valid objects? 
         // For now, just logging is safer.
         console.error("JSON Parse Error. Content was:", content, e);

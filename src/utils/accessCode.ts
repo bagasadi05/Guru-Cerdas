@@ -12,17 +12,20 @@ const RATE_LIMIT_KEY = 'access_code_rate_limit';
 const MAX_CODES_PER_HOUR = 10;
 const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in ms
 
+import { storageGetJSON, storageSetJSON } from './storage';
+
 interface RateLimitData {
     timestamps: number[];
 }
 
 // Check rate limit
-export const checkRateLimit = (): { allowed: boolean; remaining: number; resetIn: number } => {
+export const checkRateLimit = async (): Promise<{ allowed: boolean; remaining: number; resetIn: number }> => {
     const now = Date.now();
     let data: RateLimitData;
 
     try {
-        data = JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{"timestamps":[]}');
+        const stored = await storageGetJSON<RateLimitData>(RATE_LIMIT_KEY);
+        data = stored || { timestamps: [] };
     } catch {
         data = { timestamps: [] };
     }
@@ -42,19 +45,20 @@ export const checkRateLimit = (): { allowed: boolean; remaining: number; resetIn
 };
 
 // Record a code generation
-const recordCodeGeneration = () => {
+const recordCodeGeneration = async (): Promise<void> => {
     const now = Date.now();
     let data: RateLimitData;
 
     try {
-        data = JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{"timestamps":[]}');
+        const stored = await storageGetJSON<RateLimitData>(RATE_LIMIT_KEY);
+        data = stored || { timestamps: [] };
     } catch {
         data = { timestamps: [] };
     }
 
     // Add new timestamp and filter old ones
     data.timestamps = [...data.timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW), now];
-    localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data));
+    await storageSetJSON(RATE_LIMIT_KEY, data);
 };
 
 // Generate simple access code (6 chars, compatible with old system)
@@ -76,10 +80,10 @@ export const generateSecureAccessCode = (): string => {
 };
 
 // Generate access code with rate limiting
-export const generateAccessCodeWithRateLimit = (
+export const generateAccessCodeWithRateLimit = async (
     secure = false
-): { code: string | null; error: string | null; remaining: number } => {
-    const rateLimit = checkRateLimit();
+): Promise<{ code: string | null; error: string | null; remaining: number }> => {
+    const rateLimit = await checkRateLimit();
 
     if (!rateLimit.allowed) {
         const minutes = Math.ceil(rateLimit.resetIn / 60000);
@@ -90,7 +94,7 @@ export const generateAccessCodeWithRateLimit = (
         };
     }
 
-    recordCodeGeneration();
+    await recordCodeGeneration();
 
     return {
         code: secure ? generateSecureAccessCode() : generateSimpleAccessCode(),
@@ -151,11 +155,11 @@ export interface TimeLimitedCode {
     isSecure: boolean;
 }
 
-export const generateTimeLimitedCode = (
+export const generateTimeLimitedCode = async (
     expirationHours = 24,
     secure = true
-): TimeLimitedCode | null => {
-    const result = generateAccessCodeWithRateLimit(secure);
+): Promise<TimeLimitedCode | null> => {
+    const result = await generateAccessCodeWithRateLimit(secure);
 
     if (!result.code) return null;
 

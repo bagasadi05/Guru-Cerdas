@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import {
@@ -319,7 +319,10 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   const studentPolygonPoints = calculateRadarPoints(studentScores, maxScore, centerX, centerY, radius);
 
   // Helper to get storage key
-  const getStorageKey = () => `child_analysis_${studentData.student.name}_${studentData.student.class || 'general'}`;
+  const getStorageKey = useCallback(
+    () => `child_analysis_${studentData.student.name}_${studentData.student.class || 'general'}`,
+    [studentData.student.name, studentData.student.class]
+  );
 
   // Load from local storage on mount
   useEffect(() => {
@@ -332,7 +335,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
         localStorage.removeItem(getStorageKey());
       }
     }
-  }, [studentData.student.name, studentData.student.class]);
+  }, [getStorageKey]);
 
   const handleGenerateAnalysis = async () => {
     setIsLoading(true);

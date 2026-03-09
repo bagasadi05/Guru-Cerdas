@@ -31,16 +31,12 @@ const ProfileSection: React.FC = () => {
 
     useEffect(() => {
         if (user) {
-            if (user.name !== name) {
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setName(user.name || '');
-            }
-            if (user.school_name !== schoolName) {
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setSchoolName(user.school_name || '');
-            }
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setName(user.name || '');
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSchoolName(user.school_name || '');
         }
-    }, [user, name, schoolName]);
+    }, [user]);
 
     const handleAvatarUpload = async (file: File) => {
         if (!user) return;

@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { storageGet, storageSet, storageGetJSON, storageSetJSON, storageRemove } from '../utils/storage';
 
 // Security event types
 export enum SecurityEventType {
@@ -49,28 +50,29 @@ export function logSecurityEvent(
     // Log to console in dev
     logger.warn(`Security Event: ${type}`, 'Security', details);
 
-    // Store in localStorage
-    try {
-        const logs = getSecurityLogs();
-        logs.push(event);
+    // Store in secure storage (async, fire-and-forget)
+    void (async () => {
+        try {
+            const logs = await getSecurityLogs();
+            logs.push(event);
 
-        while (logs.length > MAX_SECURITY_LOGS) {
-            logs.shift();
+            while (logs.length > MAX_SECURITY_LOGS) {
+                logs.shift();
+            }
+
+            await storageSetJSON(SECURITY_LOG_KEY, logs);
+        } catch {
+            // Ignore storage errors
         }
-
-        localStorage.setItem(SECURITY_LOG_KEY, JSON.stringify(logs));
-    } catch {
-        // Ignore storage errors
-    }
+    })();
 }
 
 /**
  * Get stored security logs
  */
-export function getSecurityLogs(): SecurityEvent[] {
+export async function getSecurityLogs(): Promise<SecurityEvent[]> {
     try {
-        const stored = localStorage.getItem(SECURITY_LOG_KEY);
-        return stored ? JSON.parse(stored) : [];
+        return await storageGetJSON<SecurityEvent[]>(SECURITY_LOG_KEY) ?? [];
     } catch {
         return [];
     }
@@ -79,8 +81,8 @@ export function getSecurityLogs(): SecurityEvent[] {
 /**
  * Clear security logs
  */
-export function clearSecurityLogs() {
-    localStorage.removeItem(SECURITY_LOG_KEY);
+export async function clearSecurityLogs(): Promise<void> {
+    await storageRemove(SECURITY_LOG_KEY);
 }
 
 // ============================================
@@ -203,15 +205,15 @@ export function isSessionValid(lastActivity: number): boolean {
 /**
  * Update last activity timestamp
  */
-export function updateLastActivity() {
-    localStorage.setItem('portal_guru_last_activity', Date.now().toString());
+export function updateLastActivity(): void {
+    void storageSet('portal_guru_last_activity', Date.now().toString());
 }
 
 /**
  * Get last activity timestamp
  */
-export function getLastActivity(): number {
-    const stored = localStorage.getItem('portal_guru_last_activity');
+export async function getLastActivity(): Promise<number> {
+    const stored = await storageGet('portal_guru_last_activity');
     return stored ? parseInt(stored, 10) : Date.now();
 }
 

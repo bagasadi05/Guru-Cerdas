@@ -21,7 +21,7 @@ export interface ExportOptions {
     filename: string;
     title?: string;
     columns: ColumnDefinition[];
-    data: Record<string, any>[];
+    data: Record<string, unknown>[];
     onProgress?: (progress: number) => void;
     includeHeader?: boolean;
     includeFooter?: boolean;
@@ -37,12 +37,12 @@ export interface ExportResult {
 /**
  * Format value based on column type
  */
-function formatValue(value: any, type?: string, dateFormat?: string): string {
+function formatValue(value: unknown, type?: string, dateFormat?: string): string {
     if (value === null || value === undefined) return '';
 
     switch (type) {
         case 'date': {
-            const date = new Date(value);
+            const date = new Date(value as string | number | Date);
             if (isNaN(date.getTime())) return String(value);
             return date.toLocaleDateString('id-ID', {
                 day: '2-digit',
@@ -204,7 +204,7 @@ export async function exportToExcel(options: ExportOptions): Promise<ExportResul
                     return value;
                 }
                 if (col.type === 'date' && value) {
-                    return new Date(value);
+                    return new Date(value as string | number | Date);
                 }
                 if (col.type === 'boolean') {
                     return value ? 'Ya' : 'Tidak';

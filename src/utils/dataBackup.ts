@@ -7,6 +7,8 @@
 const BACKUP_PREFIX = 'backup_';
 const BACKUP_EXPIRY_HOURS = 24;
 
+import { storageGet, storageSet, storageRemove, storageKeys } from './storage';
+
 interface BackupData<T> {
     data: T;
     timestamp: number;
@@ -32,7 +34,7 @@ interface BackupOptions {
 /**
  * Create a backup of data before saving
  */
-export const createBackup = <T>(data: T, options: BackupOptions): boolean => {
+export const createBackup = async <T>(data: T, options: BackupOptions): Promise<boolean> => {
     try {
         const {
             key,
@@ -47,7 +49,7 @@ export const createBackup = <T>(data: T, options: BackupOptions): boolean => {
             version: 1,
         };
 
-        localStorage.setItem(BACKUP_PREFIX + key, JSON.stringify(backup));
+        await storageSet(BACKUP_PREFIX + key, JSON.stringify(backup));
 
         // Schedule cleanup
         scheduleBackupCleanup(key, expiryHours);
@@ -62,9 +64,9 @@ export const createBackup = <T>(data: T, options: BackupOptions): boolean => {
 /**
  * Get the latest backup for a key
  */
-export const getBackup = <T>(key: string): BackupData<T> | null => {
+export const getBackup = async <T>(key: string): Promise<BackupData<T> | null> => {
     try {
-        const stored = localStorage.getItem(BACKUP_PREFIX + key);
+        const stored = await storageGet(BACKUP_PREFIX + key);
         if (!stored) return null;
 
         const backup = JSON.parse(stored) as BackupData<T>;
@@ -72,7 +74,7 @@ export const getBackup = <T>(key: string): BackupData<T> | null => {
         // Check if expired (24 hours default)
         const expiryTime = backup.timestamp + (BACKUP_EXPIRY_HOURS * 60 * 60 * 1000);
         if (Date.now() > expiryTime) {
-            removeBackup(key);
+            await removeBackup(key);
             return null;
         }
 
@@ -86,9 +88,9 @@ export const getBackup = <T>(key: string): BackupData<T> | null => {
 /**
  * Remove a specific backup
  */
-export const removeBackup = (key: string): void => {
+export const removeBackup = async (key: string): Promise<void> => {
     try {
-        localStorage.removeItem(BACKUP_PREFIX + key);
+        await storageRemove(BACKUP_PREFIX + key);
     } catch (error) {
         console.error('Failed to remove backup:', error);
     }
@@ -97,14 +99,14 @@ export const removeBackup = (key: string): void => {
 /**
  * Get all available backups
  */
-export const getAllBackups = (): { key: string; backup: BackupData<unknown> }[] => {
+export const getAllBackups = async (): Promise<{ key: string; backup: BackupData<unknown> }[]> => {
     const backups: { key: string; backup: BackupData<unknown> }[] = [];
 
     try {
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith(BACKUP_PREFIX)) {
-                const stored = localStorage.getItem(key);
+        const allKeys = await storageKeys();
+        for (const key of allKeys) {
+            if (key.startsWith(BACKUP_PREFIX)) {
+                const stored = await storageGet(key);
                 if (stored) {
                     const backup = JSON.parse(stored) as BackupData<unknown>;
                     backups.push({
@@ -124,25 +126,25 @@ export const getAllBackups = (): { key: string; backup: BackupData<unknown> }[] 
 /**
  * Restore data from backup
  */
-export const restoreBackup = <T>(key: string): T | null => {
-    const backup = getBackup<T>(key);
+export const restoreBackup = async <T>(key: string): Promise<T | null> => {
+    const backup = await getBackup<T>(key);
     return backup?.data ?? null;
 };
 
 /**
  * Clean up expired backups
  */
-export const cleanupExpiredBackups = (): number => {
+export const cleanupExpiredBackups = async (): Promise<number> => {
     let cleaned = 0;
 
     try {
         const now = Date.now();
         const keysToRemove: string[] = [];
 
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith(BACKUP_PREFIX)) {
-                const stored = localStorage.getItem(key);
+        const allKeys = await storageKeys();
+        for (const key of allKeys) {
+            if (key.startsWith(BACKUP_PREFIX)) {
+                const stored = await storageGet(key);
                 if (stored) {
                     const backup = JSON.parse(stored) as BackupData<unknown>;
                     const expiryTime = backup.timestamp + (BACKUP_EXPIRY_HOURS * 60 * 60 * 1000);
@@ -153,10 +155,10 @@ export const cleanupExpiredBackups = (): number => {
             }
         }
 
-        keysToRemove.forEach(key => {
-            localStorage.removeItem(key);
+        for (const key of keysToRemove) {
+            await storageRemove(key);
             cleaned++;
-        });
+        }
     } catch (error) {
         console.error('Failed to cleanup backups:', error);
     }
@@ -169,7 +171,7 @@ export const cleanupExpiredBackups = (): number => {
  */
 const scheduleBackupCleanup = (key: string, expiryHours: number): void => {
     setTimeout(() => {
-        removeBackup(key);
+        void removeBackup(key);
     }, expiryHours * 60 * 60 * 1000);
 };
 

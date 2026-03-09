@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { storageGetJSON, storageSetJSON, storageRemove } from '../utils/storage';
 
 // ============================================
 // PASSWORD COMPLEXITY VALIDATION
@@ -211,13 +212,11 @@ interface LockoutData {
 /**
  * Get lockout data for an email
  */
-function getLockoutData(email: string): LockoutData | null {
+function getLockoutData(email: string): Promise<LockoutData | null> {
     try {
-        const stored = localStorage.getItem(`${LOCKOUT_KEY}_${email.toLowerCase()}`);
-        if (!stored) return null;
-        return JSON.parse(stored);
+        return storageGetJSON(`${LOCKOUT_KEY}_${email.toLowerCase()}`);
     } catch {
-        return null;
+        return Promise.resolve(null);
     }
 }
 
@@ -225,19 +224,21 @@ function getLockoutData(email: string): LockoutData | null {
  * Save lockout data
  */
 function saveLockoutData(data: LockoutData): void {
-    try {
-        localStorage.setItem(`${LOCKOUT_KEY}_${data.email.toLowerCase()}`, JSON.stringify(data));
-    } catch {
-        // Ignore storage errors
-    }
+    void (async () => {
+        try {
+            await storageSetJSON(`${LOCKOUT_KEY}_${data.email.toLowerCase()}`, data);
+        } catch {
+            // Ignore storage errors
+        }
+    })();
 }
 
 /**
  * Clear lockout data for an email
  */
-export function clearLockout(email: string): void {
+export async function clearLockout(email: string): Promise<void> {
     try {
-        localStorage.removeItem(`${LOCKOUT_KEY}_${email.toLowerCase()}`);
+        await storageRemove(`${LOCKOUT_KEY}_${email.toLowerCase()}`);
     } catch {
         // Ignore storage errors
     }
@@ -246,12 +247,12 @@ export function clearLockout(email: string): void {
 /**
  * Check if account is locked
  */
-export function isAccountLocked(email: string): {
+export async function isAccountLocked(email: string): Promise<{
     locked: boolean;
     remainingTime: number;
     attemptsRemaining: number;
-} {
-    const data = getLockoutData(email);
+}> {
+    const data = await getLockoutData(email);
 
     if (!data) {
         return { locked: false, remainingTime: 0, attemptsRemaining: MAX_FAILED_ATTEMPTS };
@@ -259,7 +260,7 @@ export function isAccountLocked(email: string): {
 
     // Check if lockout has expired
     if (data.lockedUntil && Date.now() >= data.lockedUntil) {
-        clearLockout(email);
+        await clearLockout(email);
         return { locked: false, remainingTime: 0, attemptsRemaining: MAX_FAILED_ATTEMPTS };
     }
 
@@ -280,12 +281,12 @@ export function isAccountLocked(email: string): {
 /**
  * Record a failed login attempt
  */
-export function recordFailedAttempt(email: string): {
+export async function recordFailedAttempt(email: string): Promise<{
     locked: boolean;
     remainingAttempts: number;
     lockoutDuration: number;
-} {
-    let data = getLockoutData(email);
+}> {
+    let data = await getLockoutData(email);
 
     if (!data) {
         data = {
@@ -324,8 +325,8 @@ export function recordFailedAttempt(email: string): {
 /**
  * Record successful login (clears lockout)
  */
-export function recordSuccessfulLogin(email: string): void {
-    clearLockout(email);
+export async function recordSuccessfulLogin(email: string): Promise<void> {
+    await clearLockout(email);
     logger.info('AuthSecurity', 'Successful login, lockout cleared', { email });
 }
 
@@ -361,19 +362,18 @@ export function initSession(rememberMe: boolean = false): void {
         rememberMe,
         timeout: rememberMe ? REMEMBER_ME_DURATION : DEFAULT_SESSION_TIMEOUT
     };
-    localStorage.setItem(SESSION_CONFIG_KEY, JSON.stringify(config));
+    void storageSetJSON(SESSION_CONFIG_KEY, config);
 }
 
 /**
  * Update last activity timestamp
  */
-export function updateSessionActivity(): void {
+export async function updateSessionActivity(): Promise<void> {
     try {
-        const stored = localStorage.getItem(SESSION_CONFIG_KEY);
-        if (stored) {
-            const config: SessionConfig = JSON.parse(stored);
+        const config = await storageGetJSON<SessionConfig>(SESSION_CONFIG_KEY);
+        if (config) {
             config.lastActivity = Date.now();
-            localStorage.setItem(SESSION_CONFIG_KEY, JSON.stringify(config));
+            await storageSetJSON(SESSION_CONFIG_KEY, config);
         }
     } catch {
         // Ignore errors
@@ -383,12 +383,11 @@ export function updateSessionActivity(): void {
 /**
  * Check if session has expired
  */
-export function isSessionExpired(): boolean {
+export async function isSessionExpired(): Promise<boolean> {
     try {
-        const stored = localStorage.getItem(SESSION_CONFIG_KEY);
-        if (!stored) return true;
+        const config = await storageGetJSON<SessionConfig>(SESSION_CONFIG_KEY);
+        if (!config) return true;
 
-        const config: SessionConfig = JSON.parse(stored);
         const now = Date.now();
         const elapsed = now - config.lastActivity;
 
@@ -401,12 +400,11 @@ export function isSessionExpired(): boolean {
 /**
  * Get remaining session time
  */
-export function getSessionTimeRemaining(): number {
+export async function getSessionTimeRemaining(): Promise<number> {
     try {
-        const stored = localStorage.getItem(SESSION_CONFIG_KEY);
-        if (!stored) return 0;
+        const config = await storageGetJSON<SessionConfig>(SESSION_CONFIG_KEY);
+        if (!config) return 0;
 
-        const config: SessionConfig = JSON.parse(stored);
         const elapsed = Date.now() - config.lastActivity;
         return Math.max(0, config.timeout - elapsed);
     } catch {
@@ -417,8 +415,8 @@ export function getSessionTimeRemaining(): number {
 /**
  * Clear session on logout
  */
-export function clearSession(): void {
-    localStorage.removeItem(SESSION_CONFIG_KEY);
+export async function clearSession(): Promise<void> {
+    await storageRemove(SESSION_CONFIG_KEY);
     sessionStorage.clear();
     logger.info('AuthSecurity', 'Session cleared');
 }

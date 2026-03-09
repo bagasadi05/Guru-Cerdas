@@ -22,6 +22,8 @@ import { KeyboardShortcutsHelp } from '../ui/KeyboardShortcutsHelp';
 import { EmptyGradesConfirmation, SaveSuccessModal, ClearAllConfirmation } from '../ui/GradeConfirmationModals';
 import { useSemester } from '../../contexts/SemesterContext';
 import { SemesterSelector, SemesterLockedBanner } from '../ui/SemesterSelector';
+import { EmptyState } from '../ui/EmptyState';
+import { SearchIcon } from '../Icons';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -286,7 +288,7 @@ const BulkGradeInputPage: React.FC = () => {
     };
 
     // Import handler
-    const handleImport = (data: Record<string, any>[]) => {
+    const handleImport = (data: Record<string, unknown>[]) => {
         if (!students) return;
 
         const studentMap = new Map(students.map(s => [s.name.toLowerCase(), s.id]));
@@ -555,7 +557,12 @@ const BulkGradeInputPage: React.FC = () => {
                                     ))}
                                 </div>
                             ) : grades.length === 0 ? (
-                                <p className="text-center text-gray-500 py-8">Tidak ada siswa di kelas ini</p>
+                                <EmptyState
+                                    icon={<SearchIcon />}
+                                    title="Tidak Ada Siswa"
+                                    description="Belum ada data siswa untuk kelas ini."
+                                    className="py-12"
+                                />
                             ) : grades.length > VIRTUALIZATION_THRESHOLD ? (
                                 // Use virtualization for large lists
                                 <VirtualList

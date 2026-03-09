@@ -2,24 +2,15 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { z } from 'zod';
 
 interface FieldState {
-    value: any;
+    value: unknown;
     error: string | null;
     touched: boolean;
     isDirty: boolean;
 }
 
-interface FormState<T> {
-    values: T;
-    errors: Partial<Record<keyof T, string>>;
-    touched: Partial<Record<keyof T, boolean>>;
-    isDirty: boolean;
-    isValid: boolean;
-    isSubmitting: boolean;
-}
-
 interface UseFormValidationOptions<T> {
     initialValues: T;
-    schema?: z.ZodObject<any>;
+    schema?: z.ZodType<T>;
     validateOnChange?: boolean;
     validateOnBlur?: boolean;
     autosave?: boolean;
@@ -73,18 +64,18 @@ export function useFormValidation<T extends Record<string, any>>({
     }, [errors]);
 
     // Validate a single field
-    const validateField = useCallback((name: keyof T, value: any): string | null => {
+    const validateField = useCallback((name: keyof T, value: T[keyof T]): string | null => {
         if (!schema) return null;
 
         try {
-            const fieldSchema = schema.shape[name as string];
-            if (fieldSchema) {
-                fieldSchema.parse(value);
-            }
+            // Validate only the single field by creating a partial object
+            const partial = { [name]: value } as T;
+            schema.parse(partial);
             return null;
-        } catch (error: any) {
+        } catch (error: unknown) {
             if (error instanceof z.ZodError) {
-                return error.errors[0]?.message || 'Nilai tidak valid';
+                const fieldIssue = error.issues.find(i => i.path[0] === name);
+                return fieldIssue?.message || 'Nilai tidak valid';
             }
             return 'Terjadi kesalahan validasi';
         }
@@ -98,13 +89,13 @@ export function useFormValidation<T extends Record<string, any>>({
             schema.parse(values);
             setErrors({});
             return true;
-        } catch (error: any) {
+        } catch (error: unknown) {
             if (error instanceof z.ZodError) {
                 const newErrors: Partial<Record<keyof T, string>> = {};
-                error.errors.forEach((err) => {
-                    const field = err.path[0] as keyof T;
+                error.issues.forEach((issue) => {
+                    const field = issue.path[0] as keyof T;
                     if (field && !newErrors[field]) {
-                        newErrors[field] = err.message;
+                        newErrors[field] = issue.message;
                     }
                 });
                 setErrors(newErrors);
@@ -114,6 +105,7 @@ export function useFormValidation<T extends Record<string, any>>({
     }, [schema, values]);
 
     // Set field value
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const setValue = useCallback((name: keyof T, value: any) => {
         setValues(prev => ({ ...prev, [name]: value }));
 

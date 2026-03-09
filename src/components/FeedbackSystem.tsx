@@ -660,8 +660,10 @@ export function useUndoManager<T>(options: UndoManagerOptions = {}) {
 
     // Cleanup timeouts on unmount
     useEffect(() => {
+        // Copy ref to a variable so the cleanup closure captures the same value
+        const timeouts = timeoutRefs.current;
         return () => {
-            timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
+            timeouts.forEach(timeout => clearTimeout(timeout));
         };
     }, []);
 
@@ -690,7 +692,6 @@ export function useUndoManager<T>(options: UndoManagerOptions = {}) {
 interface DeletableWithUndoProps<T> {
     item: T;
     onDelete: (item: T) => Promise<void>;
-    onRestore: (item: T) => Promise<void>;
     renderItem: (item: T, isPendingDelete: boolean) => React.ReactNode;
     undoDuration?: number; // ms
 }
@@ -698,7 +699,6 @@ interface DeletableWithUndoProps<T> {
 export function DeletableWithUndo<T extends { id: string }>({
     item,
     onDelete,
-    onRestore,
     renderItem,
     undoDuration = 5000
 }: DeletableWithUndoProps<T>) {
@@ -707,7 +707,8 @@ export function DeletableWithUndo<T extends { id: string }>({
     const timeoutRef = useRef<NodeJS.Timeout>();
     const toast = useToast();
 
-    const handleDelete = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const handleDelete = useCallback(async () => {
         setIsPendingDelete(true);
 
         const toastId = toast.addToast({
@@ -732,11 +733,12 @@ export function DeletableWithUndo<T extends { id: string }>({
                 toast.error('Gagal menghapus item');
             }
         }, undoDuration);
-    };
+    }, [item, onDelete, undoDuration, toast]);
 
     useEffect(() => {
+        const timeout = timeoutRef;
         return () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (timeout.current) clearTimeout(timeout.current);
         };
     }, []);
 

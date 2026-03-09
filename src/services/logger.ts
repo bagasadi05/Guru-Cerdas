@@ -116,7 +116,7 @@ export class Logger {
         return logs.map(log => this.formatLogEntry(log)).join('\n');
     }
 
-    private log(level: LogLevel, message: string, component?: string, data?: any, error?: Error) {
+    private log(level: LogLevel, message: string, component?: string, data?: unknown, error?: Error) {
         if (!this.shouldLog(level)) return;
 
         const entry: LogEntry = {
@@ -191,20 +191,20 @@ export class Logger {
     }
 
     // Convenience methods
-    debug(message: string, component?: string, data?: any) {
+    debug(message: string, component?: string, data?: unknown) {
         this.log(LogLevel.DEBUG, message, component, data);
     }
 
-    info(message: string, component?: string, data?: any) {
+    info(message: string, component?: string, data?: unknown) {
         this.log(LogLevel.INFO, message, component, data);
     }
 
-    warn(message: string, component?: string, data?: any) {
+    warn(message: string, component?: string, data?: unknown) {
         this.log(LogLevel.WARN, message, component, data);
     }
 
-    error(message: string, errorOrComponent?: Error | string, dataOrError?: any, componentOrData?: string | any) {
-        // Handle different signature call from older code: error(message: string, context?: string, error?: Error, data?: any)
+    error(message: string, errorOrComponent?: Error | string, dataOrError?: unknown, componentOrData?: string | unknown) {
+        // Handle different signature call from older code: error(message: string, context?: string, error?: Error, data?: unknown)
         // If 2nd arg is string and not Error, it's likely 'component' from old signature
         if (typeof errorOrComponent === 'string') {
             const oldComponent = errorOrComponent;
@@ -219,12 +219,12 @@ export class Logger {
         }
     }
 
-    fatal(message: string, error?: Error, data?: any, component?: string) {
+    fatal(message: string, error?: Error, data?: unknown, component?: string) {
         this.log(LogLevel.FATAL, message, component, data, error);
     }
 
     // Track user actions for debugging
-    trackAction(action: string, component?: string, data?: any) {
+    trackAction(action: string, component?: string, data?: unknown) {
         this.debug(`User action: ${action}`, component, data);
     }
 

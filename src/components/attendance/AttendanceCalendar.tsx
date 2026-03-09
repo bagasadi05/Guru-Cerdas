@@ -101,6 +101,7 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
         if (!selectedDate) return;
         const nextDate = new Date(`${selectedDate}T00:00:00`);
         if (nextDate.getFullYear() !== year || nextDate.getMonth() !== month) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCurrentDate(nextDate);
         }
     }, [month, selectedDate, year]);
@@ -119,13 +120,12 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
         const stats = { Hadir: 0, Izin: 0, Sakit: 0, Alpha: 0, Libur: 0 };
         calendarDays.forEach(day => {
             if (day) {
-                const dateStr = formatDateString(day);
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const status = recordMap.get(dateStr);
                 if (status) stats[status]++;
             }
         });
         return stats;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [calendarDays, recordMap, year, month]);
 
         return (

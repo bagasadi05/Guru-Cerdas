@@ -12,6 +12,7 @@ import {
     playMessageSound,
     playReminderSound,
 } from '../utils/notificationSound';
+import { storageGet, storageSet, storageRemove } from '../utils/storage';
 
 /**
  * Available built-in sound types
@@ -102,51 +103,51 @@ let customAudioElement: HTMLAudioElement | null = null;
 /**
  * Get the selected schedule notification sound
  */
-export const getScheduleSound = (): SoundType => {
-    return (localStorage.getItem(STORAGE_KEYS.SCHEDULE_SOUND) as SoundType) || 'default';
+export const getScheduleSound = async (): Promise<SoundType> => {
+    return (await storageGet(STORAGE_KEYS.SCHEDULE_SOUND) as SoundType) || 'default';
 };
 
 /**
  * Set the schedule notification sound preference
  */
-export const setScheduleSound = (soundType: SoundType): void => {
-    localStorage.setItem(STORAGE_KEYS.SCHEDULE_SOUND, soundType);
+export const setScheduleSound = async (soundType: SoundType): Promise<void> => {
+    await storageSet(STORAGE_KEYS.SCHEDULE_SOUND, soundType);
 };
 
 /**
  * Get the selected message notification sound
  */
-export const getMessageSound = (): SoundType => {
-    return (localStorage.getItem(STORAGE_KEYS.MESSAGE_SOUND) as SoundType) || 'pop';
+export const getMessageSound = async (): Promise<SoundType> => {
+    return (await storageGet(STORAGE_KEYS.MESSAGE_SOUND) as SoundType) || 'pop';
 };
 
 /**
  * Set the message notification sound preference
  */
-export const setMessageSound = (soundType: SoundType): void => {
-    localStorage.setItem(STORAGE_KEYS.MESSAGE_SOUND, soundType);
+export const setMessageSound = async (soundType: SoundType): Promise<void> => {
+    await storageSet(STORAGE_KEYS.MESSAGE_SOUND, soundType);
 };
 
 /**
  * Get the notification volume (0-1)
  */
-export const getSoundVolume = (): number => {
-    const stored = localStorage.getItem(STORAGE_KEYS.SOUND_VOLUME);
+export const getSoundVolume = async (): Promise<number> => {
+    const stored = await storageGet(STORAGE_KEYS.SOUND_VOLUME);
     return stored ? parseFloat(stored) : 0.7;
 };
 
 /**
  * Set the notification volume
  */
-export const setSoundVolume = (volume: number): void => {
-    localStorage.setItem(STORAGE_KEYS.SOUND_VOLUME, volume.toString());
+export const setSoundVolume = async (volume: number): Promise<void> => {
+    await storageSet(STORAGE_KEYS.SOUND_VOLUME, volume.toString());
 };
 
 /**
  * Get custom sound URL from storage
  */
-export const getCustomSoundUrl = (): string | null => {
-    return localStorage.getItem(STORAGE_KEYS.CUSTOM_SOUND_URL);
+export const getCustomSoundUrl = async (): Promise<string | null> => {
+    return storageGet(STORAGE_KEYS.CUSTOM_SOUND_URL);
 };
 
 /**
@@ -167,9 +168,9 @@ export const setCustomSound = async (file: File): Promise<void> => {
         }
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             const dataUrl = e.target?.result as string;
-            localStorage.setItem(STORAGE_KEYS.CUSTOM_SOUND_URL, dataUrl);
+            await storageSet(STORAGE_KEYS.CUSTOM_SOUND_URL, dataUrl);
             resolve();
         };
         reader.onerror = () => reject(new Error('Gagal membaca file'));
@@ -180,8 +181,8 @@ export const setCustomSound = async (file: File): Promise<void> => {
 /**
  * Clear custom sound
  */
-export const clearCustomSound = (): void => {
-    localStorage.removeItem(STORAGE_KEYS.CUSTOM_SOUND_URL);
+export const clearCustomSound = async (): Promise<void> => {
+    await storageRemove(STORAGE_KEYS.CUSTOM_SOUND_URL);
 };
 
 /**
@@ -219,8 +220,8 @@ export const previewSound = (soundType: SoundType): void => {
 /**
  * Play the actual notification based on context
  */
-export const playScheduleNotification = (): void => {
-    const soundType = getScheduleSound();
+export const playScheduleNotification = async (): Promise<void> => {
+    const soundType = await getScheduleSound();
     if (soundType !== 'none') {
         previewSound(soundType);
     }
@@ -261,8 +262,8 @@ const playGentleSound = (): void => {
 /**
  * Play custom uploaded sound
  */
-const playCustomSound = (): void => {
-    const customUrl = getCustomSoundUrl();
+const playCustomSound = async (): Promise<void> => {
+    const customUrl = await getCustomSoundUrl();
     if (!customUrl) {
         // Fallback to default if no custom sound set
         playNotificationSound();
@@ -277,7 +278,8 @@ const playCustomSound = (): void => {
         }
 
         customAudioElement = new Audio(customUrl);
-        customAudioElement.volume = getSoundVolume();
+        const volume = await getSoundVolume();
+        customAudioElement.volume = volume;
         customAudioElement.play().catch(e => {
             console.warn('Could not play custom sound:', e);
             // Fallback to default
@@ -294,7 +296,7 @@ const playCustomSound = (): void => {
  * Uses the native RingtonePicker plugin to play the saved system sound
  */
 const playSystemSound = async (): Promise<void> => {
-    const uri = localStorage.getItem('portal_guru_system_ringtone_uri');
+    const uri = await storageGet('portal_guru_system_ringtone_uri');
 
     if (!uri) {
         // Fallback to default if no system sound selected

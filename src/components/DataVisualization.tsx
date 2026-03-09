@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { Download, Maximize2, ZoomIn, ChevronDown, Info } from 'lucide-react';
+import { Download, Maximize2 } from 'lucide-react';
 
 /**
  * Advanced Data Visualization Components
@@ -200,7 +200,6 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
     className = ''
 }) => {
     const chartRef = useRef<HTMLDivElement>(null);
-    const [isFullscreen, setIsFullscreen] = useState(false);
 
     const handleExport = useCallback(async () => {
         if (!chartRef.current) return;
@@ -237,10 +236,8 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
 
         if (!document.fullscreenElement) {
             chartRef.current.requestFullscreen();
-            setIsFullscreen(true);
         } else {
             document.exitFullscreen();
-            setIsFullscreen(false);
         }
     }, []);
 
@@ -309,7 +306,6 @@ export const BarChart: React.FC<BarChartProps> = ({
     title,
     subtitle,
     height = 300,
-    horizontal = false,
     showValues = true,
     showLegend = false,
     showGrid = true,

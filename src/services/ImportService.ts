@@ -17,7 +17,7 @@ export interface ColumnMapping {
     sourceColumn: string;
     targetField: string;
     required: boolean;
-    transform?: (value: any) => any;
+    transform?: (value: unknown) => unknown;
 }
 
 /**
@@ -26,7 +26,7 @@ export interface ColumnMapping {
 export interface ImportError {
     row: number;
     column: string;
-    value: any;
+    value: unknown;
     message: string;
 }
 
@@ -35,7 +35,7 @@ export interface ImportError {
  */
 export interface ParsedRow {
     rowNumber: number;
-    data: Record<string, any>;
+    data: Record<string, unknown>;
     isValid: boolean;
     errors: ImportError[];
 }
@@ -83,7 +83,7 @@ const GENDER_MAPPINGS: Record<string, 'Laki-laki' | 'Perempuan'> = {
 /**
  * Parse Excel or CSV file and extract data
  */
-export const parseFile = async (file: File): Promise<{ headers: string[]; rows: any[][] }> => {
+export const parseFile = async (file: File): Promise<{ headers: string[]; rows: unknown[][] }> => {
     const XLSX = await getXLSX();
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -98,7 +98,7 @@ export const parseFile = async (file: File): Promise<{ headers: string[]; rows: 
                 const worksheet = workbook.Sheets[firstSheetName];
 
                 // Convert to JSON with header option
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
 
                 if (jsonData.length === 0) {
                     reject(new Error('File kosong'));
@@ -155,7 +155,7 @@ export const autoDetectMappings = (headers: string[]): ColumnMapping[] => {
 /**
  * Normalize gender value
  */
-export const normalizeGender = (value: any): 'Laki-laki' | 'Perempuan' | null => {
+export const normalizeGender = (value: unknown): 'Laki-laki' | 'Perempuan' | null => {
     if (!value) return null;
     const normalized = String(value).toLowerCase().trim();
     return GENDER_MAPPINGS[normalized] || null;
@@ -165,12 +165,12 @@ export const normalizeGender = (value: any): 'Laki-laki' | 'Perempuan' | null =>
  * Validate a single row of data
  */
 export const validateRow = (
-    rowData: Record<string, any>,
+    rowData: Record<string, unknown>,
     rowNumber: number,
     mappings: ColumnMapping[]
 ): ParsedRow => {
     const errors: ImportError[] = [];
-    const data: Record<string, any> = {};
+    const data: Record<string, unknown> = {};
 
     // Check required fields
     for (const mapping of mappings) {
@@ -190,7 +190,7 @@ export const validateRow = (
     }
 
     // Validate specific fields
-    if (data.name && data.name.length < 2) {
+    if (typeof data.name === 'string' && data.name.length < 2) {
         errors.push({
             row: rowNumber,
             column: 'name',
@@ -199,7 +199,7 @@ export const validateRow = (
         });
     }
 
-    if (data.gender && !['Laki-laki', 'Perempuan'].includes(data.gender)) {
+    if (typeof data.gender === 'string' && !['Laki-laki', 'Perempuan'].includes(data.gender)) {
         errors.push({
             row: rowNumber,
             column: 'gender',
@@ -221,7 +221,7 @@ export const validateRow = (
  */
 export const parseAndValidate = (
     headers: string[],
-    rows: any[][],
+    rows: unknown[][],
     mappings: ColumnMapping[]
 ): ParsedRow[] => {
     return rows.map((row, index) => {

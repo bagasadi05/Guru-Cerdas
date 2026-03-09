@@ -90,8 +90,6 @@ export default defineConfig(({ mode }) => {
             'vendor-icons': ['lucide-react'],
             // Supabase
             'vendor-supabase': ['@supabase/supabase-js'],
-            // Heavy export libraries (lazy loaded)
-            'vendor-export': ['xlsx', 'jspdf', 'jspdf-autotable', 'html2canvas'],
             // Capacitor plugins
             'vendor-capacitor': [
               '@capacitor/app',
@@ -119,8 +117,8 @@ export default defineConfig(({ mode }) => {
           entryFileNames: 'assets/js/[name]-[hash].js',
         },
       },
-      // Chunk size warning limit
-      chunkSizeWarningLimit: 500,
+      // Chunk size warning limit (increased to accommodate heavy exceljs/pdf modules when loading on demand)
+      chunkSizeWarningLimit: 1500,
       // Minification options
       minify: 'terser',
       terserOptions: {

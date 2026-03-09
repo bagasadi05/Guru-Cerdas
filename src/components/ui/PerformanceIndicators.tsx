@@ -1,18 +1,13 @@
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import {
-    Wifi,
     WifiOff,
-    Cloud,
     CloudOff,
     CloudUpload,
     Check,
     AlertCircle,
-    RefreshCw,
     Clock,
     ChevronDown,
-    ChevronUp,
     X,
-    Trash2,
     RotateCcw,
     Signal,
     SignalLow,
@@ -261,7 +256,7 @@ export const useSyncStatus = () => {
 
 export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [items, setItems] = useState<SyncItem[]>([]);
-    const [isSyncing, setIsSyncing] = useState(false);
+    const [isSyncing] = useState(false);
 
     const addItem = useCallback((item: Omit<SyncItem, 'id' | 'createdAt' | 'retryCount' | 'status'>) => {
         const newItem: SyncItem = {
@@ -808,8 +803,6 @@ interface PerformanceDashboardProps {
 export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
     className = '',
 }) => {
-    const network = useNetworkStatus();
-    const sync = useSyncStatus();
     const uploads = useUploadProgress();
 
     return (

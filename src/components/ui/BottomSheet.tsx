@@ -14,7 +14,6 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, ti
 
     useEffect(() => {
         if (isOpen) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTimeout(() => setIsVisible(true), 0);
             document.body.style.overflow = 'hidden';
         } else {

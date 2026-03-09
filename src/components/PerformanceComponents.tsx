@@ -534,7 +534,8 @@ export const PerformanceMonitor: React.FC<{ enabled?: boolean }> = ({ enabled = 
                     fps: Math.round((frameRef.current * 1000) / delta),
                     memory: (performance as any).memory?.usedJSHeapSize
                         ? Math.round((performance as any).memory.usedJSHeapSize / 1048576)
-                        : 0
+                        : 0,
+                    renderCount: renderCountRef.current,
                 }));
                 frameRef.current = 0;
                 lastTimeRef.current = now;
@@ -548,10 +549,8 @@ export const PerformanceMonitor: React.FC<{ enabled?: boolean }> = ({ enabled = 
         return () => cancelAnimationFrame(animationId);
     }, [enabled]);
 
-    useEffect(() => {
-        renderCountRef.current++;
-        setMetrics(prev => ({ ...prev, renderCount: renderCountRef.current }));
-    });
+    // Increment render count after each render (no setState → no infinite loop)
+    React.useLayoutEffect(() => { renderCountRef.current++; });
 
     if (!enabled) return null;
 

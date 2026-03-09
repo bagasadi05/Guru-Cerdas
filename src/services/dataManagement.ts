@@ -5,7 +5,8 @@
 
 import { supabase } from './supabase';
 import { logger } from './logger';
-import { auditLog } from './securityEnhanced';
+import { generateSecureAccessCode, auditLog } from './securityEnhanced';
+import { storageGet, storageSet } from '../utils/storage';
 
 // ============================================
 // TYPES
@@ -605,6 +606,13 @@ async function getArchiveData(id: string): Promise<ArchiveRecord | null> {
             const getRequest = store.get(id);
 
             getRequest.onsuccess = () => resolve((getRequest.result as ArchiveRecord) ?? null);
+            getRequest.onerror = () => reject(getRequest.error);
+        };
+
+        request.onerror = () => reject(request.error);
+    });
+}
+
 
 const MIGRATION_VERSION_KEY = 'portal_guru_migration_version';
 
@@ -645,15 +653,15 @@ const migrations: MigrationScript[] = [
 /**
  * Get current migration version
  */
-export function getCurrentMigrationVersion(): string {
-    return localStorage.getItem(MIGRATION_VERSION_KEY) || '0.0.0';
+export async function getCurrentMigrationVersion(): Promise<string> {
+    return (await storageGet(MIGRATION_VERSION_KEY)) || '0.0.0';
 }
 
 /**
  * Run pending migrations
  */
 export async function runMigrations(): Promise<string[]> {
-    const currentVersion = getCurrentMigrationVersion();
+    const currentVersion = await getCurrentMigrationVersion();
     const executed: string[] = [];
 
     for (const migration of migrations) {
@@ -662,7 +670,7 @@ export async function runMigrations(): Promise<string[]> {
 
             try {
                 await migration.up();
-                localStorage.setItem(MIGRATION_VERSION_KEY, migration.version);
+                await storageSet(MIGRATION_VERSION_KEY, migration.version);
                 executed.push(migration.version);
 
                 auditLog('ADMIN_ACTION', {
@@ -682,7 +690,7 @@ export async function runMigrations(): Promise<string[]> {
  * Rollback to a specific version
  */
 export async function rollbackToVersion(targetVersion: string): Promise<string[]> {
-    const currentVersion = getCurrentMigrationVersion();
+    const currentVersion = await getCurrentMigrationVersion();
     const rolledBack: string[] = [];
 
     const reversedMigrations = [...migrations].reverse();
@@ -704,7 +712,7 @@ export async function rollbackToVersion(targetVersion: string): Promise<string[]
         }
     }
 
-    localStorage.setItem(MIGRATION_VERSION_KEY, targetVersion);
+    await storageSet(MIGRATION_VERSION_KEY, targetVersion);
 
     auditLog('ADMIN_ACTION', {
         details: { action: 'ROLLBACK_MIGRATION', targetVersion, rolledBack }
@@ -744,13 +752,13 @@ const entityValidators: Record<EntityType, (record: Record<string, unknown>) => 
         if (!record.name || typeof record.name !== 'string') {
             throw new Error('Invalid name');
         }
-        if (record.gender && !['Laki-laki', 'Perempuan'].includes(record.gender)) {
+        if (record.gender && typeof record.gender === 'string' && !['Laki-laki', 'Perempuan'].includes(record.gender)) {
             throw new Error('Invalid gender');
         }
         return {
             id: record.id,
-            name: record.name.trim(),
-            class: record.class?.trim() || null,
+            name: (record.name as string).trim(),
+            class: typeof record.class === 'string' ? record.class.trim() : null,
             gender: record.gender || null,
             access_code: record.access_code || null,
             parent_contact: record.parent_contact || null,
@@ -763,7 +771,7 @@ const entityValidators: Record<EntityType, (record: Record<string, unknown>) => 
         if (!record.student_id) throw new Error('Missing student_id');
         if (!record.date) throw new Error('Missing date');
         // Use correct enum values: Hadir, Sakit, Izin, Alpha (with capital first letter)
-        if (!['Hadir', 'Sakit', 'Izin', 'Alpha'].includes(record.status)) {
+        if (!['Hadir', 'Sakit', 'Izin', 'Alpha'].includes(String(record.status))) {
             throw new Error('Invalid status. Must be one of: Hadir, Sakit, Izin, Alpha');
         }
         return {
@@ -778,7 +786,7 @@ const entityValidators: Record<EntityType, (record: Record<string, unknown>) => 
         if (!record.title) throw new Error('Missing title');
         return {
             id: record.id,
-            title: record.title.trim(),
+            title: typeof record.title === 'string' ? record.title.trim() : String(record.title),
             description: record.description || null,
             due_date: record.due_date || null,
             priority: record.priority || 'medium',
@@ -792,7 +800,7 @@ const entityValidators: Record<EntityType, (record: Record<string, unknown>) => 
         return {
             id: record.id,
             day: record.day,
-            subject: record.subject.trim(),
+            subject: typeof record.subject === 'string' ? record.subject.trim() : String(record.subject),
             start_time: record.start_time || null,
             end_time: record.end_time || null,
             room: record.room || null,
@@ -805,7 +813,7 @@ const entityValidators: Record<EntityType, (record: Record<string, unknown>) => 
         return {
             id: record.id,
             student_id: record.student_id,
-            subject: record.subject.trim(),
+            subject: typeof record.subject === 'string' ? record.subject.trim() : String(record.subject),
             score: Number(record.score) || 0,
             assessment_name: record.assessment_name || null,
             notes: record.notes || null

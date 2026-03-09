@@ -30,7 +30,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     ...props
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [isLongPressing, setIsLongPressing] = useState(false);
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -56,7 +55,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     const handleTouchStart = () => {
         if (quickActions && quickActions.length > 0) {
             longPressTimer.current = setTimeout(() => {
-                setIsLongPressing(true);
                 setIsExpanded(true);
                 // Haptic feedback if available
                 if (navigator.vibrate) {
@@ -71,7 +69,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
         }
-        setIsLongPressing(false);
     };
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {

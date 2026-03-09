@@ -11,13 +11,6 @@ const RotateCwIcon = ({ className }: { className?: string }) => (
     </svg>
 );
 
-const CropIcon = ({ className }: { className?: string }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 2v14a2 2 0 0 0 2 2h14" />
-        <path d="M18 22V8a2 2 0 0 0-2-2H2" />
-    </svg>
-);
-
 export interface ImageUploadConfig {
     maxFileSize?: number; // in MB, default 5MB
     maxWidth?: number; // default 800px
@@ -38,13 +31,6 @@ interface ImageUploaderProps {
     className?: string;
     label?: string;
     showDeleteButton?: boolean;
-}
-
-interface CropArea {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
 }
 
 const DEFAULT_CONFIG: Required<ImageUploadConfig> = {
@@ -93,16 +79,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-    // Crop state
+    const [isDragging, setIsDragging] = useState(false);
     const [zoom, setZoom] = useState(1);
     const [rotation, setRotation] = useState(0);
-    const [cropArea, setCropArea] = useState<CropArea>({ x: 0, y: 0, width: 100, height: 100 });
-    const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [position, setPosition] = useState({ x: 0, y: 0 });
 
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const imageRef = useRef<HTMLImageElement | null>(null);
     const cropContainerRef = useRef<HTMLDivElement>(null);
 
     // Cleanup preview URL on unmount

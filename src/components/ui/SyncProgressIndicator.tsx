@@ -43,7 +43,7 @@ export const SyncProgressIndicator: React.FC<SyncProgressIndicatorProps> = ({ cl
         if (isOnline && progress.status === 'idle') {
             processQueue();
         }
-    }, [isOnline]);
+    }, [isOnline, progress.status]);
 
     const handleRetry = async () => {
         setIsRetrying(true);

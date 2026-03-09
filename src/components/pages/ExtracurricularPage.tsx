@@ -1092,7 +1092,7 @@ const ExtracurricularPage: React.FC = () => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [autoSaveAttendance, localAttendance, activeTab, selectedExtracurricular, enrollments.length]);
+    }, [autoSaveAttendance, localAttendance, activeTab, selectedExtracurricular, enrollments.length, handleSaveAttendance, handleExportPDF, handleExportGradesPDF, toast]);
 
     // ==================== RENDER ====================
 

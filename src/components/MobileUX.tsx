@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Calendar, ClipboardList, Clock, Settings, Menu, MoreHorizontal } from 'lucide-react';
+import { Home, Users, Calendar, ClipboardList, Clock, MoreHorizontal } from 'lucide-react';
 
 /**
  * Mobile UX Components

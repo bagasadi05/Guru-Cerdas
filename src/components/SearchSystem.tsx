@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef, createContext, useContext, useMemo } from 'react';
-import { Search, X, Clock, TrendingUp, Users, Calendar, ClipboardList, Filter, ChevronRight, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
+import { Search, X, Clock, Users, Calendar, ClipboardList, Filter, ChevronRight } from 'lucide-react';
 import { sanitizeHtml } from '../utils/validation';
 
 /**

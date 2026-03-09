@@ -80,7 +80,7 @@ export const SemesterManagement: React.FC = () => {
             clearTimeout(timeoutId);
             setLoading(false);
         }
-    }, [user?.id, toast]); // Depend on user.id string, not user object
+    }, [user, toast]);
 
     useEffect(() => {
         if (authLoading) return;
@@ -89,7 +89,7 @@ export const SemesterManagement: React.FC = () => {
             return;
         }
         fetchData();
-    }, [authLoading, user?.id, fetchData]); // Depend on user.id string
+    }, [authLoading, user, fetchData]);
 
     const toggleYearExpand = (yearId: string) => {
         setExpandedYears(prev => {

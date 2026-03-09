@@ -1,20 +1,11 @@
-import React, { useMemo } from 'react';
-import { StatCard } from '../pages/student/StatCard';
-import { CheckCircleIcon, XCircleIcon, AlertCircleIcon, ShieldAlertIcon } from '../Icons';
+import React from 'react';
 
 type StudentStatsProps = {
     students: any[];
     activeClassId: string;
 };
 
-export const StudentStats: React.FC<StudentStatsProps> = ({ students, activeClassId }) => {
-    const studentStats = useMemo(() => {
-        const allInClass = students.filter(s => s.class_id === activeClassId);
-        const maleCount = allInClass.filter(s => s.gender === 'Laki-laki').length;
-        const femaleCount = allInClass.filter(s => s.gender === 'Perempuan').length;
-        const hasCodeCount = allInClass.filter(s => !!s.access_code).length;
-        return { total: allInClass.length, male: maleCount, female: femaleCount, hasCode: hasCodeCount };
-    }, [students, activeClassId]);
+export const StudentStats: React.FC<StudentStatsProps> = ({ activeClassId }) => {
 
     if (!activeClassId) return null;
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { ClockIcon, UsersIcon, EditIcon, PlusIcon, TrashIcon } from '../Icons';
@@ -27,13 +27,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchLogs();
-        }
-    }, [isOpen, tableName, recordId, showUserLogs]);
-
-    const fetchLogs = async () => {
+    const fetchLogs = useCallback(async () => {
         setLoading(true);
         try {
             const data = showUserLogs
@@ -45,7 +39,13 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
         } finally {
             setLoading(false);
         }
-    };
+    }, [showUserLogs, tableName, recordId]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchLogs();
+        }
+    }, [isOpen, fetchLogs]);
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);

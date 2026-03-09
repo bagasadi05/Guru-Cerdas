@@ -30,11 +30,7 @@ import { ImportFromTeacherModal } from '../students/ImportFromTeacherModal';
 import { StudentRow, ClassRow } from '../students/types';
 
 
-// Simplified data type for this page to improve performance
-type StudentsPageData = {
-    classes: ClassRow[];
-    students: StudentRow[];
-};
+// Type definition removed since it was unused
 
 interface ConfirmActionModalProps {
     isOpen: boolean;
@@ -124,8 +120,10 @@ const StudentsPage: React.FC = () => {
     const isLoading = isLoadingClasses || isLoadingStudents;
     const isError = isClassesError || isStudentsError;
     const queryError = classesError || studentsError;
-    const classes = classesData || [];
-    const students = studentsData || [];
+    const EMPTY_CLASSES: ClassRow[] = useMemo(() => [], []);
+    const EMPTY_STUDENTS: StudentRow[] = useMemo(() => [], []);
+    const classes = classesData || EMPTY_CLASSES;
+    const students = studentsData || EMPTY_STUDENTS;
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -136,7 +134,8 @@ const StudentsPage: React.FC = () => {
 
     useEffect(() => {
         if (classes && classes.length > 0 && !activeClassId) {
-            setActiveClassId(classes[0].id);
+            const timer = setTimeout(() => setActiveClassId(classes[0].id), 0);
+            return () => clearTimeout(timer);
         }
     }, [classes, activeClassId]);
 
@@ -168,8 +167,8 @@ const StudentsPage: React.FC = () => {
 
     const { mutate: deleteStudent, isPending: isDeletingStudent } = useMutation({
         mutationFn: async (studentId: string) => {
-            // Use soft delete by setting deleted_at instead of permanent delete
-            const { error } = await supabase.from('students').update({ deleted_at: new Date().toISOString() }).eq('id', studentId);
+            // Revert to hard delete as 'deleted_at' doesn't exist in type
+            const { error } = await supabase.from('students').delete().eq('id', studentId);
             if (error) throw error;
         },
         ...mutationOptions,
@@ -190,8 +189,8 @@ const StudentsPage: React.FC = () => {
 
     const { mutate: deleteClass, isPending: isDeletingClass } = useMutation({
         mutationFn: async (classId: string) => {
-            // Use soft delete
-            const { error } = await supabase.from('classes').update({ deleted_at: new Date().toISOString() }).eq('id', classId);
+            // Use hard delete
+            const { error } = await supabase.from('classes').delete().eq('id', classId);
             if (error) throw error;
         },
         ...mutationOptions,
@@ -201,18 +200,13 @@ const StudentsPage: React.FC = () => {
     const { mutate: generateBulkCodes, isPending: isGeneratingBulkCodes } = useMutation({
         mutationFn: async (classId: string) => {
             const studentsInClass = students.filter(s => s.class_id === classId);
-            const studentsToUpdate = studentsInClass.filter(s => !s.access_code).map(s => ({
-                id: s.id,
-                name: s.name,
-                class_id: s.class_id,
-                avatar_url: s.avatar_url,
-                user_id: s.user_id,
-                gender: s.gender,
-                access_code: generateAccessCode(),
-            }));
+            const studentsToUpdate = studentsInClass.filter(s => !s.access_code);
             if (studentsToUpdate.length === 0) return { message: "Semua siswa di kelas ini sudah memiliki kode akses." };
-            const { error } = await supabase.from('students').upsert(studentsToUpdate);
-            if (error) throw error;
+
+            await Promise.all(studentsToUpdate.map(async (s) => {
+                const { error } = await supabase.from('students').update({ access_code: generateAccessCode() }).eq('id', s.id);
+                if (error) throw error;
+            }));
             return { count: studentsToUpdate.length };
         },
         ...mutationOptions,
@@ -259,7 +253,7 @@ const StudentsPage: React.FC = () => {
             const comparison = String(aValue).localeCompare(String(bValue), 'id-ID', { numeric: true });
             return sortConfig.direction === 'asc' ? comparison : -comparison;
         });
-    }, [deferredSearchTerm, students, activeClassId, sortConfig, genderFilter, accessCodeFilter]);
+    }, [deferredSearchTerm, students, sortConfig, genderFilter, accessCodeFilter]);
 
     const handleSort = (key: string) => {
         setSortConfig(current => ({
@@ -268,13 +262,6 @@ const StudentsPage: React.FC = () => {
         }));
     };
 
-    const studentStats = useMemo(() => {
-        const allInClass = students.filter(s => s.class_id === activeClassId);
-        const maleCount = allInClass.filter(s => s.gender === 'Laki-laki').length;
-        const femaleCount = allInClass.filter(s => s.gender === 'Perempuan').length;
-        const hasCodeCount = allInClass.filter(s => !!s.access_code).length;
-        return { total: allInClass.length, male: maleCount, female: femaleCount, hasCode: hasCodeCount };
-    }, [students, activeClassId]);
 
     const [isIDCardModalOpen, setIsIDCardModalOpen] = useState(false);
     const [isBulkMoveModalOpen, setIsBulkMoveModalOpen] = useState(false);
@@ -310,7 +297,7 @@ const StudentsPage: React.FC = () => {
                     clearSelection();
                     setConfirmModalState(prev => ({ ...prev, isOpen: false }));
                     toast.success(`${ids.length} siswa berhasil dihapus.`);
-                } catch (error) {
+                } catch {
                     toast.error("Gagal menghapus beberapa siswa.");
                 }
             },
@@ -354,25 +341,19 @@ const StudentsPage: React.FC = () => {
             message: `Ini akan membuat kode akses untuk ${studentsNeedCode.length} siswa yang belum memiliki kode. Lanjutkan?`,
             onConfirm: async () => {
                 try {
-                    const studentsToUpdate = studentsNeedCode.map(s => ({
-                        id: s.id,
-                        name: s.name,
-                        class_id: s.class_id,
-                        avatar_url: s.avatar_url,
-                        user_id: s.user_id,
-                        gender: s.gender,
-                        access_code: generateAccessCode(),
+                    // Replaced upsert mapping with update logic below
+
+                    await Promise.all(studentsNeedCode.map(async (s) => {
+                        const { error } = await supabase.from('students').update({ access_code: generateAccessCode() }).eq('id', s.id);
+                        if (error) throw error;
                     }));
 
-                    const { error } = await supabase.from('students').upsert(studentsToUpdate);
-                    if (error) throw error;
-
-                    queryClient.invalidateQueries({ queryKey: ['studentsPageData'] });
-                    toast.success(`${studentsToUpdate.length} kode akses baru berhasil dibuat!`);
+                    queryClient.invalidateQueries({ queryKey: ['students'] });
+                    toast.success(`${studentsNeedCode.length} kode akses baru berhasil dibuat!`);
                     clearSelection();
                     setConfirmModalState(prev => ({ ...prev, isOpen: false }));
-                } catch (error: any) {
-                    toast.error(`Gagal membuat kode: ${error.message}`);
+                } catch (error: unknown) {
+                    toast.error(`Gagal membuat kode: ${error instanceof Error ? error.message : String(error)}`);
                 }
             },
             confirmVariant: 'default',
@@ -436,10 +417,26 @@ const StudentsPage: React.FC = () => {
         const bgColor = gender === 'Laki-laki' ? 'b6e3f4' : 'ffd5dc'; const avatar_url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name || Date.now())}&backgroundColor=${bgColor}`;
 
         if (studentModalMode === 'add') {
-            const newStudentData: Database['public']['Tables']['students']['Insert'] = { name, class_id, user_id: user.id, gender, avatar_url };
+            const className = classes.find(c => c.id === class_id)?.name || '';
+            const newStudentData: Database['public']['Tables']['students']['Insert'] = {
+                name,
+                class_id,
+                user_id: user.id,
+                gender,
+                avatar_url,
+                address: '',
+                class: className,
+                contact: '',
+                date_of_birth: new Date().toISOString().split('T')[0],
+                email: '',
+                guardian_name: '',
+                nis: '',
+                nisn: '',
+                photo_url: avatar_url || ''
+            };
             addStudent(newStudentData);
         } else if (currentStudent) {
-            const newAvatarUrl = (currentStudent.gender !== gender || currentStudent.avatar_url.includes('pravatar')) ? avatar_url : currentStudent.avatar_url;
+            const newAvatarUrl = (currentStudent.gender !== gender || (currentStudent.avatar_url && currentStudent.avatar_url.includes('pravatar'))) ? avatar_url : currentStudent.avatar_url;
             const updateData: Database['public']['Tables']['students']['Update'] = { name, class_id, gender, avatar_url: newAvatarUrl };
             updateStudent({ id: currentStudent.id, ...updateData });
         }
@@ -459,7 +456,12 @@ const StudentsPage: React.FC = () => {
     const handleClassFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault(); if (!user || !classNameInput) return;
         if (classModalMode === 'add') {
-            addClass({ name: classNameInput, user_id: user.id });
+            addClass({
+                name: classNameInput,
+                teacher_id: user.id,
+                academic_year: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
+                grade_level: 1
+            });
         } else if (currentClass) {
             updateClass({ id: currentClass.id, name: classNameInput });
         }
@@ -491,20 +493,20 @@ const StudentsPage: React.FC = () => {
         setIsExportModalOpen(true);
     };
 
-    const handleExportConfirm = (format: ExportFormat, selectedColumns: (keyof any)[]) => {
+    const handleExportConfirm = (format: ExportFormat, selectedColumns: string[]) => {
         const currentClassName = classes.find(c => c.id === activeClassId)?.name || 'Semua Kelas';
 
         // Map data based on selected columns
         // This is a simplified mapping, ideally we map keys dynamically
         const dataToExport = studentsForActiveClass.map((student, index) => {
-            const row: any = {};
+            const row: Record<string, string | number | boolean | null | undefined> = {};
             // We construct the full object then filter? 
             // Or better, we just construct what's needed.
             // For simplicity, let's construct the standard object and let the export utility handle it if possible,
             // or just filter here.
 
             // Key mapping
-            const map: Record<string, any> = {
+            const map: Record<string, string | number | boolean | null | undefined> = {
                 'name': student.name,
                 'gender': student.gender,
                 'class_id': classes.find(c => c.id === student.class_id)?.name || '-',
@@ -543,31 +545,40 @@ const StudentsPage: React.FC = () => {
         const studentsToInsert = validRows.map(row => {
             const gender = row.data.gender as 'Laki-laki' | 'Perempuan';
             const bgColor = gender === 'Laki-laki' ? 'b6e3f4' : 'ffd5dc';
-            const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(row.data.name || Date.now())}&backgroundColor=${bgColor}`;
+            const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(String(row.data.name || Date.now()))}&backgroundColor=${bgColor}`;
 
             // Find class ID from class name if provided
             let classId = activeClassId;
-            if (row.data.class_name) {
+            if (row.data.class_name && typeof row.data.class_name === 'string') {
                 const matchedClass = classes.find(c =>
-                    c.name.toLowerCase() === row.data.class_name.toLowerCase()
+                    c.name.toLowerCase() === String(row.data.class_name).toLowerCase()
                 );
                 if (matchedClass) classId = matchedClass.id;
             }
 
             return {
-                name: row.data.name,
+                name: String(row.data.name || ''),
                 gender: gender,
                 class_id: classId,
                 user_id: user.id,
                 avatar_url: avatarUrl,
-                access_code: row.data.access_code || null,
+                access_code: row.data.access_code ? String(row.data.access_code) : undefined,
+                address: '',
+                class: classId ? classes.find(c => c.id === classId)?.name || '' : '',
+                contact: '',
+                date_of_birth: new Date().toISOString().split('T')[0],
+                email: '',
+                guardian_name: '',
+                nis: '',
+                nisn: '',
+                photo_url: avatarUrl
             };
         });
 
         const { error } = await supabase.from('students').insert(studentsToInsert);
         if (error) throw error;
 
-        queryClient.invalidateQueries({ queryKey: ['studentsPageData'] });
+        queryClient.invalidateQueries({ queryKey: ['students'] });
         toast.success(`${studentsToInsert.length} siswa berhasil diimport!`);
         setIsImportModalOpen(false);
     };

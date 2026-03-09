@@ -188,10 +188,10 @@ const SYNC_QUEUE_STORE = 'pending-requests';
 async function openSyncDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(SYNC_QUEUE_DB, 1);
-        
+
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve(request.result);
-        
+
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(SYNC_QUEUE_STORE)) {
@@ -206,7 +206,7 @@ async function addToSyncQueue(request, data) {
     const db = await openSyncDB();
     const tx = db.transaction(SYNC_QUEUE_STORE, 'readwrite');
     const store = tx.objectStore(SYNC_QUEUE_STORE);
-    
+
     const item = {
         url: request.url,
         method: request.method,
@@ -214,7 +214,7 @@ async function addToSyncQueue(request, data) {
         body: data,
         timestamp: Date.now(),
     };
-    
+
     await store.add(item);
 }
 
@@ -223,7 +223,7 @@ async function getSyncQueue() {
     const db = await openSyncDB();
     const tx = db.transaction(SYNC_QUEUE_STORE, 'readonly');
     const store = tx.objectStore(SYNC_QUEUE_STORE);
-    
+
     return new Promise((resolve, reject) => {
         const request = store.getAll();
         request.onsuccess = () => resolve(request.result);
@@ -243,7 +243,7 @@ async function removeFromSyncQueue(id) {
 async function handleBackgroundSync() {
     try {
         const queue = await getSyncQueue();
-        
+
         for (const item of queue) {
             try {
                 const headers = new Headers(item.headers);
@@ -252,10 +252,10 @@ async function handleBackgroundSync() {
                     headers,
                     body: item.body ? JSON.stringify(item.body) : undefined,
                 });
-                
+
                 if (response.ok) {
                     await removeFromSyncQueue(item.id);
-                    
+
                     // Notify clients of successful sync
                     const clients = await self.clients.matchAll();
                     clients.forEach(client => {
@@ -278,6 +278,13 @@ async function handleBackgroundSync() {
 self.addEventListener('sync', (event) => {
     if (event.tag === 'sync-data') {
         event.waitUntil(handleBackgroundSync());
+    } else if (event.tag === 'offline-sync') {
+        // Notify clients to trigger their offline sync implementation
+        event.waitUntil(
+            self.clients.matchAll().then(clients => {
+                clients.forEach(client => client.postMessage({ type: 'TRIGGER_SYNC' }));
+            })
+        );
     }
 });
 
@@ -285,6 +292,12 @@ self.addEventListener('sync', (event) => {
 self.addEventListener('periodicsync', (event) => {
     if (event.tag === 'periodic-sync-data') {
         event.waitUntil(handleBackgroundSync());
+    } else if (event.tag === 'periodic-offline-sync') {
+        event.waitUntil(
+            self.clients.matchAll().then(clients => {
+                clients.forEach(client => client.postMessage({ type: 'TRIGGER_SYNC' }));
+            })
+        );
     }
 });
 

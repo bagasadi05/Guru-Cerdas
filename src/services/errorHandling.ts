@@ -52,7 +52,7 @@ export interface AppError {
     severity: ErrorSeverity;
     timestamp: string;
     stack?: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
     recoverable: boolean;
     retryable: boolean;
     userId?: string;
@@ -135,7 +135,7 @@ const ERROR_MESSAGES: Record<ErrorType, { title: string; message: string; action
 
 const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-export function classifyError(error: unknown, context?: Record<string, any>): AppError {
+export function classifyError(error: unknown, context?: Record<string, unknown>): AppError {
     const timestamp = new Date().toISOString();
     const errorId = crypto.randomUUID();
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -165,7 +165,7 @@ export function classifyError(error: unknown, context?: Record<string, any>): Ap
             retryable: false,
             userId,
             sessionId: SESSION_ID,
-            component: context.component,
+            component: context.component as string | undefined,
             url,
             userAgent
         };
@@ -173,8 +173,8 @@ export function classifyError(error: unknown, context?: Record<string, any>): Ap
 
     // Network errors
     if (error instanceof TypeError && (
-        error.message.includes('fetch') || 
-        error.message.includes('network') || 
+        error.message.includes('fetch') ||
+        error.message.includes('network') ||
         error.message.includes('connection')
     )) {
         return {
@@ -217,9 +217,10 @@ export function classifyError(error: unknown, context?: Record<string, any>): Ap
     }
 
     // Response errors
-    if (error instanceof Response || (error as any)?.status) {
-        const status = (error as any).status;
-        const statusText = (error as any).statusText || '';
+    const responseError = error as { status?: number; statusText?: string };
+    if (error instanceof Response || (responseError?.status != null)) {
+        const status = responseError.status!;
+        const statusText = responseError.statusText || '';
 
         if (status === 401 || status === 403) {
             return {
@@ -324,10 +325,11 @@ export function classifyError(error: unknown, context?: Record<string, any>): Ap
     }
 
     // Validation errors
-    if ((error as any)?.errors || (error as any)?.issues) {
+    const validationErr = error as { errors?: unknown; issues?: unknown };
+    if (validationErr?.errors || validationErr?.issues) {
         let validationMessage: string;
         try {
-            validationMessage = JSON.stringify((error as any).errors || (error as any).issues);
+            validationMessage = JSON.stringify(validationErr.errors || validationErr.issues);
         } catch {
             validationMessage = '[Validation errors cannot be serialized]';
         }
@@ -340,9 +342,9 @@ export function classifyError(error: unknown, context?: Record<string, any>): Ap
             userMessage: ERROR_MESSAGES[ErrorType.VALIDATION].message,
             severity: ErrorSeverity.LOW,
             timestamp,
-            context: { 
-                ...context, 
-                errors: (error as any).errors || (error as any).issues 
+            context: {
+                ...context,
+                errors: validationErr.errors || validationErr.issues
             },
             recoverable: true,
             retryable: false,
@@ -449,7 +451,7 @@ class ErrorReporter {
     private constructor() {
         // Configure monitoring endpoint from environment
         this.monitoringEndpoint = import.meta.env.VITE_ERROR_MONITORING_ENDPOINT;
-        
+
         // Start flush interval
         this.flushInterval = setInterval(() => this.flush(), 30000);
 
@@ -486,7 +488,7 @@ class ErrorReporter {
         };
     }
 
-    report(error: unknown, context?: Record<string, any>): AppError {
+    report(error: unknown, context?: Record<string, unknown>): AppError {
         const appError = classifyError(error, context);
 
         if (!this.enabled) {
@@ -595,10 +597,19 @@ export const errorReporter = ErrorReporter.getInstance();
 // RECOVERY STRATEGIES
 // ============================================
 
+/** Context for recovery strategies */
+export interface RecoveryContext {
+    retryFn?: () => Promise<unknown>;
+    getCached?: () => Promise<unknown>;
+    setData?: (data: unknown) => void;
+    fallbackData?: unknown;
+    [key: string]: unknown;
+}
+
 export interface RecoveryStrategy {
     name: string;
     canRecover: (error: AppError) => boolean;
-    recover: (error: AppError, context?: any) => Promise<boolean>;
+    recover: (error: AppError, context?: RecoveryContext) => Promise<boolean>;
 }
 
 const recoveryStrategies: RecoveryStrategy[] = [
@@ -656,7 +667,7 @@ const recoveryStrategies: RecoveryStrategy[] = [
 
 export async function attemptRecovery(
     error: AppError,
-    context?: Record<string, any>
+    context?: RecoveryContext
 ): Promise<{ recovered: boolean; strategy?: string }> {
     for (const strategy of recoveryStrategies) {
         if (strategy.canRecover(error)) {

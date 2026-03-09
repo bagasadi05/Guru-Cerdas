@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
@@ -37,16 +37,16 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     const [timeLeft, setTimeLeft] = useState<string>('');
 
     // Generate a unique token for this QR session
-    const generateToken = () => {
+    const generateToken = useCallback(() => {
         const newToken = crypto.randomUUID().split('-').pop() || '';
         const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
         setToken(newToken);
         setExpiresAt(expiry);
         return { token: newToken, expiry };
-    };
+    }, []);
 
     // Generate QR code
-    const generateQR = async () => {
+    const generateQR = useCallback(async () => {
         const { token: newToken, expiry } = generateToken();
 
         const qrData: QRData = {
@@ -72,7 +72,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         } catch (err) {
             console.error('Error generating QR code:', err);
         }
-    };
+    }, [classId, date, userId, generateToken]);
 
     // Countdown timer
     useEffect(() => {
@@ -93,14 +93,14 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [expiresAt, isOpen]);
+    }, [expiresAt, isOpen, generateQR]);
 
     // Generate QR on open
     useEffect(() => {
         if (isOpen && classId) {
             setTimeout(generateQR, 0);
         }
-    }, [isOpen, classId, date]);
+    }, [isOpen, classId, date, generateQR]);
 
     const handleDownload = () => {
         if (!qrDataUrl) return;

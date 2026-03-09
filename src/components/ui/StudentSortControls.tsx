@@ -1,6 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { ChevronUpIcon, ChevronDownIcon, FilterIcon, UsersIcon } from '../Icons';
-import { Button } from './Button';
+import React from 'react';
+import { ChevronUpIcon, ChevronDownIcon, UsersIcon } from '../Icons';
 
 export type SortField = 'name' | 'score' | 'status' | 'index';
 export type SortDirection = 'asc' | 'desc';
@@ -61,8 +60,6 @@ export const StudentSortControls: React.FC<StudentSortControlsProps> = ({
     showGrouping = true,
     className = '',
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
     const handleSortClick = (field: SortField) => {
         if (sortConfig.field === field) {
             onSortChange({
@@ -254,13 +251,18 @@ export function groupStudents<T extends { id: string; name: string }>(
         const noScore: T[] = [];
 
         students.forEach(student => {
-            const score = parseFloat(String(scores[student.id] || ''));
-            if (isNaN(score) || scores[student.id] === '') {
+            const rawScore = scores[student.id];
+            if (rawScore === undefined || rawScore === null || rawScore === '') {
                 noScore.push(student);
-            } else if (score >= kkm) {
-                aboveKkm.push(student);
             } else {
-                belowKkm.push(student);
+                const score = parseFloat(String(rawScore));
+                if (isNaN(score)) {
+                    noScore.push(student);
+                } else if (score >= kkm) {
+                    aboveKkm.push(student);
+                } else {
+                    belowKkm.push(student);
+                }
             }
         });
 
@@ -287,17 +289,22 @@ export function groupStudents<T extends { id: string; name: string }>(
         ];
 
         students.forEach(student => {
-            const score = parseFloat(String(scores[student.id] || ''));
-            if (isNaN(score) || scores[student.id] === '') {
+            const rawScore = scores[student.id];
+            if (rawScore === undefined || rawScore === null || rawScore === '') {
                 ranges[4].students.push(student);
-            } else if (score >= 90) {
-                ranges[0].students.push(student);
-            } else if (score >= 75) {
-                ranges[1].students.push(student);
-            } else if (score >= 60) {
-                ranges[2].students.push(student);
             } else {
-                ranges[3].students.push(student);
+                const score = parseFloat(String(rawScore));
+                if (isNaN(score)) {
+                    ranges[4].students.push(student);
+                } else if (score >= 90) {
+                    ranges[0].students.push(student);
+                } else if (score >= 75) {
+                    ranges[1].students.push(student);
+                } else if (score >= 60) {
+                    ranges[2].students.push(student);
+                } else {
+                    ranges[3].students.push(student);
+                }
             }
         });
 

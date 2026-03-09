@@ -88,7 +88,7 @@ export const useGradeManagement = (
 
         // Create backup before submit
         const backupKey = createGradeBackupKey(classId, subject, assessmentName);
-        createBackup(grades, {
+        await createBackup(grades, {
             key: backupKey,
             context: `Nilai ${subject} - ${assessmentName}`,
         });
@@ -134,7 +134,7 @@ export const useGradeManagement = (
         if (!lastGrades) {
             // Try to restore from backup
             const backupKey = createGradeBackupKey(classId, subject, assessmentName);
-            const restored = restoreBackup<GradeInput[]>(backupKey);
+            const restored = await restoreBackup<GradeInput[]>(backupKey);
 
             if (restored) {
                 return submitGrades(restored);

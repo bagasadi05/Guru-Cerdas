@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, createContext, useContext, useMemo } from 'react';
-import { Check, Trash2, Archive, Download, MoreHorizontal, GripVertical, X, Move, Plus, Minus, Settings, Eye, EyeOff, ChevronDown, FileText, Table, Loader2 } from 'lucide-react';
+import { Check, Trash2, Download, MoreHorizontal, GripVertical, X, Plus, Settings, Eye, EyeOff, FileText, Table, Loader2 } from 'lucide-react';
 
 /**
  * Advanced Features

@@ -78,7 +78,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
         staleTime: 1000 * 60,
     });
 
-    const searchHistory = useMemo(() => getSearchHistory(), [isOpen]);
+    const searchHistory = useMemo(() => getSearchHistory(), []);
 
     const handleNavigate = useCallback((result: SearchResult) => {
         addToSearchHistory(searchTerm);
@@ -103,16 +103,12 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
         if (isOpen) {
             setTimeout(() => {
                 inputRef.current?.focus();
-                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setShowHistory(true);
             }, 0);
         } else {
             setTimeout(() => {
-                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setSearchTerm('');
-                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setActiveIndex(0);
-                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setActiveTab('all');
             }, 0);
         }

@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { storageGetJSON, storageSetJSON } from '../utils/storage';
 
 // ============================================
 // TYPES
@@ -126,9 +127,9 @@ class OfflineQueueService {
                 this.notifyListeners();
             };
         } catch {
-            // Fallback to localStorage
-            const stored = localStorage.getItem(QUEUE_STORAGE_KEY);
-            this.queue = stored ? JSON.parse(stored) : [];
+            // Fallback to storage utility
+            const stored = await storageGetJSON<QueueItem<Record<string, unknown>>[]>(QUEUE_STORAGE_KEY);
+            this.queue = stored || [];
         }
     }
 
@@ -149,8 +150,8 @@ class OfflineQueueService {
                 store.add(item);
             }
         } catch {
-            // Fallback to localStorage
-            localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(this.queue));
+            // Fallback to storage utility
+            await storageSetJSON(QUEUE_STORAGE_KEY, this.queue);
         }
 
         this.notifyListeners();

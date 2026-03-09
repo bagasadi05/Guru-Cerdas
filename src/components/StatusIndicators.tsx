@@ -165,7 +165,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onSync }) 
         if (isOnline && queuedOperations.length > 0) {
             setTimeout(sync, 0);
         }
-    }, [isOnline]);
+    }, [isOnline, queuedOperations.length, sync]);
 
     return (
         <SyncContext.Provider value={{

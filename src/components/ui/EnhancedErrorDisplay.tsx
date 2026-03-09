@@ -313,19 +313,6 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
     const [isRetrying, setIsRetrying] = useState(false);
     const [retryCount, setRetryCount] = useState(0);
 
-    const setError = useCallback((err: unknown) => {
-        const parsed = parseError(err);
-        setErrorState(parsed);
-        setRetryCount(0);
-
-        // Auto-retry for network errors
-        if (autoRetry && parsed.retryable && onRetry) {
-            setTimeout(() => {
-                retry();
-            }, autoRetryDelay);
-        }
-    }, [autoRetry, autoRetryDelay, onRetry]);
-
     const clearError = useCallback(() => {
         setErrorState(null);
         setRetryCount(0);
@@ -346,6 +333,19 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
             setIsRetrying(false);
         }
     }, [onRetry, isRetrying, retryCount, maxRetries, clearError]);
+
+    const setError = useCallback((err: unknown) => {
+        const parsed = parseError(err);
+        setErrorState(parsed);
+        setRetryCount(0);
+
+        // Auto-retry for network errors
+        if (autoRetry && parsed.retryable && onRetry) {
+            setTimeout(() => {
+                retry();
+            }, autoRetryDelay);
+        }
+    }, [autoRetry, autoRetryDelay, onRetry, retry]);
 
     return {
         error,

@@ -20,7 +20,7 @@ import { startCleanupScheduler } from './services/CleanupService';
 import { useSessionTimeout } from './hooks/useSessionTimeout';
 import { SessionTimeoutWarning } from './components/ui/SessionTimeoutWarning';
 import { cleanupExpiredBackups } from './utils/dataBackup';
-import { globalSearch } from './services/SearchService';
+import { globalSearch, type SearchEntityType } from './services/SearchService';
 import type { SearchResult } from './components/SearchSystem';
 import { SkipToMainContent } from './utils/pageAccessibility';
 
@@ -28,7 +28,7 @@ import { SkipToMainContent } from './utils/pageAccessibility';
 startCleanupScheduler();
 
 // Cleanup expired backups on app load
-cleanupExpiredBackups();
+void cleanupExpiredBackups();
 
 // Lazy load pages for code splitting using path aliases
 const RoleSelectionPage = lazy(() => import('@/components/pages/RoleSelectionPage'));
@@ -85,20 +85,17 @@ const loadingSpinner = (
 
 function App() {
   useClickSound();
-  const queryClientRef = React.useRef<QueryClient | null>(null);
-  if (!queryClientRef.current) {
-    queryClientRef.current = new QueryClient({
-      defaultOptions: {
-        queries: {
-          staleTime: 1000 * 60 * 5, // 5 minutes
-          refetchOnWindowFocus: false,
-        },
+  const [queryClient] = React.useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchOnWindowFocus: false,
       },
-    });
-  }
+    },
+  }));
 
   return (
-    <AppProviders queryClient={queryClientRef.current}>
+    <AppProviders queryClient={queryClient}>
       <Suspense fallback={loadingSpinner}>
         <BrowserRouter>
           <AppContent />
@@ -177,7 +174,7 @@ function AppContent() {
     if (!session?.user?.id || !query || query.length < 2) return [];
 
     // Map SearchSystem's 'schedule' to SearchService's 'schedules'
-    const entityType = (type === 'schedule' ? 'schedules' : type) as Parameters<typeof globalSearch>[2]['entityType'];
+    const entityType = (type === 'schedule' ? 'schedules' : type) as SearchEntityType;
 
     try {
       const serviceResults = await globalSearch(session.user.id, query, { entityType, limit: 10 });

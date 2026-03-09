@@ -5,6 +5,7 @@
  */
 
 import { logger } from './logger';
+import { storageGetJSON, storageSetJSON, storageRemove } from '../utils/storage';
 
 // ============================================
 // CSRF PROTECTION
@@ -476,38 +477,36 @@ export function auditLog(
 }
 
 function storeAuditLog(entry: AuditLogEntry): void {
-    try {
-        const stored = localStorage.getItem(AUDIT_LOG_KEY);
-        const logs: AuditLogEntry[] = stored ? JSON.parse(stored) : [];
+    void (async () => {
+        try {
+            const logs = await storageGetJSON<AuditLogEntry[]>(AUDIT_LOG_KEY) ?? [];
 
-        logs.unshift(entry);
+            logs.unshift(entry);
 
-        // Keep only the last N entries
-        if (logs.length > MAX_AUDIT_ENTRIES) {
-            logs.length = MAX_AUDIT_ENTRIES;
+            // Keep only the last N entries
+            if (logs.length > MAX_AUDIT_ENTRIES) {
+                logs.length = MAX_AUDIT_ENTRIES;
+            }
+
+            await storageSetJSON(AUDIT_LOG_KEY, logs);
+        } catch {
+            // Ignore storage errors
         }
-
-        localStorage.setItem(AUDIT_LOG_KEY, JSON.stringify(logs));
-    } catch {
-        // Ignore storage errors
-    }
+    })();
 }
 
 /**
  * Get audit log entries
  */
-export function getAuditLog(options: {
+export async function getAuditLog(options: {
     action?: AuditAction;
     userId?: string;
     startDate?: Date;
     endDate?: Date;
     limit?: number;
-} = {}): AuditLogEntry[] {
+} = {}): Promise<AuditLogEntry[]> {
     try {
-        const stored = localStorage.getItem(AUDIT_LOG_KEY);
-        if (!stored) return [];
-
-        let logs: AuditLogEntry[] = JSON.parse(stored);
+        let logs = await storageGetJSON<AuditLogEntry[]>(AUDIT_LOG_KEY) ?? [];
 
         // Filter by action
         if (options.action) {
@@ -541,16 +540,16 @@ export function getAuditLog(options: {
 /**
  * Clear audit log (admin only)
  */
-export function clearAuditLog(): void {
+export async function clearAuditLog(): Promise<void> {
     auditLog('ADMIN_ACTION', { details: { action: 'CLEAR_AUDIT_LOG' } });
-    localStorage.removeItem(AUDIT_LOG_KEY);
+    await storageRemove(AUDIT_LOG_KEY);
 }
 
 /**
  * Export audit log as JSON
  */
-export function exportAuditLog(): string {
-    const logs = getAuditLog();
+export async function exportAuditLog(): Promise<string> {
+    const logs = await getAuditLog();
     auditLog('EXPORT_DATA', { details: { type: 'AUDIT_LOG', count: logs.length } });
     return JSON.stringify(logs, null, 2);
 }

@@ -56,7 +56,7 @@ export const UndoToast: React.FC<UndoToastProps> = ({
         }, 100);
 
         return () => clearInterval(interval);
-    }, [actionId]);
+    }, [actionId, handleDismiss]);
 
     const handleUndo = useCallback(async () => {
         if (isUndoing || !canUndo(actionId)) return;

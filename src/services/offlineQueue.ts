@@ -14,6 +14,7 @@
 
 import { Database } from "./database.types";
 import { supabase } from "./supabase";
+import { storageGetJSON, storageSetJSON, storageRemove } from '../utils/storage';
 
 const QUEUE_KEY = 'supabase-offline-queue';
 const DB_NAME = 'PortalGuruOfflineDB';
@@ -97,21 +98,21 @@ const initDB = (): Promise<IDBDatabase> => {
 };
 
 /**
- * Fallback to localStorage if IndexedDB is not available
+ * Fallback to storage utility if IndexedDB fails
  */
-const getQueueFromLocalStorage = (): QueuedMutation[] => {
+const getQueueFromStorageUtility = async (): Promise<QueuedMutation[]> => {
     try {
-        const queue = localStorage.getItem(QUEUE_KEY);
-        return queue ? JSON.parse(queue) : [];
+        const queue = await storageGetJSON<QueuedMutation[]>(QUEUE_KEY);
+        return queue || [];
     } catch (e) {
-        console.error("Failed to read offline queue from localStorage", e);
-        localStorage.removeItem(QUEUE_KEY);
+        console.error("Failed to read offline queue from storage utility", e);
+        await storageRemove(QUEUE_KEY);
         return [];
     }
 };
 
-const saveQueueToLocalStorage = (queue: QueuedMutation[]) => {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+const saveQueueToStorageUtility = async (queue: QueuedMutation[]): Promise<void> => {
+    await storageSetJSON(QUEUE_KEY, queue);
     window.dispatchEvent(new Event('storage'));
 };
 
@@ -134,9 +135,9 @@ export const getQueue = async (): Promise<QueuedMutation[]> => {
                 reject(request.error);
             };
         });
-    } catch (e) {
-        // Fallback to localStorage
-        return getQueueFromLocalStorage();
+    } catch {
+        // Fallback to storage utility
+        return await getQueueFromStorageUtility();
     }
 };
 
@@ -169,11 +170,11 @@ export const addToQueue = async (mutation: Omit<QueuedMutation, 'id' | 'status' 
                 reject(request.error);
             };
         });
-    } catch (e) {
-        // Fallback to localStorage
-        const queue = getQueueFromLocalStorage();
+    } catch {
+        // Fallback to storage utility
+        const queue = await getQueueFromStorageUtility();
         queue.push(newMutation);
-        saveQueueToLocalStorage(queue);
+        await saveQueueToStorageUtility(queue);
     }
 };
 
@@ -202,13 +203,13 @@ export const updateMutation = async (id: string, updates: Partial<QueuedMutation
 
             getRequest.onerror = () => reject(getRequest.error);
         });
-    } catch (e) {
-        // Fallback to localStorage
-        const queue = getQueueFromLocalStorage();
+    } catch {
+        // Fallback to storage utility
+        const queue = await getQueueFromStorageUtility();
         const index = queue.findIndex(m => m.id === id);
         if (index !== -1) {
             queue[index] = { ...queue[index], ...updates };
-            saveQueueToLocalStorage(queue);
+            await saveQueueToStorageUtility(queue);
         }
     }
 };
@@ -231,11 +232,11 @@ export const removeMutation = async (id: string): Promise<void> => {
 
             request.onerror = () => reject(request.error);
         });
-    } catch (e) {
-        // Fallback to localStorage
-        const queue = getQueueFromLocalStorage();
+    } catch {
+        // Fallback to storage utility
+        const queue = await getQueueFromStorageUtility();
         const filteredQueue = queue.filter(m => m.id !== id);
-        saveQueueToLocalStorage(filteredQueue);
+        await saveQueueToStorageUtility(filteredQueue);
     }
 };
 
@@ -257,8 +258,8 @@ export const clearQueue = async (): Promise<void> => {
 
             request.onerror = () => reject(request.error);
         });
-    } catch (e) {
-        localStorage.removeItem(QUEUE_KEY);
+    } catch {
+        await storageRemove(QUEUE_KEY);
         window.dispatchEvent(new Event('storage'));
     }
 };
@@ -316,16 +317,20 @@ const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
 
         switch (operation) {
             case 'insert':
-                result = await supabase.from(table).insert(payload);
+                result = await supabase.from(table).insert(payload as any);
                 break;
             case 'update':
-                result = await supabase.from(table).update(payload).match({ id: payload.id });
+                result = await supabase.from(table).update(payload as any).match({ id: (payload as any).id });
                 break;
             case 'upsert':
-                result = await supabase.from(table).upsert(payload, onConflict ? { onConflict } : undefined);
+                if (onConflict) {
+                    result = await supabase.from(table).upsert(payload as any, { onConflict });
+                } else {
+                    result = await supabase.from(table).upsert(payload as any);
+                }
                 break;
             case 'delete':
-                result = await supabase.from(table).delete().match({ id: payload.id });
+                result = await supabase.from(table).delete().match({ id: (payload as any).id });
                 break;
             default:
                 throw new Error(`Unknown operation: ${operation}`);
@@ -359,10 +364,11 @@ export const retryMutation = async (id: string): Promise<boolean> => {
         await processMutation(mutation);
         await removeMutation(id);
         return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         await updateMutation(id, {
             status: 'failed',
-            error: error.message,
+            error: errorMessage,
             retryCount: mutation.retryCount + 1
         });
         return false;
@@ -419,10 +425,11 @@ export const processQueue = async (): Promise<SyncProgress> => {
             await processMutation(mutation);
             await removeMutation(mutation.id);
             progress.succeeded++;
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             await updateMutation(mutation.id, {
                 status: 'failed',
-                error: error.message,
+                error: errorMessage,
                 retryCount: mutation.retryCount + 1
             });
             progress.failed++;

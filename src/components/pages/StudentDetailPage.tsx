@@ -318,7 +318,7 @@ const StudentDetailPage = () => {
             semester_id: activeSemester?.id || null,
         };
         if (modalState.type === 'quiz' && modalState.data?.id) {
-            quizMutation.mutate({ operation: 'edit', data: quizPayload, id: modalState.data.id as any });
+            quizMutation.mutate({ operation: 'edit', data: quizPayload, id: String(modalState.data.id) });
         } else {
             quizMutation.mutate({ operation: 'add', data: quizPayload });
         }
@@ -435,8 +435,8 @@ const StudentDetailPage = () => {
 
             queryClient.invalidateQueries({ queryKey: ['studentStats', studentId] });
             toast.success(`Status tindak lanjut berhasil diubah menjadi "${status === 'pending' ? 'Belum Ditindak' : status === 'in_progress' ? 'Sedang Diproses' : 'Sudah Selesai'}"`);
-        } catch (error: any) {
-            toast.error(`Gagal mengubah status: ${error.message}`);
+        } catch (error: unknown) {
+            toast.error(`Gagal mengubah status: ${error instanceof Error ? error.message : String(error)}`);
         }
     };
 
@@ -475,8 +475,8 @@ const StudentDetailPage = () => {
             queryClient.invalidateQueries({ queryKey: ['studentStats', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
             toast.success('Notifikasi pelanggaran berhasil dikirim ke orang tua!');
-        } catch (error: any) {
-            toast.error(`Gagal mengirim notifikasi: ${error.message}`);
+        } catch (error: unknown) {
+            toast.error(`Gagal mengirim notifikasi: ${error instanceof Error ? error.message : String(error)}`);
         }
     };
 
@@ -498,8 +498,8 @@ const StudentDetailPage = () => {
 
             const { data: publicUrlData } = supabase.storage.from('student_assets').getPublicUrl(filePath);
             studentMutation.mutate({ avatar_url: publicUrlData.publicUrl });
-        } catch (error: any) {
-            toast.error(`Gagal unggah foto: ${error.message}`);
+        } catch (error: unknown) {
+            toast.error(`Gagal unggah foto: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
             setIsUploadingPhoto(false);
         }
@@ -807,7 +807,7 @@ const StudentDetailPage = () => {
                                 studentData={{
                                     student: {
                                         name: student.name,
-                                        age: (student as any).age || 12,
+                                        age: student.date_of_birth ? new Date().getFullYear() - new Date(student.date_of_birth).getFullYear() : 12,
                                         class: student.classes?.name
                                     },
                                     academicRecords: filteredAcademicRecords.map((r: AcademicRecordRow) => ({
