@@ -15,6 +15,15 @@ export interface SortConfig {
     direction: 'asc' | 'desc';
 }
 
+export interface ConfirmModalState {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmVariant?: 'default' | 'destructive';
+    confirmText?: string;
+}
+
 export interface StudentTableProps extends StudentViewProps {
     isAllSelected: boolean;
     toggleAll: () => void;

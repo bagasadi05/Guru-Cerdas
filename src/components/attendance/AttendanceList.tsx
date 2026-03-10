@@ -105,9 +105,11 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                                 ${activeClass}
                                             `}
                                             title={opt.label}
+                                            aria-label={opt.label}
                                             aria-pressed={isActive}
                                         >
-                                            <opt.icon className="w-5 h-5" />
+                                            <opt.icon className="w-5 h-5" aria-hidden="true" />
+                                            <span className="sr-only">{opt.label}</span>
                                         </button>
                                     );
                                 })}
@@ -123,19 +125,36 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                             : 'text-slate-400 hover:text-green-600 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }
                                     `}
-                                    title="Catatan"
+                                    title={record?.note ? 'Edit catatan' : 'Tambah catatan'}
+                                    aria-label={record?.note ? 'Edit catatan siswa' : 'Tambah catatan siswa'}
                                 >
-                                    <PencilIcon className="w-5 h-5" />
+                                    <PencilIcon className="w-5 h-5" aria-hidden="true" />
+                                    <span className="sr-only">{record?.note ? 'Edit catatan' : 'Tambah catatan'}</span>
                                 </button>
-                                <a
-                                    href={createWhatsAppLink(student.parent_phone || '', generateAttendanceMessage(student.name, record?.status || 'Belum Diabsen', formattedDate))}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-11 h-11 flex items-center justify-center rounded-lg transition-all border border-transparent text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
-                                    title="Kirim via WhatsApp"
-                                >
-                                    <Share2Icon className="w-5 h-5" />
-                                </a>
+                                {(() => {
+                                    const hasValidPhone = !!(student.parent_phone && student.parent_phone.trim().replace(/\D/g, '').length >= 8);
+                                    return hasValidPhone ? (
+                                        <a
+                                            href={createWhatsAppLink(student.parent_phone!, generateAttendanceMessage(student.name, record?.status || 'Belum Diabsen', formattedDate))}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-11 h-11 flex items-center justify-center rounded-lg transition-all border border-transparent text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                            title="Kirim notifikasi via WhatsApp"
+                                            aria-label={`Kirim notifikasi kehadiran ${student.name} via WhatsApp`}
+                                        >
+                                            <Share2Icon className="w-5 h-5" aria-hidden="true" />
+                                        </a>
+                                    ) : (
+                                        <button
+                                            disabled
+                                            className="w-11 h-11 flex items-center justify-center rounded-lg border border-transparent text-slate-300 dark:text-slate-600 cursor-not-allowed opacity-50"
+                                            title="Nomor WhatsApp orang tua belum diisi"
+                                            aria-label="Kirim via WhatsApp (nomor orang tua tidak tersedia)"
+                                        >
+                                            <Share2Icon className="w-5 h-5" aria-hidden="true" />
+                                        </button>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>

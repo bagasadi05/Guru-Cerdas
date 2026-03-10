@@ -25,7 +25,9 @@ import { SchedulePageSkeleton } from '../skeletons/PageSkeletons';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 import { getJsPDF } from '../../utils/dynamicImports';
 import { WeeklyScheduleView } from '../schedule/WeeklyScheduleView';
-import { LayoutGridIcon, ListIcon } from '../Icons';
+import { ScheduleDaySelector } from '../schedule/ScheduleDaySelector';
+import { ScheduleViewToolbar } from '../schedule/ScheduleViewToolbar';
+import { type ScheduleViewMode } from '../schedule/scheduleMenuConfig';
 
 const scheduleRules: ValidationRules = {
     subject: [ValidationService.validators.required("Mata pelajaran harus diisi")],
@@ -190,7 +192,7 @@ const SchedulePage: React.FC = () => {
     const [formData, setFormData] = useState<Omit<Database['public']['Tables']['schedules']['Insert'], 'id' | 'created_at' | 'user_id'>>({ day: 'Senin', start_time: '08:00', end_time: '09:30', subject: '', class_id: '' });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('daily');
+    const [viewMode, setViewMode] = useState<ScheduleViewMode>('daily');
     const [selectedDay, setSelectedDay] = useState<string>(new Date().toLocaleDateString('id-ID', { weekday: 'long' }));
 
     // Ensure selectedDay is valid, fallback to Senin if not
@@ -778,61 +780,19 @@ const SchedulePage: React.FC = () => {
 
                 {/* Day Selector & List (Visible on all screens) */}
                 <div className="space-y-6">
-                    <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-6 sm:gap-3 lg:gap-4 sm:overflow-visible sm:pb-0">
-                        {daysOfWeek.map((day) => {
-                            const isToday = day === new Date().toLocaleDateString('id-ID', { weekday: 'long' });
-                            const isSelected = selectedDay === day;
+                    <ScheduleDaySelector
+                        days={daysOfWeek}
+                        selectedDay={selectedDay}
+                        onSelectDay={setSelectedDay}
+                        getDayNumber={getDayNumber}
+                    />
 
-                            return (
-                                <button
-                                    key={day}
-                                    onClick={() => setSelectedDay(day)}
-                                    className={`
-                                        relative flex flex-col items-center justify-center gap-1.5
-                                        min-w-[52px] h-16 flex-shrink-0 snap-center rounded-2xl transition-all duration-300
-                                        sm:min-w-0 sm:w-full sm:h-[72px] lg:h-[80px]
-                                        ${isSelected
-                                            ? 'bg-[#10B981] text-white shadow-lg shadow-green-500/30'
-                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50'
-                                        }
-                                    `}
-                                >
-                                    <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-widest ${isSelected ? 'text-green-100' : 'text-slate-400 dark:text-slate-500'}`}>{day.substring(0, 3)}</span>
-                                    <span className="text-xl sm:text-2xl font-bold">{getDayNumber(day)}</span>
-                                    {isToday && <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${isSelected ? 'bg-white' : 'bg-green-500'}`}></span>}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                        <h2 className="flex items-center gap-2">
-                            <span className="inline-flex items-center px-2.5 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-sm font-medium rounded-lg">
-                                {viewMode === 'daily' ? `${currentDaySchedule.length} Sesi` : 'Mingguan'}
-                            </span>
-                            <span className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full" />
-                            <span className="text-lg font-semibold text-slate-800 dark:text-white">
-                                {viewMode === 'daily' ? selectedDay : 'Ringkasan Minggu Ini'}
-                            </span>
-                        </h2>
-
-                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                            <button
-                                onClick={() => setViewMode('daily')}
-                                className={`p-2 rounded-lg transition-all ${viewMode === 'daily' ? 'bg-white dark:bg-slate-700 shadow text-green-600 dark:text-green-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                title="Tampilan Harian"
-                            >
-                                <ListIcon className="w-5 h-5" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('weekly')}
-                                className={`p-2 rounded-lg transition-all ${viewMode === 'weekly' ? 'bg-white dark:bg-slate-700 shadow text-green-600 dark:text-green-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                title="Tampilan Mingguan"
-                            >
-                                <LayoutGridIcon className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
+                    <ScheduleViewToolbar
+                        viewMode={viewMode}
+                        selectedDay={selectedDay}
+                        currentDaySessions={currentDaySchedule.length}
+                        onViewModeChange={setViewMode}
+                    />
 
                     {viewMode === 'weekly' ? (
                         <WeeklyScheduleView schedule={schedule} onEdit={handleOpenEditModal} />

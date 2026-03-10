@@ -1615,8 +1615,8 @@ const ExtracurricularPage: React.FC = () => {
                                                             <div className="flex gap-2">
                                                                 {[
                                                                     { label: 'Hadir', status: 'Hadir', icon: CheckSquare, color: 'emerald', bg: 'bg-emerald-50', hover: 'hover:bg-emerald-100', border: 'border-emerald-200', text: 'text-emerald-700' },
-                                                                    { label: 'Sakit', status: 'Sakit', icon: Activity, color: 'amber', bg: 'bg-amber-50', hover: 'hover:bg-amber-100', border: 'border-amber-200', text: 'text-amber-700' },
-                                                                    { label: 'Izin', status: 'Izin', icon: Info, color: 'blue', bg: 'bg-blue-50', hover: 'hover:bg-blue-100', border: 'border-blue-200', text: 'text-blue-700' },
+                                                                    { label: 'Sakit', status: 'Sakit', icon: Activity, color: 'sky', bg: 'bg-sky-50', hover: 'hover:bg-sky-100', border: 'border-sky-200', text: 'text-sky-700' },
+                                                                    { label: 'Izin', status: 'Izin', icon: Info, color: 'amber', bg: 'bg-amber-50', hover: 'hover:bg-amber-100', border: 'border-amber-200', text: 'text-amber-700' },
                                                                     { label: 'Libur', status: 'Libur', icon: CalendarOff, color: 'purple', bg: 'bg-purple-50', hover: 'hover:bg-purple-100', border: 'border-purple-200', text: 'text-purple-700' },
                                                                 ].map((btn) => (
                                                                     <button
@@ -1645,8 +1645,8 @@ const ExtracurricularPage: React.FC = () => {
                                                         <div className="flex gap-2">
                                                             {[
                                                                 { label: 'Hadir', status: 'Hadir', icon: CheckSquare, color: 'emerald', bg: 'bg-emerald-50', hover: 'hover:bg-emerald-100', border: 'border-emerald-200', text: 'text-emerald-700' },
-                                                                { label: 'Sakit', status: 'Sakit', icon: Activity, color: 'amber', bg: 'bg-amber-50', hover: 'hover:bg-amber-100', border: 'border-amber-200', text: 'text-amber-700' },
-                                                                { label: 'Izin', status: 'Izin', icon: Info, color: 'blue', bg: 'bg-blue-50', hover: 'hover:bg-blue-100', border: 'border-blue-200', text: 'text-blue-700' },
+                                                                { label: 'Sakit', status: 'Sakit', icon: Activity, color: 'sky', bg: 'bg-sky-50', hover: 'hover:bg-sky-100', border: 'border-sky-200', text: 'text-sky-700' },
+                                                                { label: 'Izin', status: 'Izin', icon: Info, color: 'amber', bg: 'bg-amber-50', hover: 'hover:bg-amber-100', border: 'border-amber-200', text: 'text-amber-700' },
                                                                 { label: 'Libur', status: 'Libur', icon: CalendarOff, color: 'purple', bg: 'bg-purple-50', hover: 'hover:bg-purple-100', border: 'border-purple-200', text: 'text-purple-700' },
                                                             ].map((btn) => (
                                                                 <button
@@ -1665,9 +1665,9 @@ const ExtracurricularPage: React.FC = () => {
                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                                 {[
                                                     { label: 'Hadir', key: 'Hadir', color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-                                                    { label: 'Izin', key: 'Izin', color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-                                                    { label: 'Sakit', key: 'Sakit', color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' },
-                                                    { label: 'Alpha', key: 'Alpha', color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' },
+                                                    { label: 'Sakit', key: 'Sakit', color: 'text-sky-600', bg: 'bg-sky-100 dark:bg-sky-900/30' },
+                                                    { label: 'Izin', key: 'Izin', color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+                                                    { label: 'Alpha', key: 'Alpha', color: 'text-rose-600', bg: 'bg-rose-100 dark:bg-rose-900/30' },
                                                     { label: 'Libur', key: 'Libur', color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' },
                                                 ].map((stat) => {
                                                     const count = enrollments.reduce((acc, curr) => {
@@ -1725,9 +1725,9 @@ const ExtracurricularPage: React.FC = () => {
                                                                     <div className="flex justify-center flex-wrap gap-2">
                                                                         {[
                                                                             { id: 'Hadir', label: 'Hadir', icon: CheckCircle2, activeClass: 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20 ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-800' },
-                                                                            { id: 'Izin', label: 'Izin', icon: Info, activeClass: 'bg-blue-500 text-white shadow-md shadow-blue-500/20 ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-800' },
-                                                                            { id: 'Sakit', label: 'Sakit', icon: Activity, activeClass: 'bg-amber-500 text-white shadow-md shadow-amber-500/20 ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-800' },
-                                                                            { id: 'Alpha', label: 'Alpha', icon: XCircle, activeClass: 'bg-red-500 text-white shadow-md shadow-red-500/20 ring-2 ring-red-500 ring-offset-2 dark:ring-offset-slate-800' },
+                                                                            { id: 'Sakit', label: 'Sakit', icon: Activity, activeClass: 'bg-sky-500 text-white shadow-md shadow-sky-500/20 ring-2 ring-sky-500 ring-offset-2 dark:ring-offset-slate-800' },
+                                                                            { id: 'Izin', label: 'Izin', icon: Info, activeClass: 'bg-amber-500 text-white shadow-md shadow-amber-500/20 ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-800' },
+                                                                            { id: 'Alpha', label: 'Alpha', icon: XCircle, activeClass: 'bg-rose-500 text-white shadow-md shadow-rose-500/20 ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-slate-800' },
                                                                             { id: 'Libur', label: 'Libur', icon: CalendarOff, activeClass: 'bg-purple-500 text-white shadow-md shadow-purple-500/20 ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-slate-800' },
                                                                         ].map((status) => {
                                                                             const Icon = status.icon;
@@ -1745,8 +1745,10 @@ const ExtracurricularPage: React.FC = () => {
                                                                                         }
                                                                                     `}
                                                                                     disabled={!selectedExtracurricular}
+                                                                                    aria-pressed={isActive}
+                                                                                    aria-label={status.label}
                                                                                 >
-                                                                                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                                                                                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} aria-hidden="true" />
                                                                                     <span className={!isActive ? 'hidden sm:inline' : ''}>{status.label}</span>
                                                                                 </button>
                                                                             );

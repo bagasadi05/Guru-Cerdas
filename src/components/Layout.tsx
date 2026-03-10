@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
-import { HomeIcon, UsersIcon, CalendarIcon, ClipboardIcon, LogoutIcon, SettingsIcon, GraduationCapIcon, CheckSquareIcon, ClipboardPenIcon } from './Icons';
-import { Trash2, History, BarChart3, ShieldCheck, Trophy } from 'lucide-react';
 import ThemeToggle from './ui/ThemeToggle';
 import GreetingRobot from './GreetingRobot';
-import { useSound } from '../hooks/useSound';
 import { NotificationCenter, useNotifications } from './ui/NotificationCenter';
 import { useOnboarding } from './ui/OnboardingTour';
 import { SearchTrigger } from './SearchSystem';
 import { SkipLinks } from './ui/AccessibilityFeatures';
 import { KeyboardShortcutsPanel } from './ui/KeyboardShortcuts';
-import { NetworkQualityIndicator, EnhancedSyncStatus, UploadProgressIndicator } from './ui/PerformanceIndicators';
+import {
+  NetworkQualityIndicator,
+  EnhancedSyncStatus,
+  UploadProgressIndicator,
+} from './ui/PerformanceIndicators';
 import { useParentMessageNotifications } from '../hooks/useParentMessageNotifications';
 import PullToRefresh from './ui/PullToRefresh';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,444 +26,261 @@ import {
   LandscapeSideRail,
   mobileNavItems,
 } from './mobile';
-
-const navSections = [
-    {
-        id: 'primary',
-        label: 'Utama',
-        items: [
-            { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
-            { href: '/absensi', label: 'Rekap Absensi', icon: ClipboardIcon },
-            { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
-            { href: '/jadwal', label: 'Jadwal Mengajar', icon: CalendarIcon },
-            { href: '/tugas', label: 'Manajemen Tugas', icon: CheckSquareIcon },
-            { href: '/input-massal', label: 'Input Cepat', icon: ClipboardPenIcon },
-        ],
-    },
-    {
-        id: 'insights',
-        label: 'Analitik & Kegiatan',
-        items: [
-            { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-            { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
-        ],
-    },
-    {
-        id: 'system',
-        label: 'Sistem',
-        items: [
-            { href: '/riwayat', label: 'Riwayat Aksi', icon: History },
-            { href: '/sampah', label: 'Sampah', icon: Trash2 },
-            { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
-        ],
-    },
-];
-
-// Items in the "More" menu (enhanced with Analytics) (enhanced with Analytics)
-const moreMenuItems = [
-    { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
-    { href: '/input-massal', label: 'Input Cepat', icon: ClipboardPenIcon },
-    { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
-    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/riwayat', label: 'Riwayat Aksi', icon: History },
-    { href: '/sampah', label: 'Sampah', icon: Trash2 },
-    { href: '/pengaturan', label: 'Pengaturan', icon: SettingsIcon },
-];
-
-interface SidebarProps {
-    onLinkClick?: () => void;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
-    const navigate = useNavigate();
-    const { user, logout } = useAuth();
-    const { playClick } = useSound();
-    const [isAdmin, setIsAdmin] = useState(false);
-
-    useEffect(() => {
-        const checkAdmin = async () => {
-            if (!user) return;
-            const { data } = await supabase
-                .from('user_roles')
-                .select('role')
-                .eq('user_id', user.id)
-                .single();
-            if (data?.role === 'admin') {
-                setIsAdmin(true);
-            }
-        };
-        checkAdmin();
-    }, [user]);
-
-    const displaySections = navSections.map((section) => ({
-        ...section,
-        items: [...section.items],
-    }));
-
-    if (isAdmin) {
-        const systemSection = displaySections.find((section) => section.id === 'system');
-        if (systemSection) {
-            systemSection.items.push({ href: '/admin', label: 'Panel Admin', icon: ShieldCheck });
-        } else {
-            displaySections.push({
-                id: 'system',
-                label: 'Sistem',
-                items: [{ href: '/admin', label: 'Panel Admin', icon: ShieldCheck }],
-            });
-        }
-    }
-
-    const handleLogout = async () => {
-        if (onLinkClick) {
-            onLinkClick();
-        }
-        await logout();
-        navigate('/', { replace: true });
-    };
-
-    return (
-        <aside className="relative w-72 h-full flex-shrink-0 font-sans">
-            {/* Floating Glass Container - Light/Dark Mode Support */}
-            <div className="h-full m-4 rounded-3xl bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden relative">
-
-                {/* Ambient Background Effects */}
-                <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-green-500/10 dark:from-green-500/20 to-transparent opacity-50 pointer-events-none"></div>
-                <div className="absolute bottom-0 right-0 w-64 h-64 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-                <div className="relative z-10 flex flex-col h-full p-5">
-                    {/* Header */}
-                    <div className="flex items-center gap-4 px-2 mb-8 mt-2">
-                        <div className="relative group">
-                            <div className="absolute inset-0 bg-green-600 blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
-                            <div className="relative w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-transform duration-300">
-                                <GraduationCapIcon className="w-7 h-7 text-white drop-shadow-md" />
-                            </div>
-                        </div>
-                        <div>
-                            <h1 className="text-lg font-bold tracking-wide text-slate-800 dark:text-white uppercase font-serif">
-                                Portal Guru
-                            </h1>
-                            <p className="text-[10px] font-medium text-green-600 dark:text-green-300 tracking-[0.2em] uppercase opacity-80">Ecosystem</p>
-                        </div>
-                    </div>
-
-                    {/* Profile Card */}
-                    <div className="mb-6 p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 dark:from-green-500/10 to-emerald-500/5 dark:to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div className="flex items-center gap-3 p-3 relative z-10">
-                            <div className="relative">
-                                <div className="absolute inset-0 bg-green-600 rounded-full blur-sm opacity-50"></div>
-                                <img
-                                    className="relative h-10 w-10 rounded-full object-cover border-2 border-white dark:border-white/20 shadow-md"
-                                    src={user?.avatarUrl}
-                                    alt="User avatar"
-                                />
-                            </div>
-                            <div className="overflow-hidden">
-                                <p className="font-semibold text-sm text-slate-800 dark:text-white truncate">{user?.name}</p>
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Navigation */}
-                    <nav id="navigation" className="flex-1 space-y-5 overflow-y-auto scrollbar-hide pr-1" aria-label="Main navigation">
-                        {displaySections.map((section, sectionIndex) => (
-                            <div
-                                key={section.id}
-                                className={sectionIndex === 0 ? '' : 'pt-4 border-t border-slate-200/70 dark:border-white/5'}
-                            >
-                                <p className="px-4 pb-2 text-[9px] font-medium uppercase tracking-[0.18em] text-slate-500/80 dark:text-slate-500/70">
-                                    {section.label}
-                                </p>
-                                <div className="space-y-1">
-                                    {section.items.map((item) => (
-                                        <NavLink
-                                            key={item.href}
-                                            to={item.href}
-                                            end={item.href === '/dashboard'}
-                                            onClick={() => {
-                                                playClick();
-                                                if (onLinkClick) onLinkClick();
-                                            }}
-                                            className={({ isActive }) =>
-                                                `relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${isActive
-                                                    ? 'text-white shadow-lg shadow-green-600/20'
-                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
-                                                }`
-                                            }
-                                        >
-                                            {({ isActive }) => (
-                                                <>
-                                                    {isActive && (
-                                                        <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 z-0"></div>
-                                                    )}
-                                                    {isActive && (
-                                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/50 rounded-r-full blur-[1px]"></div>
-                                                    )}
-                                                    <item.icon className={`w-5 h-5 relative z-10 transition-transform duration-300 ${isActive ? 'scale-110 text-white' : 'group-hover:scale-110 group-hover:text-green-600 dark:group-hover:text-green-400'}`} />
-                                                    <span className={`relative z-10 text-sm tracking-wide ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
-                                                </>
-                                            )}
-                                        </NavLink>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </nav>
-
-                    {/* Logout */}
-                    <div className="mt-auto pt-4 border-t border-slate-200 dark:border-white/5">
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center w-full gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-all duration-300 group"
-                        >
-                            <LogoutIcon className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-                            <span className="text-sm font-medium">Logout</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </aside>
-    );
-};
+import DashboardSidebar from './navigation/DashboardSidebar';
+import { getDashboardMoreMenuItems } from './navigation/dashboardMenuConfig';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { user } = useAuth();
-    const { notifications, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
-    useOnboarding(); // Hook used for side effects
+  const { user } = useAuth();
+  const { notifications, markAsRead, markAllAsRead, deleteNotification, clearAll } =
+    useNotifications();
+  useOnboarding(); // Hook used for side effects
 
-    // Listen for real-time parent messages and show notifications
-    useParentMessageNotifications();
+  const [isAdmin, setIsAdmin] = useState(false);
 
-    // Pull-to-refresh handler
-    const queryClient = useQueryClient();
-    const handleRefresh = useCallback(async () => {
-        await queryClient.invalidateQueries();
-    }, [queryClient]);
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      if (data?.role === 'admin') {
+        setIsAdmin(true);
+      }
+    };
+    checkAdmin();
+  }, [user]);
 
-    // Enhanced Mobile Navigation Hooks
-    const { isPortrait, isLandscape } = useOrientation();
+  const dynamicMoreMenuItems = useMemo(() => {
+    return getDashboardMoreMenuItems(isAdmin);
+  }, [isAdmin]);
 
-    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-    const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-    const [showGreeting, setShowGreeting] = useState(() => {
-        if (typeof sessionStorage !== 'undefined') {
-            return !sessionStorage.getItem('greeted');
+  // Listen for real-time parent messages and show notifications
+  useParentMessageNotifications();
+
+  // Pull-to-refresh handler
+  const queryClient = useQueryClient();
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+
+  // Enhanced Mobile Navigation Hooks
+  const { isPortrait, isLandscape } = useOrientation();
+
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [showGreeting, setShowGreeting] = useState(() => {
+    if (typeof sessionStorage !== 'undefined') {
+      return !sessionStorage.getItem('greeted');
+    }
+    return false;
+  });
+
+  // Track screen size for mobile navbar visibility
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Ensure proper mobile navbar behavior (only needed for < lg breakpoint)
+  useEffect(() => {
+    const handleResize = () => {
+      const navbar = document.querySelector('.mobile-bottom-nav') as HTMLElement;
+      if (navbar) {
+        // Only show on mobile (< 1024px)
+        if (window.innerWidth >= 1024) {
+          navbar.style.setProperty('display', 'none', 'important');
+        } else {
+          navbar.style.setProperty('display', 'block', 'important');
         }
-        return false;
-    });
-
-    // Track screen size for mobile navbar visibility
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 1024);
-        };
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
-
-
-    // Ensure proper mobile navbar behavior (only needed for < lg breakpoint)
-    useEffect(() => {
-        const handleResize = () => {
-            const navbar = document.querySelector('.mobile-bottom-nav') as HTMLElement;
-            if (navbar) {
-                // Only show on mobile (< 1024px)
-                if (window.innerWidth >= 1024) {
-                    navbar.style.setProperty('display', 'none', 'important');
-                } else {
-                    navbar.style.setProperty('display', 'block', 'important');
-                }
-            }
-        };
-
-        // Run immediately
-        handleResize();
-
-        // Run after a short delay to ensure DOM is ready
-        const timer = setTimeout(handleResize, 100);
-
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('orientationchange', handleResize);
-
-        return () => {
-            clearTimeout(timer);
-            window.removeEventListener('resize', handleResize);
-            window.removeEventListener('orientationchange', handleResize);
-        };
-    }, []);
-
-    const handleGreetingEnd = () => {
-        setShowGreeting(false);
-        if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem('greeted', 'true');
-        }
+      }
     };
 
-    const location = useLocation();
-    const isPathActive = (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`);
-    const isMoreMenuActive = moreMenuItems.some((item) => isPathActive(item.href));
+    // Run immediately
+    handleResize();
 
-    return (
-        <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950/50">
-            {/* Accessibility: Skip Links */}
-            <SkipLinks />
+    // Run after a short delay to ensure DOM is ready
+    const timer = setTimeout(handleResize, 100);
 
-            {/* Keyboard Shortcuts Panel */}
-            <KeyboardShortcutsPanel />
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
 
-            {/* Background Gradients */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500/5 rounded-full blur-[100px]"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[100px]"></div>
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
+  const handleGreetingEnd = () => {
+    setShowGreeting(false);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('greeted', 'true');
+    }
+  };
+
+  const location = useLocation();
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950/50">
+      {/* Accessibility: Skip Links */}
+      <SkipLinks />
+
+      {/* Keyboard Shortcuts Panel */}
+      <KeyboardShortcutsPanel />
+
+      {/* Background Gradients */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500/5 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[100px]"></div>
+      </div>
+
+      {showGreeting && user && (
+        <GreetingRobot userName={user.name} onAnimationEnd={handleGreetingEnd} />
+      )}
+
+      {/* Onboarding Tour managed globally via TourProvider */}
+
+      {/* Mobile sidebar overlay */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* Desktop sidebar - hidden on mobile */}
+      <div
+        className={`fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 lg:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        id="navigation"
+        role="navigation"
+        aria-label="Main navigation"
+      >
+        <DashboardSidebar
+          isAdmin={isAdmin}
+          onLinkClick={() => setIsMobileSidebarOpen(false)}
+        />
+      </div>
+
+      <div className="flex flex-col flex-1 w-full overflow-hidden relative z-10">
+        {/* Header */}
+        <header
+          className="h-16 lg:h-20 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-20 transition-all duration-300"
+          role="banner"
+        >
+          <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm"></div>
+
+          <div className="relative z-10 flex items-center gap-4 w-full">
+            {/* Search button */}
+            <div id="search">
+              <SearchTrigger className="hidden sm:flex" />
             </div>
 
-            {showGreeting && user && (
-                <GreetingRobot userName={user.name} onAnimationEnd={handleGreetingEnd} />
+            {/* Mobile search icon */}
+            <div className="sm:hidden">
+              <SearchTrigger className="!w-10 !h-10 !p-0 justify-center" />
+            </div>
+
+            <div className="flex items-center gap-3 ml-auto">
+              {/* Theme Toggle */}
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-black/5 dark:border-white/10 transition-all">
+                <ThemeToggle />
+              </div>
+
+              {/* Network Quality Indicator - Desktop only */}
+              <div className="hidden md:block">
+                <NetworkQualityIndicator size="sm" showLabel={true} />
+              </div>
+
+              {/* Enhanced Sync Status */}
+              <EnhancedSyncStatus showDetails={true} />
+
+              {/* Notification Center */}
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-black/5 dark:border-white/10 transition-all">
+                <NotificationCenter
+                  notifications={notifications}
+                  onMarkAsRead={markAsRead}
+                  onMarkAllAsRead={markAllAsRead}
+                  onDelete={deleteNotification}
+                  onClearAll={clearAll}
+                />
+              </div>
+
+              {/* Profile */}
+              <Link
+                to="/pengaturan"
+                className="flex items-center justify-center w-10 h-10 rounded-full transition-transform hover:scale-105 active:scale-95 ml-1 ring-2 ring-white dark:ring-slate-800 shadow-md"
+                aria-label="Settings"
+              >
+                <img
+                  className="w-full h-full rounded-full object-cover"
+                  src={user?.avatarUrl}
+                  alt="User avatar"
+                />
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        <main
+          id="main-content"
+          className={`flex-1 overflow-hidden ${isMobile && isLandscape ? 'pl-16' : ''}`}
+          role="main"
+        >
+          <PullToRefresh
+            onRefresh={handleRefresh}
+            className="h-full pb-20 lg:pb-6 px-4 lg:px-8 pt-4 lg:pt-6"
+          >
+            <div className="max-w-7xl mx-auto h-full">
+              <div key={location.pathname} className="animate-page-transition h-full">
+                {children}
+              </div>
+            </div>
+          </PullToRefresh>
+        </main>
+
+        {/* Enhanced Mobile Navigation */}
+        {isMobile && (
+          <>
+            {/* Bottom Sheet for More Menu */}
+            <MoreMenuBottomSheet
+              isOpen={isMoreMenuOpen}
+              onClose={() => setIsMoreMenuOpen(false)}
+              items={dynamicMoreMenuItems}
+            />
+
+            {/* Portrait Mode: Enhanced Bottom Navigation */}
+            {isPortrait && (
+              <EnhancedMobileBottomNav
+                moreMenuItems={dynamicMoreMenuItems}
+                isMoreMenuOpen={isMoreMenuOpen}
+                onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+              />
             )}
 
-            {/* Onboarding Tour managed globally via TourProvider */}
-
-            {/* Mobile sidebar overlay */}
-            {isMobileSidebarOpen && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileSidebarOpen(false)} />
+            {/* Landscape Mode: Side Rail Navigation */}
+            {isLandscape && (
+              <LandscapeSideRail
+                navItems={mobileNavItems}
+                moreMenuItems={dynamicMoreMenuItems}
+                isMoreMenuOpen={isMoreMenuOpen}
+                onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+              />
             )}
+          </>
+        )}
+      </div>
 
-            {/* Desktop sidebar - hidden on mobile */}
-            <div className={`fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 lg:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`} id="navigation" role="navigation" aria-label="Main navigation">
-                <Sidebar onLinkClick={() => setIsMobileSidebarOpen(false)} />
-            </div>
-
-            <div className="flex flex-col flex-1 w-full overflow-hidden relative z-10">
-                {/* Header */}
-                <header className="h-16 lg:h-20 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-20 transition-all duration-300" role="banner">
-                    <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm"></div>
-
-                    <div className="relative z-10 flex items-center gap-4 w-full">
-                        {/* Mobile menu button */}
-                        <button
-                            onClick={() => setIsMobileSidebarOpen(true)}
-                            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 transition-all active:scale-95 border border-black/5 dark:border-white/10"
-                            aria-label="Open menu"
-                            aria-expanded={isMobileSidebarOpen}
-                            aria-controls="navigation"
-                        >
-                            <svg className="w-5 h-5 text-slate-700 dark:text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
-
-                        {/* Search button */}
-                        <div id="search">
-                            <SearchTrigger className="hidden sm:flex" />
-                        </div>
-
-                        {/* Mobile search icon */}
-                        <div className="sm:hidden">
-                            <SearchTrigger className="!w-10 !h-10 !p-0 justify-center" />
-                        </div>
-
-                        <div className="flex items-center gap-3 ml-auto">
-                            {/* Theme Toggle */}
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-black/5 dark:border-white/10 transition-all">
-                                <ThemeToggle />
-                            </div>
-
-                            {/* Network Quality Indicator - Desktop only */}
-                            <div className="hidden md:block">
-                                <NetworkQualityIndicator size="sm" showLabel={true} />
-                            </div>
-
-                            {/* Enhanced Sync Status */}
-                            <EnhancedSyncStatus showDetails={true} />
-
-                            {/* Notification Center */}
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-black/5 dark:border-white/10 transition-all">
-                                <NotificationCenter
-                                    notifications={notifications}
-                                    onMarkAsRead={markAsRead}
-                                    onMarkAllAsRead={markAllAsRead}
-                                    onDelete={deleteNotification}
-                                    onClearAll={clearAll}
-                                />
-                            </div>
-
-                            {/* Profile */}
-                            <Link
-                                to="/pengaturan"
-                                className="flex items-center justify-center w-10 h-10 rounded-full transition-transform hover:scale-105 active:scale-95 ml-1 ring-2 ring-white dark:ring-slate-800 shadow-md"
-                                aria-label="Settings"
-                            >
-                                <img
-                                    className="w-full h-full rounded-full object-cover"
-                                    src={user?.avatarUrl}
-                                    alt="User avatar"
-                                />
-                            </Link>
-                        </div>
-                    </div>
-                </header>
-
-                <main 
-                    id="main-content" 
-                    className={`flex-1 overflow-hidden ${
-                        isMobile && isLandscape ? 'pl-16' : ''
-                    }`} 
-                    role="main"
-                >
-                    <PullToRefresh
-                        onRefresh={handleRefresh}
-                        className="h-full pb-20 lg:pb-6 px-4 lg:px-8 pt-4 lg:pt-6"
-                    >
-                        <div className="max-w-7xl mx-auto h-full">
-                            <div key={location.pathname} className="animate-page-transition h-full">
-                                {children}
-                            </div>
-                        </div>
-                    </PullToRefresh>
-                </main>
-
-                {/* Enhanced Mobile Navigation */}
-                {isMobile && (
-                    <>
-                        {/* Bottom Sheet for More Menu */}
-                        <MoreMenuBottomSheet
-                            isOpen={isMoreMenuOpen}
-                            onClose={() => setIsMoreMenuOpen(false)}
-                            items={moreMenuItems}
-                        />
-
-                        {/* Portrait Mode: Enhanced Bottom Navigation */}
-                        {isPortrait && (
-                            <EnhancedMobileBottomNav
-                                moreMenuItems={moreMenuItems}
-                                isMoreMenuOpen={isMoreMenuOpen}
-                                onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                            />
-                        )}
-
-                        {/* Landscape Mode: Side Rail Navigation */}
-                        {isLandscape && (
-                            <LandscapeSideRail
-                                navItems={mobileNavItems}
-                                moreMenuItems={moreMenuItems}
-                                isMoreMenuOpen={isMoreMenuOpen}
-                                onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                            />
-                        )}
-                    </>
-                )}
-            </div>
-
-            {/* Upload Progress Indicator - Floating */}
-            <UploadProgressIndicator />
-
-        </div>
-    );
+      {/* Upload Progress Indicator - Floating */}
+      <UploadProgressIndicator />
+    </div>
+  );
 };
 
 export default Layout;

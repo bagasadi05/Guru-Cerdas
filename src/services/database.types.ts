@@ -1011,6 +1011,8 @@ export type Database = {
           photo_url: string
           avatar_url?: string
           access_code?: string
+          parent_phone?: string | null
+          deleted_at?: string | null
           status: string
           updated_at: string | null
           user_id: string
@@ -1032,6 +1034,8 @@ export type Database = {
           photo_url: string
           avatar_url?: string
           access_code?: string
+          parent_phone?: string | null
+          deleted_at?: string | null
           status?: string
           updated_at?: string | null
           user_id: string
@@ -1053,6 +1057,8 @@ export type Database = {
           photo_url?: string
           avatar_url?: string
           access_code?: string
+          parent_phone?: string | null
+          deleted_at?: string | null
           status?: string
           updated_at?: string | null
           user_id?: string

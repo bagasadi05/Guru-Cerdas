@@ -16,10 +16,7 @@ import {
     SearchIcon,
     CheckCircleIcon,
     InfoIcon,
-    LayoutGridIcon,
-    ListIcon,
     UsersIcon,
-    QrCodeIcon,
     RotateCcw,
     AlertTriangle
 } from 'lucide-react';
@@ -41,11 +38,13 @@ import { AttendanceList } from '../attendance/AttendanceList';
 import { AttendanceExportModal } from '../attendance/AttendanceExportModal';
 import { AiAnalysisModal } from '../attendance/AiAnalysisModal';
 import { AttendanceCalendar } from '../attendance/AttendanceCalendar';
+import { AttendanceClassSelector } from '../attendance/AttendanceClassSelector';
+import { AttendanceQuickActionsBar } from '../attendance/AttendanceQuickActionsBar';
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
 import { QRCodeGenerator } from '../attendance/QRCodeGenerator';
-import { QuickTemplateIcons } from '../attendance/QuickTemplateIcons';
 import { AttendanceStreakIndicator } from '../attendance/AttendanceStreakIndicator';
+import { type AttendanceViewMode } from '../attendance/attendanceMenuConfig';
 // import { QuickNotePresets } from '../attendance/QuickNotePresets';
 
 const AttendancePage: React.FC = () => {
@@ -58,6 +57,9 @@ const AttendancePage: React.FC = () => {
     const { activeSemester, getSemesterByDate, semesters } = useSemester();
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const yesterdayDate = new Date(now);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
 
     // Semester filter - default to active semester
     const [selectedSemesterId, setSelectedSemesterId] = useState<string | null>(null);
@@ -93,7 +95,7 @@ const AttendancePage: React.FC = () => {
     const [noteText, setNoteText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const deferredSearchQuery = useDeferredValue(searchQuery);
-    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+    const [viewMode, setViewMode] = useState<AttendanceViewMode>('list');
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportMonth, setExportMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -869,24 +871,12 @@ Berikan respon dalam format JSON dengan struktur berikut:
                 isOnline={isOnline}
             />
 
-            {/* Class Selector */}
             {classes && classes.length > 0 && (
-                <div className="mb-6">
-                    <div className="flex flex-wrap items-center gap-2">
-                        {classes.map((c) => (
-                            <button
-                                key={c.id}
-                                onClick={() => setSelectedClass(c.id)}
-                                className={`h-9 sm:h-10 px-4 rounded-full font-semibold text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${selectedClass === c.id
-                                    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
-                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400'
-                                    }`}
-                            >
-                                {c.name}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <AttendanceClassSelector
+                    classes={classes}
+                    selectedClass={selectedClass}
+                    onSelectClass={setSelectedClass}
+                />
             )}
 
             {/* Semester Selector */}
@@ -933,7 +923,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
             </div>
 
             {/* Attendance Summary Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 sm:gap-4 mb-6">
                 <div className="glass-card p-4 rounded-xl border border-emerald-200/50 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-800/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-emerald-500 flex items-center justify-center mb-2 shadow-lg shadow-emerald-500/30">
@@ -966,6 +956,14 @@ Berikan respon dalam format JSON dengan struktur berikut:
                     <span className="text-2xl sm:text-3xl font-bold text-rose-600 dark:text-rose-400">{attendanceSummary.Alpha}</span>
                     <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Alpha</span>
                 </div>
+                <div className="glass-card p-4 rounded-xl border border-purple-200/50 dark:border-purple-500/20 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 col-span-3 sm:col-span-1">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-purple-500 flex items-center justify-center mb-2 shadow-lg shadow-purple-500/30">
+                        <span className="text-white font-bold text-sm sm:text-base">L</span>
+                    </div>
+                    <span className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{attendanceSummary.Libur}</span>
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Libur</span>
+                </div>
             </div>
 
             {/* Attendance Streak Indicator */}
@@ -989,63 +987,15 @@ Berikan respon dalam format JSON dengan struktur berikut:
             )}
 
             <main className="bg-transparent flex flex-col pb-32">
-                {/* Bulk Actions Bar */}
                 {students && students.length > 0 && (
-                    <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                                <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">Aksi Cepat:</span>
-                                {/* Template Icons */}
-                                <QuickTemplateIcons
-                                    onApplyTemplate={handleApplyTemplate}
-                                />
-                            </div>
-
-                            {/* Right side actions */}
-                            <div className="flex items-center justify-between sm:justify-end gap-2">
-                                <Button
-                                    onClick={handleResetAttendance}
-                                    size="default"
-                                    variant="ghost"
-                                    className="text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20 px-3 text-sm"
-                                    aria-label="Reset absensi"
-                                    disabled={Object.keys(attendanceRecords).length === 0}
-                                >
-                                    <RotateCcw className="w-4 h-4 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">Reset</span>
-                                </Button>
-                                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
-                                <Button
-                                    onClick={() => setIsQrModalOpen(true)}
-                                    size="default"
-                                    variant="ghost"
-                                    className="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 px-3 text-sm"
-                                    aria-label="Generate QR Code"
-                                >
-                                    <QrCodeIcon className="w-4 h-4 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">QR Code</span>
-                                </Button>
-                                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 ml-0 sm:ml-1">
-                                    <button
-                                        onClick={() => setViewMode('list')}
-                                        className={`w-10 h-10 rounded-md transition-colors ${viewMode === 'list' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                                        aria-label="Tampilan daftar"
-                                        aria-pressed={viewMode === 'list'}
-                                    >
-                                        <ListIcon className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => setViewMode('calendar')}
-                                        className={`w-10 h-10 rounded-md transition-colors ${viewMode === 'calendar' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                                        aria-label="Tampilan kalender"
-                                        aria-pressed={viewMode === 'calendar'}
-                                    >
-                                        <LayoutGridIcon className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <AttendanceQuickActionsBar
+                        hasAttendanceRecords={Object.keys(attendanceRecords).length > 0}
+                        viewMode={viewMode}
+                        onApplyTemplate={handleApplyTemplate}
+                        onReset={handleResetAttendance}
+                        onOpenQr={() => setIsQrModalOpen(true)}
+                        onViewModeChange={setViewMode}
+                    />
                 )}
 
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 px-1">
@@ -1208,13 +1158,10 @@ Berikan respon dalam format JSON dengan struktur berikut:
                             </button>
                             <button
                                 onClick={() => {
-                                    const d = new Date();
-                                    d.setDate(d.getDate() - 1);
-                                    const yesterday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                                     setSelectedDate(yesterday);
                                     setDatePickerOpen(false);
                                 }}
-                                className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate !== today && new Date(selectedDate).getTime() === new Date(new Date().setDate(new Date().getDate() - 1)).getTime()
+                                className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate === yesterday
                                     ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-500/30'
                                     : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-green-400 dark:hover:border-green-500 text-slate-700 dark:text-slate-200'
                                     }`}
