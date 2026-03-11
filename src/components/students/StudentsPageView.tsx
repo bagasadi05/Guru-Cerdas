@@ -1,5 +1,5 @@
 import React from 'react';
-import { BulkActionBar } from '../AdvancedFeatures';
+import { BulkActionBar } from '../advanced-features/BulkActionBar';
 import { StudentActionSheet } from './StudentActionSheet';
 import { StudentFilters } from './StudentFilters';
 import { StudentsClassContent } from './StudentsClassContent';
@@ -12,7 +12,7 @@ import { StudentsStudentFormModal } from './StudentsStudentFormModal';
 import { Tabs, TabsContent } from '../ui/Tabs';
 import { ClassRow, ConfirmModalState, SortConfig, StudentRow } from './types';
 import { StudentsHeaderActionId } from './studentsMenuConfig';
-import { ExportFormat } from '../AdvancedFeatures';
+import { ExportFormat } from '../advanced-features/ExportPreviewModal';
 import { ParsedRow } from '../../services/ImportService';
 
 interface StudentsPageFilterProps {

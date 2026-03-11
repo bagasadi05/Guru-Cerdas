@@ -19,7 +19,7 @@ import { SyncProvider, UploadManagerProvider } from './StatusIndicators';
 import { SemesterProvider } from '../contexts/SemesterContext';
 import { UploadProgressProvider } from './ui/PerformanceIndicators';
 import { UndoToastProvider } from './ui/UndoToast';
-import { KeyboardShortcutsProvider } from './AdvancedFeatures';
+import { KeyboardShortcutsProvider } from './advanced-features/KeyboardShortcutsProvider';
 import ErrorBoundary from './ErrorBoundary';
 
 interface AppProvidersProps {

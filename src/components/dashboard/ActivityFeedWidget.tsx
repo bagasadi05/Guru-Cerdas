@@ -3,6 +3,7 @@ import { SmartReminders, Reminder } from './SmartReminders';
 import { RecentActivityTimeline, ActivityItem } from './RecentActivityTimeline';
 import { Bell, Activity } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { DashboardPanel, DashboardPanelContent, DashboardPanelHeader } from './DashboardPanel';
 
 interface ActivityFeedWidgetProps {
     reminders: Reminder[];
@@ -18,9 +19,9 @@ const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
     const reminderCount = reminders.length;
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-sm">
+        <DashboardPanel>
             <Tabs defaultValue="activity" className="w-full">
-                <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60">
+                <DashboardPanelHeader>
                     <TabsList className="w-full grid grid-cols-2">
                         <TabsTrigger value="activity" className="justify-center">
                             <Activity className="w-4 h-4" />
@@ -38,9 +39,9 @@ const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
                             </span>
                         </TabsTrigger>
                     </TabsList>
-                </div>
+                </DashboardPanelHeader>
 
-                <div className="p-4">
+                <DashboardPanelContent>
                     <TabsContent value="activity">
                         <RecentActivityTimeline activities={activities} />
                     </TabsContent>
@@ -59,9 +60,9 @@ const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
                             )}
                         </div>
                     </TabsContent>
-                </div>
+                </DashboardPanelContent>
             </Tabs>
-        </div>
+        </DashboardPanel>
     );
 };
 

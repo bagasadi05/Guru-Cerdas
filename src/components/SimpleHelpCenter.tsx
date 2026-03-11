@@ -23,7 +23,6 @@ import {
     ZoomIn,
     ZoomOut,
     Search,
-    Wifi,
     WifiOff,
     BarChart3,
     Award,
@@ -137,7 +136,7 @@ const simpleGuides: SimpleGuide[] = [
             },
             {
                 title: '4️⃣ Selesai!',
-                description: 'Klik tombol hijau "Simpan" di bagian bawah. Data tersimpan otomatis.',
+                description: 'Klik tombol "Simpan" di bagian bawah. Data tersimpan otomatis.',
                 tip: 'Salah pilih? Klik tombol lain untuk mengubahnya.'
             }
         ]
@@ -397,8 +396,8 @@ const simpleGuides: SimpleGuide[] = [
         id: 'offline',
         title: '📴 Mode Offline',
         icon: <WifiOff className="w-8 h-8" />,
-        color: 'text-gray-600',
-        bgColor: 'bg-gray-50 dark:bg-gray-900/20',
+        color: 'text-slate-600',
+        bgColor: 'bg-slate-50 dark:bg-slate-900/20',
         category: 'lanjutan',
         keywords: ['offline', 'tanpa internet', 'sync', 'sinkronisasi'],
         steps: [
@@ -567,6 +566,8 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
     if (!isOpen) return null;
 
     const appVersion = '2.5.0';
+    const supportLinkClasses = 'flex items-center gap-3 rounded-2xl p-3 transition-colors';
+    const supportPanelClasses = 'rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50';
 
     return (
         <div
@@ -574,23 +575,23 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
             onClick={onClose}
         >
             <div
-                className={`bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col ${fontSizeClass}`}
+                className={`bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col ${fontSizeClass}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {selectedGuide ? (
                                 <button
                                     onClick={handleBack}
-                                    className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-colors"
+                                    className="rounded-lg bg-white/20 p-2 transition-colors hover:bg-white/30"
                                     aria-label="Kembali"
                                 >
                                     <ChevronLeft className="w-6 h-6" />
                                 </button>
                             ) : (
-                                <div className="p-2 rounded-xl bg-white/20">
+                                <div className="rounded-lg bg-white/20 p-2">
                                     <HelpCircle className="w-6 h-6" />
                                 </div>
                             )}
@@ -641,21 +642,21 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                         <div className="space-y-6">
                             {/* Search Bar */}
                             <div className="relative">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
                                     ref={searchInputRef}
                                     type="text"
                                     placeholder="Cari panduan... (tekan / untuk fokus)"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
                                 />
                                 {searchQuery && (
                                     <button
                                         onClick={() => setSearchQuery('')}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"
                                     >
-                                        <X className="w-4 h-4 text-gray-400" />
+                                        <X className="w-4 h-4 text-slate-400" />
                                     </button>
                                 )}
                             </div>
@@ -668,7 +669,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                         onClick={() => setActiveCategory(tab.id)}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeCategory === tab.id
                                                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                                             }`}
                                     >
                                         {tab.icon}
@@ -695,7 +696,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                             {(activeCategory === 'faq' || activeCategory === 'semua') && (
                                 <div className="space-y-3">
                                     {activeCategory === 'semua' && (
-                                        <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                                        <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 flex items-center gap-2">
                                             <MessageCircle className="w-5 h-5 text-indigo-500" />
                                             Pertanyaan Umum
                                         </h3>
@@ -704,17 +705,17 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                         {filteredFaqs.slice(0, activeCategory === 'semua' ? 3 : undefined).map((faq) => (
                                             <div
                                                 key={faq.id}
-                                                className="bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                                                className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50"
                                             >
                                                 <button
                                                     onClick={() => setExpandedFaq(expandedFaq === faq.id ? null : faq.id)}
-                                                    className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+                                                    className="w-full p-4 text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
                                                 >
-                                                    <span className="font-medium text-gray-800 dark:text-gray-200">{faq.question}</span>
-                                                    <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${expandedFaq === faq.id ? 'rotate-90' : ''}`} />
+                                                    <span className="font-medium text-slate-800 dark:text-slate-200">{faq.question}</span>
+                                                    <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform ${expandedFaq === faq.id ? 'rotate-90' : ''}`} />
                                                 </button>
                                                 {expandedFaq === faq.id && (
-                                                    <div className="px-4 pb-4 text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
+                                                    <div className="px-4 pb-4 text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 pt-3">
                                                         {faq.answer}
                                                     </div>
                                                 )}
@@ -736,7 +737,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                             {activeCategory !== 'faq' && filteredGuides.length > 0 && (
                                 <div className="space-y-3">
                                     {activeCategory === 'semua' && (
-                                        <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                                        <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 flex items-center gap-2">
                                             <BookOpen className="w-5 h-5 text-indigo-500" />
                                             Panduan Lengkap
                                         </h3>
@@ -754,10 +755,10 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                                 <h3 className={`font-bold ${guide.color} text-lg mb-2`}>
                                                     {guide.title}
                                                 </h3>
-                                                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                                                <p className="text-slate-600 dark:text-slate-400 text-sm">
                                                     {guide.steps.length} langkah mudah
                                                 </p>
-                                                <div className="flex items-center gap-1 mt-3 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
+                                                <div className="flex items-center gap-1 mt-3 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
                                                     <span className="text-sm font-medium">Mulai Belajar</span>
                                                     <ChevronRight className="w-4 h-4" />
                                                 </div>
@@ -769,7 +770,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
 
                             {/* No Results */}
                             {searchQuery && filteredGuides.length === 0 && (activeCategory !== 'faq' || filteredFaqs.length === 0) && (
-                                <div className="text-center p-8 text-gray-500 dark:text-gray-400">
+                                <div className="text-center p-8 text-slate-500 dark:text-slate-400">
                                     <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
                                     <p className="font-medium">Tidak ada hasil untuk "{searchQuery}"</p>
                                     <p className="text-sm mt-1">Coba kata kunci lain atau cek ejaan</p>
@@ -777,21 +778,21 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                             )}
 
                             {/* Contact Support */}
-                            <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-700">
-                                <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                            <div className={`p-6 ${supportPanelClasses}`}>
+                                <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
                                     <Phone className="w-5 h-5" />
                                     Butuh Bantuan Lebih Lanjut?
                                 </h3>
-                                <div className="space-y-3 text-gray-600 dark:text-gray-400">
+                                <div className="space-y-3 text-slate-600 dark:text-slate-400">
                                     <a
                                         href="https://wa.me/6281234567890?text=Halo%2C%20saya%20butuh%20bantuan%20menggunakan%20Portal%20Guru"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                                        className={`${supportLinkClasses} bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30`}
                                     >
-                                        <MessageCircle className="w-5 h-5 text-green-500" />
-                                        <span className="font-medium text-green-700 dark:text-green-400">Chat WhatsApp Support</span>
-                                        <ExternalLink className="w-4 h-4 ml-auto text-green-500" />
+                                        <MessageCircle className="w-5 h-5 text-emerald-500" />
+                                        <span className="font-medium text-emerald-700 dark:text-emerald-400">Chat WhatsApp Support</span>
+                                        <ExternalLink className="w-4 h-4 ml-auto text-emerald-500" />
                                     </a>
                                     <p className="flex items-center gap-3">
                                         <Mail className="w-5 h-5 text-blue-500" />
@@ -814,7 +815,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                         key={index}
                                         className={`flex-1 h-3 rounded-full transition-all cursor-pointer ${index <= currentStep
                                             ? 'bg-gradient-to-r from-indigo-500 to-purple-500'
-                                            : 'bg-gray-200 dark:bg-gray-700'
+                                            : 'bg-slate-200 dark:bg-slate-700'
                                             }`}
                                         onClick={() => setCurrentStep(index)}
                                     />
@@ -824,14 +825,14 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                             {/* Current Step */}
                             <div className={`p-8 rounded-3xl ${selectedGuide.bgColor} border-2 ${selectedGuide.color.replace('text-', 'border-')}`}>
                                 <div className="flex items-start gap-4">
-                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-bold ${selectedGuide.color} bg-white dark:bg-gray-800 shadow-lg flex-shrink-0`}>
+                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-bold ${selectedGuide.color} bg-white dark:bg-slate-800 shadow-lg flex-shrink-0`}>
                                         {currentStep + 1}
                                     </div>
                                     <div className="flex-1">
                                         <h3 className={`text-2xl font-bold ${selectedGuide.color} mb-4`}>
                                             {selectedGuide.steps[currentStep].title}
                                         </h3>
-                                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line text-lg">
+                                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line text-lg">
                                             {selectedGuide.steps[currentStep].description}
                                         </p>
                                     </div>
@@ -839,11 +840,11 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
 
                                 {/* Tip Box */}
                                 {selectedGuide.steps[currentStep].tip && (
-                                    <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-2xl border-2 border-amber-300 dark:border-amber-600 flex items-start gap-3">
+                                    <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-2xl border-2 border-amber-300 dark:border-amber-600 flex items-start gap-3">
                                         <Lightbulb className="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" />
                                         <div>
                                             <span className="font-bold text-amber-700 dark:text-amber-400">💡 Tips: </span>
-                                            <span className="text-gray-700 dark:text-gray-300">
+                                            <span className="text-slate-700 dark:text-slate-300">
                                                 {selectedGuide.steps[currentStep].tip}
                                             </span>
                                         </div>
@@ -875,12 +876,12 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
 
                             {/* Completion Message */}
                             {currentStep === selectedGuide.steps.length - 1 && (
-                                <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl border-2 border-green-300 dark:border-green-700 text-center">
-                                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                                    <h3 className="text-xl font-bold text-green-700 dark:text-green-400 mb-2">
+                                <div className="rounded-2xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 p-6 text-center dark:border-emerald-700 dark:from-emerald-900/20 dark:to-teal-900/20">
+                                    <CheckCircle className="mx-auto mb-3 h-12 w-12 text-emerald-500" />
+                                    <h3 className="mb-2 text-xl font-bold text-emerald-700 dark:text-emerald-400">
                                         🎉 Selamat! Anda sudah selesai belajar!
                                     </h3>
-                                    <p className="text-green-600 dark:text-green-500">
+                                    <p className="text-emerald-600 dark:text-emerald-500">
                                         Silakan coba langsung di aplikasi. Semangat!
                                     </p>
                                 </div>
@@ -891,7 +892,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                 <button
                                     onClick={handlePrevStep}
                                     disabled={currentStep === 0}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+                                    className="flex items-center gap-2 px-6 py-3 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
                                 >
                                     <ChevronLeft className="w-5 h-5" />
                                     Kembali
@@ -900,7 +901,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                 {currentStep < selectedGuide.steps.length - 1 ? (
                                     <button
                                         onClick={handleNextStep}
-                                        className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600 transition-colors font-semibold shadow-lg"
+                                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 font-semibold text-white shadow-lg transition-colors hover:from-indigo-600 hover:to-purple-600"
                                     >
                                         Lanjut
                                         <ChevronRight className="w-5 h-5" />
@@ -908,7 +909,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                 ) : (
                                     <button
                                         onClick={handleBack}
-                                        className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 transition-colors font-semibold shadow-lg"
+                                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 font-semibold text-white shadow-lg transition-colors hover:from-indigo-600 hover:to-purple-600"
                                     >
                                         <Star className="w-5 h-5" />
                                         Selesai
@@ -917,7 +918,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                             </div>
 
                             {/* Keyboard hint */}
-                            <p className="text-center text-sm text-gray-400">
+                            <p className="text-center text-sm text-slate-400">
                                 Gunakan tombol ← → untuk navigasi
                             </p>
                         </div>
@@ -925,9 +926,9 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-center">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Tekan <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs font-bold">?</kbd> kapan saja untuk membuka bantuan • <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs font-bold">Esc</kbd> untuk tutup
+                <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-center">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Tekan <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-xs font-bold">?</kbd> kapan saja untuk membuka bantuan • <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-xs font-bold">Esc</kbd> untuk tutup
                     </p>
                 </div>
             </div>
@@ -974,7 +975,7 @@ export const FloatingHelpButton: React.FC<FloatingHelpButtonProps> = ({ onClick 
             <HelpCircle className="w-7 h-7" />
 
             {/* Tooltip */}
-            <div className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            <div className="absolute right-full mr-3 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 Butuh Bantuan?
             </div>
 
@@ -983,3 +984,4 @@ export const FloatingHelpButton: React.FC<FloatingHelpButtonProps> = ({ onClick 
         </button>
     );
 };
+

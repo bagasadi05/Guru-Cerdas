@@ -75,7 +75,7 @@ export const TabsTrigger: React.FC<{ children: React.ReactNode, value: string, c
     <button
       onClick={() => setActiveTab(value)}
       data-state={isActive ? 'active' : 'inactive'}
-      className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 h-10 text-sm font-medium ring-offset-white dark:ring-offset-slate-900 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:text-slate-400 dark:data-[state=inactive]:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 flex-shrink-0 ${className}`}
+      className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 h-10 text-sm font-medium ring-offset-white dark:ring-offset-slate-900 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:text-slate-400 dark:data-[state=inactive]:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 flex-shrink-0 ${className}`}
       aria-selected={isActive}
       role="tab"
     >
@@ -95,7 +95,7 @@ export const TabsContent: React.FC<{ children: React.ReactNode, value: string, c
       key={value}
       role="tabpanel"
       data-state={isActive ? 'active' : 'inactive'}
-      className={`ring-offset-white dark:ring-offset-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${className}`}
+      className={`ring-offset-white dark:ring-offset-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${className}`}
       style={style}
     >
       {children}

@@ -85,6 +85,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
     const [phone, setPhone] = useState(student.parent_phone || '');
     const [isSaving, setIsSaving] = useState(false);
 
+    useEffect(() => {
+        if (!isOpen) return;
+        setName(student.parent_name || '');
+        setPhone(student.parent_phone || '');
+    }, [isOpen, student.parent_name, student.parent_phone]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);

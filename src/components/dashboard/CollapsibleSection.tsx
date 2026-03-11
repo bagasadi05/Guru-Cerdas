@@ -54,30 +54,30 @@ const CollapsibleSectionBase: React.FC<CollapsibleSectionProps> = ({
     };
 
     return (
-        <div className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-sm ${className}`}>
+        <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-sm ${className}`}>
             {/* Header */}
             <button
                 onClick={toggleExpanded}
-                className={`w-full flex items-center justify-between p-4 sm:p-5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors ${headerClassName}`}
+                className={`w-full flex items-center justify-between p-4 sm:p-5 text-left hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors ${headerClassName}`}
                 aria-expanded={isExpanded}
                 aria-controls={`section-content-${title.replace(/\s+/g, '-').toLowerCase()}`}
             >
                 <div className="flex items-center gap-3">
                     {icon && (
-                        <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                             {icon}
                         </div>
                     )}
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+                    <h3 className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base">
                         {title}
                     </h3>
                 </div>
                 <motion.div
                     animate={{ rotate: isExpanded ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
-                    className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
-                    <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                    <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                 </motion.div>
             </button>
 
@@ -102,7 +102,7 @@ const CollapsibleSectionBase: React.FC<CollapsibleSectionProps> = ({
             {/* Mobile hint when collapsed */}
             {!isExpanded && isMobile && (
                 <div className="px-4 pb-3">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                         Ketuk untuk memperluas
                     </p>
                 </div>

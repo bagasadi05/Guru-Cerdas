@@ -22,7 +22,7 @@ export const AttendanceQuickActionsBar: React.FC<AttendanceQuickActionsBarProps>
   onViewModeChange,
 }) => {
   return (
-    <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+    <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">
@@ -65,9 +65,9 @@ export const AttendanceQuickActionsBar: React.FC<AttendanceQuickActionsBarProps>
                 <button
                   key={option.mode}
                   onClick={() => onViewModeChange(option.mode)}
-                  className={`w-10 h-10 rounded-md transition-colors ${
+                  className={`w-10 h-10 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600'
+                      ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300'
                       : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                   aria-label={option.ariaLabel}

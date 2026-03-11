@@ -103,12 +103,12 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
         onClick={(e) => e.stopPropagation()}
         id="modal-container"
       >
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col max-h-[90vh] sm:max-h-[85vh]">
+        <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col max-h-[90vh] sm:max-h-[85vh]">
           <div className="relative p-6 border-b border-slate-200/70 dark:border-slate-700/60">
             <div className="flex justify-between items-center gap-4">
               <div className="flex items-center gap-3">
                 {icon && (
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500 text-white shadow-sm" aria-hidden="true">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-sm shadow-indigo-500/20" aria-hidden="true">
                     {icon}
                   </div>
                 )}

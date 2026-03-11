@@ -2,7 +2,7 @@ import React from 'react';
 
 export const Card: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => (
   <div
-    className={['bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 transition-all duration-200', className].filter(Boolean).join(' ')}
+    className={['bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 transition-all duration-200', className].filter(Boolean).join(' ')}
     {...props}
   />
 );

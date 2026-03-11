@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { BarChartIcon, TrendingUpIcon, UsersIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { DashboardPanel } from './DashboardPanel';
 
 interface ClassStats {
     classId: string;
@@ -99,7 +100,7 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
     const maxGrade = Math.max(...classStats.map(c => c.averageGrade), 100);
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-sm">
+        <DashboardPanel>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
@@ -249,7 +250,7 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
                     )}
                 </div>
             )}
-        </div>
+        </DashboardPanel>
     );
 };
 

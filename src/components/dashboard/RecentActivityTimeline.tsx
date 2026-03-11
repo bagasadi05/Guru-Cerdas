@@ -18,6 +18,7 @@ import {
     ChevronRight
 } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
+import { DashboardPanel, DashboardPanelContent } from './DashboardPanel';
 
 export interface ActivityItem {
     id: string;
@@ -127,7 +128,8 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
 
     if (activities.length === 0) {
         return (
-            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+            <DashboardPanel>
+                <DashboardPanelContent>
                 <div className="flex items-center gap-2 mb-4">
                     <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
                         <Activity className="w-5 h-5 text-white" />
@@ -141,12 +143,14 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                     title="Belum ada aktivitas"
                     description="Aktivitas Anda akan muncul di sini."
                 />
-            </div>
+                </DashboardPanelContent>
+            </DashboardPanel>
         );
     }
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+        <DashboardPanel>
+            <DashboardPanelContent>
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
@@ -157,9 +161,9 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                         Aktivitas Terbaru
                     </h2>
                 </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-700/50">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-xs font-semibold text-green-700 dark:text-green-400">Live</span>
+                <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 dark:border-emerald-700/50 dark:bg-emerald-900/20">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Live</span>
                 </div>
             </div>
 
@@ -236,6 +240,7 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                     </button>
                 </div>
             )}
-        </div>
+            </DashboardPanelContent>
+        </DashboardPanel>
     );
 };

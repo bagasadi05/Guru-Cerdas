@@ -202,17 +202,17 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                     title="Konfirmasi Hapus Nilai"
                 >
                     <div className="space-y-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Anda akan menghapus <strong className="text-white">{confirmDeleteModal.count} data nilai</strong> untuk penilaian <strong className="text-white">"{subjectGradeInfo.assessment_name}"</strong>. Aksi ini tidak dapat dibatalkan.
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Anda akan menghapus <strong className="text-slate-900 dark:text-white">{confirmDeleteModal.count} data nilai</strong> untuk penilaian <strong className="text-slate-900 dark:text-white">"{subjectGradeInfo.assessment_name}"</strong>. Aksi ini tidak dapat dibatalkan.
                         </p>
-                        <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Ketik <strong className="text-red-500">HAPUS</strong> untuk mengonfirmasi:</p>
+                        <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Ketik <strong className="text-rose-500">HAPUS</strong> untuk mengonfirmasi:</p>
                             <input
                                 type="text"
                                 value={confirmDeleteText}
                                 onChange={e => setConfirmDeleteText(e.target.value)}
                                 placeholder="Ketik HAPUS"
-                                className="w-full px-3 py-2 text-sm border rounded-md mb-3 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+                                className="w-full px-3 py-2 text-sm border rounded-lg mb-3 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                             />
                         </div>
                         <div className="flex justify-end gap-2 pt-2">

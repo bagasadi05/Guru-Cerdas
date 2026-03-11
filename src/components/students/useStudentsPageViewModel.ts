@@ -1,4 +1,4 @@
-import { useBulkSelection } from '../AdvancedFeatures';
+import { useBulkSelection } from '../advanced-features/useBulkSelection';
 import { useStudentsPageActions } from './useStudentsPageActions';
 import { useStudentsPageData } from './useStudentsPageData';
 import { useStudentsPageInteractions } from './useStudentsPageInteractions';

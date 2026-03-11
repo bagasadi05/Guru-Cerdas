@@ -32,6 +32,7 @@ export interface PortalAttendance {
     date: string;
     status: 'Hadir' | 'Izin' | 'Sakit' | 'Alpha';
     notes: string | null;
+    semester_id: string | null;
 }
 
 // Academic Records
@@ -50,6 +51,7 @@ export interface PortalViolation {
     type: string;
     points: number;
     description: string | null;
+    semester_id: string | null;
 }
 
 // Quiz Points
@@ -131,6 +133,47 @@ export interface PortalData {
     announcements: PortalAnnouncement[];
     teacher: TeacherInfo;
     schoolInfo: PortalSchoolInfo;
+}
+
+export type PortalPrimaryTab =
+    | 'beranda'
+    | 'perkembangan'
+    | 'kehadiran'
+    | 'komunikasi'
+    | 'lainnya';
+
+export type PortalMoreSection =
+    | 'tugas'
+    | 'jadwal'
+    | 'perilaku'
+    | 'dokumen'
+    | 'pengaturan';
+
+export interface PortalAttentionItem {
+    id: string;
+    type: 'task' | 'message' | 'attendance' | 'behavior' | 'announcement';
+    title: string;
+    description: string;
+    severity: 'info' | 'warning' | 'critical';
+    href?: string;
+    badge?: string;
+}
+
+export interface PortalQuickSummary {
+    averageScore: number | null;
+    presentCount: number;
+    activeTasksCount: number;
+    unreadMessagesCount: number;
+    violationPoints: number;
+}
+
+export interface PortalActivityItem {
+    id: string;
+    type: 'message' | 'task' | 'announcement' | 'attendance' | 'behavior';
+    title: string;
+    description: string;
+    createdAt: string;
+    href?: string;
 }
 
 // Attendance Summary

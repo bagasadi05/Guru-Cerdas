@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import WeeklyAttendanceChart from './WeeklyAttendanceChart';
 import { EmptyState } from '../ui/EmptyState';
+import { DashboardPanel, DashboardPanelContent } from './DashboardPanel';
 
 interface AttendanceStatsProps {
     selectedDate?: string;
@@ -177,7 +178,8 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
 
     if (classStats.length === 0) {
         return (
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+            <DashboardPanel>
+                <DashboardPanelContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
                         <CalendarIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
@@ -194,12 +196,14 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                     actionLabel="Isi Absensi"
                     onAction={() => navigate('/absensi')}
                 />
-            </div>
+                </DashboardPanelContent>
+            </DashboardPanel>
         );
     }
 
     return (
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+        <DashboardPanel>
+            <DashboardPanelContent className="p-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -228,18 +232,18 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                     <span className="text-[28px] font-extrabold leading-none text-emerald-600 dark:text-emerald-400">{overallStats.hadir}</span>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Hadir</p>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-2 shadow-lg">
-                        <AlertTriangleIcon className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-[28px] font-extrabold leading-none text-amber-600 dark:text-amber-400">{overallStats.sakit}</span>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Sakit</p>
-                </div>
                 <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center mb-2 shadow-lg">
+                        <AlertTriangleIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-[28px] font-extrabold leading-none text-blue-600 dark:text-blue-400">{overallStats.sakit}</span>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Sakit</p>
+                </div>
+                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-2 shadow-lg">
                         <UsersIcon className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-[28px] font-extrabold leading-none text-blue-600 dark:text-blue-400">{overallStats.izin}</span>
+                    <span className="text-[28px] font-extrabold leading-none text-amber-600 dark:text-amber-400">{overallStats.izin}</span>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Izin</p>
                 </div>
                 <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-rose-50 dark:bg-rose-900/20 rounded-lg">
@@ -273,8 +277,8 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2 text-xs">
                                 <span className="text-emerald-600 dark:text-emerald-400 font-medium">{stat.hadir}H</span>
-                                <span className="text-amber-600 dark:text-amber-400">{stat.sakit}S</span>
-                                <span className="text-blue-600 dark:text-blue-400">{stat.izin}I</span>
+                                <span className="text-blue-600 dark:text-blue-400">{stat.sakit}S</span>
+                                <span className="text-amber-600 dark:text-amber-400">{stat.izin}I</span>
                                 <span className="text-rose-600 dark:text-rose-400">{stat.alpha}A</span>
                             </div>
                             <div className="w-20">
@@ -317,7 +321,8 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                     </div>
                 )
             }
-        </div >
+            </DashboardPanelContent>
+        </DashboardPanel>
     );
 };
 

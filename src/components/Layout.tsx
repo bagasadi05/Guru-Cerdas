@@ -1,19 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
-import ThemeToggle from './ui/ThemeToggle';
 import GreetingRobot from './GreetingRobot';
-import { NotificationCenter, useNotifications } from './ui/NotificationCenter';
+import { useNotifications } from './ui/NotificationCenter';
 import { useOnboarding } from './ui/OnboardingTour';
 import { SearchTrigger } from './SearchSystem';
-import { SkipLinks } from './ui/AccessibilityFeatures';
-import { KeyboardShortcutsPanel } from './ui/KeyboardShortcuts';
-import {
-  NetworkQualityIndicator,
-  EnhancedSyncStatus,
-  UploadProgressIndicator,
-} from './ui/PerformanceIndicators';
+import { SkipLinks } from './AccessibilityComponents';
+import { UploadProgressIndicator } from './ui/PerformanceIndicators';
 import { useParentMessageNotifications } from '../hooks/useParentMessageNotifications';
 import PullToRefresh from './ui/PullToRefresh';
 import { useQueryClient } from '@tanstack/react-query';
@@ -28,6 +22,7 @@ import {
 } from './mobile';
 import DashboardSidebar from './navigation/DashboardSidebar';
 import { getDashboardMoreMenuItems } from './navigation/dashboardMenuConfig';
+import { ShellHeaderActions } from './layout/ShellHeaderActions';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -88,36 +83,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Ensure proper mobile navbar behavior (only needed for < lg breakpoint)
-  useEffect(() => {
-    const handleResize = () => {
-      const navbar = document.querySelector('.mobile-bottom-nav') as HTMLElement;
-      if (navbar) {
-        // Only show on mobile (< 1024px)
-        if (window.innerWidth >= 1024) {
-          navbar.style.setProperty('display', 'none', 'important');
-        } else {
-          navbar.style.setProperty('display', 'block', 'important');
-        }
-      }
-    };
-
-    // Run immediately
-    handleResize();
-
-    // Run after a short delay to ensure DOM is ready
-    const timer = setTimeout(handleResize, 100);
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-    };
-  }, []);
-
   const handleGreetingEnd = () => {
     setShowGreeting(false);
     if (typeof sessionStorage !== 'undefined') {
@@ -132,13 +97,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Accessibility: Skip Links */}
       <SkipLinks />
 
-      {/* Keyboard Shortcuts Panel */}
-      <KeyboardShortcutsPanel />
-
       {/* Background Gradients */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500/5 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[100px]"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/5 rounded-full blur-[100px]"></div>
       </div>
 
       {showGreeting && user && (
@@ -187,44 +149,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <SearchTrigger className="!w-10 !h-10 !p-0 justify-center" />
             </div>
 
-            <div className="flex items-center gap-3 ml-auto">
-              {/* Theme Toggle */}
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-black/5 dark:border-white/10 transition-all">
-                <ThemeToggle />
-              </div>
-
-              {/* Network Quality Indicator - Desktop only */}
-              <div className="hidden md:block">
-                <NetworkQualityIndicator size="sm" showLabel={true} />
-              </div>
-
-              {/* Enhanced Sync Status */}
-              <EnhancedSyncStatus showDetails={true} />
-
-              {/* Notification Center */}
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-black/5 dark:border-white/10 transition-all">
-                <NotificationCenter
-                  notifications={notifications}
-                  onMarkAsRead={markAsRead}
-                  onMarkAllAsRead={markAllAsRead}
-                  onDelete={deleteNotification}
-                  onClearAll={clearAll}
-                />
-              </div>
-
-              {/* Profile */}
-              <Link
-                to="/pengaturan"
-                className="flex items-center justify-center w-10 h-10 rounded-full transition-transform hover:scale-105 active:scale-95 ml-1 ring-2 ring-white dark:ring-slate-800 shadow-md"
-                aria-label="Settings"
-              >
-                <img
-                  className="w-full h-full rounded-full object-cover"
-                  src={user?.avatarUrl}
-                  alt="User avatar"
-                />
-              </Link>
-            </div>
+            <ShellHeaderActions
+              user={user}
+              notifications={notifications}
+              onMarkAsRead={markAsRead}
+              onMarkAllAsRead={markAllAsRead}
+              onDelete={deleteNotification}
+              onClearAll={clearAll}
+            />
           </div>
         </header>
 

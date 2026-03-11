@@ -21,7 +21,7 @@ interface AttendanceRecord {
 
 interface Violation {
     id: string;
-    description: string;
+    description: string | null;
     points: number;
     date: string;
 }
@@ -207,7 +207,7 @@ export const ChildDevelopmentAnalytics: React.FC<ChildAnalyticsProps> = ({
         }
 
         const present = attendanceRecords.filter(r => r.status === 'Hadir').length;
-        const absent = attendanceRecords.filter(r => r.status === 'Alpa').length;
+        const absent = attendanceRecords.filter(r => r.status === 'Alpa' || r.status === 'Alpha').length;
         const late = attendanceRecords.filter(r => r.status === 'Terlambat').length;
         const sick = attendanceRecords.filter(r => r.status === 'Sakit' || r.status === 'Izin').length;
         const rate = Math.round((present / attendanceRecords.length) * 100);

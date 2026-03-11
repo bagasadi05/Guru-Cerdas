@@ -19,6 +19,7 @@ import { UserMinusIcon, ClipboardPenIcon, CheckCircleIcon } from '../Icons';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import type { DashboardQueryData } from '../../types';
+import { DashboardPanel, DashboardPanelContent, DashboardPanelHeader } from './DashboardPanel';
 
 // =============================================================================
 // TYPES
@@ -258,9 +259,9 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data }) => {
     // ==========================================================================
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden flex flex-col border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+        <DashboardPanel className="flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-amber-500/10">
+            <DashboardPanelHeader className="bg-amber-500/10">
                 <div className="flex items-center justify-between">
                     <div>
                         <h3 className="font-semibold text-lg text-slate-900 dark:text-white">
@@ -274,10 +275,10 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data }) => {
                         <UserMinusIcon className="w-5 h-5 text-amber-500" />
                     </div>
                 </div>
-            </div>
+            </DashboardPanelHeader>
 
             {/* Content */}
-            <div className="p-4 flex-1 flex flex-col">
+            <DashboardPanelContent className="flex-1 flex flex-col">
                 {/* Filters */}
                 <div className="space-y-4 mb-4">
                     <Select
@@ -360,8 +361,8 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data }) => {
                         Pilih mapel untuk cek
                     </div>
                 )}
-            </div>
-        </div>
+            </DashboardPanelContent>
+        </DashboardPanel>
     );
 };
 

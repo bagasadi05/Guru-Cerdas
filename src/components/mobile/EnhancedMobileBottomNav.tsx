@@ -78,7 +78,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
             onClick={handleNavClick}
             className="flex flex-col items-center justify-center gap-1 
                       relative touch-manipulation focus-visible:outline-none 
-                      focus-visible:ring-2 focus-visible:ring-emerald-500/50 
+                      focus-visible:ring-2 focus-visible:ring-indigo-500/50 
                       focus-visible:ring-offset-2 rounded-xl transition-all duration-200"
             style={{ minWidth: '60px', minHeight: '52px' }}
             aria-label={item.label}
@@ -89,7 +89,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
                 {isActive && (
                   <div
                     className="absolute top-0 left-1/2 -translate-x-1/2 
-                              w-8 h-1 bg-emerald-500 dark:bg-emerald-400 
+                              w-8 h-1 bg-indigo-500 dark:bg-indigo-400 
                               rounded-full"
                   />
                 )}
@@ -98,14 +98,14 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
                 <div
                   className={`p-2 rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'bg-emerald-500/15 dark:bg-emerald-500/20'
+                      ? 'bg-indigo-500/15 dark:bg-indigo-500/20'
                       : 'bg-transparent'
                   }`}
                 >
                   <item.icon
                     className={`w-[22px] h-[22px] transition-colors duration-200 ${
                       isActive
-                        ? 'text-emerald-600 dark:text-emerald-400'
+                        ? 'text-indigo-600 dark:text-indigo-400'
                         : 'text-slate-500 dark:text-slate-400'
                     }`}
                   />
@@ -115,7 +115,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
                 <span
                   className={`text-xs leading-4 transition-colors duration-200 ${
                               isActive
-                                ? 'font-semibold text-emerald-600 dark:text-emerald-400'
+                                ? 'font-semibold text-indigo-600 dark:text-indigo-400'
                                 : 'font-medium text-slate-600 dark:text-slate-400'
                             }`}
                 >
@@ -131,7 +131,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           onClick={handleMoreClick}
           className="flex flex-col items-center justify-center gap-1 
                     relative touch-manipulation focus-visible:outline-none 
-                    focus-visible:ring-2 focus-visible:ring-emerald-500/50 
+                    focus-visible:ring-2 focus-visible:ring-indigo-500/50 
                     focus-visible:ring-offset-2 rounded-xl transition-all duration-200"
           style={{ minWidth: '60px', minHeight: '52px' }}
           aria-label="More options"
@@ -143,7 +143,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           {isMoreMenuHighlighted && (
             <div
               className="absolute top-0 left-1/2 -translate-x-1/2 
-                        w-8 h-1 bg-emerald-500 dark:bg-emerald-400 
+                        w-8 h-1 bg-indigo-500 dark:bg-indigo-400 
                         rounded-full"
             />
           )}
@@ -152,14 +152,14 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           <div
             className={`p-2 rounded-xl transition-all duration-200 ${
               isMoreMenuHighlighted
-                ? 'bg-emerald-500/15 dark:bg-emerald-500/20'
+                ? 'bg-indigo-500/15 dark:bg-indigo-500/20'
                 : 'bg-transparent'
             }`}
           >
             <MoreHorizontalIcon
               className={`w-[22px] h-[22px] transition-colors duration-200 ${
                 isMoreMenuHighlighted
-                  ? 'text-emerald-600 dark:text-emerald-400'
+                  ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             />
@@ -169,7 +169,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           <span
             className={`text-xs leading-4 transition-colors duration-200 ${
                         isMoreMenuHighlighted
-                          ? 'font-semibold text-emerald-600 dark:text-emerald-400'
+                          ? 'font-semibold text-indigo-600 dark:text-indigo-400'
                           : 'font-medium text-slate-600 dark:text-slate-400'
                       }`}
           >
@@ -182,3 +182,4 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
 };
 
 export default EnhancedMobileBottomNav;
+

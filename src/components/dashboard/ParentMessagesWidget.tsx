@@ -7,6 +7,7 @@ import { MessageSquareIcon, UsersIcon, ChevronRightIcon, ClockIcon, InboxIcon } 
 import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
+import { DashboardPanel, DashboardPanelContent, DashboardPanelHeader } from './DashboardPanel';
 
 interface ParentMessageWithStudent {
     id: string;
@@ -17,6 +18,19 @@ interface ParentMessageWithStudent {
     student_id: string;
     student_name: string;
     student_avatar: string;
+}
+
+interface CommunicationRow {
+    id: string;
+    created_at: string;
+    message: string;
+    sender: 'teacher' | 'parent';
+    is_read: boolean;
+    student_id: string;
+    students: {
+        name: string | null;
+        avatar_url: string | null;
+    } | null;
 }
 
 const ParentMessagesWidget: React.FC = () => {
@@ -45,7 +59,7 @@ const ParentMessagesWidget: React.FC = () => {
 
             if (error) throw error;
 
-            const messages: ParentMessageWithStudent[] = (communications || []).map((msg: any) => ({
+            const messages: ParentMessageWithStudent[] = ((communications as CommunicationRow[] | null) || []).map((msg) => ({
                 id: msg.id,
                 created_at: msg.created_at,
                 message: msg.message,
@@ -91,11 +105,11 @@ const ParentMessagesWidget: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
-                <div className="p-6 border-b border-slate-200/50 dark:border-white/5">
+            <DashboardPanel>
+                <DashboardPanelHeader className="p-6 border-slate-200/50 dark:border-white/5">
                     <Skeleton className="h-6 w-48" />
-                </div>
-                <div className="p-4 space-y-3">
+                </DashboardPanelHeader>
+                <DashboardPanelContent className="space-y-3">
                     {[1, 2, 3].map(i => (
                         <div key={i} className="flex items-center gap-3 p-3">
                             <Skeleton className="w-10 h-10 rounded-full" />
@@ -105,17 +119,17 @@ const ParentMessagesWidget: React.FC = () => {
                             </div>
                         </div>
                     ))}
-                </div>
-            </div>
+                </DashboardPanelContent>
+            </DashboardPanel>
         );
     }
 
     const { messages = [], unreadCount = 0 } = data || {};
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+        <DashboardPanel>
             {/* Header */}
-            <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-emerald-500/10">
+            <DashboardPanelHeader className="bg-emerald-500/10">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center shadow-sm">
@@ -140,7 +154,7 @@ const ParentMessagesWidget: React.FC = () => {
                         </span>
                     )}
                 </div>
-            </div>
+            </DashboardPanelHeader>
 
             {/* Messages List */}
             <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
@@ -218,7 +232,7 @@ const ParentMessagesWidget: React.FC = () => {
                     </Link>
                 </div>
             )}
-        </div>
+        </DashboardPanel>
     );
 };
 

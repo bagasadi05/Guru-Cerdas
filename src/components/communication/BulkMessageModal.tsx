@@ -11,7 +11,7 @@ import {
     FileTextIcon,
     ChevronDownIcon
 } from '../Icons';
-import { MESSAGE_TEMPLATES, TEMPLATE_CATEGORIES, MessageTemplate, applyTemplate } from '../../data/messageTemplates';
+import { MESSAGE_TEMPLATES, TEMPLATE_CATEGORIES, MessageTemplate } from '../../data/messageTemplates';
 import { getStudentAvatar } from '../../utils/avatarUtils';
 
 interface Student {
@@ -126,8 +126,8 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                 setSelectedStudentIds(new Set());
                 setSuccess(false);
             }, 2000);
-        } catch (err: any) {
-            setError(err.message || 'Gagal mengirim pesan');
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Gagal mengirim pesan');
         } finally {
             setIsSending(false);
         }
@@ -148,13 +148,13 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                 {/* Success State */}
                 {success ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
-                            <CheckIcon className="w-8 h-8 text-green-600 dark:text-green-400" />
+                        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-4">
+                            <CheckIcon className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                             Pesan Terkirim!
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
                             Pesan berhasil dikirim ke {recipients.length} wali murid
                         </p>
                     </div>
@@ -162,15 +162,15 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                     <>
                         {/* Selection Mode */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
                                 Kirim Ke
                             </label>
                             <div className="flex flex-wrap gap-2">
                                 <button
                                     onClick={() => setSelectionMode('all')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'all'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                 >
                                     <UsersIcon className="w-4 h-4 inline-block mr-2" />
@@ -179,8 +179,8 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 <button
                                     onClick={() => setSelectionMode('class')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'class'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                 >
                                     Per Kelas
@@ -188,8 +188,8 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 <button
                                     onClick={() => setSelectionMode('custom')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'custom'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                 >
                                     Pilih Manual
@@ -200,13 +200,13 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                         {/* Class Selection */}
                         {selectionMode === 'class' && (
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Pilih Kelas
                                 </label>
                                 <select
                                     value={selectedClassId}
                                     onChange={e => setSelectedClassId(e.target.value)}
-                                    className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                                 >
                                     <option value="">-- Pilih Kelas --</option>
                                     {classes.map(cls => (
@@ -222,18 +222,18 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                         {selectionMode === 'custom' && (
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                         Pilih Siswa ({selectedStudentIds.size} dipilih)
                                     </label>
                                     <button
                                         onClick={handleSelectAll}
-                                        className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                                     >
                                         {selectedStudentIds.size === filteredStudents.length ? 'Batalkan Semua' : 'Pilih Semua'}
                                     </button>
                                 </div>
                                 <div className="relative mb-2">
-                                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <Input
                                         value={searchQuery}
                                         onChange={e => setSearchQuery(e.target.value)}
@@ -241,24 +241,24 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                         className="pl-9"
                                     />
                                 </div>
-                                <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg divide-y divide-gray-100 dark:divide-gray-700">
+                                <div className="max-h-40 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-700">
                                     {filteredStudents.map(student => (
                                         <label
                                             key={student.id}
-                                            className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
+                                            className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
                                         >
                                             <input
                                                 type="checkbox"
                                                 checked={selectedStudentIds.has(student.id)}
                                                 onChange={() => handleToggleStudent(student.id)}
-                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                             />
                                             <img
                                                 src={getStudentAvatar(student.avatar_url, student.gender, student.id)}
                                                 alt={student.name}
                                                 className="w-8 h-8 rounded-full object-cover"
                                             />
-                                            <span className="text-sm text-gray-900 dark:text-white">{student.name}</span>
+                                            <span className="text-sm text-slate-900 dark:text-white">{student.name}</span>
                                         </label>
                                     ))}
                                 </div>
@@ -266,11 +266,11 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                         )}
 
                         {/* Recipients Preview */}
-                        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-3">
+                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                                 <UsersIcon className="w-4 h-4" />
                                 <span>
-                                    Akan dikirim ke <strong className="text-gray-900 dark:text-white">{recipients.length}</strong> wali murid
+                                    Akan dikirim ke <strong className="text-slate-900 dark:text-white">{recipients.length}</strong> wali murid
                                 </span>
                             </div>
                         </div>
@@ -279,7 +279,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                         <div className="relative">
                             <button
                                 onClick={() => setShowTemplates(!showTemplates)}
-                                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                             >
                                 <FileTextIcon className="w-4 h-4" />
                                 <span>Gunakan Template</span>
@@ -287,11 +287,11 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                             </button>
 
                             {showTemplates && (
-                                <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-60 overflow-hidden">
-                                    <div className="flex items-center gap-1 p-2 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+                                <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 max-h-60 overflow-hidden">
+                                    <div className="flex items-center gap-1 p-2 border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
                                         <button
                                             onClick={() => setSelectedCategory('all')}
-                                            className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === 'all' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === 'all' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                                         >
                                             Semua
                                         </button>
@@ -299,7 +299,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                             <button
                                                 key={key}
                                                 onClick={() => setSelectedCategory(key as MessageTemplate['category'])}
-                                                className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === key ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                                className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === key ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                                             >
                                                 {label}
                                             </button>
@@ -310,10 +310,10 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                             <button
                                                 key={template.id}
                                                 onClick={() => handleSelectTemplate(template)}
-                                                className="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700/50 last:border-0"
+                                                className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700/50 last:border-0"
                                             >
-                                                <span className="font-medium text-sm text-gray-900 dark:text-white">{template.title}</span>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-1">{template.message.substring(0, 60)}...</p>
+                                                <span className="font-medium text-sm text-slate-900 dark:text-white">{template.title}</span>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-1">{template.message.substring(0, 60)}...</p>
                                             </button>
                                         ))}
                                     </div>
@@ -323,31 +323,31 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
 
                         {/* Message Input */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                 Pesan
                             </label>
                             <textarea
                                 value={message}
                                 onChange={e => setMessage(e.target.value)}
                                 placeholder="Tulis pesan untuk wali murid..."
-                                className="w-full h-32 px-4 py-3 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                className="w-full h-32 px-4 py-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 resize-none text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                                 disabled={isSending}
                             />
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 Gunakan [Nama Siswa] untuk placeholder nama
                             </p>
                         </div>
 
                         {/* Error Message */}
                         {error && (
-                            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
+                            <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-600 dark:text-rose-400 text-sm">
                                 <AlertCircleIcon className="w-4 h-4 flex-shrink-0" />
                                 <span>{error}</span>
                             </div>
                         )}
 
                         {/* Actions */}
-                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                             <Button
                                 variant="outline"
                                 onClick={handleClose}
@@ -358,7 +358,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                             <Button
                                 onClick={handleSend}
                                 disabled={!isOnline || !message.trim() || recipients.length === 0 || isSending}
-                                className="bg-gradient-to-r from-blue-600 to-indigo-600"
+                                className="bg-gradient-to-r from-indigo-600 to-purple-600"
                             >
                                 {isSending ? (
                                     <>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExportFormat, ExportPreviewModal } from '../AdvancedFeatures';
+import { ExportFormat, ExportPreviewModal } from '../advanced-features/ExportPreviewModal';
 import { ImportModal } from '../ui/ImportModal';
 import { ParsedRow } from '../../services/ImportService';
 import { IDCardPrintModal } from './IDCardPrintModal';

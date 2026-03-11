@@ -5,7 +5,7 @@ import { exportToExcel } from '../../utils/exportUtils';
 import { supabase } from '../../services/supabase';
 import { Database } from '../../services/database.types';
 import { ParsedRow } from '../../services/ImportService';
-import { ExportFormat } from '../AdvancedFeatures';
+import { ExportFormat } from '../advanced-features/ExportPreviewModal';
 import { ClassRow, ConfirmModalState, StudentRow } from './types';
 
 const generateAccessCode = (): string => {

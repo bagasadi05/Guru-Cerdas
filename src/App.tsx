@@ -14,7 +14,8 @@ import { OfflineBanner } from './components/StatusIndicators';
 import { GlobalSearchProvider, GlobalSearchModal } from './components/SearchSystem';
 import { TourProvider, HelpButton } from './components/OnboardingHelp';
 import { SimpleHelpCenter } from './components/SimpleHelpCenter';
-import { KeyboardShortcutsPanel, useKeyboardShortcuts } from './components/AdvancedFeatures';
+import { KeyboardShortcutsPanel } from './components/advanced-features/KeyboardShortcutsPanel';
+import { useKeyboardShortcuts } from './components/advanced-features/useKeyboardShortcuts';
 import { useNavigate } from 'react-router-dom';
 import { startCleanupScheduler } from './services/CleanupService';
 import { useSessionTimeout } from './hooks/useSessionTimeout';
@@ -57,15 +58,17 @@ const ExtracurricularPage = lazy(() => import('@/components/pages/Extracurricula
 // A wrapper for routes that require authentication.
 // It shows a loader while checking the session, redirects to login if not authenticated,
 // or renders the main Layout with the requested page.
+const AppLoadingScreen = () => (
+  <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
+
 const PrivateRoutes = () => {
   const { session, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-950">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <AppLoadingScreen />;
   }
 
   return session ? (
@@ -77,11 +80,7 @@ const PrivateRoutes = () => {
   );
 };
 
-const loadingSpinner = (
-  <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-950">
-    <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
+const loadingSpinner = <AppLoadingScreen />;
 
 function App() {
   useClickSound();

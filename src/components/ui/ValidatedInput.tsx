@@ -16,6 +16,30 @@ export interface ValidatedInputProps extends React.InputHTMLAttributes<HTMLInput
     showValidationIcon?: boolean;
 }
 
+const fieldBaseClasses = `
+    rounded-lg border
+    bg-white dark:bg-slate-800
+    text-sm text-slate-900 dark:text-white
+    placeholder:text-slate-400 dark:placeholder:text-slate-500
+    focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+    focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900
+    disabled:cursor-not-allowed disabled:opacity-50
+    disabled:bg-slate-50 dark:disabled:bg-slate-900
+    transition-all duration-200
+`;
+
+const getValidationStateClasses = (hasError: boolean, showSuccess: boolean) => {
+    if (hasError) {
+        return 'border-rose-500 focus:border-rose-500 focus-visible:ring-rose-500';
+    }
+
+    if (showSuccess) {
+        return 'border-emerald-500 focus:border-emerald-500 focus-visible:ring-emerald-500';
+    }
+
+    return 'border-slate-300 dark:border-slate-600 focus:border-indigo-500 focus-visible:ring-indigo-500';
+};
+
 export const ValidatedInput = React.forwardRef<HTMLInputElement, ValidatedInputProps>(
     (
         {
@@ -40,10 +64,10 @@ export const ValidatedInput = React.forwardRef<HTMLInputElement, ValidatedInputP
                 {label && (
                     <label
                         htmlFor={inputId}
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        className="block text-sm font-medium text-slate-700 dark:text-slate-300"
                     >
                         {label}
-                        {props.required && <span className="text-red-500 ml-1">*</span>}
+                        {props.required && <span className="text-rose-500 ml-1">*</span>}
                     </label>
                 )}
 
@@ -60,20 +84,9 @@ export const ValidatedInput = React.forwardRef<HTMLInputElement, ValidatedInputP
                                     : undefined
                         }
                         className={`
-                            flex h-11 w-full rounded-xl border
-                            ${hasError
-                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                                : showSuccess
-                                    ? 'border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                                    : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500/20'
-                            }
-                            bg-white dark:bg-gray-800
-                            px-4 py-2.5
-                            text-sm text-gray-900 dark:text-white
-                            placeholder:text-gray-400 dark:placeholder:text-gray-500
-                            focus:outline-none focus:ring-4
-                            disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-900
-                            transition-all duration-200
+                            flex h-11 w-full px-4 py-2.5
+                            ${fieldBaseClasses}
+                            ${getValidationStateClasses(hasError, showSuccess)}
                             ${showValidationIcon ? 'pr-11' : ''}
                             ${className}
                         `}
@@ -84,9 +97,9 @@ export const ValidatedInput = React.forwardRef<HTMLInputElement, ValidatedInputP
                     {showValidationIcon && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                             {isValidating ? (
-                                <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                                <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
                             ) : hasError ? (
-                                <AlertCircleIcon className="w-5 h-5 text-red-500" />
+                                <AlertCircleIcon className="w-5 h-5 text-rose-500" />
                             ) : showSuccess ? (
                                 <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
                             ) : null}
@@ -98,7 +111,7 @@ export const ValidatedInput = React.forwardRef<HTMLInputElement, ValidatedInputP
                 {hasError && (
                     <p
                         id={`${inputId}-error`}
-                        className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 animate-fade-in"
+                        className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 animate-fade-in"
                         role="alert"
                     >
                         <AlertCircleIcon className="w-3 h-3 flex-shrink-0" />
@@ -110,7 +123,7 @@ export const ValidatedInput = React.forwardRef<HTMLInputElement, ValidatedInputP
                 {!hasError && helperText && (
                     <p
                         id={`${inputId}-helper`}
-                        className="text-xs text-gray-500 dark:text-gray-400"
+                        className="text-xs text-slate-500 dark:text-slate-400"
                     >
                         {helperText}
                     </p>
@@ -161,10 +174,10 @@ export const ValidatedTextarea = React.forwardRef<HTMLTextAreaElement, Validated
                 {label && (
                     <label
                         htmlFor={inputId}
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        className="block text-sm font-medium text-slate-700 dark:text-slate-300"
                     >
                         {label}
-                        {props.required && <span className="text-red-500 ml-1">*</span>}
+                        {props.required && <span className="text-rose-500 ml-1">*</span>}
                     </label>
                 )}
 
@@ -183,21 +196,9 @@ export const ValidatedTextarea = React.forwardRef<HTMLTextAreaElement, Validated
                                     : undefined
                         }
                         className={`
-                            flex min-h-[100px] w-full rounded-xl border
-                            ${hasError
-                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                                : showSuccess
-                                    ? 'border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                                    : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500/20'
-                            }
-                            bg-white dark:bg-gray-800
-                            px-4 py-3
-                            text-sm text-gray-900 dark:text-white
-                            placeholder:text-gray-400 dark:placeholder:text-gray-500
-                            focus:outline-none focus:ring-4
-                            disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-900
-                            transition-all duration-200
-                            resize-none
+                            flex min-h-[100px] w-full px-4 py-3 resize-none
+                            ${fieldBaseClasses}
+                            ${getValidationStateClasses(hasError, showSuccess)}
                             ${className}
                         `}
                         {...props}
@@ -216,8 +217,8 @@ export const ValidatedTextarea = React.forwardRef<HTMLTextAreaElement, Validated
                     <div className="flex justify-end">
                         <span
                             className={`text-xs ${charCount > maxLength
-                                    ? 'text-red-600 dark:text-red-400'
-                                    : 'text-gray-500 dark:text-gray-400'
+                                    ? 'text-rose-600 dark:text-rose-400'
+                                    : 'text-slate-500 dark:text-slate-400'
                                 }`}
                         >
                             {charCount} / {maxLength}
@@ -229,7 +230,7 @@ export const ValidatedTextarea = React.forwardRef<HTMLTextAreaElement, Validated
                 {hasError && (
                     <p
                         id={`${inputId}-error`}
-                        className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 animate-fade-in"
+                        className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 animate-fade-in"
                         role="alert"
                     >
                         <AlertCircleIcon className="w-3 h-3 flex-shrink-0" />
@@ -241,7 +242,7 @@ export const ValidatedTextarea = React.forwardRef<HTMLTextAreaElement, Validated
                 {!hasError && helperText && (
                     <p
                         id={`${inputId}-helper`}
-                        className="text-xs text-gray-500 dark:text-gray-400"
+                        className="text-xs text-slate-500 dark:text-slate-400"
                     >
                         {helperText}
                     </p>
@@ -288,10 +289,10 @@ export const ValidatedSelect = React.forwardRef<HTMLSelectElement, ValidatedSele
                 {label && (
                     <label
                         htmlFor={inputId}
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        className="block text-sm font-medium text-slate-700 dark:text-slate-300"
                     >
                         {label}
-                        {props.required && <span className="text-red-500 ml-1">*</span>}
+                        {props.required && <span className="text-rose-500 ml-1">*</span>}
                     </label>
                 )}
 
@@ -308,19 +309,9 @@ export const ValidatedSelect = React.forwardRef<HTMLSelectElement, ValidatedSele
                                     : undefined
                         }
                         className={`
-                            flex h-11 w-full rounded-xl border
-                            ${hasError
-                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                                : showSuccess
-                                    ? 'border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500/20'
-                                    : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500/20'
-                            }
-                            bg-white dark:bg-gray-800
-                            px-4 py-2.5
-                            text-sm text-gray-900 dark:text-white
-                            focus:outline-none focus:ring-4
-                            disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-900
-                            transition-all duration-200
+                            flex h-11 w-full px-4 py-2.5
+                            ${fieldBaseClasses}
+                            ${getValidationStateClasses(hasError, showSuccess)}
                             ${className}
                         `}
                         {...props}
@@ -344,7 +335,7 @@ export const ValidatedSelect = React.forwardRef<HTMLSelectElement, ValidatedSele
                 {hasError && (
                     <p
                         id={`${inputId}-error`}
-                        className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 animate-fade-in"
+                        className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 animate-fade-in"
                         role="alert"
                     >
                         <AlertCircleIcon className="w-3 h-3 flex-shrink-0" />
@@ -356,7 +347,7 @@ export const ValidatedSelect = React.forwardRef<HTMLSelectElement, ValidatedSele
                 {!hasError && helperText && (
                     <p
                         id={`${inputId}-helper`}
-                        className="text-xs text-gray-500 dark:text-gray-400"
+                        className="text-xs text-slate-500 dark:text-slate-400"
                     >
                         {helperText}
                     </p>
@@ -367,3 +358,4 @@ export const ValidatedSelect = React.forwardRef<HTMLSelectElement, ValidatedSele
 );
 
 ValidatedSelect.displayName = 'ValidatedSelect';
+
