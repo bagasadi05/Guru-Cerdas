@@ -1,5 +1,5 @@
 import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
-import type { PortalData } from '../pages/ParentPortalPage';
+import type { PortalData } from '../pages/portal/types';
 
 // Helper to load image as base64
 const loadImage = (url: string): Promise<string> => {

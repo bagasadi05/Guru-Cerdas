@@ -30,6 +30,7 @@ import {
     ShieldAlert,
     Star,
     BarChart3,
+    FileText,
 } from 'lucide-react';
 import {
     getAllDeletedItems,
@@ -74,6 +75,14 @@ const entityConfig: Record<SoftDeleteEntity, {
         color: 'text-green-500',
         bgColor: 'bg-green-500/10',
         borderColor: 'border-green-500/20',
+    },
+    tasks: {
+        label: 'Tugas',
+        labelPlural: 'Tugas',
+        icon: <FileText className="w-4 h-4" />,
+        color: 'text-amber-500',
+        bgColor: 'bg-amber-500/10',
+        borderColor: 'border-amber-500/20',
     },
     violations: {
         label: 'Pelanggaran',
@@ -122,6 +131,8 @@ function getItemDisplayName(item: DeletedItem): string {
             return data.name || data.nama || 'Kelas';
         case 'attendance':
             return `Absensi ${data.date || data.tanggal || ''}`;
+        case 'tasks':
+            return data.title || data.judul || 'Tugas';
         case 'violations':
             return data.description || data.jenis || 'Pelanggaran';
         case 'quiz_points':
@@ -143,6 +154,8 @@ function getItemSubtitle(item: DeletedItem): string {
             return `${data.student_count || 0} siswa`;
         case 'attendance':
             return data.status || '';
+        case 'tasks':
+            return data.due_date || data.deadline || '';
         case 'violations':
             return `${data.points || 0} poin`;
         case 'quiz_points':
@@ -335,6 +348,7 @@ const TrashPage: React.FC = () => {
             students: [],
             classes: [],
             attendance: [],
+            tasks: [],
             violations: [],
             quiz_points: [],
             academic_records: [],
@@ -354,6 +368,7 @@ const TrashPage: React.FC = () => {
             students: allDeletedItems.filter(i => i.entity === 'students').length,
             classes: allDeletedItems.filter(i => i.entity === 'classes').length,
             attendance: allDeletedItems.filter(i => i.entity === 'attendance').length,
+            tasks: allDeletedItems.filter(i => i.entity === 'tasks').length,
             violations: allDeletedItems.filter(i => i.entity === 'violations').length,
             quiz_points: allDeletedItems.filter(i => i.entity === 'quiz_points').length,
             academic_records: allDeletedItems.filter(i => i.entity === 'academic_records').length,

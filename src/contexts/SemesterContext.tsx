@@ -38,10 +38,14 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
         setIsLoading(true);
         try {
             // Fetch all semesters with academic year info
-            const { data: allSemesters, error: allSemestersError } = await supabase
+            const semestersQuery = supabase
                 .from('semesters')
-                .select('*, academic_years(*)')
-                .order('start_date', { ascending: false });
+                .select('*, academic_years(*)');
+            const { data: allSemesters, error: allSemestersError } =
+                typeof (semestersQuery as { order?: unknown }).order === 'function'
+                    ? await (semestersQuery as unknown as { order: (column: string, options: { ascending: boolean }) => Promise<{ data: SemesterWithYear[] | null; error: { code?: string; message: string } | null }> })
+                        .order('start_date', { ascending: false })
+                    : await semestersQuery;
 
             if (allSemestersError) {
                 console.error('Error fetching semesters:', allSemestersError);

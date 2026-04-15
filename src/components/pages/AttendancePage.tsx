@@ -124,9 +124,9 @@ const AttendancePage: React.FC = () => {
     const { data: classes, isLoading: isLoadingClasses, error: classesError, refetch: refetchClasses } = useQuery({
         queryKey: ['classes', user?.id],
         queryFn: async () => {
-            const { data, error } = await supabase.from('classes').select('*').eq('user_id', user!.id).is('deleted_at', null);
+            const { data, error } = await supabase.from('classes').select('id, name, user_id').eq('user_id', user!.id).is('deleted_at', null);
             if (error) throw error;
-            return data || [];
+            return (data || []) as unknown as ClassRow[];
         },
         enabled: !!user,
     });
@@ -141,9 +141,9 @@ const AttendancePage: React.FC = () => {
         queryKey: ['studentsForAttendance', selectedClass],
         queryFn: async () => {
             if (!selectedClass || !user) return [];
-            const { data: studentsData, error: studentsError } = await supabase.from('students').select('*').eq('class_id', selectedClass).eq('user_id', user.id).is('deleted_at', null).order('name', { ascending: true });
+            const { data: studentsData, error: studentsError } = await supabase.from('students').select('id, name, class_id, user_id').eq('class_id', selectedClass).eq('user_id', user.id).is('deleted_at', null).order('name', { ascending: true });
             if (studentsError) throw studentsError;
-            return studentsData || [];
+            return (studentsData || []) as unknown as StudentRow[];
         },
         enabled: !!selectedClass && !!user
     });
@@ -154,9 +154,10 @@ const AttendancePage: React.FC = () => {
             if (!user) return {};
             const { data: attendanceData, error: attendanceError } = await supabase
                 .from('attendance')
-                .select('*')
+                .select('id, student_id, status, notes')
                 .eq('user_id', user.id)
-                .eq('date', selectedDate);
+                .eq('date', selectedDate)
+                .is('deleted_at', null);
 
             if (attendanceError) throw attendanceError;
             return (attendanceData || []).reduce<Record<string, AttendanceRecord>>((acc, record) => {
@@ -190,12 +191,13 @@ const AttendancePage: React.FC = () => {
             if (!user || !calendarRange) return [];
             const { data, error } = await supabase
                 .from('attendance')
-                .select('*')
+                .select('student_id, date, status')
                 .eq('user_id', user.id)
                 .gte('date', calendarRange.start)
-                .lte('date', calendarRange.end);
+                .lte('date', calendarRange.end)
+                .is('deleted_at', null);
             if (error) throw error;
-            return data || [];
+            return (data || []) as unknown as AttendanceRow[];
         },
         enabled: !!user && !!calendarRange,
     });
@@ -215,7 +217,7 @@ const AttendancePage: React.FC = () => {
                 await addToQueue({
                     table: 'attendance',
                     operation: 'upsert',
-                    payload: recordsToUpsert,
+                    payload: recordsToUpsert as Record<string, unknown>[],
                 });
                 return { synced: false };
             }
@@ -376,12 +378,13 @@ const AttendancePage: React.FC = () => {
             if (!students || students.length === 0) return [];
             const { data, error } = await supabase
                 .from('attendance')
-                .select('*')
+                .select('student_id, date, status')
                 .gte('date', streakRange.start)
                 .lte('date', streakRange.end)
-                .in('student_id', students.map(student => student.id));
+                .in('student_id', students.map(student => student.id))
+                .is('deleted_at', null);
             if (error) throw error;
-            return data || [];
+            return (data || []) as unknown as AttendanceRow[];
         },
         enabled: !!students && students.length > 0,
     });
@@ -509,7 +512,7 @@ const AttendancePage: React.FC = () => {
             const studentIds = students.map(s => s.id);
             const { error } = await supabase
                 .from('attendance')
-                .delete()
+                .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
                 .eq('date', selectedDate)
                 .eq('user_id', user.id)
                 .in('student_id', studentIds);
@@ -523,8 +526,11 @@ const AttendancePage: React.FC = () => {
             toast.success('Absensi berhasil direset! Semua data absensi untuk tanggal ini telah dihapus.');
 
             // Invalidate queries to refresh data
-            queryClient.invalidateQueries({ queryKey: ['attendanceData', selectedClass, selectedDate] });
+            queryClient.invalidateQueries({ queryKey: ['attendanceData'] });
+            queryClient.invalidateQueries({ queryKey: ['attendanceCalendar'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
         },
         onError: (err: Error) => {
             toast.error(`Gagal mereset absensi: ${err.message}`);
@@ -590,20 +596,23 @@ const AttendancePage: React.FC = () => {
         }
 
         const [studentsRes, attendanceRes, classesRes] = await Promise.all([
-            supabase.from('students').select('*').eq('user_id', user.id).is('deleted_at', null),
-            supabase.from('attendance').select('*').eq('user_id', user.id).gte('date', startDate).lte('date', endDate),
-            supabase.from('classes').select('*').eq('user_id', user.id).is('deleted_at', null),
+            supabase.from('students').select('id, name, class_id, user_id').eq('user_id', user.id).is('deleted_at', null),
+            supabase.from('attendance').select('student_id, date, status').eq('user_id', user.id).gte('date', startDate).lte('date', endDate).is('deleted_at', null),
+            supabase.from('classes').select('id, name, user_id').eq('user_id', user.id).is('deleted_at', null),
         ]);
 
         if (studentsRes.error || attendanceRes.error || classesRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
 
-        const classMap = new Map((classesRes.data || []).map(c => [c.id, { name: c.name }]));
-        const studentsWithClasses = (studentsRes.data || []).map((s: StudentRow) => ({
+        const classRows = (classesRes.data || []) as unknown as ClassRow[];
+        const studentRows = (studentsRes.data || []) as unknown as StudentRow[];
+        const attendanceRows = (attendanceRes.data || []) as unknown as AttendanceRow[];
+        const classMap = new Map(classRows.map(c => [c.id, { name: c.name }]));
+        const studentsWithClasses = studentRows.map((s: StudentRow) => ({
             ...s,
-            classes: classMap.get(s.class_id) || null
+            classes: s.class_id ? (classMap.get(s.class_id) || null) : null
         }));
 
-        return { students: studentsWithClasses, attendance: attendanceRes.data, classes: classesRes.data };
+        return { students: studentsWithClasses, attendance: attendanceRows, classes: classRows };
     };
 
     const handleExport = async (format: 'pdf' | 'excel') => {
@@ -819,7 +828,8 @@ const AttendancePage: React.FC = () => {
             const { data: attendanceData, error } = await supabase
                 .from('attendance').select('student_id, date, status, students(name)')
                 .in('student_id', students.map(s => s.id))
-                .gte('date', thirtyDaysAgo);
+                .gte('date', thirtyDaysAgo)
+                .is('deleted_at', null);
             if (error) throw error;
 
             const prompt = `Analisis data kehadiran berikut: ${JSON.stringify(attendanceData)}.

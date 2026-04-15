@@ -160,6 +160,7 @@ const searchClasses = async (
 
     const studentCounts: Record<string, number> = {};
     students?.forEach(s => {
+        if (!s.class_id) return;
         studentCounts[s.class_id] = (studentCounts[s.class_id] || 0) + 1;
     });
 
@@ -194,7 +195,8 @@ const searchTasks = async (
     const { data: tasks } = await supabase
         .from('tasks')
         .select('id, title, description, status, due_date')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .is('deleted_at', null);
 
     if (!tasks) return [];
 

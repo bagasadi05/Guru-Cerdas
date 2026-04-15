@@ -109,6 +109,12 @@ const entityConfig: Record<SoftDeleteEntity, {
         color: 'text-green-500',
         bgColor: 'bg-green-500/10',
     },
+    tasks: {
+        label: 'Tugas',
+        icon: <FileText className="w-4 h-4" />,
+        color: 'text-amber-500',
+        bgColor: 'bg-amber-500/10',
+    },
     violations: {
         label: 'Pelanggaran',
         icon: <AlertTriangle className="w-4 h-4" />,
@@ -134,6 +140,7 @@ const entityLabels: Record<SoftDeleteEntity, string> = {
     students: 'Siswa',
     classes: 'Kelas',
     attendance: 'Absensi',
+    tasks: 'Tugas',
     violations: 'Pelanggaran',
     quiz_points: 'Poin Kuis',
     academic_records: 'Nilai Akademik',

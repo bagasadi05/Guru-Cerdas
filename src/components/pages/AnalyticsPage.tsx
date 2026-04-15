@@ -152,7 +152,8 @@ const AnalyticsPage: React.FC = () => {
             let attendanceQuery = supabase
                 .from('attendance')
                 .select('*')
-                .eq('user_id', user!.id);
+                .eq('user_id', user!.id)
+                .is('deleted_at', null);
 
             if (startDate) {
                 attendanceQuery = attendanceQuery.gte('date', startDate.toISOString().split('T')[0]);
@@ -163,19 +164,22 @@ const AnalyticsPage: React.FC = () => {
             const { data: tasks } = await supabase
                 .from('tasks')
                 .select('*')
-                .eq('user_id', user!.id);
+                .eq('user_id', user!.id)
+                .is('deleted_at', null);
 
             // Fetch academic records
             const { data: academicRecords } = await supabase
                 .from('academic_records')
                 .select('*')
-                .eq('user_id', user!.id);
+                .eq('user_id', user!.id)
+                .is('deleted_at', null);
 
             // Fetch violations
             let violationsQuery = supabase
                 .from('violations')
                 .select('*')
-                .eq('user_id', user!.id);
+                .eq('user_id', user!.id)
+                .is('deleted_at', null);
             if (startDate) {
                 violationsQuery = violationsQuery.gte('date', startDate.toISOString().split('T')[0]);
             }
@@ -185,7 +189,8 @@ const AnalyticsPage: React.FC = () => {
             let quizPointsQuery = supabase
                 .from('quiz_points')
                 .select('*')
-                .eq('user_id', user!.id);
+                .eq('user_id', user!.id)
+                .is('deleted_at', null);
             if (startDate) {
                 quizPointsQuery = quizPointsQuery.gte('created_at', startDate.toISOString());
             }

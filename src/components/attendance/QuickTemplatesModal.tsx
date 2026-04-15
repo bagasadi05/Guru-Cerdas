@@ -15,7 +15,7 @@ import {
     CalendarOff,
     Zap
 } from 'lucide-react';
-import { AttendanceStatus } from '../../types';
+import { AttendanceStatus } from '../../types/enums';
 
 interface Template {
     id: string;
@@ -45,7 +45,7 @@ const templates: Template[] = [
         color: 'text-emerald-600',
         bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
         borderColor: 'border-emerald-200 dark:border-emerald-700/50',
-        defaultStatus: 'Hadir',
+        defaultStatus: AttendanceStatus.Hadir,
         applyToAll: true,
     },
     {
@@ -56,7 +56,7 @@ const templates: Template[] = [
         color: 'text-red-600',
         bgColor: 'bg-red-50 dark:bg-red-900/20',
         borderColor: 'border-red-200 dark:border-red-700/50',
-        defaultStatus: 'Alpha',
+        defaultStatus: AttendanceStatus.Alpha,
         applyToAll: true,
     },
     {
@@ -67,7 +67,7 @@ const templates: Template[] = [
         color: 'text-purple-600',
         bgColor: 'bg-purple-50 dark:bg-purple-900/20',
         borderColor: 'border-purple-200 dark:border-purple-700/50',
-        defaultStatus: 'Hadir', // Won't be used, just clear
+        defaultStatus: AttendanceStatus.Hadir, // Won't be used, just clear
         applyToAll: false,
     },
     {
@@ -78,7 +78,7 @@ const templates: Template[] = [
         color: 'text-orange-600',
         bgColor: 'bg-orange-50 dark:bg-orange-900/20',
         borderColor: 'border-orange-200 dark:border-orange-700/50',
-        defaultStatus: 'Hadir',
+        defaultStatus: AttendanceStatus.Hadir,
         applyToAll: false, // Only unmarked students
     },
     {
@@ -89,7 +89,7 @@ const templates: Template[] = [
         color: 'text-indigo-600',
         bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
         borderColor: 'border-indigo-200 dark:border-indigo-700/50',
-        defaultStatus: 'Hadir',
+        defaultStatus: AttendanceStatus.Hadir,
         applyToAll: false,
     },
 ];

@@ -30,6 +30,8 @@ interface QueryOptions extends NetworkRequestOptions {
   cacheKey?: string;
 }
 
+type RpcFunctionName = keyof Database['public']['Functions'];
+
 // ============================================
 // RESILIENT SUPABASE CLIENT
 // ============================================
@@ -167,7 +169,7 @@ class ResilientSupabaseClient {
         try {
           payload = JSON.parse(init.body as string);
         } catch (e) {
-          logger.warn('Failed to parse request body for offline queue', e as Error);
+          logger.warn('Failed to parse request body for offline queue', 'ResilientSupabase', e);
         }
       }
 
@@ -312,11 +314,11 @@ class ResilientSupabaseClient {
           
           // Override eq, in, etc. to capture filter conditions
           eq: (column: string, value: any) => {
-            const filteredQuery = deleteQuery.eq(column, value);
+            const filteredQuery = deleteQuery.eq(column, value) as any;
             
             // Override the execution
-            const originalThen = filteredQuery.then;
-            filteredQuery.then = async function(onfulfilled, onrejected) {
+            const originalThen = filteredQuery.then.bind(filteredQuery);
+            filteredQuery.then = async function(onfulfilled: any, onrejected: any) {
               try {
                 return await originalThen.call(this, onfulfilled, onrejected);
               } catch (error) {
@@ -341,7 +343,7 @@ class ResilientSupabaseClient {
               }
             };
             
-            return filteredQuery;
+            return filteredQuery as typeof deleteQuery;
           }
         };
       }
@@ -377,14 +379,19 @@ class ResilientSupabaseClient {
    * RPC methods with retry support
    */
   public async rpc<T>(
-    fn: string,
+    fn: RpcFunctionName,
     args?: Record<string, any>,
-    options: QueryOptions = {}
+    _options: QueryOptions = {}
   ): Promise<{ data: T | null; error: any }> {
     try {
-      return await this.client.rpc(fn, args);
+      return await this.client.rpc(fn as any, args) as { data: T | null; error: any };
     } catch (error) {
-      logger.error('RPC call failed', error as Error, { function: fn, args });
+      logger.error(
+        'RPC call failed',
+        'ResilientSupabase',
+        error instanceof Error ? error : new Error(String(error)),
+        { function: fn, args }
+      );
       throw error;
     }
   }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { PortalData } from '../pages/ParentPortalPage';
+import type { PortalData } from '../pages/portal/types';
 
 interface ReportCardProps {
     data: PortalData;

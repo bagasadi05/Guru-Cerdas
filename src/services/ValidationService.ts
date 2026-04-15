@@ -15,7 +15,7 @@ export class ValidationService {
     /**
      * Validate a single value against a list of rules
      */
-    static validateField(value: any, rules: ValidationRule[]): ValidationResult {
+    static validateField(value: unknown, rules: ValidationRule[] = []): ValidationResult {
         for (const rule of rules) {
             try {
                 if (!rule.validate(value)) {
@@ -32,13 +32,13 @@ export class ValidationService {
     /**
      * Validate an entire form object against a schema of rules
      */
-    static validateForm(values: Record<string, any>, rules: ValidationRules): FormValidationResult {
+    static validateForm(values: Record<string, unknown>, rules: ValidationRules): FormValidationResult {
         const errors: Record<string, string> = {};
         let isValid = true;
 
         for (const field in rules) {
             if (Object.prototype.hasOwnProperty.call(rules, field)) {
-                const result = this.validateField(values[field], rules[field]);
+                const result = this.validateField(values[field], rules[field] ?? []);
                 if (!result.isValid && result.error) {
                     errors[field] = result.error;
                     isValid = false;
@@ -54,7 +54,7 @@ export class ValidationService {
      */
     static validators = {
         required: (message = 'Wajib diisi'): ValidationRule => ({
-            validate: (value: any) => {
+            validate: (value: unknown) => {
                 if (value === null || value === undefined) return false;
                 if (typeof value === 'string') return value.trim().length > 0;
                 if (Array.isArray(value)) return value.length > 0;
@@ -64,7 +64,7 @@ export class ValidationService {
         }),
 
         minLength: (length: number, message?: string): ValidationRule => ({
-            validate: (value: any) => {
+            validate: (value: unknown) => {
                 if (!value) return true; // Skip if empty (use required for non-empty check)
                 return String(value).length >= length;
             },
@@ -72,7 +72,7 @@ export class ValidationService {
         }),
 
         maxLength: (length: number, message?: string): ValidationRule => ({
-            validate: (value: any) => {
+            validate: (value: unknown) => {
                 if (!value) return true;
                 return String(value).length <= length;
             },
@@ -80,8 +80,9 @@ export class ValidationService {
         }),
 
         email: (message = 'Format email tidak valid'): ValidationRule => ({
-            validate: (value: string) => {
+            validate: (value: unknown) => {
                 if (!value) return true;
+                if (typeof value !== 'string') return false;
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 return emailRegex.test(value);
             },
@@ -89,8 +90,9 @@ export class ValidationService {
         }),
 
         phoneNumber: (message = 'Nomor telepon tidak valid'): ValidationRule => ({
-            validate: (value: string) => {
+            validate: (value: unknown) => {
                 if (!value) return true;
+                if (typeof value !== 'string') return false;
                 // Basic phone validation: 10-15 digits, optional + prefix
                 const phoneRegex = /^\+?[\d\s-]{10,15}$/;
                 return phoneRegex.test(value.replace(/\s|-/g, ''));
@@ -99,7 +101,7 @@ export class ValidationService {
         }),
 
         number: (message = 'Harus berupa angka'): ValidationRule => ({
-            validate: (value: any) => {
+            validate: (value: unknown) => {
                 if (value === null || value === undefined || value === '') return true;
                 return !isNaN(Number(value));
             },
@@ -107,16 +109,18 @@ export class ValidationService {
         }),
 
         alphanumeric: (message = 'Hanya huruf dan angka'): ValidationRule => ({
-            validate: (value: string) => {
+            validate: (value: unknown) => {
                 if (!value) return true;
+                if (typeof value !== 'string') return false;
                 return /^[a-zA-Z0-9]*$/.test(value);
             },
             message
         }),
 
         url: (message = 'URL tidak valid'): ValidationRule => ({
-            validate: (value: string) => {
+            validate: (value: unknown) => {
                 if (!value) return true;
+                if (typeof value !== 'string') return false;
                 try {
                     new URL(value);
                     return true;
@@ -128,8 +132,9 @@ export class ValidationService {
         }),
 
         futureDate: (message = 'Harus tanggal di masa depan'): ValidationRule => ({
-            validate: (value: string | Date) => {
+            validate: (value: unknown) => {
                 if (!value) return true;
+                if (!(typeof value === 'string' || value instanceof Date)) return false;
                 const date = new Date(value);
                 return date > new Date();
             },

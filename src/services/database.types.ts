@@ -131,6 +131,42 @@ export type Database = {
         }
         Relationships: []
       }
+      action_history: {
+        Row: {
+          action_type: string
+          affected_ids: string[]
+          can_undo: boolean | null
+          created_at: string | null
+          entity_type: string
+          expires_at: string
+          id: string
+          previous_state: Json | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          affected_ids: string[]
+          can_undo?: boolean | null
+          created_at?: string | null
+          entity_type: string
+          expires_at: string
+          id?: string
+          previous_state?: Json | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          affected_ids?: string[]
+          can_undo?: boolean | null
+          created_at?: string | null
+          entity_type?: string
+          expires_at?: string
+          id?: string
+          previous_state?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           audience_type: string | null
@@ -303,31 +339,34 @@ export type Database = {
       }
       classes: {
         Row: {
-          academic_year: string
-          created_at: string
-          grade_level: number
+          academic_year: string | null
+          created_at: string | null
+          deleted_at: string | null
+          grade_level: number | null
           id: string
           name: string
-          teacher_id: string
-          updated_at: string
+          updated_at: string | null
+          user_id: string
         }
         Insert: {
-          academic_year: string
-          created_at?: string
-          grade_level: number
+          academic_year?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          grade_level?: number | null
           id?: string
           name: string
-          teacher_id: string
-          updated_at?: string
+          updated_at?: string | null
+          user_id: string
         }
         Update: {
-          academic_year?: string
-          created_at?: string
-          grade_level?: number
+          academic_year?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          grade_level?: number | null
           id?: string
           name?: string
-          teacher_id?: string
-          updated_at?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -448,7 +487,7 @@ export type Database = {
           student_id: string
           teacher_id: string
           user_id: string
-          content: string
+          message: string
           sender: 'teacher' | 'parent'
           is_read: boolean
           parent_id: string | null
@@ -462,7 +501,7 @@ export type Database = {
           student_id: string
           teacher_id: string
           user_id?: string
-          content: string
+          message: string
           sender: 'teacher' | 'parent'
           is_read?: boolean
           parent_id?: string | null
@@ -476,7 +515,7 @@ export type Database = {
           student_id?: string
           teacher_id?: string
           user_id?: string
-          content?: string
+          message?: string
           sender?: 'teacher' | 'parent'
           is_read?: boolean
           parent_id?: string | null
@@ -1003,11 +1042,12 @@ export type Database = {
           date_of_birth: string
           email: string
           gender: Database["public"]["Enums"]["gender_enum"]
-          guardian_name: string
+          guardian_name: string | null
           id: string
           name: string
           nis: string
           nisn: string
+          parent_name: string | null
           photo_url: string
           avatar_url?: string
           access_code?: string
@@ -1018,20 +1058,21 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          address: string
-          class: string
+          address?: string
+          class?: string
           class_id?: string | null
-          contact: string
+          contact?: string
           created_at?: string | null
-          date_of_birth: string
-          email: string
+          date_of_birth?: string
+          email?: string
           gender: Database["public"]["Enums"]["gender_enum"]
-          guardian_name: string
+          guardian_name?: string | null
           id?: string
           name: string
-          nis: string
-          nisn: string
-          photo_url: string
+          nis?: string
+          nisn?: string
+          parent_name?: string | null
+          photo_url?: string
           avatar_url?: string
           access_code?: string
           parent_phone?: string | null
@@ -1049,11 +1090,12 @@ export type Database = {
           date_of_birth?: string
           email?: string
           gender?: Database["public"]["Enums"]["gender_enum"]
-          guardian_name?: string
+          guardian_name?: string | null
           id?: string
           name?: string
           nis?: string
           nisn?: string
+          parent_name?: string | null
           photo_url?: string
           avatar_url?: string
           access_code?: string
@@ -1288,17 +1330,26 @@ export type Database = {
       }
       delete_parent_message: {
         Args: {
-          message_id: string
-          parent_email: string
-          access_code: string
+          access_code?: string
+          access_code_param?: string
+          message_id?: string
+          message_id_param?: string
+          parent_email?: string
+          student_id_param?: string
         }
         Returns: boolean
       }
+      delete_user_account: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_student_portal_data: {
         Args: {
-          p_student_id: string
+          access_code_param?: string
+          p_student_id?: string
+          student_id_param?: string
         }
-        Returns: Json
+        Returns: Json[]
       }
       handle_updated_at: {
         Args: Record<PropertyKey, never>
@@ -1310,10 +1361,14 @@ export type Database = {
       }
       send_parent_message: {
         Args: {
-          p_student_id: string
-          p_parent_email: string
-          p_access_code: string
-          p_content: string
+          access_code_param?: string
+          message_param?: string
+          p_access_code?: string
+          p_content?: string
+          p_parent_email?: string
+          p_student_id?: string
+          student_id_param?: string
+          teacher_user_id_param?: string
         }
         Returns: string
       }
@@ -1328,20 +1383,28 @@ export type Database = {
       }
       update_parent_info: {
         Args: {
-          p_student_id: string
-          p_old_email: string
-          p_access_code: string
-          p_new_email: string
-          p_new_phone: string
+          access_code_param?: string
+          new_parent_name?: string
+          new_parent_phone?: string
+          p_access_code?: string
+          p_new_email?: string
+          p_new_phone?: string
+          p_old_email?: string
+          p_student_id?: string
+          student_id_param?: string
         }
         Returns: boolean
       }
       update_parent_message: {
         Args: {
-          message_id: string
-          p_content: string
-          parent_email: string
-          access_code: string
+          access_code?: string
+          access_code_param?: string
+          message_id?: string
+          message_id_param?: string
+          new_message_param?: string
+          p_content?: string
+          parent_email?: string
+          student_id_param?: string
         }
         Returns: boolean
       }
@@ -1363,10 +1426,15 @@ export type Database = {
       }
       verify_access_code: {
         Args: {
-          p_email: string
-          p_access_code: string
+          access_code_param?: string
+          p_access_code?: string
+          p_email?: string
         }
-        Returns: boolean
+        Returns: {
+          access_code: string
+          id: string
+          [key: string]: Json | undefined
+        }[]
       }
     }
     Enums: {

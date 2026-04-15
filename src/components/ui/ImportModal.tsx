@@ -312,13 +312,13 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                                 </td>
                                 <td className="px-3 py-2 text-slate-500">{row.rowNumber}</td>
                                 <td className="px-3 py-2 text-slate-900 dark:text-white font-medium">
-                                    {row.data.name || '-'}
+                                    {typeof row.data.name === 'string' ? row.data.name : '-'}
                                 </td>
                                 <td className="px-3 py-2 text-slate-600 dark:text-slate-400">
-                                    {row.data.gender || '-'}
+                                    {typeof row.data.gender === 'string' ? row.data.gender : '-'}
                                 </td>
                                 <td className="px-3 py-2 text-slate-600 dark:text-slate-400">
-                                    {row.data.class_name || '-'}
+                                    {typeof row.data.class_name === 'string' ? row.data.class_name : '-'}
                                 </td>
                             </tr>
                         ))}

@@ -1,13 +1,13 @@
 import React from 'react';
 import { QrCodeIcon, RotateCcw } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { QuickTemplateIcons } from './QuickTemplateIcons';
+import { QuickTemplateIcons, type Template } from './QuickTemplateIcons';
 import { attendanceViewModeOptions, type AttendanceViewMode } from './attendanceMenuConfig';
 
 interface AttendanceQuickActionsBarProps {
   hasAttendanceRecords: boolean;
   viewMode: AttendanceViewMode;
-  onApplyTemplate: (templateId: string) => void;
+  onApplyTemplate: (template: Template) => void;
   onReset: () => void;
   onOpenQr: () => void;
   onViewModeChange: (mode: AttendanceViewMode) => void;

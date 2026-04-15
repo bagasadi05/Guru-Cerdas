@@ -10,19 +10,31 @@ import * as fc from 'fast-check';
 // Mock Supabase for testing
 vi.mock('../services/supabase', () => ({
     supabase: {
-        from: vi.fn(() => ({
-            select: vi.fn().mockReturnThis(),
-            insert: vi.fn().mockResolvedValue({ data: null, error: null }),
-            update: vi.fn().mockResolvedValue({ data: null, error: null }),
-            delete: vi.fn().mockResolvedValue({ data: null, error: null }),
-            eq: vi.fn().mockReturnThis(),
-            in: vi.fn().mockReturnThis(),
-            not: vi.fn().mockReturnThis(),
-            lt: vi.fn().mockReturnThis(),
-            order: vi.fn().mockReturnThis(),
-            range: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
+        from: vi.fn(() => {
+            const builder = {
+                select: vi.fn().mockReturnThis(),
+                insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+                update: vi.fn().mockReturnThis(),
+                delete: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+                in: vi.fn().mockResolvedValue({ data: null, error: null }),
+                not: vi.fn().mockReturnThis(),
+                lt: vi.fn().mockReturnThis(),
+                order: vi.fn().mockReturnThis(),
+                range: vi.fn().mockReturnThis(),
+                single: vi.fn().mockResolvedValue({ data: null, error: null }),
+            };
+
+            builder.select = vi.fn().mockReturnValue(builder);
+            builder.update = vi.fn().mockReturnValue(builder);
+            builder.delete = vi.fn().mockReturnValue(builder);
+            builder.not = vi.fn().mockReturnValue(builder);
+            builder.lt = vi.fn().mockReturnValue(builder);
+            builder.order = vi.fn().mockReturnValue(builder);
+            builder.range = vi.fn().mockReturnValue(builder);
+
+            return builder;
+        }),
     },
 }));
 

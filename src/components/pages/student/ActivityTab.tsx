@@ -218,7 +218,7 @@ const SubjectPointsOverview: React.FC<{ records: QuizPointRow[] }> = ({ records 
 const ActivityPointsHistory: React.FC<{
     records: QuizPointRow[],
     onEdit: (record: QuizPointRow) => void,
-    onDelete: (recordId: number) => void,
+    onDelete: (recordId: string | number) => void,
     isOnline: boolean;
     categoryFilter: PointCategory | 'all';
 }> = ({ records, onEdit, onDelete, isOnline, categoryFilter }) => {

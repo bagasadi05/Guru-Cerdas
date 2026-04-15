@@ -23,17 +23,29 @@ android {
             def keystoreProperties = new Properties()
             if (keystorePropertiesFile.exists()) {
                 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+            } else {
+                keystoreProperties['storeFile'] = System.getenv('ANDROID_KEYSTORE_PATH')
+                keystoreProperties['storePassword'] = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keystoreProperties['keyAlias'] = System.getenv('ANDROID_KEY_ALIAS')
+                keystoreProperties['keyPassword'] = System.getenv('ANDROID_KEY_PASSWORD')
             }
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword = keystoreProperties['storePassword']
-            keyAlias = keystoreProperties['keyAlias']
-            keyPassword = keystoreProperties['keyPassword']
+
+            if (keystoreProperties['storeFile']) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword = keystoreProperties['storePassword']
+                keyAlias = keystoreProperties['keyAlias']
+                keyPassword = keystoreProperties['keyPassword']
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            if (signingConfigs.release.storeFile != null) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.lifecycle("Release signing disabled: provide android/keystore.properties or ANDROID_KEYSTORE_* environment variables.")
+            }
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

@@ -59,14 +59,16 @@ beforeEach(() => {
   });
 
   // Mock setTimeout to track delays
-  vi.spyOn(global, 'setTimeout').mockImplementation((callback: (...args: unknown[]) => void, delay?: number) => {
+  vi.spyOn(global, 'setTimeout').mockImplementation(((callback: TimerHandler, delay?: number) => {
     if (typeof delay === 'number') {
       fetchCallTimes.push(Date.now());
     }
     // Execute callback immediately for testing
-    callback();
+    if (typeof callback === 'function') {
+      callback();
+    }
     return 1 as unknown as NodeJS.Timeout;
-  });
+  }) as unknown as typeof setTimeout);
 
   // Mock Date.now to control timing
   let currentTime = 1000;
@@ -227,13 +229,15 @@ describe('Network Resilience Property Tests', () => {
             const delays: number[] = [];
 
             // Mock the delay calculation to capture actual delays
-            vi.spyOn(global, 'setTimeout').mockImplementation((callback: (...args: unknown[]) => void, delay?: number) => {
+            vi.spyOn(global, 'setTimeout').mockImplementation(((callback: TimerHandler, delay?: number) => {
               if (typeof delay === 'number') {
                 delays.push(delay);
               }
-              callback();
+              if (typeof callback === 'function') {
+                callback();
+              }
               return 1 as unknown as NodeJS.Timeout;
-            });
+            }) as unknown as typeof setTimeout);
 
             mockFetch.mockRejectedValue(new Error('Network failure'));
 

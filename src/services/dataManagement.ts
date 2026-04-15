@@ -58,6 +58,8 @@ interface ArchiveSummary {
     recordCount: number;
 }
 
+type GenericImportRecord = Record<string, unknown>;
+
 // ============================================
 // BULK EXPORT
 // ============================================
@@ -201,7 +203,7 @@ export async function importEntity(
             result.failed++;
             return null;
         }
-    }).filter(Boolean);
+    }).filter((record): record is GenericImportRecord => record !== null);
 
     const scopedRecords = applyUserId(validRecords, userId);
 
@@ -210,7 +212,7 @@ export async function importEntity(
         const BATCH_SIZE = 100;
         for (let i = 0; i < scopedRecords.length; i += BATCH_SIZE) {
             const batch = scopedRecords.slice(i, i + BATCH_SIZE);
-            const { error } = await supabase.from(entity).upsert(batch);
+            const { error } = await (supabase.from(entity) as any).upsert(batch);
 
             if (error) {
                 batch.forEach((_, idx) => {
@@ -737,13 +739,10 @@ function compareVersions(a: string, b: string): number {
 // DATA VALIDATION
 // ============================================
 
-function applyUserId<T extends Record<string, any>>(records: T[], userId: string): T[] {
+function applyUserId<T extends GenericImportRecord>(records: T[], userId: string): T[] {
     return records.map(record => {
         if (!record || typeof record !== 'object') return record;
-        if (Object.prototype.hasOwnProperty.call(record, 'user_id')) {
-            return { ...record, user_id: userId };
-        }
-        return record;
+        return { ...record, user_id: userId };
     });
 }
 
@@ -758,13 +757,12 @@ const entityValidators: Record<EntityType, (record: Record<string, unknown>) => 
         return {
             id: record.id,
             name: (record.name as string).trim(),
-            class: typeof record.class === 'string' ? record.class.trim() : null,
+            class_id: record.class_id || null,
             gender: record.gender || null,
             access_code: record.access_code || null,
-            parent_contact: record.parent_contact || null,
-            email: record.email || null,
-            birthdate: record.birthdate || null,
-            student_id: record.student_id || null
+            parent_name: record.parent_name || null,
+            parent_phone: record.parent_phone || record.parent_contact || null,
+            avatar_url: record.avatar_url || null,
         };
     },
     attendance: (record) => {
@@ -789,9 +787,7 @@ const entityValidators: Record<EntityType, (record: Record<string, unknown>) => 
             title: typeof record.title === 'string' ? record.title.trim() : String(record.title),
             description: record.description || null,
             due_date: record.due_date || null,
-            priority: record.priority || 'medium',
-            status: record.status || 'pending',
-            category: record.category || null
+            status: record.status || 'todo',
         };
     },
     schedules: (record) => {
@@ -803,8 +799,7 @@ const entityValidators: Record<EntityType, (record: Record<string, unknown>) => 
             subject: typeof record.subject === 'string' ? record.subject.trim() : String(record.subject),
             start_time: record.start_time || null,
             end_time: record.end_time || null,
-            room: record.room || null,
-            teacher: record.teacher || null
+            class_id: record.class_id || null,
         };
     },
     academic_records: (record) => {
@@ -821,7 +816,7 @@ const entityValidators: Record<EntityType, (record: Record<string, unknown>) => 
     }
 };
 
-function validateAndTransformRecord(entity: EntityType, record: Record<string, unknown>): Record<string, unknown> {
+function validateAndTransformRecord(entity: EntityType, record: Record<string, unknown>): GenericImportRecord {
     const validator = entityValidators[entity];
     if (!validator) {
         throw new Error(`Unknown entity: ${entity}`);

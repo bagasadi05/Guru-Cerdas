@@ -75,6 +75,7 @@ const fetchTasks = async (userId: string): Promise<TaskRow[]> => {
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -387,11 +388,16 @@ const TasksPage: React.FC = () => {
 
     const deleteTaskMutation = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await supabase.from('tasks').delete().eq('id', id);
+            const { error } = await supabase
+                .from('tasks')
+                .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+                .eq('id', id);
             if (error) throw error;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             toast.success('Tugas berhasil dihapus');
         },
         onError: () => toast.error('Gagal menghapus tugas'),

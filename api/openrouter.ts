@@ -7,17 +7,20 @@ type RateLimitEntry = { count: number; resetAt: number; burstUsed: number };
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 function isOriginAllowed(origin: string | undefined, allowedOrigin: string | undefined): boolean {
-  if (!allowedOrigin) return true;
+  if (!allowedOrigin) return false;
   if (!origin) return false;
-  return origin === allowedOrigin;
+  const allowedOrigins = allowedOrigin
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return allowedOrigins.includes(origin);
 }
 
 function getClientKey(req: any): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.length > 0) {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.socket?.remoteAddress || 'unknown';
+  const remoteAddress = req.socket?.remoteAddress;
+  const userAgent = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : 'unknown';
+  return `${remoteAddress || 'unknown'}:${userAgent}`;
 }
 
 function allowRequest(key: string): { allowed: boolean; retryAfterMs: number } {
@@ -67,7 +70,16 @@ export default async function handler(req: any, res: any): Promise<void> {
   }
 
   const allowedOrigin = process.env.OPENROUTER_ALLOWED_ORIGIN;
-  const origin = req.headers.origin || req.headers.referer;
+  const referer = typeof req.headers.referer === 'string' ? req.headers.referer : undefined;
+  let refererOrigin: string | undefined;
+  if (referer) {
+    try {
+      refererOrigin = new URL(referer).origin;
+    } catch {
+      refererOrigin = undefined;
+    }
+  }
+  const origin = typeof req.headers.origin === 'string' ? req.headers.origin : refererOrigin;
   if (!isOriginAllowed(origin, allowedOrigin)) {
     res.status(403).json({ error: 'Origin not allowed' });
     return;

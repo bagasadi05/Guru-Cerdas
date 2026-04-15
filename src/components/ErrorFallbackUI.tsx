@@ -404,7 +404,7 @@ export function DataFetcher<T>({
             // Try recovery
             const { recovered } = await attemptRecovery(appError, {
                 fallbackData,
-                setData,
+                setData: (value) => setData(value as T | null),
                 retryFn: fetch
             });
 

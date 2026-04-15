@@ -38,6 +38,9 @@ export function useSoftDelete(options: UseSoftDeleteOptions) {
         classes: 'kelas',
         attendance: 'absensi',
         tasks: 'tugas',
+        violations: 'pelanggaran',
+        quiz_points: 'poin keaktifan',
+        academic_records: 'nilai',
     };
 
     const label = entityLabel || entityLabels[entity];

@@ -125,13 +125,13 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
     else suggestions.push('Tambahkan karakter khusus');
 
     // Cap at 4
-    score = Math.min(score, 4) as 0 | 1 | 2 | 3 | 4;
+    const normalizedScore = Math.min(score, 4) as PasswordStrength['score'];
 
     const labels = ['Sangat Lemah', 'Lemah', 'Cukup', 'Kuat', 'Sangat Kuat'];
 
     return {
-        score,
-        label: labels[score],
+        score: normalizedScore,
+        label: labels[normalizedScore],
         suggestions,
     };
 }
@@ -241,7 +241,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
             return true;
         } catch (err) {
             if (err instanceof z.ZodError) {
-                const message = err.errors[0]?.message || 'Nilai tidak valid';
+                const message = err.issues[0]?.message || 'Nilai tidak valid';
                 setInternalError(message);
                 setStatus('invalid');
                 onValidationChange?.('invalid', message);
@@ -390,7 +390,7 @@ export const ValidatedTextarea: React.FC<ValidatedTextareaProps> = ({
                 setStatus('valid');
             } catch (err) {
                 if (err instanceof z.ZodError) {
-                    setInternalError(err.errors[0]?.message || 'Nilai tidak valid');
+                    setInternalError(err.issues[0]?.message || 'Nilai tidak valid');
                     setStatus('invalid');
                 }
             }

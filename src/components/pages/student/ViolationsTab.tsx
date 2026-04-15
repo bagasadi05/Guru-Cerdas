@@ -20,6 +20,8 @@ export const SEVERITY_LEVELS = {
 } as const;
 
 export type SeverityLevel = keyof typeof SEVERITY_LEVELS;
+const isSeverityLevel = (value: string | null | undefined): value is SeverityLevel =>
+    !!value && value in SEVERITY_LEVELS;
 
 export const FOLLOW_UP_STATUS = {
     pending: { label: 'Belum Ditindak', color: 'gray', icon: ClockIcon },
@@ -28,6 +30,8 @@ export const FOLLOW_UP_STATUS = {
 } as const;
 
 export type FollowUpStatus = keyof typeof FOLLOW_UP_STATUS;
+const isFollowUpStatus = (value: string | null | undefined): value is FollowUpStatus =>
+    !!value && value in FOLLOW_UP_STATUS;
 
 // Warning thresholds
 const WARNING_THRESHOLD = 25;
@@ -158,8 +162,8 @@ const ViolationCard: React.FC<{
     isLocked?: boolean;
 }> = ({ violation, onEdit, onDelete, onNotifyParent, onUpdateFollowUp, isOnline, isLocked = false }) => {
     const [showFollowUp, setShowFollowUp] = useState(false);
-    const severity = violation.severity ? SEVERITY_LEVELS[violation.severity] : SEVERITY_LEVELS.ringan;
-    const followUp = violation.follow_up_status ? FOLLOW_UP_STATUS[violation.follow_up_status] : FOLLOW_UP_STATUS.pending;
+    const severity = isSeverityLevel(violation.severity) ? SEVERITY_LEVELS[violation.severity] : SEVERITY_LEVELS.ringan;
+    const followUp = isFollowUpStatus(violation.follow_up_status) ? FOLLOW_UP_STATUS[violation.follow_up_status] : FOLLOW_UP_STATUS.pending;
     const FollowUpIcon = followUp.icon;
     const canModify = !isLocked;
 

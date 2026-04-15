@@ -18,7 +18,7 @@ export const helpArticles: HelpArticle[] = [
             <h3>Panduan Lengkap Input Absensi</h3>
             <p>Fitur absensi memungkinkan Anda untuk mencatat kehadiran siswa dengan cepat. Ikuti langkah mudah di bawah ini.</p>
             
-            <img src="/images/tutorials/attendance.png" alt="Tampilan Halaman Absensi" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
+            <img src="/images/tutorials/attendance.png" alt="Tampilan Halaman Absensi" loading="lazy" decoding="async" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
 
             <h4>Langkah-langkah:</h4>
             <ol class="space-y-2">
@@ -60,7 +60,7 @@ export const helpArticles: HelpArticle[] = [
             <h3>Panduan Menambah Siswa Baru</h3>
             <p>Berikut adalah cara mendaftarkan siswa baru ke dalam sistem Portal Guru.</p>
 
-            <img src="/images/tutorials/students.png" alt="Halaman Data Siswa" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
+            <img src="/images/tutorials/students.png" alt="Halaman Data Siswa" loading="lazy" decoding="async" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
             
             <h4>Langkah 1: Masuk ke Menu Data Siswa</h4>
             <ol class="space-y-2">
@@ -69,7 +69,7 @@ export const helpArticles: HelpArticle[] = [
             </ol>
 
             <br/>
-            <img src="/images/tutorials/add-student.png" alt="Form Tambah Siswa" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
+            <img src="/images/tutorials/add-student.png" alt="Form Tambah Siswa" loading="lazy" decoding="async" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
 
             <h4>Langkah 2: Mengisi Formulir</h4>
             <p>Akan muncul jendela formulir (seperti gambar di atas). Isi data-data berikut:</p>
@@ -93,7 +93,7 @@ export const helpArticles: HelpArticle[] = [
             <h3>Panduan Mengelola Jadwal Pelajaran</h3>
             <p>Atur jadwal pelajaran kelas Anda agar terorganisir dan mudah dipantau.</p>
             
-            <img src="/images/tutorials/schedule.png" alt="Halaman Jadwal Pelajaran" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
+            <img src="/images/tutorials/schedule.png" alt="Halaman Jadwal Pelajaran" loading="lazy" decoding="async" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
 
             <h4>Cara Membuat Jadwal Baru:</h4>
             <ol class="space-y-3">
@@ -131,7 +131,7 @@ export const helpArticles: HelpArticle[] = [
             <h3>Panduan Input Nilai Siswa</h3>
             <p>Sistem ini memudahkan Anda mengelola nilai tugas, ulangan, hingga rapor.</p>
             
-            <img src="/images/tutorials/grades.png" alt="Halaman Input Nilai" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
+            <img src="/images/tutorials/grades.png" alt="Halaman Input Nilai" loading="lazy" decoding="async" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
 
             <h4>Cara Input Nilai Per Siswa:</h4>
             <ol class="space-y-2">
@@ -146,7 +146,7 @@ export const helpArticles: HelpArticle[] = [
             </ol>
 
             <br/>
-            <img src="/images/tutorials/bulk-grades.png" alt="Halaman Input Nilai Massal" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
+            <img src="/images/tutorials/bulk-grades.png" alt="Halaman Input Nilai Massal" loading="lazy" decoding="async" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
 
             <h4>Ingin Input Nilai Sekaligus?</h4>
             <p>Gunakan menu <strong>"Input Nilai Cepat"</strong> di sidebar (gambar ke-2) untuk memasukkan nilai seluruh kelas sekaligus dalam bentuk tabel yang praktis.</p>
@@ -161,7 +161,7 @@ export const helpArticles: HelpArticle[] = [
             <h3>Panduan Manajemen Tugas</h3>
             <p>Berikan tugas kepada siswa dan pantau pengumpulannya dengan mudah.</p>
             
-            <img src="/images/tutorials/tasks.png" alt="Halaman Manajemen Tugas" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
+            <img src="/images/tutorials/tasks.png" alt="Halaman Manajemen Tugas" loading="lazy" decoding="async" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
 
             <h4>Cara Membuat Tugas Baru:</h4>
             <ol class="space-y-3">
@@ -198,7 +198,7 @@ export const helpArticles: HelpArticle[] = [
             <h3>Panduan Dashboard Analitik</h3>
             <p>Dashboard Analitik membantu Anda melihat perkembangan kelas dalam sekali pandang.</p>
             
-            <img src="/images/tutorials/analytics.png" alt="Dashboard Analitik" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
+            <img src="/images/tutorials/analytics.png" alt="Dashboard Analitik" loading="lazy" decoding="async" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
 
             <h4>Mengenal Kartu Statistik:</h4>
             <ul class="grid gap-3 sm:grid-cols-2">
@@ -236,7 +236,7 @@ export const helpArticles: HelpArticle[] = [
             <h3>Panduan Komunikasi dengan Orang Tua</h3>
             <p>Kirim pesan dan pengumuman kepada orang tua siswa langsung dari aplikasi.</p>
             
-            <img src="/images/tutorials/communication.png" alt="Tab Komunikasi Siswa" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
+            <img src="/images/tutorials/communication.png" alt="Tab Komunikasi Siswa" loading="lazy" decoding="async" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
 
             <h4>Cara Mengirim Pesan:</h4>
             <ol class="space-y-2">
@@ -297,7 +297,7 @@ export const helpArticles: HelpArticle[] = [
             <h3>Panduan Pengaturan Sistem</h3>
             <p>Sesuaikan aplikasi dengan kenyamanan Anda.</p>
             
-            <img src="/images/tutorials/settings.png" alt="Halaman Pengaturan" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
+            <img src="/images/tutorials/settings.png" alt="Halaman Pengaturan" loading="lazy" decoding="async" class="w-full rounded-xl shadow-md mb-6 border border-slate-200 dark:border-slate-700" />
 
             <h4>Menu Penting di Sini:</h4>
             <ul class="space-y-3">

@@ -108,6 +108,7 @@ export const useParentMessageNotifications = () => {
                         // Invalidate queries to refresh data
                         queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
                         queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+                        queryClient.invalidateQueries({ queryKey: ['parentMessages', user.id] });
                     }
                 }
             )

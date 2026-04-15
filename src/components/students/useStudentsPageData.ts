@@ -36,13 +36,13 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
 
       const { data, error } = await supabase
         .from('classes')
-        .select('*')
+        .select('id, name, user_id, created_at, deleted_at')
         .eq('user_id', userId)
         .is('deleted_at', null)
         .order('name');
 
       if (error) throw new Error(error.message);
-      return data || EMPTY_CLASSES;
+      return (data || EMPTY_CLASSES) as unknown as ClassRow[];
     },
     enabled: !!userId,
   });
@@ -59,13 +59,13 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
 
       const { data, error } = await supabase
         .from('students')
-        .select('*')
+        .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, created_at, deleted_at')
         .eq('user_id', userId)
         .eq('class_id', activeClassId)
         .is('deleted_at', null);
 
       if (error) throw new Error(error.message);
-      return data || EMPTY_STUDENTS;
+      return (data || EMPTY_STUDENTS) as unknown as StudentRow[];
     },
     enabled: !!userId && !!activeClassId,
   });

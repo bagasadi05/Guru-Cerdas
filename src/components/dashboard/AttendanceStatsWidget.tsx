@@ -83,7 +83,8 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                 .from('attendance')
                 .select('student_id, status')
                 .eq('user_id', user!.id)
-                .eq('date', selectedDate);
+                .eq('date', selectedDate)
+                .is('deleted_at', null);
             if (error) throw error;
             return data || [];
         },
@@ -104,7 +105,8 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                 .from('attendance')
                 .select('student_id, status')
                 .eq('user_id', user!.id)
-                .eq('date', yesterday);
+                .eq('date', yesterday)
+                .is('deleted_at', null);
             if (error) throw error;
             return data || [];
         },

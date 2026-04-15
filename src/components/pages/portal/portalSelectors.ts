@@ -53,7 +53,7 @@ export function getAttendanceSummary(records: PortalAttendance[]): AttendanceSum
         present: records.filter((record) => record.status === 'Hadir').length,
         sick: records.filter((record) => record.status === 'Sakit').length,
         permission: records.filter((record) => record.status === 'Izin').length,
-        absent: records.filter((record) => record.status === 'Alpha' || record.status === 'Alpa').length,
+        absent: records.filter((record) => ['alpha', 'alpa'].includes(record.status.toLowerCase())).length,
     };
 }
 
@@ -115,7 +115,7 @@ export function getRecentActivities(input: {
             id: `message-${message.id}`,
             type: 'message' as const,
             title: message.sender === 'teacher' ? 'Pesan baru dari guru' : 'Pesan terkirim',
-            description: message.content,
+            description: message.message,
             createdAt: message.created_at,
             href: 'komunikasi',
         })),

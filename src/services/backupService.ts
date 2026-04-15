@@ -74,6 +74,32 @@ export type ValidationResult = {
  */
 const BACKUP_VERSION = 2;
 
+const LIVE_COLUMNS: Record<keyof BackupData['data'], readonly string[]> = {
+    students: ['id', 'name', 'user_id', 'class_id', 'gender', 'avatar_url', 'access_code', 'parent_name', 'parent_phone', 'created_at', 'deleted_at'],
+    classes: ['id', 'name', 'user_id', 'created_at', 'deleted_at'],
+    attendance: ['id', 'student_id', 'user_id', 'date', 'status', 'notes', 'semester_id', 'created_at', 'deleted_at'],
+    academic_records: ['id', 'student_id', 'user_id', 'subject', 'score', 'assessment_name', 'notes', 'semester_id', 'version', 'created_at', 'deleted_at'],
+    violations: ['id', 'student_id', 'user_id', 'date', 'description', 'points', 'type', 'severity', 'semester_id', 'follow_up_status', 'follow_up_notes', 'evidence_url', 'parent_notified', 'parent_notified_at', 'created_at', 'deleted_at'],
+    quiz_points: ['id', 'student_id', 'user_id', 'quiz_date', 'quiz_name', 'subject', 'points', 'max_points', 'category', 'is_used', 'used_at', 'used_for_subject', 'semester_id', 'created_at', 'deleted_at'],
+    reports: ['id', 'student_id', 'user_id', 'title', 'notes', 'date', 'category', 'tags', 'attachment_url', 'created_at'],
+    tasks: ['id', 'user_id', 'title', 'description', 'due_date', 'status', 'created_at', 'deleted_at'],
+    schedules: ['id', 'user_id', 'day', 'subject', 'start_time', 'end_time', 'class_id', 'created_at'],
+};
+
+const sanitizeRowsForTable = <T extends Record<string, unknown>>(
+    table: keyof BackupData['data'],
+    rows: T[],
+    userId: string
+): T[] => {
+    const allowedColumns = LIVE_COLUMNS[table];
+    return rows.map((row) => {
+        const sanitized = Object.fromEntries(
+            Object.entries(row).filter(([key]) => allowedColumns.includes(key))
+        );
+        return { ...sanitized, user_id: userId } as unknown as T;
+    });
+};
+
 /**
  * Validate backup file structure before import
  */
@@ -268,22 +294,19 @@ export const importBackup = async (file: File, userId: string): Promise<void> =>
 
                     return rows.map(row => {
                         if (!row || typeof row !== 'object') return row;
-                        if (Object.prototype.hasOwnProperty.call(row, 'user_id')) {
-                            return { ...row, user_id: userId };
-                        }
-                        return row;
+                        return { ...row, user_id: userId };
                     });
                 };
 
-                const scopedClasses = scopeUserId(backup.data.classes || []);
-                const scopedStudents = scopeUserId(backup.data.students || []);
-                const scopedAttendance = scopeUserId(backup.data.attendance || []);
-                const scopedAcademicRecords = scopeUserId(backup.data.academic_records || []);
-                const scopedViolations = scopeUserId(backup.data.violations || []);
-                const scopedQuizPoints = scopeUserId(backup.data.quiz_points || []);
-                const scopedReports = scopeUserId(backup.data.reports || []);
-                const scopedTasks = scopeUserId(backup.data.tasks || []);
-                const scopedSchedules = scopeUserId(backup.data.schedules || []);
+                const scopedClasses = sanitizeRowsForTable('classes', scopeUserId(backup.data.classes || []), userId);
+                const scopedStudents = sanitizeRowsForTable('students', scopeUserId(backup.data.students || []), userId);
+                const scopedAttendance = sanitizeRowsForTable('attendance', scopeUserId(backup.data.attendance || []), userId);
+                const scopedAcademicRecords = sanitizeRowsForTable('academic_records', scopeUserId(backup.data.academic_records || []), userId);
+                const scopedViolations = sanitizeRowsForTable('violations', scopeUserId(backup.data.violations || []), userId);
+                const scopedQuizPoints = sanitizeRowsForTable('quiz_points', scopeUserId(backup.data.quiz_points || []), userId);
+                const scopedReports = sanitizeRowsForTable('reports', scopeUserId(backup.data.reports || []), userId);
+                const scopedTasks = sanitizeRowsForTable('tasks', scopeUserId(backup.data.tasks || []), userId);
+                const scopedSchedules = sanitizeRowsForTable('schedules', scopeUserId(backup.data.schedules || []), userId);
 
                 // 1. Upsert Classes
                 if (scopedClasses.length > 0) {

@@ -177,6 +177,7 @@ export const getDueTasks = async (userId: string): Promise<DueTask[]> => {
         .eq('user_id', userId)
         .neq('status', 'done')
         .not('due_date', 'is', null)
+        .is('deleted_at', null)
         .order('due_date', { ascending: true });
 
     if (!tasks) return [];
@@ -208,7 +209,7 @@ export const getDueTasks = async (userId: string): Promise<DueTask[]> => {
 /**
  * Check for due tasks and create notifications
  */
-export const checkAndNotify = async (userId: string): Promise<number> => {
+export const checkAndNotify = async (userId: string, preloadedDueTasks?: DueTask[]): Promise<number> => {
     const preferences = getPreferences();
     if (!preferences.taskReminders) return 0;
 
@@ -222,7 +223,7 @@ export const checkAndNotify = async (userId: string): Promise<number> => {
 
     localStorage.setItem(LAST_CHECK_KEY, now.toString());
 
-    const dueTasks = await getDueTasks(userId);
+    const dueTasks = preloadedDueTasks ?? await getDueTasks(userId);
     let newNotifications = 0;
 
     for (const task of dueTasks) {

@@ -192,14 +192,15 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
     }, [onDismiss]);
 
     useEffect(() => {
-        if (!toast.duration || toast.duration <= 0) {
+        const duration = toast.duration;
+        if (!duration || duration <= 0) {
             return undefined;
         }
 
         const startTime = Date.now();
         const updateProgress = () => {
             const elapsed = Date.now() - startTime;
-            const remaining = Math.max(0, 100 - (elapsed / toast.duration) * 100);
+            const remaining = Math.max(0, 100 - (elapsed / duration) * 100);
             setProgress(remaining);
 
             if (remaining > 0) {
@@ -255,7 +256,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
                         {toast.action && (
                             <button
                                 onClick={() => {
-                                    toast.action.onClick();
+                                    toast.action?.onClick();
                                     handleDismiss();
                                 }}
                                 className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"

@@ -15,6 +15,12 @@ export const REPORT_CATEGORIES = {
 
 export type ReportCategory = keyof typeof REPORT_CATEGORIES;
 
+const getReportCategory = (category: string | null | undefined) => (
+    category && category in REPORT_CATEGORIES
+        ? REPORT_CATEGORIES[category as ReportCategory]
+        : null
+);
+
 // Common tags for quick selection
 export const COMMON_TAGS = [
     'penting', 'mendesak', 'positif', 'perlu-perhatian', 'follow-up',
@@ -133,7 +139,7 @@ const TimelineView: React.FC<{
                     {/* Reports in this month */}
                     <div className="ml-6 space-y-4">
                         {groupedReports[monthKey].map((report, index) => {
-                            const category = report.category ? REPORT_CATEGORIES[report.category] : null;
+                            const category = getReportCategory(report.category);
                             const categoryColor = category?.color || 'gray';
 
                             return (
@@ -386,7 +392,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
                         {[...filteredReports]
                             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                             .map(r => {
-                                const category = r.category ? REPORT_CATEGORIES[r.category] : null;
+                                const category = getReportCategory(r.category);
                                 return (
                                     <div key={r.id} className="group relative p-4 rounded-lg bg-gray-50 dark:bg-black/20 hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
                                         <div className="absolute top-3 right-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">

@@ -23,11 +23,12 @@ function getOptimizedImageDimensions(
     devicePixelRatio: number = 1
 ): { width: number; height: number } {
     const aspectRatio = originalWidth / originalHeight;
-    const targetWidth = Math.min(originalWidth, containerWidth * devicePixelRatio);
-    const targetHeight = Math.max(1, Math.round(targetWidth / aspectRatio));
+    const maxWidth = Math.min(originalWidth, containerWidth * devicePixelRatio);
+    const targetWidth = Math.max(1, maxWidth);
+    const targetHeight = Math.max(1, targetWidth / aspectRatio);
 
     return {
-        width: Math.max(1, Math.round(targetWidth)),
+        width: targetWidth,
         height: targetHeight
     };
 }

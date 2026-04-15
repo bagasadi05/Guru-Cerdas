@@ -493,7 +493,7 @@ export const generateStudentReport = async (
 
         const quizBody = quizPoints.map((q, index) => [
             index + 1,
-            q.reason,
+            q.quiz_name || q.category || 'Aktivitas',
             q.points,
             new Date(q.created_at).toLocaleDateString('id-ID')
         ]);

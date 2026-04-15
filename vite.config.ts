@@ -51,7 +51,24 @@ export default defineConfig(({ mode }) => {
           ]
         },
         injectManifest: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          // Keep the offline shell small. Route chunks, export libraries, and
+          // tutorial images are cached at runtime only when the user opens them.
+          globPatterns: [
+            'index.html',
+            'manifest.webmanifest',
+            'assets/index-*.css',
+            'assets/fonts/*.{woff,woff2}',
+            'assets/js/index-*.js',
+            'assets/js/vendor-react-*.js',
+            'assets/js/vendor-ui-*.js',
+            'assets/js/vendor-utils-*.js',
+            'assets/js/vendor-icons-*.js',
+            'assets/js/vendor-supabase-*.js',
+            'assets/js/workbox-window*.js',
+            'logo.svg',
+            'pwa-192x192.png',
+            'pwa-512x512.png',
+          ],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         },
         devOptions: {

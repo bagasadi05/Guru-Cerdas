@@ -74,6 +74,9 @@ typings/
 .env.test
 .env.production
 .env.local
+android/keystore.properties
+android/app/*.jks
+android/app/*.keystore
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

@@ -253,7 +253,7 @@ async function syncItem(
             const { _localTimestamp, ...updateData } = data;
             ({ data: result, error } = await (supabase
                 .from(table as any) as any)
-                .update({ ...updateData, updated_at: new Date().toISOString() })
+                .update(updateData)
                 .eq('id', data.id)
                 .select()
                 .single());

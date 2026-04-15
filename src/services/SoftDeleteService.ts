@@ -7,7 +7,7 @@
 
 import { supabase } from './supabase';
 
-export type SoftDeleteEntity = 'students' | 'classes' | 'attendance' | 'violations' | 'quiz_points' | 'academic_records';
+export type SoftDeleteEntity = 'students' | 'classes' | 'attendance' | 'violations' | 'quiz_points' | 'academic_records' | 'tasks';
 
 export interface SoftDeleteResult {
     success: boolean;
@@ -201,6 +201,7 @@ export async function getAllDeletedItems(userId: string): Promise<DeletedItem[]>
         'students',
         'classes',
         'attendance',
+        'tasks',
         'violations',
         'quiz_points',
         'academic_records',
@@ -227,6 +228,7 @@ export async function cleanupExpired(): Promise<{
         'students',
         'classes',
         'attendance',
+        'tasks',
         'violations',
         'quiz_points',
         'academic_records',
@@ -240,6 +242,7 @@ export async function cleanupExpired(): Promise<{
         students: 0,
         classes: 0,
         attendance: 0,
+        tasks: 0,
         violations: 0,
         quiz_points: 0,
         academic_records: 0,

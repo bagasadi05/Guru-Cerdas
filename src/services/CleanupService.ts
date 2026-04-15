@@ -77,7 +77,15 @@ export async function runCleanup(): Promise<CleanupResult> {
         console.error('[Cleanup] Cleanup failed:', error);
         return {
             success: false,
-            deletedRecords: { students: 0, classes: 0, attendance: 0, tasks: 0 },
+            deletedRecords: {
+                students: 0,
+                classes: 0,
+                attendance: 0,
+                tasks: 0,
+                violations: 0,
+                quiz_points: 0,
+                academic_records: 0,
+            },
             deletedActions: 0,
             timestamp,
             error: error instanceof Error ? error.message : 'Unknown error',

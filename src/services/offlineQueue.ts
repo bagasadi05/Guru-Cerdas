@@ -33,7 +33,7 @@ export type QueuedMutation = {
     id: string;
     table: keyof Database['public']['Tables'];
     operation: 'upsert' | 'insert' | 'update' | 'delete';
-    payload: Record<string, unknown>;
+    payload: Record<string, unknown> | Record<string, unknown>[];
     onConflict?: string;
     status: MutationStatus;
     retryCount: number;
@@ -69,6 +69,11 @@ let currentSyncProgress: SyncProgress = {
  */
 const initDB = (): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
+        if (typeof indexedDB === 'undefined') {
+            reject(new Error('IndexedDB is not available in this environment'));
+            return;
+        }
+
         if (db) {
             resolve(db);
             return;
@@ -461,5 +466,7 @@ export const discardAllFailed = async (): Promise<void> => {
     await Promise.all(failedMutations.map(m => removeMutation(m.id)));
 };
 
-// Initialize DB on module load
-initDB().catch(console.error);
+// Initialize DB on module load when IndexedDB is available.
+if (typeof indexedDB !== 'undefined') {
+    initDB().catch(console.error);
+}

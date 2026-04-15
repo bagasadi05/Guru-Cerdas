@@ -24,13 +24,14 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
     const { mutate: sendMessage, isPending: isSending } = useMutation({
         mutationFn: async (messageText: string) => {
             if (!student.access_code || !teacher) throw new Error('Informasi tidak lengkap untuk mengirim pesan.');
-            const { error } = await supabase.rpc('send_parent_message', {
+            const { data, error } = await supabase.rpc('send_parent_message', {
                 student_id_param: student.id,
                 access_code_param: student.access_code,
                 message_param: messageText,
                 teacher_user_id_param: teacher.user_id,
             });
             if (error) throw error;
+            if (typeof data === 'boolean' && data === false) throw new Error('Pesan gagal dikirim.');
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['portalData', student.id] });
@@ -42,13 +43,14 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
     const { mutate: updateMessage, isPending: isUpdating } = useMutation({
         mutationFn: async ({ messageId, newMessageText }: { messageId: string; newMessageText: string }) => {
             if (!student.access_code) throw new Error('Kode akses tidak valid.');
-            const { error } = await supabase.rpc('update_parent_message', {
+            const { data, error } = await supabase.rpc('update_parent_message', {
                 student_id_param: student.id,
                 access_code_param: student.access_code,
                 message_id_param: messageId,
                 new_message_param: newMessageText,
             });
             if (error) throw error;
+            if (typeof data === 'boolean' && data === false) throw new Error('Pesan gagal diperbarui.');
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['portalData', student.id] });
@@ -61,12 +63,13 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
     const { mutate: deleteMessage, isPending: isDeleting } = useMutation({
         mutationFn: async (messageId: string) => {
             if (!student.access_code) throw new Error('Kode akses tidak valid.');
-            const { error } = await supabase.rpc('delete_parent_message', {
+            const { data, error } = await supabase.rpc('delete_parent_message', {
                 student_id_param: student.id,
                 access_code_param: student.access_code,
                 message_id_param: messageId,
             });
             if (error) throw error;
+            if (typeof data === 'boolean' && data === false) throw new Error('Pesan gagal dihapus.');
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['portalData', student.id] });
@@ -121,7 +124,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                         )}
                                     </div>
                                 )}
-                                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                                <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
                                 <div className={`flex items-center gap-1 text-[10px] mt-2 opacity-80 ${msg.sender === 'parent' ? 'text-indigo-100 justify-end' : 'text-slate-400 justify-end'}`}>
                                     <span>{new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                                     {msg.sender === 'parent' && msg.is_read && <CheckCircleIcon className="w-3 h-3" />}
@@ -158,7 +161,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                         const message = formData.get('message') as string;
                         updateMessage({ messageId: modalState.data!.id, newMessageText: message });
                     }}>
-                        <textarea name="message" defaultValue={modalState.data.content} rows={5} className="w-full mt-1 p-3 border rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"></textarea>
+                        <textarea name="message" defaultValue={modalState.data.message} rows={5} className="w-full mt-1 p-3 border rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"></textarea>
                         <div className="flex justify-end gap-2 pt-4">
                             <Button type="button" variant="ghost" onClick={() => setModalState({ type: 'closed', data: null })}>Batal</Button>
                             <Button type="submit" disabled={isUpdating} className="bg-indigo-600 text-white hover:bg-indigo-700">{isUpdating ? 'Menyimpan...' : 'Simpan'}</Button>

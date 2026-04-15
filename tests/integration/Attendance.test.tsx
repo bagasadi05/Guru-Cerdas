@@ -1,8 +1,12 @@
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AttendancePage from '../../src/components/pages/AttendancePage';
-import { renderWithProviders } from '../test-utils';
 import { supabase } from '../../src/services/supabase';
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
+import { AuthContext } from '../../src/hooks/useAuth';
+import { ToastProvider } from '../../src/hooks/useToast';
 
 // Mock Supabase
 vi.mock('../../src/services/supabase', () => ({
@@ -35,10 +39,56 @@ vi.mock('../../hooks/useOfflineStatus', () => ({
     useOfflineStatus: () => true,
 }));
 
+vi.mock('../../src/contexts/SemesterContext', () => ({
+    SemesterProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useSemester: () => ({
+        activeSemester: null,
+        activeAcademicYear: null,
+        currentSemesterId: null,
+        semesters: [],
+        isLoading: false,
+        refreshSemester: vi.fn(),
+        checkStudentAccess: () => ({ canAccess: true }),
+        getSemesterByDate: vi.fn(),
+        isLocked: vi.fn(() => false),
+    }),
+}));
+
 describe('AttendancePage Integration', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
+
+    const renderPage = () => {
+        const queryClient = new QueryClient({
+            defaultOptions: {
+                queries: { retry: false },
+            },
+        });
+
+        return render(
+            <QueryClientProvider client={queryClient}>
+                <AuthContext.Provider value={{
+                    user: { id: 'test-user', email: 'test@example.com' } as any,
+                    session: {} as any,
+                    logout: async () => { },
+                    loading: false,
+                    login: vi.fn(),
+                    signup: vi.fn(),
+                    updateUser: vi.fn(),
+                    enableScheduleNotifications: vi.fn(),
+                    disableScheduleNotifications: vi.fn(),
+                    isNotificationsEnabled: false
+                }}>
+                    <ToastProvider>
+                        <MemoryRouter>
+                            <AttendancePage />
+                        </MemoryRouter>
+                    </ToastProvider>
+                </AuthContext.Provider>
+            </QueryClientProvider>
+        );
+    };
 
     it('renders student list and allows marking attendance', async () => {
         // Mock classes query
@@ -47,7 +97,28 @@ describe('AttendancePage Integration', () => {
             if (table === 'classes') {
                 return {
                     select: () => ({
-                        eq: () => Promise.resolve({ data: [{ id: 'class-1', name: 'Kelas 10A' }], error: null })
+                        eq: () => ({
+                            is: () => Promise.resolve({ data: [{ id: 'class-1', name: 'Kelas 10A' }], error: null })
+                        })
+                    })
+                };
+            }
+            if (table === 'semesters') {
+                return {
+                    select: () => ({
+                        order: () => Promise.resolve({ data: [], error: null }),
+                        eq: () => ({
+                            single: () => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Not found' } })
+                        })
+                    })
+                };
+            }
+            if (table === 'academic_years') {
+                return {
+                    select: () => ({
+                        eq: () => ({
+                            single: () => Promise.resolve({ data: null, error: null })
+                        })
                     })
                 };
             }
@@ -56,12 +127,14 @@ describe('AttendancePage Integration', () => {
                     select: () => ({
                         eq: () => ({
                             eq: () => ({
-                                order: () => Promise.resolve({
-                                    data: [
-                                        { id: '1', name: 'Budi', class_id: 'class-1', user_id: 'test-user' },
-                                        { id: '2', name: 'Siti', class_id: 'class-1', user_id: 'test-user' }
-                                    ],
-                                    error: null
+                                is: () => ({
+                                    order: () => Promise.resolve({
+                                        data: [
+                                            { id: '1', name: 'Budi', class_id: 'class-1', user_id: 'test-user' },
+                                            { id: '2', name: 'Siti', class_id: 'class-1', user_id: 'test-user' }
+                                        ],
+                                        error: null
+                                    })
                                 })
                             })
                         })
@@ -72,7 +145,11 @@ describe('AttendancePage Integration', () => {
                 return {
                     select: () => ({
                         eq: () => ({
-                            in: () => Promise.resolve({ data: [], error: null })
+                            eq: () => Promise.resolve({ data: [], error: null }),
+                            in: () => Promise.resolve({ data: [], error: null }),
+                            gte: () => ({
+                                lte: () => Promise.resolve({ data: [], error: null })
+                            })
                         })
                     }),
                     upsert: vi.fn().mockResolvedValue({ error: null })
@@ -81,7 +158,7 @@ describe('AttendancePage Integration', () => {
             return { select: mockSelect };
         });
 
-        renderWithProviders(<AttendancePage />);
+        renderPage();
 
         // Wait for students to load
         await waitFor(() => {

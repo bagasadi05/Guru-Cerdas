@@ -66,8 +66,7 @@ export interface PortalQuizPoint {
 // Communications
 export interface PortalCommunication {
     id: string;
-    content: string;
-    is_from_teacher: boolean;
+    message: string;
     is_read: boolean;
     created_at: string;
     sender: 'parent' | 'teacher';

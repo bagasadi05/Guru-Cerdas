@@ -17,14 +17,14 @@ import { useSemester } from '../../contexts/SemesterContext';
 type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
 
 const fetchReportData = async (studentId: string, userId: string): Promise<ReportData> => {
-    const studentRes = await supabase.from('students').select('*, classes(id, name)').eq('id', studentId).eq('user_id', userId).single();
+    const studentRes = await supabase.from('students').select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, classes(id, name)').eq('id', studentId).eq('user_id', userId).is('deleted_at', null).single();
     if (studentRes.error) throw new Error(studentRes.error.message);
     const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes] = await Promise.all([
-        supabase.from('reports').select('*').eq('student_id', studentId),
-        supabase.from('attendance').select('*').eq('student_id', studentId),
-        supabase.from('academic_records').select('*').eq('student_id', studentId),
-        supabase.from('violations').select('*').eq('student_id', studentId),
-        supabase.from('quiz_points').select('*').eq('student_id', studentId)
+        supabase.from('reports').select('id, user_id, student_id, title, notes, date, category, attachment_url, tags, created_at').eq('student_id', studentId).eq('user_id', userId),
+        supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).eq('user_id', userId).is('deleted_at', null),
+        supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId).eq('user_id', userId).is('deleted_at', null),
+        supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).eq('user_id', userId).is('deleted_at', null),
+        supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId).eq('user_id', userId).is('deleted_at', null)
     ]);
     const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes].map(r => r.error).filter(Boolean);
     if (errors.length > 0) throw new Error(errors.map(e => e!.message).join(', '));
@@ -549,7 +549,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                             {filteredQuizPoints.map((q, index) => (
                                                 <tr key={q.id} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border-b border-slate-100 dark:border-slate-800">
                                                     <td className="p-3 text-center text-slate-600 dark:text-slate-400">{index + 1}</td>
-                                                    <td className="p-3 text-slate-800 dark:text-slate-200">{q.reason}</td>
+                                                    <td className="p-3 text-slate-800 dark:text-slate-200">{q.quiz_name || q.category || 'Aktivitas'}</td>
                                                     <td className="p-3 text-center font-bold text-emerald-600 dark:text-emerald-400">+{q.points}</td>
                                                     <td className="p-3 text-center text-slate-600 dark:text-slate-400">{new Date(q.created_at).toLocaleDateString('id-ID')}</td>
                                                 </tr>

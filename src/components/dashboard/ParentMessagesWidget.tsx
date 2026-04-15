@@ -73,7 +73,7 @@ const ParentMessagesWidget: React.FC = () => {
             // Count unread messages
             const { count } = await supabase
                 .from('communications')
-                .select('*', { count: 'exact', head: true })
+                .select('id', { count: 'exact', head: true })
                 .eq('user_id', user!.id)
                 .eq('sender', 'parent')
                 .eq('is_read', false);
@@ -81,7 +81,7 @@ const ParentMessagesWidget: React.FC = () => {
             return { messages, unreadCount: count || 0 };
         },
         enabled: !!user,
-        refetchInterval: 30000, // Refetch every 30 seconds
+        staleTime: 1000 * 60 * 5,
     });
 
     const formatTime = (dateString: string) => {

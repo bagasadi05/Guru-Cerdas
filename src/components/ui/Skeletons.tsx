@@ -8,6 +8,7 @@ import React from 'react';
 interface SkeletonProps {
   className?: string;
   animate?: boolean;
+  style?: React.CSSProperties;
 }
 
 /**
@@ -16,13 +17,15 @@ interface SkeletonProps {
  */
 export const Skeleton: React.FC<SkeletonProps> = ({ 
   className = '', 
-  animate = true 
+  animate = true,
+  style,
 }) => {
   return (
     <div 
       className={`bg-slate-200 dark:bg-slate-700/60 rounded-md ${
         animate ? 'skeleton-shimmer' : ''
       } ${className}`}
+      style={style}
       role="status"
       aria-label="Loading..."
     />

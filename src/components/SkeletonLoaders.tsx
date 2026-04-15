@@ -431,6 +431,7 @@ export const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
     height,
     blurDataURL
 }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
     const [isError, setIsError] = useState(false);
     const imgRef = useRef<HTMLImageElement>(null);
 

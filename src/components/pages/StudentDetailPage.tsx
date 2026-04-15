@@ -29,7 +29,7 @@ import { CommunicationTab } from './student/CommunicationTab';
 import { ExtracurricularTab } from './student/ExtracurricularTab';
 import { Trophy } from 'lucide-react';
 
-import { ModalState, StudentMutationVars, AcademicRecordRow, AttendanceRow, ViolationRow, QuizPointRow, CommunicationRow, ReportRow } from './student/types';
+import { ModalState, StudentMutationVars, AcademicRecordRow, AttendanceRow, ViolationRow, QuizPointRow, CommunicationRow, ReportRow, StudentWithClass } from './student/types';
 import { EditStudentFormValues, ReportFormValues, AcademicFormValues, QuizFormValues, ViolationFormValues, CommunicationFormValues } from './student/schemas';
 import { EditStudentForm } from './student/forms/EditStudentForm';
 import { ReportForm } from './student/forms/ReportForm';
@@ -116,18 +116,19 @@ const StudentDetailPage = () => {
         queryFn: async () => {
             if (!studentId || !user) throw new Error("User or Student ID not found");
             const [studentRes, classesRes] = await Promise.all([
-                supabase.from('students').select('*').eq('id', studentId).eq('user_id', user.id).single(),
-                supabase.from('classes').select('*').eq('user_id', user.id).is('deleted_at', null)
+                supabase.from('students').select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, created_at, deleted_at').eq('id', studentId).eq('user_id', user.id).is('deleted_at', null).single(),
+                supabase.from('classes').select('id, name, user_id, created_at, deleted_at').eq('user_id', user.id).is('deleted_at', null)
             ]);
 
             if (studentRes.error) throw studentRes.error;
             if (classesRes.error) throw classesRes.error;
 
-            const studentData = studentRes.data;
-            const classInfo = (classesRes.data || []).find(c => c.id === studentData.class_id);
+            const studentData = studentRes.data as unknown as StudentWithClass;
+            const classRows = (classesRes.data || []) as unknown as Database['public']['Tables']['classes']['Row'][];
+            const classInfo = classRows.find(c => c.id === studentData.class_id);
             const studentWithClass = { ...studentData, classes: classInfo ? { id: classInfo.id, name: classInfo.name } : null };
 
-            return { student: studentWithClass, classes: classesRes.data || [] };
+            return { student: studentWithClass, classes: classRows };
         },
         enabled: !!studentId && !!user,
     });
@@ -138,8 +139,8 @@ const StudentDetailPage = () => {
         queryFn: async () => {
             if (!studentId) return { attendanceRecords: [], violations: [] };
             const [attendanceRes, violationsRes] = await Promise.all([
-                supabase.from('attendance').select('*').eq('student_id', studentId),
-                supabase.from('violations').select('*').eq('student_id', studentId)
+                supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null),
+                supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null)
             ]);
             return {
                 attendanceRecords: (attendanceRes.data || []) as AttendanceRow[],
@@ -156,7 +157,7 @@ const StudentDetailPage = () => {
     const { data: academicRecords = [] } = useQuery({
         queryKey: ['studentGrades', studentId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('academic_records').select('*').eq('student_id', studentId!);
+            const { data, error } = await supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId!).is('deleted_at', null);
             if (error) throw error;
             return (data || []) as AcademicRecordRow[];
         },
@@ -169,7 +170,7 @@ const StudentDetailPage = () => {
     const { data: quizPoints = [] } = useQuery({
         queryKey: ['studentQuizzes', studentId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('quiz_points').select('*').eq('student_id', studentId!);
+            const { data, error } = await supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId!).is('deleted_at', null);
             if (error) throw error;
             return (data || []) as unknown as QuizPointRow[];
         },
@@ -180,11 +181,11 @@ const StudentDetailPage = () => {
     const { data: reports = [] } = useQuery({
         queryKey: ['studentReports', studentId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('reports').select('*').eq('student_id', studentId!);
+            const { data, error } = await supabase.from('reports').select('*').eq('student_id', studentId!).eq('user_id', user!.id);
             if (error) throw error;
             return (data || []) as unknown as ReportRow[];
         },
-        enabled: !!studentId && activeTab === 'reports'
+        enabled: !!studentId && !!user && activeTab === 'reports'
     });
 
     // Extracurricular Tab
@@ -275,8 +276,9 @@ const StudentDetailPage = () => {
         const reportPayload = {
             title: data.title,
             notes: data.notes || '',
-            type: 'general',
             date: data.date,
+            category: data.category || null,
+            tags: data.tags || null,
             student_id: studentId,
             user_id: user.id,
         };
@@ -454,7 +456,8 @@ const StudentDetailPage = () => {
                 .insert({
                     student_id: studentId!,
                     teacher_id: user!.id,
-                    content: message,
+                    user_id: user!.id,
+                    message,
                     sender: 'teacher',
                     is_read: false
                 });

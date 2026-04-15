@@ -123,6 +123,7 @@ function generateDescription(actionType: ActionType, entity: SoftDeleteEntity, c
         students: { singular: 'siswa', plural: 'siswa' },
         classes: { singular: 'kelas', plural: 'kelas' },
         attendance: { singular: 'absensi', plural: 'absensi' },
+        tasks: { singular: 'tugas', plural: 'tugas' },
         violations: { singular: 'pelanggaran', plural: 'pelanggaran' },
         quiz_points: { singular: 'poin keaktifan', plural: 'poin keaktifan' },
         academic_records: { singular: 'nilai', plural: 'nilai' },
@@ -291,8 +292,7 @@ export async function getActionHistory(
             .from('action_history')
             .select('*', { count: 'exact' })
             .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-            .range(offset, offset + limit - 1);
+            .order('created_at', { ascending: false });
 
         // Apply filters
         if (filters.type && filters.type !== 'all') {
@@ -314,17 +314,14 @@ export async function getActionHistory(
             query = query.lt('created_at', nextDay.toISOString());
         }
 
-        if (filters.search) {
-            query = query.ilike('description', `%${filters.search}%`);
-        }
-
-        const { data, error, count } = await query;
+        const { data, error } = await query;
 
         if (error) throw error;
 
         const now = new Date();
 
-        const items = (data || []).map(item => ({
+        const normalizedSearch = filters.search?.trim().toLowerCase();
+        const allItems = (data || []).map(item => ({
             id: item.id,
             actionType: item.action_type as ActionType,
             entity: item.entity_type as SoftDeleteEntity,
@@ -339,7 +336,22 @@ export async function getActionHistory(
             previousState: (item.previous_state as StateRecord[]) || undefined,
         }));
 
-        return { items, total: count || 0 };
+        const filteredItems = normalizedSearch
+            ? allItems.filter(item => {
+                const searchTarget = [
+                    item.description,
+                    item.actionType,
+                    item.entity,
+                    ...item.entityIds,
+                ].join(' ').toLowerCase();
+                return searchTarget.includes(normalizedSearch);
+            })
+            : allItems;
+
+        return {
+            items: filteredItems.slice(offset, offset + limit),
+            total: filteredItems.length,
+        };
     } catch (error) {
         console.error('Failed to get action history:', error);
         return { items: [], total: 0 };

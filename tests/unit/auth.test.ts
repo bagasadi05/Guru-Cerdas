@@ -61,7 +61,7 @@ describe('Authentication Service', () => {
 
       expect(result.data.user).toBeNull();
       expect(result.error).toBeTruthy();
-      expect(result.error.message).toBe('Invalid credentials');
+      expect(result.error?.message).toBe('Invalid credentials');
     });
   });
 

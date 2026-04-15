@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
@@ -43,9 +43,9 @@ const NotificationsSection: React.FC = () => {
     const [taskPrefs, setTaskPrefs] = useState<NotificationPreferences>(getPreferences());
 
     // Sound picker state
-    const [selectedSound, setSelectedSound] = useState<SoundType>(getScheduleSound());
-    const [volume, setVolume] = useState(getSoundVolume());
-    const [hasCustomSound, setHasCustomSound] = useState(!!getCustomSoundUrl());
+    const [selectedSound, setSelectedSound] = useState<SoundType>('default');
+    const [volume, setVolume] = useState(0.7);
+    const [hasCustomSound, setHasCustomSound] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // System ringtone state (for Android native picker)
@@ -56,6 +56,33 @@ const NotificationsSection: React.FC = () => {
         localStorage.getItem('portal_guru_system_ringtone_uri')
     );
     const isAndroid = Capacitor.getPlatform() === 'android';
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadSoundPreferences = async () => {
+            try {
+                const [sound, savedVolume, customSoundUrl] = await Promise.all([
+                    getScheduleSound(),
+                    getSoundVolume(),
+                    getCustomSoundUrl(),
+                ]);
+
+                if (!isMounted) return;
+                setSelectedSound(sound);
+                setVolume(savedVolume);
+                setHasCustomSound(Boolean(customSoundUrl));
+            } catch (error) {
+                console.error('Failed to load notification sound preferences:', error);
+            }
+        };
+
+        void loadSoundPreferences();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     // Handler for opening native ringtone picker (Android only)
     const handleSystemRingtoneSelect = async () => {
@@ -75,7 +102,7 @@ const NotificationsSection: React.FC = () => {
             if (!result.cancelled) {
                 if (result.isSilent) {
                     setSelectedSound('none');
-                    setScheduleSound('none');
+                    void setScheduleSound('none');
                     toast.info("Notifikasi diatur ke mode diam");
                 } else if (result.uri) {
                     setSystemRingtoneUri(result.uri);
@@ -84,7 +111,7 @@ const NotificationsSection: React.FC = () => {
                     localStorage.setItem('portal_guru_system_ringtone_title', result.title || 'System Sound');
 
                     setSelectedSound('system');
-                    setScheduleSound('system');
+                    void setScheduleSound('system');
                     toast.success(`Nada dipilih: ${result.title}`);
 
                     // Preview the selected ringtone
@@ -146,7 +173,7 @@ const NotificationsSection: React.FC = () => {
         setIsLoading(false);
     };
 
-    const handleTaskPrefChange = (key: keyof NotificationPreferences, value: any) => {
+    const handleTaskPrefChange = (key: keyof NotificationPreferences, value: NotificationPreferences[keyof NotificationPreferences]) => {
         const newPrefs = { ...taskPrefs, [key]: value };
         setTaskPrefs(newPrefs);
         savePreferences(newPrefs);
@@ -155,7 +182,7 @@ const NotificationsSection: React.FC = () => {
 
     const handleSoundSelect = (soundId: SoundType) => {
         setSelectedSound(soundId);
-        setScheduleSound(soundId);
+        void setScheduleSound(soundId);
         toast.success(`Nada notifikasi diubah ke "${SOUND_OPTIONS.find(s => s.id === soundId)?.name}"`);
     };
 
@@ -165,7 +192,7 @@ const NotificationsSection: React.FC = () => {
 
     const handleVolumeChange = (newVolume: number) => {
         setVolume(newVolume);
-        setSoundVolume(newVolume);
+        void setSoundVolume(newVolume);
     };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,7 +203,7 @@ const NotificationsSection: React.FC = () => {
             await setCustomSound(file);
             setHasCustomSound(true);
             setSelectedSound('custom');
-            setScheduleSound('custom');
+            void setScheduleSound('custom');
             toast.success("Nada custom berhasil diupload!");
             // Preview the uploaded sound
             setTimeout(() => previewSound('custom'), 500);
@@ -191,11 +218,11 @@ const NotificationsSection: React.FC = () => {
     };
 
     const handleClearCustomSound = () => {
-        clearCustomSound();
+        void clearCustomSound();
         setHasCustomSound(false);
         if (selectedSound === 'custom') {
             setSelectedSound('default');
-            setScheduleSound('default');
+            void setScheduleSound('default');
         }
         toast.info("Nada custom dihapus");
     };

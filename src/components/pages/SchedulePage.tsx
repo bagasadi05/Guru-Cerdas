@@ -44,6 +44,20 @@ type ScheduleMutationVars =
     | { mode: 'add'; data: Database['public']['Tables']['schedules']['Insert'] }
     | { mode: 'edit'; data: Database['public']['Tables']['schedules']['Update']; id: string };
 
+const toLiveSchedulePayload = (
+    data: Database['public']['Tables']['schedules']['Insert'] | Database['public']['Tables']['schedules']['Update']
+) => {
+    const { day, start_time, end_time, subject, class_id, user_id } = data;
+    return {
+        ...(day !== undefined ? { day } : {}),
+        ...(start_time !== undefined ? { start_time } : {}),
+        ...(end_time !== undefined ? { end_time } : {}),
+        ...(subject !== undefined ? { subject } : {}),
+        ...(class_id !== undefined ? { class_id } : {}),
+        ...(user_id !== undefined ? { user_id } : {}),
+    };
+};
+
 
 
 const FormInputWrapper: React.FC<{ children: React.ReactNode; label: string; icon: React.FC<{ className?: string }> }> = ({ children, label, icon: Icon }) => (
@@ -305,10 +319,10 @@ const SchedulePage: React.FC = () => {
     const scheduleMutation = useMutation({
         mutationFn: async (scheduleData: ScheduleMutationVars) => {
             if (scheduleData.mode === 'add') {
-                const { error } = await supabase.from('schedules').insert(scheduleData.data);
+                const { error } = await supabase.from('schedules').insert(toLiveSchedulePayload(scheduleData.data) as Database['public']['Tables']['schedules']['Insert']);
                 if (error) throw error;
             } else {
-                const { error } = await supabase.from('schedules').update(scheduleData.data).eq('id', scheduleData.id);
+                const { error } = await supabase.from('schedules').update(toLiveSchedulePayload(scheduleData.data) as Database['public']['Tables']['schedules']['Update']).eq('id', scheduleData.id);
                 if (error) throw error;
             }
         },
@@ -698,7 +712,7 @@ const SchedulePage: React.FC = () => {
         const classMap = new Map<string, string>((classes || []).map(c => [c.id, c.name]));
         const scheduleWithClassNames: ScheduleWithClassName[] = schedule.map(item => ({
             ...item,
-            className: classMap.get(item.class_id) || item.class_id
+            className: item.class_id ? (classMap.get(item.class_id) ?? item.class_id) : undefined
         }));
 
         const success = await enableScheduleNotifications(scheduleWithClassNames);
@@ -832,7 +846,13 @@ const SchedulePage: React.FC = () => {
                                                     isPast={status === 'past'}
                                                     onEdit={handleOpenEditModal}
                                                     onDuplicate={(item) => {
-                                                        setFormData({ day: item.day, start_time: item.start_time, end_time: item.end_time, subject: `${item.subject} (Copy)`, class_id: item.class_id, teacher_id: item.teacher_id });
+                                                        setFormData({
+                                                            day: item.day,
+                                                            start_time: item.start_time,
+                                                            end_time: item.end_time,
+                                                            subject: `${item.subject} (Copy)`,
+                                                            class_id: item.class_id,
+                                                        });
                                                         setModalState({ isOpen: true, mode: 'add', data: null });
                                                     }}
                                                     onDelete={handleDeleteClick}
@@ -876,15 +896,15 @@ const SchedulePage: React.FC = () => {
                     <FormInputWrapper label="Kelas" icon={GraduationCapIcon}>
                         {classes && classes.length > 0 ? (
                             <select
-                                value={formData.class_id}
+                                value={formData.class_id ?? ''}
                                 onChange={e => setFormData({ ...formData, class_id: e.target.value })}
                                 className={`w-full ${inputStyles}`}
                             >
                                 <option value="" disabled>Pilih Kelas</option>
-                                {classes.map(c => <option key={c.id} value={c.name} className="dark:bg-gray-800">{c.name}</option>)}
+                                {classes.map(c => <option key={c.id} value={c.id} className="dark:bg-gray-800">{c.name}</option>)}
                             </select>
                         ) : (
-                            <Input value={formData.class_id} onChange={e => setFormData({ ...formData, class_id: e.target.value })} className={inputStyles} placeholder="cth. 7A" error={errors.class_id} />
+                            <Input value={formData.class_id ?? ''} onChange={e => setFormData({ ...formData, class_id: e.target.value })} className={inputStyles} placeholder="cth. 7A" error={errors.class_id} />
                         )}
                         {errors.class_id && <p className="text-red-500 text-xs mt-1">{errors.class_id}</p>}
                     </FormInputWrapper>

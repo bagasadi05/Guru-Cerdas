@@ -158,7 +158,8 @@ const BulkGradeInputPage: React.FC = () => {
                 .select('id, student_id, score')
                 .eq('subject', selectedSubject)
                 .eq('assessment_name', assessmentName)
-                .in('student_id', students?.map(s => s.id) || []);
+                .in('student_id', students?.map(s => s.id) || [])
+                .is('deleted_at', null);
 
             if (selectedSemester) {
                 query = query.eq('semester_id', selectedSemester);

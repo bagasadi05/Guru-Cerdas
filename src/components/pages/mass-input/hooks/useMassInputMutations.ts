@@ -140,13 +140,18 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     const { mutate: deleteGrades, isPending: isDeleting } = useMutation({
         mutationFn: async (recordIds: string[]) => {
             if (recordIds.length === 0) return 'Tidak ada nilai yang dipilih untuk dihapus.';
-            const { error } = await supabase.from('academic_records').delete().in('id', recordIds);
+            const { error } = await supabase
+                .from('academic_records')
+                .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+                .in('id', recordIds);
             if (error) throw error;
             return `${recordIds.length} data nilai berhasil dihapus.`;
         },
         onSuccess: (message) => {
             toast.success(message);
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             setSelectedStudentIds(new Set());
         },
         onError: (err: Error) => toast.error(`Gagal menghapus: ${err.message}`),
@@ -188,14 +193,14 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     };
 
     const fetchReportDataForStudent = async (studentId: string, userId: string, semesterId: string): Promise<ReportDataType> => {
-        const studentRes = await supabase.from('students').select('*, classes(id, name)').eq('id', studentId).eq('user_id', userId).single();
+        const studentRes = await supabase.from('students').select('*, classes(id, name)').eq('id', studentId).eq('user_id', userId).is('deleted_at', null).single();
         if (studentRes.error) throw new Error(studentRes.error.message);
         const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes] = await Promise.all([
-            supabase.from('reports').select('*').eq('student_id', studentId).eq('semester_id', semesterId),
-            supabase.from('attendance').select('*').eq('student_id', studentId).eq('semester_id', semesterId),
-            supabase.from('academic_records').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId),
-            supabase.from('violations').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId),
-            supabase.from('quiz_points').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId),
+            supabase.from('reports').select('*').eq('student_id', studentId).eq('user_id', userId),
+            supabase.from('attendance').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('academic_records').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('violations').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('quiz_points').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId).is('deleted_at', null),
         ]) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes].map((r: any) => r.error).filter((e: any) => e !== null);
@@ -299,7 +304,8 @@ Contoh output yang benar:
         const { data: allSubjectGrades } = await supabase
             .from('academic_records').select('*')
             .eq('subject', subjectGradeInfo.subject)
-            .in('student_id', Array.from(selectedStudentIds));
+            .in('student_id', Array.from(selectedStudentIds))
+            .is('deleted_at', null);
         const allAssessments = [...new Set(allSubjectGrades?.map(r => r.assessment_name || 'Lainnya'))].sort();
         const head = [['No', 'Nama Siswa', ...allAssessments]];
         const tableData = (studentsData || [])

@@ -51,6 +51,25 @@ const toObject = <T,>(value: unknown, fallback: T): T => (
     value && typeof value === 'object' ? value as T : fallback
 );
 
+const normalizePortalCommunications = (value: unknown): PortalCommunication[] => (
+    toArray<Record<string, unknown>>(value).map((item) => ({
+        id: typeof item.id === 'string' ? item.id : '',
+        message: typeof item.message === 'string'
+            ? item.message
+            : typeof item.content === 'string'
+                ? item.content
+                : '',
+        is_read: Boolean(item.is_read),
+        created_at: typeof item.created_at === 'string' ? item.created_at : '',
+        sender: item.sender === 'parent' ? 'parent' : 'teacher',
+        attachment_url: typeof item.attachment_url === 'string' ? item.attachment_url : undefined,
+        attachment_type: item.attachment_type === 'image' || item.attachment_type === 'document'
+            ? item.attachment_type
+            : undefined,
+        attachment_name: typeof item.attachment_name === 'string' ? item.attachment_name : undefined,
+    }))
+);
+
 
 const fetchPortalData = async (studentId: string, accessCode: string): Promise<PortalData> => {
     const { data, error } = await supabase.rpc('get_student_portal_data', {
@@ -63,11 +82,13 @@ const fetchPortalData = async (studentId: string, accessCode: string): Promise<P
         throw new Error(`Gagal memuat data portal: ${error.message}.`);
     }
 
-    if (!data || data.length === 0) {
+    const resultRows = Array.isArray(data) ? data : [];
+
+    if (resultRows.length === 0) {
         throw new Error("Akses ditolak. Kode akses mungkin tidak valid untuk siswa ini atau telah kedaluwarsa.");
     }
 
-    const portalResult = toObject<Record<string, unknown>>(data[0], {});
+    const portalResult = toObject<Record<string, unknown>>(resultRows[0], {});
 
     const student = toObject<PortalStudentInfo>(portalResult.student, {
         id: studentId,
@@ -88,7 +109,7 @@ const fetchPortalData = async (studentId: string, accessCode: string): Promise<P
         academicRecords: toArray<PortalAcademicRecord>(portalResult.academicRecords),
         violations: toArray<PortalViolation>(portalResult.violations),
         quizPoints: toArray<PortalQuizPoint>(portalResult.quizPoints),
-        communications: toArray<PortalCommunication>(portalResult.communications),
+        communications: normalizePortalCommunications(portalResult.communications),
         schedules: toArray<PortalSchedule>(portalResult.schedules),
         tasks: toArray<PortalTask>(portalResult.tasks),
         announcements: toArray<PortalAnnouncement>(portalResult.announcements),
@@ -109,14 +130,14 @@ export const ParentPortalPage: React.FC = () => {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<PortalPrimaryTab>('beranda');
     const [activeMoreSection, setActiveMoreSection] = useState<PortalMoreSection>('tugas');
-    const [selectedSemesterId, setSelectedSemesterId] = useState<string | null>(() => activeSemester?.id || null);
-    const [hasInitializedSemester, setHasInitializedSemester] = useState(() => Boolean(activeSemester?.id));
+    const [selectedSemesterId, setSelectedSemesterId] = useState<string | null>(null);
+    const effectiveSelectedSemesterId = selectedSemesterId ?? activeSemester?.id ?? null;
 
     // PDF Download handler
     const handleDownloadPDF = async () => {
         if (data) {
             try {
-                await generateReportCardPDF(data, selectedSemesterId || undefined);
+                await generateReportCardPDF(data, effectiveSelectedSemesterId || undefined);
                 toast.success("PDF berhasil diunduh.");
             } catch (error) {
                 console.error("Failed to generate PDF", error);
@@ -129,13 +150,14 @@ export const ParentPortalPage: React.FC = () => {
     const { mutate: updateParentInfo } = useMutation({
         mutationFn: async ({ name, phone }: { name: string, phone: string }) => {
             if (!data?.student.access_code) throw new Error("Kode akses hilang.");
-            const { error } = await supabase.rpc('update_parent_info', {
+            const { data: result, error } = await supabase.rpc('update_parent_info', {
                 student_id_param: studentId!,
                 access_code_param: data.student.access_code,
                 new_parent_name: name,
                 new_parent_phone: phone
             });
             if (error) throw error;
+            if (result === false) throw new Error("Akses portal tidak valid.");
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['portalData', studentId] });
@@ -162,12 +184,6 @@ export const ParentPortalPage: React.FC = () => {
         }
     }, [accessCode, isError, error, navigate]);
 
-    useEffect(() => {
-        if (hasInitializedSemester || !activeSemester?.id) return;
-        setSelectedSemesterId(activeSemester.id);
-        setHasInitializedSemester(true);
-    }, [activeSemester?.id, hasInitializedSemester]);
-
     const handleLogout = () => {
         sessionStorage.removeItem('portal_access_code');
         navigate('/', { replace: true });
@@ -175,14 +191,14 @@ export const ParentPortalPage: React.FC = () => {
 
     // Filter attendance by selected semester
     const filteredAttendance = useMemo(() => (
-        data ? getFilteredAttendance(data.attendanceRecords, selectedSemesterId) : []
-    ), [data, selectedSemesterId]);
+        data ? getFilteredAttendance(data.attendanceRecords, effectiveSelectedSemesterId) : []
+    ), [data, effectiveSelectedSemesterId]);
 
     const attendanceSummary = useMemo(() => getAttendanceSummary(filteredAttendance), [filteredAttendance]);
 
     const filteredViolations = useMemo(() => (
-        data ? getFilteredViolations(data.violations, selectedSemesterId) : []
-    ), [data, selectedSemesterId]);
+        data ? getFilteredViolations(data.violations, effectiveSelectedSemesterId) : []
+    ), [data, effectiveSelectedSemesterId]);
 
     const averageScore = useMemo(() => (
         data ? getAverageScore(data.academicRecords) : null
@@ -261,7 +277,7 @@ export const ParentPortalPage: React.FC = () => {
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-xl p-3 border border-white/20 animate-fade-in-up">
                     <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter Semester:</span>
                     <SemesterSelector
-                        value={selectedSemesterId || 'all'}
+                        value={effectiveSelectedSemesterId || 'all'}
                         onChange={(semId) => setSelectedSemesterId(semId === 'all' ? null : semId)}
                         size="sm"
                         includeAllOption={true}

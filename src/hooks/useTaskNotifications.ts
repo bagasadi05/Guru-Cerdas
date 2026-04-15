@@ -60,8 +60,8 @@ export const useTaskNotifications = (tasks?: Task[]): UseTaskNotificationsReturn
 
         setIsLoading(true);
         try {
-            const count = await checkAndNotify(user.id);
             const tasksData = await getDueTasks(user.id);
+            const count = await checkAndNotify(user.id, tasksData);
             setDueTasks(tasksData);
             setUnreadCount(count);
         } catch (error) {

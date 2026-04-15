@@ -4,23 +4,30 @@ export type ClassRow = Database['public']['Tables']['classes']['Row'];
 export type StudentRow = Database['public']['Tables']['students']['Row'];
 export type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
 
-/**
- * Base violation row from database.
- */
 type ViolationRowBase = Database['public']['Tables']['violations']['Row'];
+type ViolationRowRequiredKeys =
+    | 'id'
+    | 'student_id'
+    | 'date'
+    | 'description'
+    | 'points'
+    | 'created_at'
+    | 'user_id';
 
 /**
  * Extended ViolationRow with UI-specific fields.
  */
-export type ViolationRow = ViolationRowBase & {
+export type ViolationRow = Partial<ViolationRowBase> & Pick<ViolationRowBase, ViolationRowRequiredKeys> & {
     /** Severity level */
-    severity?: 'ringan' | 'sedang' | 'berat';
+    severity?: string | null;
     /** Follow-up status */
-    follow_up_status?: 'pending' | 'in_progress' | 'resolved';
+    follow_up_status?: string | null;
     /** Follow-up notes */
-    follow_up_notes?: string;
+    follow_up_notes?: string | null;
     /** Evidence/attachment URL */
-    evidence_url?: string;
+    evidence_url?: string | null;
+    /** Whether parent has been notified */
+    parent_notified?: boolean | null;
 };
 
 

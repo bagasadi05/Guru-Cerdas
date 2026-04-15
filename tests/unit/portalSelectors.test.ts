@@ -37,7 +37,7 @@ describe('portalSelectors', () => {
             { id: 't2', title: 'Poster IPA', description: null, status: 'todo', due_date: '2026-03-12T08:00:00.000Z' },
         ];
         const communications: PortalCommunication[] = [
-            { id: 'c1', content: 'Mohon cek buku penghubung.', is_from_teacher: true, is_read: false, created_at: '2026-03-10T10:00:00.000Z', sender: 'teacher' },
+            { id: 'c1', message: 'Mohon cek buku penghubung.', is_read: false, created_at: '2026-03-10T10:00:00.000Z', sender: 'teacher' },
         ];
         const attendance: PortalAttendance[] = [
             { id: 'a1', date: '2026-03-10T07:00:00.000Z', status: 'Izin', notes: 'Kontrol dokter', semester_id: 's1' },
@@ -75,8 +75,8 @@ describe('portalSelectors', () => {
             { id: 't1', title: 'Essay Bahasa Indonesia', description: 'Bab 3', status: 'in_progress', due_date: '2026-03-12T00:00:00.000Z' },
         ];
         const communications: PortalCommunication[] = [
-            { id: 'c1', content: 'Terima kasih, Bu.', is_from_teacher: false, is_read: true, created_at: '2026-03-11T07:00:00.000Z', sender: 'parent' },
-            { id: 'c2', content: 'Nilai ulangan sudah diunggah.', is_from_teacher: true, is_read: false, created_at: '2026-03-11T08:00:00.000Z', sender: 'teacher' },
+            { id: 'c1', message: 'Terima kasih, Bu.', is_read: true, created_at: '2026-03-11T07:00:00.000Z', sender: 'parent' },
+            { id: 'c2', message: 'Nilai ulangan sudah diunggah.', is_read: false, created_at: '2026-03-11T08:00:00.000Z', sender: 'teacher' },
         ];
         const violations: PortalViolation[] = [
             { id: 'v1', date: '2026-03-05T07:00:00.000Z', type: 'Seragam', points: 10, description: null, semester_id: 's1' },

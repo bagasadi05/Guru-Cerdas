@@ -73,6 +73,10 @@ export const useSyncQueue = () => {
     const toast = useToast();
     const [pendingCount, setPendingCount] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
+    const getPayloadId = (payload: QueuedMutation['payload']) => {
+        if (Array.isArray(payload)) return undefined;
+        return typeof payload.id === 'string' ? payload.id : undefined;
+    };
 
     const updatePendingCount = useCallback(async () => {
         const queue = await getQueue();
@@ -120,7 +124,13 @@ export const useSyncQueue = () => {
                     return query.upsert(payload, onConflict ? { onConflict } : {});
                 case 'delete':
                     // Assume payload is an object with an id
-                    return query.delete().eq('id', payload.id);
+                    {
+                        const recordId = getPayloadId(payload);
+                        if (!recordId) {
+                            return Promise.reject(new Error(`Queued delete for ${table} is missing an id`));
+                        }
+                        return query.delete().eq('id', recordId);
+                    }
                 default:
                     console.error(`Unknown operation in queue: ${operation}`);
                     return Promise.reject(new Error(`Unknown operation: ${operation}`));

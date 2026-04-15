@@ -154,15 +154,16 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         // Fetch active tasks (not deleted, not completed)
         supabase
             .from('tasks')
-            .select('*')
+            .select('id, title, status')
             .eq('user_id', userId)
             .neq('status', 'done')
+            .is('deleted_at', null)
             .order('due_date'),
 
         // Fetch today's schedule entries
         supabase
             .from('schedules')
-            .select('*')
+            .select('id, user_id, day, subject, start_time, end_time, class_id, created_at')
             .eq('user_id', userId)
             .eq('day', todayDay as Database['public']['Tables']['schedules']['Row']['day'])
             .order('start_time'),
@@ -178,7 +179,8 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             .from('attendance')
             .select('status', { count: 'exact' })
             .eq('user_id', userId)
-            .eq('date', today),
+            .eq('date', today)
+            .is('deleted_at', null),
 
         // Fetch last 5 days attendance for trend chart
         supabase
@@ -186,13 +188,15 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             .select('date, status')
             .eq('user_id', userId)
             .gte('date', last5Days[0])
-            .lte('date', last5Days[4]),
+            .lte('date', last5Days[4])
+            .is('deleted_at', null),
 
         // Fetch academic records for grade analysis
         supabase
             .from('academic_records')
             .select('student_id, subject, score, assessment_name, created_at')
             .eq('user_id', userId)
+            .is('deleted_at', null)
             .order('created_at', { ascending: false })
             .limit(10),
 
@@ -200,13 +204,15 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         supabase
             .from('violations')
             .select('student_id, points')
-            .eq('user_id', userId),
+            .eq('user_id', userId)
+            .is('deleted_at', null),
 
         // Fetch recent tasks for activity feed
         supabase
             .from('tasks')
             .select('id, title, created_at, status')
             .eq('user_id', userId)
+            .is('deleted_at', null)
             .order('created_at', { ascending: false })
             .limit(5),
 
@@ -216,6 +222,7 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             .select('created_at, status')
             .eq('user_id', userId)
             .eq('date', today)
+            .is('deleted_at', null)
             .order('created_at', { ascending: false })
             .limit(10)
     ]);
@@ -253,8 +260,20 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
 
     return {
         students: studentsRes.data || [],
-        tasks: tasksRes.data || [],
-        schedule: scheduleRes.data || [],
+        tasks: (tasksRes.data || []).map(task => ({
+            ...task,
+            completed: task.status === 'done',
+            created_at: '',
+            description: null,
+            due_date: null,
+            updated_at: '',
+            user_id: userId,
+        })) as DashboardQueryData['tasks'],
+        schedule: (scheduleRes.data || []).map(item => ({
+            ...item,
+            room: null,
+            updated_at: item.created_at,
+        })) as DashboardQueryData['schedule'],
         classes: classesRes.data || [],
         dailyAttendanceSummary: {
             present: presentCount,
@@ -317,8 +336,7 @@ export function useDashboardData(): UseDashboardDataReturn {
         queryKey: queryKeys.dashboard.data(user?.id ?? ''),
         queryFn: () => fetchDashboardData(user!.id),
         enabled: !!user,
-        // Refetch on window focus to keep data fresh
-        refetchOnWindowFocus: true,
+        refetchOnWindowFocus: false,
         // Keep previous data while refetching
         placeholderData: (previousData) => previousData,
     });

@@ -57,7 +57,7 @@ export const ValidatedInput = React.forwardRef<HTMLInputElement, ValidatedInputP
     ) => {
         const inputId = id || `input-${label?.toLowerCase().replace(/\s+/g, '-')}`;
         const hasError = !!error;
-        const showSuccess = isValid && !isValidating && !hasError && props.value;
+        const showSuccess = !!isValid && !isValidating && !hasError && Boolean(props.value);
 
         return (
             <div className="w-full space-y-1.5">
@@ -166,7 +166,7 @@ export const ValidatedTextarea = React.forwardRef<HTMLTextAreaElement, Validated
     ) => {
         const inputId = id || `textarea-${label?.toLowerCase().replace(/\s+/g, '-')}`;
         const hasError = !!error;
-        const showSuccess = isValid && !hasError && value;
+        const showSuccess = !!isValid && !hasError && Boolean(value);
         const charCount = String(value || '').length;
 
         return (
@@ -282,7 +282,7 @@ export const ValidatedSelect = React.forwardRef<HTMLSelectElement, ValidatedSele
     ) => {
         const inputId = id || `select-${label?.toLowerCase().replace(/\s+/g, '-')}`;
         const hasError = !!error;
-        const showSuccess = isValid && !hasError && props.value;
+        const showSuccess = !!isValid && !hasError && Boolean(props.value);
 
         return (
             <div className="w-full space-y-1.5">

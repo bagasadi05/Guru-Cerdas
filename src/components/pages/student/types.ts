@@ -48,26 +48,31 @@ export type CommunicationRow = CommunicationRowBase & {
 };
 
 
-/**
- * Base violation row from database.
- */
 type ViolationRowBase = Database['public']['Tables']['violations']['Row'];
+type ViolationRowRequiredKeys =
+    | 'id'
+    | 'student_id'
+    | 'date'
+    | 'description'
+    | 'points'
+    | 'created_at'
+    | 'user_id';
 
 /**
  * Extended ViolationRow with UI-specific fields.
  * These additional fields support the violation tracking features.
  */
-export type ViolationRow = ViolationRowBase & {
+export type ViolationRow = Partial<ViolationRowBase> & Pick<ViolationRowBase, ViolationRowRequiredKeys> & {
     /** Severity level of the violation */
-    severity?: 'ringan' | 'sedang' | 'berat';
+    severity?: string | null;
     /** Follow-up status */
-    follow_up_status?: 'pending' | 'in_progress' | 'resolved';
+    follow_up_status?: string | null;
     /** Notes about the follow-up action */
-    follow_up_notes?: string;
+    follow_up_notes?: string | null;
     /** Evidence/attachment URL */
-    evidence_url?: string;
+    evidence_url?: string | null;
     /** Whether parent has been notified */
-    parent_notified?: boolean;
+    parent_notified?: boolean | null;
 };
 
 /**

@@ -4,6 +4,16 @@ import { useToast } from '../../../../hooks/useToast';
 import { Database } from '../../../../services/database.types';
 import { StudentMutationVars, ReportMutationVars, AcademicMutationVars, QuizMutationVars, ViolationMutationVars, CommunicationMutationVars } from '../types';
 
+const SOFT_DELETE_TABLES = new Set<keyof Database['public']['Tables']>([
+    'students',
+    'classes',
+    'attendance',
+    'academic_records',
+    'quiz_points',
+    'violations',
+    'tasks',
+]);
+
 export const useStudentMutations = (studentId: string | undefined, onSuccessCloseModal: () => void) => {
     const toast = useToast();
     const queryClient = useQueryClient();
@@ -88,7 +98,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
     const communicationMutation = useMutation({
         mutationFn: async (vars: CommunicationMutationVars) => {
             const { error } = await supabase.from('communications').update({
-                content: vars.data.message
+                message: vars.data.message
             }).eq('id', vars.id);
             if (error) throw error;
         },
@@ -126,7 +136,10 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                 }
             }
 
-            const { error } = await supabase.from(table).delete().eq('id', id);
+            const query = SOFT_DELETE_TABLES.has(table)
+                ? supabase.from(table).update({ deleted_at: new Date().toISOString() }).eq('id', id)
+                : supabase.from(table).delete().eq('id', id);
+            const { error } = await query;
             if (error) throw error;
         },
         onSuccess: (_d, v) => {
@@ -136,6 +149,8 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             queryClient.invalidateQueries({ queryKey: ['studentQuizzes', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentReports', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             onSuccessCloseModal();
             toast.success(`Data dari tabel ${v.table} berhasil dihapus.`);
         },
@@ -186,7 +201,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                 student_id: studentId,
                 user_id: user.id,
                 teacher_id: user.id, // Add required teacher_id
-                content: params.message, // Map message to content
+                message: params.message,
                 sender: 'teacher',
                 is_read: false,
                 attachment_url: attachmentUrl,

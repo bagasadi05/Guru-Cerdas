@@ -7,7 +7,7 @@ describe('apiWrapper Property Tests', () => {
     beforeEach(() => {
         logger.clearStoredLogs();
         vi.useFakeTimers();
-        vi.spyOn(logger, 'error');
+        vi.spyOn(logger, 'error').mockImplementation(() => undefined);
     });
 
     afterEach(() => {
@@ -39,9 +39,11 @@ describe('apiWrapper Property Tests', () => {
                 fc.string({ minLength: 1 }), // error message
                 async (context, errorMsg) => {
                     vi.mocked(logger.error).mockClear();
-                    const fn = vi.fn().mockRejectedValue(new Error(errorMsg));
-
+                    const fn = vi.fn().mockImplementation(async () => {
+                        throw new Error(errorMsg);
+                    });
                     const promise = safeApiCall(fn, { retries: 0, context });
+                    void promise.catch(() => undefined);
                     await vi.runAllTimersAsync();
                     await expect(promise).rejects.toThrow(errorMsg);
 
@@ -65,8 +67,11 @@ describe('apiWrapper Property Tests', () => {
             fc.asyncProperty(
                 fc.integer({ min: 0, max: 3 }), // number of retries
                 async (retries) => {
-                    const fn = vi.fn().mockRejectedValue(new Error('fail'));
+                    const fn = vi.fn().mockImplementation(async () => {
+                        throw new Error('fail');
+                    });
                     const promise = safeApiCall(fn, { retries, backoff: 1 });
+                    void promise.catch(() => undefined);
                     await vi.runAllTimersAsync();
                     await expect(promise).rejects.toThrow();
                     // Should be called: 1 initial + retries

@@ -7,9 +7,22 @@ interface jsPDFWithAutoTable extends jsPDF {
     lastAutoTable: { finalY: number };
 }
 
+interface AnalyticsStudent {
+    id: string;
+    name: string;
+}
+
+interface AnalyticsClassStat {
+    id: string;
+    name: string;
+    studentCount: number;
+    attendanceRate: number;
+    avgGrade?: number;
+}
+
 interface AnalyticsData {
-    students: Record<string, unknown>[];
-    classStats: Record<string, unknown>[];
+    students: AnalyticsStudent[];
+    classStats: AnalyticsClassStat[];
     attendanceStats: {
         total: number;
         hadir: number;
@@ -25,9 +38,10 @@ interface AnalyticsData {
     };
     taskStats: {
         total: number;
-        completed: number;
+        todo: number;
+        inProgress: number;
+        done: number;
         overdue: number;
-        completionRate: number;
     };
     violationsStats: {
         total: number;
@@ -132,7 +146,7 @@ export const generateAnalyticsPdf = async (data: AnalyticsData, options: ExportO
                 body: data.atRiskStudents.map((item) => [
                     item.student?.name || 'Unknown',
                     item.reason === 'attendance' ? 'Kehadiran Buruk' : item.reason === 'academic' ? 'Nilai Rendah' : 'Kombinasi',
-                    item.details
+                    item.details || '-'
                 ]),
                 theme: 'striped',
                 headStyles: { fillColor: [239, 68, 68] }, // Red 500

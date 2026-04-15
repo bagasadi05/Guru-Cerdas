@@ -432,7 +432,6 @@ const ExtracurricularPage: React.FC = () => {
                                 : r
                         );
                     } else {
-                        // @ts-expect-error - Ignoring strict type check for temp ID in optimistic update
                         return [...old, newRecord];
                     }
                 }

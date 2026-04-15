@@ -17,6 +17,32 @@ const generateAccessCode = (): string => {
   return result;
 };
 
+const pickLiveColumns = <T extends Record<string, unknown>>(data: T, columns: readonly string[]) => (
+  Object.fromEntries(Object.entries(data).filter(([key]) => columns.includes(key)))
+);
+
+const LIVE_STUDENT_COLUMNS = [
+  'id',
+  'name',
+  'user_id',
+  'class_id',
+  'gender',
+  'avatar_url',
+  'access_code',
+  'parent_name',
+  'parent_phone',
+  'created_at',
+  'deleted_at',
+] as const;
+
+const LIVE_CLASS_COLUMNS = [
+  'id',
+  'name',
+  'user_id',
+  'created_at',
+  'deleted_at',
+] as const;
+
 interface StudentsPageActionsParams {
   userId?: string;
   classes: ClassRow[];
@@ -72,6 +98,9 @@ export const useStudentsPageActions = ({
   const invalidateStudentQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['students'] });
     queryClient.invalidateQueries({ queryKey: ['classes'] });
+    queryClient.invalidateQueries({ queryKey: ['studentsPageData'] });
+    queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+    queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
   };
 
   const mutationOptions = {
@@ -81,7 +110,7 @@ export const useStudentsPageActions = ({
 
   const { mutate: addStudent, isPending: isAddingStudent } = useMutation({
     mutationFn: async (newStudent: Database['public']['Tables']['students']['Insert']) => {
-      const { error } = await supabase.from('students').insert([newStudent]);
+      const { error } = await supabase.from('students').insert([pickLiveColumns(newStudent, LIVE_STUDENT_COLUMNS) as Database['public']['Tables']['students']['Insert']]);
       if (error) throw error;
     },
     ...mutationOptions,
@@ -95,7 +124,7 @@ export const useStudentsPageActions = ({
 
   const { mutate: updateStudent, isPending: isUpdatingStudent } = useMutation({
     mutationFn: async ({ id, ...updateData }: { id: string } & Database['public']['Tables']['students']['Update']) => {
-      const { error } = await supabase.from('students').update(updateData).eq('id', id);
+      const { error } = await supabase.from('students').update(pickLiveColumns(updateData, LIVE_STUDENT_COLUMNS) as Database['public']['Tables']['students']['Update']).eq('id', id);
       if (error) throw error;
     },
     ...mutationOptions,
@@ -108,7 +137,10 @@ export const useStudentsPageActions = ({
 
   const { mutate: deleteStudent, isPending: isDeletingStudent } = useMutation({
     mutationFn: async (studentId: string) => {
-      const { error } = await supabase.from('students').delete().eq('id', studentId);
+      const { error } = await supabase
+        .from('students')
+        .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+        .eq('id', studentId);
       if (error) throw error;
     },
     ...mutationOptions,
@@ -121,7 +153,7 @@ export const useStudentsPageActions = ({
 
   const { mutate: addClass, isPending: isAddingClass } = useMutation({
     mutationFn: async (newClass: Database['public']['Tables']['classes']['Insert']) => {
-      const { error } = await supabase.from('classes').insert([newClass]);
+      const { error } = await supabase.from('classes').insert([pickLiveColumns(newClass, LIVE_CLASS_COLUMNS) as Database['public']['Tables']['classes']['Insert']]);
       if (error) throw error;
     },
     ...mutationOptions,
@@ -134,7 +166,7 @@ export const useStudentsPageActions = ({
 
   const { mutate: updateClass, isPending: isUpdatingClass } = useMutation({
     mutationFn: async ({ id, ...updateData }: { id: string } & Database['public']['Tables']['classes']['Update']) => {
-      const { error } = await supabase.from('classes').update(updateData).eq('id', id);
+      const { error } = await supabase.from('classes').update(pickLiveColumns(updateData, LIVE_CLASS_COLUMNS) as Database['public']['Tables']['classes']['Update']).eq('id', id);
       if (error) throw error;
     },
     ...mutationOptions,
@@ -147,7 +179,10 @@ export const useStudentsPageActions = ({
 
   const { mutate: deleteClass, isPending: isDeletingClass } = useMutation({
     mutationFn: async (classId: string) => {
-      const { error } = await supabase.from('classes').delete().eq('id', classId);
+      const { error } = await supabase
+        .from('classes')
+        .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+        .eq('id', classId);
       if (error) throw error;
     },
     ...mutationOptions,
@@ -259,7 +294,7 @@ export const useStudentsPageActions = ({
     if (classModalMode === 'add') {
       addClass({
         name: classNameInput,
-        teacher_id: userId,
+        user_id: userId,
         academic_year: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
         grade_level: 1,
       });
@@ -471,7 +506,9 @@ export const useStudentsPageActions = ({
       };
     });
 
-    const { error } = await supabase.from('students').insert(studentsToInsert);
+    const sanitizedStudents = studentsToInsert.map((student) => pickLiveColumns(student, LIVE_STUDENT_COLUMNS));
+
+    const { error } = await supabase.from('students').insert(sanitizedStudents as Database['public']['Tables']['students']['Insert'][]);
     if (error) throw error;
 
     queryClient.invalidateQueries({ queryKey: ['students'] });

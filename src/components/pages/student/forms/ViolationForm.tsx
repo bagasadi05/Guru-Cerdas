@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import { violationRules, ViolationFormValues } from '../schemas';
 import { validationResolver } from '../../../../utils/formValidation';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
 import { Select } from '../../../ui/Select';
 import { ViolationRow } from '../types';
-import { violationList, ViolationItem } from '../../../../services/violations.data';
+import { violationList } from '../../../../services/violations.data';
 import { SEVERITY_LEVELS, SeverityLevel } from '../ViolationsTab';
 import { AlertTriangleIcon, CameraIcon, UploadIcon } from 'lucide-react';
 
@@ -27,13 +27,18 @@ const violationsByCategory = {
 export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onSubmit, onClose, isPending }) => {
     const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
     const [evidencePreview, setEvidencePreview] = useState<string | null>(defaultValues?.evidence_url || null);
+    const defaultSeverity = defaultValues?.severity;
+    const normalizedSeverity =
+        defaultSeverity === 'ringan' || defaultSeverity === 'sedang' || defaultSeverity === 'berat'
+            ? defaultSeverity
+            : null;
 
     const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ViolationFormValues>({
         resolver: validationResolver<ViolationFormValues>(violationRules),
         defaultValues: {
             date: defaultValues?.date || new Date().toISOString().slice(0, 10),
             description: defaultValues?.description || '',
-            severity: defaultValues?.severity || null,
+            severity: normalizedSeverity,
             follow_up_notes: defaultValues?.follow_up_notes || '',
         }
     });
@@ -82,7 +87,7 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
         setEvidencePreview(null);
     };
 
-    const handleFormSubmit = (data: ViolationFormValues) => {
+    const handleFormSubmit: SubmitHandler<ViolationFormValues> = (data) => {
         onSubmit({
             ...data,
             evidence_file: evidenceFile || undefined
