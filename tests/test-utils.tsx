@@ -8,19 +8,28 @@ import { SemesterProvider } from '../src/contexts/SemesterContext';
 import { vi } from 'vitest';
 
 // Mock supabase to prevent errors in SemesterProvider
-vi.mock('../src/services/supabase', () => ({
-    supabase: {
-        from: vi.fn(() => ({
-            select: vi.fn(() => ({
+vi.mock('../src/services/supabase', () => {
+    const createSelectBuilder = () => ({
+        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        single: vi.fn(() => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'No rows found' } })),
+        eq: vi.fn(() => ({
+            eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            is: vi.fn(() => ({
                 order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-                eq: vi.fn(() => ({
-                    eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
-                    order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-                })),
             })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            single: vi.fn(() => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'No rows found' } })),
         })),
-    },
-}));
+    });
+
+    return {
+        supabase: {
+            from: vi.fn(() => ({
+                select: vi.fn(() => createSelectBuilder()),
+            })),
+        },
+    };
+});
 
 const createTestQueryClient = () => new QueryClient({
     defaultOptions: {

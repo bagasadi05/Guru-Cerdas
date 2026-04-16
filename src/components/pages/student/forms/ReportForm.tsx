@@ -5,7 +5,7 @@ import { validationResolver } from '../../../../utils/formValidation';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
 import { ReportRow } from '../types';
-import { REPORT_CATEGORIES, COMMON_TAGS, ReportCategory } from '../ReportsTab';
+import { COMMON_TAGS, REPORT_CATEGORIES, ReportCategory } from '../reportMeta';
 import { UploadIcon, XIcon, FileTextIcon } from 'lucide-react';
 
 interface ReportFormProps {

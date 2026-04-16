@@ -22,8 +22,11 @@ function getOptimizedImageDimensions(
     containerWidth: number,
     devicePixelRatio: number = 1
 ): { width: number; height: number } {
+    const safeDevicePixelRatio = Number.isFinite(devicePixelRatio) && devicePixelRatio > 0
+        ? devicePixelRatio
+        : 1;
     const aspectRatio = originalWidth / originalHeight;
-    const maxWidth = Math.min(originalWidth, containerWidth * devicePixelRatio);
+    const maxWidth = Math.min(originalWidth, containerWidth * safeDevicePixelRatio);
     const targetWidth = Math.max(1, maxWidth);
     const targetHeight = Math.max(1, targetWidth / aspectRatio);
 
@@ -250,6 +253,7 @@ describe('Property-Based Tests: Performance Optimization', () => {
                     fc.double({ min: 1, max: 3 }), // device pixel ratio
                     (origWidth, origHeight, containerWidth, dpr) => {
                         const result = getOptimizedImageDimensions(origWidth, origHeight, containerWidth, dpr);
+                        const safeDpr = Number.isFinite(dpr) && dpr > 0 ? dpr : 1;
 
                         // Property: Aspect ratio should be approximately maintained
                         const originalRatio = origWidth / origHeight;
@@ -260,7 +264,7 @@ describe('Property-Based Tests: Performance Optimization', () => {
                         expect(result.width).toBeLessThanOrEqual(origWidth);
 
                         // Property: Width should be adjusted for container and DPR
-                        expect(result.width).toBeLessThanOrEqual(containerWidth * dpr);
+                        expect(result.width).toBeLessThanOrEqual(containerWidth * safeDpr);
 
                         return true;
                     }

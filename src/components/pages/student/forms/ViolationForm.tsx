@@ -7,7 +7,7 @@ import { Input } from '../../../ui/Input';
 import { Select } from '../../../ui/Select';
 import { ViolationRow } from '../types';
 import { violationList } from '../../../../services/violations.data';
-import { SEVERITY_LEVELS, SeverityLevel } from '../ViolationsTab';
+import { SEVERITY_LEVELS, SeverityLevel } from '../violationMeta';
 import { AlertTriangleIcon, CameraIcon, UploadIcon } from 'lucide-react';
 
 interface ViolationFormProps {

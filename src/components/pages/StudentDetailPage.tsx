@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { Suspense, lazy, useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AttendanceStatus } from '../../types';
 import { useToast } from '../../hooks/useToast';
@@ -15,18 +15,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { optimizeImage } from '../utils/image';
 import { violationList } from '../../services/violations.data';
-import { ChildDevelopmentAnalysisTab } from './ChildDevelopmentAnalysisTab';
 import { ChildDevelopmentData } from '../../services/childDevelopmentAnalysis';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import { Breadcrumb } from '../ui/Breadcrumb';
 
 import { StatCard } from './student/StatCard';
-import { GradesTab } from './student/GradesTab';
-import { ActivityTab } from './student/ActivityTab';
-import { ViolationsTab } from './student/ViolationsTab';
-import { ReportsTab } from './student/ReportsTab';
-import { CommunicationTab } from './student/CommunicationTab';
-import { ExtracurricularTab } from './student/ExtracurricularTab';
 import { Trophy } from 'lucide-react';
 
 import { ModalState, StudentMutationVars, AcademicRecordRow, AttendanceRow, ViolationRow, QuizPointRow, CommunicationRow, ReportRow, StudentWithClass } from './student/types';
@@ -44,6 +37,24 @@ import { getStudentAvatar } from '../../utils/avatarUtils';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import { useSemester } from '../../contexts/SemesterContext';
 import { SemesterSelector } from '../ui/SemesterSelector';
+import { Skeleton } from '../ui/Skeleton';
+
+const GradesTab = lazy(() => import('./student/GradesTab').then((module) => ({ default: module.GradesTab })));
+const ActivityTab = lazy(() => import('./student/ActivityTab').then((module) => ({ default: module.ActivityTab })));
+const ViolationsTab = lazy(() => import('./student/ViolationsTab').then((module) => ({ default: module.ViolationsTab })));
+const ReportsTab = lazy(() => import('./student/ReportsTab').then((module) => ({ default: module.ReportsTab })));
+const CommunicationTab = lazy(() => import('./student/CommunicationTab').then((module) => ({ default: module.CommunicationTab })));
+const ExtracurricularTab = lazy(() => import('./student/ExtracurricularTab').then((module) => ({ default: module.ExtracurricularTab })));
+const ChildDevelopmentAnalysisTab = lazy(() => import('./ChildDevelopmentAnalysisTab').then((module) => ({ default: module.ChildDevelopmentAnalysisTab })));
+
+const StudentDetailTabFallback = () => (
+    <div className="space-y-4 p-4 sm:p-6">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+    </div>
+);
 
 const generateAccessCode = (): string => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No 0, O, 1, I
@@ -796,76 +807,104 @@ const StudentDetailPage = () => {
                             </div>
                         </div>
                         <TabsContent value="grades" className="p-0">
-                            <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} kkm={kkm} />
+                            {activeTab === 'grades' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} kkm={kkm} />
+                                </Suspense>
+                            )}
                         </TabsContent>
                         <TabsContent value="activity" className="p-0">
-                            <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} />
+                            {activeTab === 'activity' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} />
+                                </Suspense>
+                            )}
                         </TabsContent>
                         <TabsContent value="violations" className="p-0">
-                            <ViolationsTab
-                                violations={filteredViolations}
-                                onAdd={() => setModalState({ type: 'violation', mode: 'add', data: null })}
-                                onEdit={(r) => setModalState({ type: 'violation', mode: 'edit', data: r })}
-                                onDelete={(id) => handleDelete('violations', id)}
-                                onUpdateFollowUp={handleUpdateViolationFollowUp}
-                                onNotifyParent={handleNotifyParent}
-                                studentName={student.name}
-                                isOnline={isOnline}
-                            />
+                            {activeTab === 'violations' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <ViolationsTab
+                                        violations={filteredViolations}
+                                        onAdd={() => setModalState({ type: 'violation', mode: 'add', data: null })}
+                                        onEdit={(r) => setModalState({ type: 'violation', mode: 'edit', data: r })}
+                                        onDelete={(id) => handleDelete('violations', id)}
+                                        onUpdateFollowUp={handleUpdateViolationFollowUp}
+                                        onNotifyParent={handleNotifyParent}
+                                        studentName={student.name}
+                                        isOnline={isOnline}
+                                    />
+                                </Suspense>
+                            )}
                         </TabsContent>
                         <TabsContent value="extracurricular" className="p-0">
-                            <ExtracurricularTab
-                                studentExtracurriculars={filteredExtracurriculars}
-                                attendanceRecords={filteredExAttendance}
-                                grades={filteredExGrades}
-                            />
+                            {activeTab === 'extracurricular' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <ExtracurricularTab
+                                        studentExtracurriculars={filteredExtracurriculars}
+                                        attendanceRecords={filteredExAttendance}
+                                        grades={filteredExGrades}
+                                    />
+                                </Suspense>
+                            )}
                         </TabsContent>
                         <TabsContent value="reports" className="p-0">
-                            <ReportsTab reports={reports} onAdd={() => setModalState({ type: 'report', data: null })} onEdit={(r) => setModalState({ type: 'report', data: r })} onDelete={(id) => handleDelete('reports', id)} isOnline={isOnline} />
+                            {activeTab === 'reports' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <ReportsTab reports={reports} onAdd={() => setModalState({ type: 'report', data: null })} onEdit={(r) => setModalState({ type: 'report', data: r })} onDelete={(id) => handleDelete('reports', id)} isOnline={isOnline} />
+                                </Suspense>
+                            )}
                         </TabsContent>
                         <TabsContent value="development" className="p-4 sm:p-6">
-                            <ChildDevelopmentAnalysisTab
-                                studentData={{
-                                    student: {
-                                        name: student.name,
-                                        age: student.date_of_birth ? new Date().getFullYear() - new Date(student.date_of_birth).getFullYear() : 12,
-                                        class: student.classes?.name
-                                    },
-                                    academicRecords: filteredAcademicRecords.map((r: AcademicRecordRow) => ({
-                                        subject: r.subject,
-                                        score: r.score,
-                                        assessment_name: r.assessment_name,
-                                        notes: r.notes
-                                    })),
-                                    attendanceRecords: filteredAttendance.map((a: AttendanceRow) => ({
-                                        status: a.status,
-                                        date: a.date
-                                    })),
-                                    violations: filteredViolations.map((v: ViolationRow) => ({
-                                        description: v.description,
-                                        points: v.points,
-                                        date: v.date
-                                    })),
-                                    quizPoints: filteredQuizPoints.map((q: QuizPointRow) => ({
-                                        activity: q.quiz_name,
-                                        points: q.points,
-                                        date: q.quiz_date
-                                    }))
-                                } as ChildDevelopmentData}
-                            />
+                            {activeTab === 'development' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <ChildDevelopmentAnalysisTab
+                                        studentData={{
+                                            student: {
+                                                name: student.name,
+                                                age: student.date_of_birth ? new Date().getFullYear() - new Date(student.date_of_birth).getFullYear() : 12,
+                                                class: student.classes?.name
+                                            },
+                                            academicRecords: filteredAcademicRecords.map((r: AcademicRecordRow) => ({
+                                                subject: r.subject,
+                                                score: r.score,
+                                                assessment_name: r.assessment_name,
+                                                notes: r.notes
+                                            })),
+                                            attendanceRecords: filteredAttendance.map((a: AttendanceRow) => ({
+                                                status: a.status,
+                                                date: a.date
+                                            })),
+                                            violations: filteredViolations.map((v: ViolationRow) => ({
+                                                description: v.description,
+                                                points: v.points,
+                                                date: v.date
+                                            })),
+                                            quizPoints: filteredQuizPoints.map((q: QuizPointRow) => ({
+                                                activity: q.quiz_name,
+                                                points: q.points,
+                                                date: q.quiz_date
+                                            }))
+                                        } as ChildDevelopmentData}
+                                    />
+                                </Suspense>
+                            )}
                         </TabsContent>
 
                         <TabsContent value="communication" className="p-0">
-                            <CommunicationTab
-                                communications={communications}
-                                userAvatarUrl={user?.avatarUrl}
-                                studentName={student.name}
-                                onSendMessage={(msg, attachment) => sendMessageMutation.mutate({ message: msg, attachment })}
-                                onEditMessage={(msg) => setModalState({ type: 'editCommunication', data: msg })}
-                                onDeleteMessage={(id) => handleDelete('communications', id)}
-                                isOnline={isOnline}
-                                isSending={sendMessageMutation.isPending}
-                            />
+                            {activeTab === 'communication' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <CommunicationTab
+                                        communications={communications}
+                                        userAvatarUrl={user?.avatarUrl}
+                                        studentName={student.name}
+                                        onSendMessage={(msg, attachment) => sendMessageMutation.mutate({ message: msg, attachment })}
+                                        onEditMessage={(msg) => setModalState({ type: 'editCommunication', data: msg })}
+                                        onDeleteMessage={(id) => handleDelete('communications', id)}
+                                        isOnline={isOnline}
+                                        isSending={sendMessageMutation.isPending}
+                                    />
+                                </Suspense>
+                            )}
                         </TabsContent>
                     </Tabs>
                 </Card>

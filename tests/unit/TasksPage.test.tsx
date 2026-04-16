@@ -4,24 +4,39 @@ import { renderWithProviders } from '../test-utils';
 import TasksPage from '../../src/components/pages/TasksPage';
 
 // Mock supabase at module level
-vi.mock('../../src/services/supabase', () => ({
-    supabase: {
-        from: () => ({
-            select: () => ({
-                eq: () => ({
-                    order: () => Promise.resolve({ data: [], error: null })
+vi.mock('../../src/services/supabase', () => {
+    const createSelectBuilder = () => {
+        const resolveEmpty = () => Promise.resolve({ data: [], error: null });
+        const resolveSingle = () => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'No rows found' } });
+
+        return {
+            eq: () => ({
+                is: () => ({
+                    order: resolveEmpty,
+                }),
+                order: resolveEmpty,
+                single: resolveSingle,
+            }),
+            order: resolveEmpty,
+            single: resolveSingle,
+        };
+    };
+
+    return {
+        supabase: {
+            from: () => ({
+                select: () => createSelectBuilder(),
+                insert: () => Promise.resolve({ error: null }),
+                update: () => ({
+                    eq: () => Promise.resolve({ error: null })
+                }),
+                delete: () => ({
+                    eq: () => Promise.resolve({ error: null })
                 })
-            }),
-            insert: () => Promise.resolve({ error: null }),
-            update: () => ({
-                eq: () => Promise.resolve({ error: null })
-            }),
-            delete: () => ({
-                eq: () => Promise.resolve({ error: null })
             })
-        })
-    }
-}));
+        }
+    };
+});
 
 describe('TasksPage', () => {
     beforeEach(() => {
