@@ -1,11 +1,11 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { quizRules, QuizFormValues } from '../schemas';
 import { validationResolver } from '../../../../utils/formValidation';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
 import { QuizPointRow } from '../types';
-import { POINT_CATEGORIES, PointCategory } from '../ActivityTab';
+import { PointCategory } from '../ActivityTab';
 
 interface QuizFormProps {
     defaultValues: QuizPointRow | null;
@@ -65,7 +65,7 @@ const ACTIVITY_SUGGESTIONS: Record<PointCategory, string[]> = {
 };
 
 export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onClose, isPending }) => {
-    const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<QuizFormValues>({
+    const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<QuizFormValues>({
         resolver: validationResolver<QuizFormValues>(quizRules),
         defaultValues: {
             quiz_date: defaultValues?.quiz_date || new Date().toISOString().slice(0, 10),
@@ -75,7 +75,7 @@ export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onC
         }
     });
 
-    const selectedCategory = watch('category');
+    const selectedCategory = useWatch({ control, name: 'category' });
     const suggestions = selectedCategory ? ACTIVITY_SUGGESTIONS[selectedCategory] : [];
 
     const handleSuggestionClick = (suggestion: string) => {

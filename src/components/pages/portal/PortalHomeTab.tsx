@@ -1,5 +1,5 @@
 import React from 'react';
-import { BellIcon, BookOpenIcon, CalendarIcon, CheckCircleIcon, DownloadIcon, SendIcon, SettingsIcon, ShieldAlertIcon, SparklesIcon } from '../../Icons';
+import { BellIcon, BookOpenIcon, CalendarIcon, CheckCircleIcon, DownloadIcon, SendIcon, SettingsIcon, SparklesIcon } from '../../Icons';
 import type {
     PortalActivityItem,
     PortalAnnouncement,

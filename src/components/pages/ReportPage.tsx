@@ -136,11 +136,9 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
     }, [data]);
 
     useEffect(() => {
-        if (allSubjects.length > 0 && selectedSubjects.size === 0) {
-            setSelectedSubjects(new Set(allSubjects));
+        if (allSubjects.length > 0) {
+            setSelectedSubjects(prev => prev.size === 0 ? new Set(allSubjects) : prev);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        // selectedSubjects intentionally omitted: re-adding all subjects when user deselects all is not desired
     }, [allSubjects]);
 
     const toggleSubject = (subject: string) => {

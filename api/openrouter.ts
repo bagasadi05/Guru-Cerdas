@@ -110,7 +110,7 @@ export default async function handler(req: any, res: any): Promise<void> {
     res.setHeader('Content-Type', response.headers.get('content-type') || 'application/json');
     res.setHeader('X-Proxy-Request-Id', requestId);
     res.send(text);
-  } catch (error) {
+  } catch {
     res.status(502).json({ error: 'Failed to reach OpenRouter', requestId });
   }
 }

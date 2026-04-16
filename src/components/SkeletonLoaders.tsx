@@ -9,24 +9,6 @@ import React, { useState, useEffect, useRef, useId } from 'react';
 // SHIMMER ANIMATION STYLES
 // ============================================
 
-const shimmerClass = `
-    relative overflow-hidden
-    before:absolute before:inset-0
-    before:-translate-x-full
-    before:animate-[shimmer_1.5s_infinite]
-    before:bg-gradient-to-r
-    before:from-transparent before:via-white/20 before:to-transparent
-`;
-
-// Add to your global CSS:
-// @keyframes shimmer {
-//   100% { transform: translateX(100%); }
-// }
-
-// ============================================
-// BASE SKELETON
-// ============================================
-
 interface SkeletonProps {
     className?: string;
     width?: string | number;

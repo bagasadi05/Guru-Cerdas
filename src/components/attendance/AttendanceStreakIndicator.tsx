@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { Flame, TrendingUp, Award } from 'lucide-react';
+import { Flame } from 'lucide-react';
 
 interface StreakData {
     studentId: string;

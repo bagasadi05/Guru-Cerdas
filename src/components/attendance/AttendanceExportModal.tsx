@@ -10,9 +10,6 @@ interface ClassData {
     id: string;
     name: string;
 }
-
-import { SemesterWithYear } from '../../contexts/SemesterContext';
-
 interface AttendanceExportModalProps {
     isOpen: boolean;
     onClose: () => void;

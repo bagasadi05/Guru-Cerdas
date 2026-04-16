@@ -9,8 +9,7 @@ import {
     GraduationCap,
     Trophy,
     CreditCard,
-    Flag,
-    Megaphone
+    Flag
 } from 'lucide-react';
 import { AnnouncementTemplate, AnnouncementTemplateIcon } from './types';
 

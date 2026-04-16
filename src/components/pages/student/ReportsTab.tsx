@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, BookOpenIcon, PencilIcon, TrashIcon, FilterIcon, SearchIcon, TagIcon, CalendarIcon, FileTextIcon, ImageIcon, XIcon } from 'lucide-react';
+import { PlusIcon, BookOpenIcon, PencilIcon, TrashIcon, SearchIcon, CalendarIcon, FileTextIcon, XIcon } from 'lucide-react';
 import { ReportRow } from './types';
 
 // Report Categories
@@ -125,7 +125,7 @@ const TimelineView: React.FC<{
             {/* Timeline line */}
             <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 via-purple-500 to-pink-500" />
 
-            {monthKeys.map((monthKey, groupIndex) => (
+            {monthKeys.map((monthKey) => (
                 <div key={monthKey} className="mb-8">
                     {/* Month header */}
                     <div className="flex items-center gap-3 mb-4 relative">
@@ -138,7 +138,7 @@ const TimelineView: React.FC<{
 
                     {/* Reports in this month */}
                     <div className="ml-6 space-y-4">
-                        {groupedReports[monthKey].map((report, index) => {
+                        {groupedReports[monthKey].map((report) => {
                             const category = getReportCategory(report.category);
                             const categoryColor = category?.color || 'gray';
 

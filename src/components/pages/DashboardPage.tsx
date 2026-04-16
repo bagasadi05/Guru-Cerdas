@@ -83,7 +83,8 @@ const DashboardPage: React.FC = () => {
   const { open: openSearch } = useGlobalSearch();
 
   useEffect(() => {
-    const timerId = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute    return () => clearInterval(timerId);
+    const timerId = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timerId);
   }, []);
 
   const { data, isLoading, isError, error, refetch, isRefetching: isFetching } = useDashboardData();

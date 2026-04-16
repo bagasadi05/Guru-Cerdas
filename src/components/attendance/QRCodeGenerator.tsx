@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import QRCode from 'qrcode';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { DownloadIcon, CopyIcon, QrCodeIcon, RefreshCwIcon } from 'lucide-react';
@@ -30,7 +29,6 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     date,
     userId,
 }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
     const [qrDataUrl, setQrDataUrl] = useState<string>('');
     const [token, setToken] = useState<string>('');
     const [expiresAt, setExpiresAt] = useState<Date>(new Date());
@@ -59,6 +57,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         };
 
         try {
+            const { default: QRCode } = await import('qrcode');
             const url = await QRCode.toDataURL(JSON.stringify(qrData), {
                 width: 300,
                 margin: 2,

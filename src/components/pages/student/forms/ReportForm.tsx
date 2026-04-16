@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { reportRules, ReportFormValues } from '../schemas';
 import { validationResolver } from '../../../../utils/formValidation';
 import { Button } from '../../../ui/Button';
@@ -21,7 +21,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
     const [selectedTags, setSelectedTags] = useState<string[]>(defaultValues?.tags || []);
     const [customTag, setCustomTag] = useState('');
 
-    const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ReportFormValues>({
+    const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<ReportFormValues>({
         resolver: validationResolver<ReportFormValues>(reportRules),
         defaultValues: {
             date: defaultValues?.date || new Date().toISOString().slice(0, 10),
@@ -33,7 +33,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
         }
     });
 
-    const selectedCategory = watch('category');
+    const selectedCategory = useWatch({ control, name: 'category' });
 
     const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

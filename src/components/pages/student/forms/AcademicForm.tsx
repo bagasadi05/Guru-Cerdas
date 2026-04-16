@@ -1,6 +1,5 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { academicRules, AcademicFormValues } from '../schemas';
 import { validationResolver } from '../../../../utils/formValidation';
 import { Button } from '../../../ui/Button';

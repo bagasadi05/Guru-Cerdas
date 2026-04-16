@@ -17,7 +17,7 @@ const tabs: Array<{ value: PortalPrimaryTab; label: string; icon: React.ElementT
     { value: 'lainnya', label: 'Lainnya', icon: BookOpenIcon },
 ];
 
-export const PortalNavigation: React.FC<PortalNavigationProps> = ({ activeTab, unreadMessagesCount, attentionCount }) => {
+export const PortalNavigation: React.FC<PortalNavigationProps> = ({ unreadMessagesCount, attentionCount }) => {
     return (
         <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-hide">
             <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex gap-1 min-w-max sm:w-auto">

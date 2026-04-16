@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
-import { X, ChevronRight, ChevronLeft, Check, Play, Pause, Volume2, VolumeX, Maximize, HelpCircle, Search, Book, Video, ExternalLink, Lightbulb } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, Play, Pause, Volume2, VolumeX, Maximize, HelpCircle, Search, Book, Video, Lightbulb } from 'lucide-react';
 
 /**
  * Onboarding & Help System
@@ -173,7 +173,6 @@ const TourOverlay: React.FC = () => {
             };
         }
 
-        const padding = 16;
         const offset = 12;
 
         switch (step.position || 'bottom') {

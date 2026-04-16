@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { violationRules, ViolationFormValues } from '../schemas';
 import { validationResolver } from '../../../../utils/formValidation';
 import { Button } from '../../../ui/Button';
@@ -33,7 +33,7 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
             ? defaultSeverity
             : null;
 
-    const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ViolationFormValues>({
+    const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<ViolationFormValues>({
         resolver: validationResolver<ViolationFormValues>(violationRules),
         defaultValues: {
             date: defaultValues?.date || new Date().toISOString().slice(0, 10),
@@ -43,7 +43,8 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
         }
     });
 
-    const selectedDescription = watch('description');
+    const selectedDescription = useWatch({ control, name: 'description' });
+    const selectedSeverity = useWatch({ control, name: 'severity' });
 
     // Auto-detect severity based on selected violation
     const detectedSeverity = useMemo(() => {
@@ -103,7 +104,7 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
                     {(Object.entries(SEVERITY_LEVELS) as [SeverityLevel, typeof SEVERITY_LEVELS[SeverityLevel]][]).map(([key, level]) => (
                         <label
                             key={key}
-                            className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${watch('severity') === key
+                            className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedSeverity === key
                                     ? `${level.borderClass} ${level.bgClass}`
                                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                 }`}
@@ -116,7 +117,7 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
                             />
                             <span className="text-xl">{level.icon}</span>
                             <div className="text-left">
-                                <p className={`font-medium text-sm ${watch('severity') === key ? level.textClass : 'text-gray-700 dark:text-gray-300'}`}>
+                                <p className={`font-medium text-sm ${selectedSeverity === key ? level.textClass : 'text-gray-700 dark:text-gray-300'}`}>
                                     {level.label}
                                 </p>
                                 <p className="text-xs text-gray-400">{level.points} poin</p>

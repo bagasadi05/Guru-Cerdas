@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '../../../ui/Button';
 import { Select } from '../../../ui/Select';
-import { DownloadIcon, FileTextIcon, FileSpreadsheetIcon, ShieldAlertIcon, UsersIcon, SearchIcon, SparklesIcon } from '../../../Icons';
+import { DownloadIcon, FileTextIcon, FileSpreadsheetIcon, ShieldAlertIcon, SearchIcon, SparklesIcon } from '../../../Icons';
 import { ClassRow, ViolationRow, StudentRow, StudentFilter } from '../types';
 import { exportBulkViolationsToExcel } from '../../../../services/violationExport';
 import { useToast } from '../../../../hooks/useToast';
