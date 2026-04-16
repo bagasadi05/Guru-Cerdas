@@ -56,7 +56,13 @@ interface DailyAttendance {
 }
 
 
-type Student = Database['public']['Tables']['students']['Row'];
+type AnalyticsClass = Pick<Database['public']['Tables']['classes']['Row'], 'id' | 'name'>;
+type Student = Pick<Database['public']['Tables']['students']['Row'], 'id' | 'name' | 'class_id' | 'gender'>;
+type AnalyticsAttendance = Pick<Database['public']['Tables']['attendance']['Row'], 'student_id' | 'date' | 'status'>;
+type AnalyticsTask = Pick<Database['public']['Tables']['tasks']['Row'], 'id' | 'status' | 'due_date'>;
+type AnalyticsAcademicRecord = Pick<Database['public']['Tables']['academic_records']['Row'], 'student_id' | 'score'>;
+type AnalyticsViolation = Pick<Database['public']['Tables']['violations']['Row'], 'student_id' | 'type' | 'points' | 'date'>;
+type AnalyticsQuizPoint = Pick<Database['public']['Tables']['quiz_points']['Row'], 'student_id' | 'points' | 'category'>;
 
 interface AtRiskItem {
     student: Student;
@@ -128,14 +134,6 @@ const AnalyticsPage: React.FC = () => {
                 default: startDate = null;
             }
 
-            // Fetch classes
-            const { data: classes } = await supabase
-                .from('classes')
-                .select('id, name')
-                .eq('user_id', user!.id)
-                .is('deleted_at', null);
-
-            // Fetch students
             let studentsQuery = supabase
                 .from('students')
                 .select('id, name, class_id, gender')
@@ -145,65 +143,79 @@ const AnalyticsPage: React.FC = () => {
             if (selectedClassId !== 'all') {
                 studentsQuery = studentsQuery.eq('class_id', selectedClassId);
             }
-            const { data: studentsData } = await studentsQuery;
-            const students = (studentsData as unknown as Student[]) || [];
 
-            // Fetch attendance
             let attendanceQuery = supabase
                 .from('attendance')
-                .select('*')
+                .select('student_id, date, status')
                 .eq('user_id', user!.id)
                 .is('deleted_at', null);
 
             if (startDate) {
                 attendanceQuery = attendanceQuery.gte('date', startDate.toISOString().split('T')[0]);
             }
-            const { data: attendance } = await attendanceQuery;
 
-            // Fetch tasks
-            const { data: tasks } = await supabase
-                .from('tasks')
-                .select('*')
-                .eq('user_id', user!.id)
-                .is('deleted_at', null);
-
-            // Fetch academic records
-            const { data: academicRecords } = await supabase
-                .from('academic_records')
-                .select('*')
-                .eq('user_id', user!.id)
-                .is('deleted_at', null);
-
-            // Fetch violations
             let violationsQuery = supabase
                 .from('violations')
-                .select('*')
+                .select('student_id, type, points, date')
                 .eq('user_id', user!.id)
                 .is('deleted_at', null);
             if (startDate) {
                 violationsQuery = violationsQuery.gte('date', startDate.toISOString().split('T')[0]);
             }
-            const { data: violations } = await violationsQuery;
 
-            // Fetch quiz points
             let quizPointsQuery = supabase
                 .from('quiz_points')
-                .select('*')
+                .select('student_id, points, category')
                 .eq('user_id', user!.id)
                 .is('deleted_at', null);
             if (startDate) {
                 quizPointsQuery = quizPointsQuery.gte('created_at', startDate.toISOString());
             }
-            const { data: quizPoints } = await quizPointsQuery;
+
+            const [classesRes, studentsRes, attendanceRes, tasksRes, academicRecordsRes, violationsRes, quizPointsRes] = await Promise.all([
+                supabase
+                    .from('classes')
+                    .select('id, name')
+                    .eq('user_id', user!.id)
+                    .is('deleted_at', null),
+                studentsQuery,
+                attendanceQuery,
+                supabase
+                    .from('tasks')
+                    .select('id, status, due_date')
+                    .eq('user_id', user!.id)
+                    .is('deleted_at', null),
+                supabase
+                    .from('academic_records')
+                    .select('student_id, score')
+                    .eq('user_id', user!.id)
+                    .is('deleted_at', null),
+                violationsQuery,
+                quizPointsQuery,
+            ]);
+
+            const errors = [
+                classesRes.error,
+                studentsRes.error,
+                attendanceRes.error,
+                tasksRes.error,
+                academicRecordsRes.error,
+                violationsRes.error,
+                quizPointsRes.error,
+            ].filter(Boolean);
+
+            if (errors.length > 0) {
+                throw new Error(errors.map(error => error!.message).join(', '));
+            }
 
             return {
-                classes: classes || [],
-                students: students || [],
-                attendance: attendance || [],
-                tasks: tasks || [],
-                academicRecords: academicRecords || [],
-                violations: violations || [],
-                quizPoints: quizPoints || [],
+                classes: (classesRes.data || []) as AnalyticsClass[],
+                students: (studentsRes.data || []) as Student[],
+                attendance: (attendanceRes.data || []) as AnalyticsAttendance[],
+                tasks: (tasksRes.data || []) as AnalyticsTask[],
+                academicRecords: (academicRecordsRes.data || []) as AnalyticsAcademicRecord[],
+                violations: (violationsRes.data || []) as AnalyticsViolation[],
+                quizPoints: (quizPointsRes.data || []) as AnalyticsQuizPoint[],
             };
         },
         enabled: !!user,

@@ -129,7 +129,7 @@ const NotificationsSection: React.FC = () => {
         queryFn: async () => {
             const { data: schedule, error: scheduleError } = await supabase
                 .from('schedules')
-                .select('*')
+                .select('id, user_id, day, start_time, end_time, subject, class_id, room, created_at, updated_at')
                 .eq('user_id', user!.id);
 
             const { data: classes, error: classesError } = await supabase
@@ -142,9 +142,10 @@ const NotificationsSection: React.FC = () => {
                 throw scheduleError || classesError;
             }
 
+            const typedSchedule = (schedule || []) as ScheduleRow[];
             const classMap = new Map(classes.map(c => [c.id, c.name]));
 
-            return schedule.map(item => ({
+            return typedSchedule.map(item => ({
                 ...item,
                 className: item.class_id ? (classMap.get(item.class_id) || item.class_id) : undefined
             }));

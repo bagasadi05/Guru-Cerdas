@@ -181,7 +181,11 @@ const StudentDetailPage = () => {
     const { data: reports = [] } = useQuery({
         queryKey: ['studentReports', studentId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('reports').select('*').eq('student_id', studentId!).eq('user_id', user!.id);
+            const { data, error } = await supabase
+                .from('reports')
+                .select('id, user_id, student_id, title, notes, date, category, attachment_url, tags, created_at')
+                .eq('student_id', studentId!)
+                .eq('user_id', user!.id);
             if (error) throw error;
             return (data || []) as unknown as ReportRow[];
         },
@@ -193,9 +197,18 @@ const StudentDetailPage = () => {
         queryKey: ['studentExtra', studentId],
         queryFn: async () => {
             const [extraRes, attRes, gradesRes] = await Promise.all([
-                supabase.from('student_extracurriculars').select('*, extracurriculars(*)').eq('student_id', studentId!),
-                supabase.from('extracurricular_attendance').select('*').eq('student_id', studentId!),
-                supabase.from('extracurricular_grades').select('*').eq('student_id', studentId!)
+                supabase
+                    .from('student_extracurriculars')
+                    .select('id, user_id, student_id, extracurricular_id, extracurricular_student_id, semester_id, joined_at, status, created_at, extracurriculars(id, user_id, name, category, description, schedule_day, schedule_time, coach_name, max_participants, is_active, created_at, updated_at)')
+                    .eq('student_id', studentId!),
+                supabase
+                    .from('extracurricular_attendance')
+                    .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, date, status, notes, created_at')
+                    .eq('student_id', studentId!),
+                supabase
+                    .from('extracurricular_grades')
+                    .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, description, created_at, updated_at')
+                    .eq('student_id', studentId!)
             ]);
             return {
                 studentExtracurriculars: extraRes.data || [],
@@ -210,7 +223,12 @@ const StudentDetailPage = () => {
     const { data: communications = [] } = useQuery({
         queryKey: ['studentComms', studentId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('communications').select('*').eq('student_id', studentId!).eq('user_id', user!.id).order('created_at', { ascending: true });
+            const { data, error } = await supabase
+                .from('communications')
+                .select('id, user_id, teacher_id, student_id, sender, message, is_read, parent_id, attachment_url, attachment_type, attachment_name, created_at')
+                .eq('student_id', studentId!)
+                .eq('user_id', user!.id)
+                .order('created_at', { ascending: true });
             if (error) throw error;
             return (data || []) as unknown as CommunicationRow[];
         },

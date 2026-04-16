@@ -1,9 +1,9 @@
 /**
  * Import Service
- * 
+ *
  * Provides functionality for importing data from Excel and CSV files.
  * Includes validation, column mapping, and error reporting.
- * 
+ *
  * @module services/ImportService
  * @since 1.0.0
  */
@@ -67,17 +67,17 @@ export const STUDENT_FIELDS = [
  * Gender value mappings for normalization
  */
 const GENDER_MAPPINGS: Record<string, 'Laki-laki' | 'Perempuan'> = {
-    'l': 'Laki-laki',
+    l: 'Laki-laki',
     'laki-laki': 'Laki-laki',
-    'laki': 'Laki-laki',
-    'male': 'Laki-laki',
-    'm': 'Laki-laki',
-    'pria': 'Laki-laki',
-    'p': 'Perempuan',
-    'perempuan': 'Perempuan',
-    'female': 'Perempuan',
-    'f': 'Perempuan',
-    'wanita': 'Perempuan',
+    laki: 'Laki-laki',
+    male: 'Laki-laki',
+    m: 'Laki-laki',
+    pria: 'Laki-laki',
+    p: 'Perempuan',
+    perempuan: 'Perempuan',
+    female: 'Perempuan',
+    f: 'Perempuan',
+    wanita: 'Perempuan',
 };
 
 /**
@@ -93,11 +93,8 @@ export const parseFile = async (file: File): Promise<{ headers: string[]; rows: 
                 const data = e.target?.result;
                 const workbook = XLSX.read(data, { type: 'array' });
 
-                // Get first sheet
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert to JSON with header option
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
 
                 if (jsonData.length === 0) {
@@ -105,11 +102,13 @@ export const parseFile = async (file: File): Promise<{ headers: string[]; rows: 
                     return;
                 }
 
-                const headers = (jsonData[0] || []).map(h => String(h || '').trim());
-                const rows = jsonData.slice(1).filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''));
+                const headers = (jsonData[0] || []).map((header) => String(header || '').trim());
+                const rows = jsonData
+                    .slice(1)
+                    .filter((row) => row.some((cell) => cell !== null && cell !== undefined && cell !== ''));
 
                 resolve({ headers, rows });
-            } catch (error) {
+            } catch {
                 reject(new Error('Gagal membaca file. Pastikan format file benar.'));
             }
         };
@@ -130,21 +129,21 @@ export const autoDetectMappings = (headers: string[]): ColumnMapping[] => {
     const classPatterns = ['kelas', 'class', 'nama kelas', 'class name'];
     const codePatterns = ['kode', 'code', 'kode akses', 'access code', 'nis', 'nisn'];
 
-    headers.forEach(header => {
+    headers.forEach((header) => {
         const lowerHeader = header.toLowerCase().trim();
 
-        if (namePatterns.some(p => lowerHeader.includes(p))) {
+        if (namePatterns.some((pattern) => lowerHeader.includes(pattern))) {
             mappings.push({ sourceColumn: header, targetField: 'name', required: true });
-        } else if (genderPatterns.some(p => lowerHeader.includes(p))) {
+        } else if (genderPatterns.some((pattern) => lowerHeader.includes(pattern))) {
             mappings.push({
                 sourceColumn: header,
                 targetField: 'gender',
                 required: true,
                 transform: normalizeGender,
             });
-        } else if (classPatterns.some(p => lowerHeader.includes(p))) {
+        } else if (classPatterns.some((pattern) => lowerHeader.includes(pattern))) {
             mappings.push({ sourceColumn: header, targetField: 'class_name', required: false });
-        } else if (codePatterns.some(p => lowerHeader.includes(p))) {
+        } else if (codePatterns.some((pattern) => lowerHeader.includes(pattern))) {
             mappings.push({ sourceColumn: header, targetField: 'access_code', required: false });
         }
     });
@@ -172,7 +171,6 @@ export const validateRow = (
     const errors: ImportError[] = [];
     const data: Record<string, unknown> = {};
 
-    // Check required fields
     for (const mapping of mappings) {
         const value = rowData[mapping.sourceColumn];
         const transformedValue = mapping.transform ? mapping.transform(value) : value;
@@ -181,7 +179,7 @@ export const validateRow = (
             errors.push({
                 row: rowNumber,
                 column: mapping.sourceColumn,
-                value: value,
+                value,
                 message: `${mapping.targetField} wajib diisi`,
             });
         } else {
@@ -189,7 +187,6 @@ export const validateRow = (
         }
     }
 
-    // Validate specific fields
     if (typeof data.name === 'string' && data.name.length < 2) {
         errors.push({
             row: rowNumber,
@@ -225,134 +222,52 @@ export const parseAndValidate = (
     mappings: ColumnMapping[]
 ): ParsedRow[] => {
     return rows.map((row, index) => {
-        // Convert row array to object using headers
-        const rowData: Record<string, any> = {};
+        const rowData: Record<string, unknown> = {};
         headers.forEach((header, colIndex) => {
             rowData[header] = row[colIndex];
         });
 
-        return validateRow(rowData, index + 2, mappings); // +2 because row 1 is header
+        return validateRow(rowData, index + 2, mappings);
     });
 };
 
 /**
- * Generate import template with professional styling
+ * Generate import template
  */
 export const generateTemplate = async (format: 'xlsx' | 'csv' = 'xlsx'): Promise<Blob> => {
-    const TOTAL_ROWS = 30; // Pre-formatted rows for teachers
+    const TOTAL_ROWS = 30;
+    const XLSX = await getXLSX();
+    const templateData: string[][] = [['No', 'Nama Siswa', 'Jenis Kelamin', 'Kelas']];
+
+    for (let i = 1; i <= TOTAL_ROWS; i++) {
+        templateData.push([String(i), '', '', '']);
+    }
+
+    templateData.push([]);
+    templateData.push(['PETUNJUK PENGISIAN:']);
+    templateData.push(['- Kolom "Nama Siswa" dan "Jenis Kelamin" wajib diisi']);
+    templateData.push(['- Jenis Kelamin: isi "L" / "Laki-laki" atau "P" / "Perempuan"']);
+    templateData.push(['- Kolom "No" hanya untuk penomoran dan akan diabaikan saat import']);
+    templateData.push(['- Baris kosong tanpa nama akan otomatis diabaikan']);
+
+    const worksheet = XLSX.utils.aoa_to_sheet(templateData);
+    worksheet['!cols'] = [
+        { wch: 8 },
+        { wch: 35 },
+        { wch: 18 },
+        { wch: 12 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, format === 'csv' ? 'Template' : 'Data Siswa');
 
     if (format === 'csv') {
-        const XLSX = await getXLSX();
-        // Simple CSV for compatibility
-        const templateData = [['Nama Siswa', 'Jenis Kelamin', 'Kelas']];
-        for (let i = 1; i <= TOTAL_ROWS; i++) {
-            templateData.push(['', '', '']);
-        }
-        const worksheet = XLSX.utils.aoa_to_sheet(templateData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
-        const excelBuffer = XLSX.write(workbook, { bookType: 'csv', type: 'array' });
-        return new Blob([excelBuffer], { type: 'text/csv' });
+        const csvBuffer = XLSX.write(workbook, { bookType: 'csv', type: 'array' });
+        return new Blob([csvBuffer], { type: 'text/csv' });
     }
 
-    // Use ExcelJS for styled XLSX
-    const ExcelJS = await import('exceljs');
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'Portal Guru';
-    workbook.created = new Date();
-
-    const worksheet = workbook.addWorksheet('Data Siswa', {
-        properties: { tabColor: { argb: '4F46E5' } },
-        views: [{ state: 'frozen', ySplit: 1 }] // Freeze header row
-    });
-
-    // Column widths
-    worksheet.columns = [
-        { width: 8 },   // A - No
-        { width: 35 },  // B - Nama Siswa
-        { width: 18 },  // C - Jenis Kelamin
-        { width: 12 },  // D - Kelas
-    ];
-
-    // === ROW 1: Header (MUST be row 1 for parser compatibility) ===
-    const headerRow = worksheet.getRow(1);
-    headerRow.values = ['No', 'Nama Siswa', 'Jenis Kelamin', 'Kelas'];
-    headerRow.height = 28;
-    headerRow.eachCell((cell, colNumber) => {
-        if (colNumber <= 4) {
-            cell.font = { bold: true, color: { argb: 'FFFFFF' }, size: 11 };
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4F46E5' } };
-            cell.alignment = { horizontal: 'center', vertical: 'middle' };
-            cell.border = {
-                top: { style: 'thin', color: { argb: '4338CA' } },
-                left: { style: 'thin', color: { argb: '4338CA' } },
-                bottom: { style: 'thin', color: { argb: '4338CA' } },
-                right: { style: 'thin', color: { argb: '4338CA' } }
-            };
-        }
-    });
-
-    // === DATA ROWS (30 empty rows with formatting) ===
-    for (let i = 0; i < TOTAL_ROWS; i++) {
-        const dataRow = worksheet.getRow(2 + i); // Start from row 2
-        dataRow.values = [i + 1, '', '', ''];
-        dataRow.height = 22;
-
-        const isEven = i % 2 === 0;
-        dataRow.eachCell((cell, colNumber) => {
-            if (colNumber <= 4) {
-                cell.fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: isEven ? 'F8FAFC' : 'FFFFFF' }
-                };
-                cell.border = {
-                    top: { style: 'thin', color: { argb: 'E2E8F0' } },
-                    left: { style: 'thin', color: { argb: 'E2E8F0' } },
-                    bottom: { style: 'thin', color: { argb: 'E2E8F0' } },
-                    right: { style: 'thin', color: { argb: 'E2E8F0' } }
-                };
-                cell.alignment = { vertical: 'middle' };
-            }
-        });
-
-        // Style row number column
-        const noCell = dataRow.getCell(1);
-        noCell.alignment = { horizontal: 'center', vertical: 'middle' };
-        noCell.font = { color: { argb: '94A3B8' } };
-
-        // Center align for gender and class
-        dataRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
-        dataRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
-    }
-
-    // === NOTES SECTION (after data rows) ===
-    const notesStartRow = 2 + TOTAL_ROWS + 1; // After data rows + 1 empty row
-
-    worksheet.mergeCells(`A${notesStartRow}:D${notesStartRow}`);
-    const notesHeaderCell = worksheet.getCell(`A${notesStartRow}`);
-    notesHeaderCell.value = '📌 PETUNJUK PENGISIAN:';
-    notesHeaderCell.font = { bold: true, size: 10, color: { argb: '4F46E5' } };
-    notesHeaderCell.alignment = { horizontal: 'left', vertical: 'middle' };
-
-    const notes = [
-        '• Kolom "Nama Siswa" dan "Jenis Kelamin" WAJIB diisi',
-        '• Jenis Kelamin: ketik "L" atau "Laki-laki" untuk laki-laki, "P" atau "Perempuan" untuk perempuan',
-        '• Kolom "No" akan diabaikan saat import (hanya untuk penomoran)',
-        '• Baris yang kosong (tanpa nama) akan otomatis diabaikan',
-    ];
-
-    notes.forEach((note, idx) => {
-        worksheet.mergeCells(`A${notesStartRow + 1 + idx}:D${notesStartRow + 1 + idx}`);
-        const noteCell = worksheet.getCell(`A${notesStartRow + 1 + idx}`);
-        noteCell.value = note;
-        noteCell.font = { size: 9, color: { argb: '64748B' } };
-        noteCell.alignment = { horizontal: 'left', vertical: 'middle' };
-    });
-
-    // Download file
-    const buffer = await workbook.xlsx.writeBuffer();
-    return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    return new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 };
 
 /**

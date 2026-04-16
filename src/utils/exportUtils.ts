@@ -156,138 +156,28 @@ export const exportAttendanceToExcel = async (
     fileName: string,
     schoolName: string = 'MI AL IRSYAD KOTA MADIUN'
 ) => {
-    // Dynamic import ExcelJS for browser compatibility
-    const ExcelJS = await import('exceljs');
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'Portal Guru';
-    workbook.created = new Date();
-
-    const worksheet = workbook.addWorksheet('Absensi', {
-        properties: { tabColor: { argb: 'FF4CAF50' } }
-    });
-
-    // Calculate total columns: 2 (No, Nama) + daysInMonth + 4 (Summary)
+    const XLSX = await getXLSX();
     const totalColumns = 2 + daysInMonth + 4;
-
-    // === HEADER SECTION ===
-    // Row 1: School Name
-    worksheet.mergeCells(1, 1, 1, totalColumns);
-    const titleCell = worksheet.getCell(1, 1);
-    titleCell.value = schoolName.toUpperCase();
-    titleCell.font = { bold: true, size: 14, color: { argb: 'FFFFFF' } };
-    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A5F' } };
-    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    worksheet.getRow(1).height = 25;
-
-    // Row 2: Class Header
-    worksheet.mergeCells(2, 1, 2, totalColumns);
-    const classCell = worksheet.getCell(2, 1);
-    classCell.value = `DAFTAR HADIR KELAS ${classData.name}`;
-    classCell.font = { bold: true, size: 12, color: { argb: 'FFFFFF' } };
-    classCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '2E5A8F' } };
-    classCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    worksheet.getRow(2).height = 22;
-
-    // Row 3: Academic Year
-    worksheet.mergeCells(3, 1, 3, totalColumns);
-    const yearCell = worksheet.getCell(3, 1);
-    yearCell.value = `TAHUN PELAJARAN ${year}/${year + 1}`;
-    yearCell.font = { bold: true, size: 11 };
-    yearCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    worksheet.getRow(3).height = 20;
-
-    // Row 4: Empty
-    worksheet.getRow(4).height = 10;
-
-    // === TABLE HEADER ===
-    // Row 5: Month Header
-    // Merge A5:B5 (No, Nama placeholder)
-    worksheet.mergeCells(5, 1, 5, 2);
-    const noNamaCell = worksheet.getCell(5, 1);
-    noNamaCell.value = 'NO / NAMA';
-    noNamaCell.font = { bold: true, color: { argb: 'FFFFFF' } };
-    noNamaCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6B35' } };
-    noNamaCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    noNamaCell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-    };
-
-    // Merge C5 to last day column for month label
-    // Start col: 3, End col: 2 + daysInMonth
-    worksheet.mergeCells(5, 3, 5, 2 + daysInMonth);
-    const monthHeaderCell = worksheet.getCell(5, 3);
-    monthHeaderCell.value = `BULAN: ${monthName.toUpperCase()}`;
-    monthHeaderCell.font = { bold: true, color: { argb: 'FFFFFF' } };
-    monthHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6B35' } };
-    monthHeaderCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    monthHeaderCell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-    };
-
-    // Summary header (after dates)
-    // Start col: 2 + daysInMonth + 1
-    // End col: Start col + 3 (total 4 cols)
     const summaryStartCol = 2 + daysInMonth + 1;
-    const summaryEndCol = summaryStartCol + 3;
-    worksheet.mergeCells(5, summaryStartCol, 5, summaryEndCol);
-    const summaryHeaderCell = worksheet.getCell(5, summaryStartCol);
-    summaryHeaderCell.value = 'JUMLAH';
-    summaryHeaderCell.font = { bold: true, color: { argb: 'FFFFFF' } };
-    summaryHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6B35' } };
-    summaryHeaderCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    summaryHeaderCell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-    };
-    worksheet.getRow(5).height = 24;
+    const rows: (string | number)[][] = [
+        [schoolName.toUpperCase()],
+        [`DAFTAR HADIR KELAS ${classData.name}`],
+        [`TAHUN PELAJARAN ${year}/${year + 1}`],
+        [],
+        ['NO / NAMA', '', `BULAN: ${monthName.toUpperCase()}`],
+    ];
 
-    // Row 6: Date Numbers & Status Labels
-    const row6Data = ['NO', 'NAMA'];
-    for (let d = 1; d <= 31; d++) {
-        row6Data.push(d <= daysInMonth ? String(d) : '');
+    const headerRow: (string | number)[] = ['NO', 'NAMA'];
+    for (let day = 1; day <= 31; day++) {
+        headerRow.push(day <= daysInMonth ? String(day) : '');
     }
-    row6Data.push('S', 'I', 'A', 'H');
+    headerRow.push('S', 'I', 'A', 'H');
+    rows.push(headerRow);
 
-    const row6 = worksheet.getRow(6);
-    row6.values = row6Data;
-    row6.height = 20;
-    row6.eachCell((cell, _colNum) => {
-        cell.font = { bold: true, color: { argb: 'FFFFFF' } };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA726' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
-        };
-    });
-
-    // Set column widths
-    worksheet.getColumn(1).width = 5;  // NO
-    worksheet.getColumn(2).width = 30; // NAMA
-    for (let d = 3; d <= 33; d++) {
-        worksheet.getColumn(d).width = 3; // Date columns
-    }
-    for (let s = 34; s <= 37; s++) {
-        worksheet.getColumn(s).width = 5; // Summary columns
-    }
-
-    // === STUDENT DATA ROWS ===
     classData.students.forEach((student, index) => {
-        const rowNum = 7 + index;
-        const rowData = [index + 1, student.name];
+        const rowData: (string | number)[] = [index + 1, student.name];
         let s = 0, i = 0, a = 0, h = 0;
 
-        // Fill attendance for each day
         for (let d = 1; d <= 31; d++) {
             if (d <= daysInMonth) {
                 const dateStr = `${year}-${String(monthIndex).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -310,51 +200,39 @@ export const exportAttendanceToExcel = async (
             }
         }
 
-        // Add summary totals
         rowData.push(s, i, a, h);
-
-        const row = worksheet.getRow(rowNum);
-        row.values = rowData;
-
-        // Alternating row colors
-        const isEven = index % 2 === 0;
-        row.eachCell((cell, colNum) => {
-            cell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: isEven ? 'FFF3E0' : 'FFFFFF' }
-            };
-            cell.border = {
-                top: { style: 'thin', color: { argb: 'DDDDDD' } },
-                left: { style: 'thin', color: { argb: 'DDDDDD' } },
-                bottom: { style: 'thin', color: { argb: 'DDDDDD' } },
-                right: { style: 'thin', color: { argb: 'DDDDDD' } }
-            };
-            cell.alignment = { horizontal: 'center', vertical: 'middle' };
-
-            // Left-align student name
-            if (colNum === 2) {
-                cell.alignment = { horizontal: 'left', vertical: 'middle' };
-            }
-        });
+        rows.push(rowData);
     });
 
-    // === SIGNATURE SECTION ===
-    const signatureRow = 7 + classData.students.length + 3;
-    worksheet.getCell(`AB${signatureRow}`).value = `Madiun, ............... ${year}`;
-    worksheet.getCell(`AB${signatureRow}`).font = { bold: true };
-    worksheet.getCell(`AB${signatureRow + 1}`).value = `Wali Kelas ${classData.name}`;
-    worksheet.getCell(`AB${signatureRow + 4}`).value = '(_________________)';
+    rows.push([]);
+    rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', `Madiun, ............... ${year}`]);
+    rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', `Wali Kelas ${classData.name}`]);
+    rows.push([]);
+    rows.push([]);
+    rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '(_________________)']);
 
-    // Download file
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    worksheet['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: totalColumns - 1 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: totalColumns - 1 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: totalColumns - 1 } },
+        { s: { r: 4, c: 0 }, e: { r: 4, c: 1 } },
+        { s: { r: 4, c: 2 }, e: { r: 4, c: 1 + daysInMonth } },
+        { s: { r: 4, c: summaryStartCol - 1 }, e: { r: 4, c: summaryStartCol + 2 } },
+    ];
+    worksheet['!cols'] = [
+        { wch: 5 },
+        { wch: 30 },
+        ...Array.from({ length: 31 }, () => ({ wch: 3 })),
+        { wch: 5 },
+        { wch: 5 },
+        { wch: 5 },
+        { wch: 5 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Absensi');
+    XLSX.writeFile(workbook, fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`);
 };
 
 /**

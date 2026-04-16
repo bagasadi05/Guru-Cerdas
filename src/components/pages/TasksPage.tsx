@@ -73,13 +73,13 @@ type TaskStatus = 'todo' | 'in_progress' | 'done';
 const fetchTasks = async (userId: string): Promise<TaskRow[]> => {
     const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select('id, user_id, title, description, due_date, status, completed, created_at, updated_at')
         .eq('user_id', userId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as TaskRow[];
 };
 
 // Status configuration

@@ -381,12 +381,8 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
  */
 export const exportBulkViolationsToExcel = async (options: BulkViolationExportOptions) => {
     const { className, schoolName, violations, students } = options;
-
-    // Dynamic import ExcelJS for browser compatibility
-    const ExcelJS = await import('exceljs');
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'Portal Guru';
-    workbook.created = new Date();
+    const XLSX = await getXLSX();
+    const workbook = XLSX.utils.book_new();
 
     // Create student lookup map
     const studentMap = new Map(students.map(s => [s.id, s.name]));
@@ -418,91 +414,21 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
         const studentName = studentMap.get(studentId) || 'Tidak Diketahui';
         const totalPoints = studentViolations.reduce((sum, v) => sum + v.points, 0);
 
-        // Create worksheet with student name (max 31 chars for Excel)
         const sheetName = `${index + 1}. ${studentName}`.substring(0, 31);
-        const worksheet = workbook.addWorksheet(sheetName, {
-            properties: { tabColor: { argb: 'FF6600' } }
-        });
-
-        // Column widths
-        worksheet.columns = [
-            { width: 6 },   // A - No
-            { width: 14 },  // B - Tanggal
-            { width: 45 },  // C - Deskripsi
-            { width: 8 },   // D - Poin
-            { width: 12 },  // E - Kategori
-            { width: 12 },  // F - Status
-            { width: 30 }   // G - Catatan
-        ];
-
-        // === ROW 1: School Name ===
-        worksheet.mergeCells('A1:G1');
-        const titleCell = worksheet.getCell('A1');
-        titleCell.value = schoolName.toUpperCase();
-        titleCell.font = { bold: true, size: 16, color: { argb: 'FFFFFF' } };
-        titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A5F' } };
-        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-        worksheet.getRow(1).height = 28;
-
-        // === ROW 2: Title ===
-        worksheet.mergeCells('A2:G2');
-        const subtitleCell = worksheet.getCell('A2');
-        subtitleCell.value = 'LAPORAN PELANGGARAN SISWA';
-        subtitleCell.font = { bold: true, size: 12, color: { argb: 'FFFFFF' } };
-        subtitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '2E5A8F' } };
-        subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-        worksheet.getRow(2).height = 22;
-
-        // === ROW 3: Empty ===
-        worksheet.getRow(3).height = 10;
-
-        // === ROW 4-7: Student Info ===
-        const infoData = [
+        const rows: (string | number)[][] = [
+            [schoolName.toUpperCase()],
+            ['LAPORAN PELANGGARAN SISWA'],
+            [],
             ['Nama Siswa:', studentName],
             ['Kelas:', className],
             ['Tanggal:', dateStr],
-            ['Total Pelanggaran:', `${studentViolations.length} (${totalPoints} poin)`]
+            ['Total Pelanggaran:', `${studentViolations.length} (${totalPoints} poin)`],
+            [],
+            ['No', 'Tanggal', 'Deskripsi Pelanggaran', 'Poin', 'Kategori', 'Status', 'Catatan'],
         ];
 
-        infoData.forEach((row, idx) => {
-            const rowNum = 4 + idx;
-            worksheet.getCell(`A${rowNum}`).value = row[0];
-            worksheet.getCell(`A${rowNum}`).font = { bold: true };
-            worksheet.getCell(`B${rowNum}`).value = row[1];
-            if (idx === 3) {
-                worksheet.getCell(`B${rowNum}`).font = { bold: true, color: { argb: 'DC2626' } };
-            }
-        });
-
-        // === ROW 8: Empty ===
-        worksheet.getRow(8).height = 10;
-
-        // === ROW 9: Table Header ===
-        const headerRowNum = 9;
-        const headers = ['No', 'Tanggal', 'Deskripsi Pelanggaran', 'Poin', 'Kategori', 'Status', 'Catatan'];
-        const headerRow = worksheet.getRow(headerRowNum);
-        headerRow.values = headers;
-        headerRow.height = 24;
-        headerRow.eachCell((cell, colNumber) => {
-            if (colNumber <= 7) {
-                cell.font = { bold: true, color: { argb: 'FFFFFF' } };
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6B35' } };
-                cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                cell.border = {
-                    top: { style: 'thin' },
-                    left: { style: 'thin' },
-                    bottom: { style: 'thin' },
-                    right: { style: 'thin' }
-                };
-            }
-        });
-
-        // === DATA ROWS ===
         studentViolations.forEach((v, idx) => {
-            const dataRowNum = headerRowNum + 1 + idx;
-            const dataRow = worksheet.getRow(dataRowNum);
-
-            dataRow.values = [
+            rows.push([
                 idx + 1,
                 new Date(v.date).toLocaleDateString('id-ID'),
                 v.description,
@@ -511,63 +437,34 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
                 v.follow_up_status === 'resolved' ? 'Selesai' :
                     v.follow_up_status === 'in_progress' ? 'Proses' : 'Belum',
                 v.follow_up_notes || ''
-            ];
-
-            // Alternating row colors
-            const isEven = idx % 2 === 0;
-            dataRow.eachCell((cell, colNumber) => {
-                if (colNumber <= 7) {
-                    cell.fill = {
-                        type: 'pattern',
-                        pattern: 'solid',
-                        fgColor: { argb: isEven ? 'FFF5F0' : 'FFFFFF' }
-                    };
-                    cell.border = {
-                        top: { style: 'thin', color: { argb: 'DDDDDD' } },
-                        left: { style: 'thin', color: { argb: 'DDDDDD' } },
-                        bottom: { style: 'thin', color: { argb: 'DDDDDD' } },
-                        right: { style: 'thin', color: { argb: 'DDDDDD' } }
-                    };
-                    cell.alignment = { vertical: 'middle', wrapText: true };
-                }
-            });
-
-            // Center specific columns
-            dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-            dataRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
-            dataRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
-
-            // Color code status
-            const statusCell = dataRow.getCell(6);
-            if (v.follow_up_status === 'resolved') {
-                statusCell.font = { color: { argb: '16A34A' }, bold: true };
-            } else if (v.follow_up_status === 'in_progress') {
-                statusCell.font = { color: { argb: 'D97706' }, bold: true };
-            } else {
-                statusCell.font = { color: { argb: 'DC2626' }, bold: true };
-            }
+            ]);
         });
 
-        // === SIGNATURE SECTION ===
-        const signatureRowStart = headerRowNum + studentViolations.length + 3;
+        rows.push([]);
+        rows.push(['', 'Mengetahui,', '', '', '', 'Mengetahui,']);
+        rows.push(['', 'Orang Tua/Wali', '', '', '', 'Wali Kelas']);
+        rows.push([]);
+        rows.push([]);
+        rows.push(['', '(___________________)', '', '', '', '(___________________)']);
 
-        worksheet.getCell(`B${signatureRowStart}`).value = 'Mengetahui,';
-        worksheet.getCell(`B${signatureRowStart + 1}`).value = 'Orang Tua/Wali';
-        worksheet.getCell(`B${signatureRowStart + 4}`).value = '(___________________)';
+        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+        worksheet['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },
+        ];
+        worksheet['!cols'] = [
+            { wch: 6 },
+            { wch: 14 },
+            { wch: 45 },
+            { wch: 8 },
+            { wch: 12 },
+            { wch: 12 },
+            { wch: 30 },
+        ];
 
-        worksheet.getCell(`F${signatureRowStart}`).value = 'Mengetahui,';
-        worksheet.getCell(`F${signatureRowStart + 1}`).value = 'Wali Kelas';
-        worksheet.getCell(`F${signatureRowStart + 4}`).value = '(___________________)';
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     });
 
-    // Download file
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Laporan_Pelanggaran_${className.replace(/\s+/g, '_')}.xlsx`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    XLSX.writeFile(workbook, `Laporan_Pelanggaran_${className.replace(/\s+/g, '_')}.xlsx`);
 };
 

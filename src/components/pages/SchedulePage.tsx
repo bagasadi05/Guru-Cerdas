@@ -249,9 +249,14 @@ const SchedulePage: React.FC = () => {
     const { data: rawSchedule, isLoading: pageLoading, isError, error: queryError } = useQuery({
         queryKey: ['schedule', user?.id],
         queryFn: async (): Promise<ScheduleRow[]> => {
-            const { data, error } = await supabase.from('schedules').select('*').eq('user_id', user!.id).order('day').order('start_time');
+            const { data, error } = await supabase
+                .from('schedules')
+                .select('id, user_id, day, start_time, end_time, subject, class_id, room, created_at, updated_at')
+                .eq('user_id', user!.id)
+                .order('day')
+                .order('start_time');
             if (error) throw error;
-            return data || [];
+            return (data || []) as ScheduleRow[];
         },
         enabled: !!user,
     });
@@ -259,7 +264,12 @@ const SchedulePage: React.FC = () => {
     const { data: classes } = useQuery({
         queryKey: ['classes', user?.id],
         queryFn: async () => {
-            const { data, error } = await supabase.from('classes').select('*').eq('user_id', user!.id).is('deleted_at', null).order('name');
+            const { data, error } = await supabase
+                .from('classes')
+                .select('id, user_id, name, academic_year, grade_level, created_at, updated_at, deleted_at')
+                .eq('user_id', user!.id)
+                .is('deleted_at', null)
+                .order('name');
             if (error) throw error;
             return data || [];
         },
@@ -351,7 +361,7 @@ const SchedulePage: React.FC = () => {
     });
 
     const handleOpenAddModal = (day?: string) => {
-        setFormData({ day: (day || selectedDay) as any || 'Senin', start_time: '08:00', end_time: '09:30', subject: '', class_id: '' });
+        setFormData({ day: day || selectedDay || 'Senin', start_time: '08:00', end_time: '09:30', subject: '', class_id: '' });
         setModalState({ isOpen: true, mode: 'add', data: null });
         setErrors({});
     };

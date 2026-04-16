@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
@@ -28,6 +28,25 @@ type EnrollmentView = {
     participantType: 'student' | 'extracurricular_student';
     name: string;
     className: string | null;
+};
+type StudentEnrollmentRow = {
+    id: string;
+    student_id: string | null;
+    students: {
+        id: string;
+        name: string;
+        class_id: string | null;
+        classes: { name: string } | null;
+    } | null;
+};
+type ExtracurricularStudentEnrollmentRow = {
+    id: string;
+    extracurricular_student_id: string | null;
+    extracurricular_students: {
+        id: string;
+        name: string;
+        class_name: string | null;
+    } | null;
 };
 
 type TabType = 'list' | 'enrollment' | 'attendance' | 'grades' | 'students';
@@ -103,7 +122,7 @@ const ExtracurricularPage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurriculars')
-                .select('*')
+                .select('id, user_id, name, category, description, schedule_day, schedule_time, coach_name, max_participants, is_active, created_at, updated_at')
                 .eq('user_id', user!.id)
                 .order('name');
             if (error) throw error;
@@ -122,12 +141,12 @@ const ExtracurricularPage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')
-                .select('*')
+                .select('id, user_id, name, academic_year, grade_level, created_at, updated_at, deleted_at')
                 .eq('user_id', user!.id)
                 .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
-            return data;
+            return (data || []) as Class[];
         },
         enabled: !!user,
     });
@@ -138,7 +157,7 @@ const ExtracurricularPage: React.FC = () => {
         queryFn: async () => {
             let query = supabase
                 .from('students')
-                .select('*')
+                .select('id, user_id, name, class_id, gender, created_at, deleted_at')
                 .is('deleted_at', null)
                 .eq('user_id', user!.id)
                 .order('name');
@@ -170,7 +189,7 @@ const ExtracurricularPage: React.FC = () => {
         queryFn: async () => {
             let query = supabase
                 .from('extracurricular_students')
-                .select('*')
+                .select('id, user_id, name, gender, class_name, created_at, updated_at')
                 .eq('user_id', user!.id)
                 .order('name');
 
@@ -191,7 +210,7 @@ const ExtracurricularPage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurricular_students')
-                .select('*')
+                .select('id, user_id, name, gender, class_name, created_at, updated_at')
                 .eq('user_id', user!.id)
                 .order('name');
             if (error) throw error;
@@ -222,17 +241,17 @@ const ExtracurricularPage: React.FC = () => {
             if (studentRes.error) throw studentRes.error;
             if (extraRes.error) throw extraRes.error;
 
-            const studentEnrollments = (studentRes.data || []).map((row: any): EnrollmentView => ({
+            const studentEnrollments = ((studentRes.data || []) as StudentEnrollmentRow[]).map((row): EnrollmentView => ({
                 id: row.id,
-                participantId: row.student_id,
+                participantId: row.student_id || '',
                 participantType: 'student',
                 name: row.students?.name || 'Siswa',
                 className: row.students?.classes?.name || null,
             }));
 
-            const extraEnrollments = (extraRes.data || []).map((row: any): EnrollmentView => ({
+            const extraEnrollments = ((extraRes.data || []) as ExtracurricularStudentEnrollmentRow[]).map((row): EnrollmentView => ({
                 id: row.id,
-                participantId: row.extracurricular_student_id,
+                participantId: row.extracurricular_student_id || '',
                 participantType: 'extracurricular_student',
                 name: row.extracurricular_students?.name || 'Siswa Ekskul',
                 className: row.extracurricular_students?.class_name || null,
@@ -244,12 +263,12 @@ const ExtracurricularPage: React.FC = () => {
     });
 
     // Fetch attendance for selected extracurricular and date
-    const { data: attendanceRecords = [], isLoading: loadingAttendance } = useQuery({
+    const { data: attendanceRecords = [] } = useQuery({
         queryKey: ['extracurricular_attendance', selectedExtracurricular, selectedDate],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurricular_attendance')
-                .select('*')
+                .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, date, status, notes, created_at')
                 .eq('extracurricular_id', selectedExtracurricular)
                 .eq('date', selectedDate);
             if (error) throw error;
@@ -259,12 +278,12 @@ const ExtracurricularPage: React.FC = () => {
     });
 
     // Fetch grades for selected extracurricular
-    const { data: grades = [], isLoading: loadingGrades } = useQuery({
+    const { data: grades = [] } = useQuery({
         queryKey: ['extracurricular_grades', selectedExtracurricular, activeSemester?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurricular_grades')
-                .select('*')
+                .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, description, created_at, updated_at')
                 .eq('extracurricular_id', selectedExtracurricular)
                 .eq('semester_id', activeSemester!.id);
             if (error) throw error;
@@ -805,7 +824,7 @@ const ExtracurricularPage: React.FC = () => {
         }
     };
 
-    const handleSaveAttendance = () => {
+    const handleSaveAttendance = useCallback(() => {
         const items = Object.entries(localAttendance).map(([key, status]) => {
             const [type, id] = key.split(':');
             return {
@@ -815,7 +834,7 @@ const ExtracurricularPage: React.FC = () => {
             };
         });
         bulkAttendanceMutation.mutate(items);
-    };
+    }, [bulkAttendanceMutation, localAttendance]);
 
     const handleMarkAll = (status: string) => {
         if (autoSaveAttendance) {
@@ -838,7 +857,7 @@ const ExtracurricularPage: React.FC = () => {
         }
     };
 
-    const handleExportPDF = async () => {
+    const handleExportPDF = useCallback(async () => {
         if (!selectedExtracurricularData) return;
 
         try {
@@ -854,7 +873,7 @@ const ExtracurricularPage: React.FC = () => {
             // Fetch all attendance for this month
             const { data: monthlyAttendance, error } = await supabase
                 .from('extracurricular_attendance')
-                .select('*')
+                .select('student_id, extracurricular_student_id, date, status')
                 .eq('extracurricular_id', selectedExtracurricular)
                 .gte('date', startDate)
                 .lte('date', endDate);
@@ -912,10 +931,10 @@ const ExtracurricularPage: React.FC = () => {
 
             doc.save(`Rekap_Presensi_${selectedExtracurricularData.name}_${monthName}.pdf`);
             toast.success('Download PDF berhasil');
-        } catch (err: any) {
-            toast.error(`Gagal export: ${err.message}`);
+        } catch (err: unknown) {
+            toast.error(`Gagal export: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
-    };
+    }, [enrollments, selectedDate, selectedExtracurricular, selectedExtracurricularData, toast]);
 
     const handleExportExcel = async () => {
         if (!selectedExtracurricularData) return;
@@ -933,7 +952,7 @@ const ExtracurricularPage: React.FC = () => {
             // Fetch all attendance for this month
             const { data: monthlyAttendance, error } = await supabase
                 .from('extracurricular_attendance')
-                .select('*')
+                .select('student_id, extracurricular_student_id, date, status')
                 .eq('extracurricular_id', selectedExtracurricular)
                 .gte('date', startDate)
                 .lte('date', endDate);
@@ -991,13 +1010,13 @@ const ExtracurricularPage: React.FC = () => {
             XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Bulanan");
             XLSX.writeFile(workbook, `Rekap_Presensi_${selectedExtracurricularData.name}_${monthName}.xlsx`);
             toast.success('Download Excel berhasil');
-        } catch (err: any) {
-            toast.error(`Gagal export: ${err.message}`);
+        } catch (err: unknown) {
+            toast.error(`Gagal export: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
     };
 
     // Export Functions (Grades)
-    const handleExportGradesPDF = async () => {
+    const handleExportGradesPDF = useCallback(async () => {
         if (!selectedExtracurricularData) return;
 
         const { default: jsPDF } = await getJsPDF();
@@ -1035,7 +1054,7 @@ const ExtracurricularPage: React.FC = () => {
         });
 
         doc.save(`Nilai_Ekskul_${selectedExtracurricularData.name}_${new Date().toISOString().split('T')[0]}.pdf`);
-    };
+    }, [activeSemester, enrollments, gradesMap, selectedExtracurricularData]);
 
     const handleExportGradesExcel = async () => {
         if (!selectedExtracurricularData) return;

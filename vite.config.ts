@@ -133,7 +133,7 @@ export default defineConfig(({ mode }) => {
           entryFileNames: 'assets/js/[name]-[hash].js',
         },
       },
-      // Chunk size warning limit (increased to accommodate heavy exceljs/pdf modules when loading on demand)
+      // Chunk size warning limit (increased to accommodate heavy export modules when loading on demand)
       chunkSizeWarningLimit: 1500,
       // Minification options
       minify: 'terser',
