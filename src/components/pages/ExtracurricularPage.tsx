@@ -9,6 +9,16 @@ import { Trophy, Users, Calendar, GraduationCap, Plus, Search, Trash2, UserCog, 
 import { DatePicker } from '../ui/DatePicker';
 import { Database } from '../../services/database.types';
 import { getJsPDF, getAutoTable, getXLSX } from '../../utils/dynamicImports';
+import {
+    CLASS_COMPAT_SELECT,
+    EXTRACURRICULAR_COMPAT_SELECT,
+    EXTRACURRICULAR_GRADE_COMPAT_SELECT,
+    EXTRACURRICULAR_STUDENT_COMPAT_SELECT,
+    hydrateClassRow,
+    hydrateExtracurricularGradeRow,
+    hydrateExtracurricularRow,
+    hydrateExtracurricularStudentRow
+} from '../../services/supabaseCompat';
 
 type Class = Database['public']['Tables']['classes']['Row'];
 type AttendanceStatus = Database['public']['Tables']['extracurricular_attendance']['Row']['status'];
@@ -122,11 +132,11 @@ const ExtracurricularPage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurriculars')
-                .select('id, user_id, name, category, description, schedule_day, schedule_time, coach_name, max_participants, is_active, created_at, updated_at')
+                .select(EXTRACURRICULAR_COMPAT_SELECT)
                 .eq('user_id', user!.id)
                 .order('name');
             if (error) throw error;
-            return data as Extracurricular[];
+            return (data || []).map(hydrateExtracurricularRow) as Extracurricular[];
         },
         enabled: !!user,
     });
@@ -141,12 +151,12 @@ const ExtracurricularPage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')
-                .select('id, user_id, name, academic_year, grade_level, created_at, updated_at, deleted_at')
+                .select(CLASS_COMPAT_SELECT)
                 .eq('user_id', user!.id)
                 .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
-            return (data || []) as Class[];
+            return (data || []).map(hydrateClassRow) as Class[];
         },
         enabled: !!user,
     });
@@ -189,7 +199,7 @@ const ExtracurricularPage: React.FC = () => {
         queryFn: async () => {
             let query = supabase
                 .from('extracurricular_students')
-                .select('id, user_id, name, gender, class_name, created_at, updated_at')
+                .select(EXTRACURRICULAR_STUDENT_COMPAT_SELECT)
                 .eq('user_id', user!.id)
                 .order('name');
 
@@ -199,7 +209,7 @@ const ExtracurricularPage: React.FC = () => {
 
             const { data, error } = await query;
             if (error) throw error;
-            return data as ExtracurricularStudent[];
+            return (data || []).map(hydrateExtracurricularStudentRow) as ExtracurricularStudent[];
         },
         enabled: !!user,
     });
@@ -210,11 +220,11 @@ const ExtracurricularPage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurricular_students')
-                .select('id, user_id, name, gender, class_name, created_at, updated_at')
+                .select(EXTRACURRICULAR_STUDENT_COMPAT_SELECT)
                 .eq('user_id', user!.id)
                 .order('name');
             if (error) throw error;
-            return data as ExtracurricularStudent[];
+            return (data || []).map(hydrateExtracurricularStudentRow) as ExtracurricularStudent[];
         },
         enabled: !!user,
     });
@@ -283,11 +293,11 @@ const ExtracurricularPage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurricular_grades')
-                .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, description, created_at, updated_at')
+                .select(EXTRACURRICULAR_GRADE_COMPAT_SELECT)
                 .eq('extracurricular_id', selectedExtracurricular)
                 .eq('semester_id', activeSemester!.id);
             if (error) throw error;
-            return data as ExtracurricularGrade[];
+            return (data || []).map(hydrateExtracurricularGradeRow) as ExtracurricularGrade[];
         },
         enabled: !!selectedExtracurricular && !!activeSemester,
     });
@@ -540,7 +550,6 @@ const ExtracurricularPage: React.FC = () => {
                     grade,
                     description,
                     user_id: user!.id,
-                    updated_at: new Date().toISOString(),
                 }, { onConflict });
             if (error) throw error;
         },

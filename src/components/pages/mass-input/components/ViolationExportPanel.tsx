@@ -5,6 +5,7 @@ import { DownloadIcon, FileTextIcon, FileSpreadsheetIcon, ShieldAlertIcon, Searc
 import { ClassRow, ViolationRow, StudentRow, StudentFilter } from '../types';
 import { exportBulkViolationsToExcel } from '../../../../services/violationExport';
 import { useToast } from '../../../../hooks/useToast';
+import { useAuth } from '../../../../hooks/useAuth';
 import { SemesterSelector } from '../../../ui/SemesterSelector';
 import { useUserSettings } from '../../../../hooks/useUserSettings';
 import { useSemester } from '../../../../contexts/SemesterContext';
@@ -43,6 +44,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
     isLoadingViolations
 }) => {
     const toast = useToast();
+    const { user } = useAuth();
     const { activeSemester } = useSemester();
     const [semesterFilter, setSemesterFilter] = useState<string>(() => activeSemester?.id || 'all');
     const { schoolName } = useUserSettings();
@@ -134,7 +136,8 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                     studentName: student.name,
                     className: className,
                     schoolName: schoolName,
-                    violations: studentViolations as any
+                    violations: studentViolations as any,
+                    teacherName: user?.name
                 });
                 
                 // Small delay between downloads to prevent browser blocking
@@ -153,7 +156,8 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                     name: s.name,
                     gender: s.gender,
                     avatar_url: s.avatar_url
-                }))
+                })),
+                teacherName: user?.name
             };
             
             toast.info('Memproses export Excel...');

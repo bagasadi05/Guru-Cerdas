@@ -1,15 +1,21 @@
 import type jsPDF from 'jspdf';
 
 // Base64 encoded logos - these will be loaded from public folder
-let logoSekolahBase64: string | null = null;
-let logoKemenagBase64: string | null = null;
+interface CachedLogo {
+    dataUrl: string;
+    width: number;
+    height: number;
+}
+
+let logoSekolah: CachedLogo | null = null;
+let logoKemenag: CachedLogo | null = null;
 
 /**
  * Load and cache logos as base64 strings
  * This should be called once when the app starts or before PDF generation
  */
 export async function loadLogos(): Promise<void> {
-    if (logoSekolahBase64 && logoKemenagBase64) return;
+    if (logoSekolah && logoKemenag) return;
 
     try {
         const [sekolahResponse, kemenagResponse] = await Promise.all([
@@ -22,16 +28,34 @@ export async function loadLogos(): Promise<void> {
             kemenagResponse.blob()
         ]);
 
-        logoSekolahBase64 = await blobToBase64(sekolahBlob);
-        logoKemenagBase64 = await blobToBase64(kemenagBlob);
+        const [sekolahLogo, kemenagLogo] = await Promise.all([
+            blobToCachedLogo(sekolahBlob),
+            blobToCachedLogo(kemenagBlob)
+        ]);
+
+        logoSekolah = sekolahLogo;
+        logoKemenag = kemenagLogo;
     } catch (error) {
         console.error('Failed to load logos:', error);
     }
 }
 
 /**
- * Convert blob to base64 string
+ * Convert blob to base64 string and collect intrinsic image dimensions
  */
+async function blobToCachedLogo(blob: Blob): Promise<CachedLogo> {
+    const [dataUrl, dimensions] = await Promise.all([
+        blobToBase64(blob),
+        getImageDimensions(blob)
+    ]);
+
+    return {
+        dataUrl,
+        width: dimensions.width,
+        height: dimensions.height
+    };
+}
+
 function blobToBase64(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -39,6 +63,40 @@ function blobToBase64(blob: Blob): Promise<string> {
         reader.onerror = reject;
         reader.readAsDataURL(blob);
     });
+}
+
+function getImageDimensions(blob: Blob): Promise<{ width: number; height: number }> {
+    return new Promise((resolve, reject) => {
+        const imageUrl = URL.createObjectURL(blob);
+        const image = new Image();
+
+        image.onload = () => {
+            resolve({ width: image.naturalWidth, height: image.naturalHeight });
+            URL.revokeObjectURL(imageUrl);
+        };
+
+        image.onerror = (error) => {
+            URL.revokeObjectURL(imageUrl);
+            reject(error);
+        };
+
+        image.src = imageUrl;
+    });
+}
+
+function addContainedLogo(
+    doc: jsPDF,
+    logo: CachedLogo,
+    format: 'PNG' | 'JPEG',
+    bounds: { x: number; y: number; width: number; height: number }
+) {
+    const scale = Math.min(bounds.width / logo.width, bounds.height / logo.height);
+    const renderWidth = logo.width * scale;
+    const renderHeight = logo.height * scale;
+    const renderX = bounds.x + (bounds.width - renderWidth) / 2;
+    const renderY = bounds.y + (bounds.height - renderHeight) / 2;
+
+    doc.addImage(logo.dataUrl, format, renderX, renderY, renderWidth, renderHeight);
 }
 
 interface PdfHeaderOptions {
@@ -69,22 +127,23 @@ export function addPdfHeader(
 
     const pageWidth = orientation === 'portrait' ? 210 : 297;
     const margin = 14;
-    const logoSize = 20;
     let y = 18;
+    const schoolLogoBounds = { x: margin - 1, y: y - 8, width: 36, height: 30 };
+    const kemenagLogoBounds = { x: pageWidth - margin - 24, y: y - 6, width: 24, height: 24 };
 
-    // Add logo sekolah (left) - perfectly aligned
-    if (logoSekolahBase64) {
+    // Add logo sekolah (left) - larger box to match visual weight with Kemenag logo
+    if (logoSekolah) {
         try {
-            doc.addImage(logoSekolahBase64, 'PNG', margin, y - 5, logoSize, logoSize);
+            addContainedLogo(doc, logoSekolah, 'PNG', schoolLogoBounds);
         } catch (e) {
             console.warn('Failed to add school logo:', e);
         }
     }
 
-    // Add logo kemenag (right) - perfectly aligned
-    if (logoKemenagBase64) {
+    // Add logo kemenag (right)
+    if (logoKemenag) {
         try {
-            doc.addImage(logoKemenagBase64, 'PNG', pageWidth - margin - logoSize, y - 5, logoSize, logoSize);
+            addContainedLogo(doc, logoKemenag, 'PNG', kemenagLogoBounds);
         } catch (e) {
             console.warn('Failed to add kemenag logo:', e);
         }
@@ -111,7 +170,7 @@ export function addPdfHeader(
         doc.setFont('helvetica', 'normal');
         
         // Split address if too long
-        const maxWidth = pageWidth - (2 * margin) - 40; // Account for logos
+        const maxWidth = pageWidth - (2 * margin) - 64; // Account for larger logo boxes
         const addressLines = doc.splitTextToSize(schoolAddress, maxWidth);
         
         addressLines.forEach((line: string) => {
@@ -166,7 +225,7 @@ export function addSimplePdfHeader(
  * Check if logos are loaded
  */
 export function areLogosLoaded(): boolean {
-    return !!(logoSekolahBase64 && logoKemenagBase64);
+    return !!(logoSekolah && logoKemenag);
 }
 
 /**

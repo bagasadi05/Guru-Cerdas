@@ -70,7 +70,8 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
             studentName: 'Semua Siswa',
             className: className || 'Kelas',
             schoolName: user?.school_name || 'Sekolah',
-            violations: existingViolations as ViolationRow[]
+            violations: existingViolations as ViolationRow[],
+            teacherName: user?.name
         };
 
         if (type === 'pdf') {

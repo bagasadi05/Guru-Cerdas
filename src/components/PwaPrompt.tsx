@@ -14,16 +14,18 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const PwaPrompt: React.FC = () => {
+  const useCustomPrompt = import.meta.env.VITE_USE_CUSTOM_PWA_PROMPT === 'true';
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    if (!useCustomPrompt) {
+      return;
+    }
+
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      // Stash the event so it can be triggered later.
       setInstallPromptEvent(e as BeforeInstallPromptEvent);
-      // Check if user has dismissed it before in this session
       if (!sessionStorage.getItem('pwa-prompt-dismissed')) {
           setIsVisible(true);
       }
@@ -34,7 +36,7 @@ const PwaPrompt: React.FC = () => {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [useCustomPrompt]);
 
   const handleInstallClick = () => {
     if (!installPromptEvent) {
@@ -59,7 +61,7 @@ const PwaPrompt: React.FC = () => {
       sessionStorage.setItem('pwa-prompt-dismissed', 'true');
   }
 
-  if (!isVisible || !installPromptEvent) {
+  if (!useCustomPrompt || !isVisible || !installPromptEvent) {
     return null;
   }
 

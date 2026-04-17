@@ -9,6 +9,16 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useSemester } from '../../../contexts/SemesterContext';
 import { useToast } from '../../../hooks/useToast';
 import {
+    CLASS_COMPAT_SELECT,
+    EXTRACURRICULAR_COMPAT_SELECT,
+    EXTRACURRICULAR_GRADE_COMPAT_SELECT,
+    EXTRACURRICULAR_STUDENT_COMPAT_SELECT,
+    hydrateClassRow,
+    hydrateExtracurricularGradeRow,
+    hydrateExtracurricularRow,
+    hydrateExtracurricularStudentRow,
+} from '../../../services/supabaseCompat';
+import {
     Extracurricular,
     ExtracurricularAttendance,
     ExtracurricularGrade,
@@ -39,11 +49,11 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurriculars')
-                .select('*')
+                .select(EXTRACURRICULAR_COMPAT_SELECT)
                 .eq('user_id', user!.id)
                 .order('name');
             if (error) throw error;
-            return data as Extracurricular[];
+            return (data || []).map(hydrateExtracurricularRow) as Extracurricular[];
         },
         enabled: !!user,
     });
@@ -58,12 +68,12 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')
-                .select('*')
+                .select(CLASS_COMPAT_SELECT)
                 .eq('user_id', user!.id)
                 .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
-            return data as Class[];
+            return (data || []).map(hydrateClassRow) as Class[];
         },
         enabled: !!user,
     });
@@ -106,7 +116,7 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
         queryFn: async () => {
             let query = supabase
                 .from('extracurricular_students')
-                .select('*')
+                .select(EXTRACURRICULAR_STUDENT_COMPAT_SELECT)
                 .eq('user_id', user!.id)
                 .order('name');
 
@@ -116,7 +126,7 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
 
             const { data, error } = await query;
             if (error) throw error;
-            return data as ExtracurricularStudent[];
+            return (data || []).map(hydrateExtracurricularStudentRow) as ExtracurricularStudent[];
         },
         enabled: !!user,
     });
@@ -127,11 +137,11 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurricular_students')
-                .select('*')
+                .select(EXTRACURRICULAR_STUDENT_COMPAT_SELECT)
                 .eq('user_id', user!.id)
                 .order('name');
             if (error) throw error;
-            return data as ExtracurricularStudent[];
+            return (data || []).map(hydrateExtracurricularStudentRow) as ExtracurricularStudent[];
         },
         enabled: !!user,
     });
@@ -200,11 +210,11 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurricular_grades')
-                .select('*')
+                .select(EXTRACURRICULAR_GRADE_COMPAT_SELECT)
                 .eq('extracurricular_id', selectedExtracurricular)
                 .eq('semester_id', activeSemester!.id);
             if (error) throw error;
-            return data as ExtracurricularGrade[];
+            return (data || []).map(hydrateExtracurricularGradeRow) as ExtracurricularGrade[];
         },
         enabled: !!selectedExtracurricular && !!activeSemester,
     });

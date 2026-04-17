@@ -272,7 +272,6 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
                     grade,
                     description,
                     user_id: user!.id,
-                    updated_at: new Date().toISOString(),
                 }, { onConflict });
             if (error) throw error;
         },

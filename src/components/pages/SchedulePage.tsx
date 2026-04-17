@@ -1,5 +1,6 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useRef } from 'react';
 import { staggerContainerVariants, staggerItemVariants } from '../../utils/animations';
 import { triggerSubtleConfetti } from '../../utils/confetti';
 import { Button } from '../ui/Button';
@@ -24,6 +25,7 @@ import { ValidationRules } from '../../types';
 import { SchedulePageSkeleton } from '../skeletons/PageSkeletons';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 import { getJsPDF } from '../../utils/dynamicImports';
+import { CLASS_COMPAT_SELECT, SCHEDULE_COMPAT_SELECT, hydrateClassRow, hydrateScheduleRow } from '../../services/supabaseCompat';
 import { WeeklyScheduleView } from '../schedule/WeeklyScheduleView';
 import { ScheduleDaySelector } from '../schedule/ScheduleDaySelector';
 import { ScheduleViewToolbar } from '../schedule/ScheduleViewToolbar';
@@ -221,10 +223,10 @@ const SchedulePage: React.FC = () => {
     const [isAnalysisLoading, setAnalysisLoading] = useState(false);
 
     const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
-    const [conflictWarnings, setConflictWarnings] = useState<{ day: string; time: string; subjects: string[] }[]>([]);
 
     const [currentTime, setCurrentTime] = useState(new Date());
     const [confirmModalState, setConfirmModalState] = useState<{ isOpen: boolean; data: ScheduleRow | null }>({ isOpen: false, data: null });
+    const lastScheduleErrorRef = useRef<string | null>(null);
 
 
     useEffect(() => {
@@ -251,12 +253,12 @@ const SchedulePage: React.FC = () => {
         queryFn: async (): Promise<ScheduleRow[]> => {
             const { data, error } = await supabase
                 .from('schedules')
-                .select('id, user_id, day, start_time, end_time, subject, class_id, room, created_at, updated_at')
+                .select(SCHEDULE_COMPAT_SELECT)
                 .eq('user_id', user!.id)
                 .order('day')
                 .order('start_time');
             if (error) throw error;
-            return (data || []) as ScheduleRow[];
+            return (data || []).map(hydrateScheduleRow);
         },
         enabled: !!user,
     });
@@ -266,12 +268,12 @@ const SchedulePage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')
-                .select('id, user_id, name, academic_year, grade_level, created_at, updated_at, deleted_at')
+                .select(CLASS_COMPAT_SELECT)
                 .eq('user_id', user!.id)
                 .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
-            return data || [];
+            return (data || []).map(hydrateClassRow);
         },
         enabled: !!user,
     });
@@ -296,12 +298,19 @@ const SchedulePage: React.FC = () => {
     }, [schedule]);
 
     useEffect(() => {
-        if (isError) {
-            toast.error(`Gagal memuat jadwal: ${(queryError as Error).message}`);
+        if (!isError) {
+            lastScheduleErrorRef.current = null;
+            return;
+        }
+
+        const message = `Gagal memuat jadwal: ${(queryError as Error).message}`;
+        if (lastScheduleErrorRef.current !== message) {
+            toast.error(message);
+            lastScheduleErrorRef.current = message;
         }
     }, [isError, queryError, toast]);
 
-    useEffect(() => {
+    const conflictWarnings = useMemo(() => {
         const conflicts: { day: string; time: string; subjects: string[] }[] = [];
         daysOfWeek.forEach(day => {
             const daySchedule = scheduleByDay[day] || [];
@@ -323,7 +332,7 @@ const SchedulePage: React.FC = () => {
                 }
             }
         });
-        setConflictWarnings(conflicts);
+        return conflicts;
     }, [scheduleByDay]);
 
     const scheduleMutation = useMutation({

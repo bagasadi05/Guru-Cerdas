@@ -21,6 +21,7 @@ import { MoreVertical, Loader2, PlayCircle, Circle, CheckCircle2, AlertTriangle,
 import { ValidationService } from '../../services/ValidationService';
 import { ValidationRules } from '../../types';
 import { EmptyError } from '../EmptyStates';
+import { TASK_COMPAT_SELECT, hydrateTaskRow } from '../../services/supabaseCompat';
 
 // Native date helpers
 const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -73,13 +74,13 @@ type TaskStatus = 'todo' | 'in_progress' | 'done';
 const fetchTasks = async (userId: string): Promise<TaskRow[]> => {
     const { data, error } = await supabase
         .from('tasks')
-        .select('id, user_id, title, description, due_date, status, completed, created_at, updated_at')
+        .select(TASK_COMPAT_SELECT)
         .eq('user_id', userId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return (data || []) as TaskRow[];
+    return (data || []).map(hydrateTaskRow);
 };
 
 // Status configuration

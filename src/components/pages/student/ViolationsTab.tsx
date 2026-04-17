@@ -47,6 +47,7 @@ interface ViolationsTabProps {
     onUpdateFollowUp?: (id: string, status: FollowUpStatus, notes?: string) => void;
     isOnline: boolean;
     studentName?: string;
+    className?: string;
 }
 
 // Threshold Alert Component
@@ -291,7 +292,8 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     onNotifyParent,
     onUpdateFollowUp,
     isOnline,
-    studentName
+    studentName,
+    className
 }) => {
     const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -338,9 +340,10 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                         <DropdownItem onClick={async () => {
                             await exportViolationsToPDF({
                                 studentName: studentName || 'Siswa',
-                                className: 'Fase F', // Placeholder, ideally passed from parent
+                                className: className || '-',
                                 schoolName: user?.school_name || 'Sekolah',
-                                violations: filteredViolations
+                                violations: filteredViolations,
+                                teacherName: user?.name
                             });
                             toast.success('Mengunduh Laporan PDF...');
                         }} icon={<FileTextIcon className="w-4 h-4 text-red-500" />}>
@@ -349,9 +352,10 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                         <DropdownItem onClick={async () => {
                             await exportViolationsToExcel({
                                 studentName: studentName || 'Siswa',
-                                className: 'Fase F', // Placeholder
+                                className: className || '-',
                                 schoolName: user?.school_name || 'Sekolah',
-                                violations: filteredViolations
+                                violations: filteredViolations,
+                                teacherName: user?.name
                             });
                             toast.success('Mengunduh Data Excel...');
                         }} icon={<FileSpreadsheetIcon className="w-4 h-4 text-green-600" />}>

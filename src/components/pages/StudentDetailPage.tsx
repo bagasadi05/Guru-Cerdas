@@ -831,6 +831,7 @@ const StudentDetailPage = () => {
                                         onUpdateFollowUp={handleUpdateViolationFollowUp}
                                         onNotifyParent={handleNotifyParent}
                                         studentName={student.name}
+                                        className={student.classes?.name || '-'}
                                         isOnline={isOnline}
                                     />
                                 </Suspense>

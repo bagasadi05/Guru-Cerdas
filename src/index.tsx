@@ -1,3 +1,4 @@
+import './styles/tailwind.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -39,15 +40,33 @@ if (sentryDsn && isProduction) {
 }
 
 
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  void navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => {
+      void registration.unregister();
+    });
+  });
+
+  if ('caches' in window) {
+    void caches.keys().then((keys) => {
+      keys.forEach((key) => {
+        void caches.delete(key);
+      });
+    });
+  }
+}
+
 // Register Service Worker for PWA
-const updateSW = registerSW({
-  onNeedRefresh() {
-    console.log('New content available, click on reload button to update.');
-  },
-  onOfflineReady() {
-    console.log('App is ready to work offline.');
-  },
-});
+if (isProduction) {
+  registerSW({
+    onNeedRefresh() {
+      console.log('New content available, click on reload button to update.');
+    },
+    onOfflineReady() {
+      console.log('App is ready to work offline.');
+    },
+  });
+}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

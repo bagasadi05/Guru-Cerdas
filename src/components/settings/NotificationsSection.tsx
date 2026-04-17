@@ -12,6 +12,7 @@ import { PlayCircle, Upload, Volume, Volume2, Smartphone } from 'lucide-react';
 import { getPreferences, savePreferences, NotificationPreferences } from '../../services/NotificationService';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
+import { SCHEDULE_COMPAT_SELECT, hydrateScheduleRow } from '../../services/supabaseCompat';
 import {
     SOUND_OPTIONS,
     getScheduleSound,
@@ -129,7 +130,7 @@ const NotificationsSection: React.FC = () => {
         queryFn: async () => {
             const { data: schedule, error: scheduleError } = await supabase
                 .from('schedules')
-                .select('id, user_id, day, start_time, end_time, subject, class_id, room, created_at, updated_at')
+                .select(SCHEDULE_COMPAT_SELECT)
                 .eq('user_id', user!.id);
 
             const { data: classes, error: classesError } = await supabase
@@ -142,7 +143,7 @@ const NotificationsSection: React.FC = () => {
                 throw scheduleError || classesError;
             }
 
-            const typedSchedule = (schedule || []) as ScheduleRow[];
+            const typedSchedule = (schedule || []).map(hydrateScheduleRow);
             const classMap = new Map(classes.map(c => [c.id, c.name]));
 
             return typedSchedule.map(item => ({

@@ -12,13 +12,61 @@ interface ViolationExportOptions {
     className?: string; // Optional if not provided
     schoolName: string;
     violations: ViolationRow[];
+    teacherName?: string;
 }
+
+const formatExportDate = () =>
+    new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+
+const getTotalViolationPoints = (violations: ViolationRow[]) =>
+    violations.reduce((sum, violation) => sum + violation.points, 0);
+
+const getTeacherSignatureText = (teacherName?: string) =>
+    teacherName?.trim() ? `(${teacherName.trim()})` : '(___________________)';
+
+const addSignatureBlocks = (
+    doc: {
+        setFontSize: (size: number) => void;
+        setFont: (fontName: string, fontStyle: string) => void;
+        text: (text: string, x: number, y: number, options?: { align?: 'center' | 'left' | 'right' }) => void;
+        line: (x1: number, y1: number, x2: number, y2: number) => void;
+    },
+    pageWidth: number,
+    signatureY: number,
+    teacherName?: string
+) => {
+    const lineWidth = 60;
+    const leftX = 50;
+    const rightX = pageWidth - 50;
+    const signatureLineY = signatureY + 30;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    doc.text('Mengetahui,', leftX, signatureY, { align: 'center' });
+    doc.text('Orang Tua/Wali', leftX, signatureY + 5, { align: 'center' });
+    doc.line(leftX - lineWidth / 2, signatureLineY, leftX + lineWidth / 2, signatureLineY);
+
+    doc.text('Mengetahui,', rightX, signatureY, { align: 'center' });
+    doc.text('Wali Kelas', rightX, signatureY + 5, { align: 'center' });
+    doc.line(rightX - lineWidth / 2, signatureLineY, rightX + lineWidth / 2, signatureLineY);
+
+    doc.setFontSize(9);
+    doc.text('(___________________)', leftX, signatureLineY + 5, { align: 'center' });
+    doc.text(getTeacherSignatureText(teacherName), rightX, signatureLineY + 5, { align: 'center' });
+};
 
 /**
  * Export Violations to a Formal PDF Report
  */
 export const exportViolationsToPDF = async (options: ViolationExportOptions) => {
-    const { studentName, className, schoolName, violations } = options;
+    const { studentName, className, schoolName, violations, teacherName } = options;
+    const totalPoints = getTotalViolationPoints(violations);
+    const totalViolations = violations.length;
 
     // Ensure logos are loaded
     await ensureLogosLoaded();
@@ -62,14 +110,17 @@ export const exportViolationsToPDF = async (options: ViolationExportOptions) => 
     y += lineHeight;
 
     // Tanggal
-    const dateStr = new Date().toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
+    const dateStr = formatExportDate();
     doc.text('Tanggal', labelX, y);
     doc.text(':', colonX, y);
     doc.text(dateStr, valueX, y);
+    y += lineHeight;
+
+    doc.text('Total Poin', labelX, y);
+    doc.text(':', colonX, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${totalPoints} poin dari ${totalViolations} pelanggaran`, valueX, y);
+    doc.setFont('helvetica', 'normal');
     
     const tableStartY = y + 10;
 
@@ -117,23 +168,7 @@ export const exportViolationsToPDF = async (options: ViolationExportOptions) => 
 
     if (finalY < 235) {
         const signatureY = finalY + 15;
-        const signatureLineY = signatureY + 30;
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        
-        // Right signature - Wali Kelas
-        const rightX = pageWidth - 50;
-        doc.text('Mengetahui,', rightX, signatureY, { align: 'center' });
-        doc.text('Wali Kelas', rightX, signatureY + 5, { align: 'center' });
-        
-        // Signature line
-        doc.line(rightX - 30, signatureLineY, rightX + 30, signatureLineY);
-        
-        // Name placeholder
-        doc.setFontSize(9);
-        doc.text('(', rightX - 30, signatureLineY + 5);
-        doc.text(')', rightX + 30, signatureLineY + 5);
+        addSignatureBlocks(doc, pageWidth, signatureY, teacherName);
     }
 
     doc.save(`Laporan_Pelanggaran_${studentName.replace(/\s+/g, '_')}.pdf`);
@@ -143,7 +178,8 @@ export const exportViolationsToPDF = async (options: ViolationExportOptions) => 
  * Export Violations to Excel
  */
 export const exportViolationsToExcel = async (options: ViolationExportOptions): Promise<void> => {
-    const { studentName, className, schoolName, violations } = options;
+    const { studentName, className, schoolName, violations, teacherName } = options;
+    const totalPoints = getTotalViolationPoints(violations);
     const XLSX = await getXLSX();
     const wb = XLSX.utils.book_new();
 
@@ -155,6 +191,8 @@ export const exportViolationsToExcel = async (options: ViolationExportOptions): 
         ['Nama Siswa', studentName],
         ['Kelas', className || '-'],
         ['Tanggal Export', new Date().toLocaleDateString('id-ID')],
+        ['Total Poin', `${totalPoints} poin`],
+        ['Total Pelanggaran', violations.length],
         [],
         ['No', 'Tanggal', 'Deskripsi Pelanggaran', 'Poin', 'Kategori', 'Status Tindak Lanjut', 'Catatan']
     ];
@@ -171,6 +209,13 @@ export const exportViolationsToExcel = async (options: ViolationExportOptions): 
             v.follow_up_notes || ''
         ]);
     });
+
+    ws_data.push([]);
+    ws_data.push(['', 'Mengetahui,', '', '', '', 'Mengetahui,']);
+    ws_data.push(['', 'Orang Tua/Wali', '', '', '', 'Wali Kelas']);
+    ws_data.push([]);
+    ws_data.push([]);
+    ws_data.push(['', '(___________________)', '', '', '', getTeacherSignatureText(teacherName)]);
 
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
 
@@ -207,13 +252,14 @@ interface BulkViolationExportOptions {
     schoolName: string;
     violations: ViolationRow[];
     students: StudentInfo[];
+    teacherName?: string;
 }
 
 /**
  * Export Class Violations to PDF - One Page Per Student (Report Card Style)
  */
 export const exportBulkViolationsToPDF = async (options: BulkViolationExportOptions) => {
-    const { className, schoolName, violations, students } = options;
+    const { className, schoolName, violations, students, teacherName } = options;
 
     // Ensure logos are loaded
     await ensureLogosLoaded();
@@ -241,11 +287,7 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
         return nameA.localeCompare(nameB);
     });
 
-    const dateStr = new Date().toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
+    const dateStr = formatExportDate();
 
     let isFirstPage = true;
 
@@ -254,7 +296,7 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
         const studentViolations = groupedByStudent.get(studentId) || [];
         const studentInfo = studentInfoMap.get(studentId);
         const studentName = studentInfo?.name || 'Tidak Diketahui';
-        const totalPoints = studentViolations.reduce((sum, v) => sum + v.points, 0);
+        const totalPoints = getTotalViolationPoints(studentViolations);
 
         // Add new page for subsequent students
         if (!isFirstPage) {
@@ -308,6 +350,13 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
         doc.text('Tanggal', labelX, currentY);
         doc.text(':', colonX, currentY);
         doc.text(dateStr, valueX, currentY);
+        currentY += lineHeight;
+
+        doc.text('Total Poin', labelX, currentY);
+        doc.text(':', colonX, currentY);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${totalPoints} poin dari ${studentViolations.length} pelanggaran`, valueX, currentY);
+        doc.setFont('helvetica', 'normal');
 
         // -- Violations Table --
         const tableBody = studentViolations.map((v, index) => [
@@ -353,23 +402,7 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
 
         if (finalY < 235) {
             const signatureY = finalY + 15;
-            const signatureLineY = signatureY + 30;
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-
-            // Right signature - Wali Kelas
-            const rightX = pageWidth - 50;
-            doc.text('Mengetahui,', rightX, signatureY, { align: 'center' });
-            doc.text('Wali Kelas', rightX, signatureY + 5, { align: 'center' });
-            
-            // Signature line
-            doc.line(rightX - 30, signatureLineY, rightX + 30, signatureLineY);
-            
-            // Name placeholder
-            doc.setFontSize(9);
-            doc.text('(', rightX - 30, signatureLineY + 5);
-            doc.text(')', rightX + 30, signatureLineY + 5);
+            addSignatureBlocks(doc, pageWidth, signatureY, teacherName);
         }
     });
 
@@ -380,7 +413,7 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
  * Export Class Violations to Excel - One Sheet Per Student (Report Card Style)
  */
 export const exportBulkViolationsToExcel = async (options: BulkViolationExportOptions) => {
-    const { className, schoolName, violations, students } = options;
+    const { className, schoolName, violations, students, teacherName } = options;
     const XLSX = await getXLSX();
     const workbook = XLSX.utils.book_new();
 
@@ -445,7 +478,7 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
         rows.push(['', 'Orang Tua/Wali', '', '', '', 'Wali Kelas']);
         rows.push([]);
         rows.push([]);
-        rows.push(['', '(___________________)', '', '', '', '(___________________)']);
+        rows.push(['', '(___________________)', '', '', '', getTeacherSignatureText(teacherName)]);
 
         const worksheet = XLSX.utils.aoa_to_sheet(rows);
         worksheet['!merges'] = [
