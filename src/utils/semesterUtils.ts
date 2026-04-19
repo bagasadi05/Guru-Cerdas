@@ -99,6 +99,51 @@ export const getSemesterLabel = (semester: SemesterType): string => {
     }
 };
 
+type SemesterTerm = 'ganjil' | 'genap' | null;
+
+const getSemesterTermFromName = (name?: string | null): SemesterTerm => {
+    if (!name) return null;
+
+    const normalized = name.toLowerCase();
+    if (normalized.includes('ganjil')) return 'ganjil';
+    if (normalized.includes('genap')) return 'genap';
+    if (/semester\s*1|sem\s*1|smt\s*1/.test(normalized)) return 'ganjil';
+    if (/semester\s*2|sem\s*2|smt\s*2/.test(normalized)) return 'genap';
+
+    return null;
+};
+
+const getSemesterTermFromDate = (startDate?: string | null): SemesterTerm => {
+    if (!startDate) return null;
+
+    const parsed = new Date(startDate);
+    if (Number.isNaN(parsed.getTime())) return null;
+
+    return parsed.getMonth() >= 6 ? 'ganjil' : 'genap';
+};
+
+export const getSemesterTerm = (name?: string | null, startDate?: string | null): SemesterTerm => (
+    getSemesterTermFromName(name) ?? getSemesterTermFromDate(startDate)
+);
+
+export const getSemesterDisplayName = (
+    name?: string | null,
+    startDate?: string | null,
+    format: 'short' | 'full' = 'full'
+): string => {
+    const term = getSemesterTerm(name, startDate);
+
+    if (term === 'ganjil') {
+        return format === 'short' ? 'Ganjil' : 'Semester Ganjil';
+    }
+
+    if (term === 'genap') {
+        return format === 'short' ? 'Genap' : 'Semester Genap';
+    }
+
+    return name || 'Semester';
+};
+
 /**
  * Filter an array of records by semester based on date field
  */

@@ -24,6 +24,7 @@ export interface PortalReport {
     type: string;
     content: string;
     created_at: string;
+    date?: string | null;
 }
 
 // Attendance
@@ -42,6 +43,8 @@ export interface PortalAcademicRecord {
     score: number;
     notes: string;
     assessment_name: string | null;
+    created_at?: string | null;
+    semester_id?: string | null;
 }
 
 // Violations
@@ -61,6 +64,15 @@ export interface PortalQuizPoint {
     type: string;
     reason: string;
     created_at: string;
+    quiz_name?: string | null;
+    quiz_date?: string | null;
+    subject?: string | null;
+    category?: string | null;
+    max_points?: number | null;
+    is_used?: boolean | null;
+    used_at?: string | null;
+    used_for_subject?: string | null;
+    semester_id?: string | null;
 }
 
 // Communications
@@ -92,6 +104,7 @@ export interface PortalTask {
     description: string | null;
     status: 'todo' | 'in_progress' | 'done';
     due_date: string | null;
+    created_at?: string | null;
 }
 
 // Announcements

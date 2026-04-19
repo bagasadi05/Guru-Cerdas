@@ -2,6 +2,7 @@ import React from 'react';
 import { Select } from './Select';
 import { CalendarIcon, LockIcon, ChevronDownIcon } from 'lucide-react';
 import { useSemester } from '../../contexts/SemesterContext';
+import { getSemesterDisplayName } from '../../utils/semesterUtils';
 
 
 interface SemesterSelectorProps {
@@ -49,7 +50,7 @@ export const SemesterSelector: React.FC<SemesterSelectorProps> = ({
 
                 {semesters.map(sem => {
                     const yearName = sem.academic_years?.name || 'Tahun Ajaran ?';
-                    const semName = sem.name; // e.g., "Ganjil" or "Semester 1"
+                    const semName = getSemesterDisplayName(sem.name, sem.start_date, 'full');
                     const label = `${yearName} - ${semName}${sem.is_active ? ' (Aktif)' : ''}`;
 
                     return (

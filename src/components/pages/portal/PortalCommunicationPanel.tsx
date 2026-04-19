@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../services/supabase';
 import { useToast } from '../../../hooks/useToast';
@@ -20,6 +20,16 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
     const [newMessage, setNewMessage] = useState('');
     const [modalState, setModalState] = useState<CommunicationModalState>({ type: 'closed', data: null });
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const unreadTeacherMessages = useMemo(() => (
+        communications.filter((message) => message.sender === 'teacher' && !message.is_read).length
+    ), [communications]);
+    const latestMessage = communications[communications.length - 1];
+    const quickPrompts = [
+        'Mohon info perkembangan belajar anak saya minggu ini.',
+        'Apakah ada tugas yang perlu kami dampingi di rumah?',
+        'Terima kasih, informasinya sudah kami terima.',
+    ];
 
     const { mutate: sendMessage, isPending: isSending } = useMutation({
         mutationFn: async (messageText: string) => {
@@ -85,14 +95,60 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
 
     return (
         <>
-            <div className="flex flex-col h-[60vh]">
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                    {communications.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                            <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                                <SendIcon className="w-8 h-8 text-slate-300" />
+            <div className="flex h-[68vh] flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.18),transparent_30%),linear-gradient(135deg,#eef2ff_0%,#ffffff_60%,#f8fafc_100%)] p-4 dark:border-slate-800 dark:bg-[radial-gradient(circle_at_top_right,rgba(129,140,248,0.16),transparent_32%),linear-gradient(135deg,#111827_0%,#0f172a_100%)] sm:p-5">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex items-center gap-3">
+                            <img
+                                src={teacher?.avatar_url}
+                                className="h-12 w-12 rounded-2xl border border-white/70 object-cover shadow-sm dark:border-white/10"
+                                alt="Guru"
+                            />
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Komunikasi Wali Kelas</p>
+                                <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{teacher?.full_name || 'Wali Kelas'}</h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">Percakapan terkait perkembangan {student.name}</p>
                             </div>
-                            <p>Belum ada pesan. Mulai percakapan dengan wali kelas.</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 sm:flex">
+                            <div className="rounded-2xl bg-white/80 px-4 py-3 text-center shadow-sm dark:bg-white/10">
+                                <p className="text-lg font-bold text-slate-900 dark:text-white">{communications.length}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-300">Total pesan</p>
+                            </div>
+                            <div className="rounded-2xl bg-white/80 px-4 py-3 text-center shadow-sm dark:bg-white/10">
+                                <p className="text-lg font-bold text-rose-600 dark:text-rose-200">{unreadTeacherMessages}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-300">Belum dibaca</p>
+                            </div>
+                        </div>
+                    </div>
+                    {latestMessage && (
+                        <div className="mt-4 rounded-2xl border border-white/70 bg-white/75 p-3 text-sm text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-slate-300">
+                            Pesan terakhir: <span className="font-semibold text-slate-900 dark:text-white">{latestMessage.sender === 'teacher' ? 'Guru' : 'Wali'}</span> - {latestMessage.message}
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex flex-wrap gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/40">
+                    {quickPrompts.map((prompt) => (
+                        <button
+                            key={prompt}
+                            type="button"
+                            onClick={() => setNewMessage(prompt)}
+                            className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:bg-indigo-50 hover:text-indigo-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        >
+                            {prompt}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto p-4">
+                    {communications.length === 0 ? (
+                        <div className="flex h-full flex-col items-center justify-center text-center text-slate-400">
+                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+                                <SendIcon className="h-8 w-8 text-slate-300" />
+                            </div>
+                            <p className="font-medium text-slate-600 dark:text-slate-300">Belum ada pesan.</p>
+                            <p className="mt-1 max-w-sm text-sm">Gunakan contoh pesan di atas untuk memulai percakapan dengan wali kelas.</p>
                         </div>
                     ) : communications.map((msg) => (
                         <div key={msg.id} className={`group flex items-start gap-3 ${msg.sender === 'parent' ? 'justify-end' : 'justify-start'}`}>
@@ -141,7 +197,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                     ))}
                     <div ref={messagesEndRef} />
                 </div>
-                <form onSubmit={(event) => { event.preventDefault(); if (newMessage.trim()) sendMessage(newMessage); }} className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 rounded-b-2xl">
+                <form onSubmit={(event) => { event.preventDefault(); if (newMessage.trim()) sendMessage(newMessage); }} className="flex items-center gap-3 border-t border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
                     <Input
                         value={newMessage}
                         onChange={(event) => setNewMessage(event.target.value)}
