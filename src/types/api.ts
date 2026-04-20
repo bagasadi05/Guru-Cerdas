@@ -13,6 +13,7 @@ import type {
     TaskRow,
     ScheduleRow,
     AcademicRecordSummary,
+    CommunicationRow,
     ViolationSummary,
     WeeklyAttendance,
     DailyAttendanceSummary,
@@ -47,6 +48,8 @@ export interface DashboardQueryData {
     recentTasks: Pick<TaskRow, 'id' | 'title' | 'created_at' | 'status'>[];
     /** Recent attendance records for activity feed */
     todayAttendanceRecords: { created_at: string; status: string; count: number }[];
+    /** Unread parent messages for daily follow-up */
+    unreadParentMessages: Pick<CommunicationRow, 'id' | 'student_id' | 'message' | 'created_at' | 'sender' | 'is_read'>[];
 }
 
 // =============================================================================

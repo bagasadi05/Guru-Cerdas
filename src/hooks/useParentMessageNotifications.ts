@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { useToast } from './useToast';
 import { useQueryClient } from '@tanstack/react-query';
 import { playMessageSound } from '../utils/notificationSound';
+import { addNotification, getPreferences } from '../services/NotificationService';
 
 /**
  * Hook for listening to real-time parent messages.
@@ -16,13 +17,6 @@ export const useParentMessageNotifications = () => {
     const queryClient = useQueryClient();
     const isSubscribedRef = useRef(false);
     const lastMessageIdRef = useRef<string | null>(null);
-
-    // Request browser notification permission
-    const requestNotificationPermission = useCallback(async () => {
-        if ('Notification' in window && Notification.permission === 'default') {
-            await Notification.requestPermission();
-        }
-    }, []);
 
     // Show browser notification
     const showBrowserNotification = useCallback((title: string, body: string) => {
@@ -48,9 +42,6 @@ export const useParentMessageNotifications = () => {
 
     useEffect(() => {
         if (!user?.id || isSubscribedRef.current) return;
-
-        // Request notification permission on mount
-        requestNotificationPermission();
 
         // Subscribe to real-time changes on communications table
         const channel = supabase
@@ -97,6 +88,19 @@ export const useParentMessageNotifications = () => {
                             { duration: 8000 }
                         );
 
+                        if (getPreferences().messageNotifications) {
+                            addNotification({
+                                type: 'message',
+                                title: `Pesan dari wali ${studentName}`,
+                                message: messagePreview,
+                                metadata: {
+                                    messageId: newMessage.id,
+                                    studentId: newMessage.student_id,
+                                },
+                                link: `/siswa/${newMessage.student_id}`,
+                            });
+                        }
+
                         // Show browser notification if page is not focused
                         if (document.hidden) {
                             showBrowserNotification(
@@ -121,7 +125,7 @@ export const useParentMessageNotifications = () => {
             supabase.removeChannel(channel);
             isSubscribedRef.current = false;
         };
-    }, [user?.id, toast, queryClient, requestNotificationPermission, showBrowserNotification]);
+    }, [user?.id, toast, queryClient, showBrowserNotification]);
 
-    return { requestNotificationPermission };
+    return {};
 };

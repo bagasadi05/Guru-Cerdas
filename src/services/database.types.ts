@@ -607,8 +607,10 @@ export type Database = {
           description: string | null
           extracurricular_id: string
           extracurricular_student_id: string | null
-          grade: string
+          grade: string | null
           id: string
+          notes: string | null
+          score: number | null
           semester_id: string
           student_id: string | null
           updated_at: string
@@ -619,8 +621,10 @@ export type Database = {
           description?: string | null
           extracurricular_id: string
           extracurricular_student_id?: string | null
-          grade: string
+          grade?: string | null
           id?: string
+          notes?: string | null
+          score?: number | null
           semester_id: string
           student_id?: string | null
           updated_at?: string
@@ -631,8 +635,10 @@ export type Database = {
           description?: string | null
           extracurricular_id?: string
           extracurricular_student_id?: string | null
-          grade?: string
+          grade?: string | null
           id?: string
+          notes?: string | null
+          score?: number | null
           semester_id?: string
           student_id?: string | null
           updated_at?: string

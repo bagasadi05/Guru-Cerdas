@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import GreetingRobot from './GreetingRobot';
-import { useNotifications } from './ui/NotificationCenter';
 import { useOnboarding } from './ui/OnboardingTour';
 import { SearchTrigger } from './SearchSystem';
 import { SkipLinks } from './AccessibilityComponents';
@@ -26,8 +25,6 @@ import { ShellHeaderActions } from './layout/ShellHeaderActions';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const { notifications, markAsRead, markAllAsRead, deleteNotification, clearAll } =
-    useNotifications();
   useOnboarding(); // Hook used for side effects
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -151,11 +148,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <ShellHeaderActions
               user={user}
-              notifications={notifications}
-              onMarkAsRead={markAsRead}
-              onMarkAllAsRead={markAllAsRead}
-              onDelete={deleteNotification}
-              onClearAll={clearAll}
             />
           </div>
         </header>

@@ -218,7 +218,7 @@ const StudentDetailPage = () => {
                     .eq('student_id', studentId!),
                 supabase
                     .from('extracurricular_grades')
-                    .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, description, created_at, updated_at')
+                    .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, score, description, notes, created_at, updated_at')
                     .eq('student_id', studentId!)
             ]);
             return {

@@ -31,6 +31,7 @@ import AttendanceStatsWidget from '../dashboard/AttendanceStatsWidget';
 import ParentMessagesWidget from '../dashboard/ParentMessagesWidget';
 import { ClassAnalyticsSection } from '../dashboard/ClassAnalyticsSection';
 import { LeaderboardCard } from '../gamification/LeaderboardCard';
+import TodayActionPanel from '../dashboard/TodayActionPanel';
 
 import ActivityFeedWidget from '../dashboard/ActivityFeedWidget';
 import { transformToGameData } from '../../services/gamificationService';
@@ -461,6 +462,7 @@ const DashboardPage: React.FC = () => {
           {' '}
           {/* Stats Section */}
           <section>{data && <StatsGrid data={data} currentTime={currentTime} />}</section>
+          {data && <TodayActionPanel data={data} />}
           {/* Operational Section */}
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-4 px-2">

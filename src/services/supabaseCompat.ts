@@ -23,7 +23,7 @@ type LiveExtracurricularStudentRow = Pick<
 >;
 type LiveExtracurricularGradeRow = Pick<
   ExtracurricularGradeRow,
-  'id' | 'user_id' | 'student_id' | 'extracurricular_student_id' | 'extracurricular_id' | 'semester_id' | 'grade' | 'description' | 'created_at'
+  'id' | 'user_id' | 'student_id' | 'extracurricular_student_id' | 'extracurricular_id' | 'semester_id' | 'grade' | 'score' | 'description' | 'notes' | 'created_at' | 'updated_at'
 >;
 
 export const CLASS_COMPAT_SELECT = 'id, user_id, name, created_at, deleted_at';
@@ -34,7 +34,7 @@ export const EXTRACURRICULAR_COMPAT_SELECT =
 export const EXTRACURRICULAR_STUDENT_COMPAT_SELECT =
   'id, user_id, name, gender, class_name, created_at';
 export const EXTRACURRICULAR_GRADE_COMPAT_SELECT =
-  'id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, description, created_at';
+  'id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, score, description, notes, created_at, updated_at';
 
 export const hydrateClassRow = (row: LiveClassRow): ClassRow => ({
   ...row,
@@ -71,5 +71,5 @@ export const hydrateExtracurricularGradeRow = (
   row: LiveExtracurricularGradeRow
 ): ExtracurricularGradeRow => ({
   ...row,
-  updated_at: row.created_at,
+  updated_at: row.updated_at || row.created_at,
 });

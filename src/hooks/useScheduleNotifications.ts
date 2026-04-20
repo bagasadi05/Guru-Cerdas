@@ -9,25 +9,26 @@ export const useScheduleNotifications = (schedule: ScheduleRow[]) => {
             return;
         }
 
-        const requestPermissionAndSync = async () => {
+        const shouldSync = localStorage.getItem('scheduleNotificationsEnabled') === 'true';
+        if (!shouldSync || Notification.permission !== 'granted' || schedule.length === 0) {
+            return;
+        }
+
+        const syncSchedule = async () => {
             try {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    if (navigator.serviceWorker.controller) {
-                        navigator.serviceWorker.controller.postMessage({
-                            type: 'SCHEDULE_UPDATED',
-                            payload: schedule
-                        });
-                    }
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration?.active) {
+                    registration.active.postMessage({
+                        type: 'SCHEDULE_UPDATED',
+                        payload: schedule
+                    });
                 }
             } catch (error) {
-                console.error('Error requesting notification permission:', error);
+                console.error('Error syncing schedule notifications:', error);
             }
         };
 
-        if (schedule.length > 0) {
-            requestPermissionAndSync();
-        }
+        syncSchedule();
 
     }, [schedule]);
 };

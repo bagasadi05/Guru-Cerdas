@@ -16,6 +16,8 @@ import { useSemester } from '../../contexts/SemesterContext';
 
 type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
 
+const DEFAULT_ACADEMIC_DESCRIPTION = 'Capaian sesuai dengan nilai yang diperoleh.';
+
 const fetchReportData = async (studentId: string, userId: string): Promise<ReportData> => {
     const studentRes = await supabase.from('students').select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, classes(id, name)').eq('id', studentId).eq('user_id', userId).is('deleted_at', null).single();
     if (studentRes.error) throw new Error(studentRes.error.message);
@@ -32,6 +34,78 @@ const fetchReportData = async (studentId: string, userId: string): Promise<Repor
         student: studentRes.data as any, reports: reportsRes.data || [], attendanceRecords: attendanceRes.data || [],
         academicRecords: academicRes.data || [], violations: violationsRes.data || [], quizPoints: quizPointsRes.data || []
     };
+};
+
+const getAcademicPredicate = (score: number) => {
+    if (score >= 90) return 'A';
+    if (score >= 80) return 'B';
+    if (score >= 70) return 'C';
+    if (score >= 60) return 'D';
+    return 'E';
+};
+
+const sanitizeAcademicDescription = (note?: string | null) => (
+    (note || '')
+        .replace(/\[\s*semester[^\]]*\]/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+);
+
+const formatAcademicDescription = (note?: string | null) => {
+    const cleanedNote = sanitizeAcademicDescription(note);
+    return cleanedNote || DEFAULT_ACADEMIC_DESCRIPTION;
+};
+
+const summarizeQuizPoints = (items: Database['public']['Tables']['quiz_points']['Row'][]) => {
+    const grouped = new Map<string, { activity: string; count: number; totalPoints: number }>();
+
+    items.forEach((item) => {
+        const activity = item.quiz_name || item.category || 'Aktivitas';
+        const current = grouped.get(activity);
+
+        if (current) {
+            current.count += 1;
+            current.totalPoints += item.points;
+            return;
+        }
+
+        grouped.set(activity, {
+            activity,
+            count: 1,
+            totalPoints: item.points
+        });
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+        return a.activity.localeCompare(b.activity, 'id');
+    });
+};
+
+const summarizeViolations = (items: Database['public']['Tables']['violations']['Row'][]) => {
+    const grouped = new Map<string, { note: string; count: number; totalPoints: number }>();
+
+    items.forEach((item) => {
+        const note = item.description?.trim() || 'Catatan perilaku';
+        const current = grouped.get(note);
+
+        if (current) {
+            current.count += 1;
+            current.totalPoints += item.points;
+            return;
+        }
+
+        grouped.set(note, {
+            note,
+            count: 1,
+            totalPoints: item.points
+        });
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+        return a.note.localeCompare(b.note, 'id');
+    });
 };
 
 const ReportPage: React.FC = () => {
@@ -210,11 +284,14 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
         return data.quizPoints.filter(r => r.semester_id === selectedSemesterId);
     }, [data, selectedSemesterId]);
 
+    const summarizedQuizPoints = useMemo(() => summarizeQuizPoints(filteredQuizPoints), [filteredQuizPoints]);
+
     const filteredViolations = useMemo(() => {
         if (!data) return [];
         if (!selectedSemesterId) return data.violations;
         return data.violations.filter(r => r.semester_id === selectedSemesterId);
     }, [data, selectedSemesterId]);
+    const summarizedViolations = useMemo(() => summarizeViolations(filteredViolations), [filteredViolations]);
 
     const attendanceSummary = useMemo(() => {
         return filteredAttendance.reduce((acc, record) => {
@@ -416,78 +493,106 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                 <main className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center custom-scrollbar bg-gradient-to-br from-slate-100 to-indigo-50 dark:from-slate-900 dark:to-indigo-950">
                     <div id="printable-area" className="w-full md:w-[210mm] md:min-h-[297mm] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xl md:shadow-2xl rounded-2xl p-6 md:p-[20mm] origin-top transform transition-transform animate-fade-in border border-slate-200 dark:border-slate-700">
                         {/* --- HEADER --- */}
-                        <header className="text-center border-b-2 border-indigo-500 dark:border-indigo-400 pb-4 mb-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 -mx-6 md:-mx-[20mm] -mt-6 md:-mt-[20mm] px-6 md:px-[20mm] pt-6 md:pt-[20mm] rounded-t-2xl">
-                            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-                                {/* School Logo - Left */}
-                                <img
-                                    src="/logo_sekolah.png"
-                                    alt="Logo Sekolah"
-                                    className="w-16 h-16 md:w-20 md:h-20 object-contain"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
-                                />
-                                {/* Title in the center */}
-                                <div className="flex-1 text-center">
-                                    <h1 className="text-xl md:text-2xl font-bold uppercase tracking-wider font-serif bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">Laporan Hasil Belajar</h1>
-                                    <h2 className="text-sm md:text-base font-medium mt-1 tracking-wide text-slate-600 dark:text-slate-400">MI AL IRSYAD AL ISLAMIYYAH KOTA MADIUN</h2>
+                        <header className="-mx-6 md:-mx-[20mm] -mt-6 md:-mt-[20mm] px-6 md:px-[20mm] pt-6 md:pt-[18mm] pb-5 mb-6 rounded-t-2xl bg-white dark:bg-slate-900 border-b-4 border-slate-800 dark:border-slate-100">
+                            <div className="rounded-2xl border border-slate-300 dark:border-slate-700 px-4 py-4 md:px-6 md:py-5">
+                                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                                    <div className="w-20 md:w-24 flex justify-center">
+                                        <img
+                                            src="/logo_sekolah.png"
+                                            alt="Logo Sekolah"
+                                            className="w-16 h-16 md:w-20 md:h-20 object-contain"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="flex-1 text-center">
+                                        <p className="text-[10px] md:text-xs uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">Kementerian Agama Republik Indonesia</p>
+                                        <p className="text-[10px] md:text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 mt-1">Madrasah Ibtidaiyah</p>
+                                        <h1 className="text-lg md:text-[28px] font-bold uppercase tracking-[0.08em] font-serif text-slate-900 dark:text-white mt-2">Laporan Hasil Belajar Siswa</h1>
+                                        <h2 className="text-sm md:text-lg font-bold mt-2 text-emerald-800 dark:text-emerald-300">MI AL IRSYAD AL ISLAMIYYAH KOTA MADIUN</h2>
+                                        <p className="text-[11px] md:text-sm mt-2 text-slate-600 dark:text-slate-400">Jl. Diponegoro No. 123, Madiun, Jawa Timur | Telp. (0351) 123456</p>
+                                    </div>
+                                    <div className="w-16 md:w-20 flex justify-center">
+                                        <img
+                                            src="/logo_kemenag.png"
+                                            alt="Logo Kemenag"
+                                            className="w-14 md:w-16 object-contain"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                    </div>
                                 </div>
-                                {/* Kemenag Logo - Right */}
-                                <img
-                                    src="/logo_kemenag.png"
-                                    alt="Logo Kemenag"
-                                    className="w-16 h-16 md:w-20 md:h-20 object-contain"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
-                                />
                             </div>
                         </header>
 
                         {/* --- STUDENT INFO --- */}
-                        <div className="mb-8 p-4 border border-indigo-200 dark:border-indigo-800 rounded-xl bg-gradient-to-r from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/10 dark:to-purple-900/10">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                <div className="grid grid-cols-[100px_1fr] gap-2">
-                                    <span className="font-bold text-indigo-700 dark:text-indigo-400">Nama Siswa</span>
-                                    <span className="font-medium text-slate-800 dark:text-slate-200">: {data.student.name}</span>
-                                    <span className="font-bold text-indigo-700 dark:text-indigo-400">Kelas</span>
-                                    <span className="font-medium text-slate-800 dark:text-slate-200">: {data.student.classes?.name || 'N/A'}</span>
+                        <div className="mb-8 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 p-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                                <div className="grid grid-cols-[108px_10px_1fr] gap-y-2">
+                                    <span className="font-semibold text-slate-600 dark:text-slate-400">Nama Siswa</span>
+                                    <span className="text-slate-500">:</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{data.student.name}</span>
+                                    <span className="font-semibold text-slate-600 dark:text-slate-400">Kelas</span>
+                                    <span className="text-slate-500">:</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{data.student.classes?.name || 'N/A'}</span>
+                                    <span className="font-semibold text-slate-600 dark:text-slate-400">NIS/NISN</span>
+                                    <span className="text-slate-500">:</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">- / -</span>
                                 </div>
-                                <div className="grid grid-cols-[100px_1fr] gap-2">
-                                    <span className="font-bold text-indigo-700 dark:text-indigo-400">Tahun Ajaran</span>
-                                    <span className="font-medium text-slate-800 dark:text-slate-200">: {academicYear}</span>
-                                    <span className="font-bold text-indigo-700 dark:text-indigo-400">Semester</span>
-                                    <span className="font-medium text-slate-800 dark:text-slate-200">: {semesterName}</span>
+                                <div className="grid grid-cols-[108px_10px_1fr] gap-y-2">
+                                    <span className="font-semibold text-slate-600 dark:text-slate-400">Tahun Ajaran</span>
+                                    <span className="text-slate-500">:</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{academicYear}</span>
+                                    <span className="font-semibold text-slate-600 dark:text-slate-400">Semester</span>
+                                    <span className="text-slate-500">:</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{semesterName}</span>
+                                    <span className="font-semibold text-slate-600 dark:text-slate-400">Fase</span>
+                                    <span className="text-slate-500">:</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">-</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* --- ACADEMICS --- */}
                         <section className="mb-8">
-                            <h3 className="text-base font-bold mb-3 border-b-2 border-indigo-500 dark:border-indigo-400 pb-1 uppercase tracking-wide text-indigo-700 dark:text-indigo-400">A. Capaian Akademik</h3>
-                            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-                                <table className="w-full text-sm border-collapse min-w-[600px] md:min-w-0">
+                            <div className="rounded-t-xl bg-emerald-800 dark:bg-emerald-700 px-4 py-2.5">
+                                <h3 className="text-sm font-bold uppercase tracking-[0.08em] text-white">A. Capaian Akademik</h3>
+                            </div>
+                            <div className="overflow-x-auto rounded-b-xl border border-t-0 border-slate-300 dark:border-slate-700">
+                                <table className="w-full text-sm border-collapse min-w-[680px] md:min-w-0">
                                     <thead>
-                                        <tr className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                                        <tr className="bg-slate-800 dark:bg-slate-700 text-white">
                                             <th className="p-3 text-center w-10 font-bold">No</th>
                                             <th className="p-3 text-left font-bold">Mata Pelajaran</th>
                                             <th className="p-3 text-left font-bold">Penilaian</th>
                                             <th className="p-3 text-center w-16 font-bold">Nilai</th>
-                                            <th className="p-3 text-left font-bold">Deskripsi</th>
+                                            <th className="p-3 text-center w-16 font-bold">Pred</th>
+                                            <th className="p-3 text-left font-bold">Deskripsi Capaian</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {Object.entries(academicRecordsBySubject).map(([subject, records], subjIndex) => (
                                             <React.Fragment key={subject}>
-                                                {(records as AcademicRecordRow[]).map((record, index) => (
-                                                    <tr key={record.id} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border-b border-slate-100 dark:border-slate-800">
-                                                        <td className="p-3 text-center text-slate-600 dark:text-slate-400">{index === 0 ? subjIndex + 1 : ''}</td>
-                                                        <td className="p-3 font-bold text-slate-800 dark:text-slate-200">{index === 0 ? subject : ''}</td>
-                                                        <td className="p-3 text-slate-700 dark:text-slate-300">{record.assessment_name || '-'}</td>
-                                                        <td className={`p-3 text-center font-bold ${record.score >= 75 ? 'text-emerald-600 dark:text-emerald-400' : record.score >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`}>{record.score}</td>
-                                                        <td className="p-3 text-xs italic text-slate-500 dark:text-slate-400">{record.notes || 'Capaian sesuai dengan nilai yang diperoleh.'}</td>
-                                                    </tr>
-                                                ))}
+                                                <tr className="border-t-2 border-slate-300 bg-slate-100/90 dark:border-slate-600 dark:bg-slate-800/90">
+                                                    <td colSpan={6} className="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-100">
+                                                        Mata Pelajaran: {subject}
+                                                    </td>
+                                                </tr>
+                                                {(records as AcademicRecordRow[]).map((record, index) => {
+                                                    const predicate = getAcademicPredicate(record.score);
+                                                    return (
+                                                        <tr key={record.id} className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                                                            <td className="p-3 text-center text-slate-600 dark:text-slate-400">{subjIndex + 1}.{index + 1}</td>
+                                                            <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">{index === 0 ? subject : ''}</td>
+                                                            <td className="p-3 text-slate-700 dark:text-slate-300">{record.assessment_name || '-'}</td>
+                                                            <td className="p-3 text-center font-bold text-slate-900 dark:text-slate-100">{record.score}</td>
+                                                            <td className="p-3 text-center font-bold text-slate-900 dark:text-slate-100">{predicate}</td>
+                                                            <td className="p-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{index === 0 ? formatAcademicDescription(record.notes) : ''}</td>
+                                                        </tr>
+                                                    );
+                                                })}
                                             </React.Fragment>
                                         ))}
                                     </tbody>
@@ -518,13 +623,33 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                             </div>
                             <div className="flex-[1.5]">
                                 <h3 className="text-base font-bold mb-3 border-b-2 border-indigo-500 dark:border-indigo-400 pb-1 uppercase tracking-wide text-indigo-700 dark:text-indigo-400">C. Catatan Perilaku</h3>
-                                <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 min-h-[120px] text-sm bg-indigo-50/50 dark:bg-indigo-900/10">
-                                    <ul className="list-disc list-inside space-y-2">
-                                        {(data.violations || []).filter(v => !selectedSemesterId || v.semester_id === selectedSemesterId).length > 0
-                                            ? (data.violations || []).filter(v => !selectedSemesterId || v.semester_id === selectedSemesterId).map(v => <li key={v.id} className="text-slate-700 dark:text-slate-300">{v.description}</li>)
-                                            : <li className="italic text-slate-600 dark:text-slate-400">Siswa menunjukkan sikap yang baik dan terpuji selama pembelajaran.</li>
-                                        }
-                                    </ul>
+                                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <table className="w-full text-sm border-collapse min-w-[520px] md:min-w-0">
+                                        <thead>
+                                            <tr className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                                                <th className="p-3 text-center w-10 font-bold">No</th>
+                                                <th className="p-3 text-left font-bold">Catatan</th>
+                                                <th className="p-3 text-center w-24 font-bold">Frekuensi</th>
+                                                <th className="p-3 text-center w-24 font-bold">Total Poin</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {summarizedViolations.length > 0 ? summarizedViolations.map((v, index) => (
+                                                <tr key={`${v.note}-${index}`} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border-b border-slate-100 dark:border-slate-800">
+                                                    <td className="p-3 text-center text-slate-600 dark:text-slate-400">{index + 1}</td>
+                                                    <td className="p-3 text-slate-800 dark:text-slate-200">{v.note}</td>
+                                                    <td className="p-3 text-center font-semibold text-slate-700 dark:text-slate-300">{v.count}x</td>
+                                                    <td className="p-3 text-center font-bold text-amber-600 dark:text-amber-400">{v.totalPoints}</td>
+                                                </tr>
+                                            )) : (
+                                                <tr>
+                                                    <td colSpan={4} className="p-4 text-center italic text-slate-600 dark:text-slate-400 bg-indigo-50/50 dark:bg-indigo-900/10">
+                                                        Siswa menunjukkan sikap yang baik dan terpuji selama pembelajaran.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </section>
@@ -534,22 +659,22 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                             <section className="mb-8">
                                 <h3 className="text-base font-bold mb-3 border-b-2 border-indigo-500 dark:border-indigo-400 pb-1 uppercase tracking-wide text-indigo-700 dark:text-indigo-400">D. Keaktifan & Prestasi</h3>
                                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-                                    <table className="w-full text-sm border-collapse min-w-[600px] md:min-w-0">
+                                    <table className="w-full text-sm border-collapse min-w-[520px] md:min-w-0">
                                         <thead>
                                             <tr className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
                                                 <th className="p-3 text-center w-10 font-bold">No</th>
                                                 <th className="p-3 text-left font-bold">Kegiatan</th>
-                                                <th className="p-3 text-center w-20 font-bold">Poin</th>
-                                                <th className="p-3 text-center w-32 font-bold">Tanggal</th>
+                                                <th className="p-3 text-center w-24 font-bold">Frekuensi</th>
+                                                <th className="p-3 text-center w-24 font-bold">Total Poin</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {filteredQuizPoints.map((q, index) => (
-                                                <tr key={q.id} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border-b border-slate-100 dark:border-slate-800">
+                                            {summarizedQuizPoints.map((q, index) => (
+                                                <tr key={`${q.activity}-${index}`} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border-b border-slate-100 dark:border-slate-800">
                                                     <td className="p-3 text-center text-slate-600 dark:text-slate-400">{index + 1}</td>
-                                                    <td className="p-3 text-slate-800 dark:text-slate-200">{q.quiz_name || q.category || 'Aktivitas'}</td>
-                                                    <td className="p-3 text-center font-bold text-emerald-600 dark:text-emerald-400">+{q.points}</td>
-                                                    <td className="p-3 text-center text-slate-600 dark:text-slate-400">{new Date(q.created_at).toLocaleDateString('id-ID')}</td>
+                                                    <td className="p-3 text-slate-800 dark:text-slate-200">{q.activity}</td>
+                                                    <td className="p-3 text-center font-semibold text-slate-700 dark:text-slate-300">{q.count}x</td>
+                                                    <td className="p-3 text-center font-bold text-emerald-600 dark:text-emerald-400">{q.totalPoints}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

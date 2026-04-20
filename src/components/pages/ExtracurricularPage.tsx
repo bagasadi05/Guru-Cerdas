@@ -39,6 +39,12 @@ type EnrollmentView = {
     name: string;
     className: string | null;
 };
+
+type GradeDraft = {
+    grade: string | null;
+    score: string;
+    description: string;
+};
 type StudentEnrollmentRow = {
     id: string;
     student_id: string | null;
@@ -73,6 +79,16 @@ const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
 // Category options
 const CATEGORIES = ['Olahraga', 'Seni', 'Akademik', 'Keagamaan', 'Lainnya'];
 const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const GRADE_OPTIONS = ['A', 'B', 'C', 'D'] as const;
+
+const getGradeFromScore = (score: number) => {
+    if (score >= 90) return 'A';
+    if (score >= 80) return 'B';
+    if (score >= 70) return 'C';
+    return 'D';
+};
+
+const formatScoreInput = (score: number | null | undefined) => (score == null ? '' : String(score));
 
 const sortByEnrollmentName = (a: EnrollmentView, b: EnrollmentView) => a.name.localeCompare(b.name);
 const sortByClassThenName = (a: EnrollmentView, b: EnrollmentView) => {
@@ -119,6 +135,7 @@ const ExtracurricularPage: React.FC = () => {
     const [editingExtraStudent, setEditingExtraStudent] = useState<ExtracurricularStudent | null>(null);
     const [confirmDeleteExtraStudent, setConfirmDeleteExtraStudent] = useState<ExtracurricularStudent | null>(null);
     const [studentClassFilter, setStudentClassFilter] = useState<string>('all');
+    const [gradeDrafts, setGradeDrafts] = useState<Record<string, GradeDraft>>({});
 
     // Manual Attendance States
     const [autoSaveAttendance, setAutoSaveAttendance] = useState(true);
@@ -521,12 +538,14 @@ const ExtracurricularPage: React.FC = () => {
             studentId,
             studentType,
             grade,
+            score,
             description,
         }: {
             studentId: string;
             studentType: 'student' | 'extracurricular_student';
-            grade: string;
-            description?: string;
+            grade?: string | null;
+            score?: number | null;
+            description?: string | null;
         }) => {
             const payload =
                 studentType === 'student'
@@ -547,8 +566,9 @@ const ExtracurricularPage: React.FC = () => {
                     ...payload,
                     extracurricular_id: selectedExtracurricular,
                     semester_id: activeSemester.id,
-                    grade,
-                    description,
+                    grade: grade ?? null,
+                    score: score ?? null,
+                    description: description ?? null,
                     user_id: user!.id,
                 }, { onConflict });
             if (error) throw error;
@@ -556,6 +576,9 @@ const ExtracurricularPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['extracurricular_grades'] });
             toast.success('Nilai berhasil disimpan');
+        },
+        onError: (error: Error) => {
+            toast.error(error.message);
         },
     });
 
@@ -787,6 +810,93 @@ const ExtracurricularPage: React.FC = () => {
         });
         return map;
     }, [grades]);
+
+    useEffect(() => {
+        setGradeDrafts({});
+    }, [selectedExtracurricular, activeSemester?.id]);
+
+    useEffect(() => {
+        setGradeDrafts((prev) => {
+            const next = { ...prev };
+            grades.forEach((grade) => {
+                const key = grade.student_id
+                    ? `student:${grade.student_id}`
+                    : grade.extracurricular_student_id
+                        ? `extracurricular_student:${grade.extracurricular_student_id}`
+                        : '';
+                if (!key) return;
+                next[key] = {
+                    grade: grade.grade ?? null,
+                    score: formatScoreInput(grade.score),
+                    description: grade.description || '',
+                };
+            });
+            return next;
+        });
+    }, [grades]);
+
+    const updateGradeDraft = useCallback((key: string, patch: Partial<GradeDraft>) => {
+        setGradeDrafts((prev) => {
+            const current = prev[key] || { grade: null, score: '', description: '' };
+            return {
+                ...prev,
+                [key]: {
+                    ...current,
+                    ...patch,
+                },
+            };
+        });
+    }, []);
+
+    const saveGradeEntry = useCallback((enrollment: EnrollmentView, patch?: Partial<GradeDraft>) => {
+        const key = `${enrollment.participantType}:${enrollment.participantId}`;
+        const savedGrade = gradesMap[key];
+        const current = gradeDrafts[key] || {
+            grade: savedGrade?.grade ?? null,
+            score: formatScoreInput(savedGrade?.score),
+            description: savedGrade?.description || '',
+        };
+        const next = { ...current, ...patch };
+        const scoreText = next.score.trim();
+        const description = next.description.trim();
+        let normalizedScore: number | null = null;
+
+        if (scoreText) {
+            const parsed = Number(scoreText);
+            if (!Number.isFinite(parsed)) {
+                toast.error('Nilai ekskul harus berupa angka.');
+                return;
+            }
+            if (parsed < 0 || parsed > 100) {
+                toast.error('Nilai ekskul harus di antara 0 sampai 100.');
+                return;
+            }
+            normalizedScore = parsed;
+        }
+
+        const resolvedGrade = next.grade ?? (normalizedScore !== null ? getGradeFromScore(normalizedScore) : null);
+
+        if (!resolvedGrade && normalizedScore === null && description.length === 0) {
+            return;
+        }
+
+        setGradeDrafts((prev) => ({
+            ...prev,
+            [key]: {
+                grade: resolvedGrade,
+                score: formatScoreInput(normalizedScore),
+                description: next.description,
+            },
+        }));
+
+        gradeMutation.mutate({
+            studentId: enrollment.participantId,
+            studentType: enrollment.participantType,
+            grade: resolvedGrade,
+            score: normalizedScore,
+            description: description || null,
+        });
+    }, [gradeDrafts, gradesMap, toast]);
 
     // Get unique class names from extracurricular students
     const uniqueExtraStudentClasses = useMemo(() => {
@@ -1050,12 +1160,13 @@ const ExtracurricularPage: React.FC = () => {
                 enrollment.name,
                 enrollment.className || '-',
                 grade?.grade || '-',
+                grade?.score ?? '-',
                 grade?.description || '-'
             ];
         });
 
         autoTable(doc, {
-            head: [['No', 'Nama Siswa', 'Kelas', 'Nilai', 'Deskripsi']],
+            head: [['No', 'Nama Siswa', 'Kelas', 'Predikat', 'Nilai', 'Deskripsi']],
             body: tableBody,
             startY: 45,
             styles: { fontSize: 9 },
@@ -1076,7 +1187,8 @@ const ExtracurricularPage: React.FC = () => {
                 'No': index + 1,
                 'Nama Siswa': enrollment.name,
                 'Kelas': enrollment.className || '-',
-                'Nilai': grade?.grade || '-',
+                'Predikat': grade?.grade || '-',
+                'Nilai': grade?.score ?? '-',
                 'Deskripsi': grade?.description || '-'
             };
         });
@@ -1086,7 +1198,7 @@ const ExtracurricularPage: React.FC = () => {
         XLSX.utils.book_append_sheet(workbook, worksheet, "Nilai");
 
         const max_width = data.reduce((w, r) => Math.max(w, r['Nama Siswa'].length), 10);
-        worksheet["!cols"] = [{ wch: 5 }, { wch: max_width + 2 }, { wch: 10 }, { wch: 10 }, { wch: 30 }];
+        worksheet["!cols"] = [{ wch: 5 }, { wch: max_width + 2 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 30 }];
 
         XLSX.writeFile(workbook, `Nilai_Ekskul_${selectedExtracurricularData.name}_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
@@ -1836,14 +1948,15 @@ const ExtracurricularPage: React.FC = () => {
                                             <tr>
                                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nama Siswa</th>
                                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kelas</th>
-                                                <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[200px]">Nilai</th>
+                                                <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[200px]">Predikat</th>
+                                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[140px]">Nilai</th>
                                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Deskripsi</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                                             {enrollments.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                                         Belum ada siswa terdaftar di ekskul ini
                                                     </td>
                                                 </tr>
@@ -1851,6 +1964,10 @@ const ExtracurricularPage: React.FC = () => {
                                                 enrollmentsSortedByName.map((enrollment) => {
                                                     const key = `${enrollment.participantType}:${enrollment.participantId}`;
                                                     const gradeData = gradesMap[key];
+                                                    const gradeDraft = gradeDrafts[key];
+                                                    const currentGrade = gradeDraft?.grade ?? gradeData?.grade ?? null;
+                                                    const currentScore = gradeDraft?.score ?? formatScoreInput(gradeData?.score);
+                                                    const currentDescription = gradeDraft?.description ?? gradeData?.description ?? '';
 
                                                     return (
                                                         <tr key={enrollment.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
@@ -1865,16 +1982,15 @@ const ExtracurricularPage: React.FC = () => {
                                                             </td>
                                                             <td className="px-6 py-4">
                                                                 <div className="flex justify-center gap-1">
-                                                                    {['A', 'B', 'C', 'D'].map((grade) => (
+                                                                    {GRADE_OPTIONS.map((grade) => (
                                                                         <button
                                                                             key={grade}
-                                                                            onClick={() => gradeMutation.mutate({
-                                                                                studentId: enrollment.participantId,
-                                                                                studentType: enrollment.participantType,
-                                                                                grade: grade,
-                                                                                description: gradeData?.description || ''
-                                                                            })}
-                                                                            className={`w-8 h-8 rounded-lg text-sm font-bold transition-all ${gradeData?.grade === grade
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                updateGradeDraft(key, { grade });
+                                                                                saveGradeEntry(enrollment, { grade });
+                                                                            }}
+                                                                            className={`w-8 h-8 rounded-lg text-sm font-bold transition-all ${currentGrade === grade
                                                                                 ? grade === 'A' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' :
                                                                                     grade === 'B' ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20' :
                                                                                         grade === 'C' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' :
@@ -1888,19 +2004,25 @@ const ExtracurricularPage: React.FC = () => {
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-4">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    step="0.01"
+                                                                    inputMode="decimal"
+                                                                    value={currentScore}
+                                                                    onChange={(e) => updateGradeDraft(key, { score: e.target.value })}
+                                                                    onBlur={() => saveGradeEntry(enrollment)}
+                                                                    placeholder="0 - 100"
+                                                                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all group-hover:bg-white dark:group-hover:bg-slate-800"
+                                                                />
+                                                            </td>
+                                                            <td className="px-6 py-4">
                                                                 <textarea
                                                                     placeholder="Deskripsi kemampuan..."
-                                                                    defaultValue={gradeData?.description || ''}
-                                                                    onBlur={(e) => {
-                                                                        if (gradeData?.grade) {
-                                                                            gradeMutation.mutate({
-                                                                                studentId: enrollment.participantId,
-                                                                                studentType: enrollment.participantType,
-                                                                                grade: gradeData.grade,
-                                                                                description: e.target.value
-                                                                            });
-                                                                        }
-                                                                    }}
+                                                                    value={currentDescription}
+                                                                    onChange={(e) => updateGradeDraft(key, { description: e.target.value })}
+                                                                    onBlur={() => saveGradeEntry(enrollment)}
                                                                     rows={1}
                                                                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all resize-y min-h-[40px] group-hover:bg-white dark:group-hover:bg-slate-800"
                                                                 />

@@ -1,18 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ThemeToggle from '../ui/ThemeToggle';
-import { NotificationCenter } from '../ui/NotificationCenter';
+import NotificationPanel from '../ui/NotificationPanel';
 import { NetworkQualityIndicator, EnhancedSyncStatus } from '../ui/PerformanceIndicators';
 
 interface ShellHeaderActionsProps {
     user: {
         avatarUrl?: string | null;
     } | null;
-    notifications: React.ComponentProps<typeof NotificationCenter>['notifications'];
-    onMarkAsRead: React.ComponentProps<typeof NotificationCenter>['onMarkAsRead'];
-    onMarkAllAsRead: React.ComponentProps<typeof NotificationCenter>['onMarkAllAsRead'];
-    onDelete: React.ComponentProps<typeof NotificationCenter>['onDelete'];
-    onClearAll: React.ComponentProps<typeof NotificationCenter>['onClearAll'];
 }
 
 const ShellIconButton: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -23,11 +18,6 @@ const ShellIconButton: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
 export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
     user,
-    notifications,
-    onMarkAsRead,
-    onMarkAllAsRead,
-    onDelete,
-    onClearAll
 }) => {
     return (
         <div className="ml-auto flex items-center gap-3">
@@ -42,13 +32,7 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
             <EnhancedSyncStatus showDetails={true} />
 
             <ShellIconButton>
-                <NotificationCenter
-                    notifications={notifications}
-                    onMarkAsRead={onMarkAsRead}
-                    onMarkAllAsRead={onMarkAllAsRead}
-                    onDelete={onDelete}
-                    onClearAll={onClearAll}
-                />
+                <NotificationPanel />
             </ShellIconButton>
 
             <Link

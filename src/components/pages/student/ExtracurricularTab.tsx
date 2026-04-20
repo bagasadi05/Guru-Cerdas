@@ -110,6 +110,11 @@ export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
                                                 }`}>
                                                 {grade?.grade || '-'}
                                             </span>
+                                            {grade?.score != null && (
+                                                <span className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                                                    {grade.score}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

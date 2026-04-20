@@ -171,23 +171,24 @@ const scheduleNotifications = async (schedule: ScheduleWithClassName[]): Promise
 };
 
 /**
- * Sets up and registers the service worker for push notifications (web only)
+ * Uses the active service worker registration for web notifications
  */
 const setupServiceWorker = async (schedule?: ScheduleWithClassName[]): Promise<boolean> => {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-      await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.getRegistration();
 
-      if (schedule && registration.active) {
+      if (schedule && registration?.active) {
         registration.active.postMessage({
           type: 'SCHEDULE_UPDATED',
           payload: schedule,
         });
+      } else if (!registration?.active) {
+        console.warn('Service worker aktif belum tersedia untuk sinkronisasi notifikasi.');
       }
-      return true;
+      return !!registration?.active;
     } catch (error) {
-      console.error('Service Worker registration failed:', error);
+      console.error('Service Worker not ready:', error);
       return false;
     }
   }

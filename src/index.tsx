@@ -58,9 +58,18 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 
 // Register Service Worker for PWA
 if (isProduction) {
-  registerSW({
+  let isReloadingForUpdate = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (isReloadingForUpdate) return;
+    isReloadingForUpdate = true;
+    window.location.reload();
+  });
+
+  const updateSW = registerSW({
     onNeedRefresh() {
-      console.log('New content available, click on reload button to update.');
+      console.log('New content available, reloading to apply update.');
+      void updateSW(true);
     },
     onOfflineReady() {
       console.log('App is ready to work offline.');

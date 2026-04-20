@@ -94,6 +94,80 @@ const SCHOOL_CONFIG = {
     kemenagLogoUrl: "/logo_kemenag.png" // Kemenag logo
 };
 
+const DEFAULT_ACADEMIC_DESCRIPTION = 'Capaian sesuai dengan nilai yang diperoleh.';
+
+const getAcademicPredicate = (score: number) => {
+    if (score >= 90) return 'A';
+    if (score >= 80) return 'B';
+    if (score >= 70) return 'C';
+    if (score >= 60) return 'D';
+    return 'E';
+};
+
+const sanitizeAcademicDescription = (note?: string | null) => (
+    (note || '')
+        .replace(/\[\s*semester[^\]]*\]/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+);
+
+const formatAcademicDescription = (note?: string | null) => {
+    const cleanedNote = sanitizeAcademicDescription(note);
+    return cleanedNote || DEFAULT_ACADEMIC_DESCRIPTION;
+};
+
+const summarizeQuizPoints = (items: QuizPointRow[]) => {
+    const grouped = new Map<string, { activity: string; count: number; totalPoints: number }>();
+
+    items.forEach((item) => {
+        const activity = item.quiz_name || item.category || 'Aktivitas';
+        const current = grouped.get(activity);
+
+        if (current) {
+            current.count += 1;
+            current.totalPoints += item.points;
+            return;
+        }
+
+        grouped.set(activity, {
+            activity,
+            count: 1,
+            totalPoints: item.points
+        });
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+        return a.activity.localeCompare(b.activity, 'id');
+    });
+};
+
+const summarizeViolations = (items: ViolationRow[]) => {
+    const grouped = new Map<string, { note: string; count: number; totalPoints: number }>();
+
+    items.forEach((item) => {
+        const note = item.description?.trim() || 'Catatan perilaku';
+        const current = grouped.get(note);
+
+        if (current) {
+            current.count += 1;
+            current.totalPoints += item.points;
+            return;
+        }
+
+        grouped.set(note, {
+            note,
+            count: 1,
+            totalPoints: item.points
+        });
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+        return a.note.localeCompare(b.note, 'id');
+    });
+};
+
 /**
  * Generates a comprehensive student performance report in PDF format.
  * 
@@ -205,55 +279,85 @@ export const generateStudentReport = async (
     academicYear: string,
     user: AppUser | null
 ): Promise<void> => {
+    await preloadLogos();
     const { default: autoTable } = await getAutoTable();
     const { student, academicRecords, quizPoints, violations, attendanceRecords } = reportData;
 
     const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
     const PAGE_WIDTH = doc.internal.pageSize.getWidth();
     const MARGIN = 15;
+    const PRIMARY = [12, 74, 110] as const;
+    const PRIMARY_DARK = [7, 54, 66] as const;
+    const BORDER = [203, 213, 225] as const;
+    const MUTED = [71, 85, 105] as const;
     let currentY = 0;
 
     const addHeader = (isFirstPage = false) => {
-        // Header Background - taller to accommodate bigger logos
-        doc.setFillColor(30, 41, 59); // Dark blue
-        doc.rect(0, 0, PAGE_WIDTH, 38, 'F');
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 0, PAGE_WIDTH, 46, 'F');
 
-        // School logo on the left - larger (32x32mm) to compensate for thinner shape
+        doc.setDrawColor(...BORDER);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(MARGIN - 3, 8, PAGE_WIDTH - ((MARGIN - 3) * 2), 28, 2, 2, 'S');
+
+        const schoolLogoSize = 22;
+        const kemenagLogoWidth = 18;
+        const kemenagLogoHeight = 18 * (323 / 360);
+
         if (cachedLogoDataUrl) {
             try {
-                doc.addImage(cachedLogoDataUrl, 'PNG', MARGIN - 4, 3, 32, 32);
+                doc.addImage(cachedLogoDataUrl, 'PNG', MARGIN - 1, 10, schoolLogoSize, schoolLogoSize);
             } catch (e) {
                 console.warn('Could not add school logo to PDF', e);
             }
         }
 
-        // Kemenag logo on the right - 25x25mm
         if (cachedKemenagLogoUrl) {
             try {
-                doc.addImage(cachedKemenagLogoUrl, 'PNG', PAGE_WIDTH - MARGIN - 23, 6.5, 25, 25);
+                doc.addImage(
+                    cachedKemenagLogoUrl,
+                    'PNG',
+                    PAGE_WIDTH - MARGIN - kemenagLogoWidth,
+                    11 + ((18 - kemenagLogoHeight) / 2),
+                    kemenagLogoWidth,
+                    kemenagLogoHeight
+                );
             } catch (e) {
                 console.warn('Could not add Kemenag logo to PDF', e);
             }
         }
 
-        // Header text - always centered
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(15);
+        doc.setTextColor(...PRIMARY_DARK);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text("LAPORAN HASIL BELAJAR SISWA", PAGE_WIDTH / 2, 14, { align: 'center' });
+        doc.text('KEMENTERIAN AGAMA REPUBLIK INDONESIA', PAGE_WIDTH / 2, 14, { align: 'center' });
 
-        // School Name - centered
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(SCHOOL_CONFIG.name, PAGE_WIDTH / 2, 22, { align: 'center' });
-
-        // School Address - centered
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(209, 213, 219); // Light gray
-        doc.text(`${SCHOOL_CONFIG.address} | Telp: ${SCHOOL_CONFIG.phone}`, PAGE_WIDTH / 2, 29, { align: 'center' });
+        doc.setTextColor(...MUTED);
+        doc.text('MADRASAH IBTIDAIYAH', PAGE_WIDTH / 2, 18.5, { align: 'center' });
 
-        currentY = isFirstPage ? 48 : 43;
+        doc.setTextColor(...PRIMARY_DARK);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text("LAPORAN HASIL BELAJAR SISWA", PAGE_WIDTH / 2, 24.5, { align: 'center' });
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(SCHOOL_CONFIG.name, PAGE_WIDTH / 2, 29.5, { align: 'center' });
+
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...MUTED);
+        doc.text(`${SCHOOL_CONFIG.address} | Telp. ${SCHOOL_CONFIG.phone}`, PAGE_WIDTH / 2, 34.5, { align: 'center' });
+
+        doc.setDrawColor(...PRIMARY_DARK);
+        doc.setLineWidth(0.9);
+        doc.line(MARGIN - 3, 39, PAGE_WIDTH - (MARGIN - 3), 39);
+        doc.setLineWidth(0.25);
+        doc.line(MARGIN - 3, 40.4, PAGE_WIDTH - (MARGIN - 3), 40.4);
+
+        currentY = isFirstPage ? 49 : 46;
     };
 
     const addFooter = () => {
@@ -262,7 +366,7 @@ export const generateStudentReport = async (
             doc.setPage(i);
             doc.setFontSize(8);
             doc.setFont('helvetica', 'normal');
-            doc.setTextColor(107, 114, 128); // Gray 500
+            doc.setTextColor(...MUTED);
 
             const footerText = `Halaman ${i} dari ${pageCount}`;
             const dateText = `Dicetak: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
@@ -271,7 +375,7 @@ export const generateStudentReport = async (
             doc.text(dateText, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 10, { align: 'right' });
 
             // Decorative line
-            doc.setDrawColor(229, 231, 235); // Gray 200
+            doc.setDrawColor(...BORDER);
             doc.line(MARGIN, PAGE_HEIGHT - 15, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 15);
         }
     };
@@ -287,32 +391,35 @@ export const generateStudentReport = async (
         checkPageBreak(15);
 
         if (bgColor) {
-            doc.setFillColor(243, 244, 246); // Gray 100
-            doc.rect(MARGIN - 2, currentY - 6, PAGE_WIDTH - (MARGIN * 2) + 4, 12, 'F');
-            doc.setTextColor(17, 24, 39); // Gray 900
+            doc.setFillColor(...PRIMARY);
+            doc.roundedRect(MARGIN - 2, currentY - 6, PAGE_WIDTH - (MARGIN * 2) + 4, 10, 1.5, 1.5, 'F');
+            doc.setTextColor(255, 255, 255);
         } else {
-            doc.setTextColor(30, 41, 59);
+            doc.setTextColor(...PRIMARY_DARK);
         }
 
-        doc.setFontSize(12);
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text(title, MARGIN, currentY);
+        doc.text(title, MARGIN, currentY - 0.5);
 
         // Underline
         if (!bgColor) {
-            doc.setDrawColor(30, 41, 59);
+            doc.setDrawColor(...PRIMARY_DARK);
             doc.setLineWidth(0.5);
             doc.line(MARGIN, currentY + 2, MARGIN + doc.getTextWidth(title), currentY + 2);
         }
 
-        doc.setTextColor(30, 41, 59);
-        currentY += 12;
+        doc.setTextColor(...PRIMARY_DARK);
+        currentY += 10;
     };
 
     addHeader(true);
 
     // Student Info Section
-    doc.setTextColor(30, 41, 59);
+    doc.setDrawColor(...BORDER);
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(MARGIN, currentY - 1, PAGE_WIDTH - (MARGIN * 2), 23, 2, 2, 'FD');
+    doc.setTextColor(...PRIMARY_DARK);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
 
@@ -328,32 +435,24 @@ export const generateStudentReport = async (
         theme: 'plain',
         styles: {
             fontSize: 10,
-            cellPadding: 2,
+            cellPadding: { top: 1.8, right: 2, bottom: 1.8, left: 2 },
             font: 'helvetica',
-            textColor: [30, 41, 59]
+            textColor: [...PRIMARY_DARK]
         },
         columnStyles: {
-            0: { cellWidth: 30, fontStyle: 'bold' },
+            0: { cellWidth: 30, fontStyle: 'bold', textColor: [...MUTED] },
             1: { cellWidth: 60 },
-            2: { cellWidth: 30, fontStyle: 'bold' },
+            2: { cellWidth: 30, fontStyle: 'bold', textColor: [...MUTED] },
             3: { cellWidth: 'auto' }
         },
         margin: { left: MARGIN, right: MARGIN }
     });
 
-    currentY = (doc as any).lastAutoTable.finalY + 10;
+    currentY = (doc as any).lastAutoTable.finalY + 8;
 
     // A. Academic Records
     if (academicRecords.length > 0) {
         drawSectionTitle('A. Capaian Akademik', true);
-
-        const getPredicate = (score: number) => {
-            if (score >= 90) return 'A';
-            if (score >= 80) return 'B';
-            if (score >= 70) return 'C';
-            if (score >= 60) return 'D';
-            return 'E';
-        };
 
         const groupedRecords: { [key: string]: AcademicRecordRow[] } = {};
         academicRecords.forEach(record => {
@@ -368,14 +467,31 @@ export const generateStudentReport = async (
         let rowNum = 1;
 
         Object.entries(groupedRecords).forEach(([subject, records]) => {
+            academicBody.push([
+                {
+                    content: `Mata Pelajaran: ${subject}`,
+                    colSpan: 6,
+                    styles: {
+                        fillColor: [232, 240, 247],
+                        textColor: [...PRIMARY_DARK],
+                        fontStyle: 'bold',
+                        halign: 'left',
+                        valign: 'middle',
+                        cellPadding: { top: 2.5, right: 3, bottom: 2.5, left: 4 },
+                        lineColor: [...BORDER],
+                        lineWidth: 0.25
+                    }
+                }
+            ]);
+
             records.forEach((record, index) => {
                 academicBody.push([
                     rowNum++,
                     index === 0 ? subject : '',
                     record.assessment_name || '-',
                     record.score,
-                    getPredicate(record.score),
-                    record.notes || 'Capaian sesuai dengan nilai yang diperoleh.'
+                    getAcademicPredicate(record.score),
+                    index === 0 ? formatAcademicDescription(record.notes) : ''
                 ]);
             });
         });
@@ -386,7 +502,7 @@ export const generateStudentReport = async (
             body: academicBody,
             theme: 'grid',
             headStyles: {
-                fillColor: [30, 41, 59],
+                fillColor: [...PRIMARY_DARK],
                 textColor: [255, 255, 255],
                 fontSize: 9,
                 fontStyle: 'bold',
@@ -396,8 +512,8 @@ export const generateStudentReport = async (
             styles: {
                 fontSize: 9,
                 cellPadding: 3,
-                lineColor: [229, 231, 235],
-                lineWidth: 0.1,
+                lineColor: [...BORDER],
+                lineWidth: 0.15,
                 font: 'helvetica',
                 valign: 'middle'
             },
@@ -409,15 +525,14 @@ export const generateStudentReport = async (
                 4: { cellWidth: 15, halign: 'center' },
                 5: { cellWidth: 'auto' }
             },
-            alternateRowStyles: { fillColor: [249, 250, 251] },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
             margin: { left: MARGIN, right: MARGIN }
         });
 
         currentY = (doc as any).lastAutoTable.finalY + 10;
     }
 
-    // B. Attendance & Behavior (Side by Side)
-    drawSectionTitle('B. Absensi & Perilaku', true);
+    drawSectionTitle('B. Rekap Ketidakhadiran', true);
 
     const attendanceSummary = attendanceRecords.reduce((acc, record) => {
         if (record.status !== 'Hadir') {
@@ -426,21 +541,17 @@ export const generateStudentReport = async (
         return acc;
     }, { Sakit: 0, Izin: 0, Alpha: 0 });
 
-    const tableStartY = currentY;
-    const tableWidth = (PAGE_WIDTH - MARGIN * 2 - 10) / 2;
-
-    // Attendance Table
     autoTable(doc, {
-        startY: tableStartY,
-        head: [['Rekapitulasi Ketidakhadiran']],
+        startY: currentY,
+        head: [['Jenis Ketidakhadiran', 'Jumlah']],
         body: [
-            [`Sakit: ${attendanceSummary.Sakit} hari`],
-            [`Izin: ${attendanceSummary.Izin} hari`],
-            [`Tanpa Keterangan: ${attendanceSummary.Alpha} hari`]
+            ['Sakit', `${attendanceSummary.Sakit} hari`],
+            ['Izin', `${attendanceSummary.Izin} hari`],
+            ['Tanpa Keterangan', `${attendanceSummary.Alpha} hari`]
         ],
         theme: 'grid',
         headStyles: {
-            fillColor: [30, 41, 59],
+            fillColor: [...PRIMARY_DARK],
             textColor: [255, 255, 255],
             fontSize: 9,
             fontStyle: 'bold',
@@ -449,27 +560,32 @@ export const generateStudentReport = async (
         styles: {
             fontSize: 9,
             cellPadding: 3,
-            lineColor: [229, 231, 235],
-            lineWidth: 0.1
+            lineColor: [...BORDER],
+            lineWidth: 0.15
         },
-        tableWidth: tableWidth,
-        margin: { left: MARGIN }
+        columnStyles: {
+            0: { cellWidth: 95 },
+            1: { cellWidth: 35, halign: 'center', fontStyle: 'bold' }
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: MARGIN, right: PAGE_WIDTH - MARGIN - 130 }
     });
 
-    const leftTableFinalY = (doc as any).lastAutoTable.finalY;
+    currentY = (doc as any).lastAutoTable.finalY + 10;
 
-    // Violations Table
-    const violationBody = violations.length > 0
-        ? violations.map(v => [`${v.description} (${v.points} poin)`])
-        : [['Siswa menunjukkan sikap yang baik dan terpuji.']];
+    drawSectionTitle('C. Catatan Perilaku', true);
+    const summarizedViolations = summarizeViolations(violations);
+    const violationBody = summarizedViolations.length > 0
+        ? summarizedViolations.map((v, index) => [index + 1, v.note, `${v.count}x`, `${v.totalPoints} poin`])
+        : [[1, 'Siswa menunjukkan sikap yang baik dan terpuji selama pembelajaran.', '-', '-']];
 
     autoTable(doc, {
-        startY: tableStartY,
-        head: [['Catatan Perilaku / Pelanggaran']],
+        startY: currentY,
+        head: [['No', 'Catatan', 'Frekuensi', 'Total Poin']],
         body: violationBody,
         theme: 'grid',
         headStyles: {
-            fillColor: [30, 41, 59],
+            fillColor: [...PRIMARY_DARK],
             textColor: [255, 255, 255],
             fontSize: 9,
             fontStyle: 'bold',
@@ -478,33 +594,40 @@ export const generateStudentReport = async (
         styles: {
             fontSize: 9,
             cellPadding: 3,
-            lineColor: [229, 231, 235],
-            lineWidth: 0.1
+            lineColor: [...BORDER],
+            lineWidth: 0.15
         },
-        tableWidth: tableWidth,
-        margin: { left: PAGE_WIDTH / 2 + 5 }
+        columnStyles: {
+            0: { cellWidth: 10, halign: 'center' },
+            1: { cellWidth: 'auto' },
+            2: { cellWidth: 28, halign: 'center' },
+            3: { cellWidth: 28, halign: 'center' }
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: MARGIN, right: MARGIN }
     });
 
-    currentY = Math.max(leftTableFinalY, (doc as any).lastAutoTable.finalY) + 10;
+    currentY = (doc as any).lastAutoTable.finalY + 10;
 
     // C. Activities & Achievements
     if (quizPoints.length > 0) {
-        drawSectionTitle('C. Keaktifan & Prestasi', true);
+        drawSectionTitle('D. Keaktifan & Prestasi', true);
+        const summarizedQuizPoints = summarizeQuizPoints(quizPoints);
 
-        const quizBody = quizPoints.map((q, index) => [
+        const quizBody = summarizedQuizPoints.map((q, index) => [
             index + 1,
-            q.quiz_name || q.category || 'Aktivitas',
-            q.points,
-            new Date(q.created_at).toLocaleDateString('id-ID')
+            q.activity,
+            `${q.count}x`,
+            q.totalPoints
         ]);
 
         autoTable(doc, {
             startY: currentY,
-            head: [['No', 'Kegiatan / Prestasi', 'Poin', 'Tanggal']],
+            head: [['No', 'Kegiatan / Prestasi', 'Frekuensi', 'Total Poin']],
             body: quizBody,
             theme: 'grid',
             headStyles: {
-                fillColor: [30, 41, 59],
+                fillColor: [...PRIMARY_DARK],
                 textColor: [255, 255, 255],
                 fontSize: 9,
                 fontStyle: 'bold',
@@ -513,14 +636,14 @@ export const generateStudentReport = async (
             styles: {
                 fontSize: 9,
                 cellPadding: 3,
-                lineColor: [229, 231, 235],
-                lineWidth: 0.1
+                lineColor: [...BORDER],
+                lineWidth: 0.15
             },
             columnStyles: {
                 0: { cellWidth: 10, halign: 'center' },
                 1: { cellWidth: 'auto' },
-                2: { cellWidth: 20, halign: 'center' },
-                3: { cellWidth: 30, halign: 'center' }
+                2: { cellWidth: 28, halign: 'center' },
+                3: { cellWidth: 28, halign: 'center' }
             },
             margin: { left: MARGIN, right: MARGIN }
         });
@@ -529,7 +652,7 @@ export const generateStudentReport = async (
     }
 
     // D. Teacher's Note
-    drawSectionTitle(quizPoints.length > 0 ? 'D. Catatan Wali Kelas' : 'C. Catatan Wali Kelas', true);
+    drawSectionTitle(quizPoints.length > 0 ? 'E. Catatan Wali Kelas' : 'D. Catatan Wali Kelas', true);
 
     const noteText = teacherNote || 'Tidak ada catatan khusus untuk semester ini.';
     const noteWidth = PAGE_WIDTH - MARGIN * 2 - 10;
@@ -546,13 +669,14 @@ export const generateStudentReport = async (
     checkPageBreak(noteHeight);
 
     // Note Box
-    doc.setDrawColor(209, 213, 219); // Gray 300
-    doc.setLineWidth(0.1);
-    doc.roundedRect(MARGIN, currentY, PAGE_WIDTH - MARGIN * 2, noteHeight, 2, 2, 'S');
+    doc.setDrawColor(...BORDER);
+    doc.setFillColor(248, 250, 252);
+    doc.setLineWidth(0.15);
+    doc.roundedRect(MARGIN, currentY, PAGE_WIDTH - MARGIN * 2, noteHeight, 2, 2, 'FD');
 
     doc.setFontSize(fontSize);
     doc.setFont('helvetica', 'italic');
-    doc.setTextColor(55, 65, 81); // Gray 700
+    doc.setTextColor(...MUTED);
 
     // Justify text
     doc.text(noteText, MARGIN + 5, currentY + 10, {
@@ -561,42 +685,73 @@ export const generateStudentReport = async (
         lineHeightFactor: lineHeightFactor
     });
 
-    currentY += noteHeight + 15;
+    currentY += noteHeight + 12;
 
-    // Signatures
-    const signatureHeight = 40;
-    checkPageBreak(signatureHeight);
+    const signatureSectionTitle = quizPoints.length > 0 ? 'F. Pengesahan' : 'E. Pengesahan';
+    drawSectionTitle(signatureSectionTitle, true);
 
-    const col1X = MARGIN + 30;
-    const col2X = PAGE_WIDTH - MARGIN - 50;
+    const signatureHeight = 49;
+    checkPageBreak(signatureHeight + 2);
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(30, 41, 59);
-
-    doc.text('Mengetahui,', col1X, currentY, { align: 'center' });
-    doc.text('Orang Tua / Wali', col1X, currentY + 5, { align: 'center' });
-
+    const signatureBoxY = currentY - 1;
+    const signatureBoxWidth = PAGE_WIDTH - MARGIN * 2;
+    const signatureBoxHeight = signatureHeight;
+    const halfWidth = signatureBoxWidth / 2;
+    const leftCenterX = MARGIN + halfWidth / 2;
+    const rightCenterX = MARGIN + halfWidth + halfWidth / 2;
     const formattedDate = new Date(reportDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-    doc.text(`Madiun, ${formattedDate}`, col2X, currentY, { align: 'center' });
-    doc.text('Wali Kelas', col2X, currentY + 5, { align: 'center' });
 
-    currentY += 35;
+    doc.setDrawColor(...BORDER);
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(MARGIN, signatureBoxY, signatureBoxWidth, signatureBoxHeight, 2, 2, 'FD');
 
-    // Signature Lines
-    doc.setLineWidth(0.5);
-    doc.line(col1X - 25, currentY, col1X + 25, currentY); // Parent line
-    doc.line(col2X - 30, currentY, col2X + 30, currentY); // Teacher line
-
-    doc.text('(___________________)', col1X, currentY + 5, { align: 'center' });
+    doc.setFillColor(248, 250, 252);
+    doc.rect(MARGIN, signatureBoxY, signatureBoxWidth, 9, 'F');
+    doc.setLineWidth(0.15);
+    doc.line(MARGIN + halfWidth, signatureBoxY, MARGIN + halfWidth, signatureBoxY + signatureBoxHeight);
+    doc.line(MARGIN, signatureBoxY + 9, MARGIN + signatureBoxWidth, signatureBoxY + 9);
 
     doc.setFont('helvetica', 'bold');
-    const teacherName = user?.name || '___________________';
-    doc.text(teacherName, col2X, currentY + 5, { align: 'center' });
-    // NIP placeholder
+    doc.setFontSize(9);
+    doc.setTextColor(...PRIMARY_DARK);
+    doc.text('PIHAK ORANG TUA / WALI', leftCenterX, signatureBoxY + 6, { align: 'center' });
+    doc.text('WALI KELAS', rightCenterX, signatureBoxY + 6, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    doc.text('Mengetahui,', leftCenterX, signatureBoxY + 15, { align: 'center' });
+    doc.text(`Madiun, ${formattedDate}`, rightCenterX, signatureBoxY + 15, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setTextColor(...PRIMARY_DARK);
+    doc.text('Orang Tua / Wali Murid', leftCenterX, signatureBoxY + 21, { align: 'center' });
+    doc.text('Guru Kelas / Wali Kelas', rightCenterX, signatureBoxY + 21, { align: 'center' });
+
+    const signatureLineY = signatureBoxY + 36;
+    doc.setLineWidth(0.35);
+    doc.line(leftCenterX - 26, signatureLineY, leftCenterX + 26, signatureLineY);
+    doc.line(rightCenterX - 28, signatureLineY, rightCenterX + 28, signatureLineY);
+
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    doc.text('(....................................)', leftCenterX, signatureLineY + 5.5, { align: 'center' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...PRIMARY_DARK);
+    const teacherName = user?.name || '....................................';
+    doc.text(teacherName, rightCenterX, signatureLineY + 5.5, {
+        align: 'center',
+        maxWidth: halfWidth - 16
+    });
+
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text('NIP. -', col2X, currentY + 9, { align: 'center' });
+    doc.setTextColor(...MUTED);
+    doc.text('NIP. -', rightCenterX, signatureLineY + 10, { align: 'center' });
+
+    currentY = signatureBoxY + signatureBoxHeight + 6;
 
     addFooter();
 };

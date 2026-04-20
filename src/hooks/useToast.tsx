@@ -148,15 +148,30 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback((message: string, options?: { type?: ToastType; duration?: number }) => {
-    setToasts((prevToasts) => [
-      ...prevToasts,
-      {
-        id: Date.now(),
-        message,
-        type: options?.type || 'info',
-        duration: options?.duration,
-      },
-    ]);
+    const nextType = options?.type || 'info';
+    const nextDuration = options?.duration;
+
+    setToasts((prevToasts) => {
+      const existingToast = prevToasts.find((toast) => toast.message === message && toast.type === nextType);
+
+      if (existingToast) {
+        return prevToasts.map((toast) =>
+          toast.id === existingToast.id
+            ? { ...toast, duration: nextDuration ?? toast.duration }
+            : toast
+        );
+      }
+
+      return [
+        ...prevToasts,
+        {
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          message,
+          type: nextType,
+          duration: nextDuration,
+        },
+      ].slice(-5);
+    });
   }, []);
 
   const removeToast = useCallback((id: number) => {

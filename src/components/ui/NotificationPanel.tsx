@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BellIcon, CheckIcon, TrashIcon, XIcon, AlertTriangleIcon, ClockIcon, MessageSquareIcon, SettingsIcon } from 'lucide-react';
+import { BellIcon, CheckIcon, TrashIcon, XIcon, AlertTriangleIcon, ClockIcon, MessageSquareIcon, SettingsIcon, TrendingDownIcon } from 'lucide-react';
 import {
     getNotifications,
     markAsRead,
@@ -27,6 +27,8 @@ const NotificationIcon: React.FC<{ type: NotificationType }> = ({ type }) => {
             return <ClockIcon className="w-4 h-4 text-amber-500" />;
         case 'message':
             return <MessageSquareIcon className="w-4 h-4 text-blue-500" />;
+        case 'grade_trend':
+            return <TrendingDownIcon className="w-4 h-4 text-orange-500" />;
         default:
             return <BellIcon className="w-4 h-4 text-gray-500" />;
     }
@@ -56,7 +58,9 @@ const NotificationItem: React.FC<{
                     ? 'bg-red-100 dark:bg-red-900/30'
                     : notification.type === 'task_due'
                         ? 'bg-amber-100 dark:bg-amber-900/30'
-                        : 'bg-gray-100 dark:bg-gray-800'
+                        : notification.type === 'grade_trend'
+                            ? 'bg-orange-100 dark:bg-orange-900/30'
+                            : 'bg-gray-100 dark:bg-gray-800'
                 }`}>
                 <NotificationIcon type={notification.type} />
             </div>
@@ -112,6 +116,23 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
             clearTimeout(initialTimer);
         };
     }, [refreshNotifications]);
+
+    useEffect(() => {
+        const syncNotifications = () => {
+            setNotifications(getNotifications());
+            setUnreadCount(getUnreadCount());
+        };
+
+        window.addEventListener('portal-guru-notifications-updated', syncNotifications);
+        window.addEventListener('storage', syncNotifications);
+        window.addEventListener('focus', syncNotifications);
+
+        return () => {
+            window.removeEventListener('portal-guru-notifications-updated', syncNotifications);
+            window.removeEventListener('storage', syncNotifications);
+            window.removeEventListener('focus', syncNotifications);
+        };
+    }, []);
 
     // Close panel when clicking outside
     useEffect(() => {

@@ -7,9 +7,9 @@ import { supabase } from '../../services/supabase';
 import { Database } from '../../services/database.types';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Switch } from '../ui/Switch';
-import { BellIcon, ClockIcon, CheckSquareIcon, CalendarIcon } from '../Icons';
+import { AlertCircleIcon, BellIcon, CheckCircleIcon, ClockIcon, CheckSquareIcon, CalendarIcon, RefreshCwIcon } from '../Icons';
 import { PlayCircle, Upload, Volume, Volume2, Smartphone } from 'lucide-react';
-import { getPreferences, savePreferences, NotificationPreferences } from '../../services/NotificationService';
+import { getPreferences, getUnreadCount, savePreferences, NotificationPreferences } from '../../services/NotificationService';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import { SCHEDULE_COMPAT_SELECT, hydrateScheduleRow } from '../../services/supabaseCompat';
@@ -42,6 +42,13 @@ const NotificationsSection: React.FC = () => {
     const isOnline = useOfflineStatus();
     const [isLoading, setIsLoading] = useState(false);
     const [taskPrefs, setTaskPrefs] = useState<NotificationPreferences>(getPreferences());
+    const [notificationStatus, setNotificationStatus] = useState({
+        permission: 'checking',
+        serviceWorker: 'checking',
+        scheduleEnabled: false,
+        unreadCount: 0,
+        isDevMode: false,
+    });
 
     // Sound picker state
     const [selectedSound, setSelectedSound] = useState<SoundType>('default');
@@ -57,6 +64,23 @@ const NotificationsSection: React.FC = () => {
         localStorage.getItem('portal_guru_system_ringtone_uri')
     );
     const isAndroid = Capacitor.getPlatform() === 'android';
+
+    const refreshNotificationStatus = async () => {
+        const permission = typeof window !== 'undefined' && 'Notification' in window
+            ? Notification.permission
+            : 'unsupported';
+        const registration = typeof navigator !== 'undefined' && 'serviceWorker' in navigator
+            ? await navigator.serviceWorker.getRegistration()
+            : null;
+
+        setNotificationStatus({
+            permission,
+            serviceWorker: registration?.active ? 'active' : registration ? 'registered' : 'inactive',
+            scheduleEnabled: localStorage.getItem('scheduleNotificationsEnabled') === 'true',
+            unreadCount: getUnreadCount(),
+            isDevMode: import.meta.env.DEV,
+        });
+    };
 
     useEffect(() => {
         let isMounted = true;
@@ -82,6 +106,17 @@ const NotificationsSection: React.FC = () => {
 
         return () => {
             isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        void refreshNotificationStatus();
+        window.addEventListener('portal-guru-notifications-updated', refreshNotificationStatus);
+        window.addEventListener('focus', refreshNotificationStatus);
+
+        return () => {
+            window.removeEventListener('portal-guru-notifications-updated', refreshNotificationStatus);
+            window.removeEventListener('focus', refreshNotificationStatus);
         };
     }, []);
 
@@ -231,6 +266,80 @@ const NotificationsSection: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            <SettingsCard className="overflow-hidden">
+                <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-emerald-600 dark:from-sky-400 dark:to-emerald-400">
+                                Status Sistem Notifikasi
+                            </CardTitle>
+                            <CardDescription className="text-base">
+                                Pantau izin browser, service worker, dan jumlah notifikasi yang belum dibaca.
+                            </CardDescription>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => void refreshNotificationStatus()}>
+                            <RefreshCwIcon className="w-4 h-4 mr-2" />
+                            Periksa
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="pt-6 sm:pt-8 space-y-4">
+                    <div className="grid gap-3 md:grid-cols-4">
+                        {[
+                            {
+                                label: 'Izin Browser',
+                                value: notificationStatus.permission === 'granted'
+                                    ? 'Diizinkan'
+                                    : notificationStatus.permission === 'default'
+                                        ? 'Belum diminta'
+                                        : notificationStatus.permission === 'denied'
+                                            ? 'Diblokir'
+                                            : 'Tidak didukung',
+                                healthy: notificationStatus.permission === 'granted',
+                            },
+                            {
+                                label: 'Service Worker',
+                                value: notificationStatus.serviceWorker === 'active'
+                                    ? 'Aktif'
+                                    : notificationStatus.serviceWorker === 'registered'
+                                        ? 'Terdaftar'
+                                        : 'Tidak aktif',
+                                healthy: notificationStatus.serviceWorker === 'active',
+                            },
+                            {
+                                label: 'Jadwal',
+                                value: notificationStatus.scheduleEnabled ? 'Aktif' : 'Nonaktif',
+                                healthy: notificationStatus.scheduleEnabled,
+                            },
+                            {
+                                label: 'Belum Dibaca',
+                                value: `${notificationStatus.unreadCount}`,
+                                healthy: notificationStatus.unreadCount === 0,
+                            },
+                        ].map((item) => (
+                            <div
+                                key={item.label}
+                                className={`rounded-2xl border p-4 ${item.healthy
+                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100'
+                                    : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100'
+                                    }`}
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs font-bold uppercase tracking-[0.16em] opacity-75">{item.label}</p>
+                                    {item.healthy ? <CheckCircleIcon className="h-4 w-4" /> : <AlertCircleIcon className="h-4 w-4" />}
+                                </div>
+                                <p className="mt-3 text-lg font-bold">{item.value}</p>
+                            </div>
+                        ))}
+                    </div>
+                    {notificationStatus.isDevMode && (
+                        <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-800 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-sky-100">
+                            Mode development terdeteksi. Push/browser notification berbasis service worker baru aktif setelah build production, tetapi panel notifikasi in-app tetap bisa diuji.
+                        </div>
+                    )}
+                </CardContent>
+            </SettingsCard>
+
             {/* Schedule Notifications */}
             <SettingsCard className="overflow-hidden">
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">

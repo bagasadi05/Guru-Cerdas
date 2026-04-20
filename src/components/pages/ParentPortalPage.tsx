@@ -7,6 +7,7 @@ import { Tabs, TabsContent } from '../ui/Tabs';
 import { Select } from '../ui/Select';
 import { ChildDevelopmentAnalytics } from '../ui/ChildDevelopmentAnalytics';
 import { generateReportCardPDF } from '../exports/generateReportCardPDF';
+import { generateGuardianSummaryPDF } from '../exports/generateGuardianSummaryPDF';
 import { useSemester } from '../../contexts/SemesterContext';
 import { getSemesterTerm } from '../../utils/semesterUtils';
 import { CalendarIcon } from '../Icons';
@@ -15,10 +16,12 @@ import {
     getAttentionItems,
     getAttendanceSummary,
     getAverageScore,
+    getGuardianSummary,
     getQuickSummary,
     getRecentActivities,
     getRecentAnnouncements,
     getUnreadMessagesCount,
+    getWeeklyGuardianSummary,
     PortalAttendanceTab,
     PortalCommunicationPanel,
     PortalCommunicationTab,
@@ -329,6 +332,28 @@ export const ParentPortalPage: React.FC = () => {
         }
     ), [data, filteredAcademicRecords, filteredAttendance, filteredCommunications, filteredTasks, filteredViolations]);
 
+    const guardianSummary = useMemo(() => (
+        data ? getGuardianSummary({
+            academicRecords: filteredAcademicRecords,
+            attendance: filteredAttendance,
+            tasks: filteredTasks,
+            communications: filteredCommunications,
+            violations: filteredViolations,
+            quizPoints: filteredQuizPoints,
+        }) : null
+    ), [data, filteredAcademicRecords, filteredAttendance, filteredCommunications, filteredQuizPoints, filteredTasks, filteredViolations]);
+
+    const weeklySummary = useMemo(() => (
+        data ? getWeeklyGuardianSummary({
+            academicRecords: filteredAcademicRecords,
+            attendance: filteredAttendance,
+            tasks: filteredTasks,
+            communications: filteredCommunications,
+            violations: filteredViolations,
+            quizPoints: filteredQuizPoints,
+        }) : null
+    ), [data, filteredAcademicRecords, filteredAttendance, filteredCommunications, filteredQuizPoints, filteredTasks, filteredViolations]);
+
     const portalDataForExport = useMemo(() => {
         if (!data) return null;
 
@@ -372,6 +397,27 @@ export const ParentPortalPage: React.FC = () => {
             } catch (error) {
                 console.error('Failed to generate PDF', error);
                 toast.error('Gagal mengunduh PDF.');
+            }
+        }
+    };
+
+    const handleDownloadGuardianSummaryPDF = async () => {
+        if (portalDataForExport) {
+            try {
+                const semesterLabel = selectedSemesterFilter === 'ganjil'
+                    ? 'Semester Ganjil'
+                    : selectedSemesterFilter === 'genap'
+                        ? 'Semester Genap'
+                        : 'Semua Semester';
+                await generateGuardianSummaryPDF(portalDataForExport, {
+                    guardianSummary,
+                    weeklySummary,
+                    semesterLabel,
+                });
+                toast.success('Ringkasan wali berhasil diunduh.');
+            } catch (error) {
+                console.error('Failed to generate guardian summary PDF', error);
+                toast.error('Gagal mengunduh ringkasan wali.');
             }
         }
     };
@@ -445,13 +491,15 @@ export const ParentPortalPage: React.FC = () => {
                             <PortalHomeTab
                                 student={student}
                                 attentionItems={attentionItems}
+                                guardianSummary={guardianSummary}
+                                weeklySummary={weeklySummary}
                                 quickSummary={quickSummary}
                                 recentActivities={recentActivities}
                                 recentAnnouncements={recentAnnouncements}
                                 onOpenTab={setActiveTab}
                                 onOpenMoreSection={handleOpenMoreSection}
                                 onOpenSettings={() => setSettingsOpen(true)}
-                                onDownloadPdf={handleDownloadPDF}
+                                onDownloadPdf={handleDownloadGuardianSummaryPDF}
                             />
                         </TabsContent>
 

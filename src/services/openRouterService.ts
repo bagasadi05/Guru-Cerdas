@@ -9,9 +9,10 @@ const OPENROUTER_DIRECT_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_PROXY = '/api/openrouter';
 
 // Primary reasoning model + free fallbacks
-const PRIMARY_MODEL = 'arcee-ai/trinity-large-preview:free';
+const PRIMARY_MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
 const FALLBACK_MODELS = [
     PRIMARY_MODEL,
+    'arcee-ai/trinity-large-preview:free',
     "google/gemini-2.0-flash-exp:free",
     "meta-llama/llama-3.2-3b-instruct:free",
 ];

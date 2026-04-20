@@ -1,18 +1,22 @@
 import React from 'react';
-import { BellIcon, BookOpenIcon, CalendarIcon, CheckCircleIcon, DownloadIcon, SendIcon, SettingsIcon, SparklesIcon } from '../../Icons';
+import { BellIcon, BookOpenIcon, BrainCircuitIcon, CalendarIcon, CheckCircleIcon, DownloadIcon, SendIcon, SettingsIcon, SparklesIcon } from '../../Icons';
 import type {
     PortalActivityItem,
     PortalAnnouncement,
     PortalAttentionItem,
+    PortalGuardianSummary,
     PortalMoreSection,
     PortalPrimaryTab,
     PortalQuickSummary,
     PortalStudentInfo,
+    PortalWeeklySummary,
 } from './types';
 
 interface PortalHomeTabProps {
     student: PortalStudentInfo;
     attentionItems: PortalAttentionItem[];
+    guardianSummary: PortalGuardianSummary | null;
+    weeklySummary: PortalWeeklySummary | null;
     quickSummary: PortalQuickSummary;
     recentActivities: PortalActivityItem[];
     recentAnnouncements: PortalAnnouncement[];
@@ -31,6 +35,8 @@ const dateFormatter = new Intl.DateTimeFormat('id-ID', {
 export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
     student,
     attentionItems,
+    guardianSummary,
+    weeklySummary,
     quickSummary,
     recentActivities,
     recentAnnouncements,
@@ -93,6 +99,40 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
         },
     ];
 
+    const guardianStatusTone = guardianSummary?.status === 'perhatian'
+        ? 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/30 dark:bg-rose-950/30 dark:text-rose-100'
+        : guardianSummary?.status === 'pantau'
+            ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/30 dark:bg-amber-950/30 dark:text-amber-100'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-100';
+
+    const handleGuardianAction = (target: PortalGuardianSummary['actions'][number]['target']) => {
+        if (target === 'download') {
+            onDownloadPdf();
+            return;
+        }
+
+        if (target.startsWith('lainnya:')) {
+            onOpenMoreSection(target.split(':')[1] as PortalMoreSection);
+            return;
+        }
+
+        onOpenTab(target as PortalPrimaryTab);
+    };
+
+    const getWeeklyTone = (tone: PortalWeeklySummary['stats'][number]['tone']) => {
+        switch (tone) {
+            case 'danger':
+                return 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/30 dark:bg-rose-950/30 dark:text-rose-100';
+            case 'warning':
+                return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/30 dark:bg-amber-950/30 dark:text-amber-100';
+            case 'success':
+                return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-100';
+            case 'info':
+            default:
+                return 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900/30 dark:bg-sky-950/30 dark:text-sky-100';
+        }
+    };
+
     return (
         <div className="space-y-6 p-4 sm:p-6">
             <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#fffdf7_0%,#ffffff_45%,#f8fafc_100%)] p-5 shadow-sm dark:border-slate-800 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.96)_0%,rgba(15,23,42,0.9)_100%)] sm:p-7">
@@ -144,6 +184,87 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                     </div>
                 </div>
             </section>
+
+            {guardianSummary && (
+                <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.16),transparent_30%),linear-gradient(135deg,#f0fdfa_0%,#ffffff_50%,#f8fafc_100%)] p-5 dark:bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.12),transparent_32%),linear-gradient(135deg,#0f172a_0%,#111827_100%)] sm:p-6">
+                        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="max-w-2xl">
+                                <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700 dark:border-teal-400/20 dark:bg-teal-400/10 dark:text-teal-200">
+                                    <BrainCircuitIcon className="h-4 w-4" />
+                                    Kesimpulan Wali Murid
+                                </div>
+                                <h4 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">{guardianSummary.title}</h4>
+                                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{guardianSummary.message}</p>
+                            </div>
+                            <div className={`rounded-3xl border px-4 py-3 text-sm font-semibold ${guardianStatusTone}`}>
+                                Status: {guardianSummary.status === 'baik' ? 'Baik' : guardianSummary.status === 'pantau' ? 'Perlu Dipantau' : 'Perlu Perhatian'}
+                            </div>
+                        </div>
+
+                        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                            {guardianSummary.highlights.map((item) => (
+                                <div key={item.label} className="rounded-3xl border border-white/80 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/10">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">{item.label}</p>
+                                    <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{item.value}</p>
+                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{item.description}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-6 grid gap-3 lg:grid-cols-2">
+                            {guardianSummary.actions.map((action) => {
+                                const actionTone = action.tone === 'danger'
+                                    ? 'border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-900/30 dark:bg-rose-950/30 dark:text-rose-100 dark:hover:bg-rose-950/50'
+                                    : action.tone === 'warning'
+                                        ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-900/30 dark:bg-amber-950/30 dark:text-amber-100 dark:hover:bg-amber-950/50'
+                                        : 'border-teal-200 bg-teal-50 text-teal-800 hover:bg-teal-100 dark:border-teal-900/30 dark:bg-teal-950/30 dark:text-teal-100 dark:hover:bg-teal-950/50';
+
+                                return (
+                                    <button
+                                        key={action.id}
+                                        type="button"
+                                        onClick={() => handleGuardianAction(action.target)}
+                                        className={`rounded-3xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${actionTone}`}
+                                    >
+                                        <p className="font-semibold">{action.label}</p>
+                                        <p className="mt-1 text-sm opacity-85">{action.description}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {weeklySummary && (
+                <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+                    <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+                        <div className="rounded-[24px] bg-slate-950 p-5 text-white dark:bg-white dark:text-slate-950">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300 dark:text-emerald-700">{weeklySummary.title}</p>
+                            <h4 className="mt-3 text-2xl font-bold">Catatan singkat pekan ini</h4>
+                            <p className="mt-3 text-sm leading-6 text-slate-200 dark:text-slate-700">{weeklySummary.narrative}</p>
+                            <div className="mt-5 space-y-2">
+                                {weeklySummary.suggestions.map((suggestion) => (
+                                    <div key={suggestion} className="rounded-2xl bg-white/10 px-4 py-3 text-sm leading-5 dark:bg-slate-950/10">
+                                        {suggestion}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {weeklySummary.stats.map((stat) => (
+                                <div key={stat.label} className={`rounded-3xl border p-4 ${getWeeklyTone(stat.tone)}`}>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{stat.label}</p>
+                                    <p className="mt-3 text-3xl font-bold">{stat.value}</p>
+                                    <p className="mt-1 text-sm opacity-85">{stat.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
                 <div className="flex items-center justify-between gap-3">

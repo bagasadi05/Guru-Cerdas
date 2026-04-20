@@ -142,7 +142,8 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         academicRecordsRes,
         violationsRes,
         recentTasksRes,
-        todayAttendanceRecordsRes
+        todayAttendanceRecordsRes,
+        unreadParentMessagesRes
     ] = await Promise.all([
         // Fetch students with minimal fields needed for dashboard
         supabase
@@ -154,7 +155,7 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         // Fetch active tasks (not deleted, not completed)
         supabase
             .from('tasks')
-            .select('id, title, status')
+            .select('id, title, status, due_date')
             .eq('user_id', userId)
             .neq('status', 'done')
             .is('deleted_at', null)
@@ -224,6 +225,16 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             .eq('date', today)
             .is('deleted_at', null)
             .order('created_at', { ascending: false })
+            .limit(10),
+
+        // Fetch unread messages from parents for daily follow-up
+        supabase
+            .from('communications')
+            .select('id, student_id, message, created_at, sender, is_read')
+            .eq('user_id', userId)
+            .eq('sender', 'parent')
+            .eq('is_read', false)
+            .order('created_at', { ascending: false })
             .limit(10)
     ]);
 
@@ -238,7 +249,8 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         academicRecordsRes,
         violationsRes,
         recentTasksRes,
-        todayAttendanceRecordsRes
+        todayAttendanceRecordsRes,
+        unreadParentMessagesRes
     ]
         .map(res => res.error)
         .filter((e): e is NonNullable<typeof e> => e !== null);
@@ -265,7 +277,7 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             completed: task.status === 'done',
             created_at: '',
             description: null,
-            due_date: null,
+            due_date: task.due_date,
             updated_at: '',
             user_id: userId,
         })) as DashboardQueryData['tasks'],
@@ -292,6 +304,7 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             }
             return acc;
         }, []) || [],
+        unreadParentMessages: unreadParentMessagesRes.data || [],
     };
 };
 

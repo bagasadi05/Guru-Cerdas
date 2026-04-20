@@ -36,22 +36,23 @@ export const useTaskNotifications = (tasks?: Task[]): UseTaskNotificationsReturn
     useEffect(() => {
         if (!tasks || tasks.length === 0) return;
         if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
+        if (Notification.permission !== 'granted') return;
 
-        const requestPermissionAndSync = async () => {
+        const syncTasks = async () => {
             try {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted' && navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration?.active) {
+                    registration.active.postMessage({
                         type: 'TASKS_UPDATED',
                         payload: tasks
                     });
                 }
             } catch (error) {
-                console.error('Error requesting notification permission:', error);
+                console.error('Error syncing task notifications:', error);
             }
         };
 
-        requestPermissionAndSync();
+        syncTasks();
     }, [tasks]);
 
     // In-app notification check
@@ -83,13 +84,15 @@ export const useTaskNotifications = (tasks?: Task[]): UseTaskNotificationsReturn
 
     // Update unread count when storage changes
     useEffect(() => {
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === 'portal_guru_notifications') {
-                setUnreadCount(getUnreadCount());
-            }
+        const syncUnreadCount = () => {
+            setUnreadCount(getUnreadCount());
         };
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+        window.addEventListener('portal-guru-notifications-updated', syncUnreadCount);
+        window.addEventListener('storage', syncUnreadCount);
+        return () => {
+            window.removeEventListener('portal-guru-notifications-updated', syncUnreadCount);
+            window.removeEventListener('storage', syncUnreadCount);
+        };
     }, []);
 
     const overdueCount = dueTasks.filter(t => t.isOverdue).length;

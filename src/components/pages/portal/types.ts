@@ -179,6 +179,38 @@ export interface PortalQuickSummary {
     violationPoints: number;
 }
 
+export interface PortalGuardianSummaryAction {
+    id: string;
+    label: string;
+    description: string;
+    target: PortalPrimaryTab | `lainnya:${PortalMoreSection}` | 'download';
+    tone: 'primary' | 'warning' | 'danger';
+}
+
+export interface PortalGuardianSummary {
+    status: 'baik' | 'pantau' | 'perhatian';
+    title: string;
+    message: string;
+    highlights: {
+        label: string;
+        value: string;
+        description: string;
+    }[];
+    actions: PortalGuardianSummaryAction[];
+}
+
+export interface PortalWeeklySummary {
+    title: string;
+    narrative: string;
+    stats: {
+        label: string;
+        value: string;
+        description: string;
+        tone: 'success' | 'warning' | 'danger' | 'info';
+    }[];
+    suggestions: string[];
+}
+
 export interface PortalActivityItem {
     id: string;
     type: 'message' | 'task' | 'announcement' | 'attendance' | 'behavior';

@@ -216,10 +216,10 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         setIsExporting(true); setExportProgress('0%'); toast.info(`Mulai proses cetak ${selectedStudentIds.size} rapor...`);
         const studentsToPrint = studentsData.filter(s => selectedStudentIds.has(s.id));
         try {
-            setExportProgress('10%'); toast.info('Mengambil data siswa...');
+            setExportProgress('10%');
             if (!activeSemester?.id) throw new Error('Semester aktif tidak ditemukan.');
             const allReportData = await Promise.all(studentsToPrint.map(student => fetchReportDataForStudent(student.id, user!.id, activeSemester.id)));
-            setExportProgress('40%'); toast.info('Membuat catatan guru...');
+            setExportProgress('40%');
             let teacherNotesMap: Map<string, string>;
             if (noteMethod === 'template') {
                 teacherNotesMap = new Map(allReportData.map(data => [data.student.id, templateNote.replace(/\[Nama Siswa\]/g, data.student.name)]));
@@ -261,7 +261,7 @@ Contoh output yang benar:
                     return [item.studentId, note];
                 }));
             }
-            setExportProgress('70%'); toast.info('Menyusun file PDF...');
+            setExportProgress('70%');
             const { default: jsPDF } = await getJsPDF();
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             let isFirstPage = true;

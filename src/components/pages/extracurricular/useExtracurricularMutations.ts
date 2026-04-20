@@ -243,12 +243,14 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
             studentId,
             studentType,
             grade,
+            score,
             description,
         }: {
             studentId: string;
             studentType: 'student' | 'extracurricular_student';
-            grade: string;
-            description?: string;
+            grade?: string | null;
+            score?: number | null;
+            description?: string | null;
         }) => {
             const payload =
                 studentType === 'student'
@@ -269,8 +271,9 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
                     ...payload,
                     extracurricular_id: selectedExtracurricular,
                     semester_id: activeSemester.id,
-                    grade,
-                    description,
+                    grade: grade ?? null,
+                    score: score ?? null,
+                    description: description ?? null,
                     user_id: user!.id,
                 }, { onConflict });
             if (error) throw error;
@@ -278,6 +281,9 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['extracurricular_grades'] });
             toast.success('Nilai berhasil disimpan');
+        },
+        onError: (error: Error) => {
+            toast.error(error.message);
         },
     });
 
