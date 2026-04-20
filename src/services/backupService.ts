@@ -102,6 +102,9 @@ const sanitizeRowsForTable = <T extends Record<string, unknown>>(
 
 /**
  * Validate backup file structure before import
+ *
+ * @param {unknown} data - Parsed backup JSON payload to validate.
+ * @returns {ValidationResult} Validation errors, warnings, and table preview metadata.
  */
 export const validateBackup = (data: unknown): ValidationResult => {
     const errors: string[] = [];
@@ -150,6 +153,10 @@ export const validateBackup = (data: unknown): ValidationResult => {
 
 /**
  * Download backup file directly
+ *
+ * @param {Blob} blob - Backup blob to download.
+ * @param {string} [filename] - Optional filename for the downloaded backup.
+ * @returns {void} The function triggers a browser download.
  */
 export const downloadBackup = (blob: Blob, filename?: string): void => {
     const url = URL.createObjectURL(blob);
@@ -164,6 +171,9 @@ export const downloadBackup = (blob: Blob, filename?: string): void => {
 
 /**
  * Exports a complete backup of all user data to a JSON file.
+ *
+ * @param {string} userId - User identifier whose data should be exported.
+ * @returns {Promise<Blob>} JSON backup blob ready to download.
  */
 export const exportBackup = async (userId: string): Promise<Blob> => {
     const [studentsRes, classesRes, attendanceRes, academicRes, violationsRes, quizRes, reportsRes, tasksRes, schedulesRes] = await Promise.all([

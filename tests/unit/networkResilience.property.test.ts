@@ -109,6 +109,7 @@ describe('Network Resilience Property Tests', () => {
             // Reset counters
             fetchCallCount = 0;
             fetchCallTimes = [];
+            mockFetch.mockClear();
 
             // Configure mock to always fail
             mockFetch.mockRejectedValue(new TypeError('Network error')); // Use TypeError for retry

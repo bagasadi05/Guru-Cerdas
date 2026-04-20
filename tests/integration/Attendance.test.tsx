@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import AttendancePage from '../../src/components/pages/AttendancePage';
 import { supabase } from '../../src/services/supabase';
 import React from 'react';
@@ -11,21 +11,36 @@ import { ToastProvider } from '../../src/hooks/useToast';
 // Mock Supabase
 vi.mock('../../src/services/supabase', () => ({
     supabase: {
-        from: vi.fn(() => ({
-            select: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                    eq: vi.fn().mockResolvedValue({ data: [], error: null }), // For students query
-                    order: vi.fn().mockResolvedValue({
-                        data: [
-                            { id: '1', name: 'Budi', class_id: 'class-1', user_id: 'test-user' },
-                            { id: '2', name: 'Siti', class_id: 'class-1', user_id: 'test-user' }
-                        ], error: null
-                    }),
-                })),
-                in: vi.fn().mockResolvedValue({ data: [], error: null }), // For attendance query
-            })),
-            upsert: vi.fn().mockResolvedValue({ error: null }),
-        })),
+        from: vi.fn((table: string) => {
+            const responses: Record<string, unknown[]> = {
+                classes: [{ id: 'class-1', name: 'Kelas 10A', user_id: 'test-user' }],
+                students: [
+                    { id: '1', name: 'Budi', class_id: 'class-1', user_id: 'test-user' },
+                    { id: '2', name: 'Siti', class_id: 'class-1', user_id: 'test-user' }
+                ],
+                attendance: [],
+                semesters: [],
+                academic_years: [],
+            };
+
+            const response = { data: responses[table] || [], error: null };
+            const query = {
+                select: vi.fn(() => query),
+                eq: vi.fn(() => query),
+                is: vi.fn(() => query),
+                order: vi.fn(() => query),
+                in: vi.fn(() => query),
+                gte: vi.fn(() => query),
+                lte: vi.fn(() => query),
+                single: vi.fn(() => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Not found' } })),
+                maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
+                update: vi.fn(() => query),
+                upsert: vi.fn(() => Promise.resolve({ error: null })),
+                then: vi.fn((resolve) => Promise.resolve(response).then(resolve)),
+            };
+
+            return query;
+        }),
     },
     ai: {
         models: {
@@ -35,7 +50,7 @@ vi.mock('../../src/services/supabase', () => ({
 }));
 
 // Mock useOfflineStatus
-vi.mock('../../hooks/useOfflineStatus', () => ({
+vi.mock('../../src/hooks/useOfflineStatus', () => ({
     useOfflineStatus: () => true,
 }));
 
@@ -57,6 +72,11 @@ vi.mock('../../src/contexts/SemesterContext', () => ({
 describe('AttendancePage Integration', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.stubGlobal('confirm', vi.fn(() => true));
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
     });
 
     const renderPage = () => {
@@ -91,73 +111,6 @@ describe('AttendancePage Integration', () => {
     };
 
     it('renders student list and allows marking attendance', async () => {
-        // Mock classes query
-        const mockSelect = vi.fn();
-        (supabase.from as any).mockImplementation((table: string) => {
-            if (table === 'classes') {
-                return {
-                    select: () => ({
-                        eq: () => ({
-                            is: () => Promise.resolve({ data: [{ id: 'class-1', name: 'Kelas 10A' }], error: null })
-                        })
-                    })
-                };
-            }
-            if (table === 'semesters') {
-                return {
-                    select: () => ({
-                        order: () => Promise.resolve({ data: [], error: null }),
-                        eq: () => ({
-                            single: () => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Not found' } })
-                        })
-                    })
-                };
-            }
-            if (table === 'academic_years') {
-                return {
-                    select: () => ({
-                        eq: () => ({
-                            single: () => Promise.resolve({ data: null, error: null })
-                        })
-                    })
-                };
-            }
-            if (table === 'students') {
-                return {
-                    select: () => ({
-                        eq: () => ({
-                            eq: () => ({
-                                is: () => ({
-                                    order: () => Promise.resolve({
-                                        data: [
-                                            { id: '1', name: 'Budi', class_id: 'class-1', user_id: 'test-user' },
-                                            { id: '2', name: 'Siti', class_id: 'class-1', user_id: 'test-user' }
-                                        ],
-                                        error: null
-                                    })
-                                })
-                            })
-                        })
-                    })
-                };
-            }
-            if (table === 'attendance') {
-                return {
-                    select: () => ({
-                        eq: () => ({
-                            eq: () => Promise.resolve({ data: [], error: null }),
-                            in: () => Promise.resolve({ data: [], error: null }),
-                            gte: () => ({
-                                lte: () => Promise.resolve({ data: [], error: null })
-                            })
-                        })
-                    }),
-                    upsert: vi.fn().mockResolvedValue({ error: null })
-                };
-            }
-            return { select: mockSelect };
-        });
-
         renderPage();
 
         // Wait for students to load

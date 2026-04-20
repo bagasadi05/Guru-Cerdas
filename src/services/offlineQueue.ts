@@ -123,6 +123,8 @@ const saveQueueToStorageUtility = async (queue: QueuedMutation[]): Promise<void>
 
 /**
  * Retrieves the mutation queue
+ *
+ * @returns {Promise<QueuedMutation[]>} Current queued mutations sorted by the storage backend.
  */
 export const getQueue = async (): Promise<QueuedMutation[]> => {
     try {
@@ -148,6 +150,9 @@ export const getQueue = async (): Promise<QueuedMutation[]> => {
 
 /**
  * Adds a new mutation to the offline queue
+ *
+ * @param {Omit<QueuedMutation, 'id' | 'status' | 'retryCount' | 'maxRetries' | 'createdAt'>} mutation - Mutation payload to queue for later sync.
+ * @returns {Promise<void>} Resolves after the mutation has been persisted.
  */
 export const addToQueue = async (mutation: Omit<QueuedMutation, 'id' | 'status' | 'retryCount' | 'maxRetries' | 'createdAt'>): Promise<void> => {
     const newMutation: QueuedMutation = {
@@ -185,6 +190,10 @@ export const addToQueue = async (mutation: Omit<QueuedMutation, 'id' | 'status' 
 
 /**
  * Updates a mutation in the queue
+ *
+ * @param {string} id - Queue item identifier.
+ * @param {Partial<QueuedMutation>} updates - Partial mutation fields to merge.
+ * @returns {Promise<void>} Resolves after the queued mutation is updated.
  */
 export const updateMutation = async (id: string, updates: Partial<QueuedMutation>): Promise<void> => {
     try {
@@ -221,6 +230,9 @@ export const updateMutation = async (id: string, updates: Partial<QueuedMutation
 
 /**
  * Removes a mutation from the queue
+ *
+ * @param {string} id - Queue item identifier to remove.
+ * @returns {Promise<void>} Resolves after the item is removed.
  */
 export const removeMutation = async (id: string): Promise<void> => {
     try {
@@ -247,6 +259,8 @@ export const removeMutation = async (id: string): Promise<void> => {
 
 /**
  * Clears the entire mutation queue
+ *
+ * @returns {Promise<void>} Resolves after all queued mutations are removed.
  */
 export const clearQueue = async (): Promise<void> => {
     try {
@@ -287,6 +301,9 @@ export const getFailedMutations = async (): Promise<QueuedMutation[]> => {
 
 /**
  * Subscribe to sync progress updates
+ *
+ * @param {(progress: SyncProgress) => void} callback - Listener called whenever sync progress changes.
+ * @returns {() => void} Unsubscribe function that removes the listener.
  */
 export const subscribeSyncProgress = (callback: (progress: SyncProgress) => void): () => void => {
     syncProgressListeners.push(callback);
@@ -354,6 +371,9 @@ const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
 
 /**
  * Retry a specific failed mutation
+ *
+ * @param {string} id - Queue item identifier to retry.
+ * @returns {Promise<boolean>} True when the retry succeeds, otherwise false.
  */
 export const retryMutation = async (id: string): Promise<boolean> => {
     const queue = await getQueue();
@@ -382,6 +402,8 @@ export const retryMutation = async (id: string): Promise<boolean> => {
 
 /**
  * Process all pending mutations with exponential backoff
+ *
+ * @returns {Promise<SyncProgress>} Final sync progress after processing the queue.
  */
 export const processQueue = async (): Promise<SyncProgress> => {
     const queue = await getQueue();
@@ -452,6 +474,9 @@ export const processQueue = async (): Promise<SyncProgress> => {
 
 /**
  * Discard a failed mutation
+ *
+ * @param {string} id - Queue item identifier to discard.
+ * @returns {Promise<void>} Resolves after the failed mutation is removed.
  */
 export const discardMutation = async (id: string): Promise<void> => {
     await removeMutation(id);
@@ -459,6 +484,8 @@ export const discardMutation = async (id: string): Promise<void> => {
 
 /**
  * Discard all failed mutations
+ *
+ * @returns {Promise<void>} Resolves after every failed mutation is removed.
  */
 export const discardAllFailed = async (): Promise<void> => {
     const queue = await getQueue();

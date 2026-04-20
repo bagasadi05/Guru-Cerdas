@@ -265,11 +265,33 @@ const preloadLogos = async (): Promise<void> => {
     cachedKemenagLogoUrl = kemenagLogo;
 };
 
-// Export function to preload logos before PDF generation
+/**
+ * Preloads school and ministry logos before PDF generation starts.
+ *
+ * Calling this function warms the in-memory logo cache so generated reports can
+ * render branding consistently without waiting during the main report layout.
+ *
+ * @returns {Promise<void>} Resolves after logo loading has completed or failed gracefully.
+ */
 export const ensureLogoLoaded = async (): Promise<void> => {
     await preloadLogos();
 };
 
+/**
+ * Generates a complete student report PDF with academic, attendance, behavior, and activity summaries.
+ *
+ * The function writes directly into the provided jsPDF instance, using cached school
+ * branding and structured tables suitable for parent-facing printed reports.
+ *
+ * @param {jsPDF} doc - jsPDF document instance to write report content into.
+ * @param {ReportData} reportData - Student profile and related reporting records.
+ * @param {string} teacherNote - Teacher note displayed in the report.
+ * @param {string} reportDate - Report issue date.
+ * @param {string} semester - Semester label shown in the student information block.
+ * @param {string} academicYear - Academic year label shown in the report.
+ * @param {AppUser | null} user - Teacher account used for signature metadata, or null.
+ * @returns {Promise<void>} Resolves after the report layout has been written into the document.
+ */
 export const generateStudentReport = async (
     doc: jsPDF,
     reportData: ReportData,
