@@ -49,7 +49,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
     const [semesterFilter, setSemesterFilter] = useState<string>(() => activeSemester?.id || 'all');
     const { schoolName } = useUserSettings();
 
-    const effectiveSemesterFilter = semesterFilter === 'all' && activeSemester?.id ? activeSemester.id : semesterFilter;
+    const effectiveSemesterFilter = semesterFilter;
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());

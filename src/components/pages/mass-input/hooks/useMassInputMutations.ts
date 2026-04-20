@@ -12,6 +12,7 @@ import { addPdfHeader, ensureLogosLoaded } from '../../../../utils/pdfHeaderUtil
 import { getAutoTable, getJsPDF } from '../../../../utils/dynamicImports';
 import { recordAction } from '../../../../services/UndoManager';
 import { violationList } from '../../../../services/violations.data';
+import { sanitizeFilename } from '../../../../services/securityEnhanced';
 import { InputMode, ClassRow, StudentRow, AcademicRecordRow, ReviewDataItem } from '../types';
 
 export interface UseMassInputMutationsParams {
@@ -275,8 +276,12 @@ Contoh output yang benar:
                 await generateStudentReport(doc, reportData, teacherNote, new Date().toISOString().slice(0, 10), semName, acadYear, user);
                 setExportProgress(`${Math.round(70 + ((i + 1) / studentsToPrint.length) * 30)}%`);
             }
-            doc.save(`Rapor_Massal_${classes?.find(c => c.id === selectedClass)?.name || 'Kelas'}.pdf`);
-            toast.success('Semua rapor terpilih berhasil digabung dalam satu PDF!');
+            const selectedClassName = classes?.find(c => c.id === selectedClass)?.name || 'Kelas';
+            const fileName = allReportData.length === 1
+                ? `Rapor_${sanitizeFilename(allReportData[0]?.student.name || studentsToPrint[0]?.name || 'Siswa')}.pdf`
+                : `Rapor_Massal_${sanitizeFilename(selectedClassName)}.pdf`;
+            doc.save(fileName);
+            toast.success(allReportData.length === 1 ? 'Rapor siswa berhasil diunduh!' : 'Semua rapor terpilih berhasil digabung dalam satu PDF!');
         } catch (err) {
             console.error('Gagal membuat rapor massal:', err);
             toast.error(`Gagal membuat rapor massal: ${err instanceof Error ? err.message : 'Unknown error'}`);

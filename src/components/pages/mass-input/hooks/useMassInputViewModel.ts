@@ -51,11 +51,19 @@ export function useMassInputViewModel() {
     }, [data.existingGrades, state.subjectGradeInfo.semester]);
 
     const studentsWithGrades = useMemo(() => new Set(filteredExistingGrades.map(g => g.student_id)), [filteredExistingGrades]);
+    const studentsWithInputScores = useMemo(() => {
+        return new Set(Object.entries(state.scores)
+            .filter(([, score]) => score.trim() !== '')
+            .map(([studentId]) => studentId));
+    }, [state.scores]);
 
     const students = useMemo((): StudentRow[] => {
         if (!data.studentsData) return [];
         let filtered = data.studentsData;
-        if (state.mode === 'subject_grade' || state.mode === 'delete_subject_grade') {
+        if (state.mode === 'subject_grade') {
+            if (state.studentFilter === 'graded') filtered = filtered.filter(s => studentsWithInputScores.has(s.id));
+            else if (state.studentFilter === 'ungraded') filtered = filtered.filter(s => !studentsWithInputScores.has(s.id));
+        } else if (state.mode === 'delete_subject_grade') {
             if (state.studentFilter === 'graded') filtered = filtered.filter(s => studentsWithGrades.has(s.id));
             else if (state.studentFilter === 'ungraded') filtered = filtered.filter(s => !studentsWithGrades.has(s.id));
         } else if (state.mode) {
@@ -64,20 +72,15 @@ export function useMassInputViewModel() {
         }
         if (state.searchTerm) filtered = filtered.filter(s => s.name.toLowerCase().includes(state.searchTerm.toLowerCase()));
         return filtered;
-    }, [data.studentsData, state.searchTerm, state.studentFilter, studentsWithGrades, state.selectedStudentIds, state.mode]);
+    }, [data.studentsData, state.searchTerm, state.studentFilter, studentsWithGrades, studentsWithInputScores, state.selectedStudentIds, state.mode]);
 
     const gradedCount = useMemo(() => Object.values(state.scores).filter((s: string) => s && s.trim() !== '').length, [state.scores]);
 
-    const selectableStudentsCount = useMemo(() => {
-        if (!data.studentsData) return 0;
-        if (state.mode === 'delete_subject_grade') return data.studentsData.filter(s => studentsWithGrades.has(s.id)).length;
-        return data.studentsData.length;
-    }, [data.studentsData, state.mode, studentsWithGrades]);
-
     const isAllSelected = useMemo(() => {
-        if (selectableStudentsCount === 0) return false;
-        return state.selectedStudentIds.size === selectableStudentsCount;
-    }, [state.selectedStudentIds.size, selectableStudentsCount]);
+        if (state.mode === 'subject_grade') return false;
+        if (students.length === 0) return false;
+        return students.every(s => state.selectedStudentIds.has(s.id));
+    }, [state.mode, state.selectedStudentIds, students]);
 
     const filterOptions = useMemo((): { value: StudentFilter; label: string }[] => {
         if (state.mode === 'subject_grade' || state.mode === 'delete_subject_grade')
@@ -144,14 +147,17 @@ export function useMassInputViewModel() {
     const isSubmitDisabled = !!submitButtonTooltip;
 
     const handleSelectAllStudents = (checked: boolean) => {
-        if (checked) {
-            if (!data.studentsData) return;
-            let idsToSelect = data.studentsData.map(s => s.id);
-            if (state.mode === 'delete_subject_grade') idsToSelect = data.studentsData.filter(s => studentsWithGrades.has(s.id)).map(s => s.id);
-            state.setSelectedStudentIds(new Set(idsToSelect));
-        } else {
-            state.setSelectedStudentIds(new Set());
-        }
+        if (state.mode === 'subject_grade') return;
+        const visibleStudentIds = students.map(s => s.id);
+
+        state.setSelectedStudentIds(prev => {
+            const next = new Set(prev);
+            visibleStudentIds.forEach(id => {
+                if (checked) next.add(id);
+                else next.delete(id);
+            });
+            return next;
+        });
     };
 
     const handleImport = (importedData: Record<string, unknown>[]) => {
