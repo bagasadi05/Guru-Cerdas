@@ -58,7 +58,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                 .from('semesters')
                 .select('*')
                 .eq('is_active', true)
-                .single();
+                .maybeSingle();
 
             if (semesterError) {
                 if (semesterError.code !== 'PGRST116') { // Not found error code
@@ -67,6 +67,9 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                 setActiveSemester(null);
                 setActiveAcademicYear(null);
                 // Don't return, keep semesters list populated
+            } else if (!semesterData) {
+                setActiveSemester(null);
+                setActiveAcademicYear(null);
             } else {
                 setActiveSemester(semesterData);
 
@@ -75,7 +78,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                     .from('academic_years')
                     .select('*')
                     .eq('id', semesterData.academic_year_id)
-                    .single();
+                    .maybeSingle();
 
                 if (yearError) {
                     console.error('Error fetching academic year:', yearError);

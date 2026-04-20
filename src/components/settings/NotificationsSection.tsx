@@ -110,11 +110,14 @@ const NotificationsSection: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        void refreshNotificationStatus();
+        const timer = window.setTimeout(() => {
+            void refreshNotificationStatus();
+        }, 0);
         window.addEventListener('portal-guru-notifications-updated', refreshNotificationStatus);
         window.addEventListener('focus', refreshNotificationStatus);
 
         return () => {
+            window.clearTimeout(timer);
             window.removeEventListener('portal-guru-notifications-updated', refreshNotificationStatus);
             window.removeEventListener('focus', refreshNotificationStatus);
         };

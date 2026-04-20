@@ -155,10 +155,14 @@ export const PortalAttendanceTab: React.FC<PortalAttendanceTabProps> = ({ attend
     ));
 
     useEffect(() => {
-        setSelectedDate(defaultSelectedDate ?? undefined);
-        if (defaultSelectedDate) {
-            setVisibleMonth(toDate(defaultSelectedDate));
-        }
+        const timer = window.setTimeout(() => {
+            setSelectedDate(defaultSelectedDate ?? undefined);
+            if (defaultSelectedDate) {
+                setVisibleMonth(toDate(defaultSelectedDate));
+            }
+        }, 0);
+
+        return () => window.clearTimeout(timer);
     }, [defaultSelectedDate]);
 
     const selectedRecord = useMemo(
