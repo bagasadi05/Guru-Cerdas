@@ -38,6 +38,16 @@ import { useUserSettings } from '../../hooks/useUserSettings';
 import { useSemester } from '../../contexts/SemesterContext';
 import { SemesterSelector } from '../ui/SemesterSelector';
 import { Skeleton } from '../ui/Skeleton';
+import { SeverityLevel } from './student/violationMeta';
+import { getSemesterDisplayName } from '../../utils/semesterUtils';
+import {
+    buildStudentCommunicationSignals,
+    extractStoragePathFromPublicUrl,
+    getAvailableQuizPoints,
+    getLatestRecordForSubject,
+    resolveSubmitSemesterId,
+} from './student/studentDetailHelpers';
+import { writeAuditLog } from '../../services/auditTrail';
 
 const GradesTab = lazy(() => import('./student/GradesTab').then((module) => ({ default: module.GradesTab })));
 const ActivityTab = lazy(() => import('./student/ActivityTab').then((module) => ({ default: module.ActivityTab })));
@@ -65,6 +75,14 @@ const generateAccessCode = (): string => {
     return result;
 };
 
+const getViolationSeverityFromCategory = (category?: string): SeverityLevel | null => {
+    const normalized = category?.toLowerCase();
+    if (normalized === 'ringan' || normalized === 'sedang' || normalized === 'berat') {
+        return normalized;
+    }
+    return null;
+};
+
 const StudentDetailPage = () => {
     const { studentId } = useParams<{ studentId: string }>();
     const navigate = useNavigate();
@@ -83,10 +101,15 @@ const StudentDetailPage = () => {
     const [tabScrollState, setTabScrollState] = useState({ left: false, right: false });
     const [subjectToApply, setSubjectToApply] = useState('');
     const { kkm } = useUserSettings();
-    const { activeSemester } = useSemester();
+    const { activeSemester, semesters } = useSemester();
 
     // Initialize with activeSemester ID, will update when data loads
     const [selectedSemesterId, setSelectedSemesterId] = useState<string | null>(() => activeSemester?.id || null);
+    const targetSemesterId = resolveSubmitSemesterId(null, selectedSemesterId, activeSemester?.id);
+    const selectedSemester = selectedSemesterId ? semesters.find(semester => semester.id === selectedSemesterId) : null;
+    const selectedSemesterLabel = selectedSemester
+        ? `${selectedSemester.academic_years?.name || 'Tahun Ajaran'} - ${getSemesterDisplayName(selectedSemester.name, selectedSemester.start_date, 'full')}`
+        : 'Semua Semester';
 
     // Initialize selectedSemesterId when activeSemester loads (if not already set)
     useEffect(() => {
@@ -148,17 +171,17 @@ const StudentDetailPage = () => {
     const { data: statsData } = useQuery({
         queryKey: ['studentStats', studentId],
         queryFn: async () => {
-            if (!studentId) return { attendanceRecords: [], violations: [] };
+            if (!studentId || !user) return { attendanceRecords: [], violations: [] };
             const [attendanceRes, violationsRes] = await Promise.all([
-                supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null),
-                supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null)
+                supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).eq('user_id', user.id).is('deleted_at', null),
+                supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).eq('user_id', user.id).is('deleted_at', null)
             ]);
             return {
                 attendanceRecords: (attendanceRes.data || []) as AttendanceRow[],
                 violations: (violationsRes.data || []) as ViolationRow[]
             };
         },
-        enabled: !!studentId
+        enabled: !!studentId && !!user
     });
 
     // 3. Tab-Specific Queries (Lazy Loaded)
@@ -168,11 +191,11 @@ const StudentDetailPage = () => {
     const { data: academicRecords = [] } = useQuery({
         queryKey: ['studentGrades', studentId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId!).is('deleted_at', null);
+            const { data, error } = await supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId!).eq('user_id', user!.id).is('deleted_at', null);
             if (error) throw error;
             return (data || []) as AcademicRecordRow[];
         },
-        enabled: !!studentId && shouldLoadGrades,
+        enabled: !!studentId && !!user && shouldLoadGrades,
         staleTime: 5 * 60 * 1000
     });
 
@@ -181,11 +204,11 @@ const StudentDetailPage = () => {
     const { data: quizPoints = [] } = useQuery({
         queryKey: ['studentQuizzes', studentId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId!).is('deleted_at', null);
+            const { data, error } = await supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId!).eq('user_id', user!.id).is('deleted_at', null);
             if (error) throw error;
             return (data || []) as unknown as QuizPointRow[];
         },
-        enabled: !!studentId && shouldLoadActivity
+        enabled: !!studentId && !!user && shouldLoadActivity
     });
 
     // Reports Tab
@@ -211,15 +234,18 @@ const StudentDetailPage = () => {
                 supabase
                     .from('student_extracurriculars')
                     .select('id, user_id, student_id, extracurricular_id, extracurricular_student_id, semester_id, joined_at, status, created_at, extracurriculars(id, user_id, name, category, description, schedule_day, schedule_time, coach_name, max_participants, is_active, created_at, updated_at)')
-                    .eq('student_id', studentId!),
+                    .eq('student_id', studentId!)
+                    .eq('user_id', user!.id),
                 supabase
                     .from('extracurricular_attendance')
                     .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, date, status, notes, created_at')
-                    .eq('student_id', studentId!),
+                    .eq('student_id', studentId!)
+                    .eq('user_id', user!.id),
                 supabase
                     .from('extracurricular_grades')
                     .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, score, description, notes, created_at, updated_at')
                     .eq('student_id', studentId!)
+                    .eq('user_id', user!.id)
             ]);
             return {
                 studentExtracurriculars: extraRes.data || [],
@@ -227,7 +253,24 @@ const StudentDetailPage = () => {
                 extracurricularGrades: gradesRes.data || []
             };
         },
-        enabled: !!studentId && activeTab === 'extracurricular'
+        enabled: !!studentId && !!user && activeTab === 'extracurricular'
+    });
+
+    const { data: unreadMessagesCount = 0 } = useQuery({
+        queryKey: ['studentCommsUnreadCount', studentId],
+        queryFn: async () => {
+            const { count, error } = await supabase
+                .from('communications')
+                .select('id', { count: 'exact', head: true })
+                .eq('student_id', studentId!)
+                .eq('user_id', user!.id)
+                .eq('sender', 'parent')
+                .eq('is_read', false);
+            if (error) throw error;
+            return count || 0;
+        },
+        enabled: !!studentId && !!user,
+        staleTime: 30 * 1000
     });
 
     // Communication Tab
@@ -243,16 +286,7 @@ const StudentDetailPage = () => {
             if (error) throw error;
             return (data || []) as unknown as CommunicationRow[];
         },
-        enabled: !!studentId && !!user && (activeTab === 'communication' || activeTab === 'development')
-        // Note: 'development' doesn't use comms, but unread count logic might need it. 
-        // Actually unread messages count is used in the TAB HEADER. So we might need to fetch a lightweight count or just fetch all?
-        // For now, let's fetch it if we want the badge to be accurate.
-        // Optimization: Create a separate 'unreadCount' query if messages are huge.
-        // For simplicity now, let's fetch communications always for the badge? No, that defeats the purpose.
-        // Let's lazy load the badge count separately or just load communications lazily and accept badge updates only when visited or global sync.
-        // *Better*: Fetch communications if activeTab is communication OR if we really want that badge.
-        // Let's skip badge for non-active tabs to save BW, or make it a separate light query.
-        // Decision: Only fetch when activeTab is communication. Badge will update then.
+        enabled: !!studentId && !!user && activeTab === 'communication'
     });
 
     // Composite Data Object to minimize refactoring impact
@@ -327,7 +361,9 @@ const StudentDetailPage = () => {
             notes: data.notes || '',
             student_id: studentId,
             user_id: user.id,
-            semester_id: activeSemester?.id || null,
+            semester_id: modalState.type === 'academic' && modalState.data?.id
+                ? resolveSubmitSemesterId(modalState.data.semester_id, selectedSemesterId, activeSemester?.id)
+                : targetSemesterId,
         };
         if (modalState.type === 'academic' && modalState.data?.id) {
             academicMutation.mutate({ operation: 'edit', data: academicPayload, id: modalState.data.id });
@@ -344,9 +380,12 @@ const StudentDetailPage = () => {
             quiz_name: data.quiz_name,
             points: 1,
             max_points: 1,
+            category: data.category || null,
             student_id: studentId,
             user_id: user.id,
-            semester_id: activeSemester?.id || null,
+            semester_id: modalState.type === 'quiz' && modalState.data?.id
+                ? resolveSubmitSemesterId(modalState.data.semester_id, selectedSemesterId, activeSemester?.id)
+                : targetSemesterId,
         };
         if (modalState.type === 'quiz' && modalState.data?.id) {
             quizMutation.mutate({ operation: 'edit', data: quizPayload, id: String(modalState.data.id) });
@@ -355,18 +394,42 @@ const StudentDetailPage = () => {
         }
     };
 
-    const handleViolationSubmit = (data: ViolationFormValues) => {
+    const handleViolationSubmit = async (data: ViolationFormValues & { evidence_file?: File }) => {
         if (!user || !studentId) return;
         const selectedViolation = violationList.find(v => v.description === data.description);
+        const existingViolation = modalState.type === 'violation' ? modalState.data : null;
+        let evidenceUrl = existingViolation?.evidence_url || null;
+
+        if (data.evidence_file) {
+            try {
+                const fileExt = data.evidence_file.name.split('.').pop() || 'jpg';
+                const filePath = `violation_evidence/${studentId}-${Date.now()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage.from('student_assets').upload(filePath, data.evidence_file, { upsert: true });
+                if (uploadError) throw uploadError;
+                const oldEvidencePath = extractStoragePathFromPublicUrl(existingViolation?.evidence_url, 'student_assets');
+                if (oldEvidencePath) {
+                    await supabase.storage.from('student_assets').remove([oldEvidencePath]);
+                }
+                const { data: publicUrlData } = supabase.storage.from('student_assets').getPublicUrl(filePath);
+                evidenceUrl = publicUrlData.publicUrl;
+            } catch (error: unknown) {
+                toast.error(`Gagal unggah bukti: ${error instanceof Error ? error.message : String(error)}`);
+                return;
+            }
+        }
+
         const violationPayload = {
             date: data.date,
             description: data.description,
-            points: selectedViolation?.points || 0,
-            type: 'general',
+            points: selectedViolation?.points ?? existingViolation?.points ?? 0,
+            type: existingViolation?.type || 'general',
+            severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || existingViolation?.severity || null,
+            follow_up_status: existingViolation?.follow_up_status || 'pending',
+            follow_up_notes: data.follow_up_notes || null,
+            evidence_url: evidenceUrl,
             student_id: studentId,
             user_id: user.id,
-            follow_up_status: 'pending',
-            semester_id: activeSemester?.id || null,
+            semester_id: resolveSubmitSemesterId(existingViolation?.semester_id, selectedSemesterId, activeSemester?.id),
         };
         if (modalState.type === 'violation' && modalState.data?.id) {
             violationMutation.mutate({ operation: 'edit', data: violationPayload, id: modalState.data.id });
@@ -420,6 +483,7 @@ const StudentDetailPage = () => {
         if (!selectedSemesterId) return quizPoints;
         return quizPoints.filter(r => r.semester_id === selectedSemesterId);
     }, [quizPoints, selectedSemesterId]);
+    const availableFilteredQuizPoints = useMemo(() => getAvailableQuizPoints(filteredQuizPoints), [filteredQuizPoints]);
 
     // Note: Reports table has no semester_id column, so we show all reports
 
@@ -442,8 +506,12 @@ const StudentDetailPage = () => {
     }, [studentDetails, selectedSemesterId]);
 
     const totalViolationPoints = useMemo(() => filteredViolations.reduce((sum, v) => sum + v.points, 0) || 0, [filteredViolations]);
-    const unreadMessagesCount = useMemo(() => studentDetails?.communications.filter(m => m.sender === 'parent' && !m.is_read).length || 0, [studentDetails?.communications]);
-
+    const communicationSignals = useMemo(() => buildStudentCommunicationSignals({
+        studentName: studentDetails?.student.name || 'Siswa',
+        academicRecords: filteredAcademicRecords,
+        attendanceRecords: filteredAttendance,
+        violations: filteredViolations,
+    }), [studentDetails?.student.name, filteredAcademicRecords, filteredAttendance, filteredViolations]);
     const handleCopyAccessCode = () => {
         if (!studentDetails?.student.access_code) return;
         navigator.clipboard.writeText(studentDetails.student.access_code);
@@ -454,17 +522,29 @@ const StudentDetailPage = () => {
     // Handler for updating violation follow-up status
     const handleUpdateViolationFollowUp = async (violationId: string, status: 'pending' | 'in_progress' | 'resolved', notes?: string) => {
         try {
+            if (!user) return;
             const { error } = await supabase
                 .from('violations')
                 .update({
                     follow_up_status: status,
                     follow_up_notes: notes
                 })
-                .eq('id', violationId);
+                .eq('id', violationId)
+                .eq('user_id', user.id);
 
             if (error) throw error;
 
             queryClient.invalidateQueries({ queryKey: ['studentStats', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentCommsUnreadCount', studentId] });
+            await writeAuditLog({
+                userId: user.id,
+                userEmail: user.email,
+                tableName: 'violations',
+                recordId: violationId,
+                action: 'UPDATE',
+                oldData: { follow_up_status: 'unknown' },
+                newData: { follow_up_status: status, follow_up_notes: notes || null },
+            });
             toast.success(`Status tindak lanjut berhasil diubah menjadi "${status === 'pending' ? 'Belum Ditindak' : status === 'in_progress' ? 'Sedang Diproses' : 'Sudah Selesai'}"`);
         } catch (error: unknown) {
             toast.error(`Gagal mengubah status: ${error instanceof Error ? error.message : String(error)}`);
@@ -500,12 +580,23 @@ const StudentDetailPage = () => {
                     parent_notified: true,
                     parent_notified_at: new Date().toISOString()
                 })
-                .eq('id', violation.id);
+                .eq('id', violation.id)
+                .eq('user_id', user!.id);
 
             if (updateError) throw updateError;
 
             queryClient.invalidateQueries({ queryKey: ['studentStats', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['studentCommsUnreadCount', studentId] });
+            await writeAuditLog({
+                userId: user!.id,
+                userEmail: user!.email,
+                tableName: 'violations',
+                recordId: violation.id,
+                action: 'UPDATE',
+                oldData: { parent_notified: violation.parent_notified || false },
+                newData: { parent_notified: true, parent_notified_at: new Date().toISOString() },
+            });
             toast.success('Notifikasi pelanggaran berhasil dikirim ke orang tua!');
         } catch (error: unknown) {
             toast.error(`Gagal mengirim notifikasi: ${error instanceof Error ? error.message : String(error)}`);
@@ -548,13 +639,15 @@ const StudentDetailPage = () => {
                     const { error } = await supabase
                         .from('communications')
                         .update({ is_read: true })
-                        .in('id', unreadIds);
+                        .in('id', unreadIds)
+                        .eq('user_id', user.id);
 
                     if (error) {
                         console.error("Failed to mark messages as read:", error);
                     } else {
                         // Invalidate to refetch and update UI
                         queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
+                        queryClient.invalidateQueries({ queryKey: ['studentCommsUnreadCount', studentId] });
                     }
                 }
             }
@@ -585,18 +678,15 @@ const StudentDetailPage = () => {
     };
 
     const uniqueSubjectsForGrades = useMemo((): (string | null)[] => {
-        if (!studentDetails?.academicRecords) return [];
-        const records = studentDetails.academicRecords as AcademicRecordRow[];
+        const records = filteredAcademicRecords as AcademicRecordRow[];
         const subjects = records.map(r => r.subject);
         return [...new Set(subjects)];
-    }, [studentDetails?.academicRecords]);
+    }, [filteredAcademicRecords]);
 
     const currentRecordForSubject = useMemo(() => {
-        if (!subjectToApply || !studentDetails?.academicRecords) return null;
-        return studentDetails.academicRecords
-            .filter((r: AcademicRecordRow) => r.subject === subjectToApply)
-            .sort((a: AcademicRecordRow, b: AcademicRecordRow) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-    }, [subjectToApply, studentDetails?.academicRecords]);
+        if (!subjectToApply) return null;
+        return getLatestRecordForSubject(filteredAcademicRecords, subjectToApply);
+    }, [subjectToApply, filteredAcademicRecords]);
 
     useEffect(() => {
         if (modalState.type === 'applyPoints') {
@@ -614,7 +704,7 @@ const StudentDetailPage = () => {
             toast.error("Silakan pilih mata pelajaran.");
             return;
         }
-        applyPointsMutation.mutate(subjectToApply, {
+        applyPointsMutation.mutate({ subject: subjectToApply, semesterId: selectedSemesterId }, {
             onSuccess: () => {
                 triggerConfetti();
             }
@@ -756,6 +846,9 @@ const StudentDetailPage = () => {
                         includeAllOption={true}
                         className="min-w-[200px]"
                     />
+                    <div className="w-full sm:w-auto text-xs text-slate-500 dark:text-slate-400">
+                        Sedang melihat: <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedSemesterLabel}</span>
+                    </div>
                 </div>
 
 
@@ -809,14 +902,14 @@ const StudentDetailPage = () => {
                         <TabsContent value="grades" className="p-0">
                             {activeTab === 'grades' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} kkm={kkm} />
+                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} kkm={kkm} semesterLabel={selectedSemesterLabel} />
                                 </Suspense>
                             )}
                         </TabsContent>
                         <TabsContent value="activity" className="p-0">
                             {activeTab === 'activity' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} />
+                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} semesterLabel={selectedSemesterLabel} />
                                 </Suspense>
                             )}
                         </TabsContent>
@@ -833,6 +926,7 @@ const StudentDetailPage = () => {
                                         studentName={student.name}
                                         className={student.classes?.name || '-'}
                                         isOnline={isOnline}
+                                        semesterLabel={selectedSemesterLabel}
                                     />
                                 </Suspense>
                             )}
@@ -903,6 +997,7 @@ const StudentDetailPage = () => {
                                         onDeleteMessage={(id) => handleDelete('communications', id)}
                                         isOnline={isOnline}
                                         isSending={sendMessageMutation.isPending}
+                                        quickTemplates={communicationSignals}
                                     />
                                 </Suspense>
                             )}
@@ -982,7 +1077,7 @@ const StudentDetailPage = () => {
                     <Modal isOpen={true} onClose={() => setModalState({ type: 'closed' })} title="Gunakan Poin Keaktifan">
                         <div className="space-y-4">
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Anda akan menggunakan <strong>{filteredQuizPoints.length} poin</strong> keaktifan sebagai nilai tambahan. Poin ini akan dihapus setelah digunakan.
+                                Anda akan menggunakan <strong>{availableFilteredQuizPoints.length} poin</strong> keaktifan sebagai nilai tambahan. Poin ini akan ditandai sudah digunakan.
                             </p>
                             <div>
                                 <label htmlFor="subject-select" className="block text-sm font-medium mb-1">Pilih Mata Pelajaran</label>
@@ -996,12 +1091,12 @@ const StudentDetailPage = () => {
                             {currentRecordForSubject && (
                                 <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md text-sm">
                                     <p>Nilai Saat Ini: <strong className="text-lg">{currentRecordForSubject.score}</strong></p>
-                                    <p>Nilai Baru: <strong className="text-lg text-green-500">{Math.min(100, currentRecordForSubject.score + filteredQuizPoints.length)}</strong></p>
+                                    <p>Nilai Baru: <strong className="text-lg text-green-500">{Math.min(100, currentRecordForSubject.score + availableFilteredQuizPoints.length)}</strong></p>
                                 </div>
                             )}
                             <div className="flex justify-end gap-2 pt-4">
                                 <Button type="button" variant="ghost" onClick={() => setModalState({ type: 'closed' })}>Batal</Button>
-                                <Button type="button" onClick={handleApplyPointsSubmit} disabled={applyPointsMutation.isPending || !subjectToApply}>
+                                <Button type="button" onClick={handleApplyPointsSubmit} disabled={applyPointsMutation.isPending || !subjectToApply || availableFilteredQuizPoints.length === 0}>
                                     {applyPointsMutation.isPending ? 'Menerapkan...' : 'Terapkan Poin'}
                                 </Button>
                             </div>

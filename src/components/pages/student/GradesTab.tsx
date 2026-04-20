@@ -1,11 +1,10 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { PlusIcon, BarChartIcon, PencilIcon, TrashIcon, TrendingUpIcon, DownloadIcon, TargetIcon, UsersIcon, LockIcon } from 'lucide-react';
 import { AcademicRecordRow } from './types';
 import { GradeTrendChart } from '../../ui/GradeTrendChart';
 import { useSemester } from '../../../contexts/SemesterContext';
-import { SemesterSelector } from '../../ui/SemesterSelector';
 
 // Default KKM value - can be made configurable
 const DEFAULT_KKM = 75;
@@ -18,13 +17,8 @@ interface GradesTabProps {
     isOnline: boolean;
     classAverages?: Record<string, number>; // Optional class averages for comparison
     kkm?: number; // Kriteria Ketuntasan Minimal
+    semesterLabel?: string;
 }
-
-// Helper function to filter records by semester_id
-const filterRecordsBySemester = (records: AcademicRecordRow[], semesterId: string): AcademicRecordRow[] => {
-    if (!semesterId || semesterId === 'all') return records;
-    return records.filter(record => record.semester_id === semesterId);
-};
 
 // Helper to predict final grade based on trend
 const predictFinalGrade = (scores: number[]): number | null => {
@@ -238,7 +232,8 @@ const GradesPanel: React.FC<{
     onDelete: (recordId: string) => void,
     isOnline: boolean;
     kkm: number;
-}> = ({ records, onEdit, onDelete, isOnline, kkm }) => {
+    semesterLabel?: string;
+}> = ({ records, onEdit, onDelete, isOnline, kkm, semesterLabel }) => {
     const { isLocked } = useSemester();
     const recordsBySubject = useMemo(() => {
         if (!records || records.length === 0) return {};
@@ -261,7 +256,9 @@ const GradesPanel: React.FC<{
                     <BarChartIcon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
                 </div>
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Tidak Ada Data Nilai Mata Pelajaran</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Nilai yang Anda tambahkan akan muncul di sini.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Belum ada nilai untuk {semesterLabel || 'semester yang dipilih'}. Nilai yang Anda tambahkan akan muncul di sini.
+                </p>
             </div>
         );
     }
@@ -333,7 +330,7 @@ const GradesPanel: React.FC<{
                                         </div>
                                         <div className="absolute top-3 right-3 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                             {(() => {
-                                                const canModify = !isLocked(record.created_at);
+                                                const canModify = !isLocked(record.semester_id || record.created_at);
 
                                                 return (
                                                     <>
@@ -381,15 +378,10 @@ export const GradesTab: React.FC<GradesTabProps> = ({
     onDelete,
     isOnline,
     classAverages,
-    kkm = DEFAULT_KKM
+    kkm = DEFAULT_KKM,
+    semesterLabel
 }) => {
-    const [semesterFilter, setSemesterFilter] = useState<string>('all');
     const chartRef = useRef<HTMLDivElement>(null);
-
-    // Filter records based on selected semester
-    const filteredRecords = useMemo(() => {
-        return filterRecordsBySemester(records, semesterFilter);
-    }, [records, semesterFilter]);
 
     // Export chart as image
     const handleExportChart = async () => {
@@ -426,14 +418,6 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                     <CardDescription>Daftar nilai sumatif atau formatif yang telah diinput.</CardDescription>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                    {/* Semester Filter */}
-                    <SemesterSelector
-                        value={semesterFilter}
-                        onChange={(val) => setSemesterFilter(val)}
-                        includeAllOption={true}
-                        size="sm"
-                    />
-
                     {/* Export Button */}
                     <Button variant="outline" size="sm" onClick={handleExportChart} title="Export Chart">
                         <DownloadIcon className="w-4 h-4 mr-1" />
@@ -448,22 +432,13 @@ export const GradesTab: React.FC<GradesTabProps> = ({
             </div>
 
             {/* Summary Stats */}
-            <GradesSummary records={filteredRecords} kkm={kkm} />
-
-            {/* Semester Info */}
-            {semesterFilter !== 'all' && (
-                <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
-                    <p className="text-sm text-blue-600 dark:text-blue-400">
-                        Menampilkan {filteredRecords.length} dari {records.length} nilai untuk semester yang dipilih
-                    </p>
-                </div>
-            )}
+            <GradesSummary records={records} kkm={kkm} />
 
             {/* Trend Chart Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Bar Chart with KKM */}
                 <GradesChart
-                    records={filteredRecords}
+                    records={records}
                     kkm={kkm}
                     classAverages={classAverages}
                     chartRef={chartRef}
@@ -471,7 +446,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
 
                 {/* Trend Chart */}
                 <GradeTrendChart
-                    records={filteredRecords.map(r => ({
+                    records={records.map(r => ({
                         id: r.id,
                         subject: r.subject,
                         score: r.score,
@@ -487,11 +462,12 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                 Detail Nilai per Mapel
             </h3>
             <GradesPanel
-                records={filteredRecords}
+                records={records}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 isOnline={isOnline}
                 kkm={kkm}
+                semesterLabel={semesterLabel}
             />
         </div>
     );

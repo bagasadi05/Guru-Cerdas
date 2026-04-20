@@ -16,6 +16,15 @@ export const POINT_CATEGORIES = {
 
 export type PointCategory = keyof typeof POINT_CATEGORIES;
 
+const POINT_CATEGORY_BADGE_CLASSES: Record<PointCategory, string> = {
+    bertanya: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+    presentasi: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+    tugas_tambahan: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+    menjawab: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
+    diskusi: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400',
+    lainnya: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
+};
+
 // Settings for point usage limits
 const MAX_POINTS_PER_SUBJECT = 10; // Maximum points that can be applied to one subject
 
@@ -26,6 +35,7 @@ interface ActivityTabProps {
     onDelete: (id: string | number) => void;
     onApplyPoints: () => void;
     isOnline: boolean;
+    semesterLabel?: string;
 }
 
 // Category Filter Component
@@ -221,7 +231,8 @@ const ActivityPointsHistory: React.FC<{
     onDelete: (recordId: string | number) => void,
     isOnline: boolean;
     categoryFilter: PointCategory | 'all';
-}> = ({ records, onEdit, onDelete, isOnline, categoryFilter }) => {
+    semesterLabel?: string;
+}> = ({ records, onEdit, onDelete, isOnline, categoryFilter, semesterLabel }) => {
     const filteredRecords = useMemo(() => {
         let filtered = records.filter(r => !r.is_used);
         if (categoryFilter !== 'all') {
@@ -243,7 +254,9 @@ const ActivityPointsHistory: React.FC<{
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                     {categoryFilter !== 'all' ? 'Tidak Ada Poin untuk Kategori Ini' : 'Tidak Ada Poin Keaktifan'}
                 </h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Poin yang Anda tambahkan akan muncul di sini.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Belum ada poin untuk {semesterLabel || 'semester yang dipilih'}. Poin yang Anda tambahkan akan muncul di sini.
+                </p>
             </div>
         );
     }
@@ -265,7 +278,7 @@ const ActivityPointsHistory: React.FC<{
                             <div className="flex items-center gap-2 flex-wrap">
                                 <p className="font-semibold text-gray-900 dark:text-white">{record.quiz_name}</p>
                                 {categoryInfo && (
-                                    <span className={`text-xs px-2 py-0.5 rounded-full bg-${categoryInfo.color}-100 dark:bg-${categoryInfo.color}-900/30 text-${categoryInfo.color}-600 dark:text-${categoryInfo.color}-400 flex items-center gap-1`}>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${POINT_CATEGORY_BADGE_CLASSES[record.category!]} flex items-center gap-1`}>
                                         <span>{categoryInfo.icon}</span>
                                         {categoryInfo.label}
                                     </span>
@@ -325,7 +338,7 @@ const ApplyPointsPanel: React.FC<{
 // View Toggle
 type ViewMode = 'available' | 'history' | 'overview';
 
-export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onEdit, onDelete, onApplyPoints, isOnline }) => {
+export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onEdit, onDelete, onApplyPoints, isOnline, semesterLabel }) => {
     const [categoryFilter, setCategoryFilter] = useState<PointCategory | 'all'>('all');
     const [viewMode, setViewMode] = useState<ViewMode>('available');
 
@@ -403,6 +416,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                         onDelete={onDelete}
                         isOnline={isOnline}
                         categoryFilter={categoryFilter}
+                        semesterLabel={semesterLabel}
                     />
                 </>
             )}

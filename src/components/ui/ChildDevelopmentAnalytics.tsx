@@ -1,9 +1,19 @@
 import React, { useMemo } from 'react';
-import { BarChartIcon, TrendingUpIcon, TrendingDownIcon, MinusIcon, BookOpenIcon, CalendarIcon, ShieldAlertIcon, StarIcon, TargetIcon, SparklesIcon, AwardIcon, AlertTriangleIcon, CheckCircleIcon, ClockIcon } from '../Icons';
-
-// ============================================
-// TYPES
-// ============================================
+import {
+    AlertTriangleIcon,
+    BarChartIcon,
+    BookOpenIcon,
+    CalendarIcon,
+    CheckCircleIcon,
+    ClockIcon,
+    MinusIcon,
+    ShieldAlertIcon,
+    SparklesIcon,
+    StarIcon,
+    TargetIcon,
+    TrendingDownIcon,
+    TrendingUpIcon,
+} from '../Icons';
 
 interface AcademicRecord {
     id: string;
@@ -34,141 +44,147 @@ interface ChildAnalyticsProps {
     className?: string;
 }
 
-// ============================================
-// DONUT CHART COMPONENT
-// ============================================
+type Tone = 'success' | 'info' | 'warning' | 'danger';
+type Trend = 'up' | 'down' | 'stable';
 
-interface DonutChartProps {
-    percentage: number;
-    size?: number;
-    strokeWidth?: number;
-    colorClass?: string;
-    label?: string;
-    sublabel?: string;
-}
-
-const DonutChart: React.FC<DonutChartProps> = ({
-    percentage,
-    size = 120,
-    strokeWidth = 12,
-    colorClass = 'text-indigo-500',
-    label,
-    sublabel,
-}) => {
-    const radius = (size - strokeWidth) / 2;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-    return (
-        <div className="flex flex-col items-center">
-            <div className="relative" style={{ width: size, height: size }}>
-                <svg className="transform -rotate-90" width={size} height={size}>
-                    {/* Background circle */}
-                    <circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={radius}
-                        fill="transparent"
-                        stroke="currentColor"
-                        strokeWidth={strokeWidth}
-                        className="text-slate-200 dark:text-slate-700"
-                    />
-                    {/* Progress circle */}
-                    <circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={radius}
-                        fill="transparent"
-                        stroke="currentColor"
-                        strokeWidth={strokeWidth}
-                        strokeDasharray={circumference}
-                        strokeDashoffset={strokeDashoffset}
-                        strokeLinecap="round"
-                        className={`${colorClass} transition-all duration-1000 ease-out`}
-                    />
-                </svg>
-                {/* Center text */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-slate-900 dark:text-white">{Math.round(percentage)}%</span>
-                </div>
-            </div>
-            {label && <span className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>}
-            {sublabel && <span className="text-xs text-slate-500 dark:text-slate-400">{sublabel}</span>}
-        </div>
-    );
-};
-
-// ============================================
-// INSIGHT CARD COMPONENT
-// ============================================
-
-interface InsightCardProps {
-    icon: React.ElementType;
+interface FocusItem {
     title: string;
     description: string;
-    variant: 'success' | 'warning' | 'danger' | 'info';
+    tone: Tone;
+    icon: React.ElementType;
 }
 
-const InsightCard: React.FC<InsightCardProps> = ({ icon: Icon, title, description, variant }) => {
-    const variantStyles = {
-        success: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400',
-        warning: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400',
-        danger: 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400',
-        info: 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400',
-    };
-
-    const iconColors = {
-        success: 'text-emerald-500',
-        warning: 'text-amber-500',
-        danger: 'text-rose-500',
-        info: 'text-indigo-500',
-    };
-
-    return (
-        <div className={`p-4 rounded-2xl border ${variantStyles[variant]} transition-all hover:scale-[1.02]`}>
-            <div className="flex items-start gap-3">
-                <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-white/50 dark:bg-slate-800/50`}>
-                    <Icon className={`w-5 h-5 ${iconColors[variant]}`} />
-                </div>
-                <div>
-                    <h4 className="font-bold text-sm">{title}</h4>
-                    <p className="text-xs mt-1 opacity-80">{description}</p>
-                </div>
-            </div>
-        </div>
-    );
+const toneStyles: Record<Tone, {
+    card: string;
+    icon: string;
+    badge: string;
+    bar: string;
+}> = {
+    success: {
+        card: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100',
+        icon: 'bg-emerald-500 text-white',
+        badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200',
+        bar: 'bg-emerald-500',
+    },
+    info: {
+        card: 'border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-100',
+        icon: 'bg-sky-500 text-white',
+        badge: 'bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200',
+        bar: 'bg-sky-500',
+    },
+    warning: {
+        card: 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100',
+        icon: 'bg-amber-500 text-white',
+        badge: 'bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200',
+        bar: 'bg-amber-500',
+    },
+    danger: {
+        card: 'border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-100',
+        icon: 'bg-rose-500 text-white',
+        badge: 'bg-rose-100 text-rose-700 dark:bg-rose-400/15 dark:text-rose-200',
+        bar: 'bg-rose-500',
+    },
 };
 
-// ============================================
-// MINI BAR CHART COMPONENT
-// ============================================
+const normalizeStatus = (status: string): string => status.trim().toLowerCase();
 
-interface MiniBarChartProps {
-    data: { label: string; value: number; max: number; color?: string }[];
-}
+const getAcademicTone = (value: number): Tone => {
+    if (value >= 85) return 'success';
+    if (value >= 75) return 'info';
+    if (value >= 65) return 'warning';
+    return 'danger';
+};
 
-const MiniBarChart: React.FC<MiniBarChartProps> = ({ data }) => (
-    <div className="space-y-2">
-        {data.map((item, index) => (
-            <div key={index}>
-                <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">{item.label}</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{item.value}</span>
-                </div>
-                <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div
-                        className={`h-full rounded-full transition-all duration-700 ${item.color || 'bg-indigo-500'}`}
-                        style={{ width: `${Math.min((item.value / item.max) * 100, 100)}%` }}
-                    />
-                </div>
+const getAttendanceTone = (value: number): Tone => {
+    if (value >= 95) return 'success';
+    if (value >= 85) return 'info';
+    if (value >= 75) return 'warning';
+    return 'danger';
+};
+
+const getBehaviorTone = (points: number): Tone => {
+    if (points === 0) return 'success';
+    if (points <= 10) return 'info';
+    if (points <= 25) return 'warning';
+    return 'danger';
+};
+
+const getSubjectTone = (value: number): Tone => {
+    if (value >= 80) return 'success';
+    if (value >= 75) return 'info';
+    if (value >= 65) return 'warning';
+    return 'danger';
+};
+
+const getTrendLabel = (trend: Trend): string => {
+    if (trend === 'up') return 'Naik';
+    if (trend === 'down') return 'Menurun';
+    return 'Stabil';
+};
+
+const MetricCard: React.FC<{
+    title: string;
+    value: string;
+    description: string;
+    tone: Tone;
+    icon: React.ElementType;
+    progress?: number;
+}> = ({ title, value, description, tone, icon: Icon, progress }) => (
+    <div className={`rounded-3xl border p-4 ${toneStyles[tone].card}`}>
+        <div className="flex items-start justify-between gap-3">
+            <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-70">{title}</p>
+                <p className="mt-2 text-3xl font-black">{value}</p>
             </div>
-        ))}
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${toneStyles[tone].icon}`}>
+                <Icon className="h-5 w-5" />
+            </div>
+        </div>
+        <p className="mt-3 text-sm leading-5 opacity-80">{description}</p>
+        {typeof progress === 'number' && (
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/70 dark:bg-slate-950/40">
+                <div className={`h-full rounded-full ${toneStyles[tone].bar}`} style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
+            </div>
+        )}
     </div>
 );
 
-// ============================================
-// MAIN COMPONENT
-// ============================================
+const FocusCard: React.FC<FocusItem> = ({ title, description, tone, icon: Icon }) => (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+        <div className="flex items-start gap-3">
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${toneStyles[tone].icon}`}>
+                <Icon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+                <p className="font-semibold text-slate-950 dark:text-white">{title}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{description}</p>
+            </div>
+        </div>
+    </div>
+);
+
+const SubjectRow: React.FC<{
+    subject: string;
+    average: number;
+    count: number;
+}> = ({ subject, average, count }) => {
+    const tone = getSubjectTone(average);
+
+    return (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+            <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-950 dark:text-white">{subject}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{count} penilaian</p>
+                </div>
+                <span className={`rounded-full px-3 py-1 text-sm font-bold ${toneStyles[tone].badge}`}>{average}</span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                <div className={`h-full rounded-full ${toneStyles[tone].bar}`} style={{ width: `${Math.min(100, average)}%` }} />
+            </div>
+        </div>
+    );
+};
 
 export const ChildDevelopmentAnalytics: React.FC<ChildAnalyticsProps> = ({
     academicRecords,
@@ -176,430 +192,381 @@ export const ChildDevelopmentAnalytics: React.FC<ChildAnalyticsProps> = ({
     violations,
     studentName,
 }) => {
-    // Calculate academic statistics
     const academicStats = useMemo(() => {
         if (academicRecords.length === 0) {
-            return { average: 0, highest: 0, lowest: 0, passRate: 0, trend: 'stable', subjectCount: 0 };
+            return {
+                average: 0,
+                highest: 0,
+                lowest: 0,
+                passRate: 0,
+                trend: 'stable' as Trend,
+                subjectCount: 0,
+                recordCount: 0,
+            };
         }
 
-        const scores = academicRecords.map(r => r.score);
-        const average = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        const scores = academicRecords.map((record) => record.score);
+        const average = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
         const highest = Math.max(...scores);
         const lowest = Math.min(...scores);
-        const passCount = scores.filter(s => s >= 75).length;
-        const passRate = Math.round((passCount / scores.length) * 100);
+        const passRate = Math.round((scores.filter((score) => score >= 75).length / scores.length) * 100);
+        const splitIndex = Math.floor(scores.length / 2);
+        const recentScores = scores.slice(splitIndex);
+        const olderScores = scores.slice(0, splitIndex);
+        const recentAverage = recentScores.length > 0 ? recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length : average;
+        const olderAverage = olderScores.length > 0 ? olderScores.reduce((sum, score) => sum + score, 0) / olderScores.length : average;
+        const trend: Trend = recentAverage > olderAverage + 5 ? 'up' : recentAverage < olderAverage - 5 ? 'down' : 'stable';
+        const subjectCount = new Set(academicRecords.map((record) => record.subject)).size;
 
-        // Calculate trend (simplified - compare recent vs older)
-        const halfIdx = Math.floor(scores.length / 2);
-        const recentAvg = scores.slice(halfIdx).reduce((a, b) => a + b, 0) / (scores.length - halfIdx) || 0;
-        const olderAvg = scores.slice(0, halfIdx).reduce((a, b) => a + b, 0) / halfIdx || 0;
-        const trend = recentAvg > olderAvg + 5 ? 'up' : recentAvg < olderAvg - 5 ? 'down' : 'stable';
-
-        const subjects = new Set(academicRecords.map(r => r.subject));
-
-        return { average, highest, lowest, passRate, trend, subjectCount: subjects.size };
+        return {
+            average,
+            highest,
+            lowest,
+            passRate,
+            trend,
+            subjectCount,
+            recordCount: academicRecords.length,
+        };
     }, [academicRecords]);
 
-    // Calculate attendance statistics
     const attendanceStats = useMemo(() => {
-        if (attendanceRecords.length === 0) {
-            return { total: 0, present: 0, absent: 0, late: 0, sick: 0, rate: 0 };
+        const total = attendanceRecords.length;
+        if (total === 0) {
+            return { total: 0, present: 0, absent: 0, sickOrPermission: 0, late: 0, rate: 0 };
         }
 
-        const present = attendanceRecords.filter(r => r.status === 'Hadir').length;
-        const absent = attendanceRecords.filter(r => r.status === 'Alpa' || r.status === 'Alpha').length;
-        const late = attendanceRecords.filter(r => r.status === 'Terlambat').length;
-        const sick = attendanceRecords.filter(r => r.status === 'Sakit' || r.status === 'Izin').length;
-        const rate = Math.round((present / attendanceRecords.length) * 100);
+        const present = attendanceRecords.filter((record) => normalizeStatus(record.status) === 'hadir').length;
+        const absent = attendanceRecords.filter((record) => ['alpa', 'alpha', 'tidak hadir'].includes(normalizeStatus(record.status))).length;
+        const sickOrPermission = attendanceRecords.filter((record) => ['sakit', 'izin', 'ijin'].includes(normalizeStatus(record.status))).length;
+        const late = attendanceRecords.filter((record) => normalizeStatus(record.status) === 'terlambat').length;
+        const rate = Math.round((present / total) * 100);
 
-        return { total: attendanceRecords.length, present, absent, late, sick, rate };
+        return { total, present, absent, sickOrPermission, late, rate };
     }, [attendanceRecords]);
 
-    // Calculate behavior statistics
     const behaviorStats = useMemo(() => {
-        const totalPoints = violations.reduce((sum, v) => sum + v.points, 0);
-        const violationCount = violations.length;
-        const maxPoints = 100; // Maximum acceptable violation points
-        const behaviorScore = Math.max(0, 100 - totalPoints);
+        const totalPoints = violations.reduce((sum, violation) => sum + violation.points, 0);
+        const score = Math.max(0, 100 - totalPoints);
 
-        return { totalPoints, violationCount, behaviorScore };
+        return {
+            totalPoints,
+            count: violations.length,
+            score,
+        };
     }, [violations]);
 
-    // Generate insights for parents
-    const insights = useMemo(() => {
-        const result: InsightCardProps[] = [];
-
-        // Academic insights
-        if (academicStats.passRate >= 80) {
-            result.push({
-                icon: AwardIcon,
-                title: 'Prestasi Akademik Sangat Baik! 🌟',
-                description: `${studentName} berhasil mencapai KKM di ${academicStats.passRate}% penilaian. Terus pertahankan!`,
-                variant: 'success',
-            });
-        } else if (academicStats.passRate >= 60) {
-            result.push({
-                icon: TargetIcon,
-                title: 'Akademik Perlu Perhatian',
-                description: `${academicStats.passRate}% penilaian sudah tuntas. Pertimbangkan untuk diskusi dengan guru terkait strategi belajar.`,
-                variant: 'warning',
-            });
-        } else if (academicRecords.length > 0) {
-            result.push({
-                icon: AlertTriangleIcon,
-                title: 'Butuh Bimbingan Akademik',
-                description: `Tingkat ketuntasan masih ${academicStats.passRate}%. Disarankan untuk konsultasi dengan wali kelas.`,
-                variant: 'danger',
-            });
-        }
-
-        // Attendance insights
-        if (attendanceStats.rate >= 95) {
-            result.push({
-                icon: CheckCircleIcon,
-                title: 'Kehadiran Sangat Baik! ✓',
-                description: `Tingkat kehadiran ${attendanceStats.rate}% menunjukkan dedikasi yang tinggi terhadap pembelajaran.`,
-                variant: 'success',
-            });
-        } else if (attendanceStats.absent > 3) {
-            result.push({
-                icon: ClockIcon,
-                title: 'Perhatikan Kehadiran',
-                description: `Tercatat ${attendanceStats.absent}x tidak hadir. Pantau kesehatan dan motivasi belajar anak.`,
-                variant: 'warning',
-            });
-        }
-
-        // Behavior insights
-        if (behaviorStats.violationCount === 0) {
-            result.push({
-                icon: StarIcon,
-                title: 'Perilaku Teladan! ⭐',
-                description: `${studentName} menunjukkan perilaku yang sangat baik tanpa catatan pelanggaran.`,
-                variant: 'success',
-            });
-        } else if (behaviorStats.totalPoints > 20) {
-            result.push({
-                icon: ShieldAlertIcon,
-                title: 'Perlu Pembinaan Perilaku',
-                description: `Tercatat ${behaviorStats.violationCount} pelanggaran (${behaviorStats.totalPoints} poin). Perlu komunikasi intensif.`,
-                variant: 'danger',
-            });
-        }
-
-        // Trend insight
-        if (academicStats.trend === 'up') {
-            result.push({
-                icon: TrendingUpIcon,
-                title: 'Tren Positif! 📈',
-                description: 'Nilai menunjukkan peningkatan dari waktu ke waktu. Apresiasi kerja keras anak!',
-                variant: 'info',
-            });
-        } else if (academicStats.trend === 'down') {
-            result.push({
-                icon: TrendingDownIcon,
-                title: 'Tren Menurun',
-                description: 'Nilai menunjukkan penurunan. Diskusikan kendala yang mungkin dialami anak.',
-                variant: 'warning',
-            });
-        }
-
-        return result;
-    }, [academicStats, attendanceStats, behaviorStats, studentName, academicRecords.length]);
-
-    // Subject breakdown for detailed analysis
     const subjectBreakdown = useMemo(() => {
-        const breakdown: Record<string, { total: number; count: number; avg: number }> = {};
-        academicRecords.forEach(r => {
-            if (!breakdown[r.subject]) {
-                breakdown[r.subject] = { total: 0, count: 0, avg: 0 };
+        const subjectMap = academicRecords.reduce((acc, record) => {
+            if (!acc[record.subject]) {
+                acc[record.subject] = { total: 0, count: 0 };
             }
-            breakdown[r.subject].total += r.score;
-            breakdown[r.subject].count += 1;
-        });
 
-        return Object.entries(breakdown)
+            acc[record.subject].total += record.score;
+            acc[record.subject].count += 1;
+            return acc;
+        }, {} as Record<string, { total: number; count: number }>);
+
+        return Object.entries(subjectMap)
             .map(([subject, data]) => ({
                 subject,
-                avg: Math.round(data.total / data.count),
+                average: Math.round(data.total / data.count),
                 count: data.count,
             }))
-            .sort((a, b) => b.avg - a.avg);
+            .sort((left, right) => right.average - left.average);
     }, [academicRecords]);
 
-    // Best and weakest subjects
     const bestSubject = subjectBreakdown[0];
-    const weakestSubject = subjectBreakdown[subjectBreakdown.length - 1];
-
-    // AI Narrative Generation State
-    const [isGenerating, setIsGenerating] = React.useState(false);
-    const [aiAnalysis, setAiAnalysis] = React.useState<string | null>(null);
-
-    const generateAnalysis = () => {
-        setIsGenerating(true);
-        // Simulate AI delay
-        setTimeout(() => {
-            const narrative = generateNarrative();
-            setAiAnalysis(narrative);
-            setIsGenerating(false);
-        }, 2000);
-    };
-
-    const generateNarrative = () => {
-        const parts = [];
-
-        // 1. Opening
-        const openings = [
-            `Berdasarkan tinjauan data komprehensif semester ini, ${studentName} menunjukkan perkembangan yang ${academicStats.average >= 80 ? 'sangat impresif' : academicStats.average >= 70 ? 'positif' : 'perlu perhatian khusus'}.`,
-            `Halo Ayah/Bunda, berikut adalah hasil evaluasi akademik untuk ananda ${studentName}. Secara umum, performa saat ini ${academicStats.average >= 75 ? 'sudah memenuhi ekspektasi' : 'masih memiliki ruang untuk perbaikan'}.`,
-        ];
-        parts.push(openings[Math.floor(Math.random() * openings.length)]);
-
-        // 2. Academic Deep Dive
-        if (bestSubject) {
-            parts.push(`Kekuatan utama ananda terletak pada mata pelajaran **${bestSubject.subject}** dengan rata-rata nilai ${bestSubject.avg}. Ini potensi yang sangat bagus untuk dikembangkan lebih lanjut.`);
+    const focusSubject = [...subjectBreakdown].reverse().find((subject) => subject.average < 75) || subjectBreakdown[subjectBreakdown.length - 1];
+    const academicTone = getAcademicTone(academicStats.average);
+    const attendanceTone = attendanceStats.total > 0 ? getAttendanceTone(attendanceStats.rate) : 'info';
+    const behaviorTone = getBehaviorTone(behaviorStats.totalPoints);
+    const overallStatus = useMemo(() => {
+        if (academicRecords.length === 0 && attendanceRecords.length === 0 && violations.length === 0) {
+            return {
+                label: 'Data belum lengkap',
+                tone: 'info' as Tone,
+                message: `Belum cukup data untuk membaca perkembangan ${studentName}. Tambahkan nilai, kehadiran, atau catatan perilaku agar ringkasan lebih akurat.`,
+            };
         }
 
-        if (weakestSubject && weakestSubject.avg < 75) {
-            parts.push(`Namun, perhatian lebih mungkin dibutuhkan di mata pelajaran **${weakestSubject.subject}** (rata-rata: ${weakestSubject.avg}). Identifikasi kendala sejak dini dapat membantu meningkatkan pemahaman.`);
+        if (
+            (academicRecords.length > 0 && academicStats.average < 65) ||
+            (attendanceStats.total > 0 && attendanceStats.rate < 75) ||
+            behaviorStats.totalPoints > 25
+        ) {
+            return {
+                label: 'Perlu perhatian',
+                tone: 'danger' as Tone,
+                message: `${studentName} membutuhkan pendampingan lebih dekat, terutama pada area yang ditandai merah di bawah ini.`,
+            };
         }
 
-        if (academicStats.trend === 'up') {
-            parts.push("Tren nilai ananda menunjukkan grafik **meningkat** 📈, yang menandakan strategi belajar saat ini sudah efektif.");
-        } else if (academicStats.trend === 'down') {
-            parts.push("Terdeteksi tren **penurunan** pada beberapa penilaian terakhir. Penting untuk mengevaluasi kembali rutinitas belajar di rumah.");
+        if (
+            (academicRecords.length > 0 && academicStats.average < 75) ||
+            (attendanceStats.total > 0 && attendanceStats.rate < 85) ||
+            behaviorStats.totalPoints > 0
+        ) {
+            return {
+                label: 'Perlu dipantau',
+                tone: 'warning' as Tone,
+                message: `Perkembangan ${studentName} masih cukup baik, namun ada beberapa bagian yang sebaiknya dipantau bersama guru.`,
+            };
         }
 
-        // 3. Behavior & Attendance
-        if (attendanceStats.rate >= 90) {
-            parts.push("Tingkat kedisiplinan dan kehadiran sangat baik, menjadi fondasi kuat untuk prestasi akademik.");
-        } else if (attendanceStats.absent >= 3) {
-            parts.push(`Catatan kehadiran menunjukkan ${attendanceStats.absent} kali ketidakhadiran tanpa keterangan. Hal ini dapat berdampak pada ketertinggalan materi.`);
+        if (academicStats.average >= 85 && attendanceStats.rate >= 95 && behaviorStats.totalPoints === 0) {
+            return {
+                label: 'Sangat baik',
+                tone: 'success' as Tone,
+                message: `${studentName} menunjukkan perkembangan yang kuat. Pertahankan rutinitas belajar, kehadiran, dan kebiasaan positifnya.`,
+            };
+        }
+
+        return {
+            label: 'Stabil baik',
+            tone: 'info' as Tone,
+            message: `Perkembangan ${studentName} berada pada jalur yang baik. Dukungan kecil dan konsisten di rumah akan membantu hasilnya makin kuat.`,
+        };
+    }, [academicRecords.length, academicStats.average, attendanceRecords.length, attendanceStats.rate, attendanceStats.total, behaviorStats.totalPoints, studentName, violations.length]);
+
+    const focusItems = useMemo<FocusItem[]>(() => {
+        const items: FocusItem[] = [];
+
+        if (academicRecords.length === 0) {
+            items.push({
+                title: 'Data nilai belum tersedia',
+                description: 'Ringkasan akademik akan lebih bermakna setelah guru menginput nilai.',
+                tone: 'info',
+                icon: BookOpenIcon,
+            });
+        } else if (academicStats.average < 75) {
+            items.push({
+                title: 'Nilai perlu dukungan',
+                description: `Rata-rata nilai ${academicStats.average}. Mulai dari mapel ${focusSubject?.subject || 'yang paling rendah'} agar bantuan lebih terarah.`,
+                tone: academicStats.average < 65 ? 'danger' : 'warning',
+                icon: TargetIcon,
+            });
+        } else {
+            items.push({
+                title: 'Akademik terkendali',
+                description: `Rata-rata nilai ${academicStats.average} dengan ketuntasan ${academicStats.passRate}%. Fokusnya menjaga konsistensi belajar.`,
+                tone: academicTone,
+                icon: CheckCircleIcon,
+            });
+        }
+
+        if (attendanceStats.total === 0) {
+            items.push({
+                title: 'Data kehadiran belum tersedia',
+                description: 'Kehadiran akan terbaca setelah presensi mulai tercatat.',
+                tone: 'info',
+                icon: CalendarIcon,
+            });
+        } else if (attendanceStats.rate < 85 || attendanceStats.absent > 0) {
+            items.push({
+                title: 'Kehadiran perlu dipantau',
+                description: `Kehadiran ${attendanceStats.rate}%. Tercatat ${attendanceStats.absent} alpha dan ${attendanceStats.sickOrPermission} sakit/izin.`,
+                tone: attendanceStats.rate < 75 ? 'danger' : 'warning',
+                icon: ClockIcon,
+            });
+        } else {
+            items.push({
+                title: 'Kehadiran baik',
+                description: `${attendanceStats.present} dari ${attendanceStats.total} hari tercatat hadir. Kebiasaan masuk sekolah sudah mendukung proses belajar.`,
+                tone: attendanceTone,
+                icon: CalendarIcon,
+            });
         }
 
         if (behaviorStats.totalPoints > 0) {
-            parts.push(`Terdapat catatan perilaku yang perlu didiskusikan dengan total ${behaviorStats.totalPoints} poin pelanggaran. Pendekatan persuasif di rumah sangat disarankan.`);
-        }
-
-        // 4. Closing / Recommendation
-        if (academicStats.passRate >= 80) {
-            parts.push("Rekomendasi: Pertahankan motivasi belajar dan fasilitasi minat ananda pada mata pelajaran unggulan.");
+            items.push({
+                title: 'Catatan perilaku',
+                description: `${behaviorStats.count} catatan dengan total ${behaviorStats.totalPoints} poin. Diskusi singkat di rumah bisa membantu anak memahami konsekuensi.`,
+                tone: behaviorTone,
+                icon: ShieldAlertIcon,
+            });
         } else {
-            parts.push("Rekomendasi: Jadwalkan konsultasi dengan wali kelas untuk menyusun strategi belajar yang lebih personal.");
+            items.push({
+                title: 'Perilaku positif',
+                description: 'Tidak ada poin pelanggaran pada data yang dipilih. Beri apresiasi agar kebiasaan baik ini bertahan.',
+                tone: 'success',
+                icon: StarIcon,
+            });
         }
 
-        return parts.join("\n\n");
-    };
+        return items;
+    }, [academicRecords.length, academicStats.average, academicStats.passRate, academicTone, attendanceStats, attendanceTone, behaviorStats, behaviorTone, focusSubject?.subject]);
+
+    const homeSuggestions = useMemo(() => {
+        const suggestions: string[] = [];
+
+        if (focusSubject && focusSubject.average < 75) {
+            suggestions.push(`Dampingi latihan ${focusSubject.subject} 15-20 menit, 3 kali seminggu.`);
+        } else if (bestSubject) {
+            suggestions.push(`Apresiasi kekuatan di ${bestSubject.subject}, lalu hubungkan dengan mapel lain.`);
+        } else {
+            suggestions.push('Tanyakan aktivitas belajar harian anak dengan obrolan singkat dan santai.');
+        }
+
+        if (attendanceStats.absent > 0 || attendanceStats.rate < 90) {
+            suggestions.push('Buat rutinitas tidur dan persiapan sekolah agar kehadiran lebih stabil.');
+        } else {
+            suggestions.push('Pertahankan rutinitas pagi karena kehadiran sudah mendukung proses belajar.');
+        }
+
+        if (behaviorStats.totalPoints > 0) {
+            suggestions.push('Bahas satu perilaku yang ingin diperbaiki minggu ini, lalu sepakati langkah kecilnya.');
+        } else {
+            suggestions.push('Beri pujian spesifik saat anak menunjukkan tanggung jawab atau disiplin.');
+        }
+
+        return suggestions;
+    }, [attendanceStats.absent, attendanceStats.rate, behaviorStats.totalPoints, bestSubject, focusSubject]);
 
     return (
-        <div className="space-y-6">
-            {/* Section: Overview Donut Charts */}
-            <div className="p-5 bg-gradient-to-br from-indigo-50/80 to-purple-50/80 dark:from-slate-800/50 dark:to-indigo-900/30 rounded-3xl border border-indigo-100 dark:border-indigo-800/30 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                    <SparklesIcon className="w-24 h-24 text-indigo-500" />
-                </div>
-                <div className="flex justify-between items-start mb-5">
-                    <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-white">
-                        <SparklesIcon className="w-5 h-5 text-indigo-500 animate-pulse" />
-                        Evaluasi Perkembangan Siswa
-                    </h3>
-
-                    {!aiAnalysis && !isGenerating && (
-                        <button
-                            onClick={generateAnalysis}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded-full shadow-lg shadow-indigo-500/20 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2"
-                        >
-                            <SparklesIcon className="w-4 h-4" />
-                            Susun Laporan Evaluasi
-                        </button>
-                    )}
-                </div>
-
-                {/* AI Analysis Result */}
-                {isGenerating ? (
-                    <div className="mb-6 p-6 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-indigo-100 dark:border-indigo-500/30 flex flex-col items-center justify-center py-12">
-                        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 animate-pulse">Sedang menyusun laporan...</p>
-                    </div>
-                ) : aiAnalysis ? (
-                    <div className="mb-6 p-6 bg-white dark:bg-slate-900 rounded-2xl border border-indigo-200 dark:border-indigo-500/30 shadow-sm relative">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500 rounded-l-2xl"></div>
-                        <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-3 text-sm uppercase tracking-wider">Ringkasan Evaluasi</h4>
-                        <div className="prose dark:prose-invert text-sm leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-line">
-                            <TypewriterEffect text={aiAnalysis} />
+        <div className="space-y-5">
+            <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.18),transparent_32%),linear-gradient(135deg,#ffffff_0%,#f8fafc_50%,#eef6ff_100%)] p-5 shadow-sm dark:border-slate-800 dark:bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.16),transparent_34%),linear-gradient(135deg,#020617_0%,#0f172a_55%,#111827_100%)] sm:p-6">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="max-w-2xl">
+                        <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] ${toneStyles[overallStatus.tone].badge}`}>
+                            <SparklesIcon className="h-4 w-4" />
+                            {overallStatus.label}
                         </div>
-                        <div className="mt-4 flex justify-end">
-                            <button
-                                onClick={generateAnalysis}
-                                className="text-xs text-slate-400 hover:text-indigo-500 flex items-center gap-1 transition-colors"
-                            >
-                                <SparklesIcon className="w-3 h-3" /> Perbarui Laporan
-                            </button>
+                        <h3 className="mt-4 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+                            Analisis perkembangan yang mudah dibaca
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                            {overallStatus.message}
+                        </p>
+                    </div>
+
+                    <div className="rounded-3xl border border-white/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/10">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Arah nilai</p>
+                        <div className="mt-3 flex items-center gap-3">
+                            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${toneStyles[academicStats.trend === 'down' ? 'warning' : academicStats.trend === 'up' ? 'success' : 'info'].icon}`}>
+                                {academicStats.trend === 'up' && <TrendingUpIcon className="h-6 w-6" />}
+                                {academicStats.trend === 'down' && <TrendingDownIcon className="h-6 w-6" />}
+                                {academicStats.trend === 'stable' && <MinusIcon className="h-6 w-6" />}
+                            </div>
+                            <div>
+                                <p className="text-xl font-black text-slate-950 dark:text-white">{getTrendLabel(academicStats.trend)}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-300">{academicStats.recordCount} nilai tercatat</p>
+                            </div>
                         </div>
                     </div>
-                ) : (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-lg">
-                        Tekan tombol "Susun Laporan" untuk mendapatkan ringkasan naratif mengenai perkembangan akademik dan karakter siswa.
-                    </p>
-                )}
+                </div>
 
-                <div className="grid grid-cols-3 gap-4 sm:gap-6 mt-6 border-t border-indigo-100 dark:border-indigo-800/30 pt-6">
-                    <DonutChart
-                        percentage={academicStats.passRate}
-                        colorClass={academicStats.passRate >= 75 ? 'text-emerald-500' : academicStats.passRate >= 60 ? 'text-amber-500' : 'text-rose-500'}
-                        label="Ketuntasan"
-                        sublabel="Akademik"
+                <div className="mt-6 grid gap-3 md:grid-cols-3">
+                    <MetricCard
+                        title="Akademik"
+                        value={academicRecords.length > 0 ? String(academicStats.average) : '-'}
+                        description={academicRecords.length > 0 ? `${academicStats.passRate}% penilaian sudah tuntas.` : 'Belum ada nilai pada semester ini.'}
+                        tone={academicRecords.length > 0 ? academicTone : 'info'}
+                        icon={BarChartIcon}
+                        progress={academicRecords.length > 0 ? academicStats.passRate : 0}
                     />
-                    <DonutChart
-                        percentage={attendanceStats.rate}
-                        colorClass={attendanceStats.rate >= 90 ? 'text-emerald-500' : attendanceStats.rate >= 75 ? 'text-amber-500' : 'text-rose-500'}
-                        label="Kehadiran"
-                        sublabel="Absensi"
+                    <MetricCard
+                        title="Kehadiran"
+                        value={attendanceStats.total > 0 ? `${attendanceStats.rate}%` : '-'}
+                        description={attendanceStats.total > 0 ? `${attendanceStats.present}/${attendanceStats.total} hari hadir.` : 'Belum ada presensi pada semester ini.'}
+                        tone={attendanceStats.total > 0 ? attendanceTone : 'info'}
+                        icon={CalendarIcon}
+                        progress={attendanceStats.total > 0 ? attendanceStats.rate : 0}
                     />
-                    <DonutChart
-                        percentage={behaviorStats.behaviorScore}
-                        colorClass={behaviorStats.behaviorScore >= 90 ? 'text-emerald-500' : behaviorStats.behaviorScore >= 70 ? 'text-amber-500' : 'text-rose-500'}
-                        label="Perilaku"
-                        sublabel="Skor"
+                    <MetricCard
+                        title="Perilaku"
+                        value={`${behaviorStats.totalPoints} poin`}
+                        description={behaviorStats.count > 0 ? `${behaviorStats.count} catatan perilaku tercatat.` : 'Tidak ada catatan pelanggaran.'}
+                        tone={behaviorTone}
+                        icon={ShieldAlertIcon}
+                        progress={behaviorStats.score}
                     />
                 </div>
-            </div>
+            </section>
 
-            {/* Section: Parent Insights */}
-            {insights.length > 0 && (
-                <div className="space-y-3">
-                    <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-white">
-                        <BookOpenIcon className="w-5 h-5 text-indigo-500" />
-                        Highlight Poin Penting
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {insights.map((insight, idx) => (
-                            <InsightCard key={idx} {...insight} />
+            <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Prioritas Wali Murid</p>
+                            <h4 className="mt-1 text-lg font-bold text-slate-950 dark:text-white">Yang perlu diperhatikan</h4>
+                        </div>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            {focusItems.length} poin
+                        </span>
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                        {focusItems.map((item) => (
+                            <FocusCard key={item.title} {...item} />
                         ))}
                     </div>
                 </div>
-            )}
 
-            {/* Section: Academic Detail Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-                    <p className="text-xs opacity-80">Rata-rata Nilai</p>
-                    <p className="text-3xl font-bold mt-1">{academicStats.average}</p>
-                    <div className="flex items-center gap-1 mt-2 text-xs">
-                        {academicStats.trend === 'up' && <TrendingUpIcon className="w-4 h-4" />}
-                        {academicStats.trend === 'down' && <TrendingDownIcon className="w-4 h-4" />}
-                        {academicStats.trend === 'stable' && <MinusIcon className="w-4 h-4" />}
-                        <span>{academicStats.trend === 'up' ? 'Naik' : academicStats.trend === 'down' ? 'Turun' : 'Stabil'}</span>
+                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Saran Pendampingan</p>
+                    <h4 className="mt-1 text-lg font-bold text-slate-950 dark:text-white">Langkah kecil di rumah</h4>
+                    <div className="mt-4 space-y-3">
+                        {homeSuggestions.map((suggestion, index) => (
+                            <div key={suggestion} className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/50">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-bold text-white dark:bg-white dark:text-slate-950">
+                                    {index + 1}
+                                </span>
+                                <p className="text-sm leading-6 text-slate-700 dark:text-slate-300">{suggestion}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-4 rounded-2xl bg-sky-50 p-4 text-sm leading-6 text-sky-800 dark:bg-sky-400/10 dark:text-sky-100">
+                        Fokuskan pada satu kebiasaan dulu selama satu minggu agar anak tidak merasa terbebani.
                     </div>
                 </div>
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
-                    <p className="text-xs opacity-80">Nilai Tertinggi</p>
-                    <p className="text-3xl font-bold mt-1">{academicStats.highest}</p>
-                    {bestSubject && <p className="text-xs mt-2 opacity-80">{bestSubject.subject}</p>}
-                </div>
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white">
-                    <p className="text-xs opacity-80">Nilai Terendah</p>
-                    <p className="text-3xl font-bold mt-1">{academicStats.lowest}</p>
-                    {weakestSubject && <p className="text-xs mt-2 opacity-80">{weakestSubject.subject}</p>}
-                </div>
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 text-white">
-                    <p className="text-xs opacity-80">Total Penilaian</p>
-                    <p className="text-3xl font-bold mt-1">{academicRecords.length}</p>
-                    <p className="text-xs mt-2 opacity-80">{academicStats.subjectCount} mata pelajaran</p>
-                </div>
-            </div>
+            </section>
 
-            {/* Section: Attendance Breakdown */}
-            <div className="p-5 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800 dark:text-white">
-                    <CalendarIcon className="w-5 h-5 text-indigo-500" />
-                    Detail Kehadiran
-                </h3>
-                <MiniBarChart
-                    data={[
-                        { label: 'Hadir', value: attendanceStats.present, max: attendanceStats.total, color: 'bg-emerald-500' },
-                        { label: 'Sakit/Izin', value: attendanceStats.sick, max: attendanceStats.total, color: 'bg-amber-500' },
-                        { label: 'Tidak Hadir', value: attendanceStats.absent, max: attendanceStats.total, color: 'bg-rose-500' },
-                        { label: 'Terlambat', value: attendanceStats.late, max: attendanceStats.total, color: 'bg-slate-400' },
-                    ]}
-                />
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-4 text-center">
-                    Total {attendanceStats.total} hari tercatat
-                </p>
-            </div>
-
-            {/* Section: Subject Performance */}
             {subjectBreakdown.length > 0 && (
-                <div className="p-5 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
-                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800 dark:text-white">
-                        <BarChartIcon className="w-5 h-5 text-indigo-500" />
-                        Performa per Mata Pelajaran
-                    </h3>
-                    <div className="space-y-3">
-                        {subjectBreakdown.slice(0, 6).map((subject, idx) => {
-                            const colorClass = subject.avg >= 75 ? 'bg-emerald-500' : subject.avg >= 60 ? 'bg-amber-500' : 'bg-rose-500';
-                            return (
-                                <div key={idx} className="flex items-center gap-3">
-                                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white ${colorClass}`}>
-                                        {idx + 1}
-                                    </span>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between">
-                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{subject.subject}</span>
-                                            <span className="text-sm font-bold text-slate-900 dark:text-white">{subject.avg}</span>
-                                        </div>
-                                        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full mt-1 overflow-hidden">
-                                            <div className={`h-full ${colorClass} rounded-full`} style={{ width: `${subject.avg}%` }} />
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Per Mapel</p>
+                            <h4 className="mt-1 text-lg font-bold text-slate-950 dark:text-white">Mapel unggulan dan perlu dukungan</h4>
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {academicStats.subjectCount} mapel, {academicStats.recordCount} penilaian.
+                        </p>
                     </div>
-                </div>
+
+                    <div className="mt-5 grid gap-3 md:grid-cols-2">
+                        {subjectBreakdown.slice(0, 6).map((subject) => (
+                            <SubjectRow
+                                key={subject.subject}
+                                subject={subject.subject}
+                                average={subject.average}
+                                count={subject.count}
+                            />
+                        ))}
+                    </div>
+
+                    {(bestSubject || focusSubject) && (
+                        <div className="mt-5 grid gap-3 md:grid-cols-2">
+                            {bestSubject && (
+                                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-400/20 dark:bg-emerald-400/10">
+                                    <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-200">
+                                        <StarIcon className="h-4 w-4" />
+                                        <p className="font-semibold">Paling kuat: {bestSubject.subject}</p>
+                                    </div>
+                                    <p className="mt-2 text-sm text-emerald-800 dark:text-emerald-100">Rata-rata {bestSubject.average}. Cocok diberi apresiasi agar motivasinya bertahan.</p>
+                                </div>
+                            )}
+                            {focusSubject && (
+                                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-400/20 dark:bg-amber-400/10">
+                                    <div className="flex items-center gap-2 text-amber-700 dark:text-amber-200">
+                                        <AlertTriangleIcon className="h-4 w-4" />
+                                        <p className="font-semibold">Perlu dukungan: {focusSubject.subject}</p>
+                                    </div>
+                                    <p className="mt-2 text-sm text-amber-800 dark:text-amber-100">Rata-rata {focusSubject.average}. Bantu dengan latihan singkat dan komunikasi dengan guru jika perlu.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </section>
             )}
-        </div>
-    );
-};
-
-// Typewriter Effect Component
-const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
-    const [displayedText, setDisplayedText] = React.useState('');
-    const [hasFinished, setHasFinished] = React.useState(false);
-
-    React.useEffect(() => {
-        setDisplayedText('');
-        setHasFinished(false);
-        let i = 0;
-        const timer = setInterval(() => {
-            if (i < text.length) {
-                setDisplayedText(prev => prev + text.charAt(i));
-                i++;
-            } else {
-                setHasFinished(true);
-                clearInterval(timer);
-            }
-        }, 15); // Speed of typing
-
-        return () => clearInterval(timer);
-    }, [text]);
-
-    // Use React.cloneElement or just render if we want to parse bold markdown
-    // Simple parser for **bold**
-    const renderContent = () => {
-        const parts = displayedText.split(/(\*\*.*?\*\*)/g);
-        return parts.map((part, index) => {
-            if (part.startsWith('**') && part.endsWith('**')) {
-                return <strong key={index} className="text-indigo-700 dark:text-indigo-300 font-bold">{part.slice(2, -2)}</strong>;
-            }
-            return part;
-        });
-    };
-
-    return (
-        <div>
-            {renderContent()}
-            {!hasFinished && <span className="inline-block w-1.5 h-4 ml-1 bg-indigo-500 animate-pulse align-middle"></span>}
         </div>
     );
 };

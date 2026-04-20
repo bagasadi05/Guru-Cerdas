@@ -7,7 +7,6 @@ import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '..
 import { exportViolationsToPDF, exportViolationsToExcel } from '../../../services/violationExport';
 import { useAuth } from '../../../hooks/useAuth';
 import { useToast } from '../../../hooks/useToast';
-import { SemesterSelector, SemesterLockedBanner } from '../../ui/SemesterSelector';
 
 
 import { useSemester } from '../../../contexts/SemesterContext';
@@ -48,6 +47,7 @@ interface ViolationsTabProps {
     isOnline: boolean;
     studentName?: string;
     className?: string;
+    semesterLabel?: string;
 }
 
 // Threshold Alert Component
@@ -293,33 +293,23 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     onUpdateFollowUp,
     isOnline,
     studentName,
-    className
+    className,
+    semesterLabel
 }) => {
     const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-    const { activeSemester, isLocked } = useSemester();
-    const [semesterFilter, setSemesterFilter] = useState<string>(activeSemester?.id || 'all');
+    const { isLocked } = useSemester();
     const { user } = useAuth();
     const toast = useToast();
-
-    // ... useEffect ...
-
-    // Find the viewing semester to check lock status for banner
-    const isViewingLocked = semesterFilter !== 'all' ? isLocked(semesterFilter) : false;
 
     const totalPoints = useMemo(() => violations.reduce((sum, v) => sum + v.points, 0), [violations]);
 
     const filteredViolations = useMemo(() => {
-        let semesterFiltered = violations;
-        if (semesterFilter !== 'all') {
-            semesterFiltered = violations.filter(v => v.semester_id === semesterFilter);
-        }
-
-        return [...semesterFiltered]
+        return [...violations]
             .filter(v => severityFilter === 'all' || v.severity === severityFilter)
             .filter(v => statusFilter === 'all' || v.follow_up_status === statusFilter || (!v.follow_up_status && statusFilter === 'pending'))
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [violations, severityFilter, statusFilter, semesterFilter]);
+    }, [violations, severityFilter, statusFilter]);
 
     return (
         <div className="p-4 sm:p-6">
@@ -374,26 +364,12 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
             {/* Stats */}
             <ViolationStats violations={violations} />
 
-            {/* Semester Locked Banner */}
-            {semesterFilter !== 'all' && isViewingLocked && (
-                <div className="mb-4">
-                    <SemesterLockedBanner isLocked={true} />
-                </div>
-            )}
-
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2">
                     <FilterIcon className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-500">Filter:</span>
                 </div>
-
-                {/* Semester Filter */}
-                <SemesterSelector
-                    value={semesterFilter}
-                    onChange={setSemesterFilter}
-                    size="sm"
-                />
 
                 {/* Severity Filter */}
                 <select
@@ -461,7 +437,7 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                         </h4>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             {violations.length === 0
-                                ? 'Siswa ini memiliki catatan perilaku yang bersih.'
+                                ? `Tidak ada pelanggaran untuk ${semesterLabel || 'semester yang dipilih'}.`
                                 : 'Coba ubah filter untuk melihat pelanggaran lainnya.'}
                         </p>
                     </div>

@@ -5,6 +5,7 @@ import { Input } from '../../ui/Input';
 import { MessageSquareIcon, UsersIcon, CheckCircleIcon, PencilIcon, TrashIcon, SendIcon, SearchIcon, FileTextIcon, ChevronDownIcon, XCircleIcon } from '../../Icons';
 import { CommunicationRow } from './types';
 import { MESSAGE_TEMPLATES, TEMPLATE_CATEGORIES, MessageTemplate, applyTemplate } from '../../../data/messageTemplates';
+import { StudentCommunicationSignal } from './studentDetailHelpers';
 
 // Paperclip Icon (not in Icons.tsx)
 const PaperclipIcon = ({ className }: { className?: string }) => (
@@ -28,9 +29,17 @@ interface CommunicationTabProps {
     onDeleteMessage: (id: string) => void;
     isOnline: boolean;
     isSending: boolean;
+    quickTemplates?: StudentCommunicationSignal[];
 }
 
 type FilterType = 'all' | 'parent' | 'teacher';
+const TEMPLATE_CATEGORY_DOT_CLASSES: Record<MessageTemplate['category'], string> = {
+    academic: 'bg-blue-500',
+    behavior: 'bg-purple-500',
+    attendance: 'bg-amber-500',
+    general: 'bg-slate-500',
+    event: 'bg-green-500',
+};
 
 export const CommunicationTab: React.FC<CommunicationTabProps> = ({
     communications,
@@ -40,7 +49,8 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
     onEditMessage,
     onDeleteMessage,
     isOnline,
-    isSending
+    isSending,
+    quickTemplates = []
 }) => {
     const [newMessage, setNewMessage] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -103,6 +113,14 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
         }
     }, [showTemplates]);
 
+    useEffect(() => {
+        return () => {
+            if (attachment?.preview) {
+                URL.revokeObjectURL(attachment.preview);
+            }
+        };
+    }, [attachment?.preview]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (newMessage.trim() || attachment) {
@@ -149,6 +167,10 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
         const message = applyTemplate(template, { nama_siswa: studentName });
         setNewMessage(message);
         setShowTemplates(false);
+    };
+
+    const handleSelectQuickTemplate = (template: StudentCommunicationSignal) => {
+        setNewMessage(template.message);
     };
 
     const formatMessageDate = (dateString: string) => {
@@ -317,6 +339,30 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
 
             {/* Input Area */}
             <div className="p-4 border-t border-gray-200 dark:border-white/10 flex-shrink-0 bg-white dark:bg-gray-900">
+                {quickTemplates.length > 0 && (
+                    <div className="mb-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Template cepat sesuai kondisi siswa</p>
+                        <div className="flex flex-wrap gap-2">
+                            {quickTemplates.map(template => (
+                                <button
+                                    key={template.id}
+                                    type="button"
+                                    onClick={() => handleSelectQuickTemplate(template)}
+                                    disabled={!isOnline}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${template.tone === 'success'
+                                            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
+                                            : template.tone === 'warning'
+                                                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                                                : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                                        } disabled:opacity-50`}
+                                >
+                                    {template.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Template Selector */}
                 <div className="relative mb-3" ref={templateMenuRef}>
                     <button
@@ -360,7 +406,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                                         className="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700/50 last:border-0 transition-colors"
                                     >
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className={`w-2 h-2 rounded-full bg-${TEMPLATE_CATEGORIES[template.category].color}-500`} />
+                                            <span className={`w-2 h-2 rounded-full ${TEMPLATE_CATEGORY_DOT_CLASSES[template.category]}`} />
                                             <span className="font-medium text-sm text-gray-900 dark:text-white">{template.title}</span>
                                         </div>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{template.message.substring(0, 80)}...</p>
