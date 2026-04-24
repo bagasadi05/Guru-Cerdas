@@ -137,7 +137,6 @@ const AnalyticsPage: React.FC = () => {
             let studentsQuery = supabase
                 .from('students')
                 .select('id, name, class_id, gender')
-                .eq('user_id', user!.id)
                 .is('deleted_at', null);
 
             if (selectedClassId !== 'all') {
@@ -147,7 +146,6 @@ const AnalyticsPage: React.FC = () => {
             let attendanceQuery = supabase
                 .from('attendance')
                 .select('student_id, date, status')
-                .eq('user_id', user!.id)
                 .is('deleted_at', null);
 
             if (startDate) {
@@ -157,7 +155,6 @@ const AnalyticsPage: React.FC = () => {
             let violationsQuery = supabase
                 .from('violations')
                 .select('student_id, type, points, date')
-                .eq('user_id', user!.id)
                 .is('deleted_at', null);
             if (startDate) {
                 violationsQuery = violationsQuery.gte('date', startDate.toISOString().split('T')[0]);
@@ -166,7 +163,6 @@ const AnalyticsPage: React.FC = () => {
             let quizPointsQuery = supabase
                 .from('quiz_points')
                 .select('student_id, points, category')
-                .eq('user_id', user!.id)
                 .is('deleted_at', null);
             if (startDate) {
                 quizPointsQuery = quizPointsQuery.gte('created_at', startDate.toISOString());
@@ -176,7 +172,6 @@ const AnalyticsPage: React.FC = () => {
                 supabase
                     .from('classes')
                     .select('id, name')
-                    .eq('user_id', user!.id)
                     .is('deleted_at', null),
                 studentsQuery,
                 attendanceQuery,
@@ -188,7 +183,6 @@ const AnalyticsPage: React.FC = () => {
                 supabase
                     .from('academic_records')
                     .select('student_id, score')
-                    .eq('user_id', user!.id)
                     .is('deleted_at', null),
                 violationsQuery,
                 quizPointsQuery,

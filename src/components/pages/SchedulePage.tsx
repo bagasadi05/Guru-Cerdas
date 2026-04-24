@@ -269,7 +269,6 @@ const SchedulePage: React.FC = () => {
             const { data, error } = await supabase
                 .from('classes')
                 .select(CLASS_COMPAT_SELECT)
-                .eq('user_id', user!.id)
                 .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
@@ -721,7 +720,10 @@ const SchedulePage: React.FC = () => {
             return;
         }
 
-        const { data: classes, error } = await supabase.from('classes').select('id, name').eq('user_id', user!.id).is('deleted_at', null);
+        const { data: classes, error } = await supabase
+            .from('classes')
+            .select('id, name')
+            .is('deleted_at', null);
         if (error) {
             toast.error("Gagal mengambil data kelas untuk notifikasi.");
             setIsEnablingNotifications(false);

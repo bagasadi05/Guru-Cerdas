@@ -241,6 +241,7 @@ describe('Property-Based Tests: Security and Input Validation', () => {
                     fc.record({
                         student_id: fc.uuid(),
                         date: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
+                            .filter((date) => !Number.isNaN(date.getTime()))
                             .map(d => d.toISOString().split('T')[0]),
                         status: fc.constantFrom('Hadir', 'Izin', 'Sakit', 'Alpha'),
                         notes: fc.option(fc.string({ maxLength: 500 }), { nil: undefined })

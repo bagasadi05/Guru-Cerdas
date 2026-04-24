@@ -193,15 +193,15 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         } finally { setIsParsing(false); }
     };
 
-    const fetchReportDataForStudent = async (studentId: string, userId: string, semesterId: string): Promise<ReportDataType> => {
-        const studentRes = await supabase.from('students').select('*, classes(id, name)').eq('id', studentId).eq('user_id', userId).is('deleted_at', null).single();
+    const fetchReportDataForStudent = async (studentId: string, semesterId: string): Promise<ReportDataType> => {
+        const studentRes = await supabase.from('students').select('*, classes(id, name)').eq('id', studentId).is('deleted_at', null).single();
         if (studentRes.error) throw new Error(studentRes.error.message);
         const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes] = await Promise.all([
-            supabase.from('reports').select('*').eq('student_id', studentId).eq('user_id', userId),
-            supabase.from('attendance').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('academic_records').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('violations').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('quiz_points').select('*').eq('student_id', studentId).eq('user_id', userId).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('reports').select('*').eq('student_id', studentId),
+            supabase.from('attendance').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('academic_records').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('violations').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('quiz_points').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
         ]) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes].map((r: any) => r.error).filter((e: any) => e !== null);
@@ -219,7 +219,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         try {
             setExportProgress('10%');
             if (!activeSemester?.id) throw new Error('Semester aktif tidak ditemukan.');
-            const allReportData = await Promise.all(studentsToPrint.map(student => fetchReportDataForStudent(student.id, user!.id, activeSemester.id)));
+            const allReportData = await Promise.all(studentsToPrint.map(student => fetchReportDataForStudent(student.id, activeSemester.id)));
             setExportProgress('40%');
             let teacherNotesMap: Map<string, string>;
             if (noteMethod === 'template') {

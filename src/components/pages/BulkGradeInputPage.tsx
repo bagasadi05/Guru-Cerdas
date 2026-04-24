@@ -24,6 +24,7 @@ import { useSemester } from '../../contexts/SemesterContext';
 import { SemesterSelector, SemesterLockedBanner } from '../ui/SemesterSelector';
 import { EmptyState } from '../ui/EmptyState';
 import { SearchIcon } from '../Icons';
+import { getAssignedSubjects, hasHomeroomAssignment, TeacherClassAssignmentRow } from '../../services/teacherAssignments';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -63,6 +64,22 @@ const BulkGradeInputPage: React.FC = () => {
             setSelectedSemester(activeSemester.id);
         }
     }, [activeSemester, selectedSemester]);
+
+    const { data: teacherAssignments = [] } = useQuery({
+        queryKey: ['teacherClassAssignments', user?.id],
+        queryFn: async () => {
+            if (!user) return [] as TeacherClassAssignmentRow[];
+            const { data, error } = await supabase
+                .from('teacher_class_assignments')
+                .select('id, teacher_user_id, class_id, semester_id, assignment_role, subject_name, notes, created_by, created_at, updated_at, deleted_at')
+                .eq('teacher_user_id', user.id)
+                .is('deleted_at', null);
+            if (error) throw error;
+            return (data || []) as TeacherClassAssignmentRow[];
+        },
+        enabled: !!user,
+        staleTime: 1000 * 60 * 10,
+    });
 
     // Check if selected semester is locked
     const semesterLocked = selectedSemester ? isSemesterLocked(selectedSemester) : false;
@@ -123,12 +140,11 @@ const BulkGradeInputPage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')
-                .select('id, name')
-                .eq('user_id', user!.id)
+                .select('id, name, user_id')
                 .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
-            return data as Pick<ClassRow, 'id' | 'name'>[];
+            return data as Pick<ClassRow, 'id' | 'name' | 'user_id'>[];
         },
         enabled: !!user,
     });
@@ -198,6 +214,32 @@ const BulkGradeInputPage: React.FC = () => {
     // Stats
     const stats = useMemo(() => calculateGradeStats(grades), [grades]);
 
+    const activeClassRecord = useMemo(
+        () => classes?.find((classItem) => classItem.id === selectedClass) || null,
+        [classes, selectedClass],
+    );
+    const assignedSubjects = useMemo(
+        () => getAssignedSubjects(teacherAssignments, selectedClass || null, selectedSemester || null),
+        [selectedClass, selectedSemester, teacherAssignments],
+    );
+    const canUseDefaultSubjects = useMemo(() => {
+        if (!user) return false;
+        if (activeClassRecord?.user_id === user.id) return true;
+        return hasHomeroomAssignment(teacherAssignments, selectedClass || null, selectedSemester || null);
+    }, [activeClassRecord?.user_id, selectedClass, selectedSemester, teacherAssignments, user]);
+    const availableSubjects = assignedSubjects.length > 0
+        ? assignedSubjects
+        : canUseDefaultSubjects
+            ? SUBJECTS
+            : [];
+
+    useEffect(() => {
+        if (availableSubjects.length === 0) return;
+        if (!availableSubjects.includes(selectedSubject)) {
+            setSelectedSubject(availableSubjects[0]);
+        }
+    }, [availableSubjects, selectedSubject]);
+
     // Mutation to save all grades
     const saveMutation = useMutation({
         mutationFn: async (entries: GradeEntry[]) => {
@@ -243,6 +285,11 @@ const BulkGradeInputPage: React.FC = () => {
     };
 
     const handleSaveAll = () => {
+        if (availableSubjects.length === 0) {
+            toast.error('Belum ada mapel yang ditugaskan untuk kelas dan semester ini.');
+            return;
+        }
+
         if (!validation.isValid) {
             toast.error('Perbaiki nilai yang tidak valid sebelum menyimpan.');
             return;
@@ -320,7 +367,7 @@ const BulkGradeInputPage: React.FC = () => {
         const draft = restoreDraft();
         if (draft) {
             setGrades(draft.grades || []);
-            setSelectedSubject(draft.selectedSubject || SUBJECTS[0]);
+            setSelectedSubject(draft.selectedSubject || availableSubjects[0] || SUBJECTS[0]);
             setAssessmentName(draft.assessmentName || 'Ulangan Harian');
             toast.success('Draft berhasil dipulihkan');
         }
@@ -453,11 +500,16 @@ const BulkGradeInputPage: React.FC = () => {
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-1">Mata Pelajaran</label>
-                            <Select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)}>
-                                {SUBJECTS.map(s => (
+                            <Select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)} disabled={availableSubjects.length === 0}>
+                                {availableSubjects.map(s => (
                                     <option key={s} value={s}>{s}</option>
                                 ))}
                             </Select>
+                            {availableSubjects.length === 0 ? (
+                                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                    Belum ada mapel yang ditugaskan untuk kelas dan semester ini.
+                                </p>
+                            ) : null}
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-1">Nama Penilaian</label>
@@ -588,7 +640,7 @@ const BulkGradeInputPage: React.FC = () => {
                     <div className="sticky bottom-4 lg:bottom-8">
                         <Button
                             onClick={handleSaveAll}
-                            disabled={saveMutation.isPending || filledCount === 0 || semesterLocked || !selectedSemester}
+                            disabled={saveMutation.isPending || filledCount === 0 || semesterLocked || !selectedSemester || availableSubjects.length === 0}
                             className="w-full h-14 text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl shadow-indigo-500/30 disabled:opacity-50"
                         >
                             {saveMutation.isPending ? (

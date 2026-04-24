@@ -169,7 +169,6 @@ const ExtracurricularPage: React.FC = () => {
             const { data, error } = await supabase
                 .from('classes')
                 .select(CLASS_COMPAT_SELECT)
-                .eq('user_id', user!.id)
                 .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
@@ -186,7 +185,6 @@ const ExtracurricularPage: React.FC = () => {
                 .from('students')
                 .select('id, user_id, name, class_id, gender, created_at, deleted_at')
                 .is('deleted_at', null)
-                .eq('user_id', user!.id)
                 .order('name');
 
             if (selectedClassId) {

@@ -15,6 +15,7 @@ import {
 
 interface StudentsHeaderActionsProps {
   onAction: (actionId: StudentsHeaderActionId) => void;
+  canManageActiveClass: boolean;
 }
 
 const outlineActionClasses =
@@ -68,21 +69,37 @@ const renderOverflowMenu = (
   </DropdownMenu>
 );
 
-export const StudentsHeaderActions: React.FC<StudentsHeaderActionsProps> = ({ onAction }) => {
+export const StudentsHeaderActions: React.FC<StudentsHeaderActionsProps> = ({ onAction, canManageActiveClass }) => {
+  const desktopActions = canManageActiveClass
+    ? studentsHeaderActionSets.desktop
+    : studentsHeaderActionSets.desktop.filter((action) => action.id === 'export');
+  const tabletPrimary = canManageActiveClass
+    ? studentsHeaderActionSets.tabletPrimary
+    : studentsHeaderActionSets.tabletPrimary.filter((action) => action.id === 'export');
+  const tabletOverflow = canManageActiveClass
+    ? studentsHeaderActionSets.tabletOverflow
+    : [];
+  const mobilePrimary = canManageActiveClass
+    ? studentsHeaderActionSets.mobilePrimary
+    : [];
+  const mobileOverflow = canManageActiveClass
+    ? studentsHeaderActionSets.mobileOverflow
+    : studentsHeaderActionSets.mobileOverflow.filter((action) => action.id === 'export');
+
   return (
     <div className="flex items-center gap-3">
       <div className="hidden lg:flex items-center gap-3">
-        {studentsHeaderActionSets.desktop.map((action) => renderActionButton(action, onAction))}
+        {desktopActions.map((action) => renderActionButton(action, onAction))}
       </div>
 
       <div className="hidden sm:flex lg:hidden items-center gap-3">
-        {studentsHeaderActionSets.tabletPrimary.map((action) => renderActionButton(action, onAction))}
-        {renderOverflowMenu(studentsHeaderActionSets.tabletOverflow, onAction)}
+        {tabletPrimary.map((action) => renderActionButton(action, onAction))}
+        {tabletOverflow.length > 0 ? renderOverflowMenu(tabletOverflow, onAction) : null}
       </div>
 
       <div className="flex sm:hidden items-center gap-3">
-        {studentsHeaderActionSets.mobilePrimary.map((action) => renderActionButton(action, onAction))}
-        {renderOverflowMenu(studentsHeaderActionSets.mobileOverflow, onAction)}
+        {mobilePrimary.map((action) => renderActionButton(action, onAction))}
+        {mobileOverflow.length > 0 ? renderOverflowMenu(mobileOverflow, onAction) : null}
       </div>
     </div>
   );

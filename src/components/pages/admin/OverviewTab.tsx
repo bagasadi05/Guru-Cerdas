@@ -12,6 +12,7 @@ import {
     Settings,
     Database,
     Activity,
+    UserCheck,
 } from 'lucide-react';
 import { SystemStats, TabType, StatCard } from './index';
 
@@ -108,7 +109,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     <Database size={20} className="text-indigo-500" />
                     Aksi Cepat
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     <button
                         onClick={() => onTabChange('users')}
                         className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group"
@@ -122,6 +123,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     >
                         <Megaphone size={24} className="text-gray-400 group-hover:text-indigo-500 mb-2" />
                         <p className="font-medium text-sm">Pengumuman</p>
+                    </button>
+                    <button
+                        onClick={() => onTabChange('assignments')}
+                        className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group"
+                    >
+                        <UserCheck size={24} className="text-gray-400 group-hover:text-indigo-500 mb-2" />
+                        <p className="font-medium text-sm">Penugasan Guru</p>
                     </button>
                     <button
                         onClick={() => navigate('/analytics')}

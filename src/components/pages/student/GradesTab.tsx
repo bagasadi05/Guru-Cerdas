@@ -15,9 +15,11 @@ interface GradesTabProps {
     onEdit: (record: AcademicRecordRow) => void;
     onDelete: (id: string) => void;
     isOnline: boolean;
+    currentUserId?: string;
     classAverages?: Record<string, number>; // Optional class averages for comparison
     kkm?: number; // Kriteria Ketuntasan Minimal
     semesterLabel?: string;
+    canAdd?: boolean;
 }
 
 // Helper to predict final grade based on trend
@@ -231,9 +233,10 @@ const GradesPanel: React.FC<{
     onEdit: (record: AcademicRecordRow) => void,
     onDelete: (recordId: string) => void,
     isOnline: boolean;
+    currentUserId?: string;
     kkm: number;
     semesterLabel?: string;
-}> = ({ records, onEdit, onDelete, isOnline, kkm, semesterLabel }) => {
+}> = ({ records, onEdit, onDelete, isOnline, currentUserId, kkm, semesterLabel }) => {
     const { isLocked } = useSemester();
     const recordsBySubject = useMemo(() => {
         if (!records || records.length === 0) return {};
@@ -330,7 +333,7 @@ const GradesPanel: React.FC<{
                                         </div>
                                         <div className="absolute top-3 right-3 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                             {(() => {
-                                                const canModify = !isLocked(record.semester_id || record.created_at);
+                                                const canModify = record.user_id === currentUserId && !isLocked(record.semester_id || record.created_at);
 
                                                 return (
                                                     <>
@@ -377,9 +380,11 @@ export const GradesTab: React.FC<GradesTabProps> = ({
     onEdit,
     onDelete,
     isOnline,
+    currentUserId,
     classAverages,
     kkm = DEFAULT_KKM,
-    semesterLabel
+    semesterLabel,
+    canAdd = true,
 }) => {
     const chartRef = useRef<HTMLDivElement>(null);
 
@@ -425,7 +430,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                     </Button>
 
                     {/* Add Button */}
-                    <Button onClick={onAdd} disabled={!isOnline} className="whitespace-nowrap">
+                    <Button onClick={onAdd} disabled={!isOnline || !canAdd} className="whitespace-nowrap">
                         <PlusIcon className="w-4 h-4 mr-2" />Tambah Nilai
                     </Button>
                 </div>
@@ -466,6 +471,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 isOnline={isOnline}
+                currentUserId={currentUserId}
                 kkm={kkm}
                 semesterLabel={semesterLabel}
             />

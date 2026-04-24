@@ -149,7 +149,6 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         supabase
             .from('students')
             .select('id, name, class_id, avatar_url')
-            .eq('user_id', userId)
             .is('deleted_at', null),
 
         // Fetch active tasks (not deleted, not completed)
@@ -172,14 +171,12 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         supabase
             .from('classes')
             .select('id, name')
-            .eq('user_id', userId)
             .is('deleted_at', null),
 
         // Fetch today's attendance for summary
         supabase
             .from('attendance')
             .select('status', { count: 'exact' })
-            .eq('user_id', userId)
             .eq('date', today)
             .is('deleted_at', null),
 
@@ -187,7 +184,6 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         supabase
             .from('attendance')
             .select('date, status')
-            .eq('user_id', userId)
             .gte('date', last5Days[0])
             .lte('date', last5Days[4])
             .is('deleted_at', null),
@@ -196,7 +192,6 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         supabase
             .from('academic_records')
             .select('student_id, subject, score, assessment_name, created_at')
-            .eq('user_id', userId)
             .is('deleted_at', null)
             .order('created_at', { ascending: false })
             .limit(10),
@@ -205,7 +200,6 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         supabase
             .from('violations')
             .select('student_id, points')
-            .eq('user_id', userId)
             .is('deleted_at', null),
 
         // Fetch recent tasks for activity feed
@@ -221,7 +215,6 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         supabase
             .from('attendance')
             .select('created_at, status')
-            .eq('user_id', userId)
             .eq('date', today)
             .is('deleted_at', null)
             .order('created_at', { ascending: false })
@@ -231,7 +224,6 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         supabase
             .from('communications')
             .select('id, student_id, message, created_at, sender, is_read')
-            .eq('user_id', userId)
             .eq('sender', 'parent')
             .eq('is_read', false)
             .order('created_at', { ascending: false })

@@ -2,6 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { ClassRow, SortConfig, StudentRow } from './types';
+import { TeacherClassAssignmentRow } from '../../services/teacherAssignments';
 
 interface ToastApi {
   error: (message: string) => void;
@@ -14,6 +15,7 @@ interface UseStudentsPageDataOptions {
 
 const EMPTY_CLASSES: ClassRow[] = [];
 const EMPTY_STUDENTS: StudentRow[] = [];
+const EMPTY_ASSIGNMENTS: TeacherClassAssignmentRow[] = [];
 
 export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOptions) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +25,26 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
   const [genderFilter, setGenderFilter] = useState<'all' | 'Laki-laki' | 'Perempuan'>('all');
   const [accessCodeFilter, setAccessCodeFilter] = useState<'all' | 'has_code' | 'no_code'>('all');
+
+  const {
+    data: userAssignments = EMPTY_ASSIGNMENTS,
+  } = useQuery({
+    queryKey: ['teacherClassAssignments', userId],
+    queryFn: async () => {
+      if (!userId) return EMPTY_ASSIGNMENTS;
+
+      const { data, error } = await supabase
+        .from('teacher_class_assignments')
+        .select('id, teacher_user_id, class_id, semester_id, assignment_role, subject_name, notes, created_by, created_at, updated_at, deleted_at')
+        .eq('teacher_user_id', userId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw new Error(error.message);
+      return (data || EMPTY_ASSIGNMENTS) as TeacherClassAssignmentRow[];
+    },
+    enabled: !!userId,
+  });
 
   const {
     data: classesData,
@@ -37,7 +59,6 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
       const { data, error } = await supabase
         .from('classes')
         .select('id, name, user_id, created_at, deleted_at')
-        .eq('user_id', userId)
         .is('deleted_at', null)
         .order('name');
 
@@ -60,7 +81,6 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
       const { data, error } = await supabase
         .from('students')
         .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, created_at, deleted_at')
-        .eq('user_id', userId)
         .eq('class_id', activeClassId)
         .is('deleted_at', null);
 
@@ -72,6 +92,8 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
 
   const classes = classesData || EMPTY_CLASSES;
   const students = studentsData || EMPTY_STUDENTS;
+  const activeClass = classes.find((classItem) => classItem.id === activeClassId) || null;
+  const canManageActiveClass = activeClass?.user_id === userId;
   const isLoading = isLoadingClasses || isLoadingStudents;
   const isError = isClassesError || isStudentsError;
   const queryError = classesError || studentsError;
@@ -144,6 +166,9 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
     setAccessCodeFilter,
     classes,
     students,
+    userAssignments,
+    activeClass,
+    canManageActiveClass,
     studentsForActiveClass,
     isLoading,
     handleSort,

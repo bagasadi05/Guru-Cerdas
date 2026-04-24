@@ -26,6 +26,7 @@ import {
     TrendingUp,
     ChevronDown,
     Clock,
+    UserCheck,
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -42,6 +43,7 @@ import {
     getRoleBadgeClass,
     OverviewTab,
     AnnouncementsTab,
+    TeacherAssignmentsTab,
 } from './admin';
 
 const USER_PAGE_SIZE = 20;
@@ -567,6 +569,7 @@ const AdminPage: React.FC = () => {
     const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
         { id: 'overview', label: 'Ringkasan', icon: <BarChart3 size={18} /> },
         { id: 'users', label: 'Pengguna', icon: <Users size={18} /> },
+        { id: 'assignments', label: 'Penugasan Guru', icon: <UserCheck size={18} /> },
         { id: 'announcements', label: 'Pengumuman', icon: <Megaphone size={18} /> },
         { id: 'activity', label: 'Aktivitas', icon: <Activity size={18} /> },
         { id: 'system', label: 'Sistem', icon: <Settings size={18} /> },
@@ -909,6 +912,16 @@ const AdminPage: React.FC = () => {
                             await handleCreateAnnouncement(form);
                         }}
                         onDeleteAnnouncement={handleDeleteAnnouncement}
+                    />
+                )}
+
+                {activeTab === 'assignments' && (
+                    <TeacherAssignmentsTab
+                        currentUserId={user?.id}
+                        onLogAction={async (tableName, action, recordId, oldData, newData) => {
+                            await logAdminAction(tableName, action, recordId, oldData, newData);
+                            fetchActivityLogs();
+                        }}
                     />
                 )}
 

@@ -216,7 +216,7 @@ describe('Property 6: Date range filtering', () => {
                 fc.array(fc.date({
                     min: new Date('2023-01-01'),
                     max: new Date('2025-12-31'),
-                }), { minLength: 0, maxLength: 50 }),
+                }).filter((date) => !Number.isNaN(date.getTime())), { minLength: 0, maxLength: 50 }),
                 async (dates) => {
                     const data = dates.map((date, i) => ({
                         id: i,

@@ -1157,6 +1157,63 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_class_assignments: {
+        Row: {
+          assignment_role: string
+          class_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          notes: string | null
+          semester_id: string
+          subject_name: string | null
+          teacher_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_role: string
+          class_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          semester_id: string
+          subject_name?: string | null
+          teacher_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_role?: string
+          class_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          semester_id?: string
+          subject_name?: string | null
+          teacher_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_class_assignments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_class_assignments_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: false
+            referencedRelation: "semesters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1365,6 +1422,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: unknown
       }
+      mark_accessible_communications_read: {
+        Args: {
+          p_message_ids: string[]
+        }
+        Returns: number
+      }
       send_parent_message: {
         Args: {
           access_code_param?: string
@@ -1386,6 +1449,16 @@ export type Database = {
           p_expected_version: number
         }
         Returns: Json
+      }
+      update_accessible_violation_follow_up: {
+        Args: {
+          p_notes?: string | null
+          p_parent_notified?: boolean | null
+          p_parent_notified_at?: string | null
+          p_status?: string | null
+          p_violation_id: string
+        }
+        Returns: boolean
       }
       update_parent_info: {
         Args: {

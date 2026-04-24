@@ -82,6 +82,7 @@ export const useStudentsPageViewModel = ({ userId, toast }: UseStudentsPageViewM
       onActiveClassChange: data.setActiveClassId,
       classes: data.classes,
       studentsForActiveClass: data.studentsForActiveClass,
+      canManageActiveClass: data.canManageActiveClass,
       isSelected,
       toggleItem,
       isAllSelected,
@@ -94,6 +95,7 @@ export const useStudentsPageViewModel = ({ userId, toast }: UseStudentsPageViewM
       viewMode: data.viewMode,
     },
     actionSheet: {
+      canManageActiveClass: data.canManageActiveClass,
       onHeaderAction: interactions.handleHeaderAction,
       selectedStudentForActions: ui.selectedStudentForActions,
       onCloseStudentActions: () => ui.setSelectedStudentForActions(null),

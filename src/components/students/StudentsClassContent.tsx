@@ -10,6 +10,7 @@ interface StudentsClassContentProps {
   students: StudentRow[];
   searchTerm: string;
   viewMode: 'grid' | 'list';
+  canManageActiveClass: boolean;
   isSelected: (id: string) => boolean;
   toggleItem: (id: string) => void;
   isAllSelected: boolean;
@@ -24,6 +25,7 @@ export const StudentsClassContent: React.FC<StudentsClassContentProps> = ({
   students,
   searchTerm,
   viewMode,
+  canManageActiveClass,
   isSelected,
   toggleItem,
   isAllSelected,
@@ -50,12 +52,14 @@ export const StudentsClassContent: React.FC<StudentsClassContentProps> = ({
           <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
             Belum ada siswa di kelas ini atau tidak ada yang cocok dengan filter pencarian Anda.
           </p>
-          <Button
-            onClick={onAddStudent}
-            className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white"
-          >
-            <PlusIcon className="w-4 h-4 mr-2" /> Tambah Siswa Baru
-          </Button>
+          {canManageActiveClass ? (
+            <Button
+              onClick={onAddStudent}
+              className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <PlusIcon className="w-4 h-4 mr-2" /> Tambah Siswa Baru
+            </Button>
+          ) : null}
         </div>
       ) : viewMode === 'grid' ? (
         <StudentGrid

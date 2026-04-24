@@ -7,3 +7,4 @@ export * from './components';
 export * from './constants';
 export * from './OverviewTab';
 export * from './AnnouncementsTab';
+export * from './TeacherAssignmentsTab';

@@ -149,17 +149,35 @@ const StudentDetailPage = () => {
         queryKey: ['studentProfile', studentId],
         queryFn: async () => {
             if (!studentId || !user) throw new Error("User or Student ID not found");
-            const [studentRes, classesRes] = await Promise.all([
-                supabase.from('students').select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, created_at, deleted_at').eq('id', studentId).eq('user_id', user.id).is('deleted_at', null).single(),
-                supabase.from('classes').select('id, name, user_id, created_at, deleted_at').eq('user_id', user.id).is('deleted_at', null)
-            ]);
+            const studentRes = await supabase
+                .from('students')
+                .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, created_at, deleted_at')
+                .eq('id', studentId)
+                .is('deleted_at', null)
+                .single();
 
             if (studentRes.error) throw studentRes.error;
+
+            const [classInfoRes, classesRes] = await Promise.all([
+                supabase
+                    .from('classes')
+                    .select('id, name, user_id, created_at, deleted_at')
+                    .eq('id', studentRes.data.class_id)
+                    .is('deleted_at', null)
+                    .single(),
+                supabase
+                    .from('classes')
+                    .select('id, name, user_id, created_at, deleted_at')
+                    .eq('user_id', user.id)
+                    .is('deleted_at', null)
+            ]);
+
+            if (classInfoRes.error) throw classInfoRes.error;
             if (classesRes.error) throw classesRes.error;
 
             const studentData = studentRes.data as unknown as StudentWithClass;
             const classRows = (classesRes.data || []) as unknown as Database['public']['Tables']['classes']['Row'][];
-            const classInfo = classRows.find(c => c.id === studentData.class_id);
+            const classInfo = classInfoRes.data as Database['public']['Tables']['classes']['Row'];
             const studentWithClass = { ...studentData, classes: classInfo ? { id: classInfo.id, name: classInfo.name } : null };
 
             return { student: studentWithClass, classes: classRows };
@@ -173,8 +191,8 @@ const StudentDetailPage = () => {
         queryFn: async () => {
             if (!studentId || !user) return { attendanceRecords: [], violations: [] };
             const [attendanceRes, violationsRes] = await Promise.all([
-                supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).eq('user_id', user.id).is('deleted_at', null),
-                supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).eq('user_id', user.id).is('deleted_at', null)
+                supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null),
+                supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null)
             ]);
             return {
                 attendanceRecords: (attendanceRes.data || []) as AttendanceRow[],
@@ -191,7 +209,7 @@ const StudentDetailPage = () => {
     const { data: academicRecords = [] } = useQuery({
         queryKey: ['studentGrades', studentId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId!).eq('user_id', user!.id).is('deleted_at', null);
+            const { data, error } = await supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId!).is('deleted_at', null);
             if (error) throw error;
             return (data || []) as AcademicRecordRow[];
         },
@@ -204,7 +222,7 @@ const StudentDetailPage = () => {
     const { data: quizPoints = [] } = useQuery({
         queryKey: ['studentQuizzes', studentId],
         queryFn: async () => {
-            const { data, error } = await supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId!).eq('user_id', user!.id).is('deleted_at', null);
+            const { data, error } = await supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId!).is('deleted_at', null);
             if (error) throw error;
             return (data || []) as unknown as QuizPointRow[];
         },
@@ -219,7 +237,7 @@ const StudentDetailPage = () => {
                 .from('reports')
                 .select('id, user_id, student_id, title, notes, date, category, attachment_url, tags, created_at')
                 .eq('student_id', studentId!)
-                .eq('user_id', user!.id);
+                .order('created_at', { ascending: false });
             if (error) throw error;
             return (data || []) as unknown as ReportRow[];
         },
@@ -234,18 +252,15 @@ const StudentDetailPage = () => {
                 supabase
                     .from('student_extracurriculars')
                     .select('id, user_id, student_id, extracurricular_id, extracurricular_student_id, semester_id, joined_at, status, created_at, extracurriculars(id, user_id, name, category, description, schedule_day, schedule_time, coach_name, max_participants, is_active, created_at, updated_at)')
-                    .eq('student_id', studentId!)
-                    .eq('user_id', user!.id),
+                    .eq('student_id', studentId!),
                 supabase
                     .from('extracurricular_attendance')
                     .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, date, status, notes, created_at')
-                    .eq('student_id', studentId!)
-                    .eq('user_id', user!.id),
+                    .eq('student_id', studentId!),
                 supabase
                     .from('extracurricular_grades')
                     .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, score, description, notes, created_at, updated_at')
                     .eq('student_id', studentId!)
-                    .eq('user_id', user!.id)
             ]);
             return {
                 studentExtracurriculars: extraRes.data || [],
@@ -263,7 +278,6 @@ const StudentDetailPage = () => {
                 .from('communications')
                 .select('id', { count: 'exact', head: true })
                 .eq('student_id', studentId!)
-                .eq('user_id', user!.id)
                 .eq('sender', 'parent')
                 .eq('is_read', false);
             if (error) throw error;
@@ -281,10 +295,32 @@ const StudentDetailPage = () => {
                 .from('communications')
                 .select('id, user_id, teacher_id, student_id, sender, message, is_read, parent_id, attachment_url, attachment_type, attachment_name, created_at')
                 .eq('student_id', studentId!)
-                .eq('user_id', user!.id)
                 .order('created_at', { ascending: true });
             if (error) throw error;
-            return (data || []) as unknown as CommunicationRow[];
+            const records = (data || []) as unknown as CommunicationRow[];
+            const teacherIds = [...new Set(records
+                .filter((record) => record.sender === 'teacher' && record.teacher_id)
+                .map((record) => record.teacher_id))];
+
+            if (teacherIds.length === 0) {
+                return records;
+            }
+
+            const { data: teacherRoles } = await supabase
+                .from('user_roles')
+                .select('user_id, full_name')
+                .in('user_id', teacherIds);
+
+            const teacherNameMap = new Map(
+                (teacherRoles || []).map((role) => [role.user_id, role.full_name])
+            );
+
+            return records.map((record) => ({
+                ...record,
+                teacher_name: record.sender === 'teacher'
+                    ? teacherNameMap.get(record.teacher_id) || null
+                    : null,
+            }));
         },
         enabled: !!studentId && !!user && activeTab === 'communication'
     });
@@ -523,16 +559,14 @@ const StudentDetailPage = () => {
     const handleUpdateViolationFollowUp = async (violationId: string, status: 'pending' | 'in_progress' | 'resolved', notes?: string) => {
         try {
             if (!user) return;
-            const { error } = await supabase
-                .from('violations')
-                .update({
-                    follow_up_status: status,
-                    follow_up_notes: notes
-                })
-                .eq('id', violationId)
-                .eq('user_id', user.id);
+            const { data: updated, error } = await supabase.rpc('update_accessible_violation_follow_up', {
+                p_violation_id: violationId,
+                p_status: status,
+                p_notes: notes ?? null,
+            });
 
             if (error) throw error;
+            if (!updated) throw new Error('Data pelanggaran tidak dapat diperbarui.');
 
             queryClient.invalidateQueries({ queryKey: ['studentStats', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentCommsUnreadCount', studentId] });
@@ -554,7 +588,8 @@ const StudentDetailPage = () => {
     // Handler for notifying parent about a violation
     const handleNotifyParent = async (violation: ViolationRow) => {
         try {
-            if (!studentDetails?.student) return;
+            if (!studentDetails?.student || !user) return;
+            const notifiedAt = new Date().toISOString();
 
             // Create a communication message about the violation
             const message = `[NOTIFIKASI PELANGGARAN]\n\nYth. Orang Tua/Wali ${studentDetails.student.name},\n\nKami informasikan bahwa anak Anda telah melakukan pelanggaran:\n\n📋 Jenis: ${violation.description}\n📅 Tanggal: ${new Date(violation.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\n⚠️ Poin: ${violation.points}\n\nMohon perhatian dan kerjasamanya untuk membimbing anak di rumah.\n\nTerima kasih.`;
@@ -564,8 +599,8 @@ const StudentDetailPage = () => {
                 .from('communications')
                 .insert({
                     student_id: studentId!,
-                    teacher_id: user!.id,
-                    user_id: user!.id,
+                    teacher_id: user.id,
+                    user_id: user.id,
                     message,
                     sender: 'teacher',
                     is_read: false
@@ -574,28 +609,26 @@ const StudentDetailPage = () => {
             if (commError) throw commError;
 
             // Update violation as notified
-            const { error: updateError } = await supabase
-                .from('violations')
-                .update({
-                    parent_notified: true,
-                    parent_notified_at: new Date().toISOString()
-                })
-                .eq('id', violation.id)
-                .eq('user_id', user!.id);
+            const { data: updated, error: updateError } = await supabase.rpc('update_accessible_violation_follow_up', {
+                p_violation_id: violation.id,
+                p_parent_notified: true,
+                p_parent_notified_at: notifiedAt,
+            });
 
             if (updateError) throw updateError;
+            if (!updated) throw new Error('Status notifikasi pelanggaran tidak dapat diperbarui.');
 
             queryClient.invalidateQueries({ queryKey: ['studentStats', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentCommsUnreadCount', studentId] });
             await writeAuditLog({
-                userId: user!.id,
-                userEmail: user!.email,
+                userId: user.id,
+                userEmail: user.email,
                 tableName: 'violations',
                 recordId: violation.id,
                 action: 'UPDATE',
                 oldData: { parent_notified: violation.parent_notified || false },
-                newData: { parent_notified: true, parent_notified_at: new Date().toISOString() },
+                newData: { parent_notified: true, parent_notified_at: notifiedAt },
             });
             toast.success('Notifikasi pelanggaran berhasil dikirim ke orang tua!');
         } catch (error: unknown) {
@@ -636,11 +669,9 @@ const StudentDetailPage = () => {
                     .map(m => m.id);
 
                 if (unreadIds.length > 0) {
-                    const { error } = await supabase
-                        .from('communications')
-                        .update({ is_read: true })
-                        .in('id', unreadIds)
-                        .eq('user_id', user.id);
+                    const { error } = await supabase.rpc('mark_accessible_communications_read', {
+                        p_message_ids: unreadIds,
+                    });
 
                     if (error) {
                         console.error("Failed to mark messages as read:", error);
@@ -751,6 +782,7 @@ const StudentDetailPage = () => {
 
     const student = studentProfile.student;
     const classes = studentProfile.classes;
+    const canManageStudentProfile = student.user_id === user?.id;
 
 
     return (
@@ -774,9 +806,11 @@ const StudentDetailPage = () => {
                         <div className="relative">
                             <img src={getStudentAvatar(student.avatar_url, student.gender, student.id)} alt={student.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg dark:border-white/10" />
                             <input type="file" ref={photoInputRef} onChange={handlePhotoChange} accept="image/png, image/jpeg" className="hidden" disabled={isUploadingPhoto || !isOnline} />
-                            <button onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} className="absolute -bottom-1 -right-1 p-2 bg-purple-600 text-white rounded-full shadow-md hover:scale-110 transition-transform">
-                                <CameraIcon className="w-4 h-4" />
-                            </button>
+                            {canManageStudentProfile ? (
+                                <button onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} className="absolute -bottom-1 -right-1 p-2 bg-purple-600 text-white rounded-full shadow-md hover:scale-110 transition-transform">
+                                    <CameraIcon className="w-4 h-4" />
+                                </button>
+                            ) : null}
                         </div>
                         <div>
                             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{student.name}</h1>
@@ -784,24 +818,28 @@ const StudentDetailPage = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2 self-start md:self-center flex-wrap">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setModalState({ type: 'editStudent', data: student })}
-                            disabled={!isOnline}
-                            className="h-10 w-10 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white sm:hidden"
-                            aria-label="Edit Profil"
-                        >
-                            <UserCircleIcon className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => setModalState({ type: 'editStudent', data: student })}
-                            disabled={!isOnline}
-                            className="hidden sm:inline-flex h-10 px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white"
-                        >
-                            <UserCircleIcon className="w-4 h-4 mr-2" />Edit Profil
-                        </Button>
+                        {canManageStudentProfile ? (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setModalState({ type: 'editStudent', data: student })}
+                                    disabled={!isOnline}
+                                    className="h-10 w-10 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white sm:hidden"
+                                    aria-label="Edit Profil"
+                                >
+                                    <UserCircleIcon className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setModalState({ type: 'editStudent', data: student })}
+                                    disabled={!isOnline}
+                                    className="hidden sm:inline-flex h-10 px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white"
+                                >
+                                    <UserCircleIcon className="w-4 h-4 mr-2" />Edit Profil
+                                </Button>
+                            </>
+                        ) : null}
 
                         <Link to={`/cetak-rapot/${studentId}`} className="sm:hidden">
                             <Button
@@ -819,20 +857,24 @@ const StudentDetailPage = () => {
                             </Button>
                         </Link>
 
-                        <Button
-                            onClick={() => setModalState({ type: 'portalAccess' })}
-                            size="icon"
-                            className="h-10 w-10 sm:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-                            aria-label="Akses Portal"
-                        >
-                            <KeyRoundIcon className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            onClick={() => setModalState({ type: 'portalAccess' })}
-                            className="hidden sm:inline-flex h-10 px-3 sm:px-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-                        >
-                            <KeyRoundIcon className="w-4 h-4 mr-2" />Akses Portal
-                        </Button>
+                        {canManageStudentProfile ? (
+                            <>
+                                <Button
+                                    onClick={() => setModalState({ type: 'portalAccess' })}
+                                    size="icon"
+                                    className="h-10 w-10 sm:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                                    aria-label="Akses Portal"
+                                >
+                                    <KeyRoundIcon className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    onClick={() => setModalState({ type: 'portalAccess' })}
+                                    className="hidden sm:inline-flex h-10 px-3 sm:px-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                                >
+                                    <KeyRoundIcon className="w-4 h-4 mr-2" />Akses Portal
+                                </Button>
+                            </>
+                        ) : null}
                     </div>
                 </header>
 
@@ -902,14 +944,14 @@ const StudentDetailPage = () => {
                         <TabsContent value="grades" className="p-0">
                             {activeTab === 'grades' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} kkm={kkm} semesterLabel={selectedSemesterLabel} />
+                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} currentUserId={user?.id} kkm={kkm} semesterLabel={selectedSemesterLabel} />
                                 </Suspense>
                             )}
                         </TabsContent>
                         <TabsContent value="activity" className="p-0">
                             {activeTab === 'activity' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} semesterLabel={selectedSemesterLabel} />
+                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} currentUserId={user?.id} semesterLabel={selectedSemesterLabel} />
                                 </Suspense>
                             )}
                         </TabsContent>
@@ -926,6 +968,7 @@ const StudentDetailPage = () => {
                                         studentName={student.name}
                                         className={student.classes?.name || '-'}
                                         isOnline={isOnline}
+                                        currentUserId={user?.id}
                                         semesterLabel={selectedSemesterLabel}
                                     />
                                 </Suspense>
@@ -945,7 +988,7 @@ const StudentDetailPage = () => {
                         <TabsContent value="reports" className="p-0">
                             {activeTab === 'reports' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <ReportsTab reports={reports} onAdd={() => setModalState({ type: 'report', data: null })} onEdit={(r) => setModalState({ type: 'report', data: r })} onDelete={(id) => handleDelete('reports', id)} isOnline={isOnline} />
+                                    <ReportsTab reports={reports} onAdd={() => setModalState({ type: 'report', data: null })} onEdit={(r) => setModalState({ type: 'report', data: r })} onDelete={(id) => handleDelete('reports', id)} isOnline={isOnline} currentUserId={user?.id} canAdd={canManageStudentProfile} />
                                 </Suspense>
                             )}
                         </TabsContent>
@@ -992,6 +1035,7 @@ const StudentDetailPage = () => {
                                         communications={communications}
                                         userAvatarUrl={user?.avatarUrl}
                                         studentName={student.name}
+                                        currentUserId={user?.id}
                                         onSendMessage={(msg, attachment) => sendMessageMutation.mutate({ message: msg, attachment })}
                                         onEditMessage={(msg) => setModalState({ type: 'editCommunication', data: msg })}
                                         onDeleteMessage={(id) => handleDelete('communications', id)}

@@ -31,6 +31,7 @@ interface StudentsPageClassSectionProps {
   onActiveClassChange: (value: string) => void;
   classes: ClassRow[];
   studentsForActiveClass: StudentRow[];
+  canManageActiveClass: boolean;
   isSelected: (id: string) => boolean;
   toggleItem: (id: string) => void;
   isAllSelected: boolean;
@@ -44,6 +45,7 @@ interface StudentsPageClassSectionProps {
 }
 
 interface StudentsPageActionSheetProps {
+  canManageActiveClass: boolean;
   onHeaderAction: (actionId: StudentsHeaderActionId) => void;
   selectedStudentForActions: StudentRow | null;
   onCloseStudentActions: () => void;
@@ -142,9 +144,13 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white font-serif">Manajemen Siswa</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Kelola data siswa, kelas, dan kode akses.</p>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            {classSection.canManageActiveClass
+              ? 'Kelola data siswa, kelas, dan kode akses.'
+              : 'Mode baca untuk kelas yang ditugaskan. Detail siswa tetap bisa dibuka tanpa mengubah data master.'}
+          </p>
         </div>
-        <StudentsHeaderActions onAction={actionSheet.onHeaderAction} />
+        <StudentsHeaderActions onAction={actionSheet.onHeaderAction} canManageActiveClass={classSection.canManageActiveClass} />
       </header>
 
       <div className="space-y-6">
@@ -176,6 +182,7 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
                 sortConfig={classSection.sortConfig}
                 onSort={classSection.onSort}
                 onAddStudent={classSection.onAddStudent}
+                canManageActiveClass={classSection.canManageActiveClass}
               />
             </TabsContent>
           ))}
@@ -186,6 +193,7 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
         student={actionSheet.selectedStudentForActions}
         isOpen={!!actionSheet.selectedStudentForActions}
         onClose={actionSheet.onCloseStudentActions}
+        canManageActiveClass={actionSheet.canManageActiveClass}
         onEdit={actionSheet.onEditStudent}
         onDelete={actionSheet.onDeleteStudent}
         onCopyCode={actionSheet.onCopyCode}

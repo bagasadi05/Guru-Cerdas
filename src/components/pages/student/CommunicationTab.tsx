@@ -24,6 +24,7 @@ interface CommunicationTabProps {
     communications: CommunicationRow[];
     userAvatarUrl?: string;
     studentName?: string;
+    currentUserId?: string;
     onSendMessage: (message: string, attachment?: { file: File; type: 'image' | 'document' }) => void;
     onEditMessage: (message: CommunicationRow) => void;
     onDeleteMessage: (id: string) => void;
@@ -45,6 +46,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
     communications,
     userAvatarUrl,
     studentName = 'Siswa',
+    currentUserId,
     onSendMessage,
     onEditMessage,
     onDeleteMessage,
@@ -195,6 +197,11 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
         }
     };
 
+    const getTeacherLabel = (message: CommunicationRow) => {
+        if (message.teacher_id === currentUserId) return 'Anda';
+        return message.teacher_name?.trim() || 'Guru lain';
+    };
+
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
@@ -318,12 +325,22 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                                         )}
                                     </div>
                                 )}
+                                {msg.sender === 'teacher' && (
+                                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-blue-100/90 dark:text-blue-200/90">
+                                        {getTeacherLabel(msg)}
+                                    </p>
+                                )}
+                                {msg.sender === 'parent' && (
+                                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                        Orang tua / wali
+                                    </p>
+                                )}
                                 <p className="whitespace-pre-wrap">{msg.message}</p>
                                 <div className={`flex items-center gap-1 text-xs mt-1 ${msg.sender === 'teacher' ? 'text-blue-100 dark:text-blue-200 justify-end' : 'text-gray-500 dark:text-gray-400 justify-end'}`}>
                                     <span>{formatMessageDate(msg.created_at)}</span>
                                     {msg.sender === 'teacher' && msg.is_read && <CheckCircleIcon className="w-3.5 h-3.5" />}
                                 </div>
-                                {msg.sender === 'teacher' && isOnline && (
+                                {msg.sender === 'teacher' && msg.user_id === currentUserId && isOnline && (
                                     <div className="absolute top-0 -left-20 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button variant="ghost" size="icon" className="h-7 w-7 bg-gray-200 dark:bg-black/30" onClick={() => onEditMessage(msg)}><PencilIcon className="w-3.5 h-3.5" /></Button>
                                         <Button variant="ghost" size="icon" className="h-7 w-7 bg-gray-200 dark:bg-black/30 text-red-600 dark:text-red-400" onClick={() => onDeleteMessage(msg.id)}><TrashIcon className="w-3.5 h-3.5" /></Button>

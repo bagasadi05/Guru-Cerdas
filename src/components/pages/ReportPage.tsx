@@ -18,15 +18,20 @@ type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row']
 
 const DEFAULT_ACADEMIC_DESCRIPTION = 'Capaian sesuai dengan nilai yang diperoleh.';
 
-const fetchReportData = async (studentId: string, userId: string): Promise<ReportData> => {
-    const studentRes = await supabase.from('students').select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, classes(id, name)').eq('id', studentId).eq('user_id', userId).is('deleted_at', null).single();
+const fetchReportData = async (studentId: string): Promise<ReportData> => {
+    const studentRes = await supabase
+        .from('students')
+        .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, classes(id, name)')
+        .eq('id', studentId)
+        .is('deleted_at', null)
+        .single();
     if (studentRes.error) throw new Error(studentRes.error.message);
     const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes] = await Promise.all([
-        supabase.from('reports').select('id, user_id, student_id, title, notes, date, category, attachment_url, tags, created_at').eq('student_id', studentId).eq('user_id', userId),
-        supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).eq('user_id', userId).is('deleted_at', null),
-        supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId).eq('user_id', userId).is('deleted_at', null),
-        supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).eq('user_id', userId).is('deleted_at', null),
-        supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId).eq('user_id', userId).is('deleted_at', null)
+        supabase.from('reports').select('id, user_id, student_id, title, notes, date, category, attachment_url, tags, created_at').eq('student_id', studentId),
+        supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null),
+        supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId).is('deleted_at', null),
+        supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null),
+        supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null)
     ]);
     const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes].map(r => r.error).filter(Boolean);
     if (errors.length > 0) throw new Error(errors.map(e => e!.message).join(', '));
@@ -140,7 +145,7 @@ const ReportPage: React.FC = () => {
 
     const { data, isLoading, isError, error } = useQuery<ReportData>({
         queryKey: ['reportData', studentId, user?.id],
-        queryFn: () => fetchReportData(studentId!, user!.id),
+        queryFn: () => fetchReportData(studentId!),
         enabled: !!studentId && !!user,
     });
 

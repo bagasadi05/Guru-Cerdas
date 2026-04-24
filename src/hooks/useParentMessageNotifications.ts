@@ -5,6 +5,7 @@ import { useToast } from './useToast';
 import { useQueryClient } from '@tanstack/react-query';
 import { playMessageSound } from '../utils/notificationSound';
 import { addNotification, getPreferences } from '../services/NotificationService';
+import { queryKeys } from '../lib/queryKeys';
 
 /**
  * Hook for listening to real-time parent messages.
@@ -52,7 +53,6 @@ export const useParentMessageNotifications = () => {
                     event: 'INSERT',
                     schema: 'public',
                     table: 'communications',
-                    filter: `user_id=eq.${user.id}`,
                 },
                 async (payload) => {
                     const newMessage = payload.new as {
@@ -111,7 +111,9 @@ export const useParentMessageNotifications = () => {
 
                         // Invalidate queries to refresh data
                         queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
-                        queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+                        queryClient.invalidateQueries({ queryKey: ['studentComms'] });
+                        queryClient.invalidateQueries({ queryKey: ['studentCommsUnreadCount'] });
+                        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
                         queryClient.invalidateQueries({ queryKey: ['parentMessages', user.id] });
                     }
                 }

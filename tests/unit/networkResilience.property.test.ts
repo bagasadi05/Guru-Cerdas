@@ -102,7 +102,7 @@ describe('Network Resilience Property Tests', () => {
             retries: fc.integer({ min: 1, max: 5 }),
             initialDelay: fc.integer({ min: 100, max: 2000 }),
             maxDelay: fc.integer({ min: 5000, max: 30000 }),
-            exponentialBase: fc.float({ min: 1.5, max: 3.0 })
+            exponentialBase: fc.double({ min: 1.5, max: 3.0, noNaN: true, noDefaultInfinity: true })
           }),
           fc.string({ minLength: 10, maxLength: 100 }).map(s => `https://api.example.com/${s}`),
           async ({ retries, initialDelay, maxDelay, exponentialBase }, url) => {

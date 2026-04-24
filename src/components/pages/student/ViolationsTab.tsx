@@ -45,9 +45,11 @@ interface ViolationsTabProps {
     onNotifyParent?: (violation: ViolationRow) => void;
     onUpdateFollowUp?: (id: string, status: FollowUpStatus, notes?: string) => void;
     isOnline: boolean;
+    currentUserId?: string;
     studentName?: string;
     className?: string;
     semesterLabel?: string;
+    canAdd?: boolean;
 }
 
 // Threshold Alert Component
@@ -161,12 +163,13 @@ const ViolationCard: React.FC<{
     onUpdateFollowUp?: (status: FollowUpStatus) => void;
     isOnline: boolean;
     isLocked?: boolean;
-}> = ({ violation, onEdit, onDelete, onNotifyParent, onUpdateFollowUp, isOnline, isLocked = false }) => {
+    currentUserId?: string;
+}> = ({ violation, onEdit, onDelete, onNotifyParent, onUpdateFollowUp, isOnline, isLocked = false, currentUserId }) => {
     const [showFollowUp, setShowFollowUp] = useState(false);
     const severity = isSeverityLevel(violation.severity) ? SEVERITY_LEVELS[violation.severity] : SEVERITY_LEVELS.ringan;
     const followUp = isFollowUpStatus(violation.follow_up_status) ? FOLLOW_UP_STATUS[violation.follow_up_status] : FOLLOW_UP_STATUS.pending;
     const FollowUpIcon = followUp.icon;
-    const canModify = !isLocked;
+    const canModify = violation.user_id === currentUserId && !isLocked;
 
     return (
         <div className={`group relative p-4 rounded-xl border-2 ${severity.borderClass} ${severity.bgClass} transition-all hover:shadow-md`}>
@@ -292,9 +295,11 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     onNotifyParent,
     onUpdateFollowUp,
     isOnline,
+    currentUserId,
     studentName,
     className,
-    semesterLabel
+    semesterLabel,
+    canAdd = true,
 }) => {
     const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -353,7 +358,7 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                         </DropdownItem>
                     </DropdownContent>
                 </DropdownMenu>
-                <Button onClick={onAdd} disabled={!isOnline}>
+                <Button onClick={onAdd} disabled={!isOnline || !canAdd}>
                     <PlusIcon className="w-4 h-4 mr-2" />Tambah Pelanggaran
                 </Button>
             </div>
@@ -423,6 +428,7 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                                     onUpdateFollowUp={onUpdateFollowUp ? (status) => onUpdateFollowUp(v.id, status) : undefined}
                                     isOnline={isOnline}
                                     isLocked={isViolationLocked}
+                                    currentUserId={currentUserId}
                                 />
                             );
                         })}

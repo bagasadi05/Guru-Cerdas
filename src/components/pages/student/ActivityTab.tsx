@@ -35,7 +35,9 @@ interface ActivityTabProps {
     onDelete: (id: string | number) => void;
     onApplyPoints: () => void;
     isOnline: boolean;
+    currentUserId?: string;
     semesterLabel?: string;
+    canAdd?: boolean;
 }
 
 // Category Filter Component
@@ -230,9 +232,10 @@ const ActivityPointsHistory: React.FC<{
     onEdit: (record: QuizPointRow) => void,
     onDelete: (recordId: string | number) => void,
     isOnline: boolean;
+    currentUserId?: string;
     categoryFilter: PointCategory | 'all';
     semesterLabel?: string;
-}> = ({ records, onEdit, onDelete, isOnline, categoryFilter, semesterLabel }) => {
+}> = ({ records, onEdit, onDelete, isOnline, currentUserId, categoryFilter, semesterLabel }) => {
     const filteredRecords = useMemo(() => {
         let filtered = records.filter(r => !r.is_used);
         if (categoryFilter !== 'all') {
@@ -289,8 +292,8 @@ const ActivityPointsHistory: React.FC<{
                             </p>
                         </div>
                         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(record)} aria-label="Edit Poin" disabled={!isOnline}><PencilIcon className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 dark:text-red-400" onClick={() => onDelete(record.id)} aria-label="Hapus Poin" disabled={!isOnline}><TrashIcon className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(record)} aria-label="Edit Poin" disabled={!isOnline || record.user_id !== currentUserId}><PencilIcon className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 dark:text-red-400" onClick={() => onDelete(record.id)} aria-label="Hapus Poin" disabled={!isOnline || record.user_id !== currentUserId}><TrashIcon className="h-4 w-4" /></Button>
                         </div>
                     </div>
                 );
@@ -338,7 +341,7 @@ const ApplyPointsPanel: React.FC<{
 // View Toggle
 type ViewMode = 'available' | 'history' | 'overview';
 
-export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onEdit, onDelete, onApplyPoints, isOnline, semesterLabel }) => {
+export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onEdit, onDelete, onApplyPoints, isOnline, currentUserId, semesterLabel, canAdd = true }) => {
     const [categoryFilter, setCategoryFilter] = useState<PointCategory | 'all'>('all');
     const [viewMode, setViewMode] = useState<ViewMode>('available');
 
@@ -352,7 +355,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                     <CardTitle>Poin Keaktifan Kelas</CardTitle>
                     <CardDescription>Catatan poin untuk keaktifan siswa saat pelajaran.</CardDescription>
                 </div>
-                <Button onClick={onAdd} disabled={!isOnline}>
+                <Button onClick={onAdd} disabled={!isOnline || !canAdd}>
                     <PlusIcon className="w-4 h-4 mr-2" />Tambah Poin
                 </Button>
             </div>
@@ -415,6 +418,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                         onEdit={onEdit}
                         onDelete={onDelete}
                         isOnline={isOnline}
+                        currentUserId={currentUserId}
                         categoryFilter={categoryFilter}
                         semesterLabel={semesterLabel}
                     />

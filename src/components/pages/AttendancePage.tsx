@@ -9,6 +9,8 @@ import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { addToQueue } from '../../services/offlineQueue';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import { useSemester } from '../../contexts/SemesterContext';
+import { queryKeys } from '../../lib/queryKeys';
+import { hasHomeroomAssignment, type TeacherClassAssignmentRow } from '../../services/teacherAssignments';
 import { SemesterSelector } from '../ui/SemesterSelector';
 import {
     CalendarIcon,
@@ -124,24 +126,66 @@ const AttendancePage: React.FC = () => {
     const { data: classes, isLoading: isLoadingClasses, error: classesError, refetch: refetchClasses } = useQuery({
         queryKey: ['classes', user?.id],
         queryFn: async () => {
-            const { data, error } = await supabase.from('classes').select('id, name, user_id').eq('user_id', user!.id).is('deleted_at', null);
+            const { data, error } = await supabase
+                .from('classes')
+                .select('id, name, user_id')
+                .is('deleted_at', null);
             if (error) throw error;
             return (data || []) as unknown as ClassRow[];
         },
         enabled: !!user,
     });
 
+    const { data: teacherAssignments = [] } = useQuery({
+        queryKey: ['attendanceAssignments', user?.id],
+        queryFn: async () => {
+            if (!user) return [];
+            const { data, error } = await supabase
+                .from('teacher_class_assignments')
+                .select('id, class_id, semester_id, assignment_role, deleted_at')
+                .eq('teacher_id', user.id)
+                .is('deleted_at', null);
+
+            if (error) throw error;
+            return (data || []) as TeacherClassAssignmentRow[];
+        },
+        enabled: !!user,
+    });
+
+    const attendanceClasses = useMemo(() => {
+        if (!classes || !user) return [];
+        const semesterForAccess = selectedSemesterId || activeSemester?.id || null;
+
+        return classes.filter((classRow) => (
+            classRow.user_id === user.id
+            || hasHomeroomAssignment(teacherAssignments, classRow.id, semesterForAccess)
+        ));
+    }, [activeSemester?.id, classes, selectedSemesterId, teacherAssignments, user]);
+
     useEffect(() => {
-        if (classes && classes.length > 0 && !selectedClass) {
-            setSelectedClass(classes[0].id);
+        if (attendanceClasses.length === 0) {
+            if (selectedClass) {
+                setSelectedClass('');
+            }
+            return;
         }
-    }, [classes, selectedClass]);
+
+        const selectedClassStillAvailable = attendanceClasses.some((classRow) => classRow.id === selectedClass);
+        if (!selectedClassStillAvailable) {
+            setSelectedClass(attendanceClasses[0].id);
+        }
+    }, [attendanceClasses, selectedClass]);
 
     const { data: students, isLoading: isLoadingStudents, error: studentsError, refetch: refetchStudents } = useQuery({
         queryKey: ['studentsForAttendance', selectedClass],
         queryFn: async () => {
             if (!selectedClass || !user) return [];
-            const { data: studentsData, error: studentsError } = await supabase.from('students').select('id, name, class_id, user_id').eq('class_id', selectedClass).eq('user_id', user.id).is('deleted_at', null).order('name', { ascending: true });
+            const { data: studentsData, error: studentsError } = await supabase
+                .from('students')
+                .select('id, name, class_id, user_id')
+                .eq('class_id', selectedClass)
+                .is('deleted_at', null)
+                .order('name', { ascending: true });
             if (studentsError) throw studentsError;
             return (studentsData || []) as unknown as StudentRow[];
         },
@@ -149,14 +193,15 @@ const AttendancePage: React.FC = () => {
     });
 
     const { data: existingAttendance } = useQuery({
-        queryKey: ['attendanceData', user?.id, selectedDate],
+        queryKey: ['attendanceData', user?.id, selectedClass, selectedDate],
         queryFn: async () => {
-            if (!user) return {};
+            if (!user || !students || students.length === 0) return {};
             const { data: attendanceData, error: attendanceError } = await supabase
                 .from('attendance')
                 .select('id, student_id, status, notes')
                 .eq('user_id', user.id)
                 .eq('date', selectedDate)
+                .in('student_id', students.map((student) => student.id))
                 .is('deleted_at', null);
 
             if (attendanceError) throw attendanceError;
@@ -165,7 +210,7 @@ const AttendancePage: React.FC = () => {
                 return acc;
             }, {});
         },
-        enabled: !!user && !!selectedDate,
+        enabled: !!user && !!selectedClass && !!selectedDate && !!students && students.length > 0,
     });
 
     useEffect(() => {
@@ -186,20 +231,21 @@ const AttendancePage: React.FC = () => {
     }, [calendarMonth, selectedSemester]);
 
     const { data: calendarAttendance = [] } = useQuery({
-        queryKey: ['attendanceCalendar', user?.id, calendarRange?.start, calendarRange?.end],
+        queryKey: ['attendanceCalendar', user?.id, selectedClass, calendarRange?.start, calendarRange?.end],
         queryFn: async () => {
-            if (!user || !calendarRange) return [];
+            if (!user || !calendarRange || !students || students.length === 0) return [];
             const { data, error } = await supabase
                 .from('attendance')
                 .select('student_id, date, status')
                 .eq('user_id', user.id)
+                .in('student_id', students.map((student) => student.id))
                 .gte('date', calendarRange.start)
                 .lte('date', calendarRange.end)
                 .is('deleted_at', null);
             if (error) throw error;
             return (data || []) as unknown as AttendanceRow[];
         },
-        enabled: !!user && !!calendarRange,
+        enabled: !!user && !!selectedClass && !!calendarRange && !!students && students.length > 0,
     });
 
     const { mutate: saveAttendance, isPending: isSaving } = useMutation<
@@ -223,9 +269,9 @@ const AttendancePage: React.FC = () => {
             }
         },
         onMutate: async (recordsToUpsert) => {
-            await queryClient.cancelQueries({ queryKey: ['attendanceData', user?.id, selectedDate] });
-            const previousAttendance = queryClient.getQueryData<Record<string, AttendanceRecord>>(['attendanceData', user?.id, selectedDate]);
-            queryClient.setQueryData(['attendanceData', user?.id, selectedDate], (old: Record<string, AttendanceRecord> = {}) => {
+            await queryClient.cancelQueries({ queryKey: ['attendanceData', user?.id, selectedClass, selectedDate] });
+            const previousAttendance = queryClient.getQueryData<Record<string, AttendanceRecord>>(['attendanceData', user?.id, selectedClass, selectedDate]);
+            queryClient.setQueryData(['attendanceData', user?.id, selectedClass, selectedDate], (old: Record<string, AttendanceRecord> = {}) => {
                 const newData = { ...old };
                 recordsToUpsert.forEach(record => {
                     if (record.student_id) {
@@ -237,7 +283,7 @@ const AttendancePage: React.FC = () => {
             return { previousAttendance };
         },
         onError: (err: Error, newRecords, context) => {
-            queryClient.setQueryData(['attendanceData', user?.id, selectedDate], context?.previousAttendance);
+            queryClient.setQueryData(['attendanceData', user?.id, selectedClass, selectedDate], context?.previousAttendance);
             toast.error(`Gagal menyimpan absensi: ${err.message}`);
         },
         onSuccess: (data, variables) => {
@@ -260,9 +306,9 @@ const AttendancePage: React.FC = () => {
             }
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ['attendanceData', user?.id, selectedDate] });
+            queryClient.invalidateQueries({ queryKey: ['attendanceData', user?.id, selectedClass, selectedDate] });
             queryClient.invalidateQueries({ queryKey: ['attendanceCalendar'] });
-            queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
         },
     });
 
@@ -595,15 +641,34 @@ const AttendancePage: React.FC = () => {
             endDate = semester.end_date;
         }
 
-        const [studentsRes, attendanceRes, classesRes] = await Promise.all([
-            supabase.from('students').select('id, name, class_id, user_id').eq('user_id', user.id).is('deleted_at', null),
-            supabase.from('attendance').select('student_id, date, status').eq('user_id', user.id).gte('date', startDate).lte('date', endDate).is('deleted_at', null),
-            supabase.from('classes').select('id, name, user_id').eq('user_id', user.id).is('deleted_at', null),
+        const exportClasses = selectedExportClass === 'all'
+            ? attendanceClasses
+            : attendanceClasses.filter((classRow) => classRow.id === selectedExportClass);
+
+        if (exportClasses.length === 0) {
+            return { students: [], attendance: [], classes: [] };
+        }
+
+        const classIds = exportClasses.map((classRow) => classRow.id);
+
+        const [studentsRes, attendanceRes] = await Promise.all([
+            supabase
+                .from('students')
+                .select('id, name, class_id, user_id')
+                .in('class_id', classIds)
+                .is('deleted_at', null),
+            supabase
+                .from('attendance')
+                .select('student_id, date, status')
+                .eq('user_id', user.id)
+                .gte('date', startDate)
+                .lte('date', endDate)
+                .is('deleted_at', null),
         ]);
 
-        if (studentsRes.error || attendanceRes.error || classesRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
+        if (studentsRes.error || attendanceRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
 
-        const classRows = (classesRes.data || []) as unknown as ClassRow[];
+        const classRows = exportClasses;
         const studentRows = (studentsRes.data || []) as unknown as StudentRow[];
         const attendanceRows = (attendanceRes.data || []) as unknown as AttendanceRow[];
         const classMap = new Map(classRows.map(c => [c.id, { name: c.name }]));
@@ -881,9 +946,9 @@ Berikan respon dalam format JSON dengan struktur berikut:
                 isOnline={isOnline}
             />
 
-            {classes && classes.length > 0 && (
+            {attendanceClasses.length > 0 && (
                 <AttendanceClassSelector
-                    classes={classes}
+                    classes={attendanceClasses}
                     selectedClass={selectedClass}
                     onSelectClass={setSelectedClass}
                 />
@@ -1132,7 +1197,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
                 isExporting={isExporting}
                 exportMonth={exportMonth}
                 setExportMonth={setExportMonth}
-                classes={classes || []}
+                classes={attendanceClasses}
                 selectedExportClass={selectedExportClass}
                 setSelectedExportClass={setSelectedExportClass}
                 exportPeriod={exportPeriod}
@@ -1201,7 +1266,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
                 isOpen={isQrModalOpen}
                 onClose={() => setIsQrModalOpen(false)}
                 classId={selectedClass}
-                className={classes?.find(c => c.id === selectedClass)?.name || 'Kelas'}
+                className={attendanceClasses.find(c => c.id === selectedClass)?.name || 'Kelas'}
                 date={selectedDate}
                 userId={user?.id || ''}
             />
@@ -1218,7 +1283,7 @@ Berikan respon dalam format JSON dengan struktur berikut:
                         <div>
                             <h4 className="font-bold text-orange-700 dark:text-orange-300">Peringatan</h4>
                             <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
-                                Anda akan menghapus <strong>semua data absensi</strong> untuk kelas <strong>{classes?.find(c => c.id === selectedClass)?.name}</strong> pada tanggal <strong>{new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>.
+                                Anda akan menghapus <strong>semua data absensi</strong> untuk kelas <strong>{attendanceClasses.find(c => c.id === selectedClass)?.name}</strong> pada tanggal <strong>{new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>.
                             </p>
                             <p className="text-sm text-orange-600 dark:text-orange-400 mt-2">
                                 Tindakan ini tidak dapat dibatalkan!

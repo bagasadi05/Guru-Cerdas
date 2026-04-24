@@ -2,15 +2,45 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../../services/supabase';
 import { ClassRow, StudentRow, AcademicRecordRow, ViolationRow } from '../types';
 import { useAuth } from '../../../../hooks/useAuth';
+import { getAssignedSubjects, TeacherClassAssignmentRow } from '../../../../services/teacherAssignments';
+
+const DEFAULT_SUBJECT_OPTIONS = [
+    'Matematika',
+    'Bahasa Indonesia',
+    'Bahasa Inggris',
+    'IPA',
+    'IPS',
+    'PKN',
+    'Seni Budaya',
+    'PJOK',
+    'Informatika',
+    'Agama',
+];
 
 export const useMassInputData = (selectedClass: string, subject?: string, assessmentName?: string, mode?: string, semesterId?: string) => {
     const { user } = useAuth();
+
+    const { data: teacherAssignments = [] } = useQuery({
+        queryKey: ['teacherClassAssignments', user?.id],
+        queryFn: async (): Promise<TeacherClassAssignmentRow[]> => {
+            if (!user) return [];
+            const { data, error } = await supabase
+                .from('teacher_class_assignments')
+                .select('id, teacher_user_id, class_id, semester_id, assignment_role, subject_name, notes, created_by, created_at, updated_at, deleted_at')
+                .eq('teacher_user_id', user.id)
+                .is('deleted_at', null);
+            if (error) throw error;
+            return (data || []) as TeacherClassAssignmentRow[];
+        },
+        enabled: !!user,
+        staleTime: 1000 * 60 * 10,
+    });
 
     const { data: classes, isLoading: isLoadingClasses } = useQuery({
         queryKey: ['classes', user?.id],
         queryFn: async (): Promise<ClassRow[]> => {
             if (!user) return [];
-            const { data, error } = await supabase.from('classes').select('id, name, user_id').eq('user_id', user.id).is('deleted_at', null).order('name');
+            const { data, error } = await supabase.from('classes').select('id, name, user_id').is('deleted_at', null).order('name');
             if (error) throw error; return (data || []) as unknown as ClassRow[];
         },
         enabled: !!user,
@@ -27,13 +57,32 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
     });
 
     const { data: uniqueSubjects } = useQuery({
-        queryKey: ['distinctSubjects', user?.id],
+        queryKey: ['distinctSubjects', user?.id, selectedClass, semesterId, teacherAssignments.length],
         queryFn: async (): Promise<string[]> => {
             if (!user) return [];
-            const { data, error } = await supabase.from('academic_records').select('subject').eq('user_id', user.id).is('deleted_at', null);
+            const assignedSubjects = getAssignedSubjects(teacherAssignments, selectedClass || null, semesterId || null);
+            if (assignedSubjects.length > 0) {
+                return assignedSubjects;
+            }
+
+            let query = supabase
+                .from('academic_records')
+                .select('subject')
+                .is('deleted_at', null);
+
+            if (selectedClass && studentsData && studentsData.length > 0) {
+                query = query.in('student_id', studentsData.map((student) => student.id));
+            }
+
+            if (semesterId) {
+                query = query.eq('semester_id', semesterId);
+            }
+
+            const { data, error } = await query;
             if (error) { console.error("Error fetching distinct subjects:", error); return []; }
             const subjects = ((data as { subject: string }[]) || []).map((item) => item.subject);
-            return [...new Set(subjects)].sort();
+            const uniqueSubjectList = [...new Set(subjects)].sort();
+            return uniqueSubjectList.length > 0 ? uniqueSubjectList : DEFAULT_SUBJECT_OPTIONS;
         },
         enabled: !!user, staleTime: 1000 * 60 * 15,
     });

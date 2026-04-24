@@ -39,6 +39,8 @@ export type CommunicationRow = CommunicationRowBase & {
     sender?: string;
     /** Message content (alias for content) */
     message?: string;
+    /** Teacher display name for shared class communication */
+    teacher_name?: string | null;
     /** Attachment URL */
     attachment_url?: string;
     /** Attachment type (image/document) */

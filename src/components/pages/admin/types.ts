@@ -43,7 +43,7 @@ export interface AuditLog {
     new_data: Record<string, unknown> | null;
 }
 
-export type TabType = 'overview' | 'users' | 'announcements' | 'activity' | 'system';
+export type TabType = 'overview' | 'users' | 'assignments' | 'announcements' | 'activity' | 'system';
 
 export type AnnouncementTemplateIcon =
     | 'calendar'

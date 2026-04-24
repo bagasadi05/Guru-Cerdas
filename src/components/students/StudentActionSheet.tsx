@@ -8,6 +8,7 @@ interface StudentActionSheetProps {
   student: StudentRow | null;
   isOpen: boolean;
   onClose: () => void;
+  canManageActiveClass: boolean;
   onEdit: (student: StudentRow) => void;
   onDelete: (student: StudentRow) => void;
   onCopyCode: (code: string) => void;
@@ -18,6 +19,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
   student,
   isOpen,
   onClose,
+  canManageActiveClass,
   onEdit,
   onDelete,
   onCopyCode,
@@ -42,23 +44,25 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
           </div>
         </Link>
 
-        <button
-          className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
-          onClick={() => {
-            onEdit(student);
-            onClose();
-          }}
-        >
-          <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-            <PencilIcon className="w-5 h-5" />
-          </div>
-          <div className="flex-grow">
-            <p className="font-semibold text-gray-900 dark:text-gray-100">Edit Data</p>
-            <p className="text-xs text-gray-500">Ubah nama, kelas, atau foto</p>
-          </div>
-        </button>
+        {canManageActiveClass ? (
+          <button
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+            onClick={() => {
+              onEdit(student);
+              onClose();
+            }}
+          >
+            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+              <PencilIcon className="w-5 h-5" />
+            </div>
+            <div className="flex-grow">
+              <p className="font-semibold text-gray-900 dark:text-gray-100">Edit Data</p>
+              <p className="text-xs text-gray-500">Ubah nama, kelas, atau foto</p>
+            </div>
+          </button>
+        ) : null}
 
-        {!student.access_code && (
+        {canManageActiveClass && !student.access_code && (
           <button
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
             onClick={() => {
@@ -76,7 +80,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
           </button>
         )}
 
-        {student.access_code && (
+        {canManageActiveClass && student.access_code && (
           <button
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
             onClick={() => {
@@ -94,23 +98,25 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
           </button>
         )}
 
-        <div className="h-px bg-gray-200 dark:bg-gray-800 my-1"></div>
+        {canManageActiveClass ? <div className="h-px bg-gray-200 dark:bg-gray-800 my-1"></div> : null}
 
-        <button
-          className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left group"
-          onClick={() => {
-            onDelete(student);
-            onClose();
-          }}
-        >
-          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
-            <TrashIcon className="w-5 h-5" />
-          </div>
-          <div className="flex-grow">
-            <p className="font-semibold text-red-600 dark:text-red-400">Hapus Siswa</p>
-            <p className="text-xs text-red-400/70">Tindakan ini tidak dapat dibatalkan</p>
-          </div>
-        </button>
+        {canManageActiveClass ? (
+          <button
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left group"
+            onClick={() => {
+              onDelete(student);
+              onClose();
+            }}
+          >
+            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
+              <TrashIcon className="w-5 h-5" />
+            </div>
+            <div className="flex-grow">
+              <p className="font-semibold text-red-600 dark:text-red-400">Hapus Siswa</p>
+              <p className="text-xs text-red-400/70">Tindakan ini tidak dapat dibatalkan</p>
+            </div>
+          </button>
+        ) : null}
       </div>
     </BottomSheet>
   );

@@ -4,6 +4,7 @@ import { useToast } from '../../../../hooks/useToast';
 import { Database } from '../../../../services/database.types';
 import { StudentMutationVars, ReportMutationVars, AcademicMutationVars, QuizMutationVars, ViolationMutationVars, CommunicationMutationVars } from '../types';
 import { writeAuditLog } from '../../../../services/auditTrail';
+import { queryKeys } from '../../../../lib/queryKeys';
 
 const SOFT_DELETE_TABLES = new Set<keyof Database['public']['Tables']>([
     'students',
@@ -48,7 +49,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             queryClient.invalidateQueries({ queryKey: ['studentQuizzes', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentReports', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
-            queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
             onSuccessCloseModal();
             toast.success("Data berhasil disimpan!");
         },
@@ -321,7 +322,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentCommsUnreadCount', studentId] });
-            queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
             onSuccessCloseModal();
             toast.success("Pesan berhasil dikirim!");
         },
@@ -413,7 +414,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['studentGrades', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentQuizzes', studentId] });
-            queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
             onSuccessCloseModal();
             toast.success("Poin berhasil diterapkan dan nilai diperbarui!");
         },
