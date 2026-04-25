@@ -10,6 +10,7 @@ import { SemesterSelector } from '../../../ui/SemesterSelector';
 import { useUserSettings } from '../../../../hooks/useUserSettings';
 import { useSemester } from '../../../../contexts/SemesterContext';
 import { Checkbox } from '../../../ui/Checkbox';
+import { getStudentAvatar } from '../../../../utils/avatarUtils';
 
 interface ViolationExportPanelProps {
     classes: ClassRow[] | undefined;
@@ -21,16 +22,21 @@ interface ViolationExportPanelProps {
     isLoadingViolations: boolean;
 }
 
-const StudentAvatar: React.FC<{ name: string; avatarUrl: string | null | undefined }> = ({ name, avatarUrl }) => {
+const StudentAvatar: React.FC<{
+    name: string;
+    avatarUrl: string | null | undefined;
+    gender?: string | null;
+    studentId?: string;
+}> = ({ name, avatarUrl, gender, studentId }) => {
     const [imgError, setImgError] = useState(false);
-    const showFallback = !avatarUrl || imgError;
+    const resolvedAvatar = getStudentAvatar(avatarUrl, gender, studentId, name);
 
-    return showFallback ? (
+    return imgError ? (
         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
             {name.charAt(0).toUpperCase()}
         </div>
     ) : (
-        <img src={avatarUrl} alt={name} className="w-9 h-9 rounded-full object-cover shrink-0" onError={() => setImgError(true)} />
+        <img src={resolvedAvatar} alt={name} className="w-9 h-9 rounded-full object-cover shrink-0" onError={() => setImgError(true)} />
     );
 };
 
@@ -297,7 +303,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                                         <Checkbox checked={selectedStudentIds.has(student.id)} onChange={() => handleToggleStudent(student.id)} />
                                     </div>
                                     <div className="col-span-7 flex items-center gap-3">
-                                        <StudentAvatar name={student.name} avatarUrl={student.avatar_url} />
+                                        <StudentAvatar name={student.name} avatarUrl={student.avatar_url} gender={student.gender} studentId={student.id} />
                                         <span className="font-medium text-slate-800 dark:text-white uppercase text-sm">{student.name}</span>
                                     </div>
                                     <div className="col-span-4 text-right">

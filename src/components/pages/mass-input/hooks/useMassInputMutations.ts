@@ -14,6 +14,13 @@ import { recordAction } from '../../../../services/UndoManager';
 import { violationList } from '../../../../services/violations.data';
 import { sanitizeFilename } from '../../../../services/securityEnhanced';
 import { InputMode, ClassRow, StudentRow, AcademicRecordRow, ReviewDataItem } from '../types';
+import { dedupeAcademicRecords } from '../../../../utils/academicRecordUtils';
+
+const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
+
+const getDuplicateGuardWindowIso = () => (
+    new Date(Date.now() - DUPLICATE_GUARD_WINDOW_MINUTES * 60 * 1000).toISOString()
+);
 
 export interface UseMassInputMutationsParams {
     mode: InputMode | null;
@@ -67,27 +74,58 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                 case 'quiz': {
                     if (!quizInfo.name || !quizInfo.subject || selectedStudentIds.size === 0)
                         throw new Error('Informasi aktivitas dan siswa harus diisi.');
-                    const records: Database['public']['Tables']['quiz_points']['Insert'][] = Array.from(selectedStudentIds).map((student_id: string) => ({
-                        quiz_name: quizInfo.name,
-                        subject: quizInfo.subject,
-                        quiz_date: quizInfo.date,
-                        student_id,
-                        user_id: user.id,
-                        points: 1,
-                        max_points: 1,
-                        semester_id: activeSemester?.id || null,
-                    }));
+                    const studentIds = Array.from(selectedStudentIds);
+                    let existingQuizQuery = supabase
+                        .from('quiz_points')
+                        .select('id, student_id')
+                        .in('student_id', studentIds)
+                        .eq('user_id', user.id)
+                        .eq('quiz_name', quizInfo.name)
+                        .eq('subject', quizInfo.subject)
+                        .eq('quiz_date', quizInfo.date)
+                        .gte('created_at', getDuplicateGuardWindowIso())
+                        .is('deleted_at', null);
+
+                    existingQuizQuery = activeSemester?.id
+                        ? existingQuizQuery.eq('semester_id', activeSemester.id)
+                        : existingQuizQuery.is('semester_id', null);
+
+                    const { data: existingQuizRows, error: existingQuizError } = await existingQuizQuery;
+                    if (existingQuizError) throw existingQuizError;
+
+                    const duplicateStudentIds = new Set((existingQuizRows || []).map((row) => row.student_id));
+                    const records: Database['public']['Tables']['quiz_points']['Insert'][] = studentIds
+                        .filter((student_id) => !duplicateStudentIds.has(student_id))
+                        .map((student_id: string) => ({
+                            quiz_name: quizInfo.name,
+                            subject: quizInfo.subject,
+                            quiz_date: quizInfo.date,
+                            student_id,
+                            user_id: user.id,
+                            points: 1,
+                            max_points: 1,
+                            semester_id: activeSemester?.id || null,
+                        }));
+
+                    if (records.length === 0) {
+                        return 'Tidak ada poin baru yang disimpan. Sistem mendeteksi input yang sama sudah tersimpan beberapa menit terakhir.';
+                    }
+
                     const { data, error } = await supabase.from('quiz_points').insert(records).select();
                     if (error) throw error;
                     await recordAction(user.id, 'create', 'quiz_points', data.map(d => d.id));
-                    return `Poin keaktifan untuk ${records.length} siswa berhasil disimpan.`;
+                    return duplicateStudentIds.size > 0
+                        ? `Poin keaktifan untuk ${records.length} siswa berhasil disimpan. ${duplicateStudentIds.size} data duplikat terbaru dilewati.`
+                        : `Poin keaktifan untuk ${records.length} siswa berhasil disimpan.`;
                 }
                 case 'subject_grade': {
                     if (!subjectGradeInfo.subject || !subjectGradeInfo.assessment_name || gradedCount === 0)
                         throw new Error('Mata pelajaran, nama penilaian, dan setidaknya satu nilai harus diisi.');
                     if (Object.keys(validationErrors).length > 0)
                         throw new Error('Perbaiki nilai yang tidak valid sebelum menyimpan.');
-                    const existingGradesMap = new Map((existingGrades || []).map(g => [g.student_id, g.id]));
+                    const existingGradesMap = new Map(
+                        dedupeAcademicRecords(existingGrades || []).map(g => [g.student_id, g.id])
+                    );
                     const records = Object.entries(scores)
                         .filter(([, score]: [string, string]) => score && score.trim() !== '')
                         .map(([student_id, score]: [string, string]) => {
@@ -113,19 +151,49 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                 case 'violation': {
                     if (!selectedViolation || selectedStudentIds.size === 0)
                         throw new Error('Jenis pelanggaran dan siswa harus dipilih.');
-                    const records: Database['public']['Tables']['violations']['Insert'][] = Array.from(selectedStudentIds).map((student_id: string) => ({
-                        date: violationDate,
-                        description: selectedViolation.description,
-                        points: selectedViolation.points,
-                        type: selectedViolation.code,
-                        student_id,
-                        user_id: user.id,
-                        semester_id: activeSemester?.id || null,
-                    }));
+                    const studentIds = Array.from(selectedStudentIds);
+                    let existingViolationQuery = supabase
+                        .from('violations')
+                        .select('id, student_id')
+                        .in('student_id', studentIds)
+                        .eq('user_id', user.id)
+                        .eq('date', violationDate)
+                        .eq('description', selectedViolation.description)
+                        .eq('points', selectedViolation.points)
+                        .eq('type', selectedViolation.code)
+                        .gte('created_at', getDuplicateGuardWindowIso())
+                        .is('deleted_at', null);
+
+                    existingViolationQuery = activeSemester?.id
+                        ? existingViolationQuery.eq('semester_id', activeSemester.id)
+                        : existingViolationQuery.is('semester_id', null);
+
+                    const { data: existingViolationRows, error: existingViolationError } = await existingViolationQuery;
+                    if (existingViolationError) throw existingViolationError;
+
+                    const duplicateStudentIds = new Set((existingViolationRows || []).map((row) => row.student_id));
+                    const records: Database['public']['Tables']['violations']['Insert'][] = studentIds
+                        .filter((student_id) => !duplicateStudentIds.has(student_id))
+                        .map((student_id: string) => ({
+                            date: violationDate,
+                            description: selectedViolation.description,
+                            points: selectedViolation.points,
+                            type: selectedViolation.code,
+                            student_id,
+                            user_id: user.id,
+                            semester_id: activeSemester?.id || null,
+                        }));
+
+                    if (records.length === 0) {
+                        return 'Tidak ada pelanggaran baru yang disimpan. Sistem mendeteksi input yang sama sudah tersimpan beberapa menit terakhir.';
+                    }
+
                     const { data, error } = await supabase.from('violations').insert(records).select();
                     if (error) throw error;
                     await recordAction(user.id, 'create', 'violations', data.map(d => d.id));
-                    return `Pelanggaran untuk ${records.length} siswa berhasil dicatat.`;
+                    return duplicateStudentIds.size > 0
+                        ? `Pelanggaran untuk ${records.length} siswa berhasil dicatat. ${duplicateStudentIds.size} data duplikat terbaru dilewati.`
+                        : `Pelanggaran untuk ${records.length} siswa berhasil dicatat.`;
                 }
                 default:
                     throw new Error(`Mode "${mode}" tidak mendukung penyimpanan data.`);

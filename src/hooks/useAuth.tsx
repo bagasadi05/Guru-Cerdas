@@ -4,6 +4,7 @@ import type { User, Session } from '@supabase/supabase-js';
 import type { Database } from '../services/database.types';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { getStudentAvatar } from '../utils/avatarUtils';
 
 /**
  * Represents an authenticated application user with profile information
@@ -281,7 +282,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const processUser = (authUser: User | undefined | null): AppUser | null => {
     if (!authUser) return null;
 
-    let avatarUrl = authUser.user_metadata.avatar_url || `https://i.pravatar.cc/150?u=${authUser.id}`;
+    let avatarUrl = getStudentAvatar(
+      authUser.user_metadata.avatar_url,
+      null,
+      authUser.id,
+      authUser.user_metadata.name || authUser.email || 'Guru'
+    );
 
     if (avatarUrl && avatarUrl.includes('supabase.co')) {
       avatarUrl = `${avatarUrl.split('?')[0]}?t=${new Date().getTime()}`;
@@ -393,7 +399,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       options: {
         data: {
           name,
-          avatar_url: `https://i.pravatar.cc/150?u=${email}`
+          avatar_url: getStudentAvatar(null, null, email, name)
         }
       }
     }),

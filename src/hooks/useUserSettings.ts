@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuth } from './useAuth';
 import { useToast } from './useToast';
+import { maybeSingleCompat } from '../services/supabaseQueryCompat';
 
 export interface UserSettings {
     user_id: string;
@@ -52,11 +53,10 @@ export const useUserSettings = () => {
             if (!user) return null;
 
             // Try to fetch existing settings
-            const { data, error } = await supabase
+            const { data, error } = await maybeSingleCompat(supabase
                 .from('user_settings')
                 .select('*')
-                .eq('user_id', user.id)
-                .maybeSingle();
+                .eq('user_id', user.id));
 
             if (error) throw error;
 

@@ -48,6 +48,7 @@ import {
     resolveSubmitSemesterId,
 } from './student/studentDetailHelpers';
 import { writeAuditLog } from '../../services/auditTrail';
+import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../utils/academicRecordUtils';
 
 const GradesTab = lazy(() => import('./student/GradesTab').then((module) => ({ default: module.GradesTab })));
 const ActivityTab = lazy(() => import('./student/ActivityTab').then((module) => ({ default: module.ActivityTab })));
@@ -503,21 +504,28 @@ const StudentDetailPage = () => {
     }, [filteredAttendance]);
 
     const filteredViolations = useMemo(() => {
-        if (!studentDetails?.violations) return [];
-        if (!selectedSemesterId) return studentDetails.violations;
-        return studentDetails.violations.filter(r => r.semester_id === selectedSemesterId);
+        const semesterScopedViolations = !studentDetails?.violations
+            ? []
+            : !selectedSemesterId
+                ? studentDetails.violations
+                : studentDetails.violations.filter(r => r.semester_id === selectedSemesterId);
+        return dedupeViolations(semesterScopedViolations);
     }, [studentDetails, selectedSemesterId]);
 
     // Filter academic records by selected semester
     const filteredAcademicRecords = useMemo(() => {
-        if (!selectedSemesterId) return academicRecords;
-        return academicRecords.filter(r => r.semester_id === selectedSemesterId);
+        const semesterScopedRecords = !selectedSemesterId
+            ? academicRecords
+            : academicRecords.filter(r => r.semester_id === selectedSemesterId);
+        return dedupeAcademicRecords(semesterScopedRecords);
     }, [academicRecords, selectedSemesterId]);
 
     // Filter quiz points by selected semester
     const filteredQuizPoints = useMemo(() => {
-        if (!selectedSemesterId) return quizPoints;
-        return quizPoints.filter(r => r.semester_id === selectedSemesterId);
+        const semesterScopedQuizPoints = !selectedSemesterId
+            ? quizPoints
+            : quizPoints.filter(r => r.semester_id === selectedSemesterId);
+        return dedupeQuizPoints(semesterScopedQuizPoints);
     }, [quizPoints, selectedSemesterId]);
     const availableFilteredQuizPoints = useMemo(() => getAvailableQuizPoints(filteredQuizPoints), [filteredQuizPoints]);
 

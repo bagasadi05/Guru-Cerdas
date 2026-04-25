@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { getStudentAvatar } from '../../utils/avatarUtils';
 import { MessageSquareIcon, UsersIcon, ChevronRightIcon, ClockIcon, InboxIcon } from '../Icons';
 import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
@@ -52,7 +53,6 @@ const ParentMessagesWidget: React.FC = () => {
                     student_id,
                     students!inner(name, avatar_url)
                 `)
-                .eq('user_id', user!.id)
                 .eq('sender', 'parent')
                 .order('created_at', { ascending: false })
                 .limit(5);
@@ -67,14 +67,18 @@ const ParentMessagesWidget: React.FC = () => {
                 is_read: msg.is_read,
                 student_id: msg.student_id,
                 student_name: msg.students?.name || 'Unknown',
-                student_avatar: msg.students?.avatar_url || '',
+                student_avatar: getStudentAvatar(
+                    msg.students?.avatar_url,
+                    null,
+                    msg.student_id,
+                    msg.students?.name || msg.student_id
+                ),
             }));
 
             // Count unread messages
             const { count } = await supabase
                 .from('communications')
                 .select('id', { count: 'exact', head: true })
-                .eq('user_id', user!.id)
                 .eq('sender', 'parent')
                 .eq('is_read', false);
 

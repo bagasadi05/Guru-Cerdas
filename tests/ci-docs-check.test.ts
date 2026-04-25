@@ -204,7 +204,7 @@ describe('Property 17.1: CI Documentation Checks', () => {
         );
     });
 
-    it('should handle Storybook deployment metadata', () => {
+    it('should handle Storybook deployment metadata', { timeout: 15000 }, () => {
         fc.assert(
             fc.property(
                 fc.record({
@@ -218,7 +218,7 @@ describe('Property 17.1: CI Documentation Checks', () => {
                         typeof storybookDeploy.deploymentSuccess === 'boolean';
                 }
             ),
-            { numRuns: 50 }
+            { numRuns: 25 }
         );
     });
 

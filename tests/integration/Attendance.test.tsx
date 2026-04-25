@@ -14,6 +14,7 @@ vi.mock('../../src/services/supabase', () => ({
         from: vi.fn((table: string) => {
             const responses: Record<string, unknown[]> = {
                 classes: [{ id: 'class-1', name: 'Kelas 10A', user_id: 'test-user' }],
+                teacher_class_assignments: [],
                 students: [
                     { id: '1', name: 'Budi', class_id: 'class-1', user_id: 'test-user' },
                     { id: '2', name: 'Siti', class_id: 'class-1', user_id: 'test-user' }

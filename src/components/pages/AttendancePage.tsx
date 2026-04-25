@@ -142,8 +142,8 @@ const AttendancePage: React.FC = () => {
             if (!user) return [];
             const { data, error } = await supabase
                 .from('teacher_class_assignments')
-                .select('id, class_id, semester_id, assignment_role, deleted_at')
-                .eq('teacher_id', user.id)
+                .select('id, teacher_user_id, class_id, semester_id, assignment_role, subject_name, notes, created_by, created_at, updated_at, deleted_at')
+                .eq('teacher_user_id', user.id)
                 .is('deleted_at', null);
 
             if (error) throw error;

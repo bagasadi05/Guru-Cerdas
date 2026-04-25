@@ -3,6 +3,7 @@ import { supabase } from '../../../../services/supabase';
 import { ClassRow, StudentRow, AcademicRecordRow, ViolationRow } from '../types';
 import { useAuth } from '../../../../hooks/useAuth';
 import { getAssignedSubjects, TeacherClassAssignmentRow } from '../../../../services/teacherAssignments';
+import { dedupeAcademicRecords } from '../../../../utils/academicRecordUtils';
 
 const DEFAULT_SUBJECT_OPTIONS = [
     'Matematika',
@@ -116,7 +117,7 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             if (!selectedClass || !subject || !assessmentName || !studentsData) return [];
             let query = supabase
                 .from('academic_records')
-                .select('id, student_id, subject, assessment_name, score, notes, semester_id')
+                .select('id, student_id, user_id, subject, assessment_name, score, notes, semester_id, created_at, version')
                 .eq('subject', subject)
                 .eq('assessment_name', assessmentName)
                 .in('student_id', studentsData?.map(s => s.id) || [])
@@ -127,7 +128,8 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             }
 
             const { data, error } = await query;
-            if (error) throw error; return (data || []) as unknown as AcademicRecordRow[];
+            if (error) throw error;
+            return dedupeAcademicRecords((data || []) as unknown as AcademicRecordRow[]);
         },
         enabled: !!selectedClass && !!subject && !!assessmentName && !!studentsData && (mode === 'subject_grade' || mode === 'delete_subject_grade'),
     });

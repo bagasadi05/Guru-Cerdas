@@ -7,6 +7,7 @@ import { StudentRow, InputMode, StudentFilter, AcademicRecordRow } from '../type
 import { useGridNavigation } from '../../../../hooks/useGridNavigation';
 import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortField, SortDirection, GroupBy } from '../../../ui/StudentSortControls';
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
+import { getStudentAvatar } from '../../../../utils/avatarUtils';
 
 interface Step2_StudentListProps {
     mode: InputMode | null;
@@ -200,7 +201,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                 <div className="relative">
                                                                     <div className="absolute inset-0 bg-green-500 blur-md opacity-0 group-hover:opacity-30 transition-opacity rounded-full"></div>
                                                                     <img
-                                                                        src={s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random`}
+                                                                        src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name)}
                                                                         alt={s.name}
                                                                         className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10 relative z-10"
                                                                     />
@@ -281,7 +282,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         />
                                                     )}
                                                     <img
-                                                        src={s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random`}
+                                                        src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name)}
                                                         alt={s.name}
                                                         className="w-14 h-14 rounded-full object-cover ring-2 ring-slate-200 dark:ring-white/20 shadow-md"
                                                     />

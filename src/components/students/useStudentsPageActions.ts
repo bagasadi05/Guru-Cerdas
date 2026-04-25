@@ -7,6 +7,7 @@ import { Database } from '../../services/database.types';
 import { ParsedRow } from '../../services/ImportService';
 import { ExportFormat } from '../advanced-features/ExportPreviewModal';
 import { ClassRow, ConfirmModalState, StudentRow } from './types';
+import { getStudentAvatar } from '../../utils/avatarUtils';
 
 const generateAccessCode = (): string => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -246,8 +247,7 @@ export const useStudentsPageActions = ({
     const formData = new FormData(event.currentTarget);
     const name = formData.get('name') as string;
     const classId = formData.get('class_id') as string;
-    const bgColor = genderSelection === 'Laki-laki' ? 'b6e3f4' : 'ffd5dc';
-    const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name || Date.now())}&backgroundColor=${bgColor}`;
+    const avatarUrl = getStudentAvatar(null, genderSelection, undefined, name);
 
     if (studentModalMode === 'add') {
       const className = classes.find((item) => item.id === classId)?.name || '';
@@ -274,7 +274,12 @@ export const useStudentsPageActions = ({
 
     const nextAvatarUrl =
       currentStudent.gender !== genderSelection ||
-      (currentStudent.avatar_url && currentStudent.avatar_url.includes('pravatar'))
+      (currentStudent.avatar_url && (
+        currentStudent.avatar_url.includes('pravatar') ||
+        currentStudent.avatar_url.includes('dicebear') ||
+        currentStudent.avatar_url.includes('avatar.iran.liara.run') ||
+        currentStudent.avatar_url.includes('ui-avatars.com')
+      ))
         ? avatarUrl
         : currentStudent.avatar_url;
 
@@ -478,8 +483,7 @@ export const useStudentsPageActions = ({
 
     const studentsToInsert = validRows.map((row) => {
       const gender = row.data.gender as 'Laki-laki' | 'Perempuan';
-      const bgColor = gender === 'Laki-laki' ? 'b6e3f4' : 'ffd5dc';
-      const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(String(row.data.name || Date.now()))}&backgroundColor=${bgColor}`;
+      const avatarUrl = getStudentAvatar(null, gender, undefined, String(row.data.name || Date.now()));
 
       let classId = activeClassId;
       if (row.data.class_name && typeof row.data.class_name === 'string') {

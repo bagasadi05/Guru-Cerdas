@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 import { SemesterRow, AcademicYearRow } from '../types';
+import { maybeSingleCompat } from '../services/supabaseQueryCompat';
 
 
 interface StudentAccessPeriod {
@@ -54,11 +55,10 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
             }
 
             // Find the active semester
-            const { data: semesterData, error: semesterError } = await supabase
+            const { data: semesterData, error: semesterError } = await maybeSingleCompat(supabase
                 .from('semesters')
                 .select('*')
-                .eq('is_active', true)
-                .maybeSingle();
+                .eq('is_active', true));
 
             if (semesterError) {
                 if (semesterError.code !== 'PGRST116') { // Not found error code
@@ -74,11 +74,10 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                 setActiveSemester(semesterData);
 
                 // Fetch associated academic year for active semester
-                const { data: yearData, error: yearError } = await supabase
+                const { data: yearData, error: yearError } = await maybeSingleCompat(supabase
                     .from('academic_years')
                     .select('*')
-                    .eq('id', semesterData.academic_year_id)
-                    .maybeSingle();
+                    .eq('id', semesterData.academic_year_id));
 
                 if (yearError) {
                     console.error('Error fetching academic year:', yearError);

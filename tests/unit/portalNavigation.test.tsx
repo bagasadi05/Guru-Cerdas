@@ -32,8 +32,10 @@ describe('PortalNavigation', () => {
     it('shows badges for attention and unread messages', () => {
         render(<PortalNavigationHarness unreadMessagesCount={3} attentionCount={2} />);
 
-        expect(screen.getByRole('tab', { name: /Beranda/i })).toHaveTextContent('2');
-        expect(screen.getByRole('tab', { name: /Komunikasi/i })).toHaveTextContent('3');
+        const [berandaTab, , , komunikasiTab] = screen.getAllByRole('tab');
+
+        expect(berandaTab).toHaveTextContent('2');
+        expect(komunikasiTab).toHaveTextContent('3');
     });
 
     it('switches tab content when a portal tab is clicked', () => {

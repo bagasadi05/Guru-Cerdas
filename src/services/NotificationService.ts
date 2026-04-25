@@ -9,6 +9,7 @@
  */
 
 import { supabase } from './supabase';
+import { maybeSingleCompat } from './supabaseQueryCompat';
 
 /**
  * Notification types
@@ -276,7 +277,6 @@ const checkUnreadParentMessages = async (userId: string): Promise<void> => {
     const { data: messages, error } = await supabase
         .from('communications')
         .select('id, student_id, message, created_at')
-        .eq('user_id', userId)
         .eq('sender', 'parent')
         .eq('is_read', false)
         .order('created_at', { ascending: false })
@@ -336,11 +336,10 @@ const checkGradeTrendNotifications = async (userId: string): Promise<void> => {
 
     if (!gradeDrop) return;
 
-    const { data: student } = await supabase
+    const { data: student } = await maybeSingleCompat(supabase
         .from('students')
         .select('name')
-        .eq('id', gradeDrop.studentId)
-        .maybeSingle();
+        .eq('id', gradeDrop.studentId));
 
     addNotification({
         type: 'grade_trend',

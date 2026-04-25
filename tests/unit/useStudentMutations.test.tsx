@@ -44,6 +44,20 @@ vi.mock('../../src/services/supabase', () => {
                         if (columns === 'id, score') {
                             return makeFilterChain(table, [{ id: 'grade-1', score: 70 }]);
                         }
+                        if (columns === 'id, student_id, user_id, subject, assessment_name, notes, score, semester_id, created_at, version') {
+                            return makeFilterChain(table, [{
+                                id: 'grade-existing',
+                                student_id: 'student-1',
+                                user_id: 'teacher-1',
+                                subject: 'IPA',
+                                assessment_name: 'PH 1',
+                                notes: '',
+                                score: 70,
+                                semester_id: 'semester-1',
+                                created_at: '2026-04-01T00:00:00.000Z',
+                                version: 1,
+                            }]);
+                        }
                         return makeFilterChain(table, { id: 'grade-1', score: 70, subject: 'IPA', user_id: 'teacher-1' });
                     }
                     if (table === 'quiz_points') {
@@ -129,6 +143,39 @@ describe('useStudentMutations', () => {
             }),
         }));
         await waitFor(() => expect(onClose).toHaveBeenCalled());
+    });
+
+    it('updates the latest matching academic record instead of inserting a duplicate row', async () => {
+        const { result } = renderHook(() => useStudentMutations('student-1', vi.fn()), {
+            wrapper: createWrapper(),
+        });
+
+        await act(async () => {
+            await result.current.academicMutation.mutateAsync({
+                operation: 'add',
+                data: {
+                    subject: 'IPA',
+                    assessment_name: 'PH 1',
+                    score: 90,
+                    notes: 'Perbaikan nilai',
+                    student_id: 'student-1',
+                    user_id: 'teacher-1',
+                    semester_id: 'semester-1',
+                },
+            });
+        });
+
+        expect(updateCalls).toContainEqual(expect.objectContaining({
+            table: 'academic_records',
+            data: expect.objectContaining({
+                assessment_name: 'PH 1',
+                score: 90,
+                semester_id: 'semester-1',
+            }),
+        }));
+        expect(insertCalls).not.toContainEqual(expect.objectContaining({
+            table: 'academic_records',
+        }));
     });
 
     it('applies only available points and logs the grade and point updates', async () => {
