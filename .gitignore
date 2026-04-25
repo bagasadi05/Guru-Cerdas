@@ -146,4 +146,6 @@ dist-ssr
 # Test artifacts
 test-export.pdf
 test-export.xlsx
+lint-compact.txt
+lint-output.txt
 storybook-static
