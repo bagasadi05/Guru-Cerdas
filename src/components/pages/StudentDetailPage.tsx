@@ -252,7 +252,7 @@ const StudentDetailPage = () => {
             const [extraRes, attRes, gradesRes] = await Promise.all([
                 supabase
                     .from('student_extracurriculars')
-                    .select('id, user_id, student_id, extracurricular_id, extracurricular_student_id, semester_id, joined_at, status, created_at, extracurriculars(id, user_id, name, category, description, schedule_day, schedule_time, coach_name, max_participants, is_active, created_at, updated_at)')
+                    .select('id, user_id, student_id, extracurricular_id, extracurricular_student_id, semester_id, joined_at, status, created_at, extracurriculars(id, user_id, name, category, description, schedule_day, schedule_time, coach_name, max_participants, is_active, created_at)')
                     .eq('student_id', studentId!),
                 supabase
                     .from('extracurricular_attendance')
@@ -263,6 +263,9 @@ const StudentDetailPage = () => {
                     .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, score, description, notes, created_at, updated_at')
                     .eq('student_id', studentId!)
             ]);
+            if (extraRes.error) throw extraRes.error;
+            if (attRes.error) throw attRes.error;
+            if (gradesRes.error) throw gradesRes.error;
             return {
                 studentExtracurriculars: extraRes.data || [],
                 extracurricularAttendance: attRes.data || [],

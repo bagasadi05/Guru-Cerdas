@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Loader2, Plus, Trash2, UserCheck, Users } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { BookOpen, Loader2, Plus, Trash2, UserCheck, UserPlus, Users } from 'lucide-react';
 import { supabase } from '../../../services/supabase';
 import { useToast } from '../../../hooks/useToast';
-import { TeacherClassAssignmentRow } from '../../../services/teacherAssignments';
+import { normalizeSubjectName, TeacherClassAssignmentRow } from '../../../services/teacherAssignments';
 
 type TeacherOption = {
     user_id: string;
@@ -75,10 +75,13 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
 
     const [teacherUserId, setTeacherUserId] = useState('');
     const [classId, setClassId] = useState('');
+    const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
     const [semesterId, setSemesterId] = useState('');
     const [assignmentRole, setAssignmentRole] = useState<AssignmentRole>('homeroom');
     const [subjectName, setSubjectName] = useState('');
+    const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
     const [notes, setNotes] = useState('');
+    const formPanelRef = useRef<HTMLDivElement>(null);
 
     const loadData = async () => {
         setIsLoading(true);
@@ -153,58 +156,144 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
         return true;
     }), [assignments, filterClassId, filterSemesterId]);
 
+    const unassignedTeachers = useMemo(() => {
+        const assignedTeacherIds = new Set(assignments.map((assignment) => assignment.teacher_user_id));
+        return teachers.filter((teacher) => teacher.role === 'teacher' && !assignedTeacherIds.has(teacher.user_id));
+    }, [assignments, teachers]);
+
     const stats = useMemo(() => ({
         totalAssignments: assignments.length,
         homeroomCount: assignments.filter((assignment) => assignment.assignment_role === 'homeroom').length,
         subjectTeacherCount: assignments.filter((assignment) => assignment.assignment_role === 'subject_teacher').length,
         totalTeachers: new Set(assignments.map((assignment) => assignment.teacher_user_id)).size,
-    }), [assignments]);
+        unassignedTeacherCount: unassignedTeachers.length,
+    }), [assignments, unassignedTeachers.length]);
 
     const resetForm = () => {
         setTeacherUserId('');
         setClassId('');
+        setSelectedClassIds([]);
         setSubjectName('');
+        setSelectedSubjects([]);
         setNotes('');
         setAssignmentRole('homeroom');
+    };
+
+    const handleQuickAssignTeacher = (teacher: TeacherOption) => {
+        setTeacherUserId(teacher.user_id);
+        if (!semesterId && semesters.length > 0) {
+            setSemesterId(semesters[0].id);
+        }
+        formPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const handleSubjectToggle = (subject: string) => {
+        setSelectedSubjects((current) => (
+            current.includes(subject)
+                ? current.filter((item) => item !== subject)
+                : [...current, subject]
+        ));
+    };
+
+    const handleClassToggle = (targetClassId: string) => {
+        setSelectedClassIds((current) => (
+            current.includes(targetClassId)
+                ? current.filter((item) => item !== targetClassId)
+                : [...current, targetClassId]
+        ));
+    };
+
+    const handleRoleChange = (role: AssignmentRole) => {
+        setAssignmentRole(role);
+        setClassId('');
+        setSelectedClassIds([]);
+        setSubjectName('');
+        setSelectedSubjects([]);
+    };
+
+    const hasDuplicateAssignment = (targetClassId: string, role: AssignmentRole, subject?: string | null) => {
+        const normalizedSubject = normalizeSubjectName(subject);
+        return assignments.some((assignment) => {
+            if (assignment.deleted_at) return false;
+            if (assignment.teacher_user_id !== teacherUserId) return false;
+            if (assignment.class_id !== targetClassId) return false;
+            if (assignment.semester_id !== semesterId) return false;
+            if (assignment.assignment_role !== role) return false;
+            if (role === 'homeroom') return true;
+            return normalizeSubjectName(assignment.subject_name) === normalizedSubject;
+        });
     };
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!teacherUserId || !classId || !semesterId) {
+        const targetClassIds = assignmentRole === 'subject_teacher'
+            ? Array.from(new Set([classId, ...selectedClassIds].filter(Boolean)))
+            : classId ? [classId] : [];
+
+        if (!teacherUserId || targetClassIds.length === 0 || !semesterId) {
             toast.warning('Guru, kelas, dan semester wajib dipilih.');
             return;
         }
 
         const trimmedSubject = subjectName.trim();
-        if (assignmentRole === 'subject_teacher' && !trimmedSubject) {
-            toast.warning('Mata pelajaran wajib diisi untuk guru mapel.');
+        const subjectNames = Array.from(new Map(
+            [...selectedSubjects, trimmedSubject]
+                .map((subject) => subject.trim())
+                .filter(Boolean)
+                .map((subject) => [normalizeSubjectName(subject), subject])
+        ).values());
+
+        if (assignmentRole === 'subject_teacher' && subjectNames.length === 0) {
+            toast.warning('Pilih atau isi minimal satu mata pelajaran untuk guru mapel.');
+            return;
+        }
+
+        const payloads = assignmentRole === 'homeroom'
+            ? [{
+                teacher_user_id: teacherUserId,
+                class_id: targetClassIds[0],
+                semester_id: semesterId,
+                assignment_role: assignmentRole,
+                subject_name: null,
+                notes: notes.trim() || null,
+                created_by: currentUserId || null,
+            }]
+            : targetClassIds.flatMap((targetClassId) => subjectNames.map((subject) => ({
+                    teacher_user_id: teacherUserId,
+                    class_id: targetClassId,
+                    semester_id: semesterId,
+                    assignment_role: assignmentRole,
+                    subject_name: subject,
+                    notes: notes.trim() || null,
+                    created_by: currentUserId || null,
+                })));
+
+        const newPayloads = payloads.filter((payload) => !hasDuplicateAssignment(
+            payload.class_id,
+            payload.assignment_role as AssignmentRole,
+            payload.subject_name,
+        ));
+
+        if (newPayloads.length === 0) {
+            toast.warning('Penugasan tersebut sudah ada untuk guru, kelas, dan semester yang dipilih.');
             return;
         }
 
         setIsSubmitting(true);
         try {
-            const payload = {
-                teacher_user_id: teacherUserId,
-                class_id: classId,
-                semester_id: semesterId,
-                assignment_role: assignmentRole,
-                subject_name: assignmentRole === 'subject_teacher' ? trimmedSubject : null,
-                notes: notes.trim() || null,
-                created_by: currentUserId || null,
-            };
-
             const { data, error } = await supabase
                 .from('teacher_class_assignments')
-                .insert(payload)
+                .insert(newPayloads)
                 .select('id, teacher_user_id, class_id, semester_id, assignment_role, subject_name, notes, created_by, created_at, updated_at, deleted_at')
-                .single();
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            setAssignments((current) => [data as TeacherClassAssignmentRow, ...current]);
-            await onLogAction?.('teacher_class_assignments', 'INSERT', data.id, null, data);
-            toast.success('Penugasan guru berhasil ditambahkan.');
+            const insertedRows = (data || []) as TeacherClassAssignmentRow[];
+            setAssignments((current) => [...insertedRows, ...current]);
+            await Promise.all(insertedRows.map((row) => onLogAction?.('teacher_class_assignments', 'INSERT', row.id, null, row)));
+            toast.success(`${insertedRows.length} penugasan guru berhasil ditambahkan.`);
             resetForm();
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Gagal menyimpan penugasan guru.');
@@ -257,13 +346,48 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                     <p className="mt-2 text-3xl font-bold text-indigo-600">{stats.subjectTeacherCount}</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Guru Terlibat</p>
-                    <p className="mt-2 text-3xl font-bold text-amber-600">{stats.totalTeachers}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Belum Ditugaskan</p>
+                    <p className="mt-2 text-3xl font-bold text-amber-600">{stats.unassignedTeacherCount}</p>
                 </div>
             </div>
 
+            {unassignedTeachers.length > 0 ? (
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-2xl border border-amber-200/70 dark:border-amber-900/40 p-5 shadow-sm">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 text-xs font-bold uppercase tracking-wider">
+                                <UserPlus className="w-4 h-4" />
+                                Perlu ditindaklanjuti
+                            </div>
+                            <h3 className="mt-3 text-lg font-bold text-gray-900 dark:text-white">Guru baru belum punya akses kelas</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                                Pilih guru di bawah ini untuk langsung mengisi form penugasan. Setelah disimpan, guru bisa melihat kelas/siswa sesuai perannya.
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 lg:justify-end">
+                            {unassignedTeachers.slice(0, 6).map((teacher) => (
+                                <button
+                                    key={teacher.user_id}
+                                    type="button"
+                                    onClick={() => handleQuickAssignTeacher(teacher)}
+                                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/80 hover:bg-white dark:bg-gray-900/60 dark:hover:bg-gray-900 border border-amber-200 dark:border-amber-900/50 text-sm font-medium text-gray-800 dark:text-gray-100 shadow-sm"
+                                >
+                                    <UserPlus className="w-4 h-4 text-amber-500" />
+                                    {teacher.full_name || teacher.email || 'Guru baru'}
+                                </button>
+                            ))}
+                            {unassignedTeachers.length > 6 ? (
+                                <span className="inline-flex items-center px-3 py-2 rounded-xl text-sm text-amber-700 dark:text-amber-300">
+                                    +{unassignedTeachers.length - 6} guru lain
+                                </span>
+                            ) : null}
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
             <div className="grid grid-cols-1 xl:grid-cols-[360px,1fr] gap-6">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+                <div ref={formPanelRef} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 scroll-mt-6">
                     <div className="flex items-center gap-2 mb-5">
                         <Plus className="w-5 h-5 text-indigo-500" />
                         <h3 className="text-lg font-bold">Tambah Penugasan</h3>
@@ -282,20 +406,6 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                                     <option key={teacher.user_id} value={teacher.user_id}>
                                         {teacher.full_name || teacher.email || teacher.user_id}
                                     </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1.5">Kelas</label>
-                            <select
-                                value={classId}
-                                onChange={(event) => setClassId(event.target.value)}
-                                className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm"
-                            >
-                                <option value="">Pilih kelas</option>
-                                {classes.map((classItem) => (
-                                    <option key={classItem.id} value={classItem.id}>{classItem.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -320,7 +430,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                             <label className="block text-sm font-medium mb-1.5">Peran</label>
                             <select
                                 value={assignmentRole}
-                                onChange={(event) => setAssignmentRole(event.target.value as AssignmentRole)}
+                                onChange={(event) => handleRoleChange(event.target.value as AssignmentRole)}
                                 className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm"
                             >
                                 <option value="homeroom">Wali Kelas</option>
@@ -328,16 +438,74 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                             </select>
                         </div>
 
+                        {assignmentRole === 'homeroom' ? (
+                            <div>
+                                <label className="block text-sm font-medium mb-1.5">Kelas</label>
+                                <select
+                                    value={classId}
+                                    onChange={(event) => setClassId(event.target.value)}
+                                    className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm"
+                                >
+                                    <option value="">Pilih kelas</option>
+                                    {classes.map((classItem) => (
+                                        <option key={classItem.id} value={classItem.id}>{classItem.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        ) : (
+                            <div>
+                                <label className="block text-sm font-medium mb-1.5">Kelas yang Diampu</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {classes.map((classItem) => {
+                                        const isSelected = selectedClassIds.includes(classItem.id);
+                                        return (
+                                            <button
+                                                key={classItem.id}
+                                                type="button"
+                                                onClick={() => handleClassToggle(classItem.id)}
+                                                className={`px-3 py-2 rounded-xl border text-xs font-semibold transition-colors ${isSelected
+                                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+                                                    : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-emerald-300'
+                                                    }`}
+                                            >
+                                                {classItem.name}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Pilih beberapa kelas jika guru mengampu mapel yang sama di kelas berbeda.</p>
+                            </div>
+                        )}
+
                         {assignmentRole === 'subject_teacher' ? (
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Mata Pelajaran</label>
+                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                    {DEFAULT_SUBJECT_OPTIONS.map((subject) => {
+                                        const isSelected = selectedSubjects.includes(subject);
+                                        return (
+                                            <button
+                                                key={subject}
+                                                type="button"
+                                                onClick={() => handleSubjectToggle(subject)}
+                                                className={`px-3 py-2 rounded-xl border text-xs font-semibold transition-colors ${isSelected
+                                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                                                    : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-indigo-300'
+                                                }`}
+                                            >
+                                                {subject}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                                 <input
                                     list="teacher-assignment-subjects"
                                     value={subjectName}
                                     onChange={(event) => setSubjectName(event.target.value)}
-                                    placeholder="Contoh: Matematika"
+                                    placeholder="Mapel lain, opsional"
                                     className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm"
                                 />
+                                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Bisa pilih beberapa mapel sekaligus, lalu simpan satu kali.</p>
                                 <datalist id="teacher-assignment-subjects">
                                     {DEFAULT_SUBJECT_OPTIONS.map((subject) => (
                                         <option key={subject} value={subject} />
