@@ -26,7 +26,9 @@ import { Select } from '../ui/Select';
 import AnalyticsPageSkeleton from '../skeletons/AnalyticsPageSkeleton';
 import { useTour } from '../OnboardingHelp';
 import AnalyticsExportModal, { ExportOptions } from './analytics/AnalyticsExportModal';
+import GradeCompletionAnalysis from './analytics/GradeCompletionAnalysis';
 import { generateAnalyticsPdf } from '../../utils/analyticsPdfGenerator';
+import { useSemester } from '../../contexts/SemesterContext';
 
 // Types
 interface AttendanceStats {
@@ -60,7 +62,7 @@ type AnalyticsClass = Pick<Database['public']['Tables']['classes']['Row'], 'id' 
 type Student = Pick<Database['public']['Tables']['students']['Row'], 'id' | 'name' | 'class_id' | 'gender'>;
 type AnalyticsAttendance = Pick<Database['public']['Tables']['attendance']['Row'], 'student_id' | 'date' | 'status'>;
 type AnalyticsTask = Pick<Database['public']['Tables']['tasks']['Row'], 'id' | 'status' | 'due_date'>;
-type AnalyticsAcademicRecord = Pick<Database['public']['Tables']['academic_records']['Row'], 'student_id' | 'score'>;
+type AnalyticsAcademicRecord = Pick<Database['public']['Tables']['academic_records']['Row'], 'student_id' | 'score' | 'subject' | 'assessment_name'>;
 type AnalyticsViolation = Pick<Database['public']['Tables']['violations']['Row'], 'student_id' | 'type' | 'points' | 'date'>;
 type AnalyticsQuizPoint = Pick<Database['public']['Tables']['quiz_points']['Row'], 'student_id' | 'points' | 'category'>;
 
@@ -82,6 +84,7 @@ interface GradeDistribution {
 
 const AnalyticsPage: React.FC = () => {
     const { user } = useAuth();
+    const { activeSemester } = useSemester();
 
     // Onboarding Tour
     const { start } = useTour();
@@ -122,7 +125,7 @@ const AnalyticsPage: React.FC = () => {
 
     // Fetch all data
     const { data, isLoading, refetch } = useQuery({
-        queryKey: ['analyticsData', user?.id, dateRange, selectedClassId],
+        queryKey: ['analyticsData', user?.id, dateRange, selectedClassId, activeSemester?.id],
         queryFn: async () => {
             const now = new Date();
             let startDate: Date | null = null;
@@ -180,10 +183,16 @@ const AnalyticsPage: React.FC = () => {
                     .select('id, status, due_date')
                     .eq('user_id', user!.id)
                     .is('deleted_at', null),
-                supabase
-                    .from('academic_records')
-                    .select('student_id, score')
-                    .is('deleted_at', null),
+                (() => {
+                    let query = supabase
+                        .from('academic_records')
+                        .select('student_id, score, subject, assessment_name')
+                        .is('deleted_at', null);
+                    if (activeSemester?.id) {
+                        query = query.eq('semester_id', activeSemester.id);
+                    }
+                    return query;
+                })(),
                 violationsQuery,
                 quizPointsQuery,
             ]);
@@ -1262,6 +1271,14 @@ const AnalyticsPage: React.FC = () => {
 
                 {/* At Risk Alert (Conditional) */}
                 <AtRiskWidget students={atRiskStudents} />
+
+                {/* Grade Completion Analysis - siswa yang belum melaksanakan PH / belum terisi nilainya */}
+                <GradeCompletionAnalysis
+                    classes={classes}
+                    students={students}
+                    academicRecords={academicRecords}
+                    selectedClassId={selectedClassId}
+                />
 
                 {/* Secondary Row for Pie Chart and others */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
