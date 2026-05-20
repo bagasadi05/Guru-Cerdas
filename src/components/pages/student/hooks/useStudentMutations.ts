@@ -110,7 +110,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                     .eq('student_id', vars.data.student_id)
                     .eq('user_id', userId)
                     .eq('subject', vars.data.subject)
-                    .eq('assessment_name', vars.data.assessment_name)
+                    .eq('assessment_name', vars.data.assessment_name ?? '')
                     .is('deleted_at', null);
 
                 existingRecordQuery = vars.data.semester_id

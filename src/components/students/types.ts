@@ -29,4 +29,5 @@ export interface StudentTableProps extends StudentViewProps {
     toggleAll: () => void;
     sortConfig: SortConfig;
     onSort: (key: string) => void;
+    canManageActiveClass?: boolean;
 }

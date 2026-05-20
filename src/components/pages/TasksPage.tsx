@@ -67,6 +67,29 @@ const isOverdue = (dueDate: string | null) => {
     return parsed < now;
 };
 
+const renderDescription = (text: string | null) => {
+    if (!text) return null;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, index) => {
+        if (urlRegex.test(part)) {
+            return (
+                <a
+                    key={index}
+                    href={part}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium break-all"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {part}
+                </a>
+            );
+        }
+        return part;
+    });
+};
+
 type TaskRow = Database['public']['Tables']['tasks']['Row'];
 type TaskInsert = Database['public']['Tables']['tasks']['Insert'];
 type TaskStatus = 'todo' | 'in_progress' | 'done';
@@ -135,8 +158,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
 
     return (
         <div
+            draggable={!isUpdating}
+            onDragStart={(e) => {
+                e.dataTransfer.setData("text/plain", task.id);
+                e.dataTransfer.effectAllowed = "move";
+            }}
             className={`
-                rounded-2xl p-4 border transition-all duration-300 group relative overflow-hidden
+                rounded-2xl p-4 border transition-all duration-300 group relative overflow-hidden cursor-grab active:cursor-grabbing
                 bg-white dark:bg-slate-800/50 border-slate-200 dark:border-white/5 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/10 shadow-sm
                 ${overdue ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-transparent'}
                 ${isUpdating ? 'opacity-60 pointer-events-none' : ''}
@@ -201,7 +229,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
 
                     {task.description && (
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 line-clamp-2">
-                            {task.description}
+                            {renderDescription(task.description)}
                         </p>
                     )}
 
@@ -274,6 +302,26 @@ const Column: React.FC<ColumnProps> = ({
     updatingTaskId
 }) => {
     const config = statusConfig[status];
+    const [isDragOver, setIsDragOver] = useState(false);
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        if (!isDragOver) setIsDragOver(true);
+    };
+
+    const handleDragLeave = () => {
+        setIsDragOver(false);
+    };
+
+    const handleDropLocal = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const id = e.dataTransfer.getData("text/plain");
+        if (id) {
+            onStatusChange(id, status);
+        }
+    };
 
     return (
         <div className="w-full">
@@ -299,7 +347,16 @@ const Column: React.FC<ColumnProps> = ({
             </div>
 
             {/* Task List */}
-            <div className="rounded-3xl p-3 min-h-[300px] bg-white/50 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-700/30 shadow-inner">
+            <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDropLocal}
+                className={`rounded-3xl p-3 min-h-[300px] transition-all duration-300 ${
+                    isDragOver
+                        ? 'bg-indigo-500/10 border-2 border-dashed border-indigo-500 shadow-lg shadow-indigo-500/5'
+                        : 'bg-white/50 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-700/30 shadow-inner'
+                }`}
+            >
                 <div className="space-y-3">
                     {tasks.length === 0 ? (
                         <div className="text-center py-8">
@@ -341,6 +398,8 @@ const TasksPage: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
     const [mobileActiveTab, setMobileActiveTab] = useState<TaskStatus>('todo');
+    const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
+    const [isConfirmingClearAll, setIsConfirmingClearAll] = useState(false);
 
     // Form state
     const [title, setTitle] = useState('');
@@ -348,6 +407,14 @@ const TasksPage: React.FC = () => {
     const [dueDate, setDueDate] = useState('');
     const [status, setStatus] = useState<TaskStatus>('todo');
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const isPastDate = useMemo(() => {
+        if (!dueDate) return false;
+        const chosenDate = parseDateOnly(dueDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return chosenDate < today;
+    }, [dueDate]);
 
     const { data: tasks = [], isLoading, isError, error, refetch, isFetching } = useQuery({
         queryKey: ['tasks', user?.id],
@@ -402,6 +469,25 @@ const TasksPage: React.FC = () => {
             toast.success('Tugas berhasil dihapus');
         },
         onError: () => toast.error('Gagal menghapus tugas'),
+    });
+
+    const clearCompletedTasksMutation = useMutation({
+        mutationFn: async () => {
+            if (!user) return;
+            const { error } = await supabase
+                .from('tasks')
+                .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+                .eq('user_id', user.id)
+                .eq('status', 'done');
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
+            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
+            toast.success('Semua tugas selesai berhasil dibersihkan');
+        },
+        onError: () => toast.error('Gagal membersihkan tugas selesai'),
     });
 
     const updateStatusMutation = useMutation({
@@ -571,6 +657,18 @@ const TasksPage: React.FC = () => {
                         />
                     </div>
 
+                    {/* Clear Completed Tasks Button */}
+                    {stats.done > 0 && (
+                        <Button
+                            variant="ghost"
+                            onClick={() => setIsConfirmingClearAll(true)}
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl border border-red-200 dark:border-red-900/50 transition-all font-medium"
+                        >
+                            <TrashIcon className="w-4 h-4 mr-2" />
+                            <span className="hidden sm:inline">Bersihkan Selesai</span>
+                        </Button>
+                    )}
+
                     {/* Add Task Button */}
                     <Button
                         onClick={() => handleAddTask('todo')}
@@ -583,7 +681,7 @@ const TasksPage: React.FC = () => {
             </div>
 
             {/* Stats Cards - Aligned with header */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-4 sm:p-6 text-center">
                     <div className="text-2xl sm:text-4xl font-bold text-slate-800 dark:text-white mb-1">{stats.total}</div>
                     <div className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</div>
@@ -650,7 +748,7 @@ const TasksPage: React.FC = () => {
                                 key={task.id}
                                 task={task}
                                 onEdit={handleEdit}
-                                onDelete={(id) => deleteTaskMutation.mutate(id)}
+                                onDelete={setTaskToDeleteId}
                                 onStatusChange={handleStatusChange}
                                 isUpdating={updatingTaskId === task.id}
                             />
@@ -668,7 +766,7 @@ const TasksPage: React.FC = () => {
                         status={statusKey}
                         tasks={tasksByStatus[statusKey]}
                         onEdit={handleEdit}
-                        onDelete={(id) => deleteTaskMutation.mutate(id)}
+                        onDelete={setTaskToDeleteId}
                         onStatusChange={handleStatusChange}
                         onAddTask={handleAddTask}
                         updatingTaskId={updatingTaskId}
@@ -737,6 +835,12 @@ const TasksPage: React.FC = () => {
                                 value={dueDate}
                                 onChange={(e) => setDueDate(e.target.value)}
                             />
+                            {isPastDate && (
+                                <div className="mt-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/30">
+                                    <AlertTriangle className="w-3.5 h-3.5" />
+                                    Tenggat waktu berada di masa lalu.
+                                </div>
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
@@ -773,6 +877,74 @@ const TasksPage: React.FC = () => {
                         </Button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={!!taskToDeleteId}
+                onClose={() => setTaskToDeleteId(null)}
+                title="Konfirmasi Hapus Tugas"
+                icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
+            >
+                <div className="space-y-4">
+                    <p className="text-slate-600 dark:text-slate-300 text-sm">
+                        Apakah Anda yakin ingin menghapus tugas ini? Tindakan ini akan memindahkan tugas ke tempat sampah dan tidak dapat diurungkan secara instan dari papan ini.
+                    </p>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setTaskToDeleteId(null)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (taskToDeleteId) {
+                                    deleteTaskMutation.mutate(taskToDeleteId);
+                                    setTaskToDeleteId(null);
+                                }
+                            }}
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                        >
+                            Ya, Hapus
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Clear Completed Tasks Confirmation Modal */}
+            <Modal
+                isOpen={isConfirmingClearAll}
+                onClose={() => setIsConfirmingClearAll(false)}
+                title="Bersihkan Tugas Selesai"
+                icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
+            >
+                <div className="space-y-4">
+                    <p className="text-slate-600 dark:text-slate-300 text-sm">
+                        Apakah Anda yakin ingin membersihkan semua tugas yang telah selesai? Tindakan ini akan menghapus secara massal seluruh tugas di kolom "Selesai".
+                    </p>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setIsConfirmingClearAll(false)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                clearCompletedTasksMutation.mutate();
+                                setIsConfirmingClearAll(false);
+                            }}
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                            disabled={clearCompletedTasksMutation.isPending}
+                        >
+                            {clearCompletedTasksMutation.isPending && (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            )}
+                            Ya, Bersihkan
+                        </Button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

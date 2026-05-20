@@ -3,7 +3,7 @@ import {
     offlineQueue,
     QueueItem,
     SyncStatus
-} from '../services/offlineQueueEnhanced';
+} from '../services/offlineQueue';
 
 /**
  * Offline Queue UI Component

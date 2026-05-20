@@ -61,6 +61,7 @@ export interface MassInputPageViewProps {
     handleStudentSelect: (id: string) => void;
     scores: Record<string, string>;
     handleScoreChange: (studentId: string, value: string) => void;
+    validationErrors: Record<string, string>;
     existingGrades: AcademicRecordRow[] | undefined;
     filteredExistingGrades: AcademicRecordRow[];
     // footer
@@ -89,6 +90,8 @@ export interface MassInputPageViewProps {
     handleDeleteConfirmClick: () => void;
     // import modal
     handleImport: (data: Record<string, unknown>[]) => void;
+    bypassDuplicateGuard: boolean;
+    setBypassDuplicateGuard: (v: boolean) => void;
 }
 
 export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
@@ -103,14 +106,14 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         showImportModal, setShowImportModal,
         searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
         isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
-        selectedStudentIds, handleStudentSelect, scores, handleScoreChange,
+        selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors,
         existingGrades, filteredExistingGrades,
         summaryText, gradedCount, setScores, setSelectedStudentIds,
         isExporting, exportProgress, handleSubmit, isSubmitDisabled, submitButtonTooltip,
         isSubmitting, isDeleting, studentsData, existingViolations, isLoadingViolations,
         showChartModal, setShowChartModal,
         confirmDeleteModal, setConfirmDeleteModal, confirmDeleteText, setConfirmDeleteText,
-        handleDeleteConfirmClick, handleImport,
+        handleDeleteConfirmClick, handleImport, bypassDuplicateGuard, setBypassDuplicateGuard,
     } = props;
 
     if (step === 1) {
@@ -172,6 +175,8 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                 isParsing={isParsing}
                                 handleAiParse={handleAiParse}
                                 isOnline={isOnline}
+                                bypassDuplicateGuard={bypassDuplicateGuard}
+                                setBypassDuplicateGuard={setBypassDuplicateGuard}
                                 onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
                             />
                             <Step2_StudentList
@@ -189,6 +194,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                 handleStudentSelect={handleStudentSelect}
                                 scores={scores}
                                 handleScoreChange={handleScoreChange}
+                                validationErrors={validationErrors}
                                 existingGrades={mode === 'delete_subject_grade' ? filteredExistingGrades : existingGrades}
                             />
                         </>

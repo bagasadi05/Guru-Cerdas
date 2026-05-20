@@ -111,6 +111,8 @@ const ExtracurricularPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
     const [editingExtracurricular, setEditingExtracurricular] = useState<Extracurricular | null>(null);
+    // P0 Fix: Confirmation state untuk delete ekskul (mencegah data loss tanpa konfirmasi)
+    const [confirmDeleteExtracurricular, setConfirmDeleteExtracurricular] = useState<Extracurricular | null>(null);
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -178,12 +180,14 @@ const ExtracurricularPage: React.FC = () => {
     });
 
     // Fetch students based on selected class
+    // P0 Fix: Tambahkan filter user_id untuk mencegah data leak lintas-user
     const { data: students = [] } = useQuery({
         queryKey: ['students', user?.id, selectedClassId],
         queryFn: async () => {
             let query = supabase
                 .from('students')
-                .select('id, user_id, name, class_id, gender, created_at, deleted_at')
+                .select('id, name, class_id, gender, created_at')
+                .eq('user_id', user!.id)
                 .is('deleted_at', null)
                 .order('name');
 
@@ -846,6 +850,7 @@ const ExtracurricularPage: React.FC = () => {
         });
     }, []);
 
+    // P1 Fix: Tambahkan gradeMutation ke dependency array untuk mencegah stale closure
     const saveGradeEntry = useCallback((enrollment: EnrollmentView, patch?: Partial<GradeDraft>) => {
         const key = `${enrollment.participantType}:${enrollment.participantId}`;
         const savedGrade = gradesMap[key];
@@ -894,7 +899,7 @@ const ExtracurricularPage: React.FC = () => {
             score: normalizedScore,
             description: description || null,
         });
-    }, [gradeDrafts, gradesMap, toast]);
+    }, [gradeDrafts, gradesMap, toast, gradeMutation]);
 
     // Get unique class names from extracurricular students
     const uniqueExtraStudentClasses = useMemo(() => {
@@ -953,26 +958,34 @@ const ExtracurricularPage: React.FC = () => {
         bulkAttendanceMutation.mutate(items);
     }, [bulkAttendanceMutation, localAttendance]);
 
+    // P1 Fix: Ganti window.confirm dengan state-based confirmation untuk konsistensi UX
+    const [confirmMarkAllStatus, setConfirmMarkAllStatus] = useState<string | null>(null);
+
     const handleMarkAll = (status: string) => {
+        if (enrollments.length === 0) return;
+        setConfirmMarkAllStatus(status);
+    };
+
+    const executeMarkAll = useCallback(() => {
+        if (!confirmMarkAllStatus) return;
         if (autoSaveAttendance) {
             const items = enrollments.map(e => ({
                 studentId: e.participantId,
                 studentType: e.participantType,
-                status: status
+                status: confirmMarkAllStatus
             }));
-            if (items.length > 0 && window.confirm(`Tandai ${items.length} siswa sebagai ${status}?`)) {
-                bulkAttendanceMutation.mutate(items);
-            }
+            bulkAttendanceMutation.mutate(items);
         } else {
             const newLocal = { ...localAttendance };
             enrollments.forEach(e => {
                 const key = e.participantType === 'student' ? `student:${e.participantId}` : `extracurricular_student:${e.participantId}`;
-                newLocal[key] = status;
+                newLocal[key] = confirmMarkAllStatus;
             });
             setLocalAttendance(newLocal);
-            toast.success(`Semua ditandai ${status} (Belum disimpan)`);
+            toast.success(`Semua ditandai ${confirmMarkAllStatus} (Belum disimpan)`);
         }
-    };
+        setConfirmMarkAllStatus(null);
+    }, [confirmMarkAllStatus, autoSaveAttendance, enrollments, bulkAttendanceMutation, localAttendance, toast]);
 
     const handleExportPDF = useCallback(async () => {
         if (!selectedExtracurricularData) return;
@@ -997,12 +1010,12 @@ const ExtracurricularPage: React.FC = () => {
 
             if (error) throw error;
 
-            // Process data into a map: "id:day" -> status
-            const attendanceMap: Record<string, string> = {};
+            // P1 Fix: Rename local variable untuk menghindari shadow conflict dengan attendanceMap state
+            const exportAttendanceMap: Record<string, string> = {};
             monthlyAttendance?.forEach(record => {
                 const id = record.student_id ? `student:${record.student_id}` : `extracurricular_student:${record.extracurricular_student_id}`;
                 const day = new Date(record.date).getDate();
-                attendanceMap[`${id}:${day}`] = record.status;
+                exportAttendanceMap[`${id}:${day}`] = record.status;
             });
 
             const { default: jsPDF } = await getJsPDF();
@@ -1024,7 +1037,7 @@ const ExtracurricularPage: React.FC = () => {
                 let h = 0, s = 0, iz = 0, a = 0;
 
                 const dailyStatuses = daysColumns.map(day => {
-                    const status = attendanceMap[`${id}:${day}`] || '';
+                    const status = exportAttendanceMap[`${id}:${day}`] || '';
                     if (status === 'Hadir') { h++; return 'H'; }
                     if (status === 'Sakit') { s++; return 'S'; }
                     if (status === 'Izin') { iz++; return 'I'; }
@@ -1076,12 +1089,12 @@ const ExtracurricularPage: React.FC = () => {
 
             if (error) throw error;
 
-            // Process data into a map: "id:day" -> status
-            const attendanceMap: Record<string, string> = {};
+            // P1 Fix: Rename local variable untuk menghindari shadow conflict dengan attendanceMap state
+            const exportAttendanceMap: Record<string, string> = {};
             monthlyAttendance?.forEach(record => {
                 const id = record.student_id ? `student:${record.student_id}` : `extracurricular_student:${record.extracurricular_student_id}`;
                 const day = new Date(record.date).getDate();
-                attendanceMap[`${id}:${day}`] = record.status;
+                exportAttendanceMap[`${id}:${day}`] = record.status;
             });
 
             const XLSX = await getXLSX();
@@ -1097,7 +1110,7 @@ const ExtracurricularPage: React.FC = () => {
                 let h = 0, s = 0, iz = 0, a = 0;
 
                 const dailyStatuses = daysHeaders.map(day => {
-                    const status = attendanceMap[`${id}:${day}`] || '-';
+                    const status = exportAttendanceMap[`${id}:${day}`] || '-';
                     if (status === 'Hadir') { h++; return 'H'; }
                     if (status === 'Sakit') { s++; return 'S'; }
                     if (status === 'Izin') { iz++; return 'I'; }
@@ -1558,12 +1571,9 @@ const ExtracurricularPage: React.FC = () => {
                                         >
                                             Edit
                                         </button>
+                                        {/* P0 Fix: Ganti confirm() dengan modal konfirmasi */}
                                         <button
-                                            onClick={() => {
-                                                if (confirm('Hapus ekskul ini?')) {
-                                                    deleteExtracurricularMutation.mutate(extracurricular.id);
-                                                }
-                                            }}
+                                            onClick={() => setConfirmDeleteExtracurricular(extracurricular)}
                                             className="px-3 py-1.5 text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
                                         >
                                             Hapus
@@ -2571,6 +2581,84 @@ const ExtracurricularPage: React.FC = () => {
                                     className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors disabled:opacity-70"
                                 >
                                     {deleteExtraStudentMutation.isPending ? 'Menghapus...' : 'Hapus'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                , document.body)}
+
+            {/* P0 Fix: Modal konfirmasi hapus ekskul — mencegah data loss tanpa konfirmasi */}
+            {confirmDeleteExtracurricular && createPortal(
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteExtracurricular(null)} />
+                    <div className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+                        <div className="bg-white dark:bg-slate-800 px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                <Trash2 className="w-5 h-5 text-red-500" />
+                                Hapus Ekstrakurikuler?
+                            </h2>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-slate-600 dark:text-slate-400">
+                                Hapus <strong className="text-slate-900 dark:text-white">{confirmDeleteExtracurricular.name}</strong>?
+                            </p>
+                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-xl p-3 text-sm text-red-700 dark:text-red-300">
+                                ⚠️ Semua data pendaftaran, presensi, dan nilai untuk ekskul ini akan ikut terhapus. Tindakan ini <strong>tidak dapat dibatalkan</strong>.
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteExtracurricular(null)}
+                                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        deleteExtracurricularMutation.mutate(confirmDeleteExtracurricular.id);
+                                        setConfirmDeleteExtracurricular(null);
+                                    }}
+                                    disabled={deleteExtracurricularMutation.isPending}
+                                    className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors disabled:opacity-70"
+                                >
+                                    {deleteExtracurricularMutation.isPending ? 'Menghapus...' : 'Ya, Hapus'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                , document.body)}
+
+            {/* P1 Fix: Modal konfirmasi mark all — ganti window.confirm() */}
+            {confirmMarkAllStatus && createPortal(
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmMarkAllStatus(null)} />
+                    <div className="relative w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+                        <div className="p-6 space-y-4">
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-white">
+                                Tandai Semua Siswa?
+                            </h2>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm">
+                                Tandai <strong>{enrollments.length} siswa</strong> sebagai{' '}
+                                <strong className="text-slate-900 dark:text-white">{confirmMarkAllStatus}</strong>?
+                                {!autoSaveAttendance && ' (Belum disimpan ke database)'}
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmMarkAllStatus(null)}
+                                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={executeMarkAll}
+                                    className="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors"
+                                >
+                                    Ya, Tandai Semua
                                 </button>
                             </div>
                         </div>

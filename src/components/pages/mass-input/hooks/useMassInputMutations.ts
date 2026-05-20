@@ -14,7 +14,7 @@ import { recordAction } from '../../../../services/UndoManager';
 import { violationList } from '../../../../services/violations.data';
 import { sanitizeFilename } from '../../../../services/securityEnhanced';
 import { InputMode, ClassRow, StudentRow, AcademicRecordRow, ReviewDataItem } from '../types';
-import { dedupeAcademicRecords } from '../../../../utils/academicRecordUtils';
+import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../../utils/academicRecordUtils';
 
 const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
 
@@ -42,7 +42,41 @@ export interface UseMassInputMutationsParams {
     classes: ClassRow[] | undefined;
     setScores: React.Dispatch<React.SetStateAction<Record<string, string>>>;
     setSelectedStudentIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+    bypassDuplicateGuard: boolean;
 }
+
+export const findStudentMatch = (targetName: string, students: StudentRow[]): StudentRow | undefined => {
+    if (!targetName) return undefined;
+    const cleanString = (str: string) => 
+        str.toLowerCase()
+           .replace(/[\.\,\-\_\']/g, ' ')
+           .replace(/\s+/g, ' ')
+           .trim();
+
+    const cleanedTarget = cleanString(targetName);
+    
+    // 1. Exact match
+    let match = students.find(s => cleanString(s.name) === cleanedTarget);
+    if (match) return match;
+
+    // 2. Partial match
+    match = students.find(s => {
+        const cleanName = cleanString(s.name);
+        return cleanName.includes(cleanedTarget) || cleanedTarget.includes(cleanName);
+    });
+    if (match) return match;
+
+    // 3. Token-based overlap
+    const targetTokens = cleanedTarget.split(' ').filter(t => t.length > 1);
+    if (targetTokens.length > 0) {
+        match = students.find(s => {
+            const studentTokens = cleanString(s.name).split(' ');
+            const intersect = targetTokens.filter(t => studentTokens.some(st => st.includes(t) || t.includes(st)));
+            return intersect.length / targetTokens.length >= 0.75;
+        });
+    }
+    return match;
+};
 
 export function useMassInputMutations(params: UseMassInputMutationsParams) {
     const {
@@ -50,7 +84,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         existingGrades, selectedStudentIds, selectedViolationCode, violationDate,
         studentsData, noteMethod, templateNote, pasteData,
         gradedCount, filteredExistingGrades, classes,
-        setScores, setSelectedStudentIds,
+        setScores, setSelectedStudentIds, bypassDuplicateGuard,
     } = params;
 
     const { user } = useAuth();
@@ -75,25 +109,29 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     if (!quizInfo.name || !quizInfo.subject || selectedStudentIds.size === 0)
                         throw new Error('Informasi aktivitas dan siswa harus diisi.');
                     const studentIds = Array.from(selectedStudentIds);
-                    let existingQuizQuery = supabase
-                        .from('quiz_points')
-                        .select('id, student_id')
-                        .in('student_id', studentIds)
-                        .eq('user_id', user.id)
-                        .eq('quiz_name', quizInfo.name)
-                        .eq('subject', quizInfo.subject)
-                        .eq('quiz_date', quizInfo.date)
-                        .gte('created_at', getDuplicateGuardWindowIso())
-                        .is('deleted_at', null);
+                    
+                    let duplicateStudentIds = new Set<string>();
+                    if (!bypassDuplicateGuard) {
+                        let existingQuizQuery = supabase
+                            .from('quiz_points')
+                            .select('id, student_id')
+                            .in('student_id', studentIds)
+                            .eq('user_id', user.id)
+                            .eq('quiz_name', quizInfo.name)
+                            .eq('subject', quizInfo.subject)
+                            .eq('quiz_date', quizInfo.date)
+                            .gte('created_at', getDuplicateGuardWindowIso())
+                            .is('deleted_at', null);
 
-                    existingQuizQuery = activeSemester?.id
-                        ? existingQuizQuery.eq('semester_id', activeSemester.id)
-                        : existingQuizQuery.is('semester_id', null);
+                        existingQuizQuery = activeSemester?.id
+                            ? existingQuizQuery.eq('semester_id', activeSemester.id)
+                            : existingQuizQuery.is('semester_id', null);
 
-                    const { data: existingQuizRows, error: existingQuizError } = await existingQuizQuery;
-                    if (existingQuizError) throw existingQuizError;
+                        const { data: existingQuizRows, error: existingQuizError } = await existingQuizQuery;
+                        if (existingQuizError) throw existingQuizError;
+                        duplicateStudentIds = new Set((existingQuizRows || []).map((row) => row.student_id));
+                    }
 
-                    const duplicateStudentIds = new Set((existingQuizRows || []).map((row) => row.student_id));
                     const records: Database['public']['Tables']['quiz_points']['Insert'][] = studentIds
                         .filter((student_id) => !duplicateStudentIds.has(student_id))
                         .map((student_id: string) => ({
@@ -152,26 +190,30 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     if (!selectedViolation || selectedStudentIds.size === 0)
                         throw new Error('Jenis pelanggaran dan siswa harus dipilih.');
                     const studentIds = Array.from(selectedStudentIds);
-                    let existingViolationQuery = supabase
-                        .from('violations')
-                        .select('id, student_id')
-                        .in('student_id', studentIds)
-                        .eq('user_id', user.id)
-                        .eq('date', violationDate)
-                        .eq('description', selectedViolation.description)
-                        .eq('points', selectedViolation.points)
-                        .eq('type', selectedViolation.code)
-                        .gte('created_at', getDuplicateGuardWindowIso())
-                        .is('deleted_at', null);
+                    let duplicateStudentIds = new Set<string>();
+                    
+                    if (!bypassDuplicateGuard) {
+                        let existingViolationQuery = supabase
+                            .from('violations')
+                            .select('id, student_id')
+                            .in('student_id', studentIds)
+                            .eq('user_id', user.id)
+                            .eq('date', violationDate)
+                            .eq('description', selectedViolation.description)
+                            .eq('points', selectedViolation.points)
+                            .eq('type', selectedViolation.code)
+                            .gte('created_at', getDuplicateGuardWindowIso())
+                            .is('deleted_at', null);
 
-                    existingViolationQuery = activeSemester?.id
-                        ? existingViolationQuery.eq('semester_id', activeSemester.id)
-                        : existingViolationQuery.is('semester_id', null);
+                        existingViolationQuery = activeSemester?.id
+                            ? existingViolationQuery.eq('semester_id', activeSemester.id)
+                            : existingViolationQuery.is('semester_id', null);
 
-                    const { data: existingViolationRows, error: existingViolationError } = await existingViolationQuery;
-                    if (existingViolationError) throw existingViolationError;
+                        const { data: existingViolationRows, error: existingViolationError } = await existingViolationQuery;
+                        if (existingViolationError) throw existingViolationError;
 
-                    const duplicateStudentIds = new Set((existingViolationRows || []).map((row) => row.student_id));
+                        duplicateStudentIds = new Set((existingViolationRows || []).map((row) => row.student_id));
+                    }
                     const records: Database['public']['Tables']['violations']['Insert'][] = studentIds
                         .filter((student_id) => !duplicateStudentIds.has(student_id))
                         .map((student_id: string) => ({
@@ -214,6 +256,9 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                 .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
                 .in('id', recordIds);
             if (error) throw error;
+            if (user) {
+                await recordAction(user.id, 'delete', 'academic_records', recordIds);
+            }
             return `${recordIds.length} data nilai berhasil dihapus.`;
         },
         onSuccess: (message) => {
@@ -243,7 +288,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             if (!Array.isArray(parsedResults)) throw new Error('Format respon AI tidak valid (bukan list).');
             const newScores: Record<string, string> = {}; let matchedCount = 0;
             parsedResults.forEach(item => {
-                const student = studentsData.find(s => s.name.toLowerCase() === item.studentName.toLowerCase());
+                const student = findStudentMatch(item.studentName, studentsData);
                 if (student) { newScores[student.id] = String(item.score); matchedCount++; }
             });
             setScores(prev => ({ ...prev, ...newScores }));
@@ -276,7 +321,14 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (errors.length > 0) throw new Error(errors.map((e: any) => e!.message).join(', '));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return { student: studentRes.data as any, reports: reportsRes.data || [], attendanceRecords: attendanceRes.data || [], academicRecords: academicRes.data || [], violations: violationsRes.data || [], quizPoints: quizPointsRes.data || [] };
+        return { 
+            student: studentRes.data as any, 
+            reports: reportsRes.data || [], 
+            attendanceRecords: attendanceRes.data || [], 
+            academicRecords: dedupeAcademicRecords((academicRes.data || []) as any) as any, 
+            violations: dedupeViolations((violationsRes.data || []) as any) as any, 
+            quizPoints: dedupeQuizPoints((quizPointsRes.data || []) as any) as any 
+        };
     };
 
     const handlePrintBulkReports = async () => {
@@ -374,12 +426,22 @@ Contoh output yang benar:
         doc.text(`Kelas: ${className}`, 14, y);
         doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, pageWidth - 14, y, { align: 'right' });
         const tableStartY = y + 8;
-        const { data: allSubjectGrades } = await supabase
+        
+        let query = supabase
             .from('academic_records').select('*')
             .eq('subject', subjectGradeInfo.subject)
             .in('student_id', Array.from(selectedStudentIds))
             .is('deleted_at', null);
-        const allAssessments = [...new Set(allSubjectGrades?.map(r => r.assessment_name || 'Lainnya'))].sort();
+            
+        if (activeSemester?.id) {
+            query = query.eq('semester_id', activeSemester.id);
+        } else {
+            query = query.is('semester_id', null);
+        }
+            
+        const { data: rawAllSubjectGrades } = await query;
+        const allSubjectGrades = dedupeAcademicRecords((rawAllSubjectGrades || []) as any) as any[];
+        const allAssessments = [...new Set(allSubjectGrades.map((r: any) => r.assessment_name || 'Lainnya'))].sort();
         const head = [['No', 'Nama Siswa', ...allAssessments]];
         const tableData = (studentsData || [])
             .filter(s => selectedStudentIds.has(s.id))

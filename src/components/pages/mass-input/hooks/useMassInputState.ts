@@ -28,6 +28,7 @@ export function useMassInputState() {
     const [isCustomSubject, setIsCustomSubject] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
     const [showChartModal, setShowChartModal] = useState(false);
+    const [bypassDuplicateGuard, setBypassDuplicateGuard] = useState(false);
 
     // Set default semester when active semester loads
     useEffect(() => {
@@ -65,6 +66,7 @@ export function useMassInputState() {
             setScores({});
             setSearchTerm('');
             setStudentFilter('all');
+            setBypassDuplicateGuard(false);
             isScoresDirty.current = false;
         }, 0);
         return () => clearTimeout(timer);
@@ -72,7 +74,10 @@ export function useMassInputState() {
 
     // Reset filter when mode changes
     useEffect(() => {
-        const timer = setTimeout(() => setStudentFilter('all'), 0);
+        const timer = setTimeout(() => {
+            setStudentFilter('all');
+            setBypassDuplicateGuard(false);
+        }, 0);
         return () => clearTimeout(timer);
     }, [mode]);
 
@@ -92,6 +97,7 @@ export function useMassInputState() {
         setValidationErrors({}); setNoteMethod('ai');
         setTemplateNote('Ananda [Nama Siswa] menunjukkan perkembangan yang baik semester ini. Terus tingkatkan semangat belajar dan jangan ragu bertanya jika ada kesulitan.');
         setShowImportModal(false); setShowChartModal(false);
+        setBypassDuplicateGuard(false);
         isScoresDirty.current = false;
     };
 
@@ -137,6 +143,7 @@ export function useMassInputState() {
         showImportModal, setShowImportModal,
         showChartModal, setShowChartModal,
         isScoresDirty,
+        bypassDuplicateGuard, setBypassDuplicateGuard,
         handleModeSelect, handleBack, handleScoreChange, handleStudentSelect,
     };
 }

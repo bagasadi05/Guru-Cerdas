@@ -84,6 +84,11 @@ export type AcademicYearRow = Database['public']['Tables']['academic_years']['Ro
  */
 export type SemesterRow = Database['public']['Tables']['semesters']['Row'];
 
+/**
+ * Represents a student development analysis record from the database.
+ */
+export type StudentDevelopmentAnalysisRow = Database['public']['Tables']['student_development_analyses']['Row'];
+
 // =============================================================================
 // INSERT TYPES
 // =============================================================================
@@ -148,6 +153,11 @@ export type AcademicYearInsert = Database['public']['Tables']['academic_years'][
  */
 export type SemesterInsert = Database['public']['Tables']['semesters']['Insert'];
 
+/**
+ * Type for inserting a new student development analysis record.
+ */
+export type StudentDevelopmentAnalysisInsert = Database['public']['Tables']['student_development_analyses']['Insert'];
+
 // =============================================================================
 // UPDATE TYPES
 // =============================================================================
@@ -211,6 +221,11 @@ export type AcademicYearUpdate = Database['public']['Tables']['academic_years'][
  * Type for updating an existing semester.
  */
 export type SemesterUpdate = Database['public']['Tables']['semesters']['Update'];
+
+/**
+ * Type for updating an existing student development analysis record.
+ */
+export type StudentDevelopmentAnalysisUpdate = Database['public']['Tables']['student_development_analyses']['Update'];
 
 // =============================================================================
 // COMPOSITE/DERIVED TYPES

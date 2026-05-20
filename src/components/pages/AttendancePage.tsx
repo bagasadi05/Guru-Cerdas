@@ -44,7 +44,6 @@ import { AttendanceClassSelector } from '../attendance/AttendanceClassSelector';
 import { AttendanceQuickActionsBar } from '../attendance/AttendanceQuickActionsBar';
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
-import { QRCodeGenerator } from '../attendance/QRCodeGenerator';
 import { AttendanceStreakIndicator } from '../attendance/AttendanceStreakIndicator';
 import { type AttendanceViewMode } from '../attendance/attendanceMenuConfig';
 // import { QuickNotePresets } from '../attendance/QuickNotePresets';
@@ -119,7 +118,6 @@ const AttendancePage: React.FC = () => {
     const [isAiModalOpen, setIsAiModalOpen] = useState(false);
     const [aiAnalysisResult, setAiAnalysisResult] = useState<AiAnalysis | null>(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
-    const [isQrModalOpen, setIsQrModalOpen] = useState(false);
     const [isResetModalOpen, setIsResetModalOpen] = useState(false);
     // Template dropdown is now inline, no modal state needed
 
@@ -154,13 +152,11 @@ const AttendancePage: React.FC = () => {
 
     const attendanceClasses = useMemo(() => {
         if (!classes || !user) return [];
-        const semesterForAccess = selectedSemesterId || activeSemester?.id || null;
-
         return classes.filter((classRow) => (
             classRow.user_id === user.id
-            || hasHomeroomAssignment(teacherAssignments, classRow.id, semesterForAccess)
+            || hasHomeroomAssignment(teacherAssignments, classRow.id, null)
         ));
-    }, [activeSemester?.id, classes, selectedSemesterId, teacherAssignments, user]);
+    }, [classes, teacherAssignments, user]);
 
     useEffect(() => {
         if (attendanceClasses.length === 0) {
@@ -869,7 +865,13 @@ const AttendancePage: React.FC = () => {
                     }
                     toast.success('Laporan Excel berhasil diunduh!');
                 } else {
-                    toast.info('Ekspor Excel untuk semester akan segera tersedia. Mohon gunakan PDF.');
+                    const { exportSemesterAttendanceToExcel } = await import('../../utils/exportUtils');
+                    const semester = semesters.find(s => s.id === exportSemesterId);
+                    const semesterLabel = `Semester ${semester?.semester_number === 1 ? 'Ganjil' : 'Genap'} ${semester?.academic_years?.name || ''}`;
+                    for (const classData of studentsByClass) {
+                        await exportSemesterAttendanceToExcel(classData, attendance, semesterLabel, `Rekap_Absensi_${classData.name}_Semester`, schoolName);
+                    }
+                    toast.success('Laporan Excel Semester berhasil diunduh!');
                 }
             }
 
@@ -1068,7 +1070,6 @@ Berikan respon dalam format JSON dengan struktur berikut:
                         viewMode={viewMode}
                         onApplyTemplate={handleApplyTemplate}
                         onReset={handleResetAttendance}
-                        onOpenQr={() => setIsQrModalOpen(true)}
                         onViewModeChange={setViewMode}
                     />
                 )}
@@ -1255,21 +1256,14 @@ Berikan respon dalam format JSON dengan struktur berikut:
                                 setSelectedDate(e.target.value);
                                 setDatePickerOpen(false);
                             }}
+                            min={selectedSemester?.start_date}
+                            max={selectedSemester?.end_date}
                             className="w-full h-12 text-lg"
                         />
                     </div>
                 </div>
             </BottomSheet>
 
-            {/* QR Code Generator Modal */}
-            <QRCodeGenerator
-                isOpen={isQrModalOpen}
-                onClose={() => setIsQrModalOpen(false)}
-                classId={selectedClass}
-                className={attendanceClasses.find(c => c.id === selectedClass)?.name || 'Kelas'}
-                date={selectedDate}
-                userId={user?.id || ''}
-            />
 
             {/* Reset Attendance Confirmation Modal */}
             <Modal

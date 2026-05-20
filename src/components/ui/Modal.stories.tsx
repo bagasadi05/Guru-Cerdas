@@ -46,6 +46,7 @@ const meta = {
     isOpen: true,
     title: 'Ringkasan Informasi',
     maxWidth: 'max-w-lg',
+    onClose: () => {},
     children: (
       <div className="space-y-4 text-sm text-slate-700 dark:text-slate-200">
         <p>

@@ -62,7 +62,8 @@ const getRoleLabel = (value?: string | null) => {
     return roleLabelMap[value] || value;
 };
 
-const sanitizeSearchTerm = (value: string) => value.replace(/[%_,()'"]/g, '').trim();
+// P0 Fix: Sanitize lebih ketat — whitelist karakter yang diizinkan saja
+const sanitizeSearchTerm = (value: string) => value.replace(/[^\p{L}\p{N}\s@._-]/gu, '').trim().slice(0, 100);
 
 const AdminPage: React.FC = () => {
     const { user, loading: authLoading } = useAuth();
@@ -115,7 +116,8 @@ const AdminPage: React.FC = () => {
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; user: UserRoleRecord | null }>({ show: false, user: null });
 
     // Undo Toast State
-    const [undoToast, setUndoToast] = useState<{ show: boolean; user: UserRoleRecord | null; timeout: NodeJS.Timeout | null }>({
+    // P0 Fix: Type yang benar untuk browser setTimeout
+    const [undoToast, setUndoToast] = useState<{ show: boolean; user: UserRoleRecord | null; timeout: ReturnType<typeof setTimeout> | null }>({
         show: false, user: null, timeout: null
     });
 
@@ -408,8 +410,13 @@ const AdminPage: React.FC = () => {
 
 
     // Update user role
+    // P0 Fix: Cegah self-demote dan validasi
     const handleUpdateRole = async (userId: string) => {
         if (!newRole) return;
+        if (userId === user?.id) {
+            setError('Tidak dapat mengubah role akun sendiri');
+            return;
+        }
         setUpdating(true);
         try {
             const userToUpdate = users.find(u => u.user_id === userId) || null;
@@ -432,7 +439,12 @@ const AdminPage: React.FC = () => {
     };
 
     // Soft delete user (sets deleted_at timestamp)
+    // P0 Fix: Cegah self-delete
     const openDeleteModal = (userToDelete: UserRoleRecord) => {
+        if (userToDelete.user_id === user?.id) {
+            setError('Tidak dapat menghapus akun sendiri');
+            return;
+        }
         setDeleteModal({ show: true, user: userToDelete });
     };
 
@@ -465,8 +477,10 @@ const AdminPage: React.FC = () => {
             fetchActivityLogs();
 
             // Show success toast
-            setUndoToast({ show: true, user: userToDelete, timeout: null });
-            setTimeout(() => setUndoToast({ show: false, user: null, timeout: null }), 3000);
+            // P0 Fix: Simpan timeout ID dan clear yang lama
+            if (undoToast.timeout) clearTimeout(undoToast.timeout);
+            const timeoutId = setTimeout(() => setUndoToast({ show: false, user: null, timeout: null }), 3000);
+            setUndoToast({ show: true, user: userToDelete, timeout: timeoutId });
         } catch (err: unknown) {
             setError('Error: ' + (err as Error).message);
         }
@@ -498,7 +512,12 @@ const AdminPage: React.FC = () => {
     };
 
     // Permanently delete user (cannot be undone)
+    // P0 Fix: Cegah self-delete + ganti confirm() dengan setError
     const permanentDeleteUser = async (userId: string) => {
+        if (userId === user?.id) {
+            setError('Tidak dapat menghapus akun sendiri');
+            return;
+        }
         if (!confirm('HAPUS PERMANEN? Pengguna tidak akan bisa dipulihkan!')) return;
 
         try {

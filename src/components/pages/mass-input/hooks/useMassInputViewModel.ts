@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useToast } from '../../../../hooks/useToast';
 import { useMassInputData } from './useMassInputData';
 import { useMassInputState } from './useMassInputState';
-import { useMassInputMutations } from './useMassInputMutations';
+import { useMassInputMutations, findStudentMatch } from './useMassInputMutations';
 import { AcademicRecordRow, StudentFilter, StudentRow } from '../types';
 import { actionCards } from '../constants';
 
@@ -110,6 +110,7 @@ export function useMassInputViewModel() {
         classes: data.classes,
         setScores: state.setScores,
         setSelectedStudentIds: state.setSelectedStudentIds,
+        bypassDuplicateGuard: state.bypassDuplicateGuard,
     });
 
     const summaryText = useMemo(() => {
@@ -161,18 +162,18 @@ export function useMassInputViewModel() {
     };
 
     const handleImport = (importedData: Record<string, unknown>[]) => {
-        if (!data.studentsData) return;
-        const studentMap = new Map(data.studentsData.map(s => [s.name.toLowerCase().trim(), s.id]));
+        const studentsData = data.studentsData;
+        if (!studentsData) return;
         let matchedCount = 0; let skippedNaN = 0;
         const newScores = { ...state.scores };
         importedData.forEach(row => {
-            const name = String(row.name || '').trim().toLowerCase();
+            const name = String(row.name || '');
             const score = row.score;
-            const studentId = studentMap.get(name);
-            if (studentId && score !== undefined && score !== '') {
+            const studentMatch = findStudentMatch(name, studentsData);
+            if (studentMatch && score !== undefined && score !== '') {
                 const numScore = Number(score);
                 if (isNaN(numScore)) { skippedNaN++; return; }
-                newScores[studentId] = String(Math.min(100, Math.max(0, numScore)));
+                newScores[studentMatch.id] = String(Math.min(100, Math.max(0, numScore)));
                 matchedCount++;
             }
         });
@@ -273,5 +274,8 @@ export function useMassInputViewModel() {
         handleDeleteConfirmClick,
         // import modal
         handleImport,
+        validationErrors: state.validationErrors,
+        bypassDuplicateGuard: state.bypassDuplicateGuard,
+        setBypassDuplicateGuard: state.setBypassDuplicateGuard,
     };
 }

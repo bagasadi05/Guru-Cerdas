@@ -514,3 +514,79 @@ export const exportClassSummaryToExcel = async (
     XLSX.writeFile(wb, `${fileName}.xlsx`);
 };
 
+/**
+ * Exports class attendance summary for a full semester to a formatted Excel file
+ * 
+ * Features:
+ * - Professional header with school name and semester info
+ * - Grid columns: No, Nama Siswa, Hadir (H), Sakit (S), Izin (I), Alpha (A), % Kehadiran
+ * - Professional signature section
+ * 
+ * @since 2.0.0
+ */
+export const exportSemesterAttendanceToExcel = async (
+    classData: { name: string; students: ExportStudent[] },
+    attendanceData: ExportAttendanceRecord[],
+    semesterName: string,
+    fileName: string,
+    schoolName: string = 'MI AL IRSYAD KOTA MADIUN'
+) => {
+    const XLSX = await getXLSX();
+    const totalColumns = 7; // No, Nama, H, S, I, A, % Kehadiran
+    const rows: (string | number)[][] = [
+        [schoolName.toUpperCase()],
+        [`REKAPITULASI KEHADIRAN SISWA - KELAS ${classData.name}`],
+        [`SEMESTER: ${semesterName.toUpperCase()}`],
+        [],
+        ['NO', 'NAMA SISWA', 'HADIR (H)', 'SAKIT (S)', 'IZIN (I)', 'ALPHA (A)', 'PERSENTASE (%)'],
+    ];
+
+    classData.students.forEach((student, index) => {
+        const studentAttendance = attendanceData.filter((a) => a.student_id === student.id);
+        const h = studentAttendance.filter((a) => a.status === 'Hadir').length;
+        const s = studentAttendance.filter((a) => a.status === 'Sakit').length;
+        const i = studentAttendance.filter((a) => a.status === 'Izin').length;
+        const a = studentAttendance.filter((a) => a.status === 'Alpha').length;
+        const total = h + s + i + a;
+        const percentage = total > 0 ? Math.round((h / total) * 100) : 0;
+
+        rows.push([
+            index + 1,
+            student.name,
+            h,
+            s,
+            i,
+            a,
+            `${percentage}%`
+        ]);
+    });
+
+    // Signatures
+    rows.push([]);
+    rows.push(['', '', '', '', '', '', `Madiun, ............... ${new Date().getFullYear()}`]);
+    rows.push(['', '', '', '', '', '', `Wali Kelas ${classData.name}`]);
+    rows.push([]);
+    rows.push([]);
+    rows.push(['', '', '', '', '', '', '(_________________)']);
+
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    worksheet['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: totalColumns - 1 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: totalColumns - 1 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: totalColumns - 1 } },
+    ];
+    worksheet['!cols'] = [
+        { wch: 5 },   // No
+        { wch: 30 },  // Nama Siswa
+        { wch: 12 },  // Hadir (H)
+        { wch: 12 },  // Sakit (S)
+        { wch: 12 },  // Izin (I)
+        { wch: 12 },  // Alpha (A)
+        { wch: 18 },  // Persentase (%)
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Rekap Kehadiran Semester');
+    XLSX.writeFile(workbook, fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`);
+};
+

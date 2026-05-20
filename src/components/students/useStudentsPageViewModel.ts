@@ -4,6 +4,7 @@ import { useStudentsPageData } from './useStudentsPageData';
 import { useStudentsPageInteractions } from './useStudentsPageInteractions';
 import { useStudentsPageUiState } from './useStudentsPageUiState';
 import { ClassRow, StudentRow } from './types';
+import { hasHomeroomAssignment } from '../../services/teacherAssignments';
 
 interface ToastApi {
   success: (message: string) => void;
@@ -24,6 +25,10 @@ export const useStudentsPageViewModel = ({ userId, toast }: UseStudentsPageViewM
 
   const { selectedItems, toggleItem, toggleAll, isAllSelected, isSelected, selectedCount, clearSelection } =
     useBulkSelection(data.studentsForActiveClass);
+
+  const canManageClass = (classItem: ClassRow) => {
+    return classItem.user_id === userId || hasHomeroomAssignment(data.userAssignments, classItem.id);
+  };
 
   const actions = useStudentsPageActions({
     userId,
@@ -120,6 +125,7 @@ export const useStudentsPageViewModel = ({ userId, toast }: UseStudentsPageViewM
       isClassManageModalOpen: ui.isClassManageModalOpen,
       onCloseClassManageModal: () => ui.setIsClassManageModalOpen(false),
       classes: data.classes,
+      canManageClass,
       onGenerateCodesForClass: (classItem: ClassRow) => {
         ui.setIsClassManageModalOpen(false);
         actions.handleGenerateCodesClick(classItem);

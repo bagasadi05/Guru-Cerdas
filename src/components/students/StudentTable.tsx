@@ -14,7 +14,8 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     toggleAll,
     onAction,
     sortConfig,
-    onSort
+    onSort,
+    canManageActiveClass
 }) => {
     const toast = useToast();
     const windowSize = 40;
@@ -117,12 +118,16 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                         <Link to={`/siswa/${student.id}`} className="p-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
                                             <EyeIcon className="w-4 h-4" />
                                         </Link>
-                                        <button onClick={() => onAction(student, 'edit')} className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
-                                            <PencilIcon className="w-4 h-4" />
-                                        </button>
-                                        <button onClick={() => onAction(student, 'delete')} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                                            <TrashIcon className="w-4 h-4" />
-                                        </button>
+                                        {canManageActiveClass && (
+                                            <>
+                                                <button onClick={() => onAction(student, 'edit')} className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-emerald-900/20 transition-colors" title="Edit Siswa">
+                                                    <PencilIcon className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => onAction(student, 'delete')} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Hapus Siswa">
+                                                    <TrashIcon className="w-4 h-4" />
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </td>
                             </tr>

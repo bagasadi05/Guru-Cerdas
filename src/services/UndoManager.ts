@@ -11,6 +11,12 @@ import { restore, restoreBulk, SoftDeleteEntity } from './SoftDeleteService';
 export type ActionType = 'create' | 'update' | 'delete' | 'bulk_delete';
 export type StateRecord = Record<string, unknown>;
 
+// P0 Fix: Whitelist entity yang diizinkan untuk undo operations
+const ALLOWED_ENTITIES: readonly SoftDeleteEntity[] = [
+    'students', 'classes', 'attendance', 'tasks',
+    'violations', 'quiz_points', 'academic_records',
+] as const;
+
 export interface UndoableAction {
     id: string;
     userId: string;
@@ -38,17 +44,28 @@ export interface ActionHistoryItem {
 // In-memory action store (for quick access to recent undoable actions)
 const recentActions: Map<string, UndoableAction> = new Map();
 
+// P0 Fix: Track timer IDs untuk cleanup (mencegah memory leak)
+const actionTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+
 // Default timeout for undo actions (10 seconds)
 const DEFAULT_UNDO_TIMEOUT_MS = 10000;
 
 // Maximum actions to keep in history
 const MAX_HISTORY_ITEMS = 50;
 
+// P0 Fix: Batas fetch saat search aktif (mencegah fetch semua row ke memory)
+const MAX_SEARCH_FETCH = 500;
+
 /**
  * Generate unique action ID
+ * P0 Fix: Ganti Math.random dengan crypto.randomUUID
  */
 function generateActionId(): string {
-    return `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+        return `action_${crypto.randomUUID()}`;
+    }
+    // Fallback untuk environment tanpa crypto.randomUUID
+    return `action_${Date.now()}_${Array.from({ length: 12 }, () => Math.floor(Math.random() * 36).toString(36)).join('')}`;
 }
 
 /**
@@ -65,6 +82,8 @@ export async function recordAction(
 ): Promise<UndoableAction> {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + timeoutMs);
+    // Database gets a longer undo window (30 days) to match soft delete retention
+    const dbExpiresAt = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
 
     const action: UndoableAction = {
         id: generateActionId(),
@@ -91,23 +110,26 @@ export async function recordAction(
             entity_type: entity,
             affected_ids: entityIds,
             previous_state: (previousState as any) || null,
-            expires_at: expiresAt.toISOString(),
+            expires_at: dbExpiresAt.toISOString(),
             can_undo: true,
+            description: action.description,
         });
     } catch (error) {
         console.error('Failed to persist action to database:', error);
         // Continue even if database insert fails - we still have in-memory record
     }
 
-    // Schedule cleanup after expiration
-    setTimeout(() => {
+    // P0 Fix: Schedule cleanup after expiration — simpan timer ID untuk cleanup
+    const timerId = setTimeout(() => {
         if (recentActions.has(action.id)) {
             const stored = recentActions.get(action.id);
             if (stored && !stored.undone) {
                 recentActions.delete(action.id);
             }
         }
+        actionTimers.delete(action.id);
     }, timeoutMs + 1000);
+    actionTimers.set(action.id, timerId);
 
     // Cleanup old actions if exceeding limit
     cleanupOldActions();
@@ -149,8 +171,9 @@ function generateDescription(actionType: ActionType, entity: SoftDeleteEntity, c
 
 /**
  * Undo an action by its ID
+ * P0 Fix: Tambahkan currentUserId untuk authorization check
  */
-export async function undo(actionId: string): Promise<{ success: boolean; error?: string }> {
+export async function undo(actionId: string, currentUserId?: string): Promise<{ success: boolean; error?: string }> {
     // Try to get from memory first
     let action = recentActions.get(actionId);
 
@@ -178,7 +201,7 @@ export async function undo(actionId: string): Promise<{ success: boolean; error?
                 createdAt: new Date(data.created_at || 0),
                 expiresAt: new Date(data.expires_at ?? 0),
                 undone: !(data.can_undo ?? true), // can_undo is the inverse of undone
-                description: generateDescription(
+                description: data.description || generateDescription(
                     data.action_type as ActionType,
                     data.entity_type as SoftDeleteEntity,
                     (data.affected_ids || []).length
@@ -195,6 +218,16 @@ export async function undo(actionId: string): Promise<{ success: boolean; error?
     // Check if already undone
     if (action.undone) {
         return { success: false, error: 'Aksi sudah di-undo' };
+    }
+
+    // P0 Fix: Authorization — verifikasi user yang undo adalah pemilik action
+    if (currentUserId && action.userId !== currentUserId) {
+        return { success: false, error: 'Tidak diizinkan: aksi ini milik user lain' };
+    }
+
+    // P0 Fix: Whitelist entity validation — cegah write ke tabel arbitrary
+    if (!ALLOWED_ENTITIES.includes(action.entity)) {
+        return { success: false, error: `Entity "${action.entity}" tidak valid untuk undo` };
     }
 
     // Check if expired
@@ -280,6 +313,7 @@ export interface ActionHistoryFilters {
 
 /**
  * Get action history for a user with filters
+ * P0 Fix: Gunakan .range() di server saat tidak ada search, limit fetch saat ada search
  */
 export async function getActionHistory(
     userId: string,
@@ -288,6 +322,8 @@ export async function getActionHistory(
     filters: ActionHistoryFilters = {}
 ): Promise<{ items: ActionHistoryItem[]; total: number }> {
     try {
+        const normalizedSearch = filters.search?.trim().toLowerCase();
+
         let query = supabase
             .from('action_history')
             .select('*', { count: 'exact' })
@@ -314,19 +350,65 @@ export async function getActionHistory(
             query = query.lt('created_at', nextDay.toISOString());
         }
 
-        const { data, error } = await query;
+        const now = new Date();
+
+        // Server-side text search with fallbacks for older records
+        if (normalizedSearch) {
+            const orConditions: string[] = [`description.ilike.%${normalizedSearch}%`];
+            
+            // Map common Indonesian terms to database entity types
+            const entityMap: Record<string, string> = {
+                siswa: 'students', murid: 'students', student: 'students',
+                kelas: 'classes', class: 'classes',
+                absen: 'attendance', kehadiran: 'attendance', attendance: 'attendance',
+                tugas: 'tasks', task: 'tasks',
+                pelanggaran: 'violations', violation: 'violations',
+                poin: 'quiz_points', keaktifan: 'quiz_points', quiz: 'quiz_points',
+                nilai: 'academic_records', academic: 'academic_records'
+            };
+            
+            // Map common Indonesian terms to database action types
+            const actionMap: Record<string, string[]> = {
+                hapus: ['delete', 'bulk_delete'],
+                delete: ['delete', 'bulk_delete'],
+                ubah: ['update'],
+                perbarui: ['update'],
+                edit: ['update'],
+                update: ['update'],
+                buat: ['create'],
+                tambah: ['create'],
+                create: ['create']
+            };
+
+            for (const [key, val] of Object.entries(entityMap)) {
+                if (key.includes(normalizedSearch) || normalizedSearch.includes(key)) {
+                    orConditions.push(`entity_type.eq.${val}`);
+                }
+            }
+
+            for (const [key, val] of Object.entries(actionMap)) {
+                if (key.includes(normalizedSearch) || normalizedSearch.includes(key)) {
+                    val.forEach(act => {
+                        orConditions.push(`action_type.eq.${act}`);
+                    });
+                }
+            }
+
+            query = query.or(orConditions.join(','));
+        }
+
+        // Fetch paginated range directly from Supabase (efficient, no client-side truncation)
+        query = query.range(offset, offset + limit - 1);
+        const { data, error, count } = await query;
 
         if (error) throw error;
 
-        const now = new Date();
-
-        const normalizedSearch = filters.search?.trim().toLowerCase();
-        const allItems = (data || []).map(item => ({
+        const items = (data || []).map(item => ({
             id: item.id,
             actionType: item.action_type as ActionType,
             entity: item.entity_type as SoftDeleteEntity,
             entityIds: item.affected_ids || [],
-            description: generateDescription(
+            description: item.description || generateDescription(
                 item.action_type as ActionType,
                 item.entity_type as SoftDeleteEntity,
                 (item.affected_ids || []).length
@@ -336,22 +418,7 @@ export async function getActionHistory(
             previousState: (item.previous_state as StateRecord[]) || undefined,
         }));
 
-        const filteredItems = normalizedSearch
-            ? allItems.filter(item => {
-                const searchTarget = [
-                    item.description,
-                    item.actionType,
-                    item.entity,
-                    ...item.entityIds,
-                ].join(' ').toLowerCase();
-                return searchTarget.includes(normalizedSearch);
-            })
-            : allItems;
-
-        return {
-            items: filteredItems.slice(offset, offset + limit),
-            total: filteredItems.length,
-        };
+        return { items, total: count || 0 };
     } catch (error) {
         console.error('Failed to get action history:', error);
         return { items: [], total: 0 };
@@ -380,6 +447,7 @@ export function getUndoTimeRemaining(actionId: string): number {
 
 /**
  * Clear old actions from memory
+ * P0 Fix: Juga bersihkan timer yang terkait
  */
 export function cleanupOldActions(): void {
     const now = Date.now();
@@ -388,6 +456,12 @@ export function cleanupOldActions(): void {
     for (const [id, action] of recentActions) {
         if (action.createdAt.getTime() < expiredThreshold) {
             recentActions.delete(id);
+            // Bersihkan timer terkait
+            const timer = actionTimers.get(id);
+            if (timer) {
+                clearTimeout(timer);
+                actionTimers.delete(id);
+            }
         }
     }
 
@@ -397,7 +471,14 @@ export function cleanupOldActions(): void {
             .sort((a, b) => b[1].createdAt.getTime() - a[1].createdAt.getTime());
 
         const toDelete = sortedActions.slice(MAX_HISTORY_ITEMS);
-        toDelete.forEach(([id]) => recentActions.delete(id));
+        toDelete.forEach(([id]) => {
+            recentActions.delete(id);
+            const timer = actionTimers.get(id);
+            if (timer) {
+                clearTimeout(timer);
+                actionTimers.delete(id);
+            }
+        });
     }
 }
 
