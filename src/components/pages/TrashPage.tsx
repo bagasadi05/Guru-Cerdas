@@ -34,7 +34,6 @@ import {
 } from 'lucide-react';
 import {
     getAllDeletedItems,
-    getDeletedItems,
     restore,
     restoreBulk,
     permanentDelete,
@@ -193,24 +192,19 @@ const TrashPage: React.FC = () => {
     const [showInfo, setShowInfo] = useState(false);
     const [showExpiringOnly, setShowExpiringOnly] = useState(false);
 
-    // Fetch deleted items for stats and list
-    const { data: allDeletedItems = [], isLoading: isStatsLoading } = useQuery({
-        queryKey: ['deleted-items-all', user?.id],
+    // P0 Fix #1: Hapus duplicate query — gunakan satu query saja
+    const { data: allDeletedItems = [], isLoading } = useQuery({
+        queryKey: ['deleted-items', user?.id],
         queryFn: () => getAllDeletedItems(user!.id),
         enabled: !!user,
+        staleTime: 30_000, // 30s untuk reduce refetch
     });
 
-    const { data: visibleItems = [], isLoading: isListLoading } = useQuery({
-        queryKey: ['deleted-items', user?.id, filterEntity],
-        queryFn: () => {
-            if (!user) return Promise.resolve([]);
-            if (filterEntity === 'all') return getAllDeletedItems(user.id);
-            return getDeletedItems(filterEntity as SoftDeleteEntity, user.id);
-        },
-        enabled: !!user,
-    });
-
-    const isLoading = isListLoading || isStatsLoading;
+    // Derive visibleItems dari allDeletedItems (filtering di client)
+    const visibleItems = useMemo(() => {
+        if (filterEntity === 'all') return allDeletedItems;
+        return allDeletedItems.filter(item => item.entity === filterEntity);
+    }, [allDeletedItems, filterEntity]);
 
     // Restore mutation
     const restoreMutation = useMutation({
@@ -220,7 +214,7 @@ const TrashPage: React.FC = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
-            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
+            
             queryClient.invalidateQueries({ queryKey: ['students'] });
             queryClient.invalidateQueries({ queryKey: ['classes'] });
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
@@ -247,7 +241,7 @@ const TrashPage: React.FC = () => {
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
-            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
+            
             queryClient.invalidateQueries({ queryKey: ['students'] });
             queryClient.invalidateQueries({ queryKey: ['classes'] });
             queryClient.invalidateQueries({ queryKey: ['attendance'] });
@@ -268,7 +262,7 @@ const TrashPage: React.FC = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
-            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
+            
             setConfirmDeleteId(null);
             toast.success('Item dihapus permanen');
         },
@@ -277,21 +271,27 @@ const TrashPage: React.FC = () => {
         },
     });
 
-    // Bulk permanent delete
+    // P0 Fix #2: Bulk permanent delete dengan Promise.allSettled (partial success handling)
     const bulkPermanentDeleteMutation = useMutation({
         mutationFn: async (items: DeletedItem[]) => {
-            for (const item of items) {
-                const result = await permanentDelete(item.entity, item.id);
-                if (!result.success) throw new Error(result.error);
-            }
+            const results = await Promise.allSettled(
+                items.map(item => permanentDelete(item.entity, item.id))
+            );
+            const failed = results.filter(r =>
+                r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
+            );
+            return { total: items.length, success: items.length - failed.length, failed: failed.length };
         },
-        onSuccess: (_, variables) => {
+        onSuccess: ({ total, success, failed }) => {
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
-            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             setSelectedItems(new Set());
             setConfirmBulkDelete(false);
             setConfirmEmptyTrash(false);
-            toast.success(`${variables.length} item dihapus permanen`);
+            if (failed === 0) {
+                toast.success(`${success} item dihapus permanen`);
+            } else {
+                toast.warning(`${success} dari ${total} item berhasil dihapus. ${failed} gagal.`);
+            }
         },
         onError: (error) => {
             toast.error(`Gagal menghapus: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -361,20 +361,28 @@ const TrashPage: React.FC = () => {
         return groups;
     }, [filteredItems]);
 
-    // Stats
+    // P1 Fix: Stats optimal — single pass reduce (bukan 9x filter)
     const stats = useMemo(() => {
-        return {
+        const base = {
             total: allDeletedItems.length,
-            students: allDeletedItems.filter(i => i.entity === 'students').length,
-            classes: allDeletedItems.filter(i => i.entity === 'classes').length,
-            attendance: allDeletedItems.filter(i => i.entity === 'attendance').length,
-            tasks: allDeletedItems.filter(i => i.entity === 'tasks').length,
-            violations: allDeletedItems.filter(i => i.entity === 'violations').length,
-            quiz_points: allDeletedItems.filter(i => i.entity === 'quiz_points').length,
-            academic_records: allDeletedItems.filter(i => i.entity === 'academic_records').length,
-            expiringToday: allDeletedItems.filter(i => i.daysRemaining <= 1).length,
-            expiringThisWeek: allDeletedItems.filter(i => i.daysRemaining <= 7).length,
+            students: 0,
+            classes: 0,
+            attendance: 0,
+            tasks: 0,
+            violations: 0,
+            quiz_points: 0,
+            academic_records: 0,
+            expiringToday: 0,
+            expiringThisWeek: 0,
         };
+        for (const item of allDeletedItems) {
+            if (item.entity in base) {
+                (base as Record<string, number>)[item.entity]++;
+            }
+            if (item.daysRemaining <= 1) base.expiringToday++;
+            if (item.daysRemaining <= 7) base.expiringThisWeek++;
+        }
+        return base;
     }, [allDeletedItems]);
 
     // Toggle item selection
@@ -409,9 +417,31 @@ const TrashPage: React.FC = () => {
 
     const hasActiveFilters = searchQuery || filterEntity !== 'all' || showExpiringOnly;
 
-    const itemToDelete = confirmDeleteId
+    // P0 Fix #4: Cache itemToDelete saat modal open (mencegah crash saat cache invalidate)
+    const [cachedDeleteItem, setCachedDeleteItem] = useState<DeletedItem | null>(null);
+
+    const itemToDelete = cachedDeleteItem || (confirmDeleteId
         ? visibleItems.find(i => i.id === confirmDeleteId) || allDeletedItems.find(i => i.id === confirmDeleteId)
-        : null;
+        : null);
+
+    // Saat confirmDeleteId berubah, cache item-nya
+    React.useEffect(() => {
+        if (confirmDeleteId) {
+            const found = visibleItems.find(i => i.id === confirmDeleteId) || allDeletedItems.find(i => i.id === confirmDeleteId);
+            if (found) setCachedDeleteItem(found);
+        } else {
+            setCachedDeleteItem(null);
+        }
+    }, [confirmDeleteId, visibleItems, allDeletedItems]);
+
+    // P1 Fix: Cleanup ghost selection — hapus ID yang sudah tidak ada di data
+    React.useEffect(() => {
+        const validIds = new Set(allDeletedItems.map(i => i.id));
+        setSelectedItems(prev => {
+            const next = new Set([...prev].filter(id => validIds.has(id)));
+            return next.size === prev.size ? prev : next;
+        });
+    }, [allDeletedItems]);
 
     // Format relative time
     const formatDeletedTime = (dateStr: string) => {
@@ -427,18 +457,30 @@ const TrashPage: React.FC = () => {
         return date.toLocaleDateString('id-ID');
     };
 
-    // Cleanup expired items on mount
+    // P0 Fix #3: Throttle cleanup — max sekali per hari, dengan cancel flag
     React.useEffect(() => {
+        const CLEANUP_KEY = 'trash-last-cleanup';
+        const ONE_DAY = 24 * 60 * 60 * 1000;
+        const lastCleanup = localStorage.getItem(CLEANUP_KEY);
+        const now = Date.now();
+
+        // Skip jika sudah cleanup dalam 24 jam terakhir
+        if (lastCleanup && now - Number(lastCleanup) < ONE_DAY) return;
+
+        let cancelled = false;
         const performCleanup = async () => {
             const result = await cleanupExpired();
+            if (cancelled) return;
+            localStorage.setItem(CLEANUP_KEY, String(now));
             if (result.success && Object.values(result.deletedCounts).some(c => c > 0)) {
                 const total = Object.values(result.deletedCounts).reduce((a, b) => a + b, 0);
                 toast.info(`${total} item kadaluarsa (>30 hari) telah dibersihkan otomatis.`);
                 queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
-                queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             }
         };
         performCleanup();
+
+        return () => { cancelled = true; };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     React.useEffect(() => {

@@ -78,6 +78,7 @@ export const StudentsClassContent: React.FC<StudentsClassContentProps> = ({
           onAction={onStudentAction}
           sortConfig={sortConfig}
           onSort={onSort}
+          canManageActiveClass={canManageActiveClass}
         />
       )}
     </>

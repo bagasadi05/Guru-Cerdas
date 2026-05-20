@@ -41,7 +41,7 @@ export interface MassInputState {
     mode: InputMode | null;
     selectedClass: string;
     quizInfo: { name: string; subject: string; date: string };
-    subjectGradeInfo: { subject: string; assessment_name: string; notes: string };
+    subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     scores: Record<string, string>;
     pasteData: string;
     isParsing: boolean;
@@ -58,4 +58,6 @@ export interface MassInputState {
     validationErrors: Record<string, string>;
     isConfigOpen: boolean;
     isCustomSubject: boolean;
+    bypassDuplicateGuard: boolean;
 }
+

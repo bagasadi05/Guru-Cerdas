@@ -90,6 +90,7 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
                 .from('classes')
                 .select('*')
                 .eq('user_id', teacherData.user_id)
+                .is('deleted_at', null)
                 .order('name');
 
             if (classesError) throw classesError;

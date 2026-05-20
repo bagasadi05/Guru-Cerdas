@@ -13,6 +13,7 @@ import { getJsPDF } from '../../utils/dynamicImports';
 import { useToast } from '../../hooks/useToast';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import { useSemester } from '../../contexts/SemesterContext';
+import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../utils/academicRecordUtils';
 
 type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
 
@@ -259,15 +260,16 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
 
     const filteredAcademicRecords = useMemo(() => {
         if (!data) return [];
-        if (!selectedSemesterId) return data.academicRecords;
-        return data.academicRecords.filter(r => r.semester_id === selectedSemesterId);
+        const deduped = dedupeAcademicRecords(data.academicRecords as any) as any[];
+        if (!selectedSemesterId) return deduped;
+        return deduped.filter((r: any) => r.semester_id === selectedSemesterId);
     }, [data, selectedSemesterId]);
 
     const academicRecordsBySubject = useMemo((): Record<string, AcademicRecordRow[]> => {
         if (!data) return {};
         const filtered = showAllSubjects
             ? filteredAcademicRecords
-            : filteredAcademicRecords.filter(r => selectedSubjects.has(r.subject || 'Lainnya'));
+            : filteredAcademicRecords.filter((r: any) => selectedSubjects.has(r.subject || 'Lainnya'));
 
         return filtered.reduce((acc: Record<string, AcademicRecordRow[]>, record: AcademicRecordRow) => {
             const subject = record.subject || 'Lainnya';
@@ -285,16 +287,18 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
 
     const filteredQuizPoints = useMemo(() => {
         if (!data) return [];
-        if (!selectedSemesterId) return data.quizPoints;
-        return data.quizPoints.filter(r => r.semester_id === selectedSemesterId);
+        const deduped = dedupeQuizPoints(data.quizPoints as any) as any;
+        if (!selectedSemesterId) return deduped;
+        return deduped.filter((r: any) => r.semester_id === selectedSemesterId);
     }, [data, selectedSemesterId]);
 
     const summarizedQuizPoints = useMemo(() => summarizeQuizPoints(filteredQuizPoints), [filteredQuizPoints]);
 
     const filteredViolations = useMemo(() => {
         if (!data) return [];
-        if (!selectedSemesterId) return data.violations;
-        return data.violations.filter(r => r.semester_id === selectedSemesterId);
+        const deduped = dedupeViolations(data.violations as any) as any;
+        if (!selectedSemesterId) return deduped;
+        return deduped.filter((r: any) => r.semester_id === selectedSemesterId);
     }, [data, selectedSemesterId]);
     const summarizedViolations = useMemo(() => summarizeViolations(filteredViolations), [filteredViolations]);
 

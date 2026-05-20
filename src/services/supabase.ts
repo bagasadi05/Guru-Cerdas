@@ -11,7 +11,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types'; // This will be generated from your Supabase schema
-// import { GoogleGenAI } from '@google/genai';
+import { networkResilience } from './networkResilience';
+import { addToQueue } from './offlineQueue';
+import { logger } from './logger';
 
 // --- IMPORTANT ---
 // The credentials below have been provided to make the application runnable.
@@ -19,6 +21,102 @@ import type { Database } from './database.types'; // This will be generated from
 // server-only secrets to the client bundle.
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Network Resilience Fetch helpers
+const getRequestPriority = (url: string): 'low' | 'normal' | 'high' | 'critical' => {
+  if (url.includes('/auth/')) return 'critical';
+  if (url.includes('/realtime')) return 'high';
+  if (url.includes('/storage/')) return 'normal';
+  if (url.includes('/analytics') || url.includes('/logs')) return 'low';
+  return 'normal';
+};
+
+const getRetryCount = (url: string): number => {
+  if (url.includes('/auth/')) return 5;
+  if (url.includes('/realtime')) return 1;
+  return 3;
+};
+
+const isMutationRequest = (method?: string): boolean => {
+  return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method?.toUpperCase() || '');
+};
+
+const queueOfflineRequest = async (url: string, init?: RequestInit): Promise<void> => {
+  try {
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/');
+    const restIndex = pathParts.indexOf('rest');
+    if (restIndex === -1) return;
+    const tableIndex = restIndex + 2;
+    const tableName = pathParts[tableIndex];
+    
+    if (!tableName) return;
+
+    let operation: 'upsert' | 'insert' | 'update' | 'delete' = 'insert';
+    const method = init?.method?.toUpperCase();
+    
+    switch (method) {
+      case 'POST':
+        operation = urlObj.searchParams.has('on_conflict') ? 'upsert' : 'insert';
+        break;
+      case 'PATCH':
+        operation = 'update';
+        break;
+      case 'DELETE':
+        operation = 'delete';
+        break;
+    }
+
+    let payload = {};
+    if (init?.body) {
+      try {
+        payload = JSON.parse(init.body as string);
+      } catch (e) {
+        logger.warn('Failed to parse request body for offline queue', 'ResilientSupabase', e);
+      }
+    }
+
+    await addToQueue({
+      table: tableName as keyof Database['public']['Tables'],
+      operation,
+      payload,
+      onConflict: urlObj.searchParams.get('on_conflict') || undefined
+    });
+
+    logger.info('Request queued for offline processing', 'ResilientSupabase', {
+      table: tableName,
+      operation,
+      url
+    });
+  } catch (error) {
+    logger.error('Failed to queue offline request', error as Error, { url });
+  }
+};
+
+const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  const url = typeof input === 'string' ? input : input.toString();
+  
+  try {
+    return await networkResilience.fetch(url, {
+      ...init,
+      priority: getRequestPriority(url),
+      retries: getRetryCount(url),
+      queueWhenOffline: true
+    });
+  } catch (error) {
+    logger.error('Supabase request failed', error as Error, {
+      url,
+      method: init?.method || 'GET'
+    });
+    
+    if (isMutationRequest(init?.method)) {
+      await queueOfflineRequest(url, init);
+      throw new Error('Request queued for offline processing');
+    }
+    
+    throw error;
+  }
+};
 
 /**
  * Supabase client instance for database operations.
@@ -48,7 +146,11 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
  * @see {@link https://supabase.com/docs/reference/javascript/introduction} Supabase JS Client Documentation
  * @since 1.0.0
  */
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  global: {
+    fetch: resilientSupabaseFetch
+  }
+});
 
 // Centralized Google GenAI Client - DEPRECATED in favor of OpenRouter
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';

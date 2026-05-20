@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { ClassRow, SortConfig, StudentRow } from './types';
-import { TeacherClassAssignmentRow } from '../../services/teacherAssignments';
+import { TeacherClassAssignmentRow, hasHomeroomAssignment } from '../../services/teacherAssignments';
 
 interface ToastApi {
   error: (message: string) => void;
@@ -52,15 +52,26 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
     isError: isClassesError,
     error: classesError,
   } = useQuery({
-    queryKey: ['classes', userId],
+    queryKey: ['classes', userId, userAssignments],
     queryFn: async () => {
       if (!userId) return EMPTY_CLASSES;
 
-      const { data, error } = await supabase
+      const assignedClassIds = Array.from(
+        new Set(userAssignments.map((a) => a.class_id).filter(Boolean))
+      ) as string[];
+
+      let query = supabase
         .from('classes')
         .select('id, name, user_id, created_at, deleted_at')
-        .is('deleted_at', null)
-        .order('name');
+        .is('deleted_at', null);
+
+      if (assignedClassIds.length > 0) {
+        query = query.or(`user_id.eq.${userId},id.in.(${assignedClassIds.map((id) => `"${id}"`).join(',')})`);
+      } else {
+        query = query.eq('user_id', userId);
+      }
+
+      const { data, error } = await query.order('name');
 
       if (error) throw new Error(error.message);
       return (data || EMPTY_CLASSES) as unknown as ClassRow[];
@@ -93,7 +104,7 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
   const classes = classesData || EMPTY_CLASSES;
   const students = studentsData || EMPTY_STUDENTS;
   const activeClass = classes.find((classItem) => classItem.id === activeClassId) || null;
-  const canManageActiveClass = activeClass?.user_id === userId;
+  const canManageActiveClass = activeClass?.user_id === userId || hasHomeroomAssignment(userAssignments, activeClassId);
   const isLoading = isLoadingClasses || isLoadingStudents;
   const isError = isClassesError || isStudentsError;
   const queryError = classesError || studentsError;
@@ -105,9 +116,12 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
   }, [isError, queryError, toast]);
 
   useEffect(() => {
-    if (classes.length > 0 && !activeClassId) {
-      const timer = setTimeout(() => setActiveClassId(classes[0].id), 0);
-      return () => clearTimeout(timer);
+    if (classes.length > 0) {
+      const exists = classes.some((classItem) => classItem.id === activeClassId);
+      if (!activeClassId || !exists) {
+        const timer = setTimeout(() => setActiveClassId(classes[0].id), 0);
+        return () => clearTimeout(timer);
+      }
     }
   }, [classes, activeClassId]);
 

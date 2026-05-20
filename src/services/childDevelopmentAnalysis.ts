@@ -1,8 +1,9 @@
-import { isAiEnabled } from './supabase';
+import { isAiEnabled, supabase } from './supabase';
 import { generateOpenRouterJson } from './openRouterService';
 
 export interface ChildDevelopmentData {
   student: {
+    id: string;
     name: string;
     age?: number;
     class?: string;
@@ -77,6 +78,7 @@ export interface ComprehensiveChildAnalysis {
   affective: AffectiveDevelopmentAnalysis;
   psychomotor: PsychomotorDevelopmentAnalysis;
   recommendations: ParentRecommendations;
+  generatedBy?: 'AI' | 'Offline Fallback';
 }
 
 function generateFallbackAnalysis(
@@ -352,5 +354,89 @@ export async function generateQuickInsights(
         'Apresiasi setiap kemajuan yang dicapai'
       ]
     };
+  }
+}
+
+export async function getLatestAnalysisFromDb(
+  studentId: string
+): Promise<ComprehensiveChildAnalysis | null> {
+  try {
+    const { data, error } = await supabase
+      .from('student_development_analyses')
+      .select('analysis_data, generated_by')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    const analysis = data.analysis_data as unknown as ComprehensiveChildAnalysis;
+    return {
+      ...analysis,
+      generatedBy: data.generated_by as 'AI' | 'Offline Fallback'
+    };
+  } catch (error) {
+    console.error('Gagal mengambil analisis dari database:', error);
+    return null;
+  }
+}
+
+export async function saveAnalysisToDb(
+  studentId: string,
+  analysis: ComprehensiveChildAnalysis,
+  generatedBy: 'AI' | 'Offline Fallback',
+  academicYearId?: string | null,
+  semesterId?: string | null
+): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Pengguna tidak terautentikasi');
+
+    const analysisWithSource = {
+      ...analysis,
+      generatedBy
+    };
+
+    // Check if record exists
+    const { data: existing } = await supabase
+      .from('student_development_analyses')
+      .select('id')
+      .eq('student_id', studentId)
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (existing?.id) {
+      // Update
+      const { error } = await supabase
+        .from('student_development_analyses')
+        .update({
+          analysis_data: analysisWithSource as any,
+          generated_by: generatedBy,
+          academic_year_id: academicYearId || null,
+          semester_id: semesterId || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+      if (error) throw error;
+    } else {
+      // Insert
+      const { error } = await supabase
+        .from('student_development_analyses')
+        .insert({
+          student_id: studentId,
+          user_id: user.id,
+          academic_year_id: academicYearId || null,
+          semester_id: semesterId || null,
+          analysis_data: analysisWithSource as any,
+          generated_by: generatedBy
+        });
+      if (error) throw error;
+    }
+  } catch (error) {
+    console.error('Gagal menyimpan analisis ke database:', error);
+    throw error;
   }
 }

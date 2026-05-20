@@ -1,97 +1,99 @@
 /**
  * Enhanced Security Service
- * Features: CSRF protection, XSS prevention, file validation, 
- * cryptographic access codes, and audit logging
+ * Features: XSS prevention, file validation, cryptographic access codes,
+ * database-backed audit logging with offline fallback, XSS/SQLi detection,
+ * session management, and Parent Portal security auditing.
  */
 
 import { logger } from './logger';
-import { storageGetJSON, storageSetJSON, storageRemove } from '../utils/storage';
+import { storageGet, storageSet, storageGetJSON, storageSetJSON, storageRemove } from '../utils/storage';
+import { supabase } from './supabase';
+import type { Database } from './database.types';
 
 // ============================================
-// CSRF PROTECTION
+// SECURITY EVENTS & LOGGING (Merged from security.ts)
 // ============================================
 
-const CSRF_TOKEN_KEY = 'portal_guru_csrf_token';
-const CSRF_TOKEN_HEADER = 'X-CSRF-Token';
-const CSRF_TOKEN_EXPIRY = 3600000; // 1 hour
-
-interface CSRFToken {
-    token: string;
-    createdAt: number;
+export enum SecurityEventType {
+    LOGIN_SUCCESS = 'LOGIN_SUCCESS',
+    LOGIN_FAILED = 'LOGIN_FAILED',
+    LOGOUT = 'LOGOUT',
+    ACCESS_DENIED = 'ACCESS_DENIED',
+    INVALID_TOKEN = 'INVALID_TOKEN',
+    SUSPICIOUS_ACTIVITY = 'SUSPICIOUS_ACTIVITY',
+    RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
+    XSS_ATTEMPT = 'XSS_ATTEMPT',
+    SQL_INJECTION_ATTEMPT = 'SQL_INJECTION_ATTEMPT'
 }
 
-/**
- * Generate cryptographically secure CSRF token
- */
-export function generateCSRFToken(): string {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    const token = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+export interface SecurityEvent {
+    type: SecurityEventType;
+    timestamp: string;
+    userId?: string;
+    ip?: string;
+    userAgent?: string;
+    details?: unknown;
+}
 
-    const tokenData: CSRFToken = {
-        token,
-        createdAt: Date.now()
+const SECURITY_LOG_KEY = 'portal_guru_security_log';
+const MAX_SECURITY_LOGS = 100;
+
+/**
+ * Log security event
+ */
+export function logSecurityEvent(
+    type: SecurityEventType,
+    userId?: string,
+    details?: unknown
+) {
+    const event: SecurityEvent = {
+        type,
+        timestamp: new Date().toISOString(),
+        userId,
+        userAgent: navigator.userAgent,
+        details
     };
 
-    sessionStorage.setItem(CSRF_TOKEN_KEY, JSON.stringify(tokenData));
-    return token;
-}
+    // Log to console in dev
+    logger.warn(`Security Event: ${type}`, 'Security', details);
 
-/**
- * Validate CSRF token
- */
-export function validateCSRFToken(token: string): boolean {
-    try {
-        const stored = sessionStorage.getItem(CSRF_TOKEN_KEY);
-        if (!stored) return false;
+    // Store in secure storage (async, fire-and-forget)
+    void (async () => {
+        try {
+            const logs = await getSecurityLogs();
+            logs.push(event);
 
-        const tokenData: CSRFToken = JSON.parse(stored);
-
-        // Check if token matches
-        if (tokenData.token !== token) return false;
-
-        // Check if token is expired
-        if (Date.now() - tokenData.createdAt > CSRF_TOKEN_EXPIRY) {
-            sessionStorage.removeItem(CSRF_TOKEN_KEY);
-            return false;
-        }
-
-        return true;
-    } catch {
-        return false;
-    }
-}
-
-/**
- * Get CSRF token for forms and requests
- */
-export function getCSRFToken(): string {
-    try {
-        const stored = sessionStorage.getItem(CSRF_TOKEN_KEY);
-        if (stored) {
-            const tokenData: CSRFToken = JSON.parse(stored);
-            if (Date.now() - tokenData.createdAt < CSRF_TOKEN_EXPIRY) {
-                return tokenData.token;
+            while (logs.length > MAX_SECURITY_LOGS) {
+                logs.shift();
             }
+
+            await storageSetJSON(SECURITY_LOG_KEY, logs);
+        } catch {
+            // Ignore storage errors
         }
-    } catch {
-        // Generate new token if retrieval fails
-    }
-    return generateCSRFToken();
+    })();
 }
 
 /**
- * CSRF middleware for fetch requests
+ * Get stored security logs
  */
-export function csrfFetch(url: string, options: RequestInit = {}): Promise<Response> {
-    const headers = new Headers(options.headers);
-    headers.set(CSRF_TOKEN_HEADER, getCSRFToken());
+export async function getSecurityLogs(): Promise<SecurityEvent[]> {
+    try {
+        return await storageGetJSON<SecurityEvent[]>(SECURITY_LOG_KEY) ?? [];
+    } catch {
+        return [];
+    }
+}
 
-    return fetch(url, { ...options, headers });
+/**
+ * Clear security logs
+ */
+export async function clearSecurityLogs(): Promise<void> {
+    await storageRemove(SECURITY_LOG_KEY);
 }
 
 // ============================================
-// XSS PROTECTION
+// XSS PROTECTION & DETECTION
 // ============================================
 
 // HTML entities map for escaping
@@ -106,12 +108,43 @@ const HTML_ENTITIES: Record<string, string> = {
     '=': '&#x3D;'
 };
 
+const XSS_PATTERNS = [
+    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+    /javascript:/gi,
+    /on\w+\s*=/gi,
+    /<iframe/gi,
+    /<embed/gi,
+    /<object/gi,
+    /data:/gi,
+    /vbscript:/gi
+];
+
+/**
+ * Check if input contains potential XSS
+ */
+export function hasXssAttempt(input: string): boolean {
+    for (const pattern of XSS_PATTERNS) {
+        if (pattern.test(input)) {
+            logSecurityEvent(SecurityEventType.XSS_ATTEMPT, undefined, { input: input.substring(0, 100) });
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Escape HTML entities to prevent XSS
  */
 export function escapeHtml(str: string): string {
     if (typeof str !== 'string') return '';
     return str.replace(/[&<>"'`=/]/g, char => HTML_ENTITIES[char] || char);
+}
+
+/**
+ * Sanitize input to prevent XSS (compatibility fallback)
+ */
+export function sanitizeForXss(input: string): string {
+    return escapeHtml(input);
 }
 
 /**
@@ -187,6 +220,37 @@ export function sanitizeUrl(url: string): string {
     }
 
     return url.trim();
+}
+
+// ============================================
+// SQL INJECTION PROTECTION (Merged from security.ts)
+// ============================================
+
+const SQL_KEYWORDS = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER', 'TRUNCATE', 'UNION'];
+
+/**
+ * Check if input contains potential SQL injection
+ */
+export function hasSqlInjectionAttempt(input: string): boolean {
+    const upperInput = input.toUpperCase();
+
+    // Check for SQL keywords
+    for (const keyword of SQL_KEYWORDS) {
+        if (upperInput.includes(keyword)) {
+            logSecurityEvent(SecurityEventType.SQL_INJECTION_ATTEMPT, undefined, { input: input.substring(0, 100) });
+            return true;
+        }
+    }
+
+    // Check for common injection patterns
+    if (/(\d+\s*=\s*\d+)/.test(input) || // 1=1 pattern
+        /(--)/.test(input) ||             // SQL comment
+        /('\s*(OR|AND)\s*')/i.test(input)) { // ' OR ' pattern
+        logSecurityEvent(SecurityEventType.SQL_INJECTION_ATTEMPT, undefined, { input: input.substring(0, 100) });
+        return true;
+    }
+
+    return false;
 }
 
 // ============================================
@@ -344,7 +408,7 @@ export function sanitizeFilename(filename: string): string {
 }
 
 // ============================================
-// CRYPTOGRAPHIC ACCESS CODES
+// CRYPTOGRAPHIC ACCESS CODES & ENCRYPTION
 // ============================================
 
 /**
@@ -358,6 +422,20 @@ export function generateSecureAccessCode(length: number = 6): string {
     crypto.getRandomValues(array);
 
     return Array.from(array, num => CHARS[num % CHARS.length]).join('');
+}
+
+/**
+ * Validate access code format (Merged from security.ts)
+ */
+export function isValidAccessCode(code: string): boolean {
+    return /^[A-Z0-9]{6}$/.test(code);
+}
+
+/**
+ * Hash access code for comparison (Merged from security.ts)
+ */
+export async function hashAccessCode(code: string): Promise<string> {
+    return hashString(code);
 }
 
 /**
@@ -412,7 +490,7 @@ export async function hashString(str: string): Promise<string> {
 }
 
 // ============================================
-// AUDIT LOGGING
+// AUDIT LOGGING WITH ONLINE/OFFLINE FAILBACK
 // ============================================
 
 type AuditAction =
@@ -443,6 +521,7 @@ const MAX_AUDIT_ENTRIES = 1000;
 
 /**
  * Log sensitive operation for audit trail
+ * Asynchronously saves directly to database, falling back to local storage if offline
  */
 export function auditLog(
     action: AuditAction,
@@ -466,14 +545,48 @@ export function auditLog(
         sessionId: getSessionId()
     };
 
-    // Store locally
-    storeAuditLog(entry);
-
     // Log to console in development
     logger.info(`Audit: ${action}`, 'AuditLog', entry);
 
-    // In production, you would send this to a secure server
-    // sendAuditToServer(entry);
+    // Asynchronously insert into database with local storage queue strictly as offline fallback
+    void (async () => {
+        try {
+            let activeUserId = entry.userId;
+            let activeUserEmail: string | null = null;
+
+            // Retrieve active session details from supabase client if not provided
+            if (!activeUserId) {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    activeUserId = session.user.id;
+                    activeUserEmail = session.user.email || null;
+                }
+            }
+
+            const payload: Database['public']['Tables']['audit_logs']['Insert'] = {
+                id: entry.id,
+                action,
+                user_id: activeUserId || null,
+                user_email: activeUserEmail,
+                table_name: entry.targetType || 'system',
+                record_id: entry.targetId || 'system',
+                new_data: (entry.details || null) as Database['public']['Tables']['audit_logs']['Insert']['new_data'],
+                old_data: null,
+                user_agent: entry.userAgent || null,
+                session_id: entry.sessionId || null
+            };
+
+            const { error } = await supabase.from('audit_logs').insert(payload);
+            if (error) throw error;
+        } catch (dbError) {
+            logger.warn(
+                `Failed to save audit log directly to DB. Falling back to local queue. Error: ${dbError instanceof Error ? dbError.message : String(dbError)}`,
+                'AuditLog'
+            );
+            // Fallback: Store locally
+            storeAuditLog(entry);
+        }
+    })();
 }
 
 function storeAuditLog(entry: AuditLogEntry): void {
@@ -555,10 +668,11 @@ export async function exportAuditLog(): Promise<string> {
 }
 
 // ============================================
-// SESSION MANAGEMENT
+// SESSION MANAGEMENT & TIMEOUTS
 // ============================================
 
 const SESSION_ID_KEY = 'portal_guru_session_id';
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes (Merged from security.ts)
 
 function getSessionId(): string {
     let sessionId = sessionStorage.getItem(SESSION_ID_KEY);
@@ -567,6 +681,28 @@ function getSessionId(): string {
         sessionStorage.setItem(SESSION_ID_KEY, sessionId);
     }
     return sessionId;
+}
+
+/**
+ * Check if session is still valid (Merged from security.ts)
+ */
+export function isSessionValid(lastActivity: number): boolean {
+    return Date.now() - lastActivity < SESSION_TIMEOUT;
+}
+
+/**
+ * Update last activity timestamp (Merged from security.ts)
+ */
+export function updateLastActivity(): void {
+    void storageSet('portal_guru_last_activity', Date.now().toString());
+}
+
+/**
+ * Get last activity timestamp (Merged from security.ts)
+ */
+export async function getLastActivity(): Promise<number> {
+    const stored = await storageGet('portal_guru_last_activity');
+    return stored ? parseInt(stored, 10) : Date.now();
 }
 
 // ============================================
@@ -583,7 +719,6 @@ export function sanitizeFormData<T extends Record<string, any>>(data: T): T {
         const value = sanitized[key];
 
         if (typeof value === 'string') {
-            // Sanitize based on field type
             // Sanitize based on field type
             if (key.toLowerCase().includes('html') || key.toLowerCase().includes('content')) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -614,13 +749,6 @@ export function sanitizeFormData<T extends Record<string, any>>(data: T): T {
 // ============================================
 
 /**
- * Get CSP nonce for inline scripts (should be generated server-side)
- */
-export function getCSPNonce(): string {
-    return generateSecureToken(16);
-}
-
-/**
  * Check if script src is allowed
  */
 export function isAllowedScriptSrc(src: string, allowedDomains: string[]): boolean {
@@ -635,21 +763,119 @@ export function isAllowedScriptSrc(src: string, allowedDomains: string[]): boole
 }
 
 // ============================================
+// SECURITY AUDIT FOR PORTAL GURU (Merged from security.ts)
+// ============================================
+
+export interface SecurityAuditResult {
+    passed: boolean;
+    checks: {
+        name: string;
+        passed: boolean;
+        message: string;
+    }[];
+    score: number;
+}
+
+/**
+ * Run security audit for parent portal
+ */
+export function runParentPortalSecurityAudit(): SecurityAuditResult {
+    const checks: SecurityAuditResult['checks'] = [];
+
+    // Check 1: HTTPS
+    checks.push({
+        name: 'HTTPS Connection',
+        passed: location.protocol === 'https:' || location.hostname === 'localhost',
+        message: location.protocol === 'https:' || location.hostname === 'localhost'
+            ? 'Koneksi aman menggunakan HTTPS'
+            : 'Koneksi tidak aman! Gunakan HTTPS'
+    });
+
+    // Check 2: Session storage
+    checks.push({
+        name: 'Session Storage',
+        passed: typeof Storage !== 'undefined',
+        message: typeof Storage !== 'undefined'
+            ? 'Storage tersedia untuk session management'
+            : 'Storage tidak tersedia'
+    });
+
+    // Check 3: Crypto API
+    checks.push({
+        name: 'Crypto API',
+        passed: typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function',
+        message: typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function'
+            ? 'Crypto API tersedia untuk enkripsi'
+            : 'Crypto API tidak tersedia'
+    });
+
+    // Check 4: CSP (Content Security Policy)
+    const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    checks.push({
+        name: 'Content Security Policy',
+        passed: !!cspMeta,
+        message: cspMeta
+            ? 'CSP dikonfigurasi'
+            : 'CSP belum dikonfigurasi (opsional tapi direkomendasikan)'
+    });
+
+    // Check 5: Cookie security
+    checks.push({
+        name: 'Cookie Security',
+        passed: true, // Supabase handles this
+        message: 'Supabase menangani keamanan cookie'
+    });
+
+    // Calculate score
+    const passedCount = checks.filter(c => c.passed).length;
+    const score = Math.round((passedCount / checks.length) * 100);
+
+    return {
+        passed: score >= 80,
+        checks,
+        score
+    };
+}
+
+// ============================================
+// INPUT VALIDATION HELPERS (Merged from security.ts)
+// ============================================
+
+/**
+ * Validate and sanitize user input
+ */
+export function validateAndSanitize(input: string): { valid: boolean; sanitized: string; error?: string } {
+    // Check for XSS
+    if (hasXssAttempt(input)) {
+        return { valid: false, sanitized: '', error: 'Input mengandung karakter yang tidak diizinkan' };
+    }
+
+    // Check for SQL injection
+    if (hasSqlInjectionAttempt(input)) {
+        return { valid: false, sanitized: '', error: 'Input mengandung karakter yang tidak diizinkan' };
+    }
+
+    // Sanitize
+    const sanitized = sanitizeForXss(input.trim());
+
+    return { valid: true, sanitized };
+}
+
+// ============================================
 // EXPORTS
 // ============================================
 
 export const enhancedSecurity = {
-    // CSRF
-    generateCSRFToken,
-    validateCSRFToken,
-    getCSRFToken,
-    csrfFetch,
-
     // XSS
     escapeHtml,
     sanitizeContent,
     sanitizeText,
     sanitizeUrl,
+    hasXssAttempt,
+    sanitizeForXss,
+
+    // SQL Injection
+    hasSqlInjectionAttempt,
 
     // File validation
     validateFile,
@@ -661,19 +887,34 @@ export const enhancedSecurity = {
     generateSecurePassword,
     generateSecureToken,
     hashString,
+    isValidAccessCode,
+    hashAccessCode,
 
     // Audit
     auditLog,
     getAuditLog,
     clearAuditLog,
     exportAuditLog,
+    logSecurityEvent,
+    getSecurityLogs,
+    clearSecurityLogs,
+
+    // Session
+    isSessionValid,
+    updateLastActivity,
+    getLastActivity,
 
     // Form
     sanitizeFormData,
 
     // CSP
-    getCSPNonce,
-    isAllowedScriptSrc
+    isAllowedScriptSrc,
+
+    // Security Audit
+    runParentPortalSecurityAudit,
+
+    // Validation
+    validateAndSanitize
 };
 
 export default enhancedSecurity;

@@ -137,6 +137,7 @@ export type Database = {
           affected_ids: string[]
           can_undo: boolean | null
           created_at: string | null
+          description: string | null
           entity_type: string
           expires_at: string
           id: string
@@ -148,6 +149,7 @@ export type Database = {
           affected_ids: string[]
           can_undo?: boolean | null
           created_at?: string | null
+          description?: string | null
           entity_type: string
           expires_at: string
           id?: string
@@ -159,6 +161,7 @@ export type Database = {
           affected_ids?: string[]
           can_undo?: boolean | null
           created_at?: string | null
+          description?: string | null
           entity_type?: string
           expires_at?: string
           id?: string
@@ -1338,6 +1341,64 @@ export type Database = {
             referencedRelation: "semesters"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      student_development_analyses: {
+        Row: {
+          id: string
+          student_id: string
+          user_id: string
+          academic_year_id: string | null
+          semester_id: string | null
+          analysis_data: Json
+          generated_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          user_id: string
+          academic_year_id?: string | null
+          semester_id?: string | null
+          analysis_data: Json
+          generated_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          user_id?: string
+          academic_year_id?: string | null
+          semester_id?: string | null
+          analysis_data?: Json
+          generated_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_development_analyses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_development_analyses_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_development_analyses_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: false
+            referencedRelation: "semesters"
+            referencedColumns: ["id"]
+          }
         ]
       }
     }

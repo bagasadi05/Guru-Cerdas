@@ -24,9 +24,14 @@ import { useToast } from '../../hooks/useToast';
 import {
   generateComprehensiveChildAnalysis,
   ComprehensiveChildAnalysis,
-  ChildDevelopmentData
+  ChildDevelopmentData,
+  saveAnalysisToDb,
+  getLatestAnalysisFromDb
 } from '../../services/childDevelopmentAnalysis';
 import { useMemo } from 'react';
+import { getJsPDF, getAutoTable } from '../../utils/dynamicImports';
+import { motion, AnimatePresence } from 'framer-motion';
+import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 
 // Helper functions for Radar Chart
 const calculateRadarPoints = (values: number[], max: number, centerX: number, centerY: number, radius: number): string => {
@@ -261,6 +266,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   const [analysis, setAnalysis] = useState<ComprehensiveChildAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(1);
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
   const toast = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -307,6 +313,9 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   const studentScores = subjectAverages.map(s => s.average);
   const overallAverage = studentScores.length > 0 ? Math.round(studentScores.reduce((a, b) => a + b, 0) / studentScores.length) : 0;
 
+  // Radar chart validation
+  const isRadarChartValid = subjects.length >= 3;
+
   // Radar chart dimensions
   const chartSize = 260;
   const centerX = chartSize / 2;
@@ -314,9 +323,9 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   const radius = chartSize / 2 - 40;
   const maxScore = 100;
   const gridLevels = [20, 40, 60, 80, 100];
-  const axisEndpoints = calculateAxisEndpoints(subjects.length, centerX, centerY, radius);
-  const labelPositions = calculateLabelPositions(subjects, centerX, centerY, radius);
-  const studentPolygonPoints = calculateRadarPoints(studentScores, maxScore, centerX, centerY, radius);
+  const axisEndpoints = useMemo(() => calculateAxisEndpoints(subjects.length, centerX, centerY, radius), [subjects.length, centerX, centerY, radius]);
+  const labelPositions = useMemo(() => calculateLabelPositions(subjects, centerX, centerY, radius), [subjects, centerX, centerY, radius]);
+  const studentPolygonPoints = useMemo(() => calculateRadarPoints(studentScores, maxScore, centerX, centerY, radius), [studentScores, maxScore, centerX, centerY, radius]);
 
   // Helper to get storage key
   const getStorageKey = useCallback(
@@ -324,115 +333,477 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     [studentData.student.name, studentData.student.class]
   );
 
-  // Load from local storage on mount
+  // Load from database / local storage on mount
   useEffect(() => {
-    const savedAnalysis = localStorage.getItem(getStorageKey());
-    if (savedAnalysis) {
+    const loadAnalysis = async () => {
+      // 1. Try DB
       try {
-        setAnalysis(JSON.parse(savedAnalysis));
-      } catch (e) {
-        console.error('Failed to parse saved analysis:', e);
-        localStorage.removeItem(getStorageKey());
+        const dbAnalysis = await getLatestAnalysisFromDb(studentData.student.id);
+        if (dbAnalysis) {
+          setAnalysis(dbAnalysis);
+          return;
+        }
+      } catch (err) {
+        console.error('Gagal memuat analisis dari Supabase, mencoba localStorage:', err);
       }
+
+      // 2. Fallback to LocalStorage
+      const savedAnalysis = localStorage.getItem(getStorageKey());
+      if (savedAnalysis) {
+        try {
+          setAnalysis(JSON.parse(savedAnalysis));
+        } catch (e) {
+          console.error('Failed to parse saved analysis:', e);
+          localStorage.removeItem(getStorageKey());
+        }
+      }
+    };
+
+    loadAnalysis();
+  }, [studentData.student.id, getStorageKey]);
+
+  // "30-Second Glance" summary calculation
+  const glanceSummary = useMemo(() => {
+    if (!analysis) return null;
+
+    const cleanText = (text: string) => {
+      if (!text) return '';
+      return text
+        .replace(/^[\s\d•\-*🌟💡🎯🏠🏆👣🙋‍♂️🏫⭐🎒😇🔥👍👌💪🏃‍♂️🛠️★►]+/, '') // Remove prefix emojis, bullets, etc.
+        .trim();
+    };
+
+    const superpower = analysis.cognitive.strengths && analysis.cognitive.strengths.length > 0
+      ? cleanText(analysis.cognitive.strengths[0])
+      : 'Menunjukkan motivasi belajar dan respon afektif yang baik di kelas.';
+
+    const challenge = analysis.cognitive.areasForDevelopment && analysis.cognitive.areasForDevelopment.length > 0
+      ? cleanText(analysis.cognitive.areasForDevelopment[0])
+      : 'Dukung kemandirian dalam memecahkan soal latihan tingkat lanjut.';
+
+    const homeTip = analysis.recommendations.homeSupport && analysis.recommendations.homeSupport.length > 0
+      ? cleanText(analysis.recommendations.homeSupport[0])
+      : 'Sediakan sesi membaca bersama 15 menit sehari di rumah.';
+
+    return { superpower, challenge, homeTip };
+  }, [analysis]);
+
+  // "Status Perkembangan" Badges (HSL colors)
+  const developmentBadges = useMemo(() => {
+    // Cognitive
+    let cognitiveLabel = 'Cukup';
+    let cognitiveColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50';
+    let cognitiveDot = 'bg-amber-500';
+    if (overallAverage >= 85) {
+      cognitiveLabel = 'Sangat Baik';
+      cognitiveColor = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50';
+      cognitiveDot = 'bg-emerald-500';
+    } else if (overallAverage >= 75) {
+      cognitiveLabel = 'Baik';
+      cognitiveColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50';
+      cognitiveDot = 'bg-blue-500';
+    } else if (overallAverage < 60) {
+      cognitiveLabel = 'Perlu Pendampingan';
+      cognitiveColor = 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50';
+      cognitiveDot = 'bg-rose-500';
     }
-  }, [getStorageKey]);
+
+    // Affective
+    const attendanceRecords = studentData.attendanceRecords || [];
+    const violations = studentData.violations || [];
+    const totalViolations = violations.length;
+    const attendanceRate = attendanceRecords.length > 0
+      ? (attendanceRecords.filter(a => a.status === 'Hadir').length / attendanceRecords.length) * 100
+      : 100;
+
+    let affectiveLabel = 'Cukup Disiplin';
+    let affectiveColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50';
+    let affectiveDot = 'bg-amber-500';
+    if (attendanceRate >= 95 && totalViolations === 0) {
+      affectiveLabel = 'Sangat Disiplin';
+      affectiveColor = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50';
+      affectiveDot = 'bg-emerald-500';
+    } else if (attendanceRate >= 85 && totalViolations <= 1) {
+      affectiveLabel = 'Disiplin';
+      affectiveColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50';
+      affectiveDot = 'bg-blue-500';
+    } else if (attendanceRate < 75 || totalViolations > 3) {
+      affectiveLabel = 'Perlu Perhatian';
+      affectiveColor = 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50';
+      affectiveDot = 'bg-rose-500';
+    }
+
+    // Psychomotor
+    let psychomotorLabel = 'Cukup Aktif';
+    let psychomotorColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50';
+    let psychomotorDot = 'bg-amber-500';
+
+    const outstandingCount = analysis?.psychomotor?.outstandingSkills?.length || 0;
+    const needStimulationCount = analysis?.psychomotor?.areasNeedingStimulation?.length || 0;
+
+    if (outstandingCount >= 3 && needStimulationCount <= 1) {
+      psychomotorLabel = 'Sangat Aktif';
+      psychomotorColor = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50';
+      psychomotorDot = 'bg-emerald-500';
+    } else if (outstandingCount >= 1 && needStimulationCount <= 2) {
+      psychomotorLabel = 'Aktif';
+      psychomotorColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50';
+      psychomotorDot = 'bg-blue-500';
+    } else if (needStimulationCount > 2) {
+      psychomotorLabel = 'Perlu Stimulasi';
+      psychomotorColor = 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50';
+      psychomotorDot = 'bg-rose-500';
+    }
+
+    return {
+      cognitive: { label: cognitiveLabel, color: cognitiveColor, dot: cognitiveDot },
+      affective: { label: affectiveLabel, color: affectiveColor, dot: affectiveDot },
+      psychomotor: { label: psychomotorLabel, color: psychomotorColor, dot: psychomotorDot }
+    };
+  }, [analysis, overallAverage, studentData]);
 
   const handleGenerateAnalysis = async () => {
     setIsLoading(true);
     setLoadingStep(1);
+
+    // Setup micro-interaction interval timer for loading steps
+    const stepInterval = setInterval(() => {
+      setLoadingStep(prev => {
+        if (prev < 5) return prev + 1;
+        return prev;
+      });
+    }, 1200);
+
     try {
       const result = await generateComprehensiveChildAnalysis(studentData);
       setAnalysis(result);
+
       // Save to local storage
       localStorage.setItem(getStorageKey(), JSON.stringify(result));
+
+      // Save to Supabase DB (silent sync, doesn't crash on offline)
+      try {
+        await saveAnalysisToDb(
+          studentData.student.id,
+          result,
+          result.generatedBy || 'AI'
+        );
+      } catch (dbError) {
+        console.error('Supabase Sync Error:', dbError);
+      }
+
       toast.success('Analisis perkembangan anak berhasil dibuat!');
     } catch (error) {
       toast.error('Gagal membuat analisis. Silakan coba lagi.');
       console.error(error);
     } finally {
+      clearInterval(stepInterval);
       setIsLoading(false);
       setLoadingStep(1);
     }
   };
 
-  // Export report as text/html
-  const handleExportReport = () => {
+  // Export report as PDF Premium
+  const handleExportReport = async () => {
     if (!analysis) return;
 
-    const reportContent = `
-LAPORAN ANALISIS PERKEMBANGAN ANAK
-=====================================
-Nama: ${analysis.summary.name}
-Usia: ${analysis.summary.age} Tahun
-Kelas: ${analysis.summary.class}
-Tanggal: ${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+    try {
+      toast.info('Menyiapkan Laporan PDF Premium...');
 
-=====================================
-RINGKASAN PERKEMBANGAN
-=====================================
-${analysis.summary.overallAssessment}
+      // Load school logos
+      await ensureLogosLoaded();
 
-=====================================
-A. ANALISIS PERKEMBANGAN KOGNITIF
-=====================================
-Kekuatan:
-${analysis.cognitive.strengths.map(s => `• ${s}`).join('\n')}
+      const { default: jsPDF } = await getJsPDF();
+      const { default: autoTable } = await getAutoTable();
 
-Area Pengembangan:
-${analysis.cognitive.areasForDevelopment.map(a => `• ${a}`).join('\n')}
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 14;
 
-Gaya Belajar: ${analysis.cognitive.learningStyle}
-Kemampuan Berpikir Kritis: ${analysis.cognitive.criticalThinking}
+      // Formal Kop Surat
+      let y = addPdfHeader(doc, {
+        schoolName: 'MI AL IRSYAD KOTA MADIUN',
+        orientation: 'portrait'
+      });
 
-=====================================
-B. ANALISIS PERKEMBANGAN AFEKTIF
-=====================================
-Karakter Positif:
-${analysis.affective.positiveCharacters.map(c => `• ${c}`).join('\n')}
+      // Report Title
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59); // Slate 800
+      doc.text('LAPORAN ANALISIS PERKEMBANGAN SISWA', pageWidth / 2, y, { align: 'center' });
+      y += 8;
 
-Kemampuan Sosial: ${analysis.affective.socialSkills}
-Kecerdasan Emosional: ${analysis.affective.emotionalIntelligence}
-Kedisiplinan: ${analysis.affective.discipline}
+      // Metadata Table (elegant, clean)
+      autoTable(doc, {
+        startY: y,
+        body: [
+          ['Nama Siswa', `: ${analysis.summary.name}`, 'Kelas / TA', `: ${analysis.summary.class} / ${new Date().getFullYear()}/${new Date().getFullYear() + 1}`],
+          ['Usia', `: ${analysis.summary.age} Tahun`, 'Tanggal Cetak', `: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`],
+        ],
+        theme: 'plain',
+        styles: { fontSize: 9.5, cellPadding: 1.5, textColor: [51, 65, 85] },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 28 },
+          1: { cellWidth: 60 },
+          2: { fontStyle: 'bold', cellWidth: 28 },
+          3: { cellWidth: 60 },
+        },
+      });
 
-=====================================
-C. ANALISIS PERKEMBANGAN PSIKOMOTOR
-=====================================
-Kemampuan Motorik: ${analysis.psychomotor.motorSkills}
-Koordinasi: ${analysis.psychomotor.coordination}
+      y = (doc as any).lastAutoTable.finalY + 6;
 
-Keterampilan Menonjol:
-${analysis.psychomotor.outstandingSkills.map(s => `• ${s}`).join('\n')}
+      // Divide line
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 6;
 
-=====================================
-D. REKOMENDASI UNTUK ORANG TUA
-=====================================
-Dukungan di Rumah:
-${analysis.recommendations.homeSupport.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+      // 1. Overall assessment / Ringkasan Perkembangan
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text('I. RINGKASAN PERKEMBANGAN ANANDA', margin, y);
+      y += 5;
 
-Target 3 Bulan:
-${analysis.recommendations.developmentPlan.threeMonths.map(t => `• ${t}`).join('\n')}
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(71, 85, 105);
+      const splitOverall = doc.splitTextToSize(analysis.summary.overallAssessment, pageWidth - margin * 2);
+      doc.text(splitOverall, margin, y);
+      y += splitOverall.length * 4.5 + 4;
 
-Target 6 Bulan:
-${analysis.recommendations.developmentPlan.sixMonths.map(t => `• ${t}`).join('\n')}
+      // 2. Academic & Attendance Stats Table
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text('II. PERFORMA AKADEMIK & KEHADIRAN', margin, y);
+      y += 5;
 
-Tanda Peringatan:
-${analysis.recommendations.warningsSigns.map(w => `⚠️ ${w}`).join('\n')}
+      // Academic data mapping
+      const academicData = subjectAverages.map((sub, idx) => [
+        idx + 1,
+        sub.subject,
+        sub.average,
+        sub.average >= 85 ? 'Sangat Baik' : sub.average >= 75 ? 'Baik' : sub.average >= 65 ? 'Cukup' : 'Perlu Pendampingan'
+      ]);
 
-=====================================
-Catatan: Analisis ini dibuat dengan bantuan AI berdasarkan data akademik dan perilaku.
-Konsultasikan dengan profesional untuk evaluasi lebih lanjut.
-    `;
+      autoTable(doc, {
+        startY: y,
+        head: [['No', 'Mata Pelajaran', 'Nilai Rata-rata', 'Predikat']],
+        body: academicData,
+        theme: 'striped',
+        headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
+        styles: { fontSize: 8.5, cellPadding: 2, halign: 'center' },
+        columnStyles: {
+          0: { cellWidth: 12 },
+          1: { cellWidth: 80, halign: 'left' },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 50 },
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] }
+      });
 
-    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Laporan_Perkembangan_${analysis.summary.name}_${new Date().toISOString().slice(0, 10)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Laporan berhasil diunduh!');
+      y = (doc as any).lastAutoTable.finalY + 6;
+
+      // Attendance Rekap
+      const totalAttend = studentData.attendanceRecords.length;
+      const hadir = studentData.attendanceRecords.filter(a => a.status === 'Hadir').length;
+      const sakit = studentData.attendanceRecords.filter(a => a.status === 'Sakit').length;
+      const izin = studentData.attendanceRecords.filter(a => a.status === 'Izin').length;
+      const alpha = studentData.attendanceRecords.filter(a => a.status === 'Alpha').length;
+      const percentage = totalAttend > 0 ? ((hadir / totalAttend) * 100).toFixed(1) : '100';
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Kehadiran (H)', 'Sakit (S)', 'Izin (I)', 'Alpha (A)', 'Persentase Kehadiran']],
+        body: [[`${hadir} Hari`, `${sakit} Hari`, `${izin} Hari`, `${alpha} Hari`, `${percentage}%`]],
+        theme: 'grid',
+        headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
+        styles: { fontSize: 8.5, cellPadding: 2.5, halign: 'center' },
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 8;
+
+      // Check if we need to add a new page (prevent orphans)
+      if (y > 220) {
+        doc.addPage();
+        y = 20;
+      }
+
+      // 3. Cognitive, Affective, Psychomotor details
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text('III. DETIL ASPEK PERKEMBANGAN', margin, y);
+      y += 6;
+
+      // Cognitive
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(79, 70, 229);
+      doc.text('A. Perkembangan Pola Pikir & Kognitif', margin, y);
+      y += 4.5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      doc.text(`• Gaya Belajar: ${analysis.cognitive.learningStyle}`, margin + 3, y);
+      y += 4.5;
+      doc.text(`• Berpikir Kritis: ${analysis.cognitive.criticalThinking}`, margin + 3, y);
+      y += 4.5;
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Kekuatan Utama Kognitif:', margin + 3, y);
+      y += 4;
+      doc.setFont('helvetica', 'normal');
+      analysis.cognitive.strengths.slice(0, 2).forEach(str => {
+        const lines = doc.splitTextToSize(`- ${str}`, pageWidth - margin * 2 - 6);
+        doc.text(lines, margin + 5, y);
+        y += lines.length * 4.5;
+      });
+      y += 2;
+
+      // Check height
+      if (y > 235) {
+        doc.addPage();
+        y = 20;
+      }
+
+      // Affective
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(79, 70, 229);
+      doc.text('B. Aspek Afektif & Karakter Positif', margin, y);
+      y += 4.5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      doc.text(`• Kemampuan Sosial: ${analysis.affective.socialSkills}`, margin + 3, y);
+      y += 4.5;
+      doc.text(`• Kedisiplinan: ${analysis.affective.discipline}`, margin + 3, y);
+      y += 4.5;
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Karakter Positif Menonjol:', margin + 3, y);
+      y += 4;
+      doc.setFont('helvetica', 'normal');
+      analysis.affective.positiveCharacters.slice(0, 2).forEach(char => {
+        const lines = doc.splitTextToSize(`- ${char}`, pageWidth - margin * 2 - 6);
+        doc.text(lines, margin + 5, y);
+        y += lines.length * 4.5;
+      });
+      y += 2;
+
+      // Check height
+      if (y > 235) {
+        doc.addPage();
+        y = 20;
+      }
+
+      // Psychomotor
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(79, 70, 229);
+      doc.text('C. Aspek Psikomotor & Keterampilan Fisik', margin, y);
+      y += 4.5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      doc.text(`• Kemampuan Motorik: ${analysis.psychomotor.motorSkills}`, margin + 3, y);
+      y += 4.5;
+      doc.text(`• Koordinasi Fisik: ${analysis.psychomotor.coordination}`, margin + 3, y);
+      y += 4.5;
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Keterampilan Fisik Terbaik:', margin + 3, y);
+      y += 4;
+      doc.setFont('helvetica', 'normal');
+      analysis.psychomotor.outstandingSkills.slice(0, 2).forEach(skill => {
+        const lines = doc.splitTextToSize(`- ${skill}`, pageWidth - margin * 2 - 6);
+        doc.text(lines, margin + 5, y);
+        y += lines.length * 4.5;
+      });
+      y += 6;
+
+      // Check page break for Recommendations
+      if (y > 200) {
+        doc.addPage();
+        y = 20;
+      }
+
+      // 4. Recommendations & Development Plan
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text('IV. REKOMENDASI & RENCANA PENGEMBANGAN', margin, y);
+      y += 6;
+
+      // Home support text
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(79, 70, 229);
+      doc.text('Dukungan di Rumah (Saran Praktis):', margin, y);
+      y += 4.5;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      analysis.recommendations.homeSupport.slice(0, 3).forEach((support, idx) => {
+        const lines = doc.splitTextToSize(`${idx + 1}. ${support}`, pageWidth - margin * 2 - 4);
+        doc.text(lines, margin + 2, y);
+        y += lines.length * 4.5;
+      });
+      y += 4;
+
+      // Target 3 Bulan & 6 Bulan inside grid
+      autoTable(doc, {
+        startY: y,
+        head: [['Rencana Target 3 Bulan', 'Rencana Target 6 Bulan']],
+        body: [[
+          analysis.recommendations.developmentPlan.threeMonths.slice(0, 3).map(t => `• ${t}`).join('\n\n'),
+          analysis.recommendations.developmentPlan.sixMonths.slice(0, 3).map(t => `• ${t}`).join('\n\n')
+        ]],
+        theme: 'grid',
+        headStyles: { fillColor: [245, 158, 11], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
+        styles: { fontSize: 8.5, cellPadding: 3, textColor: [71, 85, 105] },
+        columnStyles: {
+          0: { cellWidth: 91 },
+          1: { cellWidth: 91 },
+        }
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 18;
+
+      // Signature page check
+      if (y > 240) {
+        doc.addPage();
+        y = 25;
+      }
+
+      // 5. Signature Block
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(51, 65, 85);
+
+      const printDateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      doc.text(`Madiun, ${printDateStr}`, pageWidth - 70, y);
+
+      doc.text('Mengetahui,', margin + 10, y + 5);
+      doc.text('Kepala Madrasah,', margin + 10, y + 10);
+
+      doc.text('Wali Kelas,', pageWidth - 70, y + 10);
+
+      // Names signatures place
+      y += 32;
+      doc.setFont('helvetica', 'bold');
+      doc.text('( H. Masturi, S.Pd.I. )', margin + 10, y);
+      doc.text(`( ${studentData.student.class ? 'Guru Wali Kelas' : 'Wali Kelas'} )`, pageWidth - 70, y);
+
+      const safeName = analysis.summary.name.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+      doc.save(`Laporan_Perkembangan_Siswa_${safeName}.pdf`);
+
+      toast.success('Laporan PDF Premium berhasil diunduh!');
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+      toast.error('Gagal membuat ekspor PDF Premium. Silakan coba kembali.');
+    }
   };
 
   // Generate actionable recommendations from analysis
@@ -549,20 +920,32 @@ Konsultasikan dengan profesional untuk evaluasi lebih lanjut.
         {/* Charts */}
         {subjectAverages.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Radar Chart */}
+            {/* Radar Chart with Safety Check */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
               <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Spider Chart: Performa per Mapel</h4>
-              <div className="flex justify-center">
-                <svg width={chartSize} height={chartSize} className="overflow-visible">
-                  {gridLevels.map(level => (
-                    <polygon key={level} points={calculateRadarPoints(subjects.map(() => level), maxScore, centerX, centerY, radius)} fill="none" stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />
-                  ))}
-                  {axisEndpoints.map((axis, i) => (<line key={i} x1={axis.x1} y1={axis.y1} x2={axis.x2} y2={axis.y2} stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />))}
-                  <polygon points={studentPolygonPoints} fill="rgba(99, 102, 241, 0.3)" stroke="rgb(99, 102, 241)" strokeWidth="2" />
-                  {subjects.map((_, i) => { const angle = i * (2 * Math.PI / subjects.length) - Math.PI / 2; const ratio = studentScores[i] / maxScore; return (<circle key={i} cx={centerX + radius * ratio * Math.cos(angle)} cy={centerY + radius * ratio * Math.sin(angle)} r="5" fill="white" stroke="rgb(99, 102, 241)" strokeWidth="2" />); })}
-                  {labelPositions.map((pos, i) => (<text key={i} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" className="text-[10px] font-medium fill-slate-600 dark:fill-slate-400">{pos.label.length > 10 ? pos.label.substring(0, 10) + '...' : pos.label}</text>))}
-                </svg>
-              </div>
+              {isRadarChartValid ? (
+                <div className="flex justify-center">
+                  <svg width={chartSize} height={chartSize} className="overflow-visible">
+                    {gridLevels.map(level => (
+                      <polygon key={level} points={calculateRadarPoints(subjects.map(() => level), maxScore, centerX, centerY, radius)} fill="none" stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />
+                    ))}
+                    {axisEndpoints.map((axis, i) => (<line key={i} x1={axis.x1} y1={axis.y1} x2={axis.x2} y2={axis.y2} stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />))}
+                    <polygon points={studentPolygonPoints} fill="rgba(99, 102, 241, 0.3)" stroke="rgb(99, 102, 241)" strokeWidth="2" />
+                    {subjects.map((_, i) => { const angle = i * (2 * Math.PI / subjects.length) - Math.PI / 2; const ratio = studentScores[i] / maxScore; return (<circle key={i} cx={centerX + radius * ratio * Math.cos(angle)} cy={centerY + radius * ratio * Math.sin(angle)} r="5" fill="white" stroke="rgb(99, 102, 241)" strokeWidth="2" />); })}
+                    {labelPositions.map((pos, i) => (<text key={i} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" className="text-[10px] font-medium fill-slate-600 dark:fill-slate-400">{pos.label.length > 10 ? pos.label.substring(0, 10) + '...' : pos.label}</text>))}
+                  </svg>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[260px]">
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-full p-4 mb-4 text-indigo-500">
+                    <BrainCircuitIcon className="w-12 h-12" />
+                  </div>
+                  <h5 className="font-semibold text-slate-800 dark:text-slate-200 text-center mb-2">Bagan Radar Tidak Tersedia</h5>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 text-center max-w-[280px] leading-relaxed">
+                    Bagan Radar membutuhkan minimal 3 mata pelajaran dengan nilai untuk memetakan kekuatan kognitif secara geometri. Saat ini siswa baru memiliki {subjects.length} mata pelajaran.
+                  </p>
+                </div>
+              )}
               <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-3">Rata-rata: <span className="font-bold text-indigo-600 dark:text-indigo-400">{overallAverage}</span></p>
             </div>
             {/* Bar Chart */}
@@ -606,17 +989,26 @@ Konsultasikan dengan profesional untuk evaluasi lebih lanjut.
 
   return (
     <div className="space-y-6 pb-8" ref={reportRef}>
-      {/* Header with Export */}
+      {/* Header Laporan */}
       <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800">
-        <CardHeader>
+        <CardHeader className="pb-4">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-full p-3">
                 <BrainCircuitIcon className="w-6 h-6 text-white" />
               </div>
               <div>
-                <CardTitle className="text-2xl">Ringkasan Perkembangan Anak</CardTitle>
-                <CardDescription className="mt-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <CardTitle className="text-2xl font-bold">Ringkasan Perkembangan Anak</CardTitle>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${
+                    analysis.generatedBy === 'Offline Fallback'
+                      ? 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                      : 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/50'
+                  }`}>
+                    {analysis.generatedBy === 'Offline Fallback' ? '📴 Offline Standard' : '✨ AI Generated'}
+                  </span>
+                </div>
+                <CardDescription className="mt-1 font-medium">
                   {analysis.summary.name} • {analysis.summary.age} Tahun • Kelas {analysis.summary.class}
                 </CardDescription>
               </div>
@@ -626,15 +1018,16 @@ Konsultasikan dengan profesional untuk evaluasi lebih lanjut.
                 onClick={handleExportReport}
                 variant="outline"
                 size="sm"
-                className="bg-white/50 dark:bg-black/20"
+                className="bg-white/50 dark:bg-black/20 font-semibold hover:shadow-sm"
               >
                 <DownloadIcon className="w-4 h-4 mr-2" />
-                Export Laporan
+                Export PDF Premium
               </Button>
               <Button
                 onClick={handleGenerateAnalysis}
                 variant="ghost"
                 size="sm"
+                className="font-semibold"
               >
                 <RefreshCwIcon className="w-4 h-4 mr-2" />
                 Refresh
@@ -642,249 +1035,422 @@ Konsultasikan dengan profesional untuk evaluasi lebih lanjut.
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-            {analysis.summary.overallAssessment}
-          </p>
-        </CardContent>
       </Card>
 
-      {/* Period Comparison in Analysis View */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <PeriodComparison
-          currentAvg={periodStats.currentAvg}
-          previousAvg={periodStats.previousAvg}
-          label="Rata-rata Saat Ini"
-        />
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-          <p className="text-xs text-gray-500 mb-1">Trend Kehadiran</p>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {studentData.attendanceRecords.filter(a => a.status === 'Hadir').length}
-            </span>
-            <span className="text-sm text-gray-400">
-              / {studentData.attendanceRecords.length} hari
-            </span>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-          <p className="text-xs text-gray-500 mb-1">Poin Keaktifan</p>
-          <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {studentData.quizPoints.length}
-          </span>
-        </div>
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-          <p className="text-xs text-gray-500 mb-1">Pelanggaran</p>
-          <span className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {studentData.violations.reduce((a, b) => a + b.points, 0)} poin
-          </span>
-        </div>
-      </div>
-
-      {/* Actionable Recommendations Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg p-2">
-              <PlayCircleIcon className="w-5 h-5 text-white" />
+      {/* 30-Second Glance Ringkasan Ananda */}
+      {glanceSummary && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 dark:from-emerald-500/5 dark:to-teal-500/0 border border-emerald-500/20 dark:border-emerald-500/10 rounded-2xl p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl -mr-6 -mt-6" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/25 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 font-semibold text-lg">
+              🌟
             </div>
-            <div>
-              <CardTitle>Rekomendasi Aksi</CardTitle>
-              <CardDescription>Langkah-langkah konkret yang bisa dilakukan segera</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {actionableRecommendations.map((rec, idx) => (
-              <ActionableRecommendation key={idx} {...rec} />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Rest of the analysis sections... (keeping existing structure but abbreviated) */}
-      {/* A. Cognitive Development */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg p-2">
-              <BookOpenIcon className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <CardTitle>A. Perkembangan Pola Pikir & Akademik</CardTitle>
-              <CardDescription>Kemampuan akademik dan berpikir</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-              <h5 className="font-semibold text-green-700 dark:text-green-400 mb-2 flex items-center gap-2">
-                <CheckCircleIcon className="w-4 h-4" /> Kekuatan
-              </h5>
-              <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                {analysis.cognitive.strengths.map((s, i) => <li key={i}>• {s}</li>)}
-              </ul>
-            </div>
-            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
-              <h5 className="font-semibold text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-2">
-                <TrendingUpIcon className="w-4 h-4" /> Area Pengembangan
-              </h5>
-              <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                {analysis.cognitive.areasForDevelopment.map((a, i) => <li key={i}>• {a}</li>)}
-              </ul>
-            </div>
-          </div>
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-            <h5 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">Gaya Belajar</h5>
-            <p className="text-sm text-gray-700 dark:text-gray-300">{analysis.cognitive.learningStyle}</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* B. Affective Development - Abbreviated */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-lg p-2">
-              <UsersIcon className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <CardTitle>B. Perkembangan Karakter & Emosi</CardTitle>
-              <CardDescription>Karakter, emosi, dan kemampuan sosial</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-            <h5 className="font-semibold text-green-700 dark:text-green-400 mb-2">Karakter Positif</h5>
-            <div className="flex flex-wrap gap-2">
-              {analysis.affective.positiveCharacters.map((c, i) => (
-                <span key={i} className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm">✓ {c}</span>
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-pink-50 dark:bg-pink-900/20 rounded-lg p-4">
-              <h5 className="font-semibold text-pink-900 dark:text-pink-300 mb-2">Kemampuan Sosial</h5>
-              <p className="text-sm text-gray-700 dark:text-gray-300">{analysis.affective.socialSkills}</p>
-            </div>
-            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
-              <h5 className="font-semibold text-purple-900 dark:text-purple-300 mb-2">Kedisiplinan</h5>
-              <p className="text-sm text-gray-700 dark:text-gray-300">{analysis.affective.discipline}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* C. Psychomotor - Abbreviated */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg p-2">
-              <CheckSquareIcon className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <CardTitle>C. Keterampilan Fisik & Kreativitas</CardTitle>
-              <CardDescription>Kemampuan motorik dan keterampilan fisik</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-              <h5 className="font-semibold text-green-900 dark:text-green-300 mb-2">Keterampilan Menonjol</h5>
-              <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                {analysis.psychomotor.outstandingSkills.map((s, i) => <li key={i}>★ {s}</li>)}
-              </ul>
-            </div>
-            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
-              <h5 className="font-semibold text-amber-900 dark:text-amber-300 mb-2">Perlu Stimulasi</h5>
-              <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                {analysis.psychomotor.areasNeedingStimulation.map((a, i) => <li key={i}>► {a}</li>)}
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* D. Development Plan */}
-      <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg p-2">
-              <CalendarIcon className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <CardTitle>D. Rencana Pengembangan</CardTitle>
-              <CardDescription>Target jangka pendek dan menengah</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-amber-500">
-              <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                <ClockIcon className="w-4 h-4" /> Target 3 Bulan
-              </h5>
-              <ul className="space-y-2 text-sm">
-                {analysis.recommendations.developmentPlan.threeMonths.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 text-gray-700 dark:text-gray-300">
-                    <span className="text-amber-500">→</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-orange-500">
-              <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4" /> Target 6 Bulan
-              </h5>
-              <ul className="space-y-2 text-sm">
-                {analysis.recommendations.developmentPlan.sixMonths.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 text-gray-700 dark:text-gray-300">
-                    <span className="text-orange-500">→</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Warning Signs */}
-          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
-            <h5 className="font-semibold text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
-              <AlertCircleIcon className="w-4 h-4" /> Tanda Peringatan
-            </h5>
-            <ul className="space-y-2">
-              {analysis.recommendations.warningsSigns.map((sign, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <AlertCircleIcon className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                  <span>{sign}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Footer Note */}
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
-        <div className="flex items-start gap-4">
-          <div className="bg-purple-100 dark:bg-purple-900/30 rounded-full p-2 flex-shrink-0">
-            <AlertCircleIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-          </div>
-          <div>
-            <h4 className="font-semibold text-purple-900 dark:text-purple-300 mb-2">Catatan Penting</h4>
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-              Analisis ini dibuat berdasarkan data akademik dan perilaku yang tersedia.
-              Setiap anak berkembang dengan kecepatan yang berbeda. Jika Anda memiliki kekhawatiran khusus
-              tentang perkembangan anak, konsultasikan dengan guru, psikolog anak, atau ahli perkembangan anak.
+            <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-wide uppercase mb-1">Kekuatan Utama Ananda</h4>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+              {glanceSummary.superpower}
             </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+            className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 dark:from-amber-500/5 dark:to-orange-500/0 border border-amber-500/20 dark:border-amber-500/10 rounded-2xl p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl -mr-6 -mt-6" />
+            <div className="w-10 h-10 rounded-xl bg-amber-500/25 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3 font-semibold text-lg">
+              🎯
+            </div>
+            <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-wide uppercase mb-1">Tantangan Seru</h4>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+              {glanceSummary.challenge}
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="bg-gradient-to-br from-indigo-500/10 to-sky-500/5 dark:from-indigo-500/5 dark:to-sky-500/0 border border-indigo-500/20 dark:border-indigo-500/10 rounded-2xl p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl -mr-6 -mt-6" />
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/25 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-3 font-semibold text-lg">
+              🏠
+            </div>
+            <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-wide uppercase mb-1">Tips Praktis Rumah</h4>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+              {glanceSummary.homeTip}
+            </p>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Status Perkembangan badges */}
+      <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-4">
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Status Perkembangan Ananda:</span>
+        <div className="flex flex-wrap gap-2">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${developmentBadges.cognitive.color}`}>
+            <span className={`w-2.5 h-2.5 rounded-full ${developmentBadges.cognitive.dot}`} />
+            <span>Kognitif: {developmentBadges.cognitive.label}</span>
+          </div>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${developmentBadges.affective.color}`}>
+            <span className={`w-2.5 h-2.5 rounded-full ${developmentBadges.affective.dot}`} />
+            <span>Afektif: {developmentBadges.affective.label}</span>
+          </div>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${developmentBadges.psychomotor.color}`}>
+            <span className={`w-2.5 h-2.5 rounded-full ${developmentBadges.psychomotor.dot}`} />
+            <span>Psikomotorik: {developmentBadges.psychomotor.label}</span>
           </div>
         </div>
       </div>
+
+      {/* Accordion Expand Button */}
+      <div className="flex justify-center mt-2">
+        <Button
+          onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
+          variant="outline"
+          className="rounded-full shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-bold px-6 py-5 flex items-center gap-2 hover:bg-slate-50 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
+        >
+          {isDetailsExpanded ? 'Sembunyikan Detail Analisis' : 'Lihat Detail Analisis AI & Grafik Radar'}
+          <motion.span
+            animate={{ rotate: isDetailsExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="inline-block"
+          >
+            ↓
+          </motion.span>
+        </Button>
+      </div>
+
+      {/* Accordion Collapsible Detail Content */}
+      <AnimatePresence>
+        {isDetailsExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden space-y-6"
+          >
+            {/* Overall Assessment Text */}
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100">Ulasan Perkembangan Komprehensif</CardTitle>
+                <CardDescription>Ulasan holistik tentang performa dan kepribadian siswa di kelas</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
+                  {analysis.summary.overallAssessment}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Period Comparison in Analysis View */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <PeriodComparison
+                currentAvg={periodStats.currentAvg}
+                previousAvg={periodStats.previousAvg}
+                label="Rata-rata Saat Ini"
+              />
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs text-gray-500 mb-1">Trend Kehadiran</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {studentData.attendanceRecords.filter(a => a.status === 'Hadir').length}
+                  </span>
+                  <span className="text-sm text-gray-400 font-medium">
+                    / {studentData.attendanceRecords.length} hari
+                  </span>
+                </div>
+              </div>
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs text-gray-500 mb-1">Poin Keaktifan</p>
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {studentData.quizPoints.length}
+                </span>
+              </div>
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs text-gray-500 mb-1">Pelanggaran</p>
+                <span className="text-2xl font-bold text-red-600 dark:text-red-400">
+                  {studentData.violations.reduce((a, b) => a + b.points, 0)} poin
+                </span>
+              </div>
+            </div>
+
+            {/* Academic Charts */}
+            {subjectAverages.length > 0 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Radar Chart with Safety Check */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+                  <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Spider Chart: Performa per Mapel</h4>
+                  {isRadarChartValid ? (
+                    <div className="flex justify-center">
+                      <svg width={chartSize} height={chartSize} className="overflow-visible">
+                        {gridLevels.map(level => (
+                          <polygon key={level} points={calculateRadarPoints(subjects.map(() => level), maxScore, centerX, centerY, radius)} fill="none" stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />
+                        ))}
+                        {axisEndpoints.map((axis, i) => (<line key={i} x1={axis.x1} y1={axis.y1} x2={axis.x2} y2={axis.y2} stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />))}
+                        <polygon points={studentPolygonPoints} fill="rgba(99, 102, 241, 0.3)" stroke="rgb(99, 102, 241)" strokeWidth="2" />
+                        {subjects.map((_, i) => { const angle = i * (2 * Math.PI / subjects.length) - Math.PI / 2; const ratio = studentScores[i] / maxScore; return (<circle key={i} cx={centerX + radius * ratio * Math.cos(angle)} cy={centerY + radius * ratio * Math.sin(angle)} r="5" fill="white" stroke="rgb(99, 102, 241)" strokeWidth="2" />); })}
+                        {labelPositions.map((pos, i) => (<text key={i} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" className="text-[10px] font-medium fill-slate-600 dark:fill-slate-400">{pos.label.length > 10 ? pos.label.substring(0, 10) + '...' : pos.label}</text>))}
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[260px]">
+                      <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-full p-4 mb-4 text-indigo-500">
+                        <BrainCircuitIcon className="w-12 h-12" />
+                      </div>
+                      <h5 className="font-semibold text-slate-800 dark:text-slate-200 text-center mb-2">Bagan Radar Tidak Tersedia</h5>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 text-center max-w-[280px] leading-relaxed">
+                        Bagan Radar membutuhkan minimal 3 mata pelajaran dengan nilai untuk memetakan kekuatan kognitif secara geometri. Saat ini siswa baru memiliki {subjects.length} mata pelajaran.
+                      </p>
+                    </div>
+                  )}
+                  <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-3">Rata-rata: <span className="font-bold text-indigo-600 dark:text-indigo-400">{overallAverage}</span></p>
+                </div>
+                {/* Bar Chart */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+                  <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Nilai per Mata Pelajaran</h4>
+                  <div className="space-y-3">
+                    {subjectAverages.map((item, index) => (
+                      <div key={index}>
+                        <div className="flex justify-between text-sm mb-1"><span className="font-medium text-slate-700 dark:text-slate-300">{item.subject}</span><span className={`font-bold ${item.average >= 75 ? 'text-emerald-600' : item.average >= 60 ? 'text-amber-600' : 'text-rose-600'}`}>{item.average}</span></div>
+                        <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all duration-500 ${item.average >= 75 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' : item.average >= 60 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rose-400 to-rose-500'}`} style={{ width: `${item.average}%` }} /></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Actionable Recommendations Section */}
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg p-2">
+                    <PlayCircleIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-slate-800 dark:text-white">Rekomendasi Aksi Guru & Orang Tua</CardTitle>
+                    <CardDescription>Langkah-langkah konkret yang dirancang khusus untuk memandu Ananda</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {actionableRecommendations.map((rec, idx) => (
+                    <ActionableRecommendation key={idx} {...rec} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* A. Cognitive Development */}
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg p-2">
+                    <BookOpenIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-slate-800 dark:text-white">A. Perkembangan Pola Pikir & Akademik (Kognitif)</CardTitle>
+                    <CardDescription>Tinjauan gaya belajar dan kemampuan analisis akademis</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30 rounded-xl p-4">
+                    <h5 className="font-bold text-green-800 dark:text-green-400 mb-2 flex items-center gap-2">
+                      <CheckCircleIcon className="w-4 h-4" /> Kekuatan
+                    </h5>
+                    <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      {analysis.cognitive.strengths.map((s, i) => <li key={i}>• {s}</li>)}
+                    </ul>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4">
+                    <h5 className="font-bold text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-2">
+                      <TrendingUpIcon className="w-4 h-4" /> Area Pengembangan
+                    </h5>
+                    <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      {analysis.cognitive.areasForDevelopment.map((a, i) => <li key={i}>• {a}</li>)}
+                    </ul>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-900/20 rounded-xl p-4">
+                    <h5 className="font-bold text-blue-900 dark:text-blue-300 mb-1 text-sm uppercase tracking-wide">Gaya Belajar Ananda</h5>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{analysis.cognitive.learningStyle}</p>
+                  </div>
+                  <div className="bg-cyan-50/50 dark:bg-cyan-900/10 border border-cyan-100/50 dark:border-cyan-900/20 rounded-xl p-4">
+                    <h5 className="font-bold text-cyan-900 dark:text-cyan-300 mb-1 text-sm uppercase tracking-wide">Kemampuan Berpikir Kritis</h5>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{analysis.cognitive.criticalThinking}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* B. Affective Development */}
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-lg p-2">
+                    <UsersIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-slate-800 dark:text-white">B. Perkembangan Karakter & Emosi (Afektif)</CardTitle>
+                    <CardDescription>Kedisiplinan, kecerdasan emosional, dan sosialitas siswa</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-xl p-4">
+                  <h5 className="font-bold text-emerald-800 dark:text-emerald-400 mb-2.5 text-sm uppercase tracking-wide">Karakter Positif Menonjol</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {analysis.affective.positiveCharacters.map((c, i) => (
+                      <span key={i} className="px-3 py-1.5 bg-emerald-100/60 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-900/50 rounded-full text-xs font-semibold">✓ {c}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-pink-50/50 dark:bg-pink-900/10 border border-pink-100/50 dark:border-pink-900/20 rounded-xl p-4">
+                    <h5 className="font-bold text-pink-900 dark:text-pink-300 mb-1.5 text-sm uppercase tracking-wide">Kemampuan Sosial</h5>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{analysis.affective.socialSkills}</p>
+                  </div>
+                  <div className="bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100/50 dark:border-purple-900/20 rounded-xl p-4">
+                    <h5 className="font-bold text-purple-900 dark:text-purple-300 mb-1.5 text-sm uppercase tracking-wide">Kecerdasan Emosional & Kedisiplinan</h5>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+                      {analysis.affective.emotionalIntelligence}. Tingkat kedisiplinan dinilai {analysis.affective.discipline}.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* C. Psychomotor Development */}
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg p-2">
+                    <CheckSquareIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-slate-800 dark:text-white">C. Keterampilan Fisik & Kreativitas (Psikomotorik)</CardTitle>
+                    <CardDescription>Kemampuan koordinasi, kekuatan motorik, dan kerajinan tangan</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30 rounded-xl p-4">
+                    <h5 className="font-bold text-green-800 dark:text-green-400 mb-2 flex items-center gap-2">
+                      🌟 Keterampilan Menonjol
+                    </h5>
+                    <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      {analysis.psychomotor.outstandingSkills.map((s, i) => <li key={i}>★ {s}</li>)}
+                    </ul>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4">
+                    <h5 className="font-bold text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-2">
+                      ► Area Perlu Stimulasi
+                    </h5>
+                    <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      {analysis.psychomotor.areasNeedingStimulation.map((a, i) => <li key={i}>► {a}</li>)}
+                    </ul>
+                  </div>
+                </div>
+                <div className="bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-900/20 rounded-xl p-4">
+                  <h5 className="font-bold text-emerald-900 dark:text-emerald-300 mb-1 text-sm uppercase tracking-wide">Koordinasi & Kekuatan Motorik</h5>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+                    {analysis.psychomotor.motorSkills}. Koordinasi gerakan tubuh terbukti {analysis.psychomotor.coordination}.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* D. Development Plan & Warnings */}
+            <Card className="bg-gradient-to-br from-amber-50 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10 border-amber-200/60 dark:border-amber-900/50">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg p-2">
+                    <CalendarIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-slate-800 dark:text-white">D. Rencana Pengembangan Akademik & Karakter</CardTitle>
+                    <CardDescription>Target jangka pendek 3 bulan dan jangka menengah 6 bulan</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border-l-4 border-amber-500 shadow-sm border border-slate-200/50 dark:border-slate-800">
+                    <h5 className="font-bold text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                      <ClockIcon className="w-4 h-4 text-amber-500" /> Target 3 Bulan
+                    </h5>
+                    <ul className="space-y-2 text-sm font-medium">
+                      {analysis.recommendations.developmentPlan.threeMonths.map((item, index) => (
+                        <li key={index} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
+                          <span className="text-amber-500 font-bold">→</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border-l-4 border-orange-500 shadow-sm border border-slate-200/50 dark:border-slate-800">
+                    <h5 className="font-bold text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                      <CalendarIcon className="w-4 h-4 text-orange-500" /> Target 6 Bulan
+                    </h5>
+                    <ul className="space-y-2 text-sm font-medium">
+                      {analysis.recommendations.developmentPlan.sixMonths.map((item, index) => (
+                        <li key={index} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
+                          <span className="text-orange-500 font-bold">→</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Warning Signs */}
+                <div className="bg-rose-50/50 dark:bg-rose-950/20 rounded-xl p-4 border border-rose-200/60 dark:border-rose-900/50">
+                  <h5 className="font-bold text-rose-800 dark:text-rose-400 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                    <AlertCircleIcon className="w-4 h-4 text-rose-600" /> Tanda Peringatan (Perlu Diwaspadai)
+                  </h5>
+                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+                    {analysis.recommendations.warningsSigns.map((sign, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <AlertCircleIcon className="w-3.5 h-3.5 text-rose-500 flex-shrink-0 mt-0.5" />
+                        <span>{sign}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Footer Note */}
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/10 dark:to-blue-950/10 rounded-2xl p-6 border border-purple-200/50 dark:border-purple-900/50">
+              <div className="flex items-start gap-4">
+                <div className="bg-purple-100 dark:bg-purple-950/40 rounded-full p-2.5 flex-shrink-0">
+                  <AlertCircleIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-purple-900 dark:text-purple-300 mb-1 text-sm uppercase tracking-wide">Catatan Penting Guru & Orang Tua</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                    Analisis perkembangan siswa ini dirumuskan berdasarkan rekam data akademik serta perilaku harian kelas secara objektif.
+                    Setiap anak tumbuh dengan garis waktu dan potensi keunikannya masing-masing. Terus dukung perkembangan minat-bakat Ananda, dan jalin komunikasi intensif dengan pihak sekolah untuk hasil stimulasi terbaik.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

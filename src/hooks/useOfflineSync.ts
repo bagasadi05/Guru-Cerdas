@@ -10,7 +10,7 @@ import {
     resolveConflict,
     detectConflict,
     ConflictResolution
-} from '../services/offlineQueueEnhanced';
+} from '../services/offlineQueue';
 import { supabase } from '../services/supabase';
 import { logger } from '../services/logger';
 import { useToast } from './useToast';

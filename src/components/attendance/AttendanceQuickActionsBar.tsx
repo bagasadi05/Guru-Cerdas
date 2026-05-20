@@ -1,5 +1,5 @@
 import React from 'react';
-import { QrCodeIcon, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { QuickTemplateIcons, type Template } from './QuickTemplateIcons';
 import { attendanceViewModeOptions, type AttendanceViewMode } from './attendanceMenuConfig';
@@ -9,7 +9,6 @@ interface AttendanceQuickActionsBarProps {
   viewMode: AttendanceViewMode;
   onApplyTemplate: (template: Template) => void;
   onReset: () => void;
-  onOpenQr: () => void;
   onViewModeChange: (mode: AttendanceViewMode) => void;
 }
 
@@ -18,7 +17,6 @@ export const AttendanceQuickActionsBar: React.FC<AttendanceQuickActionsBarProps>
   viewMode,
   onApplyTemplate,
   onReset,
-  onOpenQr,
   onViewModeChange,
 }) => {
   return (
@@ -42,19 +40,6 @@ export const AttendanceQuickActionsBar: React.FC<AttendanceQuickActionsBarProps>
           >
             <RotateCcw className="w-4 h-4 sm:mr-1.5" />
             <span className="hidden sm:inline">Reset</span>
-          </Button>
-
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
-
-          <Button
-            onClick={onOpenQr}
-            size="default"
-            variant="ghost"
-            className="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 px-3 text-sm"
-            aria-label="Generate QR Code"
-          >
-            <QrCodeIcon className="w-4 h-4 sm:mr-1.5" />
-            <span className="hidden sm:inline">QR Code</span>
           </Button>
 
           <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 ml-0 sm:ml-1">

@@ -11,8 +11,8 @@ type MaybeSingleCapable<T> = {
     }>;
 };
 
-export const maybeSingleCompat = async <T>(
-    query: MaybeSingleCapable<T>,
+export const maybeSingleCompat = async <T = any>(
+    query: any,
 ): SupabaseMaybeSingleResult<T> => {
     if (typeof query.maybeSingle === 'function') {
         return query.maybeSingle();

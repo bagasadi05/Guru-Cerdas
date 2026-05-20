@@ -160,12 +160,14 @@ const StudentDetailPage = () => {
             if (studentRes.error) throw studentRes.error;
 
             const [classInfoRes, classesRes] = await Promise.all([
-                supabase
-                    .from('classes')
-                    .select('id, name, user_id, created_at, deleted_at')
-                    .eq('id', studentRes.data.class_id)
-                    .is('deleted_at', null)
-                    .single(),
+                studentRes.data.class_id
+                    ? supabase
+                        .from('classes')
+                        .select('id, name, user_id, created_at, deleted_at')
+                        .eq('id', studentRes.data.class_id)
+                        .is('deleted_at', null)
+                        .single()
+                    : Promise.resolve({ data: null, error: null }),
                 supabase
                     .from('classes')
                     .select('id, name, user_id, created_at, deleted_at')
@@ -252,7 +254,7 @@ const StudentDetailPage = () => {
             const [extraRes, attRes, gradesRes] = await Promise.all([
                 supabase
                     .from('student_extracurriculars')
-                    .select('id, user_id, student_id, extracurricular_id, extracurricular_student_id, semester_id, joined_at, status, created_at, extracurriculars(id, user_id, name, category, description, schedule_day, schedule_time, coach_name, max_participants, is_active, created_at)')
+                    .select('id, user_id, student_id, extracurricular_id, extracurricular_student_id, semester_id, joined_at, status, created_at, extracurriculars(id, user_id, name, category, description, schedule_day, schedule_time, coach_name, max_participants, is_active, created_at, updated_at)')
                     .eq('student_id', studentId!),
                 supabase
                     .from('extracurricular_attendance')
@@ -1009,6 +1011,7 @@ const StudentDetailPage = () => {
                                     <ChildDevelopmentAnalysisTab
                                         studentData={{
                                             student: {
+                                                id: student.id,
                                                 name: student.name,
                                                 age: student.date_of_birth ? new Date().getFullYear() - new Date(student.date_of_birth).getFullYear() : 12,
                                                 class: student.classes?.name

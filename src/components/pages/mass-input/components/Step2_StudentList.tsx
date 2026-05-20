@@ -24,13 +24,14 @@ interface Step2_StudentListProps {
     handleStudentSelect: (id: string) => void;
     scores: Record<string, string>;
     handleScoreChange: (id: string, value: string) => void;
+    validationErrors?: Record<string, string>;
     existingGrades: AcademicRecordRow[] | undefined;
 }
 
 export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     mode, searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
     isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
-    selectedStudentIds, handleStudentSelect, scores, handleScoreChange, existingGrades
+    selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors = {}, existingGrades
 }) => {
     // Sorting and Grouping State
     const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: SortDirection }>({
@@ -222,8 +223,16 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                         value={scores[s.id] || ''}
                                                                         onChange={e => handleScoreChange(s.id, e.target.value)}
                                                                         placeholder=""
-                                                                        className={`w-24 text-center font-bold text-lg h-10 transition-all ${scores[s.id] ? 'bg-green-100 dark:bg-green-500/30 border-green-400 text-green-900 dark:text-white' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70'}`}
+                                                                        className={`w-24 text-center font-bold text-lg h-10 transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : scores[s.id] ? 'bg-green-100 dark:bg-green-500/30 border-green-400 text-green-900 dark:text-white' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70'}`}
                                                                     />
+                                                                    {validationErrors[s.id] && (
+                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max max-w-[200px] z-20">
+                                                                            <div className="bg-rose-500 text-white text-xs py-1 px-2 rounded shadow-lg">
+                                                                                {validationErrors[s.id]}
+                                                                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-x-4 border-b-4 border-x-transparent border-b-rose-500" />
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                                 </div> :
                                                                 (mode === 'academic_print' || mode === 'delete_subject_grade') ?
                                                                     <span className={`font-bold px-4 py-2 rounded-lg text-sm ${hasGrade ? 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-gray-500 border border-slate-200 dark:border-white/5'}`}>
@@ -306,14 +315,19 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                 value={scores[s.id] || ''}
                                                                 onChange={e => handleScoreChange(s.id, e.target.value)}
                                                                 placeholder=""
-                                                                className="flex-grow text-xl font-bold text-center h-12 bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl focus:ring-indigo-500"
+                                                                className={`flex-grow text-xl font-bold text-center h-12 rounded-xl transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500'}`}
                                                             />
-                                                            {scores[s.id] && (
+                                                            {scores[s.id] && !validationErrors[s.id] && (
                                                                 <span className={`px-4 py-2 rounded-xl text-sm font-bold shadow-lg ${parseInt(scores[s.id]) >= 75 ? 'bg-emerald-500 text-white' : parseInt(scores[s.id]) >= 60 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'}`}>
                                                                     {parseInt(scores[s.id]) >= 75 ? 'Baik' : parseInt(scores[s.id]) >= 60 ? 'Cukup' : 'Kurang'}
                                                                 </span>
                                                             )}
                                                         </div>
+                                                        {validationErrors[s.id] && (
+                                                            <div className="text-xs text-rose-500 mt-2 font-medium">
+                                                                * {validationErrors[s.id]}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ) : (mode === 'academic_print' || mode === 'delete_subject_grade') ? (
                                                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-white/10">

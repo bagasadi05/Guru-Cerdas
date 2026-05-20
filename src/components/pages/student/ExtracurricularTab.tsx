@@ -1,5 +1,6 @@
 import React from 'react';
-import { Trophy, Calendar, Star, Info } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Trophy, Calendar, Star, Info, AlertCircle, ArrowRight, Plus } from 'lucide-react';
 import { Database } from '../../../services/database.types';
 
 type Extracurricular = Database['public']['Tables']['extracurriculars']['Row'];
@@ -11,21 +12,91 @@ interface ExtracurricularTabProps {
     studentExtracurriculars: (StudentExtracurricular & { extracurriculars: Extracurricular | null })[];
     attendanceRecords: ExtracurricularAttendance[];
     grades: ExtracurricularGrade[];
+    isLoading?: boolean;
 }
+
+// Konsistenkan warna grade A/B/C/D
+const gradeColorMap: Record<string, string> = {
+    A: 'text-green-500',
+    B: 'text-blue-500',
+    C: 'text-yellow-500',
+    D: 'text-red-500',
+};
+
+// Loading Skeleton Component
+const ExtracurricularSkeleton: React.FC = () => (
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-pulse">
+        <div className="p-4 bg-slate-50 dark:bg-slate-900/30 border-b border-slate-100 dark:border-slate-700/50 flex justify-between items-start">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-700" />
+                <div className="space-y-2">
+                    <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
+                    <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                </div>
+            </div>
+            <div className="h-5 w-12 bg-slate-200 dark:bg-slate-700 rounded-full" />
+        </div>
+        <div className="p-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg space-y-2">
+                    <div className="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
+                    <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg space-y-2">
+                    <div className="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
+                    <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+                </div>
+            </div>
+            <div className="space-y-2">
+                <div className="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
+            </div>
+        </div>
+    </div>
+);
 
 export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
     studentExtracurriculars,
     attendanceRecords,
     grades,
+    isLoading = false,
 }) => {
+    // Loading State
+    if (isLoading) {
+        return (
+            <div className="space-y-6 p-4 sm:p-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                    <ExtracurricularSkeleton />
+                    <ExtracurricularSkeleton />
+                </div>
+            </div>
+        );
+    }
+
+    // Empty State - Actionable dengan CTA ke halaman ekstrakurikuler
     if (studentExtracurriculars.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center mb-4">
-                    <Trophy className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 flex items-center justify-center mb-5 shadow-sm">
+                    <Trophy className="w-10 h-10 text-amber-500 dark:text-amber-400" />
                 </div>
-                <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Tidak Ada Ekstrakurikuler</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Siswa ini belum mengikuti ekstrakurikuler apapun.</p>
+                <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                    Belum Ada Ekstrakurikuler
+                </h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-6 leading-relaxed">
+                    Siswa ini belum terdaftar pada ekstrakurikuler manapun. Daftarkan siswa ke kegiatan ekstrakurikuler untuk mengembangkan potensi non-akademiknya.
+                </p>
+                <Link
+                    to="/ekstrakurikuler"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-medium rounded-lg shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all"
+                >
+                    <Plus className="w-4 h-4" />
+                    Kelola Ekstrakurikuler
+                    <ArrowRight className="w-4 h-4" />
+                </Link>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">
+                    Anda akan diarahkan ke halaman manajemen ekstrakurikuler
+                </p>
             </div>
         );
     }
@@ -46,6 +117,7 @@ export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
                     const attendanceRate = totalMeetings > 0 ? Math.round((presentCount / totalMeetings) * 100) : 0;
 
                     const grade = grades.find((g) => g.extracurricular_id === ekskul.id);
+                    const gradeColor = grade?.grade ? (gradeColorMap[grade.grade] ?? 'text-slate-800 dark:text-white') : 'text-slate-800 dark:text-white';
 
                     return (
                         <div
@@ -67,15 +139,23 @@ export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
                                         </p>
                                     </div>
                                 </div>
-                                {enrollment.status === 'active' ? (
-                                    <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs px-2 py-1 rounded-full font-medium">
-                                        Aktif
-                                    </span>
-                                ) : (
-                                    <span className="bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 text-xs px-2 py-1 rounded-full font-medium">
-                                        {enrollment.status}
-                                    </span>
-                                )}
+                                <div className="flex flex-col items-end gap-1">
+                                    {enrollment.status === 'active' ? (
+                                        <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs px-2 py-1 rounded-full font-medium">
+                                            Aktif
+                                        </span>
+                                    ) : (
+                                        <span className="bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 text-xs px-2 py-1 rounded-full font-medium">
+                                            {enrollment.status}
+                                        </span>
+                                    )}
+                                    {!ekskul.is_active && (
+                                        <span className="flex items-center gap-1 bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 text-xs px-2 py-0.5 rounded-full font-medium">
+                                            <AlertCircle className="w-3 h-3" />
+                                            Ekskul Nonaktif
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Content */}
@@ -103,11 +183,7 @@ export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
                                             <span className="text-xs font-medium">Nilai</span>
                                         </div>
                                         <div className="flex items-end gap-2">
-                                            <span className={`text-xl font-bold ${grade?.grade === 'A' ? 'text-green-500' :
-                                                grade?.grade === 'B' ? 'text-blue-500' :
-                                                    grade?.grade === 'C' ? 'text-yellow-500' :
-                                                        'text-slate-800 dark:text-white'
-                                                }`}>
+                                            <span className={`text-xl font-bold ${gradeColor}`}>
                                                 {grade?.grade || '-'}
                                             </span>
                                             {grade?.score != null && (

@@ -8,7 +8,7 @@ import {
     validateAndSanitize,
     runParentPortalSecurityAudit,
     SecurityEventType
-} from '../../src/services/security';
+} from '../../src/services/securityEnhanced';
 import { rateLimiter, useRateLimit } from '../../src/services/rateLimiter';
 
 // Mock localStorage

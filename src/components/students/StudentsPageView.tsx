@@ -72,6 +72,7 @@ interface StudentsPageClassModalProps {
   isClassManageModalOpen: boolean;
   onCloseClassManageModal: () => void;
   classes: ClassRow[];
+  canManageClass: (classItem: ClassRow) => boolean;
   onGenerateCodesForClass: (classItem: ClassRow) => void;
   onEditClass: (classItem: ClassRow) => void;
   onDeleteClass: (classItem: ClassRow) => void;
@@ -217,6 +218,7 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
         isOpen={classModal.isClassManageModalOpen}
         onClose={classModal.onCloseClassManageModal}
         classes={classModal.classes}
+        canManageClass={classModal.canManageClass}
         onGenerateCodes={classModal.onGenerateCodesForClass}
         onEditClass={classModal.onEditClass}
         onDeleteClass={classModal.onDeleteClass}

@@ -92,7 +92,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
         : 0;
     const attendanceRecorded = dailyAttendanceSummary?.total || 0;
     const attendanceMissing = Math.max(students.length - attendanceRecorded, 0);
-    const activeTasks = tasks.filter((task) => task.status !== 'completed');
+    const activeTasks = tasks.filter((task) => task.status !== 'done');
     const overdueTasks = activeTasks.filter((task) => isTaskOverdue(task.due_date, currentTime)).length;
     const dueTodayTasks = activeTasks.filter((task) => isTaskDueToday(task.due_date, currentTime)).length;
 

@@ -31,7 +31,7 @@ const config: CapacitorConfig = {
     },
     android: {
         backgroundColor: '#0f172a',
-        allowMixedContent: true,
+        allowMixedContent: false,
         captureInput: true,
         webContentsDebuggingEnabled: false, // Disable for production
     },

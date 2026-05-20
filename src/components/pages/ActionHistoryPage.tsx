@@ -183,7 +183,7 @@ const ActionHistoryPage: React.FC = () => {
     // Undo mutation
     const undoMutation = useMutation({
         mutationFn: async (actionId: string) => {
-            const result = await undo(actionId);
+            const result = await undo(actionId, user?.id);
             if (!result.success) throw new Error(result.error);
         },
         onSuccess: () => {
