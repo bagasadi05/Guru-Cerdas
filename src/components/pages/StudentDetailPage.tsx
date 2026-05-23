@@ -56,7 +56,7 @@ const ViolationsTab = lazy(() => import('./student/ViolationsTab').then((module)
 const ReportsTab = lazy(() => import('./student/ReportsTab').then((module) => ({ default: module.ReportsTab })));
 const CommunicationTab = lazy(() => import('./student/CommunicationTab').then((module) => ({ default: module.CommunicationTab })));
 const ExtracurricularTab = lazy(() => import('./student/ExtracurricularTab').then((module) => ({ default: module.ExtracurricularTab })));
-const ChildDevelopmentAnalysisTab = lazy(() => import('./ChildDevelopmentAnalysisTab').then((module) => ({ default: module.ChildDevelopmentAnalysisTab })));
+const ChildDevelopmentAnalysisTab = lazy(() => import('./student-detail/child-development').then((module) => ({ default: module.ChildDevelopmentAnalysisTab })));
 
 const StudentDetailTabFallback = () => (
     <div className="space-y-4 p-4 sm:p-6">
