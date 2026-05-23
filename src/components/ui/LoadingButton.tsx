@@ -5,8 +5,9 @@
 
 import React from 'react';
 import { Button } from './Button';
+import { HTMLMotionProps } from 'framer-motion';
 
-interface LoadingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface LoadingButtonProps extends HTMLMotionProps<"button"> {
     isLoading?: boolean;
     loadingText?: string;
     variant?: 'default' | 'destructive' | 'outline' | 'ghost';
@@ -95,7 +96,7 @@ export const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonPr
             >
                 <span className={`flex items-center gap-2 transition-opacity duration-200 ${showLoading || showSuccess ? 'opacity-0' : 'opacity-100'}`}>
                     {icon}
-                    {children}
+                    {children as React.ReactNode}
                 </span>
 
                 {/* Loading State */}

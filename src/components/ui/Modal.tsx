@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './Button';
 
 interface ModalProps {
@@ -87,22 +88,31 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen || !isClient) return null;
+  if (!isClient) return null;
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in"
-      aria-labelledby="modal-title"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        className={`relative w-full ${maxWidth} mx-4 animate-fade-in-up max-h-[90vh] sm:max-h-[85vh] flex flex-col`}
-        onClick={(e) => e.stopPropagation()}
-        id="modal-container"
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+          onClick={onClose}
+        >
+          <motion.div
+            ref={modalRef as React.RefObject<HTMLDivElement>}
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className={`relative w-full ${maxWidth} mx-4 max-h-[90vh] sm:max-h-[85vh] flex flex-col`}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            id="modal-container"
+          >
         <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col max-h-[90vh] sm:max-h-[85vh]">
           <div className="relative p-6 border-b border-slate-200/70 dark:border-slate-700/60">
             <div className="flex justify-between items-center gap-4">
@@ -130,8 +140,10 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             {children}
           </div>
         </div>
-      </div>
-    </div>,
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>,
     document.body
   );
 };

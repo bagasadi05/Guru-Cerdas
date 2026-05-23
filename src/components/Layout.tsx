@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import GreetingRobot from './GreetingRobot';
@@ -162,9 +163,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             className="h-full pb-20 lg:pb-6 px-4 lg:px-8 pt-4 lg:pt-6"
           >
             <div className="max-w-7xl mx-auto h-full">
-              <div key={location.pathname} className="animate-page-transition h-full">
-                {children}
-              </div>
+              <AnimatePresence mode="wait">
+                <motion.div 
+                  key={location.pathname} 
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="h-full"
+                >
+                  {children}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </PullToRefresh>
         </main>
