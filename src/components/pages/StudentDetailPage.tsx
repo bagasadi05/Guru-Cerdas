@@ -1037,6 +1037,10 @@ const StudentDetailPage = () => {
                                                 date: q.quiz_date
                                             }))
                                         } as ChildDevelopmentData}
+                                        allAcademicRecords={academicRecords}
+                                        allAttendanceRecords={studentDetails?.attendanceRecords || []}
+                                        allViolations={studentDetails?.violations || []}
+                                        allQuizPoints={quizPoints}
                                     />
                                 </Suspense>
                             )}
