@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import { GraduationCapIcon, UsersIcon } from '../Icons';
+import { pageVariants } from '../../utils/animations';
 
 const RoleSelectionPage: React.FC = () => {
     const { session, loading } = useAuth();
@@ -24,7 +26,13 @@ const RoleSelectionPage: React.FC = () => {
     }
 
     return (
-        <div className="h-screen w-full overflow-y-auto bg-white dark:bg-gray-900">
+        <motion.div
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="h-screen w-full overflow-y-auto bg-white dark:bg-gray-900"
+        >
             <div className="min-h-full flex items-center justify-center p-4">
                 <div className="w-full max-w-4xl text-center">
                     <div className="holographic-orb-container mx-auto" style={{ position: 'relative', top: 0, marginBottom: '-40px' }}>
@@ -77,7 +85,7 @@ const RoleSelectionPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

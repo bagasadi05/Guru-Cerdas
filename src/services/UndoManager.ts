@@ -7,6 +7,7 @@
 
 import { supabase } from './supabase';
 import { restore, restoreBulk, SoftDeleteEntity } from './SoftDeleteService';
+import { logger } from './logger';
 
 export type ActionType = 'create' | 'update' | 'delete' | 'bulk_delete';
 export type StateRecord = Record<string, unknown>;
@@ -115,7 +116,7 @@ export async function recordAction(
             description: action.description,
         });
     } catch (error) {
-        console.error('Failed to persist action to database:', error);
+        logger.error('Failed to persist action to database', error instanceof Error ? error : 'UndoManager', error);
         // Continue even if database insert fails - we still have in-memory record
     }
 
@@ -420,7 +421,7 @@ export async function getActionHistory(
 
         return { items, total: count || 0 };
     } catch (error) {
-        console.error('Failed to get action history:', error);
+        logger.error('Failed to get action history', error instanceof Error ? error : 'UndoManager', error);
         return { items: [], total: 0 };
     }
 }

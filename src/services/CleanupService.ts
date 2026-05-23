@@ -7,6 +7,7 @@
 
 import { cleanupExpired as cleanupSoftDeleted, SoftDeleteEntity } from './SoftDeleteService';
 import { cleanupExpiredActions } from './UndoManager';
+import { logger } from './logger';
 
 export interface CleanupResult {
     success: boolean;
@@ -45,7 +46,7 @@ export async function runCleanup(): Promise<CleanupResult> {
     const timestamp = new Date();
 
     try {
-        console.log('[Cleanup] Starting cleanup job...');
+        logger.info('Starting cleanup job...', 'Cleanup');
 
         // Cleanup soft-deleted records older than 30 days
         const softDeleteResult = await cleanupSoftDeleted();
@@ -58,7 +59,7 @@ export async function runCleanup(): Promise<CleanupResult> {
 
         // Log statistics
         const totalDeleted = Object.values(softDeleteResult.deletedCounts).reduce((a, b) => a + b, 0);
-        console.log('[Cleanup] Cleanup completed:', {
+        logger.info('Cleanup completed', 'Cleanup', {
             softDeleteSuccess: softDeleteResult.success,
             actionsSuccess: actionsResult.success,
             deletedRecords: totalDeleted,
@@ -74,7 +75,7 @@ export async function runCleanup(): Promise<CleanupResult> {
             error: softDeleteResult.error || actionsResult.error,
         };
     } catch (error) {
-        console.error('[Cleanup] Cleanup failed:', error);
+        logger.error('Cleanup failed', error instanceof Error ? error : 'Cleanup', error);
         return {
             success: false,
             deletedRecords: {
@@ -98,7 +99,7 @@ export async function runCleanup(): Promise<CleanupResult> {
  */
 export async function runCleanupIfNeeded(): Promise<CleanupResult | null> {
     if (!shouldRunCleanup()) {
-        console.log('[Cleanup] Skipping cleanup - already ran within 24 hours');
+        logger.info('Skipping cleanup - already ran within 24 hours', 'Cleanup');
         return null;
     }
 
@@ -114,7 +115,7 @@ let cleanupInterval: ReturnType<typeof setInterval> | null = null;
 export function startCleanupScheduler(): void {
     // Run cleanup on startup if needed (wrapped in try-catch to not break app)
     runCleanupIfNeeded().catch(err => {
-        console.warn('[Cleanup] Startup cleanup failed (non-fatal):', err);
+        logger.warn('Startup cleanup failed (non-fatal)', 'Cleanup', err);
     });
 
     // Schedule to run every hour and check if cleanup is needed
@@ -124,11 +125,11 @@ export function startCleanupScheduler(): void {
 
     cleanupInterval = setInterval(() => {
         runCleanupIfNeeded().catch(err => {
-            console.warn('[Cleanup] Scheduled cleanup failed (non-fatal):', err);
+            logger.warn('Scheduled cleanup failed (non-fatal)', 'Cleanup', err);
         });
     }, 60 * 60 * 1000); // Check every hour
 
-    console.log('[Cleanup] Cleanup scheduler started');
+    logger.info('Cleanup scheduler started', 'Cleanup');
 }
 
 /**
@@ -138,7 +139,7 @@ export function stopCleanupScheduler(): void {
     if (cleanupInterval) {
         clearInterval(cleanupInterval);
         cleanupInterval = null;
-        console.log('[Cleanup] Cleanup scheduler stopped');
+        logger.info('Cleanup scheduler stopped', 'Cleanup');
     }
 }
 

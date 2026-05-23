@@ -6,6 +6,7 @@
  */
 
 import { supabase } from './supabase';
+import { logger } from './logger';
 
 export type SoftDeleteEntity = 'students' | 'classes' | 'attendance' | 'violations' | 'quiz_points' | 'academic_records' | 'tasks';
 
@@ -188,7 +189,7 @@ export async function getDeletedItems(
                 };
             });
     } catch (error) {
-        console.error(`Failed to get deleted ${entity}:`, error);
+        logger.error(`Failed to get deleted ${entity}`, error instanceof Error ? error : 'SoftDelete', error);
         return [];
     }
 }
@@ -258,7 +259,7 @@ export async function cleanupExpired(): Promise<{
                 .lt('deleted_at', cutoffISO);
 
             if (selectError) {
-                console.error(`Failed to query ${entity}:`, selectError);
+                logger.error(`Failed to query ${entity}`, selectError);
                 continue;
             }
 
@@ -274,7 +275,7 @@ export async function cleanupExpired(): Promise<{
                 .in('id', ids);
 
             if (deleteError) {
-                console.error(`Failed to delete ${entity}:`, deleteError);
+                logger.error(`Failed to delete ${entity}`, deleteError);
                 continue;
             }
 
