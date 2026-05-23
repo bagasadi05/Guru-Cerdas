@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Button } from '../ui/Button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
+import { Button } from '../../../../ui/Button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../../ui/Card';
 import {
   BrainCircuitIcon,
   SparklesIcon,
@@ -18,9 +18,9 @@ import {
   ArrowRightIcon,
   RefreshCwIcon,
   FileTextIcon
-} from '../Icons';
-import { MarkdownText } from '../ui/MarkdownText';
-import { useToast } from '../../hooks/useToast';
+} from '../../../../Icons';
+import { MarkdownText } from '../../../../ui/MarkdownText';
+import { useToast } from '../../../../../hooks/useToast';
 import {
   generateComprehensiveChildAnalysis,
   ComprehensiveChildAnalysis,
@@ -31,12 +31,12 @@ import {
   generateComparativeChildAnalysis,
   getComparativeAnalysisFromDb,
   saveComparativeAnalysisToDb
-} from '../../services/childDevelopmentAnalysis';
-import { useSemester } from '../../contexts/SemesterContext';
+} from '../../../../../services/childDevelopmentAnalysis';
+import { useSemester } from '../../../../../contexts/SemesterContext';
 import { useMemo } from 'react';
-import { getJsPDF, getAutoTable } from '../../utils/dynamicImports';
+import { getJsPDF, getAutoTable } from '../../../../../utils/dynamicImports';
 import { motion, AnimatePresence } from 'framer-motion';
-import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
+import { addPdfHeader, ensureLogosLoaded } from '../../../../../utils/pdfHeaderUtils';
 
 // Helper functions for Radar Chart
 const calculateRadarPoints = (values: number[], max: number, centerX: number, centerY: number, radius: number): string => {
@@ -357,7 +357,7 @@ interface ChildDevelopmentAnalysisTabProps {
   allQuizPoints?: any[];
 }
 
-export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabProps> = ({
+export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
   studentData,
   allAcademicRecords = [],
   allAttendanceRecords = [],
@@ -401,7 +401,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
 
     if (totalRecords < 4) {
       const avg = totalRecords > 0
-        ? Math.round(records.reduce((a, b) => a + b.score, 0) / totalRecords)
+        ? Math.round(records.reduce((a: any, b: any) => a + b.score, 0) / totalRecords)
         : 0;
       return { currentAvg: avg, previousAvg: 0 };
     }
@@ -410,15 +410,15 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     const recentRecords = records.slice(midPoint);
     const olderRecords = records.slice(0, midPoint);
 
-    const currentAvg = Math.round(recentRecords.reduce((a, b) => a + b.score, 0) / recentRecords.length);
-    const previousAvg = Math.round(olderRecords.reduce((a, b) => a + b.score, 0) / olderRecords.length);
+    const currentAvg = Math.round(recentRecords.reduce((a: any, b: any) => a + b.score, 0) / recentRecords.length);
+    const previousAvg = Math.round(olderRecords.reduce((a: any, b: any) => a + b.score, 0) / olderRecords.length);
 
     return { currentAvg, previousAvg };
   }, [studentData.academicRecords]);
 
-  const subjects = subjectAverages.map(s => s.subject);
-  const studentScores = subjectAverages.map(s => s.average);
-  const overallAverage = studentScores.length > 0 ? Math.round(studentScores.reduce((a, b) => a + b, 0) / studentScores.length) : 0;
+  const subjects = subjectAverages.map((s: any) => s.subject);
+  const studentScores = subjectAverages.map((s: any) => s.average);
+  const overallAverage = studentScores.length > 0 ? Math.round(studentScores.reduce((a: any, b: any) => a + b, 0) / studentScores.length) : 0;
 
   const isRadarChartValid = subjects.length >= 3;
   const chartSize = 260;
@@ -439,7 +439,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   // === DYNAMIC GROUPING FOR SEMESTER COMPARISON ===
   const activeYearSemesters = useMemo(() => {
     if (!activeAcademicYear) return [];
-    return semesters.filter(s => s.academic_year_id === activeAcademicYear.id);
+    return semesters.filter((s: any) => s.academic_year_id === activeAcademicYear.id);
   }, [semesters, activeAcademicYear]);
 
   const sem1 = useMemo(() => {
@@ -493,12 +493,12 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   // === CALCULATING STATS FOR COMPARISON ===
   const avgScoreSem1 = useMemo(() => {
     if (sem1Academic.length === 0) return 0;
-    return Math.round(sem1Academic.reduce((sum, r) => sum + r.score, 0) / sem1Academic.length);
+    return Math.round(sem1Academic.reduce((sum: any, r: any) => sum + r.score, 0) / sem1Academic.length);
   }, [sem1Academic]);
 
   const avgScoreSem2 = useMemo(() => {
     if (sem2Academic.length === 0) return 0;
-    return Math.round(sem2Academic.reduce((sum, r) => sum + r.score, 0) / sem2Academic.length);
+    return Math.round(sem2Academic.reduce((sum: any, r: any) => sum + r.score, 0) / sem2Academic.length);
   }, [sem2Academic]);
 
   const avgScoreDiff = avgScoreSem2 - avgScoreSem1;
@@ -522,7 +522,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   const compViolationStats = useMemo(() => {
     const getStats = (recs: any[]) => {
       const count = recs.length;
-      const points = recs.reduce((sum, r) => sum + (r.points || 0), 0);
+      const points = recs.reduce((sum: any, r: any) => sum + (r.points || 0), 0);
       return { count, points };
     };
     return {
@@ -562,16 +562,16 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
         return practicalSubjects.some(p => sub.includes(p));
       });
       if (practicalRecords.length > 0) {
-        return Math.round(practicalRecords.reduce((sum, r) => sum + r.score, 0) / practicalRecords.length);
+        return Math.round(practicalRecords.reduce((sum: any, r: any) => sum + r.score, 0) / practicalRecords.length);
       }
       return overallAvg > 0 ? Math.round((overallAvg + 80) / 2) : 80;
     };
 
-    const qPts1 = sem1Quizzes.reduce((sum, q) => sum + (q.points || 0), 0);
+    const qPts1 = sem1Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0);
     const qCount1 = sem1Quizzes.length;
     const keaktifanSem1 = qPts1 > 0 ? Math.min(qPts1 * 5, 100) : Math.min(qCount1 * 15, 100);
 
-    const qPts2 = sem2Quizzes.reduce((sum, q) => sum + (q.points || 0), 0);
+    const qPts2 = sem2Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0);
     const qCount2 = sem2Quizzes.length;
     const keaktifanSem2 = qPts2 > 0 ? Math.min(qPts2 * 5, 100) : Math.min(qCount2 * 15, 100);
 
@@ -814,7 +814,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     const violations = studentData.violations || [];
     const totalViolations = violations.length;
     const attendanceRate = attendanceRecords.length > 0
-      ? (attendanceRecords.filter(a => a.status === 'Hadir').length / attendanceRecords.length) * 100
+      ? (attendanceRecords.filter((a: any) => a.status === 'Hadir').length / attendanceRecords.length) * 100
       : 100;
 
     let affectiveLabel = 'Cukup Disiplin';
@@ -1007,10 +1007,10 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
 
       // Attendance Rekap
       const totalAttend = studentData.attendanceRecords.length;
-      const hadir = studentData.attendanceRecords.filter(a => a.status === 'Hadir').length;
-      const sakit = studentData.attendanceRecords.filter(a => a.status === 'Sakit').length;
-      const izin = studentData.attendanceRecords.filter(a => a.status === 'Izin').length;
-      const alpha = studentData.attendanceRecords.filter(a => a.status === 'Alpha').length;
+      const hadir = studentData.attendanceRecords.filter((a: any) => a.status === 'Hadir').length;
+      const sakit = studentData.attendanceRecords.filter((a: any) => a.status === 'Sakit').length;
+      const izin = studentData.attendanceRecords.filter((a: any) => a.status === 'Izin').length;
+      const alpha = studentData.attendanceRecords.filter((a: any) => a.status === 'Alpha').length;
       const percentage = totalAttend > 0 ? ((hadir / totalAttend) * 100).toFixed(1) : '100';
 
       autoTable(doc, {
@@ -1055,7 +1055,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
       doc.text('Kekuatan Utama Kognitif:', margin + 3, y);
       y += 4;
       doc.setFont('helvetica', 'normal');
-      analysis.cognitive.strengths.slice(0, 2).forEach(str => {
+      analysis.cognitive.strengths.slice(0, 2).forEach((str: any) => {
         const lines = doc.splitTextToSize(`- ${str}`, pageWidth - margin * 2 - 6);
         doc.text(lines, margin + 5, y);
         y += lines.length * 4.5;
@@ -1086,7 +1086,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
       doc.text('Karakter Positif Menonjol:', margin + 3, y);
       y += 4;
       doc.setFont('helvetica', 'normal');
-      analysis.affective.positiveCharacters.slice(0, 2).forEach(char => {
+      analysis.affective.positiveCharacters.slice(0, 2).forEach((char: any) => {
         const lines = doc.splitTextToSize(`- ${char}`, pageWidth - margin * 2 - 6);
         doc.text(lines, margin + 5, y);
         y += lines.length * 4.5;
@@ -1117,7 +1117,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
       doc.text('Keterampilan Fisik Terbaik:', margin + 3, y);
       y += 4;
       doc.setFont('helvetica', 'normal');
-      analysis.psychomotor.outstandingSkills.slice(0, 2).forEach(skill => {
+      analysis.psychomotor.outstandingSkills.slice(0, 2).forEach((skill: any) => {
         const lines = doc.splitTextToSize(`- ${skill}`, pageWidth - margin * 2 - 6);
         doc.text(lines, margin + 5, y);
         y += lines.length * 4.5;
@@ -1145,7 +1145,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
       y += 4.5;
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
-      analysis.recommendations.homeSupport.slice(0, 3).forEach((support, idx) => {
+      analysis.recommendations.homeSupport.slice(0, 3).forEach((support: any, idx: any) => {
         const lines = doc.splitTextToSize(`${idx + 1}. ${support}`, pageWidth - margin * 2 - 4);
         doc.text(lines, margin + 2, y);
         y += lines.length * 4.5;
@@ -1157,8 +1157,8 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
         startY: y,
         head: [['Rencana Target 3 Bulan', 'Rencana Target 6 Bulan']],
         body: [[
-          analysis.recommendations.developmentPlan.threeMonths.slice(0, 3).map(t => `• ${t}`).join('\n\n'),
-          analysis.recommendations.developmentPlan.sixMonths.slice(0, 3).map(t => `• ${t}`).join('\n\n')
+          analysis.recommendations.developmentPlan.threeMonths.slice(0, 3).map((t: any) => `• ${t}`).join('\n\n'),
+          analysis.recommendations.developmentPlan.sixMonths.slice(0, 3).map((t: any) => `• ${t}`).join('\n\n')
         ]],
         theme: 'grid',
         headStyles: { fillColor: [245, 158, 11], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
@@ -1345,7 +1345,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
           3: { cellWidth: 35, halign: 'center' },
           4: { cellWidth: 40, fontStyle: 'bold' }
         },
-        didParseCell: (data) => {
+        didParseCell: (data: any) => {
           if (data.column.index === 4 && data.cell.section === 'body') {
             const val = data.cell.text[0];
             if (val.startsWith('Naik')) {
@@ -1390,7 +1390,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
           2: { cellWidth: 40, halign: 'center' },
           3: { cellWidth: 45, halign: 'center', fontStyle: 'bold' }
         },
-        didParseCell: (data) => {
+        didParseCell: (data: any) => {
           if (data.column.index === 3 && data.cell.section === 'body') {
             const val = data.cell.text[0];
             const isViolationRow = data.row.index === 5;
@@ -1450,7 +1450,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
           3: { cellWidth: 35, halign: 'center' },
           4: { cellWidth: 35, halign: 'center', fontStyle: 'bold' }
         },
-        didParseCell: (data) => {
+        didParseCell: (data: any) => {
           if (data.column.index === 4 && data.cell.section === 'body') {
             const val = data.cell.text[0];
             if (val.startsWith('+')) {
@@ -1602,7 +1602,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
       doc.text('A. Dukungan Pembelajaran di Rumah (Home Support)', margin, y);
       y += 4;
 
-      const homeSupportRows = comparativeAnalysis.recommendations.homeSupport.map((support, idx) => [idx + 1, support]);
+      const homeSupportRows = comparativeAnalysis.recommendations.homeSupport.map((support: any, idx: any) => [idx + 1, support]);
       autoTable(doc, {
         startY: y,
         body: homeSupportRows,
@@ -1740,7 +1740,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
 
     // Home support
     const homeSupport = analysis?.recommendations?.homeSupport || [];
-    homeSupport.slice(0, 2).forEach((support, idx) => {
+    homeSupport.slice(0, 2).forEach((support: any, idx: any) => {
       recs.push({
         title: `Dukungan Rumah ${idx + 1}`,
         description: support,
@@ -2141,7 +2141,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
               <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                 <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 1</p>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-300">
-                  {sem1Quizzes.reduce((sum, q) => sum + (q.points || 0), 0)}
+                  {sem1Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0)}
                 </p>
                 <p className="text-[10px] text-slate-500 mt-2 font-medium">
                   {sem1Quizzes.length} Aktivitas
@@ -2150,7 +2150,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
               <div className="bg-slate-50 dark:bg-slate-855 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                 <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 2</p>
                 <p className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
-                  {sem2Quizzes.reduce((sum, q) => sum + (q.points || 0), 0)}
+                  {sem2Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0)}
                 </p>
                 <p className="text-[10px] text-slate-500 mt-2 font-medium">
                   {sem2Quizzes.length} Aktivitas
@@ -2158,7 +2158,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
               </div>
             </div>
             <div className="mt-3 text-xs text-center font-semibold text-slate-500">
-              {sem2Quizzes.reduce((sum, q) => sum + (q.points || 0), 0) >= sem1Quizzes.reduce((sum, q) => sum + (q.points || 0), 0) ? (
+              {sem2Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0) >= sem1Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0) ? (
                 <span className="text-emerald-600 dark:text-emerald-400">⚡ Partisipasi kuis meningkat / konsisten</span>
               ) : (
                 <span className="text-amber-600 dark:text-amber-500">⚠️ Partisipasi kuis perlu didorong lagi</span>
@@ -2278,7 +2278,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Kekuatan Belajar</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.cognitive.semester1Strengths.map((str, idx) => (
+                          {comparativeAnalysis.cognitive.semester1Strengths.map((str: any, idx: any) => (
                             <li key={idx}>{str}</li>
                           ))}
                         </ul>
@@ -2294,7 +2294,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Kekuatan Belajar</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.cognitive.semester2Strengths.map((str, idx) => (
+                          {comparativeAnalysis.cognitive.semester2Strengths.map((str: any, idx: any) => (
                             <li key={idx}>{str}</li>
                           ))}
                         </ul>
@@ -2332,7 +2332,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Karakter Unggul</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.affective.semester1PositiveCharacters.map((char, idx) => (
+                          {comparativeAnalysis.affective.semester1PositiveCharacters.map((char: any, idx: any) => (
                             <li key={idx}>{char}</li>
                           ))}
                         </ul>
@@ -2348,7 +2348,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Karakter Unggul</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.affective.semester2PositiveCharacters.map((char, idx) => (
+                          {comparativeAnalysis.affective.semester2PositiveCharacters.map((char: any, idx: any) => (
                             <li key={idx}>{char}</li>
                           ))}
                         </ul>
@@ -2386,7 +2386,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Keterampilan Kuat</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.psychomotor.semester1Skills.map((sk, idx) => (
+                          {comparativeAnalysis.psychomotor.semester1Skills.map((sk: any, idx: any) => (
                             <li key={idx}>{sk}</li>
                           ))}
                         </ul>
@@ -2402,7 +2402,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Keterampilan Kuat</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.psychomotor.semester2Skills.map((sk, idx) => (
+                          {comparativeAnalysis.psychomotor.semester2Skills.map((sk: any, idx: any) => (
                             <li key={idx}>{sk}</li>
                           ))}
                         </ul>
@@ -2556,7 +2556,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
               <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Nilai per Mata Pelajaran</h4>
               <div className="space-y-3">
-                {subjectAverages.map((item, index) => (
+                {subjectAverages.map((item: any, index: any) => (
                   <div key={index}>
                     <div className="flex justify-between text-sm mb-1"><span className="font-medium text-slate-700 dark:text-slate-300">{item.subject}</span><span className={`font-bold ${item.average >= 75 ? 'text-emerald-600' : item.average >= 60 ? 'text-amber-600' : 'text-rose-600'}`}>{item.average}</span></div>
                     <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all duration-500 ${item.average >= 75 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' : item.average >= 60 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rose-400 to-rose-500'}`} style={{ width: `${item.average}%` }} /></div>
@@ -2766,7 +2766,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                 <p className="text-xs text-gray-500 mb-1">Trend Kehadiran</p>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {studentData.attendanceRecords.filter(a => a.status === 'Hadir').length}
+                    {studentData.attendanceRecords.filter((a: any) => a.status === 'Hadir').length}
                   </span>
                   <span className="text-sm text-gray-400 font-medium">
                     / {studentData.attendanceRecords.length} hari
@@ -2782,7 +2782,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
               <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
                 <p className="text-xs text-gray-500 mb-1">Pelanggaran</p>
                 <span className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {studentData.violations.reduce((a, b) => a + b.points, 0)} poin
+                  {studentData.violations.reduce((a: any, b: any) => a + b.points, 0)} poin
                 </span>
               </div>
             </div>
@@ -2822,7 +2822,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
                   <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Nilai per Mata Pelajaran</h4>
                   <div className="space-y-3">
-                    {subjectAverages.map((item, index) => (
+                    {subjectAverages.map((item: any, index: any) => (
                       <div key={index}>
                         <div className="flex justify-between text-sm mb-1"><span className="font-medium text-slate-700 dark:text-slate-300">{item.subject}</span><span className={`font-bold ${item.average >= 75 ? 'text-emerald-600' : item.average >= 60 ? 'text-amber-600' : 'text-rose-600'}`}>{item.average}</span></div>
                         <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all duration-500 ${item.average >= 75 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' : item.average >= 60 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rose-400 to-rose-500'}`} style={{ width: `${item.average}%` }} /></div>
@@ -2875,7 +2875,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       <CheckCircleIcon className="w-4 h-4" /> Kekuatan
                     </h5>
                     <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
-                      {analysis.cognitive.strengths.map((s, i) => <li key={i}>• {s}</li>)}
+                      {analysis.cognitive.strengths.map((s: any, i: any) => <li key={i}>• {s}</li>)}
                     </ul>
                   </div>
                   <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4">
@@ -2883,7 +2883,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       <TrendingUpIcon className="w-4 h-4" /> Area Pengembangan
                     </h5>
                     <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
-                      {analysis.cognitive.areasForDevelopment.map((a, i) => <li key={i}>• {a}</li>)}
+                      {analysis.cognitive.areasForDevelopment.map((a: any, i: any) => <li key={i}>• {a}</li>)}
                     </ul>
                   </div>
                 </div>
@@ -2917,7 +2917,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                 <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-xl p-4">
                   <h5 className="font-bold text-emerald-800 dark:text-emerald-400 mb-2.5 text-sm uppercase tracking-wide">Karakter Positif Menonjol</h5>
                   <div className="flex flex-wrap gap-2">
-                    {analysis.affective.positiveCharacters.map((c, i) => (
+                    {analysis.affective.positiveCharacters.map((c: any, i: any) => (
                       <span key={i} className="px-3 py-1.5 bg-emerald-100/60 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-900/50 rounded-full text-xs font-semibold">✓ {c}</span>
                     ))}
                   </div>
@@ -2957,7 +2957,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       🌟 Keterampilan Menonjol
                     </h5>
                     <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
-                      {analysis.psychomotor.outstandingSkills.map((s, i) => <li key={i}>★ {s}</li>)}
+                      {analysis.psychomotor.outstandingSkills.map((s: any, i: any) => <li key={i}>★ {s}</li>)}
                     </ul>
                   </div>
                   <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4">
@@ -2965,7 +2965,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       ► Area Perlu Stimulasi
                     </h5>
                     <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
-                      {analysis.psychomotor.areasNeedingStimulation.map((a, i) => <li key={i}>► {a}</li>)}
+                      {analysis.psychomotor.areasNeedingStimulation.map((a: any, i: any) => <li key={i}>► {a}</li>)}
                     </ul>
                   </div>
                 </div>
@@ -2998,7 +2998,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       <ClockIcon className="w-4 h-4 text-amber-500" /> Target 3 Bulan
                     </h5>
                     <ul className="space-y-2 text-sm font-medium">
-                      {analysis.recommendations.developmentPlan.threeMonths.map((item, index) => (
+                      {analysis.recommendations.developmentPlan.threeMonths.map((item: any, index: any) => (
                         <li key={index} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
                           <span className="text-amber-500 font-bold">→</span>
                           <span>{item}</span>
@@ -3011,7 +3011,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                       <CalendarIcon className="w-4 h-4 text-orange-500" /> Target 6 Bulan
                     </h5>
                     <ul className="space-y-2 text-sm font-medium">
-                      {analysis.recommendations.developmentPlan.sixMonths.map((item, index) => (
+                      {analysis.recommendations.developmentPlan.sixMonths.map((item: any, index: any) => (
                         <li key={index} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
                           <span className="text-orange-500 font-bold">→</span>
                           <span>{item}</span>
@@ -3027,7 +3027,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
                     <AlertCircleIcon className="w-4 h-4 text-rose-600" /> Tanda Peringatan (Perlu Diwaspadai)
                   </h5>
                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-                    {analysis.recommendations.warningsSigns.map((sign, index) => (
+                    {analysis.recommendations.warningsSigns.map((sign: any, index: any) => (
                       <li key={index} className="flex items-start gap-2">
                         <AlertCircleIcon className="w-3.5 h-3.5 text-rose-500 flex-shrink-0 mt-0.5" />
                         <span>{sign}</span>

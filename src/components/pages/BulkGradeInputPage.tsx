@@ -376,6 +376,39 @@ const BulkGradeInputPage: React.FC = () => {
 
     const filledCount = grades.filter(g => g.score !== '').length;
 
+    // Handle Paste from Excel
+    const handlePaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>, startIndex: number) => {
+        const pasteData = e.clipboardData.getData('text');
+        if (!pasteData) return;
+
+        // Split by newline and filter out empty rows
+        const rows = pasteData.split(/\r?\n/).filter(row => row.trim() !== '');
+        
+        // Only intercept if there's more than one row pasted
+        if (rows.length > 1) {
+            e.preventDefault();
+            
+            setGrades(prev => {
+                const newGrades = [...prev];
+                let pasteCount = 0;
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const targetIndex = startIndex + i;
+                    if (targetIndex < newGrades.length) {
+                        const parsedValue = parseInt(rows[i].replace(/[^\d]/g, ''), 10);
+                        if (!isNaN(parsedValue)) {
+                            newGrades[targetIndex].score = Math.min(100, Math.max(0, parsedValue));
+                            pasteCount++;
+                        }
+                    }
+                }
+                
+                toast.success(`${pasteCount} nilai berhasil ditempel (paste) dari Excel!`);
+                return newGrades;
+            });
+        }
+    }, [toast]);
+
     // Render student row
     const renderStudentRow = useCallback((g: GradeEntry, index: number) => {
         const existingScore = existingGrades?.find(eg => eg.student_id === g.studentId)?.score;
@@ -411,6 +444,7 @@ const BulkGradeInputPage: React.FC = () => {
                         value={g.score}
                         onChange={(e) => handleScoreChange(g.studentId, e.target.value)}
                         onKeyDown={(e) => handleGridKeyDown(e, index)}
+                        onPaste={(e) => handlePaste(e, index)}
                         placeholder="0-100"
                         className={`w-24 text-center ${g.score !== '' ? colorClass.border : ''}`}
                     />
@@ -422,7 +456,7 @@ const BulkGradeInputPage: React.FC = () => {
                 </div>
             </div>
         );
-    }, [existingGrades, kkm, handleGridKeyDown, registerRef]);
+    }, [existingGrades, kkm, handleGridKeyDown, registerRef, handlePaste]);
 
     return (
         <div className="min-h-full bg-gray-50 dark:bg-gray-950 p-4 md:p-6 pb-24 lg:pb-8">
@@ -436,6 +470,10 @@ const BulkGradeInputPage: React.FC = () => {
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Input Nilai Cepat</h1>
                             <p className="text-gray-500 dark:text-gray-400">Masukkan nilai untuk semua siswa dalam satu kelas</p>
+                            <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium border border-green-200 dark:border-green-800/50">
+                                <span className="text-[10px]">💡</span>
+                                <span>Bisa langsung Copy dari Excel, lalu Paste (Ctrl+V) di kotak nilai</span>
+                            </div>
                         </div>
                     </div>
 

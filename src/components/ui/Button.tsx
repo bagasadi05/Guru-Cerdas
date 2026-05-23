@@ -1,7 +1,8 @@
 import React from 'react';
 import { useSound } from '../../hooks/useSound';
+import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends HTMLMotionProps<"button"> {
   variant?: 'default' | 'primary' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'success';
   size?: 'default' | 'sm' | 'lg' | 'icon';
 }
@@ -62,14 +63,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     return (
-      <button
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.95 }}
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         ref={ref}
         onClick={handleRipple}
         {...props}
       >
         {children}
-      </button>
+      </motion.button>
     );
   }
 );
