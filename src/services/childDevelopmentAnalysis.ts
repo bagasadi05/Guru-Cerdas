@@ -440,3 +440,398 @@ export async function saveAnalysisToDb(
     throw error;
   }
 }
+
+// === COMPARATIVE DEVELOPMENT ANALYSIS TYPES & FUNCTIONS ===
+
+export interface ComparativeChildAnalysis {
+  summary: {
+    name: string;
+    class: string;
+    overallComparison: string;
+  };
+  cognitive: {
+    semester1Strengths: string[];
+    semester2Strengths: string[];
+    comparisonNarrative: string;
+  };
+  affective: {
+    semester1PositiveCharacters: string[];
+    semester2PositiveCharacters: string[];
+    comparisonNarrative: string;
+  };
+  psychomotor: {
+    semester1Skills: string[];
+    semester2Skills: string[];
+    comparisonNarrative: string;
+  };
+  recommendations: {
+    homeSupport: string[];
+    stimulation: {
+      cognitive: string[];
+      affective: string[];
+      psychomotor: string[];
+    };
+  };
+  generatedBy?: 'AI' | 'Offline Fallback';
+  isComparative: boolean;
+}
+
+export async function getAnalysisForSemesterFromDb(
+  studentId: string,
+  semesterId: string
+): Promise<ComprehensiveChildAnalysis | null> {
+  try {
+    const { data, error } = await supabase
+      .from('student_development_analyses')
+      .select('analysis_data, generated_by')
+      .eq('student_id', studentId)
+      .eq('semester_id', semesterId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    const analysis = data.analysis_data as unknown as ComprehensiveChildAnalysis;
+    return {
+      ...analysis,
+      generatedBy: data.generated_by as 'AI' | 'Offline Fallback'
+    };
+  } catch (error) {
+    console.error('Gagal mengambil analisis semester dari database:', error);
+    return null;
+  }
+}
+
+export async function getComparativeAnalysisFromDb(
+  studentId: string,
+  academicYearId: string
+): Promise<ComparativeChildAnalysis | null> {
+  try {
+    const { data, error } = await supabase
+      .from('student_development_analyses')
+      .select('analysis_data, generated_by')
+      .eq('student_id', studentId)
+      .eq('academic_year_id', academicYearId)
+      .is('semester_id', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    const analysis = data.analysis_data as unknown as ComparativeChildAnalysis;
+    return {
+      ...analysis,
+      generatedBy: data.generated_by as 'AI' | 'Offline Fallback'
+    };
+  } catch (error) {
+    console.error('Gagal mengambil analisis komparatif dari database:', error);
+    return null;
+  }
+}
+
+export async function saveComparativeAnalysisToDb(
+  studentId: string,
+  academicYearId: string,
+  analysis: ComparativeChildAnalysis,
+  generatedBy: 'AI' | 'Offline Fallback'
+): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Pengguna tidak terautentikasi');
+
+    const analysisWithSource = {
+      ...analysis,
+      generatedBy,
+      isComparative: true
+    };
+
+    // Check if record exists
+    const { data: existing } = await supabase
+      .from('student_development_analyses')
+      .select('id')
+      .eq('student_id', studentId)
+      .eq('academic_year_id', academicYearId)
+      .is('semester_id', null)
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (existing?.id) {
+      // Update
+      const { error } = await supabase
+        .from('student_development_analyses')
+        .update({
+          analysis_data: analysisWithSource as any,
+          generated_by: generatedBy,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+      if (error) throw error;
+    } else {
+      // Insert
+      const { error } = await supabase
+        .from('student_development_analyses')
+        .insert({
+          student_id: studentId,
+          user_id: user.id,
+          academic_year_id: academicYearId,
+          semester_id: null,
+          analysis_data: analysisWithSource as any,
+          generated_by: generatedBy
+        });
+      if (error) throw error;
+    }
+  } catch (error) {
+    console.error('Gagal menyimpan analisis komparatif ke database:', error);
+    throw error;
+  }
+}
+
+export function generateComparativeFallbackAnalysis(
+  data1: ChildDevelopmentData,
+  data2: ChildDevelopmentData,
+  avgScore1: number,
+  avgScore2: number,
+  attRate1: number,
+  attRate2: number,
+  violations1: number,
+  violations2: number
+): ComparativeChildAnalysis {
+  const name = data1.student.name;
+  const studentClass = data1.student.class || 'SD';
+  const progressPercent = avgScore2 - avgScore1;
+  const progressText = progressPercent > 0
+    ? `mengalami peningkatan manis sebesar ${progressPercent} poin`
+    : progressPercent === 0
+    ? `mempertahankan kestabilan belajarnya dengan sangat baik`
+    : `sedang berproses dan beradaptasi dengan materi belajar yang lebih menantang`;
+
+  const attendanceText = attRate2 >= attRate1
+    ? `kehadirannya pun semakin mantap di angka ${attRate2}%`
+    : `tingkat kehadiran ananda berada di angka ${attRate2}%`;
+
+  return {
+    summary: {
+      name,
+      class: studentClass,
+      overallComparison: `✨ Halo Ayah & Bunda! Perjalanan belajar Ananda ${name} dari Semester 1 ke Semester 2 sungguh merupakan petualangan yang luar biasa. Secara akademik, Ananda ${progressText}, di mana rata-rata nilainya adalah ${avgScore1} di Semester 1 dan menjadi ${avgScore2} di Semester 2. Didukung dengan kedisiplinan yang baik, di mana ${attendanceText}, kami yakin Ananda menyimpan potensi yang luar biasa besar untuk terus mekar di masa depan. Terima kasih Ayah dan Bunda yang tiada henti mendampingi ananda dengan penuh cinta kasih! ❤️`
+    },
+    cognitive: {
+      semester1Strengths: [
+        `⭐ Menunjukkan minat belajar yang baik di Semester 1`,
+        `📚 Rata-rata pencapaian akademik awal yang solid (${avgScore1})`,
+        `✍️ Aktif menyelesaikan tugas-tugas dasar kelas`
+      ],
+      semester2Strengths: [
+        `🚀 Menunjukkan perkembangan pemahaman materi baru di Semester 2`,
+        `🧠 Lebih mandiri dalam memecahkan masalah pelajaran`,
+        `📈 Rata-rata pencapaian akademik akhir adalah ${avgScore2}`
+      ],
+      comparisonNarrative: `🌟 Pertumbuhan kognitif Ananda ${name} menunjukkan grafik yang sangat positif. Dari peletakan fondasi di Semester 1, ananda melangkah mantap ke Semester 2 dengan rasa percaya diri yang lebih tinggi. Tantangan materi pelajaran yang semakin kompleks justru memicu keingintahuan ananda untuk belajar lebih giat lagi.`
+    },
+    affective: {
+      semester1PositiveCharacters: [
+        `🤗 Anak yang ramah dan disukai oleh teman-teman sekelas`,
+        `🌸 Menunjukkan sikap hormat kepada guru sejak awal tahun`,
+        violations1 === 0 ? `😇 Berperilaku sangat tertib tanpa pelanggaran` : `🌱 Belajar mematuhi peraturan sekolah`
+      ],
+      semester2PositiveCharacters: [
+        `🤝 Memiliki kepekaan sosial dan toleransi yang semakin matang`,
+        `💪 Lebih berani mengemukakan pendapat di forum kelas`,
+        violations2 === 0 ? `🏅 Menjadi teladan kedisiplinan bagi teman lainnya` : `👍 Menunjukkan komitmen untuk lebih tertib`
+      ],
+      comparisonNarrative: `💖 Dari segi afektif, kedewasaan emosi dan kepedulian sosial Ananda ${name} berkembang dengan sangat manis. Jika di Semester 1 ananda lebih banyak mengamati, di Semester 2 ananda mulai berani tampil memimpin, menunjukkan empati yang tinggi pada teman-temannya, serta semakin mandiri.`
+    },
+    psychomotor: {
+      semester1Skills: [
+        `🏃‍♂️ Aktif bergerak dan bersemangat saat pelajaran PJOK`,
+        `🎨 Terampil dalam kegiatan mewarnai dan menggambar dasar`
+      ],
+      semester2Skills: [
+        `🕺 Koordinasi gerak fisik yang semakin matang dan lincah`,
+        `🛠️ Menghasilkan karya keterampilan tangan yang kreatif`
+      ],
+      comparisonNarrative: `👟 Aspek psikomotorik ananda tumbuh selaras dengan keaktifan fisiknya yang luar biasa. Di Semester 2 ini, koordinasi motorik halus (seperti menulis, memotong, menempel) dan motorik kasar ananda tampak jauh lebih terkoordinasi dan ekspresif dibanding awal semester lalu.`
+    },
+    recommendations: {
+      homeSupport: [
+        `Sediakan waktu minimal 15-30 menit setiap sore untuk mengobrol santai tentang hari ananda di sekolah.`,
+        `Berikan apresiasi atas setiap proses usahanya, bukan hanya hasil nilai ujian semata.`,
+        `Diskusikan bersama ananda rencana belajarnya dengan suasana yang menyenangkan.`
+      ],
+      stimulation: {
+        cognitive: [
+          `Ajak anak bermain permainan logika/strategi seperti catur sederhana, monopoli, atau tebak kata.`,
+          `Sediakan buku bacaan menarik di rumah untuk merangsang minat literasinya.`
+        ],
+        affective: [
+          `Berikan tanggung jawab kecil di rumah, misalnya menyiram tanaman atau merapikan tempat tidur sendiri.`,
+          `Ajari anak meregulasi emosi dengan teknik pernapasan saat sedang merasa kesal.`
+        ],
+        psychomotor: [
+          `Semangati anak untuk berolahraga bersama keluarga di akhir pekan (bersepeda, jalan pagi, dsb).`,
+          `Fasilitasi hobi seni atau eksperimen ilmiah sederhana yang memadukan aktivitas motorik halus.`
+        ]
+      }
+    },
+    isComparative: true
+  };
+}
+
+export async function generateComparativeChildAnalysis(
+  data1: ChildDevelopmentData,
+  data2: ChildDevelopmentData
+): Promise<ComparativeChildAnalysis> {
+  try {
+    // Validate data
+    if (!data1 || !data1.student?.name || !data2) {
+      throw new Error('Data siswa untuk perbandingan tidak lengkap');
+    }
+
+    // Sanitize data
+    const validAcademicRecords1 = (data1.academicRecords || []).filter(r => r && typeof r.score === 'number');
+    const validAcademicRecords2 = (data2.academicRecords || []).filter(r => r && typeof r.score === 'number');
+
+    const avgScore1 = validAcademicRecords1.length > 0
+      ? Math.round(validAcademicRecords1.reduce((sum, r) => sum + r.score, 0) / validAcademicRecords1.length)
+      : 0;
+    const avgScore2 = validAcademicRecords2.length > 0
+      ? Math.round(validAcademicRecords2.reduce((sum, r) => sum + r.score, 0) / validAcademicRecords2.length)
+      : 0;
+
+    const attend1 = (data1.attendanceRecords || []).filter(r => r && r.status);
+    const attend2 = (data2.attendanceRecords || []).filter(r => r && r.status);
+
+    const attSummary1 = {
+      total: attend1.length,
+      hadir: attend1.filter(r => r.status === 'Hadir').length,
+      sakit: attend1.filter(r => r.status === 'Sakit').length,
+      izin: attend1.filter(r => r.status === 'Izin').length,
+      alpha: attend1.filter(r => r.status === 'Alpha').length
+    };
+    const attSummary2 = {
+      total: attend2.length,
+      hadir: attend2.filter(r => r.status === 'Hadir').length,
+      sakit: attend2.filter(r => r.status === 'Sakit').length,
+      izin: attend2.filter(r => r.status === 'Izin').length,
+      alpha: attend2.filter(r => r.status === 'Alpha').length
+    };
+
+    const attRate1 = attSummary1.total > 0 ? Math.round((attSummary1.hadir / attSummary1.total) * 100) : 100;
+    const attRate2 = attSummary2.total > 0 ? Math.round((attSummary2.hadir / attSummary2.total) * 100) : 100;
+
+    const violationsCount1 = (data1.violations || []).length;
+    const violationsCount2 = (data2.violations || []).length;
+
+    // Check if AI is available
+    if (!isAiEnabled) {
+      console.warn('AI service not available, using comparative fallback analysis');
+      return generateComparativeFallbackAnalysis(data1, data2, avgScore1, avgScore2, attRate1, attRate2, violationsCount1, violationsCount2);
+    }
+
+    const systemInstruction = `Anda adalah seorang psikolog anak dan mitra setia orang tua yang hangat, bijaksana, dan penuh empati.
+    Tugas Anda adalah membandingkan perkembangan anak antara Semester 1 (Ganjil) dan Semester 2 (Genap) dari tahun ajaran aktif, lalu memberikan analisis komparatif yang "sangat hangat dan menyentuh hati orang tua" (delightful and heartwarming to read for parents).
+    
+    PANDUAN GAYA BAHASA & NADA:
+    1. **Nada Bicara**: Sangat personal, penuh kasih sayang, dan menenangkan. Sapalah dengan "Ayah/Bunda" dan panggil anak dengan panggilan sayang "Ananda" atau namanya langsung.
+    2. **Fokus pada Pertumbuhan**: Tonjolkan setiap kemajuan sekecil apa pun dari Semester 1 ke Semester 2. JANGAN menggunakan kata-kata kaku atau negatif seperti "menurun", "buruk", atau "gagal". Gantilah dengan ungkapan optimis dan penuh semangat (misal: "sedang berproses", "menyimpan energi untuk melompat lebih tinggi", "perjalanan belajar yang menantang namun seru").
+    3. **Pesan Emosional**: Buat tulisan yang menyentuh hati, mengapresiasi kerja keras ananda, dan memberikan motivasi yang manis kepada Ayah dan Bunda untuk terus membersamai ananda.
+    4. **Gunakan Emoji**: Selipkan emoji-emoji hangat dan penuh warna 🌟💖🌱🤗🏆 di setiap bagian agar ramah dibaca.`;
+
+    const prompt = `Lakukan analisis perbandingan perkembangan anak berikut antara Semester 1 (Ganjil) dan Semester 2 (Genap):
+    
+    SISWA: ${data1.student.name}, Usia: ${data1.student.age || 7} tahun, Kelas: ${data1.student.class || 'SD'}
+    
+    DATA SEMESTER 1 (GANJIL):
+    - Rata-rata Nilai Akademik: ${avgScore1}
+    - Rincian Nilai Mapel: ${validAcademicRecords1.map(s => `${s.subject} (${s.score})`).join(', ')}
+    - Kehadiran: ${attRate1}% (${attSummary1.hadir}/${attSummary1.total} hari)
+    - Pelanggaran: ${violationsCount1} catatan
+    - Kuis/Partisipasi: ${(data1.quizPoints || []).length} kali
+    
+    DATA SEMESTER 2 (GENAP):
+    - Rata-rata Nilai Akademik: ${avgScore2}
+    - Rincian Nilai Mapel: ${validAcademicRecords2.map(s => `${s.subject} (${s.score})`).join(', ')}
+    - Kehadiran: ${attRate2}% (${attSummary2.hadir}/${attSummary2.total} hari)
+    - Pelanggaran: ${violationsCount2} catatan
+    - Kuis/Partisipasi: ${(data2.quizPoints || []).length} kali
+    
+    Hasilkan respons dalam format JSON dengan struktur persis seperti ini:
+    {
+      "summary": {
+        "name": "${data1.student.name}",
+        "class": "${data1.student.class || 'SD'}",
+        "overallComparison": "[Tulis ulasan naratif komparatif yang sangat hangat, menyentuh, dan mengalir tentang keseluruhan perkembangan anak dari Semester 1 ke Semester 2. Apresiasi usaha ananda dan kehadiran Ayah/Bunda]"
+      },
+      "cognitive": {
+        "semester1Strengths": ["[Kekuatan kognitif/akademik utama semester 1]"],
+        "semester2Strengths": ["[Kekuatan kognitif/akademik utama semester 2]"],
+        "comparisonNarrative": "[Naratif hangat tentang bagaimana kognitif/akademik anak berkembang, berproses, atau menghadapi tantangan secara positif dari Semester 1 ke Semester 2]"
+      },
+      "affective": {
+        "semester1PositiveCharacters": ["[Karakter/sikap positif utama semester 1]"],
+        "semester2PositiveCharacters": ["[Karakter/sikap positif utama semester 2]"],
+        "comparisonNarrative": "[Naratif hangat tentang perkembangan emosi, kemandirian, kedisiplinan, dan interaksi sosial anak dari Semester 1 ke Semester 2]"
+      },
+      "psychomotor": {
+        "semester1Skills": ["[Keterampilan fisik/motorik utama semester 1]"],
+        "semester2Skills": ["[Keterampilan fisik/motorik utama semester 2]"],
+        "comparisonNarrative": "[Naratif hangat tentang perkembangan koordinasi fisik, karya tangan, olahraga, atau kreativitas psikomotorik anak dari Semester 1 ke Semester 2]"
+      },
+      "recommendations": {
+        "homeSupport": [
+          "[Rekomendasi pendampingan di rumah yang spesifik dan penuh kasih]"
+        ],
+        "stimulation": {
+          "cognitive": ["[Stimulasi berpikir/akademik di rumah]"],
+          "affective": ["[Stimulasi karakter/emosi di rumah]"],
+          "psychomotor": ["[Stimulasi fisik/kreativitas di rumah]"]
+        }
+      }
+    }`;
+
+    const analysis = await generateOpenRouterJson<ComparativeChildAnalysis>(prompt, systemInstruction);
+    return {
+      ...analysis,
+      isComparative: true
+    };
+
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Error generating comparative child development analysis:', error);
+    console.error('Error details:', errorMessage);
+
+    const validAcademicRecords1 = (data1.academicRecords || []).filter(r => r && typeof r.score === 'number');
+    const validAcademicRecords2 = (data2.academicRecords || []).filter(r => r && typeof r.score === 'number');
+
+    const avgScore1 = validAcademicRecords1.length > 0
+      ? Math.round(validAcademicRecords1.reduce((sum, r) => sum + r.score, 0) / validAcademicRecords1.length)
+      : 0;
+    const avgScore2 = validAcademicRecords2.length > 0
+      ? Math.round(validAcademicRecords2.reduce((sum, r) => sum + r.score, 0) / validAcademicRecords2.length)
+      : 0;
+
+    const attendRate1 = (data1.attendanceRecords || []).length > 0
+      ? Math.round(((data1.attendanceRecords || []).filter(r => r.status === 'Hadir').length / (data1.attendanceRecords || []).length) * 100)
+      : 100;
+    const attendRate2 = (data2.attendanceRecords || []).length > 0
+      ? Math.round(((data2.attendanceRecords || []).filter(r => r.status === 'Hadir').length / (data2.attendanceRecords || []).length) * 100)
+      : 100;
+
+    return generateComparativeFallbackAnalysis(
+      data1,
+      data2,
+      avgScore1,
+      avgScore2,
+      attendRate1,
+      attendRate2,
+      (data1.violations || []).length,
+      (data2.violations || []).length
+    );
+  }
+}
+

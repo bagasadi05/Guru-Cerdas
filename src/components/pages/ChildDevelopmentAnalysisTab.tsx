@@ -26,8 +26,13 @@ import {
   ComprehensiveChildAnalysis,
   ChildDevelopmentData,
   saveAnalysisToDb,
-  getLatestAnalysisFromDb
+  getLatestAnalysisFromDb,
+  ComparativeChildAnalysis,
+  generateComparativeChildAnalysis,
+  getComparativeAnalysisFromDb,
+  saveComparativeAnalysisToDb
 } from '../../services/childDevelopmentAnalysis';
+import { useSemester } from '../../contexts/SemesterContext';
 import { useMemo } from 'react';
 import { getJsPDF, getAutoTable } from '../../utils/dynamicImports';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -148,6 +153,94 @@ const LoadingProgress: React.FC<{ currentStep: number }> = ({ currentStep }) => 
   );
 };
 
+// Comparative Loading Progress Steps
+const COMP_LOADING_STEPS = [
+  { id: 1, label: 'Mengelompokkan data Semester 1 & Semester 2', icon: BookOpenIcon },
+  { id: 2, label: 'Membandingkan rata-rata nilai dan tren kognitif', icon: TrendingUpIcon },
+  { id: 3, label: 'Menganalisis perbandingan kehadiran & pelanggaran', icon: UsersIcon },
+  { id: 4, label: 'Merumuskan narasi perkembangan emosional (AI)', icon: BrainCircuitIcon },
+  { id: 5, label: 'Menyusun laporan komparatif terpadu', icon: FileTextIcon },
+];
+
+// Comparative Loading Progress Component
+const CompLoadingProgress: React.FC<{ currentStep: number }> = ({ currentStep }) => {
+  return (
+    <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-8 border border-purple-200 dark:border-purple-800">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Membandingkan Perkembangan Semester...</h3>
+          <p className="text-sm text-gray-500 font-medium">AI sedang menganalisis komparasi Semester 1 & Semester 2</p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {COMP_LOADING_STEPS.map((step) => {
+          const Icon = step.icon;
+          const isCompleted = step.id < currentStep;
+          const isCurrent = step.id === currentStep;
+
+          return (
+            <div
+              key={step.id}
+              className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                isCompleted
+                  ? 'bg-green-50 dark:bg-green-900/20'
+                  : isCurrent
+                    ? 'bg-blue-50 dark:bg-blue-900/20 animate-pulse'
+                    : 'bg-gray-50 dark:bg-gray-800/50 opacity-50'
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  isCompleted
+                    ? 'bg-green-500 text-white'
+                    : isCurrent
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-300 dark:bg-gray-600 text-gray-500'
+                }`}
+              >
+                {isCompleted ? (
+                  <CheckCircleIcon className="w-4 h-4" />
+                ) : (
+                  <Icon className="w-4 h-4" />
+                )}
+              </div>
+              <span
+                className={`text-sm font-medium ${
+                  isCompleted || isCurrent ? 'text-gray-900 dark:text-white' : 'text-gray-400'
+                }`}
+              >
+                {step.label}
+              </span>
+              {isCurrent && (
+                <div className="ml-auto">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Progress bar */}
+      <div className="mt-6">
+        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
+            style={{ width: `${(currentStep / COMP_LOADING_STEPS.length) * 100}%` }}
+          />
+        </div>
+        <p className="text-xs text-gray-400 mt-2 text-center font-medium">
+          Langkah {currentStep} dari {COMP_LOADING_STEPS.length}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // Period Comparison Component
 const PeriodComparison: React.FC<{
   currentAvg: number;
@@ -258,10 +351,18 @@ const ActionableRecommendation: React.FC<{
 
 interface ChildDevelopmentAnalysisTabProps {
   studentData: ChildDevelopmentData;
+  allAcademicRecords?: any[];
+  allAttendanceRecords?: any[];
+  allViolations?: any[];
+  allQuizPoints?: any[];
 }
 
 export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabProps> = ({
-  studentData
+  studentData,
+  allAcademicRecords = [],
+  allAttendanceRecords = [],
+  allViolations = [],
+  allQuizPoints = []
 }) => {
   const [analysis, setAnalysis] = useState<ComprehensiveChildAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -270,7 +371,15 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   const toast = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
 
-  // Calculate subject averages for analytics
+  // === COMPARATIVE STATE ===
+  const { activeAcademicYear, semesters } = useSemester();
+  const [activeTabMode, setActiveTabMode] = useState<'single' | 'comparative'>('single');
+  const [comparativeAnalysis, setComparativeAnalysis] = useState<ComparativeChildAnalysis | null>(null);
+  const [isCompLoading, setIsCompLoading] = useState(false);
+  const [compLoadingStep, setCompLoadingStep] = useState(1);
+  const [isCompDetailsExpanded, setIsCompDetailsExpanded] = useState(false);
+
+  // Calculate subject averages for analytics (Single Semester)
   const subjectAverages = useMemo(() => {
     const subjectMap: Record<string, { total: number; count: number }> = {};
     studentData.academicRecords.forEach(record => {
@@ -291,14 +400,12 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     const totalRecords = records.length;
 
     if (totalRecords < 4) {
-      // Not enough records to compare
       const avg = totalRecords > 0
         ? Math.round(records.reduce((a, b) => a + b.score, 0) / totalRecords)
         : 0;
       return { currentAvg: avg, previousAvg: 0 };
     }
 
-    // Split records into two halves (recent vs older)
     const midPoint = Math.floor(totalRecords / 2);
     const recentRecords = records.slice(midPoint);
     const olderRecords = records.slice(0, midPoint);
@@ -313,10 +420,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   const studentScores = subjectAverages.map(s => s.average);
   const overallAverage = studentScores.length > 0 ? Math.round(studentScores.reduce((a, b) => a + b, 0) / studentScores.length) : 0;
 
-  // Radar chart validation
   const isRadarChartValid = subjects.length >= 3;
-
-  // Radar chart dimensions
   const chartSize = 260;
   const centerX = chartSize / 2;
   const centerY = chartSize / 2;
@@ -327,16 +431,288 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
   const labelPositions = useMemo(() => calculateLabelPositions(subjects, centerX, centerY, radius), [subjects, centerX, centerY, radius]);
   const studentPolygonPoints = useMemo(() => calculateRadarPoints(studentScores, maxScore, centerX, centerY, radius), [studentScores, maxScore, centerX, centerY, radius]);
 
-  // Helper to get storage key
   const getStorageKey = useCallback(
     () => `child_analysis_${studentData.student.name}_${studentData.student.class || 'general'}`,
     [studentData.student.name, studentData.student.class]
   );
 
-  // Load from database / local storage on mount
+  // === DYNAMIC GROUPING FOR SEMESTER COMPARISON ===
+  const activeYearSemesters = useMemo(() => {
+    if (!activeAcademicYear) return [];
+    return semesters.filter(s => s.academic_year_id === activeAcademicYear.id);
+  }, [semesters, activeAcademicYear]);
+
+  const sem1 = useMemo(() => {
+    return activeYearSemesters.find(s => s.semester_number === 1);
+  }, [activeYearSemesters]);
+
+  const sem2 = useMemo(() => {
+    return activeYearSemesters.find(s => s.semester_number === 2);
+  }, [activeYearSemesters]);
+
+  const sem1Academic = useMemo(() => {
+    if (!sem1 || !allAcademicRecords) return [];
+    return allAcademicRecords.filter(r => r.semester_id === sem1.id);
+  }, [allAcademicRecords, sem1]);
+
+  const sem2Academic = useMemo(() => {
+    if (!sem2 || !allAcademicRecords) return [];
+    return allAcademicRecords.filter(r => r.semester_id === sem2.id);
+  }, [allAcademicRecords, sem2]);
+
+  const sem1Attendance = useMemo(() => {
+    if (!sem1 || !allAttendanceRecords) return [];
+    return allAttendanceRecords.filter(r => r.semester_id === sem1.id);
+  }, [allAttendanceRecords, sem1]);
+
+  const sem2Attendance = useMemo(() => {
+    if (!sem2 || !allAttendanceRecords) return [];
+    return allAttendanceRecords.filter(r => r.semester_id === sem2.id);
+  }, [allAttendanceRecords, sem2]);
+
+  const sem1Violations = useMemo(() => {
+    if (!sem1 || !allViolations) return [];
+    return allViolations.filter(r => r.semester_id === sem1.id);
+  }, [allViolations, sem1]);
+
+  const sem2Violations = useMemo(() => {
+    if (!sem2 || !allViolations) return [];
+    return allViolations.filter(r => r.semester_id === sem2.id);
+  }, [allViolations, sem2]);
+
+  const sem1Quizzes = useMemo(() => {
+    if (!sem1 || !allQuizPoints) return [];
+    return allQuizPoints.filter(r => r.semester_id === sem1.id);
+  }, [allQuizPoints, sem1]);
+
+  const sem2Quizzes = useMemo(() => {
+    if (!sem2 || !allQuizPoints) return [];
+    return allQuizPoints.filter(r => r.semester_id === sem2.id);
+  }, [allQuizPoints, sem2]);
+
+  // === CALCULATING STATS FOR COMPARISON ===
+  const avgScoreSem1 = useMemo(() => {
+    if (sem1Academic.length === 0) return 0;
+    return Math.round(sem1Academic.reduce((sum, r) => sum + r.score, 0) / sem1Academic.length);
+  }, [sem1Academic]);
+
+  const avgScoreSem2 = useMemo(() => {
+    if (sem2Academic.length === 0) return 0;
+    return Math.round(sem2Academic.reduce((sum, r) => sum + r.score, 0) / sem2Academic.length);
+  }, [sem2Academic]);
+
+  const avgScoreDiff = avgScoreSem2 - avgScoreSem1;
+
+  const compAttendanceStats = useMemo(() => {
+    const getStats = (recs: any[]) => {
+      const total = recs.length;
+      const hadir = recs.filter(r => r.status === 'Hadir').length;
+      const sakit = recs.filter(r => r.status === 'Sakit').length;
+      const izin = recs.filter(r => r.status === 'Izin').length;
+      const alpha = recs.filter(r => r.status === 'Alpha').length;
+      const percentage = total > 0 ? Math.round((hadir / total) * 100) : 100;
+      return { total, hadir, sakit, izin, alpha, percentage };
+    };
+    return {
+      sem1: getStats(sem1Attendance),
+      sem2: getStats(sem2Attendance)
+    };
+  }, [sem1Attendance, sem2Attendance]);
+
+  const compViolationStats = useMemo(() => {
+    const getStats = (recs: any[]) => {
+      const count = recs.length;
+      const points = recs.reduce((sum, r) => sum + (r.points || 0), 0);
+      return { count, points };
+    };
+    return {
+      sem1: getStats(sem1Violations),
+      sem2: getStats(sem2Violations)
+    };
+  }, [sem1Violations, sem2Violations]);
+
+  const compSubjectAverages = useMemo(() => {
+    const subjectsMap: Record<string, { sem1: number[]; sem2: number[] }> = {};
+    
+    sem1Academic.forEach(r => {
+      const s = r.subject || 'Lainnya';
+      if (!subjectsMap[s]) subjectsMap[s] = { sem1: [], sem2: [] };
+      subjectsMap[s].sem1.push(r.score);
+    });
+
+    sem2Academic.forEach(r => {
+      const s = r.subject || 'Lainnya';
+      if (!subjectsMap[s]) subjectsMap[s] = { sem1: [], sem2: [] };
+      subjectsMap[s].sem2.push(r.score);
+    });
+
+    return Object.entries(subjectsMap).map(([subject, scores]) => {
+      const sem1Avg = scores.sem1.length > 0 ? Math.round(scores.sem1.reduce((a,b)=>a+b,0)/scores.sem1.length) : null;
+      const sem2Avg = scores.sem2.length > 0 ? Math.round(scores.sem2.reduce((a,b)=>a+b,0)/scores.sem2.length) : null;
+      return { subject, sem1: sem1Avg, sem2: sem2Avg };
+    });
+  }, [sem1Academic, sem2Academic]);
+
+  // === DUAL RADAR CHART CALCULATIONS ===
+  const compHolisticDimensions = useMemo(() => {
+    const getKeterampilanScore = (records: any[], overallAvg: number) => {
+      const practicalSubjects = ['pjok', 'seni', 'sbdp', 'prakarya', 'keterampilan', 'seni budaya'];
+      const practicalRecords = records.filter(r => {
+        const sub = (r.subject || '').toLowerCase();
+        return practicalSubjects.some(p => sub.includes(p));
+      });
+      if (practicalRecords.length > 0) {
+        return Math.round(practicalRecords.reduce((sum, r) => sum + r.score, 0) / practicalRecords.length);
+      }
+      return overallAvg > 0 ? Math.round((overallAvg + 80) / 2) : 80;
+    };
+
+    const qPts1 = sem1Quizzes.reduce((sum, q) => sum + (q.points || 0), 0);
+    const qCount1 = sem1Quizzes.length;
+    const keaktifanSem1 = qPts1 > 0 ? Math.min(qPts1 * 5, 100) : Math.min(qCount1 * 15, 100);
+
+    const qPts2 = sem2Quizzes.reduce((sum, q) => sum + (q.points || 0), 0);
+    const qCount2 = sem2Quizzes.length;
+    const keaktifanSem2 = qPts2 > 0 ? Math.min(qPts2 * 5, 100) : Math.min(qCount2 * 15, 100);
+
+    const labels = ['Akademik', 'Kehadiran', 'Kedisiplinan', 'Keaktifan', 'Keterampilan'];
+
+    return {
+      labels,
+      sem1: [
+        avgScoreSem1,
+        compAttendanceStats.sem1.percentage,
+        Math.max(100 - compViolationStats.sem1.points * 5, 0),
+        keaktifanSem1,
+        getKeterampilanScore(sem1Academic, avgScoreSem1)
+      ],
+      sem2: [
+        avgScoreSem2,
+        compAttendanceStats.sem2.percentage,
+        Math.max(100 - compViolationStats.sem2.points * 5, 0),
+        keaktifanSem2,
+        getKeterampilanScore(sem2Academic, avgScoreSem2)
+      ]
+    };
+  }, [
+    avgScoreSem1, avgScoreSem2,
+    compAttendanceStats, compViolationStats,
+    sem1Academic, sem2Academic,
+    sem1Quizzes, sem2Quizzes
+  ]);
+
+  // Construct Data for Comparative AI
+  const childData1 = useMemo<ChildDevelopmentData>(() => ({
+    student: {
+      id: studentData.student.id,
+      name: studentData.student.name,
+      age: studentData.student.age,
+      class: studentData.student.class
+    },
+    academicRecords: sem1Academic.map((r: any) => ({
+      subject: r.subject,
+      score: r.score,
+      assessment_name: r.assessment_name,
+      notes: r.notes
+    })),
+    attendanceRecords: sem1Attendance.map((a: any) => ({
+      status: a.status,
+      date: a.date
+    })),
+    violations: sem1Violations.map((v: any) => ({
+      description: v.description,
+      points: v.points,
+      date: v.date
+    })),
+    quizPoints: sem1Quizzes.map((q: any) => ({
+      activity: q.quiz_name || q.activity,
+      points: q.points,
+      date: q.quiz_date || q.date
+    }))
+  }), [studentData.student, sem1Academic, sem1Attendance, sem1Violations, sem1Quizzes]);
+
+  const childData2 = useMemo<ChildDevelopmentData>(() => ({
+    student: {
+      id: studentData.student.id,
+      name: studentData.student.name,
+      age: studentData.student.age,
+      class: studentData.student.class
+    },
+    academicRecords: sem2Academic.map((r: any) => ({
+      subject: r.subject,
+      score: r.score,
+      assessment_name: r.assessment_name,
+      notes: r.notes
+    })),
+    attendanceRecords: sem2Attendance.map((a: any) => ({
+      status: a.status,
+      date: a.date
+    })),
+    violations: sem2Violations.map((v: any) => ({
+      description: v.description,
+      points: v.points,
+      date: v.date
+    })),
+    quizPoints: sem2Quizzes.map((q: any) => ({
+      activity: q.quiz_name || q.activity,
+      points: q.points,
+      date: q.quiz_date || q.date
+    }))
+  }), [studentData.student, sem2Academic, sem2Attendance, sem2Violations, sem2Quizzes]);
+
+  // "Status Perkembangan Komparatif" Badges (HSL colors)
+  const comparativeBadges = useMemo(() => {
+    let cognitiveLabel = 'Stabil';
+    let cognitiveColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50';
+    let cognitiveDot = 'bg-blue-500';
+    if (avgScoreDiff > 3) {
+      cognitiveLabel = 'Meningkat Pesat 📈';
+      cognitiveColor = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50';
+      cognitiveDot = 'bg-emerald-500';
+    } else if (avgScoreDiff < -3) {
+      cognitiveLabel = 'Butuh Stimulasi Ekstra ⚠️';
+      cognitiveColor = 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50';
+      cognitiveDot = 'bg-rose-500';
+    }
+
+    let attendanceLabel = 'Stabil';
+    let attendanceColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50';
+    let attendanceDot = 'bg-blue-500';
+    const attDiff = compAttendanceStats.sem2.percentage - compAttendanceStats.sem1.percentage;
+    if (attDiff > 2) {
+      attendanceLabel = 'Kehadiran Meningkat 👍';
+      attendanceColor = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50';
+      attendanceDot = 'bg-emerald-500';
+    } else if (attDiff < -5) {
+      attendanceLabel = 'Kehadiran Menurun ⚠️';
+      attendanceColor = 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50';
+      attendanceDot = 'bg-rose-500';
+    }
+
+    let behaviorLabel = 'Sangat Baik';
+    let behaviorColor = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50';
+    let behaviorDot = 'bg-emerald-500';
+    const violDiff = compViolationStats.sem2.points - compViolationStats.sem1.points;
+    if (violDiff > 0) {
+      behaviorLabel = 'Ada Pelanggaran Baru ⚠️';
+      behaviorColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50';
+      behaviorDot = 'bg-amber-500';
+    } else if (compViolationStats.sem2.points === 0 && compViolationStats.sem1.points === 0) {
+      behaviorLabel = 'Zero Violations (Teladan!) 🏅';
+    } else if (violDiff < 0) {
+      behaviorLabel = 'Kedisiplinan Membaik 🌟';
+    }
+
+    return {
+      cognitive: { label: cognitiveLabel, color: cognitiveColor, dot: cognitiveDot },
+      attendance: { label: attendanceLabel, color: attendanceColor, dot: attendanceDot },
+      behavior: { label: behaviorLabel, color: behaviorColor, dot: behaviorDot }
+    };
+  }, [avgScoreDiff, compAttendanceStats, compViolationStats]);
+
+  // Load from database / local storage on mount (Single Semester)
   useEffect(() => {
     const loadAnalysis = async () => {
-      // 1. Try DB
       try {
         const dbAnalysis = await getLatestAnalysisFromDb(studentData.student.id);
         if (dbAnalysis) {
@@ -347,7 +723,6 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
         console.error('Gagal memuat analisis dari Supabase, mencoba localStorage:', err);
       }
 
-      // 2. Fallback to LocalStorage
       const savedAnalysis = localStorage.getItem(getStorageKey());
       if (savedAnalysis) {
         try {
@@ -362,6 +737,34 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     loadAnalysis();
   }, [studentData.student.id, getStorageKey]);
 
+  // Load comparative analysis
+  useEffect(() => {
+    const loadCompAnalysis = async () => {
+      if (!activeAcademicYear) return;
+      
+      try {
+        const dbComp = await getComparativeAnalysisFromDb(studentData.student.id, activeAcademicYear.id);
+        if (dbComp) {
+          setComparativeAnalysis(dbComp);
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to load comparative analysis from Supabase:', err);
+      }
+
+      const savedComp = localStorage.getItem(`comp_analysis_${studentData.student.name}_${activeAcademicYear.id}`);
+      if (savedComp) {
+        try {
+          setComparativeAnalysis(JSON.parse(savedComp));
+        } catch (e) {
+          console.error('Failed to parse saved comparative analysis:', e);
+        }
+      }
+    };
+
+    loadCompAnalysis();
+  }, [studentData.student.id, activeAcademicYear]);
+
   // "30-Second Glance" summary calculation
   const glanceSummary = useMemo(() => {
     if (!analysis) return null;
@@ -369,19 +772,19 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     const cleanText = (text: string) => {
       if (!text) return '';
       return text
-        .replace(/^[\s\d•\-*🌟💡🎯🏠🏆👣🙋‍♂️🏫⭐🎒😇🔥👍👌💪🏃‍♂️🛠️★►]+/, '') // Remove prefix emojis, bullets, etc.
+        .replace(/^[\s\d•\-*🌟💡🎯🏠🏆👣🙋‍♂️🏫⭐🎒😇🔥👍👌💪🏃‍♂️🛠️★►]+/, '') 
         .trim();
     };
 
-    const superpower = analysis.cognitive.strengths && analysis.cognitive.strengths.length > 0
+    const superpower = analysis?.cognitive?.strengths && analysis.cognitive.strengths.length > 0
       ? cleanText(analysis.cognitive.strengths[0])
       : 'Menunjukkan motivasi belajar dan respon afektif yang baik di kelas.';
 
-    const challenge = analysis.cognitive.areasForDevelopment && analysis.cognitive.areasForDevelopment.length > 0
+    const challenge = analysis?.cognitive?.areasForDevelopment && analysis.cognitive.areasForDevelopment.length > 0
       ? cleanText(analysis.cognitive.areasForDevelopment[0])
       : 'Dukung kemandirian dalam memecahkan soal latihan tingkat lanjut.';
 
-    const homeTip = analysis.recommendations.homeSupport && analysis.recommendations.homeSupport.length > 0
+    const homeTip = analysis?.recommendations?.homeSupport && analysis.recommendations.homeSupport.length > 0
       ? cleanText(analysis.recommendations.homeSupport[0])
       : 'Sediakan sesi membaca bersama 15 menit sehari di rumah.';
 
@@ -390,7 +793,6 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
 
   // "Status Perkembangan" Badges (HSL colors)
   const developmentBadges = useMemo(() => {
-    // Cognitive
     let cognitiveLabel = 'Cukup';
     let cognitiveColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50';
     let cognitiveDot = 'bg-amber-500';
@@ -408,7 +810,6 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
       cognitiveDot = 'bg-rose-500';
     }
 
-    // Affective
     const attendanceRecords = studentData.attendanceRecords || [];
     const violations = studentData.violations || [];
     const totalViolations = violations.length;
@@ -433,7 +834,6 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
       affectiveDot = 'bg-rose-500';
     }
 
-    // Psychomotor
     let psychomotorLabel = 'Cukup Aktif';
     let psychomotorColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50';
     let psychomotorDot = 'bg-amber-500';
@@ -806,6 +1206,478 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     }
   };
 
+  // === GENERATE & EXPORT COMPARATIVE ANALYSIS ===
+  const handleGenerateComparativeAnalysis = async () => {
+    setIsCompLoading(true);
+    setCompLoadingStep(1);
+
+    // Setup micro-interaction interval timer for loading steps
+    const stepInterval = setInterval(() => {
+      setCompLoadingStep(prev => {
+        if (prev < 5) return prev + 1;
+        return prev;
+      });
+    }, 1200);
+
+    try {
+      if (!childData1 || !childData2) {
+        throw new Error('Data Semester 1 atau Semester 2 tidak dapat ditemukan.');
+      }
+      
+      const result = await generateComparativeChildAnalysis(childData1, childData2);
+      setComparativeAnalysis(result);
+
+      // Save to local storage
+      const storageKey = `comp_analysis_${studentData.student.name}_${activeAcademicYear?.id || 'general'}`;
+      localStorage.setItem(storageKey, JSON.stringify(result));
+
+      // Save to Supabase DB (silent sync, doesn't crash on offline)
+      try {
+        if (activeAcademicYear) {
+          await saveComparativeAnalysisToDb(
+            studentData.student.id,
+            activeAcademicYear.id,
+            result,
+            result.generatedBy || 'AI'
+          );
+        }
+      } catch (dbError) {
+        console.error('Supabase Comparative Sync Error:', dbError);
+      }
+
+      toast.success('Analisis perbandingan semester berhasil dibuat!');
+    } catch (error) {
+      toast.error('Gagal membuat analisis perbandingan. Silakan coba lagi.');
+      console.error(error);
+    } finally {
+      clearInterval(stepInterval);
+      setIsCompLoading(false);
+      setCompLoadingStep(1);
+    }
+  };
+
+  const handleExportComparativeReport = async () => {
+    if (!comparativeAnalysis) return;
+
+    try {
+      toast.info('Menyiapkan Laporan Perbandingan PDF Premium...');
+
+      // Load school logos
+      await ensureLogosLoaded();
+
+      const { default: jsPDF } = await getJsPDF();
+      const { default: autoTable } = await getAutoTable();
+
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 14;
+
+      // Formal Kop Surat
+      let y = addPdfHeader(doc, {
+        schoolName: 'MI AL IRSYAD KOTA MADIUN',
+        orientation: 'portrait'
+      });
+
+      // Report Title
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59); // Slate 800
+      doc.text('LAPORAN KOMPARASI PERKEMBANGAN SISWA ANTAR SEMESTER', pageWidth / 2, y, { align: 'center' });
+      y += 8;
+
+      // Metadata Table (elegant, clean)
+      autoTable(doc, {
+        startY: y,
+        body: [
+          ['Nama Siswa', `: ${comparativeAnalysis.summary.name}`, 'Kelas / TA', `: ${comparativeAnalysis.summary.class} / ${activeAcademicYear?.name || '-'}`],
+          ['Rata-Rata S1', `: ${avgScoreSem1}`, 'Rata-Rata S2', `: ${avgScoreSem2} (${avgScoreDiff >= 0 ? '+' : ''}${avgScoreDiff})`],
+          ['Tanggal Cetak', `: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`, 'Metode', `: ${comparativeAnalysis.generatedBy === 'Offline Fallback' ? 'Offline Standard' : 'AI Comparative'}`],
+        ],
+        theme: 'plain',
+        styles: { fontSize: 9.5, cellPadding: 1.5, textColor: [51, 65, 85] },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 28 },
+          1: { cellWidth: 60 },
+          2: { fontStyle: 'bold', cellWidth: 28 },
+          3: { cellWidth: 60 },
+        },
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 6;
+
+      // Divide line
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 6;
+
+      // === SECTION 1: PERFORMA AKADEMIK KOMPARATIF ===
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(79, 70, 229); // Indigo 600
+      doc.text('1. PERBANDINGAN PERFORMA AKADEMIK PER MATA PELAJARAN', margin, y);
+      y += 5;
+
+      // Create comparative rows
+      const academicRows = compSubjectAverages.map((item, idx) => {
+        const s1Val = item.sem1 !== null ? item.sem1 : '-';
+        const s2Val = item.sem2 !== null ? item.sem2 : '-';
+        let status = 'Stabil';
+        if (item.sem1 !== null && item.sem2 !== null) {
+          const diff = item.sem2 - item.sem1;
+          status = diff > 0 ? `Naik ${diff} Poin` : diff < 0 ? `Turun ${Math.abs(diff)} Poin` : 'Stabil';
+        }
+        return [idx + 1, item.subject, s1Val, s2Val, status];
+      });
+
+      autoTable(doc, {
+        startY: y,
+        head: [['No', 'Mata Pelajaran', 'Semester 1 (Ganjil)', 'Semester 2 (Genap)', 'Catatan Perkembangan']],
+        body: academicRows,
+        theme: 'striped',
+        headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        styles: { fontSize: 8.5, cellPadding: 2.5 },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 65 },
+          2: { cellWidth: 35, halign: 'center' },
+          3: { cellWidth: 35, halign: 'center' },
+          4: { cellWidth: 40, fontStyle: 'bold' }
+        },
+        didParseCell: (data) => {
+          if (data.column.index === 4 && data.cell.section === 'body') {
+            const val = data.cell.text[0];
+            if (val.startsWith('Naik')) {
+              data.cell.styles.textColor = [16, 185, 129]; // Emerald 500
+            } else if (val.startsWith('Turun')) {
+              data.cell.styles.textColor = [244, 63, 94]; // Rose 500
+            } else {
+              data.cell.styles.textColor = [100, 116, 139]; // Slate 500
+            }
+          }
+        }
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 8;
+
+      // === SECTION 2: KEHADIRAN & KARAKTER KOMPARATIF ===
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(79, 70, 229);
+      doc.text('2. KOMPARASI REKAPITULASI PRESENSI & DISIPLIN', margin, y);
+      y += 5;
+
+      const presensiRows = [
+        ['Rasio Kehadiran', `${compAttendanceStats.sem1.percentage}%`, `${compAttendanceStats.sem2.percentage}%`, `${compAttendanceStats.sem2.percentage - compAttendanceStats.sem1.percentage >= 0 ? '+' : ''}${compAttendanceStats.sem2.percentage - compAttendanceStats.sem1.percentage}%`],
+        ['Hadir', `${compAttendanceStats.sem1.hadir} Hari`, `${compAttendanceStats.sem2.hadir} Hari`, `${compAttendanceStats.sem2.hadir - compAttendanceStats.sem1.hadir}`],
+        ['Sakit', `${compAttendanceStats.sem1.sakit} Hari`, `${compAttendanceStats.sem2.sakit} Hari`, `${compAttendanceStats.sem2.sakit - compAttendanceStats.sem1.sakit}`],
+        ['Izin', `${compAttendanceStats.sem1.izin} Hari`, `${compAttendanceStats.sem2.izin} Hari`, `${compAttendanceStats.sem2.izin - compAttendanceStats.sem1.izin}`],
+        ['Alpha', `${compAttendanceStats.sem1.alpha} Hari`, `${compAttendanceStats.sem2.alpha} Hari`, `${compAttendanceStats.sem2.alpha - compAttendanceStats.sem1.alpha}`],
+        ['Poin Pelanggaran', `${compViolationStats.sem1.points} Poin`, `${compViolationStats.sem2.points} Poin`, `${compViolationStats.sem2.points - compViolationStats.sem1.points}`]
+      ];
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Metrik Disiplin', 'Semester 1', 'Semester 2', 'Perubahan']],
+        body: presensiRows,
+        theme: 'grid',
+        headStyles: { fillColor: [100, 116, 139], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        styles: { fontSize: 8.5, cellPadding: 2 },
+        columnStyles: {
+          0: { cellWidth: 60, fontStyle: 'bold' },
+          1: { cellWidth: 40, halign: 'center' },
+          2: { cellWidth: 40, halign: 'center' },
+          3: { cellWidth: 45, halign: 'center', fontStyle: 'bold' }
+        },
+        didParseCell: (data) => {
+          if (data.column.index === 3 && data.cell.section === 'body') {
+            const val = data.cell.text[0];
+            const isViolationRow = data.row.index === 5;
+            if (val.startsWith('+') && !isViolationRow) {
+              data.cell.styles.textColor = [16, 185, 129];
+            } else if (val.startsWith('-') && !isViolationRow) {
+              data.cell.styles.textColor = [244, 63, 94];
+            } else if (isViolationRow) {
+              const numVal = parseInt(val);
+              if (numVal > 0) {
+                data.cell.styles.textColor = [244, 63, 94]; // Red for violation increase
+              } else if (numVal < 0) {
+                data.cell.styles.textColor = [16, 185, 129]; // Green for violation decrease
+              }
+            }
+          }
+        }
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 8;
+
+      // === SECTION 3: EVALUASI 5 DIMENSI PERKEMBANGAN HOLISTIK ===
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(79, 70, 229);
+      doc.text('3. EVALUASI 5 DIMENSI PERKEMBANGAN HOLISTIK', margin, y);
+      y += 5;
+
+      const subLabels = [
+        'Akademik (Kognitif)',
+        'Kehadiran (Presensi)',
+        'Kedisiplinan (Karakter & Adab)',
+        'Keaktifan (Partisipasi)',
+        'Keterampilan (Psikomotorik)'
+      ];
+
+      const dimensiRows = compHolisticDimensions.labels.map((label, idx) => {
+        const s1Val = compHolisticDimensions.sem1[idx];
+        const s2Val = compHolisticDimensions.sem2[idx];
+        const diff = s2Val - s1Val;
+        const trend = diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : 'Stabil';
+        const displayLabel = subLabels[idx] || label;
+        return [idx + 1, displayLabel, `${s1Val}%`, `${s2Val}%`, trend];
+      });
+
+      autoTable(doc, {
+        startY: y,
+        head: [['No', 'Dimensi Perkembangan', 'Semester 1', 'Semester 2', 'Perkembangan (Trend)']],
+        body: dimensiRows,
+        theme: 'striped',
+        headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        styles: { fontSize: 8.5, cellPadding: 2.5 },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 70 },
+          2: { cellWidth: 35, halign: 'center' },
+          3: { cellWidth: 35, halign: 'center' },
+          4: { cellWidth: 35, halign: 'center', fontStyle: 'bold' }
+        },
+        didParseCell: (data) => {
+          if (data.column.index === 4 && data.cell.section === 'body') {
+            const val = data.cell.text[0];
+            if (val.startsWith('+')) {
+              data.cell.styles.textColor = [16, 185, 129]; // Emerald 500
+            } else if (val.startsWith('-')) {
+              data.cell.styles.textColor = [244, 63, 94]; // Rose 500
+            } else {
+              data.cell.styles.textColor = [100, 116, 139]; // Slate 500
+            }
+          }
+        }
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 12;
+
+      // Add a page break for the detailed narratives
+      doc.addPage();
+      y = addPdfHeader(doc, {
+        schoolName: 'MI AL IRSYAD KOTA MADIUN',
+        orientation: 'portrait'
+      });
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(79, 70, 229);
+      doc.text('4. ANALISIS NARATIF PERKEMBANGAN ANANDA (AI COMPLETED)', margin, y);
+      y += 6;
+
+      // General comparative overview
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text('A. RINGKASAN DINAMIKA PERKEMBANGAN', margin, y);
+      y += 4;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      const overallText = doc.splitTextToSize(comparativeAnalysis.summary.overallComparison, pageWidth - (margin * 2));
+      doc.text(overallText, margin, y);
+      y += (overallText.length * 4) + 6;
+
+      // Function to render elegant side-by-side strengths or bullet points and then narrative
+      const drawAspectComparison = (
+        title: string,
+        sem1Bullets: string[],
+        sem2Bullets: string[],
+        narrative: string
+      ) => {
+        // Prevent layout overlapping
+        if (y > pageHeight - 80) {
+          doc.addPage();
+          y = addPdfHeader(doc, { schoolName: 'MI AL IRSYAD KOTA MADIUN', orientation: 'portrait' }) + 8;
+        }
+
+        doc.setFontSize(9.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 41, 59);
+        doc.text(title, margin, y);
+        y += 5;
+
+        // Render standard comparison bullets using a two-column clean style
+        const colWidth = (pageWidth - (margin * 2) - 8) / 2;
+        
+        // Semester 1 Col
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(margin, y, colWidth, 32, 2, 2, 'F');
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text('Semester 1 (Ganjil):', margin + 3, y + 5);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
+        let s1Y = y + 10;
+        sem1Bullets.slice(0, 3).forEach(b => {
+          const splitB = doc.splitTextToSize(`• ${b}`, colWidth - 6);
+          doc.text(splitB, margin + 3, s1Y);
+          s1Y += (splitB.length * 3.5);
+        });
+
+        // Semester 2 Col
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(margin + colWidth + 8, y, colWidth, 32, 2, 2, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(79, 70, 229);
+        doc.text('Semester 2 (Genap):', margin + colWidth + 11, y + 5);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
+        let s2Y = y + 10;
+        sem2Bullets.slice(0, 3).forEach(b => {
+          const splitB = doc.splitTextToSize(`• ${b}`, colWidth - 6);
+          doc.text(splitB, margin + colWidth + 11, s2Y);
+          s2Y += (splitB.length * 3.5);
+        });
+
+        y += 36;
+
+        // Narrative below columns
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        const splitNarrative = doc.splitTextToSize(`" ${narrative} "`, pageWidth - (margin * 2));
+        doc.text(splitNarrative, margin, y);
+        y += (splitNarrative.length * 4) + 6;
+      };
+
+      // Aspect 1: Kognitif
+      drawAspectComparison(
+        'B. EVALUASI ASPEK KOGNITIF (AKADEMIK & CARA BELAJAR)',
+        comparativeAnalysis.cognitive.semester1Strengths,
+        comparativeAnalysis.cognitive.semester2Strengths,
+        comparativeAnalysis.cognitive.comparisonNarrative
+      );
+
+      // Aspect 2: Afektif
+      drawAspectComparison(
+        'C. EVALUASI ASPEK AFEKTIF (KARAKTER & SOSIAL-EMOSIONAL)',
+        comparativeAnalysis.affective.semester1PositiveCharacters,
+        comparativeAnalysis.affective.semester2PositiveCharacters,
+        comparativeAnalysis.affective.comparisonNarrative
+      );
+
+      // Aspect 3: Psikomotorik
+      drawAspectComparison(
+        'D. EVALUASI ASPEK PSIKOMOTORIK (KETERAMPILAN & AKTIVITAS FISIK)',
+        comparativeAnalysis.psychomotor.semester1Skills,
+        comparativeAnalysis.psychomotor.semester2Skills,
+        comparativeAnalysis.psychomotor.comparisonNarrative
+      );
+
+      // Add one more page for recommendations & signature
+      doc.addPage();
+      y = addPdfHeader(doc, {
+        schoolName: 'MI AL IRSYAD KOTA MADIUN',
+        orientation: 'portrait'
+      });
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(79, 70, 229);
+      doc.text('5. REKOMENDASI DAN RENCANA STIMULASI LANJUTAN', margin, y);
+      y += 6;
+
+      // Home Support Table
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text('A. Dukungan Pembelajaran di Rumah (Home Support)', margin, y);
+      y += 4;
+
+      const homeSupportRows = comparativeAnalysis.recommendations.homeSupport.map((support, idx) => [idx + 1, support]);
+      autoTable(doc, {
+        startY: y,
+        body: homeSupportRows,
+        theme: 'plain',
+        styles: { fontSize: 8.5, cellPadding: 2, textColor: [71, 85, 105] },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 8, textColor: [79, 70, 229] },
+          1: { cellWidth: 170 }
+        }
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 6;
+
+      // Stimulation Plan Table
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text('B. Rencana Kerja Stimulasi Kolaboratif', margin, y);
+      y += 4;
+
+      const stimulationRows = [
+        ['Stimulasi Kognitif', comparativeAnalysis.recommendations.stimulation.cognitive.join('\n')],
+        ['Stimulasi Afektif', comparativeAnalysis.recommendations.stimulation.affective.join('\n')],
+        ['Stimulasi Psikomotorik', comparativeAnalysis.recommendations.stimulation.psychomotor.join('\n')]
+      ];
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Dimensi', 'Rencana Aksi Stimulasi untuk Orang Tua & Guru']],
+        body: stimulationRows,
+        theme: 'grid',
+        headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        styles: { fontSize: 8.5, cellPadding: 3, textColor: [51, 65, 85] },
+        columnStyles: {
+          0: { cellWidth: 40, fontStyle: 'bold' },
+          1: { cellWidth: 140 }
+        }
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 12;
+
+      // Check height for signature
+      if (y > pageHeight - 50) {
+        doc.addPage();
+        y = addPdfHeader(doc, { schoolName: 'MI AL IRSYAD KOTA MADIUN', orientation: 'portrait' }) + 8;
+      }
+
+      // Formal signature blocks
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(51, 65, 85);
+      doc.text('Madiun, ' + new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), pageWidth - 70, y);
+      y += 4;
+
+      doc.text('Mengetahui,', margin + 10, y);
+      doc.text('Kepala Madrasah,', margin + 10, y + 5);
+
+      doc.text('Wali Kelas,', pageWidth - 70, y + 5);
+
+      // Names signatures place
+      y += 28;
+      doc.setFont('helvetica', 'bold');
+      doc.text('( H. Masturi, S.Pd.I. )', margin + 10, y);
+      doc.text(`( ${studentData.student.class ? 'Guru Wali Kelas' : 'Wali Kelas'} )`, pageWidth - 70, y);
+
+      const safeName = comparativeAnalysis.summary.name.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+      doc.save(`Laporan_Komparasi_Perkembangan_Siswa_${safeName}.pdf`);
+
+      toast.success('Laporan Perbandingan PDF Premium berhasil diunduh!');
+    } catch (err) {
+      console.error('Failed to export comparative PDF:', err);
+      toast.error('Gagal membuat ekspor PDF perbandingan. Silakan coba kembali.');
+    }
+  };
+
   // Generate actionable recommendations from analysis
   const actionableRecommendations = useMemo(() => {
     if (!analysis) return [];
@@ -813,16 +1685,17 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     const recs = [];
 
     // Academic recommendations
-    if (analysis.cognitive.areasForDevelopment.length > 0) {
+    const cognitiveAreas = analysis?.cognitive?.areasForDevelopment || [];
+    if (cognitiveAreas.length > 0) {
       recs.push({
         title: 'Tingkatkan Kemampuan Akademik',
-        description: analysis.cognitive.areasForDevelopment[0],
+        description: cognitiveAreas[0],
         priority: 'high' as const,
         category: 'Kognitif',
         actions: [
           'Identifikasi mata pelajaran yang paling membutuhkan perhatian',
           'Buat jadwal belajar tambahan 30 menit/hari',
-          'Gunakan metode belajar yang sesuai: ' + analysis.cognitive.learningStyle,
+          'Gunakan metode belajar yang sesuai: ' + (analysis?.cognitive?.learningStyle || 'Visual/Auditori'),
           'Pantau kemajuan setiap minggu',
           'Berikan apresiasi atas setiap peningkatan'
         ]
@@ -830,10 +1703,11 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     }
 
     // Character development
-    if (analysis.affective.characterDevelopmentAreas.length > 0) {
+    const affectiveAreas = analysis?.affective?.characterDevelopmentAreas || [];
+    if (affectiveAreas.length > 0) {
       recs.push({
         title: 'Pengembangan Karakter',
-        description: analysis.affective.characterDevelopmentAreas[0],
+        description: affectiveAreas[0],
         priority: 'medium' as const,
         category: 'Afektif',
         actions: [
@@ -847,10 +1721,11 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     }
 
     // Motor skills
-    if (analysis.psychomotor.areasNeedingStimulation.length > 0) {
+    const psychomotorAreas = analysis?.psychomotor?.areasNeedingStimulation || [];
+    if (psychomotorAreas.length > 0) {
       recs.push({
         title: 'Stimulasi Psikomotor',
-        description: analysis.psychomotor.areasNeedingStimulation[0],
+        description: psychomotorAreas[0],
         priority: 'low' as const,
         category: 'Psikomotor',
         actions: [
@@ -864,7 +1739,8 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     }
 
     // Home support
-    analysis.recommendations.homeSupport.slice(0, 2).forEach((support, idx) => {
+    const homeSupport = analysis?.recommendations?.homeSupport || [];
+    homeSupport.slice(0, 2).forEach((support, idx) => {
       recs.push({
         title: `Dukungan Rumah ${idx + 1}`,
         description: support,
@@ -883,6 +1759,33 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     return recs;
   }, [analysis]);
 
+  const renderSegmentedControl = () => (
+    <div className="flex justify-center mb-6">
+      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shadow-inner border border-slate-200/50 dark:border-slate-700/50">
+        <button
+          onClick={() => setActiveTabMode('single')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
+            activeTabMode === 'single'
+              ? 'bg-white dark:bg-slate-900 text-indigo-650 dark:text-indigo-400 shadow-sm transform scale-102 font-bold'
+              : 'text-slate-605 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-205'
+          }`}
+        >
+          <span>🎯</span> Analisis Semester Aktif
+        </button>
+        <button
+          onClick={() => setActiveTabMode('comparative')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
+            activeTabMode === 'comparative'
+              ? 'bg-white dark:bg-slate-900 text-indigo-650 dark:text-indigo-400 shadow-sm transform scale-102 font-bold'
+              : 'text-slate-605 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-205'
+          }`}
+        >
+          <span>📊</span> Perbandingan Semester 1 & 2
+        </button>
+      </div>
+    </div>
+  );
+
   if (isLoading) {
     return (
       <div className="space-y-6 pb-24 lg:pb-8">
@@ -891,9 +1794,710 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
     );
   }
 
+  if (isCompLoading) {
+    return (
+      <div className="space-y-6 pb-24 lg:pb-8">
+        <CompLoadingProgress currentStep={compLoadingStep} />
+      </div>
+    );
+  }
+
+  // === RENDER COMPARATIVE MODE TREE ===
+  if (activeTabMode === 'comparative') {
+    return (
+      <div className="space-y-6 pb-24 lg:pb-8">
+        {renderSegmentedControl()}
+
+        {/* Overall averages cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-500/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-400/20 rounded-full blur-xl -mr-6 -mt-6" />
+            <p className="text-sm opacity-80 font-medium">Rata-rata Semester 1 (Ganjil)</p>
+            <p className="text-4xl font-extrabold mt-2">{avgScoreSem1}</p>
+            <div className="mt-4 text-xs bg-indigo-700/40 rounded-lg px-2.5 py-1 inline-block border border-indigo-400/20 font-semibold">
+              {sem1Academic.length} Rekor Nilai
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg shadow-emerald-500/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/20 rounded-full blur-xl -mr-6 -mt-6" />
+            <p className="text-sm opacity-80 font-medium">Rata-rata Semester 2 (Genap)</p>
+            <p className="text-4xl font-extrabold mt-2">{avgScoreSem2}</p>
+            <div className="mt-4 text-xs bg-emerald-700/40 rounded-lg px-2.5 py-1 inline-block border border-emerald-400/20 font-semibold">
+              {sem2Academic.length} Rekor Nilai
+            </div>
+          </div>
+          <div className={`rounded-2xl p-6 text-white shadow-lg relative overflow-hidden ${
+            avgScoreDiff >= 0 
+              ? 'bg-gradient-to-br from-teal-500 to-cyan-600 shadow-teal-500/20' 
+              : 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/20'
+          }`}>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl -mr-6 -mt-6" />
+            <p className="text-sm opacity-80 font-medium">Pertumbuhan Akademik</p>
+            <p className="text-4xl font-extrabold mt-2">
+              {avgScoreDiff >= 0 ? `+${avgScoreDiff}` : avgScoreDiff}
+            </p>
+            <div className="mt-4 text-xs bg-white/20 rounded-lg px-2.5 py-1 inline-block border border-white/10 font-semibold">
+              {avgScoreDiff >= 0 ? '📈 Kenaikan Performa' : '📉 Butuh Bimbingan'}
+            </div>
+          </div>
+        </div>
+
+        {/* Side-by-Side Charts: Double Radar & Subject Bars */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Double Radar Chart */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                <h4 className="font-bold text-slate-800 dark:text-slate-200 text-lg">Bagan Radar Ganda: Dimensi Holistik</h4>
+                <div className="flex gap-4 text-xs font-semibold">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded bg-indigo-500 inline-block" />
+                    <span className="text-slate-600 dark:text-slate-400">Sem 1</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded bg-emerald-500 inline-block" />
+                    <span className="text-slate-600 dark:text-slate-400">Sem 2</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 mb-6">Perbandingan 5 dimensi perkembangan utama siswa antar semester</p>
+            </div>
+
+            <div className="flex justify-center my-auto py-2">
+              <svg width={chartSize} height={chartSize} className="overflow-visible">
+                {/* Radar Grid Levels (20, 40, 60, 80, 100) */}
+                {gridLevels.map(level => (
+                  <polygon 
+                    key={level} 
+                    points={calculateRadarPoints(compHolisticDimensions.labels.map(() => level), maxScore, centerX, centerY, radius)} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="1" 
+                    className="text-slate-200 dark:text-slate-700" 
+                  />
+                ))}
+
+                {/* Axis lines */}
+                {calculateAxisEndpoints(compHolisticDimensions.labels.length, centerX, centerY, radius).map((axis, i) => (
+                  <line 
+                    key={i} 
+                    x1={axis.x1} 
+                    y1={axis.y1} 
+                    x2={axis.x2} 
+                    y2={axis.y2} 
+                    stroke="currentColor" 
+                    strokeWidth="1" 
+                    className="text-slate-200 dark:text-slate-700" 
+                  />
+                ))}
+
+                {/* Semester 1 Polygon (Indigo) */}
+                <polygon 
+                  points={calculateRadarPoints(compHolisticDimensions.sem1, maxScore, centerX, centerY, radius)} 
+                  fill="rgba(99, 102, 241, 0.15)" 
+                  stroke="rgba(99, 102, 241, 0.85)" 
+                  strokeWidth="2.5" 
+                  strokeDasharray="4 2"
+                />
+
+                {/* Semester 2 Polygon (Emerald) */}
+                <polygon 
+                  points={calculateRadarPoints(compHolisticDimensions.sem2, maxScore, centerX, centerY, radius)} 
+                  fill="rgba(16, 185, 129, 0.22)" 
+                  stroke="rgba(16, 185, 129, 0.9)" 
+                  strokeWidth="2.5" 
+                />
+
+                {/* Semester 1 Circles */}
+                {compHolisticDimensions.sem1.map((val, i) => {
+                  const angle = i * (2 * Math.PI / compHolisticDimensions.labels.length) - Math.PI / 2;
+                  const ratio = val / maxScore;
+                  return (
+                    <circle 
+                      key={`sem1-pt-${i}`} 
+                      cx={centerX + radius * ratio * Math.cos(angle)} 
+                      cy={centerY + radius * ratio * Math.sin(angle)} 
+                      r="4" 
+                      fill="white" 
+                      stroke="rgb(99, 102, 241)" 
+                      strokeWidth="2" 
+                    />
+                  );
+                })}
+
+                {/* Semester 2 Circles */}
+                {compHolisticDimensions.sem2.map((val, i) => {
+                  const angle = i * (2 * Math.PI / compHolisticDimensions.labels.length) - Math.PI / 2;
+                  const ratio = val / maxScore;
+                  return (
+                    <circle 
+                      key={`sem2-pt-${i}`} 
+                      cx={centerX + radius * ratio * Math.cos(angle)} 
+                      cy={centerY + radius * ratio * Math.sin(angle)} 
+                      r="4" 
+                      fill="white" 
+                      stroke="rgb(16, 185, 129)" 
+                      strokeWidth="2" 
+                    />
+                  );
+                })}
+
+                {/* Labels */}
+                {calculateLabelPositions(compHolisticDimensions.labels, centerX, centerY, radius).map((pos, i) => {
+                  const val1 = compHolisticDimensions.sem1[i];
+                  const val2 = compHolisticDimensions.sem2[i];
+                  return (
+                    <g key={i} className="cursor-pointer group">
+                      <text 
+                        x={pos.x} 
+                        y={pos.y} 
+                        textAnchor="middle" 
+                        dominantBaseline="middle" 
+                        className="text-[10px] font-bold fill-slate-600 dark:fill-slate-400 hover:fill-indigo-650 dark:hover:fill-indigo-400 transition-colors"
+                      >
+                        {pos.label}
+                      </text>
+                      {/* Tooltip on hover using SVG title */}
+                      <title>{`${pos.label}\nSemester 1: ${val1}\nSemester 2: ${val2}`}</title>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* Legenda & Mini Stats */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-4 grid grid-cols-2 gap-4 text-xs font-semibold">
+              <div className="flex flex-col items-center p-2 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/20">
+                <span className="text-[10px] text-slate-500 font-medium">Rata-rata Dimensi S1</span>
+                <span className="text-base font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                  {Math.round(compHolisticDimensions.sem1.reduce((a,b)=>a+b,0)/5)}
+                </span>
+              </div>
+
+              <div className="flex flex-col items-center p-2 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-100/50 dark:border-emerald-900/20">
+                <span className="text-[10px] text-slate-500 font-medium">Rata-rata Dimensi S2</span>
+                <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  {Math.round(compHolisticDimensions.sem2.reduce((a,b)=>a+b,0)/5)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Side-by-Side Subject Comparison Chart */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                <h4 className="font-bold text-slate-800 dark:text-slate-200 text-lg">Bagan Perbandingan Nilai Mapel</h4>
+                <div className="flex gap-4 text-xs font-semibold">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded bg-indigo-500 inline-block" />
+                    <span className="text-slate-600 dark:text-slate-400">Semester 1</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded bg-emerald-500 inline-block" />
+                    <span className="text-slate-600 dark:text-slate-400">Semester 2</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 mb-6">Perbandingan rata-rata nilai per mata pelajaran antar semester</p>
+            </div>
+
+            {compSubjectAverages.length > 0 ? (
+              <div className="space-y-4 my-auto py-2">
+                {compSubjectAverages.map((item, idx) => (
+                  <div key={idx} className="group">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">{item.subject}</span>
+                      <div className="flex gap-3 text-[10px]">
+                        <span className="text-indigo-600 dark:text-indigo-400 font-bold">Sem 1: {item.sem1 ?? '-'}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">Sem 2: {item.sem2 ?? '-'}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1 bg-slate-50/50 dark:bg-slate-800/20 p-1.5 rounded-lg border border-slate-100 dark:border-slate-800/40">
+                      {/* Semester 1 Bar */}
+                      {item.sem1 !== null && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] text-slate-400 font-semibold w-7">Sem 1</span>
+                          <div className="flex-1 h-2 bg-slate-200/50 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-indigo-505 transition-all duration-505" 
+                              style={{ width: `${item.sem1}%` }} 
+                            />
+                          </div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold w-5 text-right">{item.sem1}</span>
+                        </div>
+                      )}
+                      {/* Semester 2 Bar */}
+                      {item.sem2 !== null && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] text-slate-400 font-semibold w-7">Sem 2</span>
+                          <div className="flex-1 h-2 bg-slate-200/50 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-505 transition-all duration-505" 
+                              style={{ width: `${item.sem2}%` }} 
+                            />
+                          </div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold w-5 text-right">{item.sem2}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-10 text-center text-slate-500 text-sm">Tidak ada data akademik untuk dibandingkan.</div>
+            )}
+            
+            <div className="pt-4 border-t border-transparent" />
+          </div>
+        </div>
+
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Attendance Comparison */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm relative overflow-hidden">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">📅</span>
+              <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-wide uppercase">Persentase Kehadiran</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 1</p>
+                <p className="text-2xl font-bold mt-1 text-indigo-600 dark:text-indigo-400">
+                  {compAttendanceStats.sem1.percentage}%
+                </p>
+                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                  Hadir: {compAttendanceStats.sem1.hadir} hari
+                </p>
+                <p className="text-[9px] text-slate-400 mt-1">
+                  S/I/A: {compAttendanceStats.sem1.sakit}/{compAttendanceStats.sem1.izin}/{compAttendanceStats.sem1.alpha}
+                </p>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-855 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 2</p>
+                <p className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
+                  {compAttendanceStats.sem2.percentage}%
+                </p>
+                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                  Hadir: {compAttendanceStats.sem2.hadir} hari
+                </p>
+                <p className="text-[9px] text-slate-400 mt-1">
+                  S/I/A: {compAttendanceStats.sem2.sakit}/{compAttendanceStats.sem2.izin}/{compAttendanceStats.sem2.alpha}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 text-xs text-center font-semibold text-slate-500">
+              {compAttendanceStats.sem2.percentage >= compAttendanceStats.sem1.percentage ? (
+                <span className="text-emerald-600 dark:text-emerald-400">📈 Kehadiran meningkat atau stabil</span>
+              ) : (
+                <span className="text-rose-600 dark:text-rose-400">📉 Kehadiran mengalami penurunan</span>
+              )}
+            </div>
+          </div>
+
+          {/* Violations Comparison */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm relative overflow-hidden">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">⚠️</span>
+              <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-wide uppercase">Poin Pelanggaran</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 1</p>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-300">
+                  {compViolationStats.sem1.points}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                  {compViolationStats.sem1.count} Pelanggaran
+                </p>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-855 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 2</p>
+                <p className={`text-2xl font-bold mt-1 ${compViolationStats.sem2.points > compViolationStats.sem1.points ? 'text-rose-600 dark:text-rose-400 font-extrabold' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                  {compViolationStats.sem2.points}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                  {compViolationStats.sem2.count} Pelanggaran
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 text-xs text-center font-semibold text-slate-500">
+              {compViolationStats.sem2.points <= compViolationStats.sem1.points ? (
+                <span className="text-emerald-600 dark:text-emerald-400">🛡️ Disiplin membaik / tetap prima</span>
+              ) : (
+                <span className="text-rose-600 dark:text-rose-400">⚠️ Poin pelanggaran bertambah</span>
+              )}
+            </div>
+          </div>
+
+          {/* Quizzes/Activity Comparison */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm relative overflow-hidden">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">🏆</span>
+              <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-wide uppercase">Poin Keaktifan Kuis</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 1</p>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-300">
+                  {sem1Quizzes.reduce((sum, q) => sum + (q.points || 0), 0)}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                  {sem1Quizzes.length} Aktivitas
+                </p>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-855 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 2</p>
+                <p className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
+                  {sem2Quizzes.reduce((sum, q) => sum + (q.points || 0), 0)}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                  {sem2Quizzes.length} Aktivitas
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 text-xs text-center font-semibold text-slate-500">
+              {sem2Quizzes.reduce((sum, q) => sum + (q.points || 0), 0) >= sem1Quizzes.reduce((sum, q) => sum + (q.points || 0), 0) ? (
+                <span className="text-emerald-600 dark:text-emerald-400">⚡ Partisipasi kuis meningkat / konsisten</span>
+              ) : (
+                <span className="text-amber-600 dark:text-amber-500">⚠️ Partisipasi kuis perlu didorong lagi</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Comparative AI Analysis CTA / Dashboard */}
+        {!comparativeAnalysis ? (
+          <div className="flex flex-col items-center justify-center py-12 px-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl border border-purple-200 dark:border-purple-800">
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-full p-6 mb-6">
+              <BrainCircuitIcon className="w-16 h-16 text-purple-600 dark:text-purple-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+              Perbandingan Perkembangan Anak (AI)
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-8 text-sm font-medium leading-relaxed">
+              AI akan membandingkan data perkembangan Kognitif, Afektif, dan Psikomotorik ananda dari Semester 1 ke Semester 2, memberikan ulasan pertumbuhan yang mendalam dan bersahabat bagi orang tua.
+            </p>
+            <Button
+              onClick={handleGenerateComparativeAnalysis}
+              size="lg"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-md transition-all duration-300"
+            >
+              <SparklesIcon className="w-5 h-5 mr-2" />
+              Jalankan Analisis Perbandingan AI
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* Header Laporan Komparasi */}
+            <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800">
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-full p-3">
+                      <BrainCircuitIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <CardTitle className="text-xl font-bold">Ulasan Komparasi AI Terintegrasi</CardTitle>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${
+                          comparativeAnalysis.generatedBy === 'Offline Fallback'
+                            ? 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                            : 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/50'
+                        }`}>
+                          {comparativeAnalysis.generatedBy === 'Offline Fallback' ? '📴 Offline Standard' : '✨ AI Generated'}
+                        </span>
+                      </div>
+                      <CardDescription className="mt-1 font-medium text-slate-600 dark:text-slate-400 text-xs">
+                        {studentData.student.name} • Tahun Ajaran {activeAcademicYear?.name || 'Aktif'}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleExportComparativeReport}
+                      variant="outline"
+                      size="sm"
+                      className="bg-white/50 dark:bg-black/20 font-bold hover:shadow-sm"
+                    >
+                      <DownloadIcon className="w-4 h-4 mr-2" />
+                      Export PDF Premium
+                    </Button>
+                    <Button
+                      onClick={handleGenerateComparativeAnalysis}
+                      variant="ghost"
+                      size="sm"
+                      className="font-bold text-xs"
+                    >
+                      <RefreshCwIcon className="w-3.5 h-3.5 mr-1.5 animate-spin-hover" />
+                      Ulangi Analisis
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Overall Growth narrative summary */}
+            {comparativeAnalysis.summary.overallComparison && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-gradient-to-br from-indigo-500/10 to-purple-500/5 dark:from-indigo-500/5 dark:to-purple-500/0 border border-indigo-500/20 dark:border-indigo-500/10 rounded-2xl p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl -mr-6 -mt-6" />
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/25 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-3 font-semibold text-lg">
+                  🌱
+                </div>
+                <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-wide uppercase mb-1">Ulasan Pertumbuhan Menyeluruh Ananda</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                  {comparativeAnalysis.summary.overallComparison}
+                </p>
+              </motion.div>
+            )}
+
+            {/* Side-by-side Analysis */}
+            <div className="grid grid-cols-1 gap-8">
+              {/* Kognitif Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-6 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-2xl">🧠</span>
+                  <div>
+                    <h4 className="font-bold text-slate-800 dark:text-slate-200 text-base">Perkembangan Kognitif (Belajar & Akademik)</h4>
+                    <p className="text-xs text-slate-400">Ulasan perbandingan proses belajar dan pencapaian akademik ananda</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-indigo-50/30 dark:bg-indigo-950/10 p-5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/20">
+                    <h5 className="font-bold text-indigo-700 dark:text-indigo-400 text-sm uppercase mb-3 flex items-center gap-2">
+                      <span>📚</span> Semester 1
+                    </h5>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 mb-1">Kekuatan Belajar</p>
+                        <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
+                          {comparativeAnalysis.cognitive.semester1Strengths.map((str, idx) => (
+                            <li key={idx}>{str}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-50/30 dark:bg-emerald-950/10 p-5 rounded-xl border border-emerald-100/50 dark:border-emerald-900/20">
+                    <h5 className="font-bold text-emerald-700 dark:text-emerald-400 text-sm uppercase mb-3 flex items-center gap-2">
+                      <span>📝</span> Semester 2
+                    </h5>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 mb-1">Kekuatan Belajar</p>
+                        <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
+                          {comparativeAnalysis.cognitive.semester2Strengths.map((str, idx) => (
+                            <li key={idx}>{str}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 p-4 bg-purple-50/60 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/50">
+                  <h5 className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-1.5 flex items-center gap-1.5">
+                    <span>🌱</span> Analisis Pertumbuhan Kognitif
+                  </h5>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                    {comparativeAnalysis.cognitive.comparisonNarrative}
+                  </p>
+                </div>
+              </div>
+
+              {/* Afektif Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-6 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-2xl">❤️</span>
+                  <div>
+                    <h4 className="font-bold text-slate-800 dark:text-slate-200 text-base">Perkembangan Afektif (Karakter & Sosial)</h4>
+                    <p className="text-xs text-slate-400">Ulasan perbandingan karakter mulia, emosional, dan sosial ananda</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-indigo-50/30 dark:bg-indigo-950/10 p-5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/20">
+                    <h5 className="font-bold text-indigo-700 dark:text-indigo-400 text-sm uppercase mb-3 flex items-center gap-2">
+                      <span>😇</span> Semester 1
+                    </h5>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 mb-1">Karakter Unggul</p>
+                        <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
+                          {comparativeAnalysis.affective.semester1PositiveCharacters.map((char, idx) => (
+                            <li key={idx}>{char}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-50/30 dark:bg-emerald-950/10 p-5 rounded-xl border border-emerald-100/50 dark:border-emerald-900/20">
+                    <h5 className="font-bold text-emerald-700 dark:text-emerald-400 text-sm uppercase mb-3 flex items-center gap-2">
+                      <span>🌟</span> Semester 2
+                    </h5>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 mb-1">Karakter Unggul</p>
+                        <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
+                          {comparativeAnalysis.affective.semester2PositiveCharacters.map((char, idx) => (
+                            <li key={idx}>{char}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 p-4 bg-purple-50/60 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/50">
+                  <h5 className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-1.5 flex items-center gap-1.5">
+                    <span>🤝</span> Analisis Pertumbuhan Karakter & Sosial
+                  </h5>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                    {comparativeAnalysis.affective.comparisonNarrative}
+                  </p>
+                </div>
+              </div>
+
+              {/* Psikomotor Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-6 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-2xl">🏃‍♂️</span>
+                  <div>
+                    <h4 className="font-bold text-slate-800 dark:text-slate-200 text-base">Perkembangan Psikomotorik (Fisik & Kreativitas)</h4>
+                    <p className="text-xs text-slate-400">Ulasan perbandingan motorik halus/kasar, olahraga, dan kreativitas ananda</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-indigo-50/30 dark:bg-indigo-950/10 p-5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/20">
+                    <h5 className="font-bold text-indigo-700 dark:text-indigo-400 text-sm uppercase mb-3 flex items-center gap-2">
+                      <span>🎨</span> Semester 1
+                    </h5>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 mb-1">Keterampilan Kuat</p>
+                        <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
+                          {comparativeAnalysis.psychomotor.semester1Skills.map((sk, idx) => (
+                            <li key={idx}>{sk}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-50/30 dark:bg-emerald-950/10 p-5 rounded-xl border border-emerald-100/50 dark:border-emerald-900/20">
+                    <h5 className="font-bold text-emerald-700 dark:text-emerald-400 text-sm uppercase mb-3 flex items-center gap-2">
+                      <span>🏃‍♂️</span> Semester 2
+                    </h5>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 mb-1">Keterampilan Kuat</p>
+                        <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
+                          {comparativeAnalysis.psychomotor.semester2Skills.map((sk, idx) => (
+                            <li key={idx}>{sk}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 p-4 bg-purple-50/60 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/50">
+                  <h5 className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-1.5 flex items-center gap-1.5">
+                    <span>🚀</span> Analisis Pertumbuhan Motorik & Fisik
+                  </h5>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                    {comparativeAnalysis.psychomotor.comparisonNarrative}
+                  </p>
+                </div>
+              </div>
+
+              {/* Actionable Tips (Rekomendasi) */}
+              <div>
+                <h4 className="font-bold text-slate-800 dark:text-slate-200 text-base mb-4 flex items-center gap-2">
+                  <span>💡</span> Rekomendasi Tindak Lanjut untuk Orang Tua
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {(() => {
+                    const compRecs = [];
+                    if (comparativeAnalysis.recommendations.homeSupport && comparativeAnalysis.recommendations.homeSupport.length > 0) {
+                      compRecs.push({
+                        title: 'Dukungan Rumah Tangga',
+                        description: comparativeAnalysis.recommendations.homeSupport.join(' • '),
+                        priority: 'high' as const,
+                        category: 'Peran Rumah',
+                        actions: [
+                          'Diskusikan hasil perbandingan ini dengan anak secara suportif',
+                          'Berikan penguatan positif atas area yang telah meningkat',
+                          'Terapkan batasan waktu layar (screen-time) yang lebih teratur'
+                        ]
+                      });
+                    }
+                    if (comparativeAnalysis.recommendations.stimulation.cognitive && comparativeAnalysis.recommendations.stimulation.cognitive.length > 0) {
+                      compRecs.push({
+                        title: 'Stimulasi Perkembangan Kognitif',
+                        description: comparativeAnalysis.recommendations.stimulation.cognitive.join(' • '),
+                        priority: 'medium' as const,
+                        category: 'Akademik',
+                        actions: [
+                          'Sediakan waktu belajar mandiri yang terjadwal',
+                          'Dukung dengan buku bacaan seru atau kuis edukatif singkat',
+                          'Latih pemecahan masalah sederhana sehari-hari'
+                        ]
+                      });
+                    }
+                    if (comparativeAnalysis.recommendations.stimulation.affective && comparativeAnalysis.recommendations.stimulation.affective.length > 0) {
+                      compRecs.push({
+                        title: 'Stimulasi Karakter & Afektif',
+                        description: comparativeAnalysis.recommendations.stimulation.affective.join(' • '),
+                        priority: 'medium' as const,
+                        category: 'Sosial Emosional',
+                        actions: [
+                          'Apresiasi setiap kemandirian dan rasa empati yang ditunjukkan',
+                          'Ajak bercerita tentang aktivitas dan perasaan anak setiap hari',
+                          'Bantu anak mengelola emosi secara sehat melalui dialog'
+                        ]
+                      });
+                    }
+                    if (comparativeAnalysis.recommendations.stimulation.psychomotor && comparativeAnalysis.recommendations.stimulation.psychomotor.length > 0) {
+                      compRecs.push({
+                        title: 'Stimulasi Keterampilan Motorik',
+                        description: comparativeAnalysis.recommendations.stimulation.psychomotor.join(' • '),
+                        priority: 'low' as const,
+                        category: 'Fisik & Kreativitas',
+                        actions: [
+                          'Alokasikan waktu 1 jam/hari untuk aktivitas fisik terarah',
+                          'Ajak anak melakukan permainan taktis atau seni melipat kertas',
+                          'Evaluasi berkala koordinasi motorik anak secara riang'
+                        ]
+                      });
+                    }
+                    return compRecs.map((rec, idx) => (
+                      <ActionableRecommendation key={idx} {...rec} />
+                    ));
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (!analysis) {
     return (
       <div className="space-y-6 pb-24 lg:pb-8">
+        {renderSegmentedControl()}
         {/* Period Comparison Stats */}
         {subjectAverages.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -989,6 +2593,7 @@ export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabPr
 
   return (
     <div className="space-y-6 pb-8" ref={reportRef}>
+      {renderSegmentedControl()}
       {/* Header Laporan */}
       <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800">
         <CardHeader className="pb-4">
