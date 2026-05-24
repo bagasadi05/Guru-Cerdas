@@ -84,8 +84,20 @@ const DashboardPage: React.FC = () => {
   const { open: openSearch } = useGlobalSearch();
 
   useEffect(() => {
-    const timerId = setInterval(() => setCurrentTime(new Date()), 60000);
+    const timerId = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timerId);
+  }, []);
+
+  const randomQuote = useMemo(() => {
+    const quotes = [
+      'Pendidikan adalah senjata paling mematikan di dunia, karena dengan itu Anda bisa mengubah dunia. — Nelson Mandela',
+      'Tugas utama seorang pendidik bukan sekadar mengajar, melainkan menginspirasi sanubari. 🌟',
+      'Setiap siswa memiliki bakat unik yang menunggu untuk Anda kembangkan dengan penuh kasih sayang. 💖',
+      'Pendidik yang baik bagaikan lilin — ia menghabiskan dirinya sendiri untuk menerangi jalan orang lain. 🕯️',
+      'Terima kasih atas dedikasi luar biasa Anda hari ini dalam mencerdaskan anak bangsa! 🇮🇩',
+    ];
+    const dateNum = new Date().getDate();
+    return quotes[dateNum % quotes.length];
   }, []);
 
   const { data, isLoading, isError, error, refetch, isRefetching: isFetching } = useDashboardData();
@@ -432,29 +444,49 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       )}
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-            {(() => {
-              const hour = new Date().getHours();
-              let greeting = 'Selamat Pagi';
-              if (hour >= 11 && hour < 15) greeting = 'Selamat Siang';
-              else if (hour >= 15 && hour < 19) greeting = 'Selamat Sore';
-              else if (hour >= 19 || hour < 4) greeting = 'Selamat Malam';
-              return `${greeting}, ${user?.name?.split(' ')[0] || 'Guru'}`;
-            })()}
-          </h1>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4" />
-            {new Date().toLocaleDateString('id-ID', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </p>
-        </div>
-      </header>
+      {(() => {
+        const hour = currentTime.getHours();
+        let greeting = 'Selamat Pagi';
+        let icon = '🌅';
+        let quote = 'Mulailah hari dengan penuh semangat dan senyuman hangat! 😊';
+        if (hour >= 11 && hour < 15) {
+            greeting = 'Selamat Siang';
+            icon = '☀️';
+            quote = 'Semoga hari Anda penuh produktivitas dan keceriaan! ⚡';
+        } else if (hour >= 15 && hour < 19) {
+            greeting = 'Selamat Sore';
+            icon = '🌇';
+            quote = 'Lelah mengajar? Istirahat sejenak dan nikmati indahnya sore! ☕';
+        } else if (hour >= 19 || hour < 4) {
+            greeting = 'Selamat Malam';
+            icon = '🌙';
+            quote = 'Waktunya mengistirahatkan pikiran demi hari esok yang gemilang! 😴';
+        }
+
+        return (
+          <header className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/5 dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-pink-950/10 backdrop-blur-xl border border-white/20 dark:border-slate-800/40 p-6 rounded-3xl shadow-xl shadow-indigo-500/5 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-scale-in">
+              <div className="flex items-start gap-4">
+                  <span className="text-4xl filter drop-shadow-md animate-bounce select-none">{icon}</span>
+                  <div>
+                      <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                          {greeting}, {user?.name?.split(' ')[0] || 'Guru'}! 🌟
+                      </h1>
+                      <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-indigo-200/70 mt-1 italic">
+                          "{randomQuote}"
+                      </p>
+                  </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
+                  <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs px-3.5 py-1.5 rounded-2xl border border-emerald-200/20 shadow-sm">
+                      📅 {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-mono font-black text-sm px-3.5 py-1.5 rounded-2xl border border-indigo-200/20 shadow-sm tracking-widest">
+                      ⏰ {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':')}
+                  </div>
+              </div>
+          </header>
+        );
+      })()}
 
       <div className="flex flex-col xl:grid xl:grid-cols-12 gap-6">
         {/* Left Column Part 1 */}
@@ -681,6 +713,15 @@ const DashboardPage: React.FC = () => {
                         const isPast = now > endTime;
                         const isCurrent = now >= startTime && now <= endTime;
 
+                        let progressPercent = 0;
+                        let minutesRemaining = 0;
+                        if (isCurrent) {
+                            const totalDuration = endTime.getTime() - startTime.getTime();
+                            const elapsed = now.getTime() - startTime.getTime();
+                            progressPercent = Math.min(100, Math.max(0, Math.round((elapsed / totalDuration) * 100)));
+                            minutesRemaining = Math.round((endTime.getTime() - now.getTime()) / 60000);
+                        }
+
                         return (
                           <div key={item.id} className="relative pl-8 pb-8 last:pb-0 group">
                             {/* Timeline Dot */}
@@ -722,6 +763,20 @@ const DashboardPage: React.FC = () => {
                                 <UsersIcon className="w-4 h-4 text-slate-400" />
                                 {item.className}
                               </p>
+                              {isCurrent && (
+                                <div className="mt-3 mb-3">
+                                  <div className="flex justify-between text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">
+                                    <span>Berjalan ({progressPercent}%)</span>
+                                    <span>{minutesRemaining} menit lagi</span>
+                                  </div>
+                                  <div className="w-full bg-emerald-100 dark:bg-emerald-950/40 rounded-full h-1.5 overflow-hidden">
+                                    <div
+                                      className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
+                                      style={{ width: `${progressPercent}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              )}
                               <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-500 border-t border-slate-100 dark:border-white/5 pt-3">
                                 <div className="flex items-center gap-1.5">
                                   <ClockIcon className="w-3.5 h-3.5" />

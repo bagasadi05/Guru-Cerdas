@@ -138,7 +138,8 @@ export type ModalState =
     | { type: 'confirmDelete', title: string; message: string; onConfirm: () => void; isPending: boolean }
     | { type: 'applyPoints' }
     | { type: 'editCommunication', data: CommunicationRow }
-    | { type: 'portalAccess' };
+    | { type: 'portalAccess' }
+    | { type: 'aiAssistant' };
 
 export type AiSummary = {
     general_evaluation: string;

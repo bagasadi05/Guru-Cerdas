@@ -29,7 +29,12 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                     <div
                         key={student.id}
                         id={`student-${student.id}`}
-                        className={`group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all duration-300 card-interactive animate-list-item`}
+                        className={`
+                            group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm 
+                            hover:shadow-lg hover:scale-[1.01] hover:border-emerald-200 dark:hover:border-emerald-500/30 
+                            focus-within:bg-indigo-50/50 focus-within:dark:bg-indigo-950/20 focus-within:border-indigo-300 focus-within:shadow-md
+                            transition-all duration-300 card-interactive animate-list-item
+                        `}
                         style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
                     >
                         {/* Student Info */}

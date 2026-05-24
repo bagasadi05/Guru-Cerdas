@@ -8,7 +8,7 @@ import { Select } from '../ui/Select';
 import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, AlertCircleIcon, FileTextIcon, UserCircleIcon, BrainCircuitIcon, CameraIcon, ShieldAlertIcon, PlusIcon, BookOpenIcon, SparklesIcon, MessageSquareIcon, KeyRoundIcon, CopyIcon, CopyCheckIcon, Share2Icon, PrinterIcon } from '../Icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Modal } from '../ui/Modal';
-import { supabase } from '../../services/supabase';
+import { supabase, isAiEnabled } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { Database } from '../../services/database.types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -49,6 +49,7 @@ import {
 } from './student/studentDetailHelpers';
 import { writeAuditLog } from '../../services/auditTrail';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../utils/academicRecordUtils';
+import { createWhatsAppLink } from '../../utils/whatsappUtils';
 
 const GradesTab = lazy(() => import('./student/GradesTab').then((module) => ({ default: module.GradesTab })));
 const ActivityTab = lazy(() => import('./student/ActivityTab').then((module) => ({ default: module.ActivityTab })));
@@ -95,6 +96,10 @@ const StudentDetailPage = () => {
     const [modalState, setModalState] = useState<ModalState>({ type: 'closed' });
     const [activeTab, setActiveTab] = useState('grades');
     const [copied, setCopied] = useState(false);
+    const [aiReport, setAiReport] = useState('');
+    const [isAiReportLoading, setIsAiReportLoading] = useState(false);
+    const [aiReportError, setAiReportError] = useState('');
+    const [copiedAiReport, setCopiedAiReport] = useState(false);
     const photoInputRef = useRef<HTMLInputElement>(null);
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -755,6 +760,74 @@ const StudentDetailPage = () => {
         });
     };
 
+    const handleGenerateAiReport = async () => {
+        if (!studentDetails?.student) return;
+        setIsAiReportLoading(true);
+        setAiReportError('');
+        try {
+            const { generateOpenRouterContent, getAssistantContent } = await import('../../services/openRouterService');
+            
+            const avgScore = filteredAcademicRecords.length > 0
+                ? Math.round(filteredAcademicRecords.reduce((a, b) => a + b.score, 0) / filteredAcademicRecords.length)
+                : 'N/A';
+            const attendanceRate = filteredAttendance.length > 0
+                ? Math.round((filteredAttendance.filter(r => r.status === 'Hadir').length / filteredAttendance.length) * 100)
+                : 100;
+            const violationCount = filteredViolations.length;
+
+            const systemPrompt = `Anda adalah wali kelas yang bijaksana, peduli, dan profesional di Madrasah Ibtidaiyah. Anda ditugaskan untuk menyusun laporan perkembangan berkala siswa ("Rapor Perkembangan Wali Kelas") untuk dibagikan kepada orang tua melalui WhatsApp.
+
+ATURAN DAN FORMAT PENULISAN:
+1. Gunakan bahasa Indonesia yang santun, hangat, mengayomi, dan memberikan kesan peduli serta apresiatif. Sapa orang tua dengan hormat (Bapak/Ibu Orang Tua/Wali dari [Nama Siswa]).
+2. FORMAT OUTPUT HARUS RAPI dan menggunakan EMOJI menarik agar mudah dibaca di WhatsApp. Gunakan garis pemisah/bold yang sesuai.
+3. Struktur laporan wajib mencakup:
+   - *SALAM & PEMBUKA*: Salam hangat pembuka, sebutkan nama siswa dan kelasnya.
+   - *📊 RINGKASAN AKADEMIK*: Sebutkan rata-rata nilai dan apresiasi atas kerja kerasnya di mata pelajaran tertentu (jika ada).
+   - *🌟 AKTIVITAS & KEAKTIFAN*: Sebutkan partisipasi positif siswa, poin keaktifan yang diperoleh, dan bagaimana hal itu membantu perkembangan dirinya.
+   - *📅 KEHADIRAN*: Persentase kehadiran dan apresiasi kedisiplinan atau pesan motivasi jika kehadiran kurang optimal.
+   - *⚠️ PERILAKU & DISIPLIN*: Sampaikan evaluasi perilaku secara objektif dan halus. Jika ada pelanggaran, sebutkan perlunya bimbingan bersama. Jika nihil pelanggaran, berikan pujian luar biasa.
+   - *💡 SARAN & MOTIVASI WALI KELAS*: Kalimat penyemangat, saran konkret untuk pendampingan belajar di rumah, serta ajakan kolaborasi yang hangat antara sekolah dan orang tua.
+   - *PENUTUP*: Doa dan salam penutup dari Wali Kelas.
+4. Jangan menuliskan teks penjelasan teknis atau metadata di luar isi pesan. Langsung berikan teks pesan WhatsApp yang siap disalin.`;
+
+            const prompt = `Susunlah laporan perkembangan WhatsApp terperinci untuk siswa berikut:
+- Nama Siswa: ${studentDetails.student.name}
+- Kelas: ${studentDetails.student.classes?.name || 'N/A'}
+- Semester: ${selectedSemesterLabel}
+- Rata-rata Nilai Akademik: ${avgScore} (dari ${filteredAcademicRecords.length} penilaian)
+- Detail Nilai: ${filteredAcademicRecords.map(r => `${r.subject}: ${r.score} (${r.assessment_name})`).join(', ') || 'Belum ada penilaian'}
+- Kehadiran: ${attendanceRate}% (Hadir: ${attendanceSummary.Hadir}, Sakit: ${attendanceSummary.Sakit}, Izin: ${attendanceSummary.Izin}, Alpha: ${attendanceSummary.Alpha})
+- Keaktifan (Poin): ${filteredQuizPoints.length} poin (Detail: ${filteredQuizPoints.map(q => q.quiz_name).join(', ') || 'Belum ada catatan keaktifan'})
+- Catatan Pelanggaran: ${violationCount} kejadian (Total Poin Pelanggaran: ${totalViolationPoints})
+${filteredViolations.length > 0 ? `- Detail Pelanggaran: ${filteredViolations.map(v => `${v.description} (${v.points} poin)`).join(', ')}` : '- Catatan Perilaku: Sangat baik, tidak memiliki catatan pelanggaran.'}
+
+Tulis laporan yang menyentuh hati, memotivasi, dan komprehensif agar orang tua memahami betul perkembangan anaknya secara holistik. Gunakan format WhatsApp yang indah.`;
+
+            const response = await generateOpenRouterContent([
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: prompt }
+            ]);
+
+            const text = getAssistantContent(response) || '';
+            setAiReport(text.trim());
+        } catch (err: any) {
+            console.error('Error generating AI report:', err);
+            setAiReportError(err.message || 'Gagal menghasilkan laporan AI. Silakan coba lagi.');
+        } finally {
+            setIsAiReportLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (modalState.type === 'aiAssistant') {
+            handleGenerateAiReport();
+        } else {
+            setAiReport('');
+            setAiReportError('');
+            setCopiedAiReport(false);
+        }
+    }, [modalState.type]);
+
     if (isLoading) return <StudentDetailPageSkeleton />;
 
     if (isError) {
@@ -1092,46 +1165,63 @@ const StudentDetailPage = () => {
 
             {/* Floating Action Button with Quick Actions - Hidden on Communication Tab */}
             {activeTab !== 'communication' && (
-                <FloatingActionButton
-                    icon={<PlusIcon className="w-6 h-6" />}
-                    label="Menu Cepat"
-                    offset={{ bottom: 80, right: 16 }}
-                    size={56}
-                    className="shadow-xl"
-                    quickActions={[
-                        {
-                            icon: <BookOpenIcon className="w-4 h-4" />,
-                            label: 'Tambah Nilai',
-                            onClick: () => setModalState({ type: 'academic', data: null }),
-                            color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                        },
-                        {
-                            icon: <SparklesIcon className="w-4 h-4" />,
-                            label: 'Tambah Keaktifan',
-                            onClick: () => setModalState({ type: 'quiz', data: null }),
-                            color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                        },
-                        {
-                            icon: <ShieldAlertIcon className="w-4 h-4" />,
-                            label: 'Catat Pelanggaran',
-                            onClick: () => setModalState({ type: 'violation', mode: 'add', data: null }),
-                            color: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                        },
-                        {
-                            icon: <FileTextIcon className="w-4 h-4" />,
-                            label: 'Catatan Guru',
-                            onClick: () => setModalState({ type: 'report', data: null }),
-                            color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                        },
-                        {
-                            icon: <MessageSquareIcon className="w-4 h-4" />,
-                            label: 'Kirim Pesan',
-                            onClick: () => setActiveTab('communication'),
-                            color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                        }
-                    ]}
-                    aria-label="Menu Cepat"
-                />
+                <>
+                    <FloatingActionButton
+                        icon={<BrainCircuitIcon className="w-6 h-6 animate-pulse text-white" />}
+                        label="Asisten AI Wali Kelas"
+                        offset={{ bottom: 80, right: 80 }}
+                        size={56}
+                        className="shadow-xl bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 text-white border-none focus:ring-fuchsia-500 shadow-fuchsia-500/20 animate-fade-in"
+                        onClick={() => setModalState({ type: 'aiAssistant' })}
+                        aria-label="Asisten AI Wali Kelas"
+                    />
+                    <FloatingActionButton
+                        icon={<PlusIcon className="w-6 h-6" />}
+                        label="Menu Cepat"
+                        offset={{ bottom: 80, right: 16 }}
+                        size={56}
+                        className="shadow-xl"
+                        quickActions={[
+                            {
+                                icon: <BrainCircuitIcon className="w-4 h-4 text-fuchsia-500" />,
+                                label: 'Asisten AI Wali Kelas',
+                                onClick: () => setModalState({ type: 'aiAssistant' }),
+                                color: 'bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-600 dark:text-fuchsia-400 font-semibold'
+                            },
+                            {
+                                icon: <BookOpenIcon className="w-4 h-4" />,
+                                label: 'Tambah Nilai',
+                                onClick: () => setModalState({ type: 'academic', data: null }),
+                                color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                            },
+                            {
+                                icon: <SparklesIcon className="w-4 h-4" />,
+                                label: 'Tambah Keaktifan',
+                                onClick: () => setModalState({ type: 'quiz', data: null }),
+                                color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                            },
+                            {
+                                icon: <ShieldAlertIcon className="w-4 h-4" />,
+                                label: 'Catat Pelanggaran',
+                                onClick: () => setModalState({ type: 'violation', mode: 'add', data: null }),
+                                color: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                            },
+                            {
+                                icon: <FileTextIcon className="w-4 h-4" />,
+                                label: 'Catatan Guru',
+                                onClick: () => setModalState({ type: 'report', data: null }),
+                                color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                            },
+                            {
+                                icon: <MessageSquareIcon className="w-4 h-4" />,
+                                label: 'Kirim Pesan',
+                                onClick: () => setActiveTab('communication'),
+                                color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                            }
+                        ]}
+                        aria-label="Menu Cepat"
+                    />
+                </>
             )}
 
             {
@@ -1272,6 +1362,93 @@ const StudentDetailPage = () => {
                             <Button type="button" variant="destructive" onClick={modalState.onConfirm} disabled={deleteMutation.isPending}>
                                 {deleteMutation.isPending ? 'Menghapus...' : 'Ya, Hapus'}
                             </Button>
+                        </div>
+                    </Modal>
+                )
+            }
+            {
+                modalState.type === 'aiAssistant' && (
+                    <Modal isOpen={true} onClose={() => setModalState({ type: 'closed' })} title="🤖 Asisten AI Wali Kelas - Laporan Orang Tua">
+                        <div className="space-y-4">
+                            {isAiReportLoading ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in">
+                                    <div className="relative w-16 h-16 mb-4">
+                                        <div className="absolute inset-0 rounded-full border-4 border-fuchsia-200 animate-ping"></div>
+                                        <div className="relative w-16 h-16 rounded-full border-4 border-fuchsia-600 border-t-transparent animate-spin"></div>
+                                    </div>
+                                    <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Merangkum Laporan Perkembangan...</h4>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm">
+                                        Kecerdasan Buatan sedang menganalisis data nilai akademik, kehadiran, keaktifan, dan perilaku {student.name} secara menyeluruh untuk menyusun pesan WhatsApp yang santun, apresiatif, dan memotivasi.
+                                    </p>
+                                </div>
+                            ) : aiReportError ? (
+                                <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-center">
+                                    <AlertCircleIcon className="w-12 h-12 text-red-500 mx-auto mb-2 animate-bounce" />
+                                    <h4 className="font-semibold text-red-800 dark:text-red-300 mb-1">Gagal Membuat Laporan</h4>
+                                    <p className="text-xs text-red-600 dark:text-red-400 mb-4">{aiReportError}</p>
+                                    <Button onClick={handleGenerateAiReport} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/40">
+                                        Coba Lagi
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 animate-fade-in">
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-fuchsia-50 dark:bg-fuchsia-950/20 p-3 rounded-xl border border-fuchsia-100 dark:border-fuchsia-900/30">
+                                        ✨ Laporan perkembangan anak telah berhasil dibuat berdasarkan data riil semester ini. Anda dapat menyunting atau langsung menyalin laporan ini untuk WhatsApp orang tua.
+                                    </p>
+                                    
+                                    <textarea
+                                        value={aiReport}
+                                        onChange={(e) => setAiReport(e.target.value)}
+                                        rows={12}
+                                        className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-fuchsia-500 focus:ring-fuchsia-500 text-sm p-4 transition-all resize-y min-h-[250px] overflow-y-auto leading-relaxed"
+                                    />
+                                    
+                                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                        <Button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(aiReport);
+                                                setCopiedAiReport(true);
+                                                toast.success("Laporan WhatsApp berhasil disalin ke clipboard!");
+                                                setTimeout(() => setCopiedAiReport(false), 2000);
+                                            }}
+                                            className="flex-1 bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 text-white shadow-lg shadow-fuchsia-500/20 transition-all font-semibold h-11"
+                                        >
+                                            {copiedAiReport ? (
+                                                <>
+                                                    <CheckCircleIcon className="w-4 h-4 mr-2 animate-scale-in" />
+                                                    Tersalin!
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CopyIcon className="w-4 h-4 mr-2" />
+                                                    Salin Laporan WhatsApp
+                                                </>
+                                            )}
+                                        </Button>
+
+                                        {student.parent_phone && (
+                                            <a
+                                                href={createWhatsAppLink(student.parent_phone, aiReport)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20 rounded-lg text-sm font-semibold transition-all h-11"
+                                            >
+                                                <Share2Icon className="w-4 h-4 mr-2" />
+                                                Kirim via WhatsApp
+                                            </a>
+                                        )}
+                                        
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleGenerateAiReport}
+                                            className="h-11 border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
+                                        >
+                                            <SparklesIcon className="w-4 h-4 mr-2 text-fuchsia-500 animate-pulse" />
+                                            Buat Ulang
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </Modal>
                 )
