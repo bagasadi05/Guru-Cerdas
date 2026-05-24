@@ -451,7 +451,7 @@ export const ParentPortalPage: React.FC = () => {
                 onSave={async (name, phone) => updateParentInfo({ name: name || '', phone: phone || '' })}
             />
 
-            <main className="relative z-10 -mt-14 mx-auto max-w-7xl px-4 pb-14 sm:px-6">
+            <main className="relative z-10 -mt-14 mx-auto max-w-7xl px-4 pb-28 md:pb-14 sm:px-6">
                 <div className="absolute inset-x-4 top-8 -z-10 h-48 rounded-[36px] bg-slate-900/8 blur-3xl dark:bg-slate-100/5 sm:inset-x-10" />
 
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-white/70 bg-white/88 p-4 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.35)] backdrop-blur-xl animate-fade-in-up dark:border-white/10 dark:bg-slate-900/82">

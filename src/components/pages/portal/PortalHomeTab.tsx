@@ -134,268 +134,290 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
     };
 
     return (
-        <div className="space-y-6 p-4 sm:p-6">
-            <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#fffdf7_0%,#ffffff_45%,#f8fafc_100%)] p-5 shadow-sm dark:border-slate-800 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.96)_0%,rgba(15,23,42,0.9)_100%)] sm:p-7">
-                <div className="grid gap-6 lg:grid-cols-[1.35fr_0.85fr]">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 dark:text-amber-300">Beranda Portal</p>
-                        <h3 className="mt-3 font-serif text-3xl leading-tight text-slate-900 dark:text-white">
-                            Ringkasan perkembangan {student.name}
-                        </h3>
-                        <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-                            Halaman ini merangkum hal-hal utama yang biasanya dibutuhkan wali murid: progres akademik, kehadiran, komunikasi dengan guru, serta agenda tindak lanjut.
-                        </p>
-                        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            {summaryCards.map((card) => (
-                                <div key={card.label} className={`rounded-3xl border p-4 ${card.tone}`}>
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/80 shadow-sm dark:bg-white/10">
-                                        <card.icon className="h-5 w-5" />
-                                    </div>
-                                    <p className="mt-5 text-3xl font-semibold">{card.value}</p>
-                                    <p className="mt-1 text-sm">{card.label}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="rounded-[28px] border border-slate-200/80 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/60">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Ikhtisar Wali</p>
-                        <div className="mt-4 space-y-4">
-                            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/70">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Nama Wali / Orang Tua</p>
-                                <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{student.parent_name || 'Belum diperbarui'}</p>
-                            </div>
-                            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/70">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Kelas</p>
-                                <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{student.classes.name}</p>
-                            </div>
-                            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/70">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Kontak Notifikasi</p>
-                                <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{student.parent_phone || 'Belum diisi'}</p>
-                            </div>
-                        </div>
-                        <button
-                            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 dark:border-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
-                            onClick={onOpenSettings}
+        <div className="space-y-6 p-4 sm:p-6 animate-fade-in">
+            {/* 1. Sleek Top Summary Grid with Parent-Centric Terminology */}
+            <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {summaryCards.map((card) => {
+                    const isNewMessage = card.label === 'Pesan Belum Dibaca' && Number(card.value) > 0;
+                    return (
+                        <div 
+                            key={card.label} 
+                            className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${card.tone}`}
                         >
-                            <SettingsIcon className="h-4 w-4" />
-                            Perbarui Data Wali
-                        </button>
-                    </div>
-                </div>
+                            <div className="relative z-10 flex flex-col justify-between h-full">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold uppercase tracking-wider opacity-75">
+                                        {card.label === 'Rata-rata Nilai' ? 'Rata-rata Rapor' :
+                                         card.label === 'Kehadiran Hadir' ? 'Presensi Hadir' :
+                                         card.label === 'Tugas Aktif' ? 'Tugas Berjalan' :
+                                         card.label === 'Pesan Belum Dibaca' ? 'Pesan Baru' : card.label}
+                                    </span>
+                                    <span className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/80 dark:bg-white/10 shadow-sm transition-transform duration-300 group-hover:scale-110 ${isNewMessage ? 'animate-bounce bg-rose-100 text-rose-600' : ''}`}>
+                                        <card.icon className="h-4.5 w-4.5" />
+                                    </span>
+                                </div>
+                                <div className="mt-5 flex items-baseline gap-1">
+                                    <p className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+                                        {card.value}
+                                    </p>
+                                    {card.label === 'Kehadiran Hadir' && <span className="text-xs font-medium opacity-75">hari</span>}
+                                    {card.label === 'Tugas Aktif' && <span className="text-xs font-medium opacity-75">tugas</span>}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </section>
 
-            {guardianSummary && (
-                <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    <div className="bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.16),transparent_30%),linear-gradient(135deg,#f0fdfa_0%,#ffffff_50%,#f8fafc_100%)] p-5 dark:bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.12),transparent_32%),linear-gradient(135deg,#0f172a_0%,#111827_100%)] sm:p-6">
-                        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                            <div className="max-w-2xl">
-                                <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700 dark:border-teal-400/20 dark:bg-teal-400/10 dark:text-teal-200">
-                                    <BrainCircuitIcon className="h-4 w-4" />
-                                    Kesimpulan Wali Murid
-                                </div>
-                                <h4 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">{guardianSummary.title}</h4>
-                                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{guardianSummary.message}</p>
-                            </div>
-                            <div className={`rounded-3xl border px-4 py-3 text-sm font-semibold ${guardianStatusTone}`}>
-                                Status: {guardianSummary.status === 'baik' ? 'Baik' : guardianSummary.status === 'pantau' ? 'Perlu Dipantau' : 'Perlu Perhatian'}
-                            </div>
-                        </div>
-
-                        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                            {guardianSummary.highlights.map((item) => (
-                                <div key={item.label} className="rounded-3xl border border-white/80 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/10">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">{item.label}</p>
-                                    <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{item.value}</p>
-                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{item.description}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="mt-6 grid gap-3 lg:grid-cols-2">
-                            {guardianSummary.actions.map((action) => {
-                                const actionTone = action.tone === 'danger'
-                                    ? 'border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-900/30 dark:bg-rose-950/30 dark:text-rose-100 dark:hover:bg-rose-950/50'
-                                    : action.tone === 'warning'
-                                        ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-900/30 dark:bg-amber-950/30 dark:text-amber-100 dark:hover:bg-amber-950/50'
-                                        : 'border-teal-200 bg-teal-50 text-teal-800 hover:bg-teal-100 dark:border-teal-900/30 dark:bg-teal-950/30 dark:text-teal-100 dark:hover:bg-teal-950/50';
-
-                                return (
-                                    <button
-                                        key={action.id}
-                                        type="button"
-                                        onClick={() => handleGuardianAction(action.target)}
-                                        className={`rounded-3xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${actionTone}`}
-                                    >
-                                        <p className="font-semibold">{action.label}</p>
-                                        <p className="mt-1 text-sm opacity-85">{action.description}</p>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </section>
-            )}
-
-            {weeklySummary && (
-                <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-                    <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-                        <div className="rounded-[24px] bg-slate-950 p-5 text-white dark:bg-white dark:text-slate-950">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300 dark:text-emerald-700">{weeklySummary.title}</p>
-                            <h4 className="mt-3 text-2xl font-bold">Catatan singkat pekan ini</h4>
-                            <p className="mt-3 text-sm leading-6 text-slate-200 dark:text-slate-700">{weeklySummary.narrative}</p>
-                            <div className="mt-5 space-y-2">
-                                {weeklySummary.suggestions.map((suggestion) => (
-                                    <div key={suggestion} className="rounded-2xl bg-white/10 px-4 py-3 text-sm leading-5 dark:bg-slate-950/10">
-                                        {suggestion}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            {weeklySummary.stats.map((stat) => (
-                                <div key={stat.label} className={`rounded-3xl border p-4 ${getWeeklyTone(stat.tone)}`}>
-                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{stat.label}</p>
-                                    <p className="mt-3 text-3xl font-bold">{stat.value}</p>
-                                    <p className="mt-1 text-sm opacity-85">{stat.description}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-            )}
-
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-                <div className="flex items-center justify-between gap-3">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Menu Cepat</p>
-                        <h4 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">Akses yang paling sering dipakai wali murid</h4>
-                    </div>
-                    <button
-                        className="hidden rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:inline-flex"
-                        onClick={onOpenSettings}
-                    >
-                        <SettingsIcon className="mr-2 h-4 w-4" />
-                        Pengaturan
-                    </button>
-                </div>
-                <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    {quickActions.map((item) => (
-                        <button
-                            key={item.label}
-                            type="button"
-                            onClick={item.action}
-                            className="group rounded-3xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:-translate-y-1 hover:border-slate-300 hover:bg-white hover:shadow-md dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-slate-600 dark:hover:bg-slate-800"
-                        >
-                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900">
-                                <item.icon className="h-5 w-5" />
-                            </div>
-                            <h5 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">{item.label}</h5>
-                            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{item.description}</p>
-                        </button>
-                    ))}
-                </div>
-            </section>
-
-            <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-                <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-                    <div className="flex items-center justify-between gap-3">
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Perlu Perhatian</p>
-                            <h4 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">Hal penting untuk ditindaklanjuti</h4>
-                        </div>
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">{attentionItems.length} item</span>
-                    </div>
-
-                    <div className="mt-5 space-y-3">
-                        {attentionItems.length === 0 ? (
-                            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
-                                Tidak ada item mendesak saat ini.
-                            </div>
-                        ) : attentionItems.map((item) => {
-                            const toneClass = item.severity === 'critical'
-                                ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/30 dark:bg-rose-950/30 dark:text-rose-300'
-                                : item.severity === 'warning'
-                                    ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/30 dark:bg-amber-950/30 dark:text-amber-300'
-                                    : 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/30 dark:bg-sky-950/30 dark:text-sky-300';
-
-                            return (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => item.href?.startsWith('lainnya:') ? onOpenMoreSection(item.href.split(':')[1] as PortalMoreSection) : onOpenTab((item.href as PortalPrimaryTab) || 'beranda')}
-                                    className={`w-full rounded-3xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${toneClass}`}
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div>
-                                            <p className="font-semibold">{item.title}</p>
-                                            <p className="mt-1 text-sm opacity-90">{item.description}</p>
+            {/* 2. Main Two-Column Layout (Left: Primary Insights, Right: School/Timeline) */}
+            <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+                {/* ==================== LEFT COLUMN ==================== */}
+                <div className="space-y-6">
+                    {/* A. AI Guardian Summary with dynamic HSL background */}
+                    {guardianSummary && (
+                        <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 hover:shadow-md">
+                            <div className={`p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-br ${
+                                guardianSummary.status === 'perhatian'
+                                    ? 'from-rose-50/40 via-red-50/20 to-white/50 dark:from-rose-950/10 dark:via-red-950/5 dark:to-slate-900/40 border-l-[6px] border-l-rose-500'
+                                    : guardianSummary.status === 'pantau'
+                                        ? 'from-amber-50/40 via-yellow-50/20 to-white/50 dark:from-amber-950/10 dark:via-yellow-950/5 dark:to-slate-900/40 border-l-[6px] border-l-amber-500'
+                                        : 'from-emerald-50/40 via-teal-50/20 to-white/50 dark:from-emerald-950/10 dark:via-teal-950/5 dark:to-slate-900/40 border-l-[6px] border-l-emerald-500'
+                            }`}>
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                        <div className="inline-flex items-center gap-2 rounded-full border border-teal-200/60 bg-teal-50/70 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:border-teal-400/20 dark:bg-teal-400/10 dark:text-teal-200">
+                                            <BrainCircuitIcon className="h-3.5 w-3.5" />
+                                            AI Kesimpulan Wali Murid
                                         </div>
-                                        {item.badge && <span className="rounded-full bg-white/70 px-2.5 py-1 text-xs font-bold dark:bg-black/20">{item.badge}</span>}
+                                        <h4 className="mt-3 text-xl font-bold text-slate-900 dark:text-white sm:text-2xl">
+                                            {guardianSummary.title}
+                                        </h4>
+                                        <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                                            {guardianSummary.message}
+                                        </p>
                                     </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-                    <div className="flex items-center gap-2">
-                        <BellIcon className="h-5 w-5 text-amber-500" />
-                        <h4 className="text-xl font-semibold text-slate-900 dark:text-white">Pengumuman Sekolah</h4>
-                    </div>
-                    <div className="mt-5 space-y-3">
-                        {recentAnnouncements.length === 0 ? (
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Belum ada pengumuman baru.</p>
-                        ) : recentAnnouncements.map((announcement) => (
-                            <div key={announcement.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
-                                <div className="flex items-center justify-between gap-3">
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{announcement.title}</p>
-                                    {announcement.date && (
-                                        <span className="text-xs text-slate-500 dark:text-slate-400">{dateFormatter.format(new Date(announcement.date))}</span>
-                                    )}
+                                    <div className={`self-start rounded-2xl border px-3 py-1.5 text-xs font-bold shadow-sm ${
+                                        guardianSummary.status === 'perhatian'
+                                            ? 'border-rose-200 bg-rose-100 text-rose-800 dark:border-rose-900/30 dark:bg-rose-950/30 dark:text-rose-200'
+                                            : guardianSummary.status === 'pantau'
+                                                ? 'border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-900/30 dark:bg-amber-950/30 dark:text-amber-200'
+                                                : 'border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-200'
+                                    }`}>
+                                        {guardianSummary.status === 'baik' ? '🟢 Kondisi Baik & Stabil' : 
+                                         guardianSummary.status === 'pantau' ? '🟡 Perlu Dipantau Bersama' : '🔴 Butuh Perhatian Khusus'}
+                                    </div>
                                 </div>
-                                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{announcement.content}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-                <div className="flex items-center justify-between gap-3">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Riwayat</p>
-                        <h4 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">Aktivitas Terbaru</h4>
-                    </div>
-                    <button
-                        className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                        onClick={onDownloadPdf}
-                    >
-                        <DownloadIcon className="mr-2 inline-block h-4 w-4" />
-                        Unduh PDF
-                    </button>
-                </div>
-                <div className="mt-5 space-y-3">
-                    {recentActivities.length === 0 ? (
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Belum ada aktivitas terbaru.</p>
-                    ) : recentActivities.map((activity) => (
-                        <div key={activity.id} className="flex items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
-                            <div className="mt-1 rounded-2xl bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
-                                <SparklesIcon className="h-4 w-4" />
+                                {/* Mini stats grid from AI summary */}
+                                <div className="mt-6 grid gap-3 grid-cols-2 sm:grid-cols-4">
+                                    {guardianSummary.highlights.map((item) => (
+                                        <div key={item.label} className="rounded-2xl border border-white/60 bg-white/70 p-3.5 shadow-sm dark:border-white/5 dark:bg-slate-800/40">
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{item.label}</p>
+                                            <p className="mt-1.5 text-xl font-extrabold text-slate-900 dark:text-white">{item.value}</p>
+                                            <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{item.description}</p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Action Buttons from AI summary */}
+                                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                                    {guardianSummary.actions.map((action) => {
+                                        const actionTone = action.tone === 'danger'
+                                            ? 'border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-900/30 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50'
+                                            : action.tone === 'warning'
+                                                ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-900/30 dark:bg-amber-950/30 dark:text-amber-200 dark:hover:bg-amber-950/50'
+                                                : 'border-teal-200 bg-teal-50 text-teal-800 hover:bg-teal-100 dark:border-teal-900/30 dark:bg-teal-950/30 dark:text-teal-200 dark:hover:bg-teal-950/50';
+
+                                        return (
+                                            <button
+                                                key={action.id}
+                                                type="button"
+                                                onClick={() => handleGuardianAction(action.target)}
+                                                className={`rounded-2xl border p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${actionTone}`}
+                                            >
+                                                <p className="text-xs font-bold tracking-wide uppercase opacity-75">Saran Tindakan</p>
+                                                <p className="mt-1 font-semibold text-sm leading-relaxed">{action.label}</p>
+                                                <p className="mt-0.5 text-xs opacity-85">{action.description}</p>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="font-medium text-slate-900 dark:text-white">{activity.title}</p>
-                                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{activity.description}</p>
-                                <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-                                    {dateFormatter.format(new Date(activity.createdAt))}
-                                </p>
+                        </section>
+                    )}
+
+                    {/* B. Weekly summary & Suggestions */}
+                    {weeklySummary && (
+                        <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 hover:shadow-md">
+                            <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+                                <div className="bg-slate-950 p-5 text-white dark:bg-slate-900 sm:p-6 flex flex-col justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">{weeklySummary.title}</p>
+                                        <h4 className="mt-2.5 text-xl font-bold">Catatan Singkat Pekan Ini</h4>
+                                        <p className="mt-3 text-sm leading-relaxed text-slate-300">{weeklySummary.narrative}</p>
+                                    </div>
+                                    <div className="mt-5 space-y-2">
+                                        {weeklySummary.suggestions.map((suggestion) => (
+                                            <div key={suggestion} className="rounded-2xl bg-white/10 px-4 py-3 text-xs leading-relaxed text-slate-200 backdrop-blur-sm border border-white/5">
+                                                💡 {suggestion}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="p-5 sm:p-6 flex flex-col justify-center">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3.5">Statistik Mingguan</p>
+                                    <div className="grid gap-3 grid-cols-2">
+                                        {weeklySummary.stats.map((stat) => (
+                                            <div key={stat.label} className={`rounded-2xl border p-3.5 ${getWeeklyTone(stat.tone)}`}>
+                                                <p className="text-[10px] font-bold uppercase tracking-wider opacity-75">{stat.label}</p>
+                                                <p className="mt-2 text-2xl font-black">{stat.value}</p>
+                                                <p className="mt-0.5 text-[11px] leading-relaxed opacity-85">{stat.description}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
+                        </section>
+                    )}
+
+                    {/* C. Quick actions grid */}
+                    <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6 transition-all duration-300 hover:shadow-md">
+                        <h4 className="text-lg font-bold text-slate-900 dark:text-white">Menu Cepat Orang Tua</h4>
+                        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Akses cepat ke fitur yang paling sering dibutuhkan oleh ayah & bunda.</p>
+                        
+                        <div className="mt-4 grid gap-4 grid-cols-2 sm:grid-cols-4">
+                            {quickActions.map((item) => (
+                                <button
+                                    key={item.label}
+                                    type="button"
+                                    onClick={item.action}
+                                    className="group rounded-3xl border border-slate-100 bg-slate-50/50 p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-slate-200 hover:bg-white hover:shadow-sm dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                                >
+                                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 text-white dark:bg-amber-400 dark:text-slate-950 shadow-sm transition-transform duration-300 group-hover:scale-105">
+                                        <item.icon className="h-4.5 w-4.5" />
+                                    </div>
+                                    <h5 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">{item.label}</h5>
+                                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{item.description}</p>
+                                </button>
+                            ))}
                         </div>
-                    ))}
+                    </section>
                 </div>
-            </section>
+
+                {/* ==================== RIGHT COLUMN ==================== */}
+                <div className="space-y-6">
+                    {/* A. Attention Items (Perlu Perhatian) */}
+                    <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 hover:shadow-md">
+                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
+                            <div>
+                                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Perlu Tindak Lanjut</h4>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Pemberitahuan penting yang butuh perhatian orang tua.</p>
+                            </div>
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                {attentionItems.length}
+                            </span>
+                        </div>
+
+                        <div className="mt-4 space-y-3">
+                            {attentionItems.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-800/20 dark:text-slate-400 leading-relaxed">
+                                    ✨ <b>Semua Aman!</b><br />
+                                    Anak Anda mengikuti kegiatan sekolah dengan sangat baik pekan ini.
+                                </div>
+                            ) : (
+                                attentionItems.map((item) => {
+                                    const toneClass = item.severity === 'critical'
+                                        ? 'border-rose-200 bg-rose-50/50 text-rose-850 hover:bg-rose-50 dark:border-rose-900/30 dark:bg-rose-950/20 dark:text-rose-250 dark:hover:bg-rose-950/30'
+                                        : item.severity === 'warning'
+                                            ? 'border-amber-200 bg-amber-50/50 text-amber-850 hover:bg-amber-50 dark:border-amber-900/30 dark:bg-amber-950/20 dark:text-amber-250 dark:hover:bg-amber-950/30'
+                                            : 'border-sky-200 bg-sky-50/50 text-sky-850 hover:bg-sky-50 dark:border-sky-900/30 dark:bg-sky-950/20 dark:text-sky-250 dark:hover:bg-sky-950/30';
+
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            type="button"
+                                            onClick={() => item.href?.startsWith('lainnya:') ? onOpenMoreSection(item.href.split(':')[1] as PortalMoreSection) : onOpenTab((item.href as PortalPrimaryTab) || 'beranda')}
+                                            className={`w-full rounded-2xl border p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm flex items-start gap-2.5 ${toneClass}`}
+                                        >
+                                            <span className="text-base select-none mt-0.5">⚠️</span>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-xs uppercase tracking-wider opacity-75">{item.severity === 'critical' ? 'Penting Sekali' : 'Pemberitahuan'}</p>
+                                                <p className="font-semibold text-sm leading-relaxed mt-0.5">{item.title}</p>
+                                                <p className="text-xs opacity-90 leading-relaxed mt-0.5">{item.description}</p>
+                                            </div>
+                                            {item.badge && (
+                                                <span className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold dark:bg-black/20 self-center">
+                                                    {item.badge}
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+
+                    {/* B. School Announcements (Pengumuman Sekolah) */}
+                    <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 hover:shadow-md">
+                        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3.5">
+                            <BellIcon className="h-5 w-5 text-amber-500 animate-pulse" />
+                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">Pengumuman Sekolah</h4>
+                        </div>
+                        
+                        <div className="mt-4 space-y-3.5">
+                            {recentAnnouncements.length === 0 ? (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">Belum ada pengumuman baru dari sekolah.</p>
+                            ) : (
+                                recentAnnouncements.map((announcement) => (
+                                    <div key={announcement.id} className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/40 hover:-translate-y-0.5 transition-transform duration-300">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <p className="font-bold text-sm text-slate-900 dark:text-white leading-relaxed">{announcement.title}</p>
+                                            {announcement.date && (
+                                                <span className="text-[10px] font-medium text-slate-400 whitespace-nowrap">{dateFormatter.format(new Date(announcement.date))}</span>
+                                            )}
+                                        </div>
+                                        <p className="mt-2 text-xs leading-relaxed text-slate-650 dark:text-slate-350">{announcement.content}</p>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    {/* C. Recent Activities (Riwayat Aktivitas) */}
+                    <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 hover:shadow-md">
+                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
+                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">Aktivitas Terbaru Siswa</h4>
+                            <button
+                                className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-350 dark:hover:bg-slate-800 transition-all"
+                                onClick={onDownloadPdf}
+                            >
+                                📥 Ekspor PDF
+                            </button>
+                        </div>
+
+                        <div className="mt-4 space-y-4 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-slate-800">
+                            {recentActivities.length === 0 ? (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">Belum ada aktivitas tercatat.</p>
+                            ) : (
+                                recentActivities.map((activity) => (
+                                    <div key={activity.id} className="relative pl-9 group">
+                                        {/* Activity dot indicator */}
+                                        <span className="absolute left-3.5 top-2.5 h-3 w-3 rounded-full bg-indigo-500 ring-4 ring-white dark:ring-slate-900 transition-transform duration-300 group-hover:scale-125 shadow-sm shadow-indigo-500/25" />
+                                        <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 transition-all">
+                                            <p className="font-bold text-sm text-slate-900 dark:text-white">{activity.title}</p>
+                                            <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{activity.description}</p>
+                                            <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                                {dateFormatter.format(new Date(activity.createdAt))}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

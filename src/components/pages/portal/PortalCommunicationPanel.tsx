@@ -95,117 +95,186 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
 
     return (
         <>
-            <div className="flex h-[68vh] flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.18),transparent_30%),linear-gradient(135deg,#eef2ff_0%,#ffffff_60%,#f8fafc_100%)] p-4 dark:border-slate-800 dark:bg-[radial-gradient(circle_at_top_right,rgba(129,140,248,0.16),transparent_32%),linear-gradient(135deg,#111827_0%,#0f172a_100%)] sm:p-5">
+            <div className="flex h-[68vh] flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900 transition-all duration-300">
+                {/* A. Chat Header */}
+                <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.12),transparent_30%),linear-gradient(135deg,#f5f7ff_0%,#ffffff_60%,#f8fafc_100%)] p-4 dark:border-slate-850 dark:bg-[radial-gradient(circle_at_top_right,rgba(129,140,248,0.1),transparent_32%),linear-gradient(135deg,#1e293b_0%,#0f172a_100%)] sm:p-5">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center gap-3">
                             <img
                                 src={teacher?.avatar_url}
-                                className="h-12 w-12 rounded-2xl border border-white/70 object-cover shadow-sm dark:border-white/10"
+                                className="h-12 w-12 rounded-[18px] border border-white/80 object-cover shadow-sm dark:border-white/10 bg-slate-100"
                                 alt="Guru"
                             />
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Komunikasi Wali Kelas</p>
-                                <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{teacher?.full_name || 'Wali Kelas'}</h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">Percakapan terkait perkembangan {student.name}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-650 dark:text-indigo-300">Wali Kelas Anda</p>
+                                <h3 className="mt-0.5 text-base font-extrabold text-slate-900 dark:text-white sm:text-lg">{teacher?.full_name || 'Wali Kelas'}</h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-450">Konsultasi perkembangan belajar {student.name}</p>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2 sm:flex">
-                            <div className="rounded-2xl bg-white/80 px-4 py-3 text-center shadow-sm dark:bg-white/10">
-                                <p className="text-lg font-bold text-slate-900 dark:text-white">{communications.length}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-300">Total pesan</p>
+                            <div className="rounded-2xl border border-white/60 bg-white/70 px-4 py-2.5 text-center shadow-sm dark:border-white/5 dark:bg-white/5">
+                                <p className="text-base font-black text-slate-900 dark:text-white">{communications.length}</p>
+                                <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Pesan</p>
                             </div>
-                            <div className="rounded-2xl bg-white/80 px-4 py-3 text-center shadow-sm dark:bg-white/10">
-                                <p className="text-lg font-bold text-rose-600 dark:text-rose-200">{unreadTeacherMessages}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-300">Belum dibaca</p>
+                            <div className="rounded-2xl border border-white/60 bg-white/70 px-4 py-2.5 text-center shadow-sm dark:border-white/5 dark:bg-white/5">
+                                <p className="text-base font-black text-rose-600 dark:text-rose-350">{unreadTeacherMessages}</p>
+                                <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Pesan Baru</p>
                             </div>
                         </div>
                     </div>
-                    {latestMessage && (
-                        <div className="mt-4 rounded-2xl border border-white/70 bg-white/75 p-3 text-sm text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-slate-300">
-                            Pesan terakhir: <span className="font-semibold text-slate-900 dark:text-white">{latestMessage.sender === 'teacher' ? 'Guru' : 'Wali'}</span> - {latestMessage.message}
-                        </div>
-                    )}
                 </div>
 
-                <div className="flex flex-wrap gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/40">
-                    {quickPrompts.map((prompt) => (
-                        <button
-                            key={prompt}
-                            type="button"
-                            onClick={() => setNewMessage(prompt)}
-                            className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:bg-indigo-50 hover:text-indigo-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                        >
-                            {prompt}
-                        </button>
-                    ))}
+                {/* B. Slider Kapsul Pesan Cepat (Quick Prompts pills) */}
+                <div className="flex gap-2 overflow-x-auto no-scrollbar py-2.5 px-4 bg-slate-50/50 border-b border-slate-100 dark:bg-slate-950/20 dark:border-slate-800/40">
+                    <div className="flex gap-2 whitespace-nowrap">
+                        {quickPrompts.map((prompt) => (
+                            <button
+                                key={prompt}
+                                type="button"
+                                onClick={() => setNewMessage(prompt)}
+                                className="inline-flex items-center rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-amber-400 hover:border-slate-300 dark:hover:bg-slate-800 border border-slate-200/70 shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:scale-95 dark:bg-slate-900 dark:border-slate-800"
+                            >
+                                💬 {prompt}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto p-4">
+                {/* C. Conversation Thread List */}
+                <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto p-4 bg-slate-50/30 dark:bg-slate-950/5">
                     {communications.length === 0 ? (
-                        <div className="flex h-full flex-col items-center justify-center text-center text-slate-400">
-                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
-                                <SendIcon className="h-8 w-8 text-slate-300" />
+                        <div className="flex h-full flex-col items-center justify-center text-center text-slate-400 dark:text-slate-500">
+                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm dark:bg-slate-800">
+                                <SendIcon className="h-7 w-7 text-indigo-500" />
                             </div>
-                            <p className="font-medium text-slate-600 dark:text-slate-300">Belum ada pesan.</p>
-                            <p className="mt-1 max-w-sm text-sm">Gunakan contoh pesan di atas untuk memulai percakapan dengan wali kelas.</p>
+                            <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">Belum ada obrolan.</p>
+                            <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                Ketuk salah satu kapsul pesan cepat di atas untuk memulai konsultasi dengan wali kelas.
+                            </p>
                         </div>
-                    ) : communications.map((msg) => (
-                        <div key={msg.id} className={`group flex items-start gap-3 ${msg.sender === 'parent' ? 'justify-end' : 'justify-start'}`}>
-                            {msg.sender === 'teacher' && <img src={teacher?.avatar_url} className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-slate-700" alt="Guru" />}
-                            <div className={`relative max-w-md p-4 rounded-2xl text-sm shadow-sm ${msg.sender === 'parent' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-bl-none border border-slate-200 dark:border-slate-700'}`}>
-                                {msg.attachment_url && (
-                                    <div className="mb-3">
-                                        {msg.attachment_type === 'image' ? (
-                                            <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
-                                                <img
-                                                    src={msg.attachment_url}
-                                                    alt="Attachment"
-                                                    className="max-w-full rounded-lg max-h-48 object-cover hover:opacity-90 transition-opacity"
-                                                />
-                                            </a>
-                                        ) : (
-                                            <a
-                                                href={msg.attachment_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className={`flex items-center gap-2 p-3 rounded-lg ${msg.sender === 'parent' ? 'bg-indigo-700/50 hover:bg-indigo-700/70' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'} transition-colors`}
-                                            >
-                                                <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                                                    <polyline points="14 2 14 8 20 8" />
-                                                </svg>
-                                                <span className="text-xs font-medium truncate">{msg.attachment_name || 'Dokumen'}</span>
-                                            </a>
+                    ) : (
+                        communications.map((msg) => {
+                            const isParent = msg.sender === 'parent';
+                            return (
+                                <div key={msg.id} className={`group flex items-start gap-2.5 ${isParent ? 'justify-end' : 'justify-start'}`}>
+                                    {/* Teacher Avatar */}
+                                    {!isParent && (
+                                        <img 
+                                            src={teacher?.avatar_url} 
+                                            className="w-7 h-7 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-200 mt-1 shadow-sm" 
+                                            alt="Guru" 
+                                        />
+                                    )}
+
+                                    {/* Chat Bubble Box */}
+                                    <div className="relative max-w-[72%] group/bubble">
+                                        <div className={`p-3.5 rounded-2xl text-sm shadow-sm leading-relaxed ${
+                                            isParent 
+                                                ? 'bg-gradient-to-br from-indigo-650 to-violet-750 text-white rounded-tr-sm shadow-indigo-600/5' 
+                                                : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-sm border border-slate-200/40 dark:border-slate-700/40 shadow-slate-900/5'
+                                        }`}>
+                                            {/* File/Image Attachment */}
+                                            {msg.attachment_url && (
+                                                <div className="mb-2.5 rounded-xl overflow-hidden border border-black/5">
+                                                    {msg.attachment_type === 'image' ? (
+                                                        <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="block relative overflow-hidden group/img bg-slate-100">
+                                                            <img
+                                                                src={msg.attachment_url}
+                                                                alt="Attachment"
+                                                                className="max-w-full rounded-lg max-h-48 object-cover hover:scale-[1.03] transition-transform duration-300"
+                                                            />
+                                                        </a>
+                                                    ) : (
+                                                        <a
+                                                            href={msg.attachment_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className={`flex items-center gap-2.5 p-3 rounded-lg text-xs font-semibold ${
+                                                                isParent 
+                                                                    ? 'bg-white/10 hover:bg-white/20 text-white' 
+                                                                    : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200/80 dark:hover:bg-slate-600/80 text-slate-800 dark:text-white'
+                                                            } transition-colors`}
+                                                        >
+                                                            <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                                                                <polyline points="14 2 14 8 20 8" />
+                                                            </svg>
+                                                            <span className="truncate">{msg.attachment_name || 'Lampiran Dokumen'}</span>
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.message}</p>
+                                            
+                                            {/* Micro Timestamp & Read Checks */}
+                                            <div className={`flex items-center gap-1.5 text-[9px] mt-2 font-bold justify-end ${isParent ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'}`}>
+                                                <span>{new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                {isParent && msg.is_read && (
+                                                    <span className="text-[10px] select-none text-emerald-350">✔✔</span>
+                                                )}
+                                                {isParent && !msg.is_read && (
+                                                    <span className="text-[10px] select-none opacity-60">✔</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Edit/Delete Overlay triggers for Parent Message */}
+                                        {isParent && (
+                                            <div className="absolute top-1/2 -translate-y-1/2 -left-18 flex items-center gap-1.5 opacity-0 group-hover/bubble:opacity-100 transition-all duration-300 ease-out scale-90 group-hover/bubble:scale-100">
+                                                <button 
+                                                    type="button"
+                                                    title="Ubah pesan"
+                                                    className="h-7 w-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm hover:shadow active:scale-95 transition-all"
+                                                    onClick={() => setModalState({ type: 'edit', data: msg })}
+                                                >
+                                                    <PencilIcon className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button 
+                                                    type="button"
+                                                    title="Hapus pesan"
+                                                    className="h-7 w-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm hover:shadow active:scale-95 transition-all"
+                                                    onClick={() => setModalState({ type: 'delete', data: msg })}
+                                                >
+                                                    <TrashIcon className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
-                                )}
-                                <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
-                                <div className={`flex items-center gap-1 text-[10px] mt-2 opacity-80 ${msg.sender === 'parent' ? 'text-indigo-100 justify-end' : 'text-slate-400 justify-end'}`}>
-                                    <span>{new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
-                                    {msg.sender === 'parent' && msg.is_read && <CheckCircleIcon className="w-3 h-3" />}
+
+                                    {/* Parent Avatar */}
+                                    {isParent && (
+                                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-100 to-indigo-200 dark:from-indigo-950 dark:to-indigo-900 border border-indigo-200 dark:border-indigo-850 flex items-center justify-center flex-shrink-0 shadow-sm mt-1">
+                                            <UsersIcon className="w-3.5 h-3.5 text-indigo-650 dark:text-indigo-350" />
+                                        </div>
+                                    )}
                                 </div>
-                                {msg.sender === 'parent' && (
-                                    <div className="absolute top-0 -left-20 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-300" onClick={() => setModalState({ type: 'edit', data: msg })}><PencilIcon className="w-4 h-4" /></Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/10 hover:bg-white/20 text-red-500" onClick={() => setModalState({ type: 'delete', data: msg })}><TrashIcon className="w-4 h-4" /></Button>
-                                    </div>
-                                )}
-                            </div>
-                            {msg.sender === 'parent' && <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0 border border-indigo-200 dark:border-indigo-800"><UsersIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" /></div>}
-                        </div>
-                    ))}
+                            );
+                        })
+                    )}
                     <div ref={messagesEndRef} />
                 </div>
-                <form onSubmit={(event) => { event.preventDefault(); if (newMessage.trim()) sendMessage(newMessage); }} className="flex items-center gap-3 border-t border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+
+                {/* D. Message Input Controls */}
+                <form 
+                    onSubmit={(event) => { event.preventDefault(); if (newMessage.trim()) sendMessage(newMessage); }} 
+                    className="flex items-center gap-3 border-t border-slate-100 bg-slate-50/50 p-4 dark:border-slate-850 dark:bg-slate-900/40"
+                >
                     <Input
                         value={newMessage}
                         onChange={(event) => setNewMessage(event.target.value)}
                         placeholder="Ketik pesan untuk wali kelas..."
-                        className="flex-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-indigo-500"
+                        className="flex-1 h-11 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 rounded-2xl shadow-sm pl-4 text-sm"
                         disabled={isSending}
                     />
-                    <Button type="submit" size="icon" disabled={isSending || !newMessage.trim()} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20"><SendIcon className="w-5 h-5" /></Button>
+                    <Button 
+                        type="submit" 
+                        size="icon" 
+                        disabled={isSending || !newMessage.trim()} 
+                        className="h-11 w-11 rounded-2xl bg-indigo-650 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/10 flex items-center justify-center active:scale-95 transition-all"
+                    >
+                        <SendIcon className="w-4.5 h-4.5" />
+                    </Button>
                 </form>
             </div>
 
