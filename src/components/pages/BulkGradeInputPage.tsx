@@ -31,6 +31,7 @@ import { SettingsCard } from './bulk-grade-input/components/SettingsCard';
 import { StatsPanel } from './bulk-grade-input/components/StatsPanel';
 import { QuickActionsToolbar } from './bulk-grade-input/components/QuickActionsToolbar';
 import { GradeInputGrid } from './bulk-grade-input/components/GradeInputGrid';
+import { ImportPreviewModal } from './bulk-grade-input/components/ImportPreviewModal';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -62,6 +63,8 @@ const BulkGradeInputPage: React.FC = () => {
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showAIPasteModal, setShowAIPasteModal] = useState(false);
+    const [pendingImportData, setPendingImportData] = useState<{ name: string; score: string | number }[]>([]);
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [lastSaveCount, setLastSaveCount] = useState(0);
     const [kkm, setKkm] = useState(DEFAULT_KKM);
     const [searchTerm, setSearchTerm] = useState<string>('');
@@ -381,27 +384,29 @@ const BulkGradeInputPage: React.FC = () => {
     const handleImport = (data: Record<string, unknown>[]) => {
         if (!students) return;
 
-        const studentMap = new Map(students.map(s => [s.name.toLowerCase(), s.id]));
-        let matchedCount = 0;
+        const parsedRows = data.map(row => ({
+            name: String(row.name || ''),
+            score: row.score !== undefined ? String(row.score) : '',
+        }));
 
-        const newGrades = [...grades];
-        data.forEach(row => {
-            const name = String(row.name || '').trim().toLowerCase();
-            const score = row.score;
-
-            const studentId = studentMap.get(name);
-            if (studentId && score !== undefined && score !== '') {
-                const gradeIndex = newGrades.findIndex(g => g.studentId === studentId);
-                if (gradeIndex !== -1) {
-                    newGrades[gradeIndex].score = Math.min(100, Math.max(0, Number(score) || 0));
-                    matchedCount++;
-                }
-            }
-        });
-
-        setGrades(newGrades);
+        setPendingImportData(parsedRows);
         setShowImportModal(false);
-        toast.success(`${matchedCount} nilai berhasil diimport dari ${data.length} baris`);
+        setShowPreviewModal(true);
+    };
+
+    const handlePreviewConfirm = (mappedScores: Record<string, string>) => {
+        setGrades(prev => prev.map(g => {
+            if (mappedScores[g.studentId] !== undefined) {
+                const val = mappedScores[g.studentId];
+                const parsedVal = parseFloat(val);
+                return { ...g, score: !isNaN(parsedVal) ? parsedVal : '' };
+            }
+            return g;
+        }));
+        
+        const matchedCount = Object.keys(mappedScores).length;
+        toast.success(`${matchedCount} nilai berhasil diimpor setelah peninjauan.`);
+        setPendingImportData([]);
     };
 
     const handleAIPasteSuccess = (parsedScores: Record<string, string>) => {
@@ -714,6 +719,15 @@ const BulkGradeInputPage: React.FC = () => {
                     templateData={students?.map(s => ({ id: s.id, name: s.name }))}
                 />
             </Modal>
+
+            {/* Import Preview Matcher Modal */}
+            <ImportPreviewModal
+                isOpen={showPreviewModal}
+                onClose={() => setShowPreviewModal(false)}
+                parsedData={pendingImportData}
+                students={students?.map(s => ({ id: s.id, name: s.name })) || []}
+                onConfirm={handlePreviewConfirm}
+            />
 
             {/* Keyboard Help Modal */}
             <Modal

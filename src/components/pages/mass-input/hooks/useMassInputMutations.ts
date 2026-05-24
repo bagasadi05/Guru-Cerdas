@@ -46,37 +46,14 @@ export interface UseMassInputMutationsParams {
     isScoresDirty: React.MutableRefObject<boolean>;
 }
 
+import { findStudentMatch as centralFindStudentMatch } from '../../../../utils/studentMatcher';
+
 export const findStudentMatch = (targetName: string, students: StudentRow[]): StudentRow | undefined => {
-    if (!targetName) return undefined;
-    const cleanString = (str: string) => 
-        str.toLowerCase()
-           .replace(/[\.\,\-\_\']/g, ' ')
-           .replace(/\s+/g, ' ')
-           .trim();
-
-    const cleanedTarget = cleanString(targetName);
-    
-    // 1. Exact match
-    let match = students.find(s => cleanString(s.name) === cleanedTarget);
-    if (match) return match;
-
-    // 2. Partial match
-    match = students.find(s => {
-        const cleanName = cleanString(s.name);
-        return cleanName.includes(cleanedTarget) || cleanedTarget.includes(cleanName);
-    });
-    if (match) return match;
-
-    // 3. Token-based overlap
-    const targetTokens = cleanedTarget.split(' ').filter(t => t.length > 1);
-    if (targetTokens.length > 0) {
-        match = students.find(s => {
-            const studentTokens = cleanString(s.name).split(' ');
-            const intersect = targetTokens.filter(t => studentTokens.some(st => st.includes(t) || t.includes(st)));
-            return intersect.length / targetTokens.length >= 0.75;
-        });
+    const res = centralFindStudentMatch(targetName, students);
+    if (res.method !== 'none') {
+        return students.find(s => s.id === res.studentId);
     }
-    return match;
+    return undefined;
 };
 
 export function useMassInputMutations(params: UseMassInputMutationsParams) {

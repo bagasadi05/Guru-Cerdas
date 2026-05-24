@@ -5,6 +5,7 @@ import { Input } from '../../../ui/Input';
 import { useToast } from '../../../../hooks/useToast';
 import { generateOpenRouterJson } from '../../../../services/openRouterService';
 import { SparklesIcon } from '../../../Icons';
+import { findStudentMatch } from '../../../../utils/studentMatcher';
 
 interface Student {
     id: string;
@@ -22,39 +23,6 @@ interface ReviewDataItem {
     studentName: string;
     score: string | number;
 }
-
-export const findStudentMatch = (targetName: string, students: Student[]): Student | undefined => {
-    if (!targetName) return undefined;
-    const cleanString = (str: string) => 
-        str.toLowerCase()
-           .replace(/[\.\,\-\_\']/g, ' ')
-           .replace(/\s+/g, ' ')
-           .trim();
-
-    const cleanedTarget = cleanString(targetName);
-    
-    // 1. Exact match
-    let match = students.find(s => cleanString(s.name) === cleanedTarget);
-    if (match) return match;
-
-    // 2. Partial match
-    match = students.find(s => {
-        const cleanName = cleanString(s.name);
-        return cleanName.includes(cleanedTarget) || cleanedTarget.includes(cleanName);
-    });
-    if (match) return match;
-
-    // 3. Token-based overlap
-    const targetTokens = cleanedTarget.split(' ').filter(t => t.length > 1);
-    if (targetTokens.length > 0) {
-        match = students.find(s => {
-            const studentTokens = cleanString(s.name).split(' ');
-            const intersect = targetTokens.filter(t => studentTokens.some(st => st.includes(t) || t.includes(st)));
-            return intersect.length / targetTokens.length >= 0.75;
-        });
-    }
-    return match;
-};
 
 export const AIPasteModal: React.FC<AIPasteModalProps> = ({
     isOpen,
@@ -82,7 +50,7 @@ export const AIPasteModal: React.FC<AIPasteModalProps> = ({
             
             Format JSON yang diharapkan:
             [
-              { "studentName": "Nama Siswa", "score": "85" }
+                { "studentName": "Nama Siswa", "score": "85" }
             ]`;
             const prompt = `Daftar Siswa: ${JSON.stringify(studentNames)}\n\nTeks Nilai untuk Diproses:\n${pasteData}`;
             const parsedResults = await generateOpenRouterJson<ReviewDataItem[]>(prompt, systemInstruction);
@@ -95,9 +63,9 @@ export const AIPasteModal: React.FC<AIPasteModalProps> = ({
             let matchedCount = 0;
 
             parsedResults.forEach(item => {
-                const student = findStudentMatch(item.studentName, students);
-                if (student) {
-                    newScores[student.id] = String(item.score);
+                const matchResult = findStudentMatch(item.studentName, students);
+                if (matchResult.method !== 'none') {
+                    newScores[matchResult.studentId] = String(item.score);
                     matchedCount++;
                 }
             });
