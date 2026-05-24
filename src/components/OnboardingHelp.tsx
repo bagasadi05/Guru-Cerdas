@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
 import { X, ChevronRight, ChevronLeft, Check, Play, Pause, Volume2, VolumeX, Maximize, HelpCircle, Search, Book, Video, Lightbulb } from 'lucide-react';
+import { sanitizeDangerousHtml } from '../utils/sanitize';
 
 /**
  * Onboarding & Help System
@@ -449,7 +450,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                             <VideoPlayer url={selectedArticle.videoUrl} className="mb-6" />
                         )}
                         <div className="prose dark:prose-invert max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:shadow-md">
-                            <div dangerouslySetInnerHTML={{ __html: selectedArticle.content }} />
+                            <div dangerouslySetInnerHTML={{ __html: sanitizeDangerousHtml(selectedArticle.content) }} />
                         </div>
                     </div>
                 ) : (

@@ -100,6 +100,10 @@ export default defineConfig(({ mode }) => {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             // UI libraries
             'vendor-ui': ['framer-motion', '@tanstack/react-query'],
+            // Charts
+            'vendor-charts': ['recharts'],
+            // PDF/Excel export libs
+            'vendor-export': ['jspdf', 'jspdf-autotable', 'html2canvas', 'xlsx'],
             // Utility libraries
             'vendor-utils': ['zod', 'date-fns'],
             // Icons (heavy)

@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { GraduationCapIcon, LogoutIcon } from '../Icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useSound } from '../../hooks/useSound';
@@ -106,7 +107,11 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
                       {({ isActive }) => (
                         <>
                           {isActive && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-700 z-0"></div>
+                            <motion.div
+                              layoutId="activeSidebarPill"
+                              className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-700 z-0"
+                              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                            />
                           )}
                           {isActive && (
                             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/50 rounded-r-full blur-[1px]"></div>

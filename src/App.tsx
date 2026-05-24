@@ -4,11 +4,12 @@ import './styles/print.css';
 
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { AsyncErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './hooks/useAuth';
 import { useClickSound } from './hooks/useClickSound';
 import Layout from './components/Layout';
 import PwaPrompt from './components/PwaPrompt';
-import { QueryClient } from '@tanstack/query-core';
+import { queryClient } from './services/queryClient';
 import { AppProviders } from './components/AppProviders';
 import { OfflineBanner } from './components/StatusIndicators';
 import { GlobalSearchProvider, GlobalSearchModal } from './components/SearchSystem';
@@ -53,6 +54,7 @@ const ActionHistoryPage = lazy(() => import('@/components/pages/ActionHistoryPag
 const AnalyticsPage = lazy(() => import('@/components/pages/AnalyticsPage'));
 const AdminPage = lazy(() => import('@/components/pages/AdminPage'));
 const ExtracurricularPage = lazy(() => import('@/components/pages/ExtracurricularPage'));
+const NotFoundPage = lazy(() => import('@/components/pages/NotFoundPage'));
 
 
 // A wrapper for routes that require authentication.
@@ -84,14 +86,6 @@ const loadingSpinner = <AppLoadingScreen />;
 
 function App() {
   useClickSound();
-  const [queryClient] = React.useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        refetchOnWindowFocus: false,
-      },
-    },
-  }));
 
   return (
     <AppProviders queryClient={queryClient}>
@@ -218,32 +212,32 @@ function AppContent() {
       <GlobalSearchProvider onSearch={handleSearch}>
         <TourProvider>
           <Routes>
-            <Route path="/" element={<RoleSelectionPage />} />
-            <Route path="/guru-login" element={<LoginPage />} />
-            <Route path="/portal-login" element={<PortalLoginPage />} />
-            <Route path="/portal/:studentId" element={<ParentPortalPage />} />
+            <Route path="/" element={<AsyncErrorBoundary context="RoleSelectionPage"><RoleSelectionPage /></AsyncErrorBoundary>} />
+            <Route path="/guru-login" element={<AsyncErrorBoundary context="LoginPage"><LoginPage /></AsyncErrorBoundary>} />
+            <Route path="/portal-login" element={<AsyncErrorBoundary context="PortalLoginPage"><PortalLoginPage /></AsyncErrorBoundary>} />
+            <Route path="/portal/:studentId" element={<AsyncErrorBoundary context="ParentPortalPage"><ParentPortalPage /></AsyncErrorBoundary>} />
 
             <Route element={<PrivateRoutes />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/absensi" element={<AttendancePage />} />
-              <Route path="/siswa" element={<StudentsPage />} />
-              <Route path="/siswa/:studentId" element={<StudentDetailPage />} />
-              <Route path="/jadwal" element={<SchedulePage />} />
-              <Route path="/pengaturan" element={<SettingsPage />} />
-              <Route path="/tugas" element={<TasksPage />} />
-              <Route path="/input-massal" element={<MassInputPage />} />
-              <Route path="/input-nilai-cepat" element={<BulkGradeInputPage />} />
-              <Route path="/sampah" element={<TrashPage />} />
-              <Route path="/riwayat" element={<ActionHistoryPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/ekstrakurikuler" element={<ExtracurricularPage />} />
-              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/dashboard" element={<AsyncErrorBoundary context="DashboardPage"><DashboardPage /></AsyncErrorBoundary>} />
+              <Route path="/absensi" element={<AsyncErrorBoundary context="AttendancePage"><AttendancePage /></AsyncErrorBoundary>} />
+              <Route path="/siswa" element={<AsyncErrorBoundary context="StudentsPage"><StudentsPage /></AsyncErrorBoundary>} />
+              <Route path="/siswa/:studentId" element={<AsyncErrorBoundary context="StudentDetailPage"><StudentDetailPage /></AsyncErrorBoundary>} />
+              <Route path="/jadwal" element={<AsyncErrorBoundary context="SchedulePage"><SchedulePage /></AsyncErrorBoundary>} />
+              <Route path="/pengaturan" element={<AsyncErrorBoundary context="SettingsPage"><SettingsPage /></AsyncErrorBoundary>} />
+              <Route path="/tugas" element={<AsyncErrorBoundary context="TasksPage"><TasksPage /></AsyncErrorBoundary>} />
+              <Route path="/input-massal" element={<AsyncErrorBoundary context="MassInputPage"><MassInputPage /></AsyncErrorBoundary>} />
+              <Route path="/input-nilai-cepat" element={<AsyncErrorBoundary context="BulkGradeInputPage"><BulkGradeInputPage /></AsyncErrorBoundary>} />
+              <Route path="/sampah" element={<AsyncErrorBoundary context="TrashPage"><TrashPage /></AsyncErrorBoundary>} />
+              <Route path="/riwayat" element={<AsyncErrorBoundary context="ActionHistoryPage"><ActionHistoryPage /></AsyncErrorBoundary>} />
+              <Route path="/analytics" element={<AsyncErrorBoundary context="AnalyticsPage"><AnalyticsPage /></AsyncErrorBoundary>} />
+              <Route path="/ekstrakurikuler" element={<AsyncErrorBoundary context="ExtracurricularPage"><ExtracurricularPage /></AsyncErrorBoundary>} />
+              <Route path="/admin" element={<AsyncErrorBoundary context="AdminPage"><AdminPage /></AsyncErrorBoundary>} />
             </Route>
 
             {/* Report page has no main layout */}
-            <Route path="/cetak-rapot/:studentId" element={<ReportPage />} />
+            <Route path="/cetak-rapot/:studentId" element={<AsyncErrorBoundary context="ReportPage"><ReportPage /></AsyncErrorBoundary>} />
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<AsyncErrorBoundary context="NotFoundPage"><NotFoundPage /></AsyncErrorBoundary>} />
           </Routes>
 
           <PwaPrompt />

@@ -185,7 +185,7 @@ const devApiKey = import.meta.env.DEV ? (import.meta.env.VITE_OPENROUTER_API_KEY
 export const isAiEnabled = !!openRouterProxyUrl || !!devApiKey;
 
 if (!isAiEnabled) {
-    console.warn("AI API Keys are not set. AI features will not work.");
+    logger.warn("AI API Keys are not set. AI features will not work.", "Supabase");
 }
 
 /**

@@ -251,7 +251,7 @@ export const getGradeColorClass = (
 /**
  * Calculate statistics from grades
  */
-export const calculateGradeStats = (grades: GradeEntry[]): {
+export const calculateGradeStats = (grades: GradeEntry[], kkm: number = DEFAULT_KKM): {
     average: number;
     min: number;
     max: number;
@@ -281,8 +281,8 @@ export const calculateGradeStats = (grades: GradeEntry[]): {
         min: Math.min(...validGrades),
         max: Math.max(...validGrades),
         count: validGrades.length,
-        belowKkmCount: validGrades.filter(s => s < DEFAULT_KKM).length,
-        aboveKkmCount: validGrades.filter(s => s >= DEFAULT_KKM).length,
+        belowKkmCount: validGrades.filter(s => s < kkm).length,
+        aboveKkmCount: validGrades.filter(s => s >= kkm).length,
         perfectCount: validGrades.filter(s => s === 100).length,
     };
 };

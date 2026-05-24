@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
+import { motion } from 'framer-motion';
 import { useTour } from '../OnboardingHelp';
 import AnalyticsPageSkeleton from '../skeletons/AnalyticsPageSkeleton';
 import AnalyticsExportModal from './analytics/AnalyticsExportModal';
 import { generateAnalyticsPdf } from '../../utils/analyticsPdfGenerator';
 import { useAnalyticsData } from './analytics/useAnalyticsData';
 
-// Tabs
-import { OverviewTab } from './analytics/OverviewTab';
-import { AcademicTab } from './analytics/AcademicTab';
-import { AttendanceTab } from './analytics/AttendanceTab';
-import { CharacterTab } from './analytics/CharacterTab';
+// Tabs (Lazy Loaded)
+const OverviewTab = lazy(() => import('./analytics/OverviewTab').then(m => ({ default: m.OverviewTab })));
+const AcademicTab = lazy(() => import('./analytics/AcademicTab').then(m => ({ default: m.AcademicTab })));
+const AttendanceTab = lazy(() => import('./analytics/AttendanceTab').then(m => ({ default: m.AttendanceTab })));
+const CharacterTab = lazy(() => import('./analytics/CharacterTab').then(m => ({ default: m.CharacterTab })));
 
 // UI Components
 import { Button } from '../ui/Button';
@@ -151,43 +152,52 @@ const AnalyticsPage: React.FC = () => {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex-1 min-w-[110px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300
+                        className={`relative flex-1 min-w-[110px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 focus:outline-none
                             ${activeTab === tab.id 
-                                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm scale-100' 
+                                ? 'text-indigo-600 dark:text-indigo-400 scale-100' 
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 scale-95 hover:scale-100'}`}
                     >
-                        <tab.icon className="w-4 h-4" />
-                        <span>{tab.label}</span>
+                        {activeTab === tab.id && (
+                            <motion.div
+                                layoutId="activeAnalyticsTab"
+                                className="absolute inset-0 bg-white dark:bg-slate-900 rounded-xl shadow-sm z-0"
+                                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                            />
+                        )}
+                        <tab.icon className="w-4 h-4 relative z-10" />
+                        <span className="relative z-10">{tab.label}</span>
                     </button>
                 ))}
             </div>
 
             {/* Tab Content Rendering */}
-            <div className="mt-6">
-                {activeTab === 'overview' && (
-                    <OverviewTab 
-                        students={students} classes={classes} attendanceStats={attendanceStats} 
-                        taskStats={taskStats} genderStats={genderStats} 
-                        atRiskStudents={atRiskStudents} topPerformingStudents={topPerformingStudents} 
-                    />
-                )}
-                {activeTab === 'academic' && (
-                    <AcademicTab 
-                        gradeStats={gradeStats} classes={classes} students={students} 
-                        academicRecords={academicRecords} selectedClassId={selectedClassId} 
-                    />
-                )}
-                {activeTab === 'attendance' && (
-                    <AttendanceTab 
-                        dailyAttendance={dailyAttendance} attendanceStats={attendanceStats} 
-                        titleContext={selectedClassLabel}
-                    />
-                )}
-                {activeTab === 'character' && (
-                    <CharacterTab 
-                        violationsStats={violationsStats} quizPointsStats={quizPointsStats} 
-                    />
-                )}
+            <div className="mt-6 min-h-[400px]">
+                <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}>
+                    {activeTab === 'overview' && (
+                        <OverviewTab 
+                            students={students} classes={classes} attendanceStats={attendanceStats} 
+                            taskStats={taskStats} genderStats={genderStats} 
+                            atRiskStudents={atRiskStudents} topPerformingStudents={topPerformingStudents} 
+                        />
+                    )}
+                    {activeTab === 'academic' && (
+                        <AcademicTab 
+                            gradeStats={gradeStats} classes={classes} students={students} 
+                            academicRecords={academicRecords} selectedClassId={selectedClassId} 
+                        />
+                    )}
+                    {activeTab === 'attendance' && (
+                        <AttendanceTab 
+                            dailyAttendance={dailyAttendance} attendanceStats={attendanceStats} 
+                            titleContext={selectedClassLabel}
+                        />
+                    )}
+                    {activeTab === 'character' && (
+                        <CharacterTab 
+                            violationsStats={violationsStats} quizPointsStats={quizPointsStats} 
+                        />
+                    )}
+                </Suspense>
             </div>
 
             <AnalyticsExportModal

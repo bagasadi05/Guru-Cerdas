@@ -9,8 +9,9 @@ import { Select } from '../ui/Select';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { ExcelImporter } from '../ui/ExcelImporter';
-import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, UploadIcon, TrashIcon, AlertTriangleIcon, KeyboardIcon } from '../Icons';
+import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, UploadIcon, TrashIcon, AlertTriangleIcon, KeyboardIcon, DownloadIcon } from '../Icons';
 import { useNavigate } from 'react-router-dom';
+import { exportGradesToExcel } from '../../utils/gradeExporter';
 import { Skeleton } from '../ui/Skeleton';
 import { Database } from '../../services/database.types';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcutsLegacy';
@@ -25,6 +26,11 @@ import { SemesterSelector, SemesterLockedBanner } from '../ui/SemesterSelector';
 import { EmptyState } from '../ui/EmptyState';
 import { SearchIcon } from '../Icons';
 import { getAssignedSubjects, hasHomeroomAssignment, TeacherClassAssignmentRow } from '../../services/teacherAssignments';
+import { AIPasteModal } from './bulk-grade-input/components/AIPasteModal';
+import { SettingsCard } from './bulk-grade-input/components/SettingsCard';
+import { StatsPanel } from './bulk-grade-input/components/StatsPanel';
+import { QuickActionsToolbar } from './bulk-grade-input/components/QuickActionsToolbar';
+import { GradeInputGrid } from './bulk-grade-input/components/GradeInputGrid';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -55,8 +61,10 @@ const BulkGradeInputPage: React.FC = () => {
     const [showEmptyConfirm, setShowEmptyConfirm] = useState(false);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showAIPasteModal, setShowAIPasteModal] = useState(false);
     const [lastSaveCount, setLastSaveCount] = useState(0);
-    const [kkm] = useState(DEFAULT_KKM);
+    const [kkm, setKkm] = useState(DEFAULT_KKM);
+    const [searchTerm, setSearchTerm] = useState<string>('');
 
     // Default to active semester when it loads
     useEffect(() => {
@@ -188,7 +196,7 @@ const BulkGradeInputPage: React.FC = () => {
     });
 
     // Initialize grades when students change
-    useMemo(() => {
+    useEffect(() => {
         if (students) {
             setGrades(students.map(s => ({
                 studentId: s.id,
@@ -197,6 +205,21 @@ const BulkGradeInputPage: React.FC = () => {
             })));
         }
     }, [students]);
+
+    // Warn before unload if there are unsaved changes
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            const hasUnsaved = grades.some(g => g.score !== '');
+            if (hasUnsaved) {
+                e.preventDefault();
+                e.returnValue = 'Anda memiliki nilai yang belum disimpan. Apakah Anda yakin ingin keluar?';
+                return e.returnValue;
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [grades]);
 
     // Validation
     const validation = useMemo(() => {
@@ -212,7 +235,13 @@ const BulkGradeInputPage: React.FC = () => {
     }, [grades, kkm, existingGrades]);
 
     // Stats
-    const stats = useMemo(() => calculateGradeStats(grades), [grades]);
+    const stats = useMemo(() => calculateGradeStats(grades, kkm), [grades, kkm]);
+
+    // Filter grades by student name
+    const filteredGrades = useMemo(() => {
+        if (!searchTerm.trim()) return grades;
+        return grades.filter(g => g.studentName.toLowerCase().includes(searchTerm.toLowerCase()));
+    }, [grades, searchTerm]);
 
     const activeClassRecord = useMemo(
         () => classes?.find((classItem) => classItem.id === selectedClass) || null,
@@ -269,6 +298,7 @@ const BulkGradeInputPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
             clearDraft();
+            setShowSuccessModal(true);
             // Reset grades
             if (students) {
                 setGrades(students.map(s => ({ studentId: s.id, studentName: s.name, score: '' })));
@@ -280,8 +310,20 @@ const BulkGradeInputPage: React.FC = () => {
     });
 
     const handleScoreChange = (studentId: string, value: string) => {
-        const numValue = value === '' ? '' : Math.min(100, Math.max(0, parseInt(value) || 0));
-        setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: numValue } : g));
+        if (value === '') {
+            setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: '' } : g));
+            return;
+        }
+
+        const num = parseFloat(value);
+        if (!isNaN(num)) {
+            // Round to maximum of 2 decimal places to comply with gradeValidator
+            const rounded = Math.round(num * 100) / 100;
+            const clamped = Math.min(100, Math.max(0, rounded));
+            setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: clamped } : g));
+        } else {
+            setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: '' } : g));
+        }
     };
 
     const handleSaveAll = () => {
@@ -362,6 +404,20 @@ const BulkGradeInputPage: React.FC = () => {
         toast.success(`${matchedCount} nilai berhasil diimport dari ${data.length} baris`);
     };
 
+    const handleAIPasteSuccess = (parsedScores: Record<string, string>) => {
+        setGrades(prev => prev.map(g => {
+            if (parsedScores[g.studentId] !== undefined) {
+                const val = parsedScores[g.studentId];
+                const parsedVal = parseFloat(val);
+                if (!isNaN(parsedVal)) {
+                    const rounded = Math.round(parsedVal * 100) / 100;
+                    return { ...g, score: Math.min(100, Math.max(0, rounded)) };
+                }
+            }
+            return g;
+        }));
+    };
+
     // Restore draft
     const handleRestoreDraft = () => {
         const draft = restoreDraft();
@@ -395,10 +451,17 @@ const BulkGradeInputPage: React.FC = () => {
                 for (let i = 0; i < rows.length; i++) {
                     const targetIndex = startIndex + i;
                     if (targetIndex < newGrades.length) {
-                        const parsedValue = parseInt(rows[i].replace(/[^\d]/g, ''), 10);
-                        if (!isNaN(parsedValue)) {
-                            newGrades[targetIndex].score = Math.min(100, Math.max(0, parsedValue));
-                            pasteCount++;
+                        // Replace comma with dot for standard decimal parsing
+                        const normalizedRow = rows[i].trim().replace(',', '.');
+                        // Find first matching floating point or integer number
+                        const match = normalizedRow.match(/[-+]?[0-9]*\.?[0-9]+/);
+                        if (match) {
+                            const parsedValue = parseFloat(match[0]);
+                            if (!isNaN(parsedValue)) {
+                                const rounded = Math.round(parsedValue * 100) / 100;
+                                newGrades[targetIndex].score = Math.min(100, Math.max(0, rounded));
+                                pasteCount++;
+                            }
                         }
                     }
                 }
@@ -408,6 +471,41 @@ const BulkGradeInputPage: React.FC = () => {
             });
         }
     }, [toast]);
+
+    const handleClearAllClick = () => {
+        const filled = grades.filter(g => g.score !== '').length;
+        if (filled > 0) {
+            setShowClearConfirm(true);
+        } else {
+            toast.info('Tidak ada nilai untuk dihapus');
+        }
+    };
+
+    const handleExport = async () => {
+        try {
+            const className = classes?.find(c => c.id === selectedClass)?.name || 'Kelas';
+            const filename = `Nilai_${selectedSubject.replace(/\s/g, '_')}_${className.replace(/\s/g, '_')}_${assessmentName.replace(/\s/g, '_')}.xlsx`;
+            
+            await exportGradesToExcel(
+                grades.map(g => ({
+                    studentName: g.studentName,
+                    studentId: g.studentId,
+                    score: g.score,
+                })),
+                {
+                    filename,
+                    sheetName: 'Nilai Siswa',
+                    subject: selectedSubject,
+                    assessmentName,
+                    className,
+                    kkm,
+                }
+            );
+            toast.success('Nilai berhasil diekspor ke Excel!');
+        } catch (error: any) {
+            toast.error(`Gagal mengekspor: ${error.message || 'Error tidak dikenal'}`);
+        }
+    };
 
     // Render student row
     const renderStudentRow = useCallback((g: GradeEntry, index: number) => {
@@ -441,11 +539,13 @@ const BulkGradeInputPage: React.FC = () => {
                         type="number"
                         min={0}
                         max={100}
+                        step="any"
                         value={g.score}
                         onChange={(e) => handleScoreChange(g.studentId, e.target.value)}
                         onKeyDown={(e) => handleGridKeyDown(e, index)}
                         onPaste={(e) => handlePaste(e, index)}
                         placeholder="0-100"
+                        aria-label={`Nilai untuk ${g.studentName}`}
                         className={`w-24 text-center ${g.score !== '' ? colorClass.border : ''}`}
                     />
                     {isBelowKkm && (
@@ -498,67 +598,25 @@ const BulkGradeInputPage: React.FC = () => {
                 )}
 
                 {/* Settings Card */}
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Pengaturan</CardTitle>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowImportModal(true)}
-                            >
-                                <UploadIcon className="w-4 h-4 mr-1" />
-                                Import Excel
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Pilih Kelas</label>
-                            {loadingClasses ? (
-                                <Skeleton className="h-10 w-full" />
-                            ) : (
-                                <Select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
-                                    <option value="">-- Pilih Kelas --</option>
-                                    {classes?.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </Select>
-                            )}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Semester</label>
-                            <SemesterSelector
-                                value={selectedSemester}
-                                onChange={(val) => setSelectedSemester(val)}
-                                includeAllOption={false}
-                                showIcon={true}
-                                className="w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Mata Pelajaran</label>
-                            <Select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)} disabled={availableSubjects.length === 0}>
-                                {availableSubjects.map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                ))}
-                            </Select>
-                            {availableSubjects.length === 0 ? (
-                                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                                    Belum ada mapel yang ditugaskan untuk kelas dan semester ini.
-                                </p>
-                            ) : null}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Nama Penilaian</label>
-                            <Input
-                                value={assessmentName}
-                                onChange={(e) => setAssessmentName(e.target.value)}
-                                placeholder="Ulangan Harian 1"
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
+                <SettingsCard
+                    selectedClass={selectedClass}
+                    setSelectedClass={setSelectedClass}
+                    selectedSemester={selectedSemester}
+                    setSelectedSemester={setSelectedSemester}
+                    selectedSubject={selectedSubject}
+                    setSelectedSubject={setSelectedSubject}
+                    assessmentName={assessmentName}
+                    setAssessmentName={setAssessmentName}
+                    kkm={kkm}
+                    setKkm={setKkm}
+                    classes={classes}
+                    loadingClasses={loadingClasses}
+                    availableSubjects={availableSubjects}
+                    onShowImportModal={() => setShowImportModal(true)}
+                    onShowAIPasteModal={() => setShowAIPasteModal(true)}
+                    onExport={handleExport}
+                    gradesEmpty={grades.length === 0}
+                />
 
                 {/* Semester Locked Banner */}
                 {semesterLocked && selectedSemester && (
@@ -567,45 +625,17 @@ const BulkGradeInputPage: React.FC = () => {
 
                 {/* Quick Actions Toolbar */}
                 {selectedClass && grades.length > 0 && !semesterLocked && (
-                    <div className="flex flex-wrap items-center gap-2 p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <span className="text-sm text-gray-500 mr-2">Quick Fill:</span>
-                        <Button size="sm" variant="outline" onClick={() => handleBulkFill(100)}>
-                            Kosong → 100
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleBulkFill(kkm)}>
-                            Kosong → KKM ({kkm})
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleFillAllWith(100)}>
-                            Semua 100
-                        </Button>
-                        <div className="flex-1" />
-                        <Button size="sm" variant="ghost" onClick={handleClearAll} className="text-red-500">
-                            <TrashIcon className="w-4 h-4 mr-1" />
-                            Clear All
-                        </Button>
-                    </div>
+                    <QuickActionsToolbar
+                        kkm={kkm}
+                        onBulkFill={handleBulkFill}
+                        onFillAllWith={handleFillAllWith}
+                        onClearAllClick={handleClearAllClick}
+                    />
                 )}
 
                 {/* Stats Summary */}
                 {filledCount > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
-                            <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{stats.average}</p>
-                            <p className="text-xs text-blue-500">Rata-rata</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30">
-                            <p className="text-xl font-bold text-green-600 dark:text-green-400">{stats.aboveKkmCount}</p>
-                            <p className="text-xs text-green-500">Tuntas ≥{kkm}</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
-                            <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.belowKkmCount}</p>
-                            <p className="text-xs text-amber-500">Belum Tuntas</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30">
-                            <p className="text-xl font-bold text-purple-600 dark:text-purple-400">{stats.perfectCount}</p>
-                            <p className="text-xs text-purple-500">Nilai 100</p>
-                        </div>
-                    </div>
+                    <StatsPanel stats={stats} kkm={kkm} />
                 )}
 
                 {/* Validation Warnings */}
@@ -632,45 +662,15 @@ const BulkGradeInputPage: React.FC = () => {
 
                 {/* Grade Input Grid */}
                 {selectedClass && (
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Daftar Siswa ({grades.length})</CardTitle>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <CheckCircleIcon className="w-4 h-4 text-green-500" />
-                                {filledCount} / {grades.length} terisi
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            {loadingStudents ? (
-                                <div className="space-y-3">
-                                    {[1, 2, 3, 4, 5].map(i => (
-                                        <Skeleton key={i} className="h-12 w-full" />
-                                    ))}
-                                </div>
-                            ) : grades.length === 0 ? (
-                                <EmptyState
-                                    icon={<SearchIcon />}
-                                    title="Tidak Ada Siswa"
-                                    description="Belum ada data siswa untuk kelas ini."
-                                    className="py-12"
-                                />
-                            ) : grades.length > VIRTUALIZATION_THRESHOLD ? (
-                                // Use virtualization for large lists
-                                <VirtualList
-                                    items={grades}
-                                    itemHeight={64}
-                                    containerHeight={500}
-                                    renderItem={(g, index) => renderStudentRow(g, index)}
-                                    keyExtractor={(g) => g.studentId}
-                                />
-                            ) : (
-                                // Regular render for small lists
-                                <div className="space-y-2">
-                                    {grades.map((g, index) => renderStudentRow(g, index))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    <GradeInputGrid
+                        grades={grades}
+                        filteredGrades={filteredGrades}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        loadingStudents={loadingStudents}
+                        filledCount={filledCount}
+                        renderStudentRow={renderStudentRow}
+                    />
                 )}
 
                 {/* Save Button */}
@@ -806,6 +806,14 @@ const BulkGradeInputPage: React.FC = () => {
             <KeyboardShortcutsHelp
                 isOpen={showKeyboardHelp}
                 onClose={() => setShowKeyboardHelp(false)}
+            />
+
+            {/* AI Paste Modal */}
+            <AIPasteModal
+                isOpen={showAIPasteModal}
+                onClose={() => setShowAIPasteModal(false)}
+                students={students || []}
+                onParseSuccess={handleAIPasteSuccess}
             />
         </div>
     );

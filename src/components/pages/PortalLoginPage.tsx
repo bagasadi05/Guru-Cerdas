@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { supabase } from '../../services/supabase';
+import { pageVariants } from '../../utils/animations';
 
 const PortalLoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -60,7 +62,13 @@ const PortalLoginPage: React.FC = () => {
     const handleBlur = () => document.body.setAttribute('data-focused', 'false');
 
     return (
-        <div className="h-screen w-full overflow-y-auto bg-gray-50 dark:bg-gray-900">
+        <motion.div
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="h-screen w-full overflow-y-auto bg-gray-50 dark:bg-gray-900"
+        >
             <div className="flex items-center justify-center min-h-full p-4 animate-page-transition">
                 <div className="login-card">
                     <div className="holographic-orb-container">
@@ -114,7 +122,7 @@ const PortalLoginPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../hooks/useAuth';
@@ -10,6 +11,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { MailIcon, LockIcon, UserCircleIcon, EyeIcon, EyeOffIcon } from '../Icons';
 import { loginSchema, signupSchema, LoginFormValues, SignupFormValues } from './login/schemas';
+import { pageVariants } from '../../utils/animations';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -97,7 +99,13 @@ const LoginPage: React.FC = () => {
 
     return (
         <>
-            <div className="h-screen w-full overflow-y-auto bg-gray-50 dark:bg-gray-900">
+            <motion.div
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="h-screen w-full overflow-y-auto bg-gray-50 dark:bg-gray-900"
+            >
                 <div className="flex items-center justify-center min-h-full p-4 animate-page-transition">
                     <div className="login-card">
 
@@ -204,7 +212,7 @@ const LoginPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             <Modal title="Lupa Password" isOpen={isForgotModalOpen} onClose={() => setIsForgotModalOpen(false)}>
                 <form onSubmit={handleForgotPassword} className="space-y-4">
