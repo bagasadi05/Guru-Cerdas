@@ -140,7 +140,7 @@ const SettingsPage: React.FC = () => {
 
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-8 relative">
                 {/* Premium Header */}
-                <header className="relative p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-955 via-emerald-950 to-slate-950 text-white shadow-2xl shadow-green-955/20 overflow-hidden isolate border border-emerald-900/30">
+                <header className="relative p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-950 via-emerald-950 to-slate-950 text-white shadow-2xl shadow-emerald-950/30 overflow-hidden isolate border border-emerald-900/30">
                     {/* Decorative Elements */}
                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl -z-10"></div>
                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/30 to-transparent -z-10"></div>
