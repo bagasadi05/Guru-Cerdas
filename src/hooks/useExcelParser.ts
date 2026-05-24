@@ -193,18 +193,39 @@ export const useExcelParser = () => {
         const XLSX = await getXLSX();
         const wb = XLSX.utils.book_new();
 
-        // Info sheet
+        // Beautiful Info sheet design
         const infoData = [
-            ['Mata Pelajaran', subject],
-            ['Nama Penilaian', assessmentName],
-            ['Tanggal', new Date().toLocaleDateString('id-ID')],
+            ['========================================================================'],
+            ['                PORTAL GURU — MI AL IRSYAD MADIUN                       '],
+            ['              TEMPLATE IMPOR NILAI BERBASIS EXCEL                       '],
+            ['========================================================================'],
             [''],
-            ['Petunjuk:'],
-            ['1. Isi nilai pada kolom "Nilai" (0-100)'],
-            ['2. Jangan mengubah nama siswa'],
-            ['3. Simpan file dan upload kembali'],
+            ['DETAIL PENILAIAN AKADEMIK:'],
+            ['  Mata Pelajaran', ': ' + subject],
+            ['  Jenis Penilaian', ': ' + assessmentName],
+            ['  Tanggal Unduh', ': ' + new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })],
+            ['  Status Sinkron', ': SIAP DIIMPOR'],
+            [''],
+            ['PANDUAN PENGISIAN NILAI (MANDATORI):'],
+            ['  1. Klik tab "Data Nilai" di bagian bawah berkas ini.'],
+            ['  2. Masukkan nilai siswa pada kolom "Nilai" (Skala 0 s/d 100).'],
+            ['  3. Anda dapat menginput angka desimal/pecahan jika diperlukan (misal: 85.5 atau 77.75).'],
+            ['  4. Kolom "Catatan" bersifat opsional untuk memberikan masukan singkat per siswa.'],
+            ['  5. JANGAN mengubah ejaan nama, nomor urut, atau urutan baris siswa.'],
+            ['  6. Setelah selesai, simpan berkas ini lalu unggah kembali melalui tombol "Import Excel".'],
+            [''],
+            ['------------------------------------------------------------------------'],
+            ['Portal Guru © 2026 MI Al Irsyad Madiun. Seluruh hak cipta dilindungi.']
         ];
+        
         const infoWs = XLSX.utils.aoa_to_sheet(infoData);
+        
+        // Auto-fit column widths for Info sheet
+        infoWs['!cols'] = [
+            { wch: 25 }, // Key
+            { wch: 60 }  // Value
+        ];
+        
         XLSX.utils.book_append_sheet(wb, infoWs, 'Info');
 
         // Data sheet
@@ -216,11 +237,13 @@ export const useExcelParser = () => {
         }));
 
         const ws = XLSX.utils.json_to_sheet(data);
+        
+        // Adjusted column widths for Data Nilai sheet
         ws['!cols'] = [
-            { wch: 5 },  // No
-            { wch: 30 }, // Nama
-            { wch: 10 }, // Nilai
-            { wch: 30 }, // Catatan
+            { wch: 6 },   // No
+            { wch: 35 },  // Nama Siswa
+            { wch: 12 },  // Nilai
+            { wch: 35 },  // Catatan
         ];
 
         XLSX.utils.book_append_sheet(wb, ws, 'Data Nilai');
