@@ -29,6 +29,7 @@ export function useMassInputState() {
     const [showImportModal, setShowImportModal] = useState(false);
     const [showChartModal, setShowChartModal] = useState(false);
     const [bypassDuplicateGuard, setBypassDuplicateGuard] = useState(false);
+    const [pendingImportData, setPendingImportData] = useState<any[] | null>(null);
 
     // Warn before unload if there are unsaved changes
     useEffect(() => {
@@ -158,6 +159,7 @@ export function useMassInputState() {
         showChartModal, setShowChartModal,
         isScoresDirty,
         bypassDuplicateGuard, setBypassDuplicateGuard,
+        pendingImportData, setPendingImportData,
         handleModeSelect, handleBack, handleScoreChange, handleStudentSelect,
     };
 }

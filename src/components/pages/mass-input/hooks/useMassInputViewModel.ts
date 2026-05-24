@@ -163,27 +163,11 @@ export function useMassInputViewModel() {
     };
 
     const handleImport = (importedData: Record<string, unknown>[]) => {
-        const studentsData = data.studentsData;
-        if (!studentsData) return;
-        let matchedCount = 0; let skippedNaN = 0;
-        const newScores = { ...state.scores };
-        importedData.forEach(row => {
-            const name = String(row.name || '');
-            const score = row.score;
-            const studentMatch = findStudentMatch(name, studentsData);
-            if (studentMatch && score !== undefined && score !== '') {
-                const numScore = Number(score);
-                if (isNaN(numScore)) { skippedNaN++; return; }
-                newScores[studentMatch.id] = String(Math.min(100, Math.max(0, numScore)));
-                matchedCount++;
-            }
-        });
-        state.setScores(newScores);
-        state.isScoresDirty.current = true;
+        state.setPendingImportData(importedData.map(row => ({
+            name: String(row.name || ''),
+            score: row.score !== undefined && row.score !== null ? String(row.score) : ''
+        })));
         state.setShowImportModal(false);
-        const message = `${matchedCount} nilai berhasil diimport dari ${importedData.length} baris`;
-        if (skippedNaN > 0) toast.warning(`${message}. ${skippedNaN} baris dilewati karena nilai bukan angka.`);
-        else toast.success(message);
     };
 
     const handleDeleteConfirmClick = () => {
@@ -275,6 +259,8 @@ export function useMassInputViewModel() {
         handleDeleteConfirmClick,
         // import modal
         handleImport,
+        pendingImportData: state.pendingImportData,
+        setPendingImportData: state.setPendingImportData,
         validationErrors: state.validationErrors,
         bypassDuplicateGuard: state.bypassDuplicateGuard,
         setBypassDuplicateGuard: state.setBypassDuplicateGuard,

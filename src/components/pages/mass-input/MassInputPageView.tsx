@@ -10,6 +10,9 @@ import { Step2_StudentList } from './components/Step2_StudentList';
 import { Step2_Footer } from './components/Step2_Footer';
 import { ViolationExportPanel } from './components/ViolationExportPanel';
 import { InputMode, Step, StudentFilter, StudentRow, AcademicRecordRow, ClassRow, ViolationRow } from './types';
+import { ImportPreviewModal } from '../bulk-grade-input/components/ImportPreviewModal';
+import { violationList } from '../../../services/violations.data';
+import { useToast } from '../../../hooks/useToast';
 
 export interface MassInputPageViewProps {
     step: Step;
@@ -90,11 +93,14 @@ export interface MassInputPageViewProps {
     handleDeleteConfirmClick: () => void;
     // import modal
     handleImport: (data: Record<string, unknown>[]) => void;
+    pendingImportData: any[] | null;
+    setPendingImportData: (v: any[] | null) => void;
     bypassDuplicateGuard: boolean;
     setBypassDuplicateGuard: (v: boolean) => void;
 }
 
 export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
+    const toast = useToast();
     const {
         step, mode, handleModeSelect, handleBack, currentCard,
         isConfigOpen, setIsConfigOpen, selectedClass, setSelectedClass, classes, isLoadingClasses,
@@ -113,7 +119,8 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         isSubmitting, isDeleting, studentsData, existingViolations, isLoadingViolations,
         showChartModal, setShowChartModal,
         confirmDeleteModal, setConfirmDeleteModal, confirmDeleteText, setConfirmDeleteText,
-        handleDeleteConfirmClick, handleImport, bypassDuplicateGuard, setBypassDuplicateGuard,
+        handleDeleteConfirmClick, handleImport, pendingImportData, setPendingImportData,
+        bypassDuplicateGuard, setBypassDuplicateGuard,
     } = props;
 
     if (step === 1) {
@@ -133,6 +140,40 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                     </div>
                 </header>
 
+                {/* Horizontal Breadcrumbs Status Bar when Configuration is Collapsed */}
+                {!isConfigOpen && mode !== 'violation_export' && (
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-3xl border border-indigo-100 bg-white/80 dark:border-slate-800 dark:bg-slate-900/60 backdrop-blur-md animate-fade-in-down shadow-sm">
+                        <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
+                            <span className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-550/10 px-3.5 py-1.5 font-extrabold text-indigo-700 dark:text-indigo-300 border border-indigo-200/20 shadow-sm">
+                                🏫 Kelas: {classes?.find(c => c.id === selectedClass)?.name || '-'}
+                            </span>
+                            {mode === 'subject_grade' && subjectGradeInfo.subject && (
+                                <span className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-550/10 px-3.5 py-1.5 font-extrabold text-emerald-700 dark:text-emerald-300 border border-emerald-200/20 shadow-sm animate-scale-in">
+                                    📚 Mapel: {subjectGradeInfo.subject} ({subjectGradeInfo.assessment_name || 'Penilaian'})
+                                </span>
+                            )}
+                            {mode === 'quiz' && quizInfo.name && (
+                                <span className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-550/10 px-3.5 py-1.5 font-extrabold text-amber-700 dark:text-amber-300 border border-amber-200/20 shadow-sm animate-scale-in">
+                                    ⚡ Kuis: {quizInfo.name} ({quizInfo.subject || 'Umum'})
+                                </span>
+                            )}
+                            {mode === 'violation' && selectedViolationCode && (
+                                <span className="inline-flex items-center gap-1.5 rounded-2xl bg-rose-550/10 px-3.5 py-1.5 font-extrabold text-rose-700 dark:text-rose-300 border border-rose-200/20 shadow-sm animate-scale-in">
+                                    ⚠️ Pelanggaran: {violationList.find(v => v.code === selectedViolationCode)?.description || selectedViolationCode}
+                                </span>
+                            )}
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setIsConfigOpen(true)}
+                            className="rounded-xl border-indigo-200 dark:border-slate-700 text-indigo-650 dark:text-indigo-300 bg-white hover:bg-indigo-50/50 dark:bg-slate-800 hover:dark:bg-slate-700 active:scale-95 transition-all text-xs font-bold"
+                        >
+                            ⚙️ Ubah Konfigurasi
+                        </Button>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
                     {mode === 'violation_export' ? (
                         <ViolationExportPanel
@@ -146,57 +187,61 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         />
                     ) : (
                         <>
-                            <Step2_Configuration
-                                mode={mode}
-                                isConfigOpen={isConfigOpen}
-                                setIsConfigOpen={setIsConfigOpen}
-                                selectedClass={selectedClass}
-                                setSelectedClass={setSelectedClass}
-                                classes={classes}
-                                isLoadingClasses={isLoadingClasses}
-                                quizInfo={quizInfo}
-                                setQuizInfo={setQuizInfo}
-                                subjectGradeInfo={subjectGradeInfo}
-                                setSubjectGradeInfo={setSubjectGradeInfo}
-                                isCustomSubject={isCustomSubject}
-                                setIsCustomSubject={setIsCustomSubject}
-                                uniqueSubjects={uniqueSubjects}
-                                selectedViolationCode={selectedViolationCode}
-                                setSelectedViolationCode={setSelectedViolationCode}
-                                violationDate={violationDate}
-                                setViolationDate={setViolationDate}
-                                noteMethod={noteMethod}
-                                setNoteMethod={setNoteMethod}
-                                templateNote={templateNote}
-                                setTemplateNote={setTemplateNote}
-                                assessmentNames={assessmentNames}
-                                pasteData={pasteData}
-                                setPasteData={setPasteData}
-                                isParsing={isParsing}
-                                handleAiParse={handleAiParse}
-                                isOnline={isOnline}
-                                bypassDuplicateGuard={bypassDuplicateGuard}
-                                setBypassDuplicateGuard={setBypassDuplicateGuard}
-                                onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
-                            />
-                            <Step2_StudentList
-                                mode={mode}
-                                searchTerm={searchTerm}
-                                setSearchTerm={setSearchTerm}
-                                filterOptions={filterOptions}
-                                studentFilter={studentFilter}
-                                setStudentFilter={setStudentFilter}
-                                isLoadingStudents={isLoadingStudents}
-                                students={students}
-                                isAllSelected={isAllSelected}
-                                handleSelectAllStudents={handleSelectAllStudents}
-                                selectedStudentIds={selectedStudentIds}
-                                handleStudentSelect={handleStudentSelect}
-                                scores={scores}
-                                handleScoreChange={handleScoreChange}
-                                validationErrors={validationErrors}
-                                existingGrades={mode === 'delete_subject_grade' ? filteredExistingGrades : existingGrades}
-                            />
+                            <div className={`${isConfigOpen ? 'lg:col-span-1 block' : 'hidden'} transition-all duration-300`}>
+                                <Step2_Configuration
+                                    mode={mode}
+                                    isConfigOpen={isConfigOpen}
+                                    setIsConfigOpen={setIsConfigOpen}
+                                    selectedClass={selectedClass}
+                                    setSelectedClass={setSelectedClass}
+                                    classes={classes}
+                                    isLoadingClasses={isLoadingClasses}
+                                    quizInfo={quizInfo}
+                                    setQuizInfo={setQuizInfo}
+                                    subjectGradeInfo={subjectGradeInfo}
+                                    setSubjectGradeInfo={setSubjectGradeInfo}
+                                    isCustomSubject={isCustomSubject}
+                                    setIsCustomSubject={setIsCustomSubject}
+                                    uniqueSubjects={uniqueSubjects}
+                                    selectedViolationCode={selectedViolationCode}
+                                    setSelectedViolationCode={setSelectedViolationCode}
+                                    violationDate={violationDate}
+                                    setViolationDate={setViolationDate}
+                                    noteMethod={noteMethod}
+                                    setNoteMethod={setNoteMethod}
+                                    templateNote={templateNote}
+                                    setTemplateNote={setTemplateNote}
+                                    assessmentNames={assessmentNames}
+                                    pasteData={pasteData}
+                                    setPasteData={setPasteData}
+                                    isParsing={isParsing}
+                                    handleAiParse={handleAiParse}
+                                    isOnline={isOnline}
+                                    bypassDuplicateGuard={bypassDuplicateGuard}
+                                    setBypassDuplicateGuard={setBypassDuplicateGuard}
+                                    onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
+                                />
+                            </div>
+                            <div className={`${isConfigOpen ? 'lg:col-span-2' : 'lg:col-span-3'} transition-all duration-300`}>
+                                <Step2_StudentList
+                                    mode={mode}
+                                    searchTerm={searchTerm}
+                                    setSearchTerm={setSearchTerm}
+                                    filterOptions={filterOptions}
+                                    studentFilter={studentFilter}
+                                    setStudentFilter={setStudentFilter}
+                                    isLoadingStudents={isLoadingStudents}
+                                    students={students}
+                                    isAllSelected={isAllSelected}
+                                    handleSelectAllStudents={handleSelectAllStudents}
+                                    selectedStudentIds={selectedStudentIds}
+                                    handleStudentSelect={handleStudentSelect}
+                                    scores={scores}
+                                    handleScoreChange={handleScoreChange}
+                                    validationErrors={validationErrors}
+                                    existingGrades={mode === 'delete_subject_grade' ? filteredExistingGrades : existingGrades}
+                                />
+                            </div>
                         </>
                     )}
                 </div>
@@ -230,19 +275,46 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                     </div>
                 </Modal>
 
-                {/* Import Excel Modal */}
+                {/* Import Excel Modal / Preview Matcher */}
                 {mode === 'subject_grade' && (
-                    <Modal isOpen={showImportModal} onClose={() => setShowImportModal(false)} title="Import Nilai dari Excel">
-                        <ExcelImporter
-                            columns={[
-                                { key: 'name', label: 'Nama Siswa', required: true, type: 'string' },
-                                { key: 'score', label: 'Nilai', required: true, type: 'number' },
-                            ]}
-                            onImport={handleImport}
-                            onCancel={() => setShowImportModal(false)}
-                            templateData={studentsData?.map(s => ({ id: s.id, name: s.name }))}
-                        />
-                    </Modal>
+                    <>
+                        <Modal isOpen={showImportModal} onClose={() => setShowImportModal(false)} title="Import Nilai dari Excel">
+                            <ExcelImporter
+                                columns={[
+                                    { key: 'name', label: 'Nama Siswa', required: true, type: 'string' },
+                                    { key: 'score', label: 'Nilai', required: true, type: 'number' },
+                                ]}
+                                onImport={handleImport}
+                                onCancel={() => setShowImportModal(false)}
+                                templateData={studentsData?.map(s => ({ id: s.id, name: s.name }))}
+                            />
+                        </Modal>
+
+                        {pendingImportData && (
+                            <ImportPreviewModal
+                                isOpen={!!pendingImportData}
+                                onClose={() => setPendingImportData(null)}
+                                parsedData={pendingImportData}
+                                students={studentsData?.map(s => ({ id: s.id, name: s.name })) || []}
+                                onConfirm={(mappedScores) => {
+                                    const nextScores = { ...scores, ...mappedScores };
+                                    setScores(nextScores);
+                                    if (props.setScores) {
+                                        props.setScores(nextScores);
+                                    }
+                                    if (props.setSelectedStudentIds) {
+                                        // Auto-select students that received scores
+                                        props.setSelectedStudentIds(prev => {
+                                            const next = new Set(prev);
+                                            Object.keys(mappedScores).forEach(id => next.add(id));
+                                            return next;
+                                        });
+                                    }
+                                    toast.success(`Berhasil memproses dan menerapkan ${Object.keys(mappedScores).length} nilai siswa.`);
+                                }}
+                            />
+                        )}
+                    </>
                 )}
 
                 {/* Footer */}

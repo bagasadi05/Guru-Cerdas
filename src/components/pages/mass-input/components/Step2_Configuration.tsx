@@ -80,8 +80,8 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
         <div className="lg:col-span-1 space-y-6 animate-fade-in-left">
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xl shadow-indigo-500/10">
                 <div
-                    className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer lg:cursor-default bg-slate-50 dark:bg-slate-800/50 backdrop-blur-md"
-                    onClick={() => window.innerWidth < 1024 && setIsConfigOpen(!isConfigOpen)}
+                    className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer bg-slate-50 dark:bg-slate-800/50 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    onClick={() => setIsConfigOpen(!isConfigOpen)}
                 >
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center border border-indigo-200 dark:border-white/10">
@@ -89,7 +89,12 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                         </div>
                         <h3 className="font-bold text-xl text-slate-900 dark:text-white tracking-wide">Konfigurasi</h3>
                     </div>
-                    <ChevronDownIcon className={`w-5 h-5 text-slate-400 dark:text-white/70 lg:hidden transition-transform duration-300 ${isConfigOpen ? 'rotate-180' : ''}`} />
+                    <div className="flex items-center gap-2">
+                        <span className="hidden lg:inline text-xs font-bold text-slate-400 dark:text-slate-500">
+                            {isConfigOpen ? 'Sembunyikan' : 'Tampilkan'}
+                        </span>
+                        <ChevronDownIcon className={`w-5 h-5 text-slate-400 dark:text-white/70 transition-transform duration-300 ${isConfigOpen ? 'rotate-180' : ''}`} />
+                    </div>
                 </div>
 
                 <div className={`p-5 sm:p-6 space-y-5 bg-white dark:bg-slate-900/50 ${isConfigOpen ? 'block' : 'hidden lg:block'}`}>

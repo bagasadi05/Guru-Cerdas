@@ -170,7 +170,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                             {group.students.map((s: StudentRow) => {
                                                 const globalIndex = flatStudentList.findIndex(st => st.id === s.id);
                                                 const isSelected = selectedStudentIds.has(s.id);
-                                                const gradeRecord = (mode === 'delete_subject_grade' || mode === 'academic_print') ? (existingGrades || []).find(g => g.student_id === s.id) : null;
+                                                const gradeRecord = (existingGrades || []).find(g => g.student_id === s.id);
                                                 const hasGrade = !!gradeRecord;
                                                 const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
 
@@ -180,6 +180,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
                                                         className={`
                                                             group transition-all duration-300 rounded-xl
+                                                            focus-within:bg-indigo-50/70 focus-within:dark:bg-indigo-950/20 focus-within:shadow-md transition-all
                                                             ${(isSelected || hasScore)
                                                                 ? 'bg-green-100 dark:bg-green-500/20 shadow-lg shadow-green-500/10 border-transparent'
                                                                 : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 hover:shadow-md border-transparent'
@@ -207,7 +208,14 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                         className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10 relative z-10"
                                                                     />
                                                                 </div>
-                                                                <span className={`font-medium text-base ${isSelected || hasScore ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-green-100'}`}>{s.name}</span>
+                                                                <div className="flex flex-col">
+                                                                    <span className={`font-medium text-base ${isSelected || hasScore ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-green-100'}`}>{s.name}</span>
+                                                                    {mode === 'subject_grade' && hasGrade && (
+                                                                        <span className="animate-pulse text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 flex items-center gap-1 w-fit mt-1">
+                                                                            ⚠️ Nilai Sudah Ada
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </td>
                                                         <td className="p-4 rounded-r-xl border-y border-r border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
@@ -266,7 +274,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                     {group.students.map((s: StudentRow) => {
                                         const globalIndex = flatStudentList.findIndex(st => st.id === s.id);
                                         const isSelected = selectedStudentIds.has(s.id);
-                                        const gradeRecord = (mode === 'delete_subject_grade' || mode === 'academic_print') ? (existingGrades || []).find(g => g.student_id === s.id) : null;
+                                        const gradeRecord = (existingGrades || []).find(g => g.student_id === s.id);
                                         const hasGrade = !!gradeRecord;
                                         const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
 
@@ -276,6 +284,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
                                                 className={`
                                             bg-white dark:bg-slate-800 rounded-2xl p-5 border transition-all duration-300
+                                            focus-within:bg-indigo-50/70 focus-within:dark:bg-indigo-950/20 focus-within:shadow-md transition-all
                                             ${(isSelected || hasScore)
                                                         ? 'bg-green-50 dark:bg-green-500/20 border-green-300 dark:border-green-500/30 shadow-lg shadow-green-500/10'
                                                         : 'border-slate-200 dark:border-white/10'
@@ -299,7 +308,14 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                     />
                                                     <div className="flex-grow min-w-0">
                                                         <p className="font-bold text-slate-900 dark:text-white text-lg truncate">{s.name}</p>
-                                                        <p className="text-sm text-slate-500 dark:text-indigo-200/70 mt-0.5">No. {globalIndex + 1}</p>
+                                                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                                            <span className="text-sm text-slate-500 dark:text-indigo-200/70">No. {globalIndex + 1}</span>
+                                                            {mode === 'subject_grade' && hasGrade && (
+                                                                <span className="animate-pulse text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 flex items-center gap-1 w-fit">
+                                                                    ⚠️ Nilai Sudah Ada
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
 
