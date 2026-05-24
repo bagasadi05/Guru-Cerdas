@@ -43,6 +43,7 @@ export interface UseMassInputMutationsParams {
     setScores: React.Dispatch<React.SetStateAction<Record<string, string>>>;
     setSelectedStudentIds: React.Dispatch<React.SetStateAction<Set<string>>>;
     bypassDuplicateGuard: boolean;
+    isScoresDirty: React.MutableRefObject<boolean>;
 }
 
 export const findStudentMatch = (targetName: string, students: StudentRow[]): StudentRow | undefined => {
@@ -84,7 +85,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         existingGrades, selectedStudentIds, selectedViolationCode, violationDate,
         studentsData, noteMethod, templateNote, pasteData,
         gradedCount, filteredExistingGrades, classes,
-        setScores, setSelectedStudentIds, bypassDuplicateGuard,
+        setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirty,
     } = params;
 
     const { user } = useAuth();
@@ -244,6 +245,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         onSuccess: (message) => {
             toast.success(message || 'Data berhasil disimpan!');
             queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
+            isScoresDirty.current = false;
         },
         onError: (err: Error) => toast.error(`Gagal menyimpan: ${err.message}`),
     });

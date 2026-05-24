@@ -9,8 +9,9 @@ import { Select } from '../ui/Select';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { ExcelImporter } from '../ui/ExcelImporter';
-import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, UploadIcon, TrashIcon, AlertTriangleIcon, KeyboardIcon } from '../Icons';
+import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, UploadIcon, TrashIcon, AlertTriangleIcon, KeyboardIcon, DownloadIcon } from '../Icons';
 import { useNavigate } from 'react-router-dom';
+import { exportGradesToExcel } from '../../utils/gradeExporter';
 import { Skeleton } from '../ui/Skeleton';
 import { Database } from '../../services/database.types';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcutsLegacy';
@@ -56,7 +57,8 @@ const BulkGradeInputPage: React.FC = () => {
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [lastSaveCount, setLastSaveCount] = useState(0);
-    const [kkm] = useState(DEFAULT_KKM);
+    const [kkm, setKkm] = useState(DEFAULT_KKM);
+    const [searchTerm, setSearchTerm] = useState<string>('');
 
     // Default to active semester when it loads
     useEffect(() => {
@@ -188,7 +190,7 @@ const BulkGradeInputPage: React.FC = () => {
     });
 
     // Initialize grades when students change
-    useMemo(() => {
+    useEffect(() => {
         if (students) {
             setGrades(students.map(s => ({
                 studentId: s.id,
@@ -197,6 +199,21 @@ const BulkGradeInputPage: React.FC = () => {
             })));
         }
     }, [students]);
+
+    // Warn before unload if there are unsaved changes
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            const hasUnsaved = grades.some(g => g.score !== '');
+            if (hasUnsaved) {
+                e.preventDefault();
+                e.returnValue = 'Anda memiliki nilai yang belum disimpan. Apakah Anda yakin ingin keluar?';
+                return e.returnValue;
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [grades]);
 
     // Validation
     const validation = useMemo(() => {
@@ -212,7 +229,13 @@ const BulkGradeInputPage: React.FC = () => {
     }, [grades, kkm, existingGrades]);
 
     // Stats
-    const stats = useMemo(() => calculateGradeStats(grades), [grades]);
+    const stats = useMemo(() => calculateGradeStats(grades, kkm), [grades, kkm]);
+
+    // Filter grades by student name
+    const filteredGrades = useMemo(() => {
+        if (!searchTerm.trim()) return grades;
+        return grades.filter(g => g.studentName.toLowerCase().includes(searchTerm.toLowerCase()));
+    }, [grades, searchTerm]);
 
     const activeClassRecord = useMemo(
         () => classes?.find((classItem) => classItem.id === selectedClass) || null,
@@ -269,6 +292,7 @@ const BulkGradeInputPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
             clearDraft();
+            setShowSuccessModal(true);
             // Reset grades
             if (students) {
                 setGrades(students.map(s => ({ studentId: s.id, studentName: s.name, score: '' })));
@@ -280,8 +304,20 @@ const BulkGradeInputPage: React.FC = () => {
     });
 
     const handleScoreChange = (studentId: string, value: string) => {
-        const numValue = value === '' ? '' : Math.min(100, Math.max(0, parseInt(value) || 0));
-        setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: numValue } : g));
+        if (value === '') {
+            setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: '' } : g));
+            return;
+        }
+
+        const num = parseFloat(value);
+        if (!isNaN(num)) {
+            // Round to maximum of 2 decimal places to comply with gradeValidator
+            const rounded = Math.round(num * 100) / 100;
+            const clamped = Math.min(100, Math.max(0, rounded));
+            setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: clamped } : g));
+        } else {
+            setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: '' } : g));
+        }
     };
 
     const handleSaveAll = () => {
@@ -395,10 +431,17 @@ const BulkGradeInputPage: React.FC = () => {
                 for (let i = 0; i < rows.length; i++) {
                     const targetIndex = startIndex + i;
                     if (targetIndex < newGrades.length) {
-                        const parsedValue = parseInt(rows[i].replace(/[^\d]/g, ''), 10);
-                        if (!isNaN(parsedValue)) {
-                            newGrades[targetIndex].score = Math.min(100, Math.max(0, parsedValue));
-                            pasteCount++;
+                        // Replace comma with dot for standard decimal parsing
+                        const normalizedRow = rows[i].trim().replace(',', '.');
+                        // Find first matching floating point or integer number
+                        const match = normalizedRow.match(/[-+]?[0-9]*\.?[0-9]+/);
+                        if (match) {
+                            const parsedValue = parseFloat(match[0]);
+                            if (!isNaN(parsedValue)) {
+                                const rounded = Math.round(parsedValue * 100) / 100;
+                                newGrades[targetIndex].score = Math.min(100, Math.max(0, rounded));
+                                pasteCount++;
+                            }
                         }
                     }
                 }
@@ -408,6 +451,41 @@ const BulkGradeInputPage: React.FC = () => {
             });
         }
     }, [toast]);
+
+    const handleClearAllClick = () => {
+        const filled = grades.filter(g => g.score !== '').length;
+        if (filled > 0) {
+            setShowClearConfirm(true);
+        } else {
+            toast.info('Tidak ada nilai untuk dihapus');
+        }
+    };
+
+    const handleExport = async () => {
+        try {
+            const className = classes?.find(c => c.id === selectedClass)?.name || 'Kelas';
+            const filename = `Nilai_${selectedSubject.replace(/\s/g, '_')}_${className.replace(/\s/g, '_')}_${assessmentName.replace(/\s/g, '_')}.xlsx`;
+            
+            await exportGradesToExcel(
+                grades.map(g => ({
+                    studentName: g.studentName,
+                    studentId: g.studentId,
+                    score: g.score,
+                })),
+                {
+                    filename,
+                    sheetName: 'Nilai Siswa',
+                    subject: selectedSubject,
+                    assessmentName,
+                    className,
+                    kkm,
+                }
+            );
+            toast.success('Nilai berhasil diekspor ke Excel!');
+        } catch (error: any) {
+            toast.error(`Gagal mengekspor: ${error.message || 'Error tidak dikenal'}`);
+        }
+    };
 
     // Render student row
     const renderStudentRow = useCallback((g: GradeEntry, index: number) => {
@@ -441,11 +519,13 @@ const BulkGradeInputPage: React.FC = () => {
                         type="number"
                         min={0}
                         max={100}
+                        step="any"
                         value={g.score}
                         onChange={(e) => handleScoreChange(g.studentId, e.target.value)}
                         onKeyDown={(e) => handleGridKeyDown(e, index)}
                         onPaste={(e) => handlePaste(e, index)}
                         placeholder="0-100"
+                        aria-label={`Nilai untuk ${g.studentName}`}
                         className={`w-24 text-center ${g.score !== '' ? colorClass.border : ''}`}
                     />
                     {isBelowKkm && (
@@ -510,9 +590,18 @@ const BulkGradeInputPage: React.FC = () => {
                                 <UploadIcon className="w-4 h-4 mr-1" />
                                 Import Excel
                             </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleExport}
+                                disabled={grades.length === 0}
+                            >
+                                <DownloadIcon className="w-4 h-4 mr-1" />
+                                Export Excel
+                            </Button>
                         </div>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">Pilih Kelas</label>
                             {loadingClasses ? (
@@ -557,6 +646,17 @@ const BulkGradeInputPage: React.FC = () => {
                                 placeholder="Ulangan Harian 1"
                             />
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">KKM (Kriteria Ketuntasan Minimal)</label>
+                            <Input
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={kkm}
+                                onChange={(e) => setKkm(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                                placeholder="75"
+                            />
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -579,7 +679,7 @@ const BulkGradeInputPage: React.FC = () => {
                             Semua 100
                         </Button>
                         <div className="flex-1" />
-                        <Button size="sm" variant="ghost" onClick={handleClearAll} className="text-red-500">
+                        <Button size="sm" variant="ghost" onClick={handleClearAllClick} className="text-red-500">
                             <TrashIcon className="w-4 h-4 mr-1" />
                             Clear All
                         </Button>
@@ -640,7 +740,18 @@ const BulkGradeInputPage: React.FC = () => {
                                 {filledCount} / {grades.length} terisi
                             </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="space-y-4">
+                            {/* Search bar */}
+                            <div className="relative group">
+                                <SearchIcon className="w-5 h-5 text-gray-400 absolute top-1/2 left-3 -translate-y-1/2 transition-colors group-focus-within:text-indigo-500" />
+                                <Input
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Cari nama siswa..."
+                                    className="pl-10 w-full"
+                                />
+                            </div>
+
                             {loadingStudents ? (
                                 <div className="space-y-3">
                                     {[1, 2, 3, 4, 5].map(i => (
@@ -654,19 +765,26 @@ const BulkGradeInputPage: React.FC = () => {
                                     description="Belum ada data siswa untuk kelas ini."
                                     className="py-12"
                                 />
-                            ) : grades.length > VIRTUALIZATION_THRESHOLD ? (
+                            ) : filteredGrades.length === 0 ? (
+                                <EmptyState
+                                    icon={<SearchIcon />}
+                                    title="Siswa Tidak Ditemukan"
+                                    description={`Tidak ada hasil untuk pencarian "${searchTerm}"`}
+                                    className="py-12"
+                                />
+                            ) : filteredGrades.length > VIRTUALIZATION_THRESHOLD ? (
                                 // Use virtualization for large lists
                                 <VirtualList
-                                    items={grades}
+                                    items={filteredGrades}
                                     itemHeight={64}
                                     containerHeight={500}
                                     renderItem={(g, index) => renderStudentRow(g, index)}
                                     keyExtractor={(g) => g.studentId}
-                                />
+                                  />
                             ) : (
                                 // Regular render for small lists
                                 <div className="space-y-2">
-                                    {grades.map((g, index) => renderStudentRow(g, index))}
+                                    {filteredGrades.map((g, index) => renderStudentRow(g, index))}
                                 </div>
                             )}
                         </CardContent>

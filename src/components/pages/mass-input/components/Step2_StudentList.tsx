@@ -220,9 +220,11 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                         inputMode="numeric"
                                                                         min="0"
                                                                         max="100"
+                                                                        step="any"
                                                                         value={scores[s.id] || ''}
                                                                         onChange={e => handleScoreChange(s.id, e.target.value)}
                                                                         placeholder=""
+                                                                        aria-label={`Nilai untuk ${s.name}`}
                                                                         className={`w-24 text-center font-bold text-lg h-10 transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : scores[s.id] ? 'bg-green-100 dark:bg-green-500/30 border-green-400 text-green-900 dark:text-white' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70'}`}
                                                                     />
                                                                     {validationErrors[s.id] && (
@@ -312,9 +314,11 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                 inputMode="numeric"
                                                                 min="0"
                                                                 max="100"
+                                                                step="any"
                                                                 value={scores[s.id] || ''}
                                                                 onChange={e => handleScoreChange(s.id, e.target.value)}
                                                                 placeholder=""
+                                                                aria-label={`Nilai untuk ${s.name}`}
                                                                 className={`flex-grow text-xl font-bold text-center h-12 rounded-xl transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500'}`}
                                                             />
                                                             {scores[s.id] && !validationErrors[s.id] && (

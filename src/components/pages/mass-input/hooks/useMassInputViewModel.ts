@@ -111,6 +111,7 @@ export function useMassInputViewModel() {
         setScores: state.setScores,
         setSelectedStudentIds: state.setSelectedStudentIds,
         bypassDuplicateGuard: state.bypassDuplicateGuard,
+        isScoresDirty: state.isScoresDirty,
     });
 
     const summaryText = useMemo(() => {

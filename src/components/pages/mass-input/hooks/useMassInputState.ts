@@ -30,6 +30,20 @@ export function useMassInputState() {
     const [showChartModal, setShowChartModal] = useState(false);
     const [bypassDuplicateGuard, setBypassDuplicateGuard] = useState(false);
 
+    // Warn before unload if there are unsaved changes
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (isScoresDirty.current) {
+                e.preventDefault();
+                e.returnValue = 'Anda memiliki nilai yang belum disimpan. Apakah Anda yakin ingin keluar?';
+                return e.returnValue;
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, []);
+
     // Set default semester when active semester loads
     useEffect(() => {
         if (activeSemester && !subjectGradeInfo.semester) {
