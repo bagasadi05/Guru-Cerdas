@@ -29,6 +29,59 @@ const SettingsPage: React.FC = () => {
         { id: 'account', label: 'Akun & Keamanan', icon: ShieldIcon },
     ];
 
+    const getTabTheme = (tabId: string) => {
+        switch (tabId) {
+            case 'profile': return {
+                gradient: 'from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500',
+                glow: 'shadow-green-500/25',
+                hover: 'hover:text-green-600 dark:hover:text-green-400 hover:bg-green-500/5',
+                text: 'text-green-600 dark:text-green-400 border-green-500/20'
+            };
+            case 'appearance': return {
+                gradient: 'from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500',
+                glow: 'shadow-indigo-500/25',
+                hover: 'hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/5',
+                text: 'text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+            };
+            case 'academic': return {
+                gradient: 'from-blue-600 to-cyan-600 dark:from-blue-500 dark:to-cyan-500',
+                glow: 'shadow-blue-500/25',
+                hover: 'hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/5',
+                text: 'text-blue-600 dark:text-blue-400 border-blue-500/20'
+            };
+            case 'notifications': return {
+                gradient: 'from-amber-600 to-orange-600 dark:from-amber-500 dark:to-orange-500',
+                glow: 'shadow-amber-500/25',
+                hover: 'hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-500/5',
+                text: 'text-amber-600 dark:text-amber-400 border-amber-500/20'
+            };
+            case 'integrations': return {
+                gradient: 'from-pink-600 to-rose-600 dark:from-pink-500 dark:to-rose-500',
+                glow: 'shadow-pink-500/25',
+                hover: 'hover:text-pink-600 dark:hover:text-pink-400 hover:bg-pink-500/5',
+                text: 'text-pink-600 dark:text-pink-400 border-pink-500/20'
+            };
+            case 'database': return {
+                gradient: 'from-slate-700 to-zinc-700 dark:from-slate-600 dark:to-zinc-600',
+                glow: 'shadow-slate-500/25',
+                hover: 'hover:text-slate-700 dark:hover:text-slate-400 hover:bg-slate-500/5',
+                text: 'text-slate-700 dark:text-slate-400 border-slate-500/20'
+            };
+            case 'account': return {
+                gradient: 'from-red-600 to-rose-600 dark:from-red-500 dark:to-rose-500',
+                glow: 'shadow-red-500/25',
+                hover: 'hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/5',
+                text: 'text-red-600 dark:text-red-400 border-red-500/20'
+            };
+            default: return {
+                gradient: 'from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500',
+                glow: 'shadow-green-500/25',
+                hover: 'hover:text-green-600 dark:hover:text-green-400 hover:bg-green-500/5',
+                text: 'text-green-600 dark:text-green-400 border-green-500/20'
+            };
+        }
+    };
+
     const searchItems = [
         { query: 'semester', tab: 'academic', title: 'Tahun Ajaran & Semester', desc: 'Ganti atau kelola semester aktif, kurikulum, dan tahun ajaran.' },
         { query: 'tahun ajaran', tab: 'academic', title: 'Tahun Ajaran & Semester', desc: 'Ganti atau kelola semester aktif, kurikulum, dan tahun ajaran.' },
@@ -87,7 +140,7 @@ const SettingsPage: React.FC = () => {
 
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-8 relative">
                 {/* Premium Header */}
-                <header className="relative p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-950 via-emerald-950 to-slate-950 text-white shadow-2xl shadow-green-950/20 overflow-hidden isolate border border-emerald-900/30">
+                <header className="relative p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-955 via-emerald-950 to-slate-950 text-white shadow-2xl shadow-green-955/20 overflow-hidden isolate border border-emerald-900/30">
                     {/* Decorative Elements */}
                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl -z-10"></div>
                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/30 to-transparent -z-10"></div>
@@ -139,24 +192,27 @@ const SettingsPage: React.FC = () => {
                             <h3 className="font-bold text-sm sm:text-base">Navigasi Pintar Ditemukan:</h3>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                            {filteredSearch.map((item, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => {
-                                        setActiveTab(item.tab);
-                                        setSearchQuery('');
-                                    }}
-                                    className="flex items-start text-left p-3.5 rounded-xl border border-slate-200/50 dark:border-white/5 hover:border-emerald-500 bg-white dark:bg-slate-800/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-all duration-300 group shadow-sm hover:shadow-md"
-                                >
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center justify-between">
-                                            {item.title}
-                                            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-emerald-500" />
-                                        </p>
-                                        <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{item.desc}</p>
-                                    </div>
-                                </button>
-                            ))}
+                            {filteredSearch.map((item, index) => {
+                                const theme = getTabTheme(item.tab);
+                                return (
+                                    <button
+                                        key={index}
+                                        onClick={() => {
+                                            setActiveTab(item.tab);
+                                            setSearchQuery('');
+                                        }}
+                                        className="flex items-start text-left p-3.5 rounded-xl border border-slate-200/50 dark:border-white/5 hover:border-emerald-500 bg-white dark:bg-slate-800/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-all duration-300 group shadow-sm hover:shadow-md"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center justify-between">
+                                                {item.title}
+                                                <ArrowRight className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all ${theme.text}`} />
+                                            </p>
+                                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{item.desc}</p>
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -167,25 +223,25 @@ const SettingsPage: React.FC = () => {
                         <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">Asisten Cerdas:</span>
                         <button
                             onClick={() => setActiveTab('appearance')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-green-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-indigo-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
                             <span>🌓 Mode Gelap/Terang</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('academic')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-emerald-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-blue-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
                             <span>🏫 Kelola Semester / KKM</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('account')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-blue-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-red-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
                             <span>🔑 Ganti Sandi Akun</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('database')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-amber-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-slate-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
                             <span>💾 Backup Data Siswa</span>
                         </button>
@@ -197,24 +253,28 @@ const SettingsPage: React.FC = () => {
                     <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-slate-50 to-transparent dark:from-slate-950 z-10"></div>
                     <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-slate-50 to-transparent dark:from-slate-950 z-10"></div>
                     <nav className="flex gap-2 p-2 rounded-2xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-lg min-w-max relative">
-                        {navItems.map((item) => (
-                            <button
-                                key={item.id}
-                                onClick={() => setActiveTab(item.id)}
-                                aria-current={activeTab === item.id ? 'page' : undefined}
-                                className={`
-                                    flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 whitespace-nowrap hover:scale-105 active:scale-95
-                                    ${activeTab === item.id
-                                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 dark:from-emerald-500 dark:to-green-600 text-white shadow-md shadow-green-500/25 ring-1 ring-white/10'
-                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/5 font-semibold text-xs sm:text-sm'
-                                    }
-                                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40
-                                `}
-                            >
-                                <item.icon className={`w-4 h-4 flex-shrink-0 ${activeTab === item.id ? 'scale-110' : ''}`} />
-                                <span className="font-semibold text-xs sm:text-sm">{item.label}</span>
-                            </button>
-                        ))}
+                        {navItems.map((item) => {
+                            const theme = getTabTheme(item.id);
+                            const isActive = activeTab === item.id;
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)}
+                                    aria-current={isActive ? 'page' : undefined}
+                                    className={`
+                                        flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 whitespace-nowrap hover:scale-105 active:scale-95
+                                        ${isActive
+                                            ? `bg-gradient-to-r ${theme.gradient} text-white shadow-md ${theme.glow} ring-1 ring-white/10`
+                                            : `text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/5 font-semibold text-xs sm:text-sm`
+                                        }
+                                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40
+                                    `}
+                                >
+                                    <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'scale-110' : ''}`} />
+                                    <span className="font-semibold text-xs sm:text-sm">{item.label}</span>
+                                </button>
+                            );
+                        })}
                     </nav>
                 </div>
 
@@ -225,27 +285,31 @@ const SettingsPage: React.FC = () => {
                             <div className="px-3 py-2.5 mb-2 border-b border-slate-100 dark:border-white/5">
                                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Menu Navigasi</p>
                             </div>
-                            {navItems.map((item) => (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setActiveTab(item.id)}
-                                    aria-current={activeTab === item.id ? 'page' : undefined}
-                                    className={`
-                                        group flex items-center gap-3 w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 relative overflow-hidden hover:translate-x-1
-                                        ${activeTab === item.id
-                                            ? 'bg-gradient-to-r from-green-600 to-emerald-600 dark:from-emerald-500 dark:to-green-600 text-white shadow-lg shadow-green-500/20 ring-1 ring-white/10'
-                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                                        }
-                                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40
-                                    `}
-                                >
-                                    <item.icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${activeTab === item.id ? 'scale-110' : 'group-hover:scale-110 group-hover:rotate-12'}`} />
-                                    <span className="text-sm font-semibold tracking-wide">{item.label}</span>
-                                    {activeTab === item.id && (
-                                        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-white/30 rounded-l-full"></div>
-                                    )}
-                                </button>
-                            ))}
+                            {navItems.map((item) => {
+                                const theme = getTabTheme(item.id);
+                                const isActive = activeTab === item.id;
+                                return (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setActiveTab(item.id)}
+                                        aria-current={isActive ? 'page' : undefined}
+                                        className={`
+                                            group flex items-center gap-3 w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 relative overflow-hidden hover:translate-x-1
+                                            ${isActive
+                                                ? `bg-gradient-to-r ${theme.gradient} text-white shadow-lg ${theme.glow} ring-1 ring-white/10`
+                                                : `text-slate-600 dark:text-slate-400 ${theme.hover} hover:text-slate-900 dark:hover:text-white`
+                                            }
+                                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40
+                                        `}
+                                    >
+                                        <item.icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110 group-hover:rotate-12'}`} />
+                                        <span className="text-sm font-semibold tracking-wide">{item.label}</span>
+                                        {isActive && (
+                                            <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-white/30 rounded-l-full"></div>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </nav>
                     </aside>
 
@@ -262,4 +326,3 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
-
