@@ -26,6 +26,11 @@ import { SemesterSelector, SemesterLockedBanner } from '../ui/SemesterSelector';
 import { EmptyState } from '../ui/EmptyState';
 import { SearchIcon } from '../Icons';
 import { getAssignedSubjects, hasHomeroomAssignment, TeacherClassAssignmentRow } from '../../services/teacherAssignments';
+import { AIPasteModal } from './bulk-grade-input/components/AIPasteModal';
+import { SettingsCard } from './bulk-grade-input/components/SettingsCard';
+import { StatsPanel } from './bulk-grade-input/components/StatsPanel';
+import { QuickActionsToolbar } from './bulk-grade-input/components/QuickActionsToolbar';
+import { GradeInputGrid } from './bulk-grade-input/components/GradeInputGrid';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -56,6 +61,7 @@ const BulkGradeInputPage: React.FC = () => {
     const [showEmptyConfirm, setShowEmptyConfirm] = useState(false);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showAIPasteModal, setShowAIPasteModal] = useState(false);
     const [lastSaveCount, setLastSaveCount] = useState(0);
     const [kkm, setKkm] = useState(DEFAULT_KKM);
     const [searchTerm, setSearchTerm] = useState<string>('');
@@ -398,6 +404,20 @@ const BulkGradeInputPage: React.FC = () => {
         toast.success(`${matchedCount} nilai berhasil diimport dari ${data.length} baris`);
     };
 
+    const handleAIPasteSuccess = (parsedScores: Record<string, string>) => {
+        setGrades(prev => prev.map(g => {
+            if (parsedScores[g.studentId] !== undefined) {
+                const val = parsedScores[g.studentId];
+                const parsedVal = parseFloat(val);
+                if (!isNaN(parsedVal)) {
+                    const rounded = Math.round(parsedVal * 100) / 100;
+                    return { ...g, score: Math.min(100, Math.max(0, rounded)) };
+                }
+            }
+            return g;
+        }));
+    };
+
     // Restore draft
     const handleRestoreDraft = () => {
         const draft = restoreDraft();
@@ -578,87 +598,25 @@ const BulkGradeInputPage: React.FC = () => {
                 )}
 
                 {/* Settings Card */}
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Pengaturan</CardTitle>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowImportModal(true)}
-                            >
-                                <UploadIcon className="w-4 h-4 mr-1" />
-                                Import Excel
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleExport}
-                                disabled={grades.length === 0}
-                            >
-                                <DownloadIcon className="w-4 h-4 mr-1" />
-                                Export Excel
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Pilih Kelas</label>
-                            {loadingClasses ? (
-                                <Skeleton className="h-10 w-full" />
-                            ) : (
-                                <Select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
-                                    <option value="">-- Pilih Kelas --</option>
-                                    {classes?.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </Select>
-                            )}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Semester</label>
-                            <SemesterSelector
-                                value={selectedSemester}
-                                onChange={(val) => setSelectedSemester(val)}
-                                includeAllOption={false}
-                                showIcon={true}
-                                className="w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Mata Pelajaran</label>
-                            <Select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)} disabled={availableSubjects.length === 0}>
-                                {availableSubjects.map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                ))}
-                            </Select>
-                            {availableSubjects.length === 0 ? (
-                                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                                    Belum ada mapel yang ditugaskan untuk kelas dan semester ini.
-                                </p>
-                            ) : null}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Nama Penilaian</label>
-                            <Input
-                                value={assessmentName}
-                                onChange={(e) => setAssessmentName(e.target.value)}
-                                placeholder="Ulangan Harian 1"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">KKM (Kriteria Ketuntasan Minimal)</label>
-                            <Input
-                                type="number"
-                                min={0}
-                                max={100}
-                                value={kkm}
-                                onChange={(e) => setKkm(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                                placeholder="75"
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
+                <SettingsCard
+                    selectedClass={selectedClass}
+                    setSelectedClass={setSelectedClass}
+                    selectedSemester={selectedSemester}
+                    setSelectedSemester={setSelectedSemester}
+                    selectedSubject={selectedSubject}
+                    setSelectedSubject={setSelectedSubject}
+                    assessmentName={assessmentName}
+                    setAssessmentName={setAssessmentName}
+                    kkm={kkm}
+                    setKkm={setKkm}
+                    classes={classes}
+                    loadingClasses={loadingClasses}
+                    availableSubjects={availableSubjects}
+                    onShowImportModal={() => setShowImportModal(true)}
+                    onShowAIPasteModal={() => setShowAIPasteModal(true)}
+                    onExport={handleExport}
+                    gradesEmpty={grades.length === 0}
+                />
 
                 {/* Semester Locked Banner */}
                 {semesterLocked && selectedSemester && (
@@ -667,45 +625,17 @@ const BulkGradeInputPage: React.FC = () => {
 
                 {/* Quick Actions Toolbar */}
                 {selectedClass && grades.length > 0 && !semesterLocked && (
-                    <div className="flex flex-wrap items-center gap-2 p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <span className="text-sm text-gray-500 mr-2">Quick Fill:</span>
-                        <Button size="sm" variant="outline" onClick={() => handleBulkFill(100)}>
-                            Kosong → 100
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleBulkFill(kkm)}>
-                            Kosong → KKM ({kkm})
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleFillAllWith(100)}>
-                            Semua 100
-                        </Button>
-                        <div className="flex-1" />
-                        <Button size="sm" variant="ghost" onClick={handleClearAllClick} className="text-red-500">
-                            <TrashIcon className="w-4 h-4 mr-1" />
-                            Clear All
-                        </Button>
-                    </div>
+                    <QuickActionsToolbar
+                        kkm={kkm}
+                        onBulkFill={handleBulkFill}
+                        onFillAllWith={handleFillAllWith}
+                        onClearAllClick={handleClearAllClick}
+                    />
                 )}
 
                 {/* Stats Summary */}
                 {filledCount > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
-                            <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{stats.average}</p>
-                            <p className="text-xs text-blue-500">Rata-rata</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30">
-                            <p className="text-xl font-bold text-green-600 dark:text-green-400">{stats.aboveKkmCount}</p>
-                            <p className="text-xs text-green-500">Tuntas ≥{kkm}</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
-                            <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.belowKkmCount}</p>
-                            <p className="text-xs text-amber-500">Belum Tuntas</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30">
-                            <p className="text-xl font-bold text-purple-600 dark:text-purple-400">{stats.perfectCount}</p>
-                            <p className="text-xs text-purple-500">Nilai 100</p>
-                        </div>
-                    </div>
+                    <StatsPanel stats={stats} kkm={kkm} />
                 )}
 
                 {/* Validation Warnings */}
@@ -732,63 +662,15 @@ const BulkGradeInputPage: React.FC = () => {
 
                 {/* Grade Input Grid */}
                 {selectedClass && (
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Daftar Siswa ({grades.length})</CardTitle>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <CheckCircleIcon className="w-4 h-4 text-green-500" />
-                                {filledCount} / {grades.length} terisi
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {/* Search bar */}
-                            <div className="relative group">
-                                <SearchIcon className="w-5 h-5 text-gray-400 absolute top-1/2 left-3 -translate-y-1/2 transition-colors group-focus-within:text-indigo-500" />
-                                <Input
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    placeholder="Cari nama siswa..."
-                                    className="pl-10 w-full"
-                                />
-                            </div>
-
-                            {loadingStudents ? (
-                                <div className="space-y-3">
-                                    {[1, 2, 3, 4, 5].map(i => (
-                                        <Skeleton key={i} className="h-12 w-full" />
-                                    ))}
-                                </div>
-                            ) : grades.length === 0 ? (
-                                <EmptyState
-                                    icon={<SearchIcon />}
-                                    title="Tidak Ada Siswa"
-                                    description="Belum ada data siswa untuk kelas ini."
-                                    className="py-12"
-                                />
-                            ) : filteredGrades.length === 0 ? (
-                                <EmptyState
-                                    icon={<SearchIcon />}
-                                    title="Siswa Tidak Ditemukan"
-                                    description={`Tidak ada hasil untuk pencarian "${searchTerm}"`}
-                                    className="py-12"
-                                />
-                            ) : filteredGrades.length > VIRTUALIZATION_THRESHOLD ? (
-                                // Use virtualization for large lists
-                                <VirtualList
-                                    items={filteredGrades}
-                                    itemHeight={64}
-                                    containerHeight={500}
-                                    renderItem={(g, index) => renderStudentRow(g, index)}
-                                    keyExtractor={(g) => g.studentId}
-                                  />
-                            ) : (
-                                // Regular render for small lists
-                                <div className="space-y-2">
-                                    {filteredGrades.map((g, index) => renderStudentRow(g, index))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    <GradeInputGrid
+                        grades={grades}
+                        filteredGrades={filteredGrades}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        loadingStudents={loadingStudents}
+                        filledCount={filledCount}
+                        renderStudentRow={renderStudentRow}
+                    />
                 )}
 
                 {/* Save Button */}
@@ -924,6 +806,14 @@ const BulkGradeInputPage: React.FC = () => {
             <KeyboardShortcutsHelp
                 isOpen={showKeyboardHelp}
                 onClose={() => setShowKeyboardHelp(false)}
+            />
+
+            {/* AI Paste Modal */}
+            <AIPasteModal
+                isOpen={showAIPasteModal}
+                onClose={() => setShowAIPasteModal(false)}
+                students={students || []}
+                onParseSuccess={handleAIPasteSuccess}
             />
         </div>
     );
