@@ -1,5 +1,6 @@
 import './styles/designSystem.css';
 import './styles/accessibility.css';
+import './styles/mobilePolish.css';
 import './styles/print.css';
 
 import React, { lazy, Suspense } from 'react';
