@@ -36,7 +36,7 @@ export const useAnalyticsData = () => {
             const assignedClassIds = Array.from(new Set(assignments?.map(a => a.class_id).filter(Boolean))) as string[];
 
             // 2. Get classes created by teacher OR assigned to teacher
-            let query = supabase.from('classes').select('id, name').is('deleted_at', null);
+            let query = supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false);
             if (assignedClassIds.length > 0) {
                 query = query.or(`user_id.eq.${user.id},id.in.(${assignedClassIds.map(id => `"${id}"`).join(',')})`);
             } else {

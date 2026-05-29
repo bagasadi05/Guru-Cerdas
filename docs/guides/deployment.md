@@ -45,6 +45,11 @@ Sebelum deployment, pastikan:
 | `VITE_GEMINI_API_KEY` | Google Gemini API key for AI features | `` |
 | `VITE_APP_VERSION` | Application version | `1.0.0` |
 | `VITE_SENTRY_DSN` | Sentry DSN for error tracking | `` |
+| `VITE_USE_CUSTOM_PWA_PROMPT` | Enable or disable custom PWA prompt UI | `false` |
+| `VITE_ERROR_MONITORING_ENDPOINT` | Telemetry endpoint for client error logs | `` |
+| `VITE_OPENROUTER_PROXY_URL` | OpenRouter proxy endpoint for secure AI calls | `` |
+| `VITE_OPENROUTER_API_KEY` | Local fallback OpenRouter API Key for AI Insights | `` |
+| `VITE_PIONEER_API_KEY` | Analytics/tracking token for Pioneer platform | `` |
 
 ### Getting Supabase Credentials
 

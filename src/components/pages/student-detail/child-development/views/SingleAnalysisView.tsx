@@ -772,7 +772,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
     const cleanText = (text: string) => {
       if (!text) return '';
       return text
-        .replace(/^[\s\d•\-*🌟💡🎯🏠🏆👣🙋‍♂️🏫⭐🎒😇🔥👍👌💪🏃‍♂️🛠️★►]+/, '') 
+        .replace(/^(?:[\s\d•\-*🌟💡🎯🏠🏆👣🏫⭐🎒😇🔥👍👌💪🛠★►]|🙋‍♂️|🏃‍♂️)+/u, '') 
         .trim();
     };
 
