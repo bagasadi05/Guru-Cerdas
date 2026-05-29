@@ -137,13 +137,13 @@ interface TouchTargetProps {
 }
 
 /**
- * Wrapper to ensure minimum touch target size of 44px (iOS HIG) or 48px (Material Design)
+ * Wrapper to ensure minimum touch target size of 48px (Material Design 3)
  */
 export const TouchTarget: React.FC<TouchTargetProps> = ({
     children,
     onClick,
     className = '',
-    minSize = 44,
+    minSize = 48,
     as = 'button',
     href,
     disabled = false,
@@ -161,7 +161,7 @@ export const TouchTarget: React.FC<TouchTargetProps> = ({
         return (
             <a
                 href={href}
-                className={`inline-flex items-center justify-center ${className}`}
+                className={`inline-flex items-center justify-center active:scale-[0.95] transition-transform duration-150 ${className}`}
                 style={baseStyles}
                 aria-label={ariaLabel}
             >
@@ -173,7 +173,7 @@ export const TouchTarget: React.FC<TouchTargetProps> = ({
     return (
         <Component
             onClick={disabled ? undefined : onClick}
-            className={`inline-flex items-center justify-center ${className}`}
+            className={`inline-flex items-center justify-center active:scale-[0.95] transition-transform duration-150 ${className}`}
             style={baseStyles}
             disabled={disabled}
             aria-label={ariaLabel}
@@ -330,7 +330,7 @@ export const LoadingButton: React.FC<LoadingButtonProps> = ({
             disabled={isLoading || disabled}
             className={`
                 inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium
-                transition-all duration-300 min-h-[44px]
+                transition-all duration-300 min-h-[48px]
                 disabled:opacity-50 disabled:cursor-not-allowed
                 ${variantClasses[variant]}
                 ${className}
@@ -417,23 +417,40 @@ export function useSafeAreaInsets(): SafeAreaInsets {
     });
 
     useEffect(() => {
-        const updateInsets = () => {
-            const computedStyle = getComputedStyle(document.documentElement);
+        const measureInsets = () => {
+            // Create a temporary element to measure safe area insets
+            const el = document.createElement('div');
+            el.style.position = 'fixed';
+            el.style.top = '0';
+            el.style.left = '0';
+            el.style.width = '0';
+            el.style.height = '0';
+            el.style.visibility = 'hidden';
+            el.style.paddingTop = 'env(safe-area-inset-top, 0px)';
+            el.style.paddingRight = 'env(safe-area-inset-right, 0px)';
+            el.style.paddingBottom = 'env(safe-area-inset-bottom, 0px)';
+            el.style.paddingLeft = 'env(safe-area-inset-left, 0px)';
+            document.body.appendChild(el);
+
+            const computed = getComputedStyle(el);
             setInsets({
-                top: parseInt(computedStyle.getPropertyValue('--sat') || '0', 10) ||
-                    parseInt(computedStyle.getPropertyValue('env(safe-area-inset-top)') || '0', 10),
-                right: parseInt(computedStyle.getPropertyValue('--sar') || '0', 10) ||
-                    parseInt(computedStyle.getPropertyValue('env(safe-area-inset-right)') || '0', 10),
-                bottom: parseInt(computedStyle.getPropertyValue('--sab') || '0', 10) ||
-                    parseInt(computedStyle.getPropertyValue('env(safe-area-inset-bottom)') || '0', 10),
-                left: parseInt(computedStyle.getPropertyValue('--sal') || '0', 10) ||
-                    parseInt(computedStyle.getPropertyValue('env(safe-area-inset-left)') || '0', 10),
+                top: parseInt(computed.paddingTop, 10) || 0,
+                right: parseInt(computed.paddingRight, 10) || 0,
+                bottom: parseInt(computed.paddingBottom, 10) || 0,
+                left: parseInt(computed.paddingLeft, 10) || 0,
             });
+
+            document.body.removeChild(el);
         };
 
-        updateInsets();
-        window.addEventListener('resize', updateInsets);
-        return () => window.removeEventListener('resize', updateInsets);
+        measureInsets();
+        window.addEventListener('resize', measureInsets);
+        window.addEventListener('orientationchange', measureInsets);
+
+        return () => {
+            window.removeEventListener('resize', measureInsets);
+            window.removeEventListener('orientationchange', measureInsets);
+        };
     }, []);
 
     return insets;

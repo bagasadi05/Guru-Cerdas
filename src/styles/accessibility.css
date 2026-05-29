@@ -193,6 +193,14 @@ textarea:focus-visible {
     min-height: 48px;
 }
 
+/* Mobile UX - Touch Target Group Spacing */
+/* Ensures 8px spacing between touch targets (Material Design 3 requirement) */
+.touch-target-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 /* Touch manipulation for better responsiveness */
 .touch-manipulation {
     touch-action: manipulation;
@@ -218,6 +226,14 @@ textarea:focus-visible {
 .safe-area-inset-top {
     padding-top: env(safe-area-inset-top, 0px);
 }
+
+/* Safe Area Inset Utilities */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+.pl-safe { padding-left: env(safe-area-inset-left, 0px); }
+.pr-safe { padding-right: env(safe-area-inset-right, 0px); }
+.mb-safe { margin-bottom: env(safe-area-inset-bottom, 0px); }
+.mt-safe { margin-top: env(safe-area-inset-top, 0px); }
 
 /* Prevent text selection on mobile UI elements */
 .no-select {
@@ -559,6 +575,21 @@ input[type="radio"]:focus-visible {
 }
 
 /* ============================================
+   KEYBOARD VISIBILITY - HIDE BOTTOM NAV AND FAB
+   ============================================ */
+
+/* Hide bottom navigation when keyboard is visible */
+body.keyboard-visible .mobile-bottom-nav {
+  display: none !important;
+}
+
+/* Hide FAB elements when keyboard is visible */
+body.keyboard-hide-fab [data-fab],
+body.keyboard-hide-fab .enhanced-fab {
+  display: none !important;
+}
+
+/* ============================================
    MOTION PREFERENCES
    ============================================ */
 
@@ -573,4 +604,51 @@ input[type="radio"]:focus-visible {
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
+}
+
+/* ============================================
+   PERFORMANCE OPTIMIZATION - WILL-CHANGE HINTS
+   ============================================ */
+
+/* will-change hints for frequently animated elements */
+.will-change-transform { will-change: transform; }
+.will-change-opacity { will-change: opacity; }
+
+/* ============================================
+   SKELETON LOADER ANIMATIONS
+   ============================================ */
+
+/* Shimmer animation - left-to-right gradient sweep */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Pulse animation - fallback for reduced motion preference */
+@keyframes skeleton-pulse-anim {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse-anim 2s ease-in-out infinite;
+}
+
+/* Disable shimmer animation when reduced motion is preferred */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: skeleton-pulse-anim 2s ease-in-out infinite;
+    background: none;
+  }
 }

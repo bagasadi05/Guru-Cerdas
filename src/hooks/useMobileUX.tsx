@@ -305,16 +305,16 @@ export const auditTouchTargets = () => {
 
     interactiveElements.forEach((element) => {
         const rect = element.getBoundingClientRect();
-        if (rect.width < 44 || rect.height < 44) {
+        if (rect.width < 48 || rect.height < 48) {
             smallTargets.push(element as HTMLElement);
             console.warn('Touch target too small:', element, `${rect.width}x${rect.height}px`);
         }
     });
 
     if (smallTargets.length > 0) {
-        console.warn(`Found ${smallTargets.length} touch targets smaller than 44x44px`);
+        console.warn(`Found ${smallTargets.length} touch targets smaller than 48x48px`);
     } else {
-        console.log('All touch targets meet the 44x44px minimum requirement');
+        console.log('All touch targets meet the 48x48px minimum requirement');
     }
 
     return smallTargets;
