@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../services/supabase';
+import { supabase, clearStaleAuthTokens } from '../services/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import type { Database } from '../services/database.types';
 import { Capacitor } from '@capacitor/core';
@@ -305,16 +305,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const fetchSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) console.error("Error fetching session:", error);
-      setSession(data.session);
-      setUser(processUser(data.session?.user));
-      setLoading(false);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error fetching session:', error);
+          // A failed/expired refresh token leaves the client in a broken state.
+          // Clear the stale token and reset to a clean logged-out state.
+          const message = error.message?.toLowerCase() ?? '';
+          if (message.includes('refresh') || message.includes('token') || error.status === 400) {
+            clearStaleAuthTokens();
+            await supabase.auth.signOut().catch(() => undefined);
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+        }
+        setSession(data.session);
+        setUser(processUser(data.session?.user));
+      } catch (err) {
+        console.error('Unexpected error fetching session:', err);
+        setSession(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // When a token refresh fails, Supabase emits SIGNED_OUT with a null session.
+      // Clean up any leftover stale tokens so the next load starts fresh.
+      if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+        clearStaleAuthTokens();
+      }
       setSession(session);
       setUser(processUser(session?.user));
     });

@@ -199,7 +199,8 @@ const AttendancePage: React.FC = () => {
             const { data, error } = await supabase
                 .from('classes')
                 .select('id, name, user_id')
-                .is('deleted_at', null);
+                .is('deleted_at', null)
+                .eq('is_archived', false);
             if (error) throw error;
             return (data || []) as unknown as ClassRow[];
         },

@@ -160,7 +160,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         >
           <PullToRefresh
             onRefresh={handleRefresh}
-            className="h-full pb-20 lg:pb-6 px-4 lg:px-8 pt-4 lg:pt-6"
+            className="h-full mobile-content-safe lg:pb-6 px-4 lg:px-8 pt-4 lg:pt-6"
           >
             <div className="max-w-7xl mx-auto h-full">
               <AnimatePresence mode="wait">

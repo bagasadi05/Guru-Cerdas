@@ -147,10 +147,39 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
  * @since 1.0.0
  */
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Persist the session in localStorage and keep it fresh automatically.
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: 'portal-guru-auth',
+  },
   global: {
     fetch: resilientSupabaseFetch
   }
 });
+
+/**
+ * Clears any stale/invalid Supabase auth tokens from storage.
+ *
+ * A "400 Bad Request" on the `token?grant_type=refresh_token` endpoint means the
+ * stored refresh token is expired, revoked, or malformed. When that happens the
+ * client can get stuck retrying with a token that will never succeed. This helper
+ * removes the persisted auth entry so the app can fall back to a clean logged-out
+ * state instead of looping on failed refreshes.
+ *
+ * @since 1.0.0
+ */
+export const clearStaleAuthTokens = (): void => {
+  try {
+    if (typeof window === 'undefined') return;
+    Object.keys(window.localStorage)
+      .filter((key) => key.startsWith('portal-guru-auth') || key.startsWith('sb-'))
+      .forEach((key) => window.localStorage.removeItem(key));
+  } catch (error) {
+    logger.warn('Failed to clear stale auth tokens', 'Supabase', error);
+  }
+};
 
 // Centralized Google GenAI Client - DEPRECATED in favor of OpenRouter
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';

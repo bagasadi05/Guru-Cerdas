@@ -1,5 +1,6 @@
 import './styles/designSystem.css';
 import './styles/accessibility.css';
+import './styles/mobilePolish.css';
 import './styles/print.css';
 
 import React, { lazy, Suspense } from 'react';
@@ -55,6 +56,7 @@ const AnalyticsPage = lazy(() => import('@/components/pages/AnalyticsPage'));
 const AdminPage = lazy(() => import('@/components/pages/AdminPage'));
 const ExtracurricularPage = lazy(() => import('@/components/pages/ExtracurricularPage'));
 const NotFoundPage = lazy(() => import('@/components/pages/NotFoundPage'));
+const BrankasPage = lazy(() => import('@/components/pages/BrankasPage'));
 
 
 // A wrapper for routes that require authentication.
@@ -221,6 +223,7 @@ function AppContent() {
               <Route path="/dashboard" element={<AsyncErrorBoundary context="DashboardPage"><DashboardPage /></AsyncErrorBoundary>} />
               <Route path="/absensi" element={<AsyncErrorBoundary context="AttendancePage"><AttendancePage /></AsyncErrorBoundary>} />
               <Route path="/siswa" element={<AsyncErrorBoundary context="StudentsPage"><StudentsPage /></AsyncErrorBoundary>} />
+              <Route path="/brankas" element={<AsyncErrorBoundary context="BrankasPage"><BrankasPage /></AsyncErrorBoundary>} />
               <Route path="/siswa/:studentId" element={<AsyncErrorBoundary context="StudentDetailPage"><StudentDetailPage /></AsyncErrorBoundary>} />
               <Route path="/jadwal" element={<AsyncErrorBoundary context="SchedulePage"><SchedulePage /></AsyncErrorBoundary>} />
               <Route path="/pengaturan" element={<AsyncErrorBoundary context="SettingsPage"><SettingsPage /></AsyncErrorBoundary>} />

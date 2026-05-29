@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRef } from 'react';
 import { staggerContainerVariants, staggerItemVariants } from '../../utils/animations';
@@ -270,6 +270,7 @@ const SchedulePage: React.FC = () => {
                 .from('classes')
                 .select(CLASS_COMPAT_SELECT)
                 .is('deleted_at', null)
+                .eq('is_archived', false)
                 .order('name');
             if (error) throw error;
             return (data || []).map(hydrateClassRow);

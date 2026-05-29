@@ -4,27 +4,21 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { Button } from '../ui/Button';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
-import { Select } from '../ui/Select';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { ExcelImporter } from '../ui/ExcelImporter';
-import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, UploadIcon, TrashIcon, AlertTriangleIcon, KeyboardIcon, DownloadIcon } from '../Icons';
+import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, AlertTriangleIcon, KeyboardIcon } from '../Icons';
 import { useNavigate } from 'react-router-dom';
 import { exportGradesToExcel } from '../../utils/gradeExporter';
-import { Skeleton } from '../ui/Skeleton';
 import { Database } from '../../services/database.types';
-import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcutsLegacy';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useGridNavigation } from '../../hooks/useGridNavigation';
 import { useAutosave } from '../../hooks/useAutosave';
 import { validateGrades, getGradeColorClass, calculateGradeStats, GradeEntry } from '../../utils/gradeValidator';
-import { VirtualList } from '../ui/VirtualList';
 import { KeyboardShortcutsHelp } from '../ui/KeyboardShortcutsHelp';
 import { EmptyGradesConfirmation, SaveSuccessModal, ClearAllConfirmation } from '../ui/GradeConfirmationModals';
 import { useSemester } from '../../contexts/SemesterContext';
-import { SemesterSelector, SemesterLockedBanner } from '../ui/SemesterSelector';
-import { EmptyState } from '../ui/EmptyState';
-import { SearchIcon } from '../Icons';
+import { SemesterLockedBanner } from '../ui/SemesterSelector';
 import { getAssignedSubjects, hasHomeroomAssignment, TeacherClassAssignmentRow } from '../../services/teacherAssignments';
 import { AIPasteModal } from './bulk-grade-input/components/AIPasteModal';
 import { SettingsCard } from './bulk-grade-input/components/SettingsCard';
@@ -42,7 +36,6 @@ const SUBJECTS = [
 ];
 
 const DEFAULT_KKM = 75;
-const VIRTUALIZATION_THRESHOLD = 30;
 
 const BulkGradeInputPage: React.FC = () => {
     const { user } = useAuth();
@@ -72,6 +65,7 @@ const BulkGradeInputPage: React.FC = () => {
     // Default to active semester when it loads
     useEffect(() => {
         if (activeSemester && !selectedSemester) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSelectedSemester(activeSemester.id);
         }
     }, [activeSemester, selectedSemester]);
@@ -126,23 +120,47 @@ const BulkGradeInputPage: React.FC = () => {
     // Check for draft on mount
     useEffect(() => {
         if (hasDraft && selectedClass) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setShowDraftPrompt(true);
         }
     }, [hasDraft, selectedClass]);
 
     // Keyboard shortcuts
     useKeyboardShortcuts({
-        'ctrl+s': () => {
-            if (filledCount > 0) {
-                handleSaveAll();
-            }
-        },
-        'ctrl+i': () => setShowImportModal(true),
-        'ctrl+shift+c': () => {
-            const filled = grades.filter(g => g.score !== '').length;
-            if (filled > 0) setShowClearConfirm(true);
-        },
-        'f1': () => setShowKeyboardHelp(true),
+        shortcuts: [
+            {
+                key: 's',
+                ctrlKey: true,
+                action: () => {
+                    if (filledCount > 0) {
+                        handleSaveAll();
+                    }
+                },
+                description: 'Simpan semua nilai',
+            },
+            {
+                key: 'i',
+                ctrlKey: true,
+                action: () => setShowImportModal(true),
+                description: 'Import Excel',
+            },
+            {
+                key: 'c',
+                ctrlKey: true,
+                shiftKey: true,
+                action: () => {
+                    const filled = grades.filter(g => g.score !== '').length;
+                    if (filled > 0) setShowClearConfirm(true);
+                },
+                description: 'Clear semua nilai',
+            },
+            {
+                key: 'f1',
+                action: () => setShowKeyboardHelp(true),
+                description: 'Bantuan keyboard',
+            },
+        ],
+        enabled: !semesterLocked && !!selectedClass,
     });
 
     // Fetch classes
@@ -153,6 +171,7 @@ const BulkGradeInputPage: React.FC = () => {
                 .from('classes')
                 .select('id, name, user_id')
                 .is('deleted_at', null)
+                .eq('is_archived', false)
                 .order('name');
             if (error) throw error;
             return data as Pick<ClassRow, 'id' | 'name' | 'user_id'>[];
@@ -201,6 +220,7 @@ const BulkGradeInputPage: React.FC = () => {
     // Initialize grades when students change
     useEffect(() => {
         if (students) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setGrades(students.map(s => ({
                 studentId: s.id,
                 studentName: s.name,
@@ -268,6 +288,7 @@ const BulkGradeInputPage: React.FC = () => {
     useEffect(() => {
         if (availableSubjects.length === 0) return;
         if (!availableSubjects.includes(selectedSubject)) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSelectedSubject(availableSubjects[0]);
         }
     }, [availableSubjects, selectedSubject]);
@@ -312,7 +333,7 @@ const BulkGradeInputPage: React.FC = () => {
         },
     });
 
-    const handleScoreChange = (studentId: string, value: string) => {
+    const handleScoreChange = useCallback((studentId: string, value: string) => {
         if (value === '') {
             setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: '' } : g));
             return;
@@ -327,7 +348,7 @@ const BulkGradeInputPage: React.FC = () => {
         } else {
             setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: '' } : g));
         }
-    };
+    }, []);
 
     const handleSaveAll = () => {
         if (availableSubjects.length === 0) {
@@ -561,7 +582,7 @@ const BulkGradeInputPage: React.FC = () => {
                 </div>
             </div>
         );
-    }, [existingGrades, kkm, handleGridKeyDown, registerRef, handlePaste]);
+    }, [existingGrades, kkm, handleGridKeyDown, registerRef, handlePaste, handleScoreChange]);
 
     return (
         <div className="min-h-full bg-gray-50 dark:bg-gray-950 p-4 md:p-6 pb-24 lg:pb-8">

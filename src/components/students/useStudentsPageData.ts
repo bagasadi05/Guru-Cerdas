@@ -63,7 +63,8 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
       let query = supabase
         .from('classes')
         .select('id, name, user_id, created_at, deleted_at')
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .eq('is_archived', false);
 
       if (assignedClassIds.length > 0) {
         query = query.or(`user_id.eq.${userId},id.in.(${assignedClassIds.map((id) => `"${id}"`).join(',')})`);

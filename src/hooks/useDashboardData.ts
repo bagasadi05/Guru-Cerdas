@@ -171,7 +171,8 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         supabase
             .from('classes')
             .select('id, name')
-            .is('deleted_at', null),
+            .is('deleted_at', null)
+            .eq('is_archived', false),
 
         // Fetch today's attendance for summary
         supabase
@@ -251,9 +252,13 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         throw new Error(errors.map(e => e.message).join(', '));
     }
 
+    // Filter active classes and active students in memory
+    const activeClassIds = new Set((classesRes.data || []).map(c => c.id));
+    const activeStudents = (studentsRes.data || []).filter(s => s.class_id && activeClassIds.has(s.class_id));
+
     // Calculate attendance statistics
     const presentCount = dailyAttendanceRes.data?.filter(a => a.status === 'Hadir').length || 0;
-    const totalStudents = studentsRes.data?.length || 1;
+    const totalStudents = activeStudents.length || 1;
 
     // Calculate weekly attendance from raw data
     const weeklyAttendance = calculateWeeklyAttendance(
@@ -263,7 +268,7 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
     );
 
     return {
-        students: studentsRes.data || [],
+        students: activeStudents,
         tasks: (tasksRes.data || []).map(task => ({
             ...task,
             completed: task.status === 'done',
@@ -284,8 +289,8 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             total: dailyAttendanceRes.count || 0
         },
         weeklyAttendance,
-        academicRecords: academicRecordsRes.data || [],
-        violations: violationsRes.data || [],
+        academicRecords: (academicRecordsRes.data || []).filter(r => activeStudents.some(s => s.id === r.student_id)),
+        violations: (violationsRes.data || []).filter(v => activeStudents.some(s => s.id === v.student_id)),
         recentTasks: recentTasksRes.data || [],
         todayAttendanceRecords: todayAttendanceRecordsRes.data?.reduce((acc: { created_at: string; status: string; count: number }[], record) => {
             const existing = acc.find(a => a.created_at === record.created_at && a.status === record.status);
@@ -296,7 +301,7 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             }
             return acc;
         }, []) || [],
-        unreadParentMessages: unreadParentMessagesRes.data || [],
+        unreadParentMessages: (unreadParentMessagesRes.data || []).filter(m => activeStudents.some(s => s.id === m.student_id)),
     };
 };
 
