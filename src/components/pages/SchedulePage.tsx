@@ -25,7 +25,6 @@ import { ValidationRules } from '../../types';
 import { SchedulePageSkeleton } from '../skeletons/PageSkeletons';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 import { getJsPDF } from '../../utils/dynamicImports';
-import { CLASS_COMPAT_SELECT, SCHEDULE_COMPAT_SELECT, hydrateClassRow, hydrateScheduleRow } from '../../services/supabaseCompat';
 import { WeeklyScheduleView } from '../schedule/WeeklyScheduleView';
 import { ScheduleDaySelector } from '../schedule/ScheduleDaySelector';
 import { ScheduleViewToolbar } from '../schedule/ScheduleViewToolbar';
@@ -253,12 +252,12 @@ const SchedulePage: React.FC = () => {
         queryFn: async (): Promise<ScheduleRow[]> => {
             const { data, error } = await supabase
                 .from('schedules')
-                .select(SCHEDULE_COMPAT_SELECT)
+                .select('*')
                 .eq('user_id', user!.id)
                 .order('day')
                 .order('start_time');
             if (error) throw error;
-            return (data || []).map(hydrateScheduleRow);
+            return data || [];
         },
         enabled: !!user,
     });
@@ -268,12 +267,12 @@ const SchedulePage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')
-                .select(CLASS_COMPAT_SELECT)
+                .select('*')
                 .is('deleted_at', null)
                 .eq('is_archived', false)
                 .order('name');
             if (error) throw error;
-            return (data || []).map(hydrateClassRow);
+            return data || [];
         },
         enabled: !!user,
     });

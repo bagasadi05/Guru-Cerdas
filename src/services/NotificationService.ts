@@ -9,7 +9,6 @@
  */
 
 import { supabase } from './supabase';
-import { maybeSingleCompat } from './supabaseQueryCompat';
 
 /**
  * Notification types
@@ -336,10 +335,11 @@ const checkGradeTrendNotifications = async (userId: string): Promise<void> => {
 
     if (!gradeDrop) return;
 
-    const { data: student } = await maybeSingleCompat(supabase
+    const { data: student } = await supabase
         .from('students')
         .select('name')
-        .eq('id', gradeDrop.studentId));
+        .eq('id', gradeDrop.studentId)
+        .maybeSingle();
 
     addNotification({
         type: 'grade_trend',

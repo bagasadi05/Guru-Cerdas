@@ -9,17 +9,13 @@ import {
   CheckCircleIcon,
   BookOpenIcon,
   UsersIcon,
-  ShieldPlusIcon,
   CheckSquareIcon,
   CalendarIcon,
   DownloadIcon,
   PlayCircleIcon,
   ClockIcon,
-  ArrowRightIcon,
-  RefreshCwIcon,
-  FileTextIcon
+  RefreshCwIcon
 } from '../../../../Icons';
-import { MarkdownText } from '../../../../ui/MarkdownText';
 import { useToast } from '../../../../../hooks/useToast';
 import {
   generateComprehensiveChildAnalysis,
@@ -37,317 +33,12 @@ import { useMemo } from 'react';
 import { getJsPDF, getAutoTable } from '../../../../../utils/dynamicImports';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addPdfHeader, ensureLogosLoaded } from '../../../../../utils/pdfHeaderUtils';
-
-// Helper functions for Radar Chart
-const calculateRadarPoints = (values: number[], max: number, centerX: number, centerY: number, radius: number): string => {
-  const n = values.length;
-  if (n === 0) return '';
-  const angleStep = (2 * Math.PI) / n;
-  const points = values.map((value, i) => {
-    const angle = i * angleStep - Math.PI / 2;
-    const ratio = value / max;
-    const x = centerX + radius * ratio * Math.cos(angle);
-    const y = centerY + radius * ratio * Math.sin(angle);
-    return `${x},${y}`;
-  });
-  return points.join(' ');
-};
-
-const calculateAxisEndpoints = (n: number, centerX: number, centerY: number, radius: number) => {
-  if (n === 0) return [];
-  const angleStep = (2 * Math.PI) / n;
-  return Array.from({ length: n }).map((_, i) => {
-    const angle = i * angleStep - Math.PI / 2;
-    return { x1: centerX, y1: centerY, x2: centerX + radius * Math.cos(angle), y2: centerY + radius * Math.sin(angle) };
-  });
-};
-
-const calculateLabelPositions = (labels: string[], centerX: number, centerY: number, radius: number) => {
-  const n = labels.length;
-  if (n === 0) return [];
-  const angleStep = (2 * Math.PI) / n;
-  return labels.map((label, i) => {
-    const angle = i * angleStep - Math.PI / 2;
-    return { x: centerX + (radius + 15) * Math.cos(angle), y: centerY + (radius + 15) * Math.sin(angle), label };
-  });
-};
-
-// Loading Progress Steps
-const LOADING_STEPS = [
-  { id: 1, label: 'Mengumpulkan data akademik', icon: BookOpenIcon },
-  { id: 2, label: 'Menganalisis pola perilaku', icon: UsersIcon },
-  { id: 3, label: 'Menghitung tren perkembangan', icon: TrendingUpIcon },
-  { id: 4, label: 'Membuat rekomendasi AI', icon: BrainCircuitIcon },
-  { id: 5, label: 'Menyusun laporan', icon: FileTextIcon },
-];
-
-// Loading Progress Component
-const LoadingProgress: React.FC<{ currentStep: number }> = ({ currentStep }) => {
-  return (
-    <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-8 border border-purple-200 dark:border-purple-800">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Menganalisis Perkembangan...</h3>
-          <p className="text-sm text-gray-500">AI sedang memproses data siswa</p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {LOADING_STEPS.map((step, index) => {
-          const Icon = step.icon;
-          const isCompleted = step.id < currentStep;
-          const isCurrent = step.id === currentStep;
-
-          return (
-            <div
-              key={step.id}
-              className={`flex items-center gap-3 p-3 rounded-lg transition-all ${isCompleted
-                ? 'bg-green-50 dark:bg-green-900/20'
-                : isCurrent
-                  ? 'bg-blue-50 dark:bg-blue-900/20 animate-pulse'
-                  : 'bg-gray-50 dark:bg-gray-800/50 opacity-50'
-                }`}
-            >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isCompleted
-                ? 'bg-green-500 text-white'
-                : isCurrent
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-300 dark:bg-gray-600 text-gray-500'
-                }`}>
-                {isCompleted ? (
-                  <CheckCircleIcon className="w-4 h-4" />
-                ) : (
-                  <Icon className="w-4 h-4" />
-                )}
-              </div>
-              <span className={`text-sm font-medium ${isCompleted || isCurrent ? 'text-gray-900 dark:text-white' : 'text-gray-400'
-                }`}>
-                {step.label}
-              </span>
-              {isCurrent && (
-                <div className="ml-auto">
-                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Progress bar */}
-      <div className="mt-6">
-        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
-            style={{ width: `${(currentStep / LOADING_STEPS.length) * 100}%` }}
-          />
-        </div>
-        <p className="text-xs text-gray-400 mt-2 text-center">
-          Langkah {currentStep} dari {LOADING_STEPS.length}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-// Comparative Loading Progress Steps
-const COMP_LOADING_STEPS = [
-  { id: 1, label: 'Mengelompokkan data Semester 1 & Semester 2', icon: BookOpenIcon },
-  { id: 2, label: 'Membandingkan rata-rata nilai dan tren kognitif', icon: TrendingUpIcon },
-  { id: 3, label: 'Menganalisis perbandingan kehadiran & pelanggaran', icon: UsersIcon },
-  { id: 4, label: 'Merumuskan narasi perkembangan emosional (AI)', icon: BrainCircuitIcon },
-  { id: 5, label: 'Menyusun laporan komparatif terpadu', icon: FileTextIcon },
-];
-
-// Comparative Loading Progress Component
-const CompLoadingProgress: React.FC<{ currentStep: number }> = ({ currentStep }) => {
-  return (
-    <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-8 border border-purple-200 dark:border-purple-800">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Membandingkan Perkembangan Semester...</h3>
-          <p className="text-sm text-gray-500 font-medium">AI sedang menganalisis komparasi Semester 1 & Semester 2</p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {COMP_LOADING_STEPS.map((step) => {
-          const Icon = step.icon;
-          const isCompleted = step.id < currentStep;
-          const isCurrent = step.id === currentStep;
-
-          return (
-            <div
-              key={step.id}
-              className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                isCompleted
-                  ? 'bg-green-50 dark:bg-green-900/20'
-                  : isCurrent
-                    ? 'bg-blue-50 dark:bg-blue-900/20 animate-pulse'
-                    : 'bg-gray-50 dark:bg-gray-800/50 opacity-50'
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  isCompleted
-                    ? 'bg-green-500 text-white'
-                    : isCurrent
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-300 dark:bg-gray-600 text-gray-500'
-                }`}
-              >
-                {isCompleted ? (
-                  <CheckCircleIcon className="w-4 h-4" />
-                ) : (
-                  <Icon className="w-4 h-4" />
-                )}
-              </div>
-              <span
-                className={`text-sm font-medium ${
-                  isCompleted || isCurrent ? 'text-gray-900 dark:text-white' : 'text-gray-400'
-                }`}
-              >
-                {step.label}
-              </span>
-              {isCurrent && (
-                <div className="ml-auto">
-                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Progress bar */}
-      <div className="mt-6">
-        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
-            style={{ width: `${(currentStep / COMP_LOADING_STEPS.length) * 100}%` }}
-          />
-        </div>
-        <p className="text-xs text-gray-400 mt-2 text-center font-medium">
-          Langkah {currentStep} dari {COMP_LOADING_STEPS.length}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-// Period Comparison Component
-const PeriodComparison: React.FC<{
-  currentAvg: number;
-  previousAvg: number;
-  label: string;
-}> = ({ currentAvg, previousAvg, label }) => {
-  const diff = currentAvg - previousAvg;
-  const percentChange = previousAvg > 0 ? ((diff / previousAvg) * 100).toFixed(1) : 0;
-  const isImproved = diff > 0;
-  const isDeclined = diff < 0;
-
-  return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <div className="flex items-end gap-2">
-        <span className="text-2xl font-bold text-gray-900 dark:text-white">{currentAvg}</span>
-        {previousAvg > 0 && (
-          <span className={`text-sm font-medium flex items-center gap-1 ${isImproved ? 'text-green-500' : isDeclined ? 'text-red-500' : 'text-gray-400'
-            }`}>
-            {isImproved ? '↑' : isDeclined ? '↓' : '→'} {Math.abs(Number(percentChange))}%
-          </span>
-        )}
-      </div>
-      {previousAvg > 0 && (
-        <p className="text-xs text-gray-400 mt-1">Sebelumnya: {previousAvg}</p>
-      )}
-    </div>
-  );
-};
-
-// Actionable Recommendation Card
-const ActionableRecommendation: React.FC<{
-  title: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  category: string;
-  actions: string[];
-  onStartAction?: () => void;
-}> = ({ title, description, priority, category, actions, onStartAction }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const isLongDescription = description.length > 150;
-
-  const priorityStyles = {
-    high: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10',
-    medium: 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10',
-    low: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10',
-  };
-
-  const priorityLabels = {
-    high: { text: 'Prioritas Tinggi', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
-    medium: { text: 'Prioritas Sedang', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
-    low: { text: 'Prioritas Rendah', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
-  };
-
-  return (
-    <div className={`rounded-xl border-2 shadow-sm ${priorityStyles[priority]} overflow-hidden`}>
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priorityLabels[priority].bg} ${priorityLabels[priority].color}`}>
-              {priorityLabels[priority].text}
-            </span>
-            <span className="text-xs text-gray-400">{category}</span>
-          </div>
-        </div>
-
-        <h4 className="font-bold text-gray-900 dark:text-white mb-1">{title}</h4>
-        <div className={`text-sm text-gray-600 dark:text-gray-400 ${!isDescriptionExpanded && isLongDescription ? 'line-clamp-3' : ''}`}>
-          <MarkdownText text={description} />
-        </div>
-        {isLongDescription && (
-          <button
-            onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-            className="mt-1 text-xs text-blue-500 hover:underline"
-          >
-            {isDescriptionExpanded ? 'Tutup' : 'Baca selengkapnya â†’'}
-          </button>
-        )}
-
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="mt-3 text-sm text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:underline"
-        >
-          {isExpanded ? 'Sembunyikan Langkah' : 'Lihat Langkah Aksi'}
-          <ArrowRightIcon className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-        </button>
-      </div>
-
-      {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-black/20">
-          <p className="text-xs font-semibold text-gray-500 mb-2">LANGKAH AKSI:</p>
-          <ol className="space-y-2">
-            {actions.map((action, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <span className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                  {idx + 1}
-                </span>
-                {action}
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
-    </div>
-  );
-};
+import { calculateRadarPoints, calculateAxisEndpoints, calculateLabelPositions } from '../utils/radarChartUtils';
+import { LoadingProgress } from '../components/LoadingProgress';
+import { CompLoadingProgress } from '../components/CompLoadingProgress';
+import { PeriodComparison } from '../components/PeriodComparison';
+import { ActionableRecommendation } from '../components/ActionableRecommendation';
+import { useUserSettings } from '../../../../../hooks/useUserSettings';
 
 interface ChildDevelopmentAnalysisTabProps {
   studentData: ChildDevelopmentData;
@@ -355,14 +46,16 @@ interface ChildDevelopmentAnalysisTabProps {
   allAttendanceRecords?: any[];
   allViolations?: any[];
   allQuizPoints?: any[];
+  defaultMode?: 'single' | 'comparative';
 }
 
-export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
+export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
   studentData,
   allAcademicRecords = [],
   allAttendanceRecords = [],
   allViolations = [],
-  allQuizPoints = []
+  allQuizPoints = [],
+  defaultMode = 'single'
 }) => {
   const [analysis, setAnalysis] = useState<ComprehensiveChildAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -373,11 +66,19 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
 
   // === COMPARATIVE STATE ===
   const { activeAcademicYear, semesters } = useSemester();
-  const [activeTabMode, setActiveTabMode] = useState<'single' | 'comparative'>('single');
+  const [activeTabMode, setActiveTabMode] = useState<'single' | 'comparative'>(defaultMode);
   const [comparativeAnalysis, setComparativeAnalysis] = useState<ComparativeChildAnalysis | null>(null);
   const [isCompLoading, setIsCompLoading] = useState(false);
   const [compLoadingStep, setCompLoadingStep] = useState(1);
-  const [isCompDetailsExpanded, setIsCompDetailsExpanded] = useState(false);
+  const [_isCompDetailsExpanded, _setIsCompDetailsExpanded] = useState(false);
+
+  const { schoolName } = useUserSettings();
+  const principalName = 'H. Masturi, S.Pd.I.';
+  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
+  const [compGeneratedAt, setCompGeneratedAt] = useState<string | null>(null);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+  const [showCompRegenerateConfirm, setShowCompRegenerateConfirm] = useState(false);
+  const [_retryCount, setRetryCount] = useState(0);
 
   // Calculate subject averages for analytics (Single Semester)
   const subjectAverages = useMemo(() => {
@@ -432,8 +133,8 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
   const studentPolygonPoints = useMemo(() => calculateRadarPoints(studentScores, maxScore, centerX, centerY, radius), [studentScores, maxScore, centerX, centerY, radius]);
 
   const getStorageKey = useCallback(
-    () => `child_analysis_${studentData.student.name}_${studentData.student.class || 'general'}`,
-    [studentData.student.name, studentData.student.class]
+    () => `child_analysis_${studentData.student.id}`,
+    [studentData.student.id]
   );
 
   // === DYNAMIC GROUPING FOR SEMESTER COMPARISON ===
@@ -661,7 +362,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
   }), [studentData.student, sem2Academic, sem2Attendance, sem2Violations, sem2Quizzes]);
 
   // "Status Perkembangan Komparatif" Badges (HSL colors)
-  const comparativeBadges = useMemo(() => {
+  const _comparativeBadges = useMemo(() => {
     let cognitiveLabel = 'Stabil';
     let cognitiveColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50';
     let cognitiveDot = 'bg-blue-500';
@@ -717,6 +418,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
         const dbAnalysis = await getLatestAnalysisFromDb(studentData.student.id);
         if (dbAnalysis) {
           setAnalysis(dbAnalysis);
+          setGeneratedAt((dbAnalysis as any).generatedAt || null);
           return;
         }
       } catch (err) {
@@ -726,7 +428,9 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
       const savedAnalysis = localStorage.getItem(getStorageKey());
       if (savedAnalysis) {
         try {
-          setAnalysis(JSON.parse(savedAnalysis));
+          const parsed = JSON.parse(savedAnalysis);
+          setAnalysis(parsed);
+          setGeneratedAt(parsed.generatedAt || null);
         } catch (e) {
           console.error('Failed to parse saved analysis:', e);
           localStorage.removeItem(getStorageKey());
@@ -746,16 +450,19 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
         const dbComp = await getComparativeAnalysisFromDb(studentData.student.id, activeAcademicYear.id);
         if (dbComp) {
           setComparativeAnalysis(dbComp);
+          setCompGeneratedAt((dbComp as any).generatedAt || null);
           return;
         }
       } catch (err) {
         console.error('Failed to load comparative analysis from Supabase:', err);
       }
 
-      const savedComp = localStorage.getItem(`comp_analysis_${studentData.student.name}_${activeAcademicYear.id}`);
+      const savedComp = localStorage.getItem(`comp_analysis_${studentData.student.id}_${activeAcademicYear.id}`);
       if (savedComp) {
         try {
-          setComparativeAnalysis(JSON.parse(savedComp));
+          const parsed = JSON.parse(savedComp);
+          setComparativeAnalysis(parsed);
+          setCompGeneratedAt(parsed.generatedAt || null);
         } catch (e) {
           console.error('Failed to parse saved comparative analysis:', e);
         }
@@ -772,7 +479,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
     const cleanText = (text: string) => {
       if (!text) return '';
       return text
-        .replace(/^(?:[\s\d•\-*🌟💡🎯🏠🏆👣🏫⭐🎒😇🔥👍👌💪🛠★►]|🙋‍♂️|🏃‍♂️)+/u, '') 
+        .replace(/^(?:[\s\d•\-*🌟💡🎯🏠🏆👣🏫⭐🎒😇🔥👍👌💪★►]|🙋‍♂️|🏃‍♂️|🛠️)+/u, '') 
         .trim();
     };
 
@@ -863,8 +570,18 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
   }, [analysis, overallAverage, studentData]);
 
   const handleGenerateAnalysis = async () => {
+    if (analysis) {
+      setShowRegenerateConfirm(true);
+      return;
+    }
+    await doGenerateAnalysis();
+  };
+
+  const doGenerateAnalysis = async () => {
+    setShowRegenerateConfirm(false);
     setIsLoading(true);
     setLoadingStep(1);
+    setRetryCount(0);
 
     // Setup micro-interaction interval timer for loading steps
     const stepInterval = setInterval(() => {
@@ -875,7 +592,23 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
     }, 1200);
 
     try {
-      const result = await generateComprehensiveChildAnalysis(studentData);
+      let result: ComprehensiveChildAnalysis | null = null;
+      const maxRetries = 2;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          if (attempt > 0) setRetryCount(attempt);
+          result = await generateComprehensiveChildAnalysis(studentData);
+          if (result && (!('error' in result) || (result as any).summary)) break;
+        } catch (retryError) {
+          if (attempt === maxRetries) throw retryError;
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+        }
+      }
+      if (!result) throw new Error('Gagal menghasilkan analisis setelah beberapa percobaan.');
+
+      const now = new Date().toISOString();
+      (result as any).generatedAt = now;
+      setGeneratedAt(now);
       setAnalysis(result);
 
       // Save to local storage
@@ -894,12 +627,13 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
 
       toast.success('Analisis perkembangan anak berhasil dibuat!');
     } catch (error) {
-      toast.error('Gagal membuat analisis. Silakan coba lagi.');
+      toast.error('Gagal membuat analisis setelah beberapa percobaan. Silakan coba lagi.');
       console.error(error);
     } finally {
       clearInterval(stepInterval);
       setIsLoading(false);
       setLoadingStep(1);
+      setRetryCount(0);
     }
   };
 
@@ -922,7 +656,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
 
       // Formal Kop Surat
       let y = addPdfHeader(doc, {
-        schoolName: 'MI AL IRSYAD KOTA MADIUN',
+        schoolName: schoolName,
         orientation: 'portrait'
       });
 
@@ -1193,7 +927,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
       // Names signatures place
       y += 32;
       doc.setFont('helvetica', 'bold');
-      doc.text('( H. Masturi, S.Pd.I. )', margin + 10, y);
+      doc.text(`( ${principalName} )`, margin + 10, y);
       doc.text(`( ${studentData.student.class ? 'Guru Wali Kelas' : 'Wali Kelas'} )`, pageWidth - 70, y);
 
       const safeName = analysis.summary.name.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
@@ -1208,8 +942,22 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
 
   // === GENERATE & EXPORT COMPARATIVE ANALYSIS ===
   const handleGenerateComparativeAnalysis = async () => {
+    if (sem1Academic.length === 0 || sem2Academic.length === 0) {
+      toast.warning('Data Semester 1 atau Semester 2 belum tersedia. Analisis perbandingan tidak dapat dilakukan.');
+      return;
+    }
+    if (comparativeAnalysis) {
+      setShowCompRegenerateConfirm(true);
+      return;
+    }
+    await doGenerateComparativeAnalysis();
+  };
+
+  const doGenerateComparativeAnalysis = async () => {
+    setShowCompRegenerateConfirm(false);
     setIsCompLoading(true);
     setCompLoadingStep(1);
+    setRetryCount(0);
 
     // Setup micro-interaction interval timer for loading steps
     const stepInterval = setInterval(() => {
@@ -1220,15 +968,27 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
     }, 1200);
 
     try {
-      if (!childData1 || !childData2) {
-        throw new Error('Data Semester 1 atau Semester 2 tidak dapat ditemukan.');
+      let result: ComparativeChildAnalysis | null = null;
+      const maxRetries = 2;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          if (attempt > 0) setRetryCount(attempt);
+          result = await generateComparativeChildAnalysis(childData1, childData2);
+          if (result && (!('error' in result) || (result as any).summary)) break;
+        } catch (retryError) {
+          if (attempt === maxRetries) throw retryError;
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+        }
       }
-      
-      const result = await generateComparativeChildAnalysis(childData1, childData2);
+      if (!result) throw new Error('Gagal menghasilkan analisis perbandingan setelah beberapa percobaan.');
+
+      const now = new Date().toISOString();
+      (result as any).generatedAt = now;
+      setCompGeneratedAt(now);
       setComparativeAnalysis(result);
 
       // Save to local storage
-      const storageKey = `comp_analysis_${studentData.student.name}_${activeAcademicYear?.id || 'general'}`;
+      const storageKey = `comp_analysis_${studentData.student.id}_${activeAcademicYear?.id || 'general'}`;
       localStorage.setItem(storageKey, JSON.stringify(result));
 
       // Save to Supabase DB (silent sync, doesn't crash on offline)
@@ -1247,12 +1007,13 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
 
       toast.success('Analisis perbandingan semester berhasil dibuat!');
     } catch (error) {
-      toast.error('Gagal membuat analisis perbandingan. Silakan coba lagi.');
+      toast.error('Gagal membuat analisis perbandingan setelah beberapa percobaan. Silakan coba lagi.');
       console.error(error);
     } finally {
       clearInterval(stepInterval);
       setIsCompLoading(false);
       setCompLoadingStep(1);
+      setRetryCount(0);
     }
   };
 
@@ -1275,7 +1036,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
 
       // Formal Kop Surat
       let y = addPdfHeader(doc, {
-        schoolName: 'MI AL IRSYAD KOTA MADIUN',
+        schoolName: schoolName,
         orientation: 'portrait'
       });
 
@@ -1469,7 +1230,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
       // Add a page break for the detailed narratives
       doc.addPage();
       y = addPdfHeader(doc, {
-        schoolName: 'MI AL IRSYAD KOTA MADIUN',
+        schoolName: schoolName,
         orientation: 'portrait'
       });
 
@@ -1502,7 +1263,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
         // Prevent layout overlapping
         if (y > pageHeight - 80) {
           doc.addPage();
-          y = addPdfHeader(doc, { schoolName: 'MI AL IRSYAD KOTA MADIUN', orientation: 'portrait' }) + 8;
+          y = addPdfHeader(doc, { schoolName: schoolName, orientation: 'portrait' }) + 8;
         }
 
         doc.setFontSize(9.5);
@@ -1585,7 +1346,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
       // Add one more page for recommendations & signature
       doc.addPage();
       y = addPdfHeader(doc, {
-        schoolName: 'MI AL IRSYAD KOTA MADIUN',
+        schoolName: schoolName,
         orientation: 'portrait'
       });
 
@@ -1665,7 +1426,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
       // Names signatures place
       y += 28;
       doc.setFont('helvetica', 'bold');
-      doc.text('( H. Masturi, S.Pd.I. )', margin + 10, y);
+      doc.text(`( ${principalName} )`, margin + 10, y);
       doc.text(`( ${studentData.student.class ? 'Guru Wali Kelas' : 'Wali Kelas'} )`, pageWidth - 70, y);
 
       const safeName = comparativeAnalysis.summary.name.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
@@ -1864,7 +1625,8 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
             </div>
 
             <div className="flex justify-center my-auto py-2">
-              <svg width={chartSize} height={chartSize} className="overflow-visible">
+              <svg width={chartSize} height={chartSize} className="overflow-visible" role="img" aria-label="Bagan radar perbandingan 5 dimensi perkembangan holistik siswa antar semester">
+                <title>Bagan Radar Ganda: Dimensi Holistik Semester 1 vs Semester 2</title>
                 {/* Radar Grid Levels (20, 40, 60, 80, 100) */}
                 {gridLevels.map(level => (
                   <polygon 
@@ -2182,6 +1944,7 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
             <Button
               onClick={handleGenerateComparativeAnalysis}
               size="lg"
+              disabled={sem1Academic.length === 0 || sem2Academic.length === 0}
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-md transition-all duration-300"
             >
               <SparklesIcon className="w-5 h-5 mr-2" />
@@ -2190,6 +1953,8 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
           </div>
         ) : (
           <div className="space-y-8">
+            {/* TS narrowing: comparativeAnalysis is guaranteed non-null in this else branch */}
+            {(() => { if (!comparativeAnalysis) return null; })()}
             {/* Header Laporan Komparasi */}
             <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800">
               <CardHeader className="pb-4">
@@ -2211,6 +1976,14 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
                       </div>
                       <CardDescription className="mt-1 font-medium text-slate-600 dark:text-slate-400 text-xs">
                         {studentData.student.name} • Tahun Ajaran {activeAcademicYear?.name || 'Aktif'}
+                        {compGeneratedAt && (
+                          <span className="ml-2 text-slate-400 dark:text-slate-500">
+                            • Dibuat: {new Date(compGeneratedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                        {compGeneratedAt && (Date.now() - new Date(compGeneratedAt).getTime()) > 30 * 24 * 60 * 60 * 1000 && (
+                          <span className="ml-1 px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-[10px] font-semibold">Stale</span>
+                        )}
                       </CardDescription>
                     </div>
                   </div>
@@ -2529,7 +2302,8 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
               <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Spider Chart: Performa per Mapel</h4>
               {isRadarChartValid ? (
                 <div className="flex justify-center">
-                  <svg width={chartSize} height={chartSize} className="overflow-visible">
+                  <svg width={chartSize} height={chartSize} className="overflow-visible" role="img" aria-label="Spider chart performa siswa per mata pelajaran">
+                    <title>Bagan Radar: Performa per Mata Pelajaran</title>
                     {gridLevels.map(level => (
                       <polygon key={level} points={calculateRadarPoints(subjects.map(() => level), maxScore, centerX, centerY, radius)} fill="none" stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />
                     ))}
@@ -2615,6 +2389,14 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
                 </div>
                 <CardDescription className="mt-1 font-medium">
                   {analysis.summary.name} • {analysis.summary.age} Tahun • Kelas {analysis.summary.class}
+                  {generatedAt && (
+                    <span className="ml-2 text-slate-400 dark:text-slate-500 text-xs">
+                      • Dibuat: {new Date(generatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                  {generatedAt && (Date.now() - new Date(generatedAt).getTime()) > 30 * 24 * 60 * 60 * 1000 && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-[10px] font-semibold">Stale</span>
+                  )}
                 </CardDescription>
               </div>
             </div>
@@ -3056,6 +2838,48 @@ export const SingleAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Regenerate Confirmation Modal */}
+      {showRegenerateConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowRegenerateConfirm(false)}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+                <AlertCircleIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Regenerate Analisis?</h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Analisis baru akan menggantikan analisis sebelumnya. Lanjutkan?</p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setShowRegenerateConfirm(false)}>Batal</Button>
+              <Button size="sm" onClick={doGenerateAnalysis}>Ya, Regenerate</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Comparative Regenerate Confirmation Modal */}
+      {showCompRegenerateConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowCompRegenerateConfirm(false)}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+                <AlertCircleIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Regenerate Analisis Perbandingan?</h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Analisis perbandingan baru akan menggantikan analisis sebelumnya. Lanjutkan?</p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setShowCompRegenerateConfirm(false)}>Batal</Button>
+              <Button size="sm" onClick={doGenerateComparativeAnalysis}>Ya, Regenerate</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
