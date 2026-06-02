@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Calendar, Save, CheckSquare, Activity, Info, CalendarOff, FileText, FileSpreadsheet, CheckCircle2, XCircle } from 'lucide-react';
 import { DatePicker } from '../../ui/DatePicker';
 import { EnrollmentView } from './types';
@@ -21,7 +21,7 @@ interface AttendanceTabProps {
 }
 
 export const AttendanceTab: React.FC<AttendanceTabProps> = ({
-    extracurricularId,
+    extracurricularId: _extracurricularId,
     enrollments,
     selectedDate,
     onDateChange,

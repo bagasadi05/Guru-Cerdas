@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import fc from 'fast-check';
-import { logger, LogLevel, LogEntry } from '../logger';
+import { logger, LogLevel } from '../logger';
 
 describe('LoggerService Property Tests', () => {
     beforeEach(() => {

@@ -4,6 +4,7 @@ import { useOfflineStatus } from './useOfflineStatus';
 import { supabase } from '../services/supabase';
 import { getQueue, clearQueue, QueuedMutation } from '../services/offlineQueue';
 import { useToast } from './useToast';
+import { logger } from '../services/logger';
 
 /**
  * Custom hook for managing offline data synchronization queue
@@ -132,7 +133,7 @@ export const useSyncQueue = () => {
                         return query.delete().eq('id', recordId);
                     }
                 default:
-                    console.error(`Unknown operation in queue: ${operation}`);
+                    logger.error(`Unknown operation in queue: ${operation}`, undefined, undefined, 'SyncQueue');
                     return Promise.reject(new Error(`Unknown operation: ${operation}`));
             }
         });
@@ -154,7 +155,7 @@ export const useSyncQueue = () => {
 
         } catch (error: any) {
             toast.error(`Gagal sinkronisasi: ${error.message}`);
-            console.error("Sync failed:", error);
+            logger.error('Sync failed', error as Error, undefined, 'SyncQueue');
         } finally {
             setIsSyncing(false);
             updatePendingCount(); // Should update count to 0

@@ -37,7 +37,7 @@ export interface ExportResult {
 /**
  * Format value based on column type
  */
-function formatValue(value: unknown, type?: string, dateFormat?: string): string {
+function formatValue(value: unknown, type?: string, _dateFormat?: string): string {
     if (value === null || value === undefined) return '';
 
     switch (type) {

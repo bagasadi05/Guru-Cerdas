@@ -33,7 +33,7 @@ const ProfileSection: React.FC = () => {
         if (user) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setName(user.name || '');
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+             
             setSchoolName(user.school_name || '');
         }
     }, [user]);

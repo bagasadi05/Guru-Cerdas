@@ -90,7 +90,7 @@ describe('Property 14.1: Search Functionality', () => {
                     try {
                         mockSearch(query, documents);
                         return true;
-                    } catch (error) {
+                    } catch (_error) {
                         return false;
                     }
                 }

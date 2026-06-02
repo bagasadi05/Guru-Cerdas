@@ -62,13 +62,13 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
                 border-t border-slate-200/50 dark:border-slate-700/50 
                 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
       style={{
-        minHeight: '60px',
+        minHeight: '64px',
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
       role="navigation"
       aria-label="Mobile navigation"
     >
-      <div className="flex items-center justify-around px-3 pt-2">
+      <div className="flex items-center justify-around px-3 pt-1.5">
         {/* Primary Navigation Items */}
         {mobileNavItems.map((item) => (
           <NavLink
@@ -85,25 +85,26 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           >
             {({ isActive }) => (
               <>
-                {/* Top Active Indicator Pill */}
+                {/* Top Active Indicator Pill - Floating & Elegant */}
                 {isActive && (
                   <div
-                    className="absolute top-0 left-1/2 -translate-x-1/2 
-                              w-8 h-1 bg-indigo-500 dark:bg-indigo-400 
-                              rounded-full"
+                    className="absolute top-1.5 left-1/2 -translate-x-1/2 
+                              w-6 h-[3px] bg-indigo-500 dark:bg-indigo-400 
+                              rounded-full shadow-[0_1px_4px_rgba(99,102,241,0.4)]"
                   />
                 )}
 
-                {/* Icon Container */}
+                {/* Icon Container with Slimmer & More Balanced Padding */}
                 <div
-                  className={`p-2 rounded-xl transition-all duration-200 ${
+                  className={`p-1.5 rounded-xl transition-all duration-300 ${
                     isActive
-                      ? 'bg-indigo-500/15 dark:bg-indigo-500/20'
-                      : 'bg-transparent'
+                      ? 'bg-indigo-500/10 dark:bg-indigo-500/15 scale-105'
+                      : 'bg-transparent hover:bg-slate-100/50 dark:hover:bg-slate-800/30'
                   }`}
+                  style={{ marginTop: '4px' }}
                 >
                   <item.icon
-                    className={`w-[22px] h-[22px] transition-colors duration-200 ${
+                    className={`w-5 h-5 transition-colors duration-200 ${
                       isActive
                         ? 'text-indigo-600 dark:text-indigo-400'
                         : 'text-slate-500 dark:text-slate-400'
@@ -113,7 +114,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
 
                 {/* Label with Responsive Size */}
                 <span
-                  className={`text-xs leading-4 transition-colors duration-200 ${
+                  className={`text-[10px] leading-3 transition-colors duration-200 ${
                               isActive
                                 ? 'font-semibold text-indigo-600 dark:text-indigo-400'
                                 : 'font-medium text-slate-600 dark:text-slate-400'
@@ -129,7 +130,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
         {/* More Button */}
         <button
           onClick={handleMoreClick}
-          className="flex flex-col items-center justify-center gap-1 
+          className="flex flex-col items-center justify-center gap-0.5 
                     relative touch-manipulation focus-visible:outline-none 
                     focus-visible:ring-2 focus-visible:ring-indigo-500/50 
                     focus-visible:ring-offset-2 rounded-xl transition-all duration-200"
@@ -142,22 +143,23 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           {/* Top Active Indicator for More Menu */}
           {isMoreMenuHighlighted && (
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 
-                        w-8 h-1 bg-indigo-500 dark:bg-indigo-400 
-                        rounded-full"
+              className="absolute top-1.5 left-1/2 -translate-x-1/2 
+                        w-6 h-[3px] bg-indigo-500 dark:bg-indigo-400 
+                        rounded-full shadow-[0_1px_4px_rgba(99,102,241,0.4)]"
             />
           )}
 
           {/* Icon */}
           <div
-            className={`p-2 rounded-xl transition-all duration-200 ${
+            className={`p-1.5 rounded-xl transition-all duration-300 ${
               isMoreMenuHighlighted
-                ? 'bg-indigo-500/15 dark:bg-indigo-500/20'
-                : 'bg-transparent'
+                ? 'bg-indigo-500/10 dark:bg-indigo-500/15 scale-105'
+                : 'bg-transparent hover:bg-slate-100/50 dark:hover:bg-slate-800/30'
             }`}
+            style={{ marginTop: '4px' }}
           >
             <MoreHorizontalIcon
-              className={`w-[22px] h-[22px] transition-colors duration-200 ${
+              className={`w-5 h-5 transition-colors duration-200 ${
                 isMoreMenuHighlighted
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-slate-500 dark:text-slate-400'
@@ -167,7 +169,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
 
           {/* Label */}
           <span
-            className={`text-xs leading-4 transition-colors duration-200 ${
+            className={`text-[10px] leading-3 transition-colors duration-200 ${
                         isMoreMenuHighlighted
                           ? 'font-semibold text-indigo-600 dark:text-indigo-400'
                           : 'font-medium text-slate-600 dark:text-slate-400'

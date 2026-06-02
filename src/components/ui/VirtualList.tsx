@@ -48,7 +48,7 @@ export function VirtualList<T>({
     }, [containerHeight]);
 
     // Calculate visible range
-    const { startIndex, endIndex, visibleItems, offsetY } = useMemo(() => {
+    const { startIndex, endIndex: _endIndex, visibleItems, offsetY } = useMemo(() => {
         const totalHeight = items.length * itemHeight;
         const start = Math.floor(scrollTop / itemHeight);
         const visibleCount = Math.ceil(containerHeightState / itemHeight);

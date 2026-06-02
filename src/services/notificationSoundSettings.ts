@@ -8,7 +8,6 @@
 import {
     playNotificationSound,
     playSuccessSound,
-    playErrorSound,
     playMessageSound,
     playReminderSound,
 } from '../utils/notificationSound';

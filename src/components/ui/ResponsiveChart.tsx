@@ -202,7 +202,7 @@ export const InteractiveBar: React.FC<InteractiveBarProps> = ({
     const context = React.useContext(ChartContext);
     const percentage = Math.min((value / maxValue) * 100, 100);
 
-    const handleMouseEnter = (e: React.MouseEvent) => {
+    const handleMouseEnter = (_e: React.MouseEvent) => {
         if (context && tooltipContent && barRef.current) {
             const rect = barRef.current.getBoundingClientRect();
             const parentRect = barRef.current.closest('.relative')?.getBoundingClientRect();

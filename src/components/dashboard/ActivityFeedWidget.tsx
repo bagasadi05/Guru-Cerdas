@@ -22,17 +22,17 @@ const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
         <DashboardPanel>
             <Tabs defaultValue="activity" className="w-full">
                 <DashboardPanelHeader>
-                    <TabsList className="w-full grid grid-cols-2">
-                        <TabsTrigger value="activity" className="justify-center">
-                            <Activity className="w-4 h-4" />
-                            Aktivitas
+                    <TabsList className="flex w-full">
+                        <TabsTrigger value="activity" className="flex-1 justify-center gap-1.5 h-9 text-xs">
+                            <Activity className="w-3.5 h-3.5" />
+                            <span>Aktivitas</span>
                         </TabsTrigger>
-                        <TabsTrigger value="reminders" className="justify-center">
-                            <span className="relative flex items-center gap-2">
-                                <Bell className="w-4 h-4" />
-                                Pengingat
+                        <TabsTrigger value="reminders" className="flex-1 justify-center gap-1.5 h-9 text-xs">
+                            <span className="relative flex items-center gap-1.5">
+                                <Bell className="w-3.5 h-3.5" />
+                                <span>Pengingat</span>
                                 {reminderCount > 0 && (
-                                    <span className="absolute -top-1 -right-4 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                                    <span className="absolute -top-1 -right-4 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] text-white font-bold leading-none">
                                         {reminderCount}
                                     </span>
                                 )}

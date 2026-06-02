@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { subscribeSyncProgress, SyncProgress, processQueue, getFailedMutations, retryMutation, discardAllFailed } from '../../services/offlineQueue';
+import { subscribeSyncProgress, SyncProgress, processQueue, getFailedMutations, discardAllFailed } from '../../services/offlineQueue';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { CloudIcon, CloudOffIcon, RefreshCwIcon, CheckCircleIcon, AlertCircleIcon, XCircleIcon, Loader2Icon } from 'lucide-react';
 import { Button } from './Button';

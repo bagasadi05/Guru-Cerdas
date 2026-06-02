@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Network, ConnectionStatus } from '@capacitor/network';
+import { logger } from '../services/logger';
 
 /**
  * Native network status hook using Capacitor Network plugin
@@ -29,7 +30,7 @@ export const useNativeNetwork = () => {
                     wasOffline: !status.connected ? true : prev.wasOffline
                 }));
             } catch (error) {
-                console.error('Error checking network status:', error);
+                logger.error('Error checking network status', error as Error, undefined, 'Network');
             }
         } else {
             // Web fallback
@@ -48,7 +49,7 @@ export const useNativeNetwork = () => {
         if (Capacitor.isNativePlatform()) {
             // Native listener
             const listener = Network.addListener('networkStatusChange', (status: ConnectionStatus) => {
-                console.log('Network status changed:', status);
+                logger.info('Network status changed', 'Network', status);
                 setState(prev => ({
                     isConnected: status.connected,
                     connectionType: status.connectionType,

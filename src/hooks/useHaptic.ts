@@ -32,9 +32,8 @@ export const useHaptic = () => {
     // Trigger vibration
     try {
       navigator.vibrate(patterns[type] || patterns.light);
-    } catch (error) {
+    } catch (_error) {
       // Silently fail on unsupported patterns
-      console.debug('Haptic feedback not available:', error);
     }
   }, []);
 

@@ -10,8 +10,6 @@ import { Modal } from '../ui/Modal';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import { MarkdownText } from '../ui/MarkdownText';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
-// import { Type } from '@google/genai';
-// import { ai } from '../../services/supabase';
 import { generateOpenRouterJson } from '../../services/openRouterService';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';

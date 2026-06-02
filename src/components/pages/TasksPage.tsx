@@ -457,7 +457,7 @@ const TasksPage: React.FC = () => {
         mutationFn: async (id: string) => {
             const { error } = await supabase
                 .from('tasks')
-                .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+                .update({ deleted_at: new Date().toISOString() } as never)
                 .eq('id', id);
             if (error) throw error;
         },
@@ -475,7 +475,7 @@ const TasksPage: React.FC = () => {
             if (!user) return;
             const { error } = await supabase
                 .from('tasks')
-                .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+                .update({ deleted_at: new Date().toISOString() } as never)
                 .eq('user_id', user.id)
                 .eq('status', 'done');
             if (error) throw error;

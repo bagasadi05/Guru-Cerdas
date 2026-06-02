@@ -1,3 +1,5 @@
+import { logger } from '../services/logger';
+
 /**
  * Safely sanitizes HTML content in the browser to prevent XSS (Cross-Site Scripting) attacks.
  * It uses the native browser DOMParser to parse the input HTML, and then traverses
@@ -82,7 +84,7 @@ export function sanitizeDangerousHtml(html: string): string {
 
     return body.innerHTML;
   } catch (error) {
-    console.error('Error during HTML sanitization:', error);
+    logger.error('Error during HTML sanitization', error as Error, undefined, 'Sanitize');
     // Strict fallback: strip all HTML tags
     return html.replace(/<[^>]*>/g, '');
   }

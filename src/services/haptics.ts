@@ -5,6 +5,7 @@
 
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { logger } from './logger';
 
 /**
  * Check if running on native platform
@@ -18,8 +19,8 @@ export const hapticLight = async (): Promise<void> => {
     if (!isNative()) return;
     try {
         await Haptics.impact({ style: ImpactStyle.Light });
-    } catch (e) {
-        console.log('Haptics not available');
+    } catch (_e) {
+        logger.warn('Haptics not available', 'Haptics');
     }
 };
 
@@ -30,8 +31,8 @@ export const hapticMedium = async (): Promise<void> => {
     if (!isNative()) return;
     try {
         await Haptics.impact({ style: ImpactStyle.Medium });
-    } catch (e) {
-        console.log('Haptics not available');
+    } catch (_e) {
+        logger.warn('Haptics not available', 'Haptics');
     }
 };
 
@@ -42,8 +43,8 @@ export const hapticHeavy = async (): Promise<void> => {
     if (!isNative()) return;
     try {
         await Haptics.impact({ style: ImpactStyle.Heavy });
-    } catch (e) {
-        console.log('Haptics not available');
+    } catch (_e) {
+        logger.warn('Haptics not available', 'Haptics');
     }
 };
 
@@ -54,8 +55,8 @@ export const hapticSuccess = async (): Promise<void> => {
     if (!isNative()) return;
     try {
         await Haptics.notification({ type: NotificationType.Success });
-    } catch (e) {
-        console.log('Haptics not available');
+    } catch (_e) {
+        logger.warn('Haptics not available', 'Haptics');
     }
 };
 
@@ -66,8 +67,8 @@ export const hapticWarning = async (): Promise<void> => {
     if (!isNative()) return;
     try {
         await Haptics.notification({ type: NotificationType.Warning });
-    } catch (e) {
-        console.log('Haptics not available');
+    } catch (_e) {
+        logger.warn('Haptics not available', 'Haptics');
     }
 };
 
@@ -78,8 +79,8 @@ export const hapticError = async (): Promise<void> => {
     if (!isNative()) return;
     try {
         await Haptics.notification({ type: NotificationType.Error });
-    } catch (e) {
-        console.log('Haptics not available');
+    } catch (_e) {
+        logger.warn('Haptics not available', 'Haptics');
     }
 };
 
@@ -92,8 +93,8 @@ export const hapticSelection = async (): Promise<void> => {
         await Haptics.selectionStart();
         await Haptics.selectionChanged();
         await Haptics.selectionEnd();
-    } catch (e) {
-        console.log('Haptics not available');
+    } catch (_e) {
+        logger.warn('Haptics not available', 'Haptics');
     }
 };
 
@@ -104,8 +105,8 @@ export const vibrate = async (duration: number = 100): Promise<void> => {
     if (!isNative()) return;
     try {
         await Haptics.vibrate({ duration });
-    } catch (e) {
-        console.log('Haptics not available');
+    } catch (_e) {
+        logger.warn('Haptics not available', 'Haptics');
     }
 };
 

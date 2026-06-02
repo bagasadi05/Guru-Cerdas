@@ -2,6 +2,7 @@ import './styles/designSystem.css';
 import './styles/accessibility.css';
 import './styles/mobilePolish.css';
 import './styles/print.css';
+import './styles/shellStyles.css';
 
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
@@ -18,14 +19,14 @@ import { TourProvider, HelpButton } from './components/OnboardingHelp';
 import { SimpleHelpCenter } from './components/SimpleHelpCenter';
 import { KeyboardShortcutsPanel } from './components/advanced-features/KeyboardShortcutsPanel';
 import { useKeyboardShortcuts } from './components/advanced-features/useKeyboardShortcuts';
-import { useNavigate } from 'react-router-dom';
 import { startCleanupScheduler } from './services/CleanupService';
 import { useSessionTimeout } from './hooks/useSessionTimeout';
 import { SessionTimeoutWarning } from './components/ui/SessionTimeoutWarning';
 import { cleanupExpiredBackups } from './utils/dataBackup';
-import { globalSearch, type SearchEntityType } from './services/SearchService';
-import type { SearchResult } from './components/SearchSystem';
 import { SkipToMainContent } from './utils/pageAccessibility';
+import { useAndroidBackButton } from './hooks/useAndroidBackButton';
+import { useAppSearch } from './hooks/useAppSearch';
+import { useNavigate } from 'react-router-dom';
 
 // Start cleanup scheduler on app load
 startCleanupScheduler();
@@ -106,6 +107,10 @@ function AppContent() {
   const [showShortcuts, setShowShortcuts] = React.useState(false);
   const { registerShortcut } = useKeyboardShortcuts();
 
+  // Extracted hooks
+  useAndroidBackButton();
+  const { handleSearch, handleSearchResult } = useAppSearch();
+
   React.useEffect(() => {
     registerShortcut({
       key: '?',
@@ -128,85 +133,6 @@ function AppContent() {
       }
     },
   });
-
-  // Android Back Button Handler
-  React.useEffect(() => {
-    const setupBackButton = async () => {
-      try {
-        const { Capacitor } = await import('@capacitor/core');
-        const { App: CapApp } = await import('@capacitor/app');
-
-        if (Capacitor.isNativePlatform()) {
-          const listener = await CapApp.addListener('backButton', ({ canGoBack }) => {
-            const currentPath = window.location.pathname;
-
-            // If on home/dashboard, exit app
-            if (currentPath === '/' || currentPath === '/dashboard') {
-              CapApp.exitApp();
-            } else if (canGoBack || window.history.length > 1) {
-              // Navigate back
-              navigate(-1);
-            } else {
-              // Exit app as fallback
-              CapApp.exitApp();
-            }
-          });
-
-          return () => {
-            listener.remove();
-          };
-        }
-      } catch {
-        console.log('Back button handler not available on this platform');
-      }
-    };
-
-    setupBackButton();
-  }, [navigate]);
-
-  // Search handler delegating to SearchService for proper fuzzy matching & relevance ranking
-  const handleSearch = React.useCallback(async (query: string, type: string): Promise<SearchResult[]> => {
-    if (!session?.user?.id || !query || query.length < 2) return [];
-
-    // Map SearchSystem's 'schedule' to SearchService's 'schedules'
-    const entityType = (type === 'schedule' ? 'schedules' : type) as SearchEntityType;
-
-    try {
-      const serviceResults = await globalSearch(session.user.id, query, { entityType, limit: 10 });
-
-      return serviceResults.map(r => ({
-        id: r.id,
-        // Map 'schedules' back to SearchSystem's 'schedule'
-        type: (r.type === 'schedules' ? 'schedule' : r.type) as SearchResult['type'],
-        title: r.title,
-        subtitle: r.subtitle,
-        metadata: r.metadata,
-        relevance: r.relevance,
-      }));
-    } catch (error) {
-      console.error('Search error:', error);
-      return [];
-    }
-  }, [session?.user?.id]);
-
-  const handleSearchResult = (result: { id: string; type: string }) => {
-    switch (result.type) {
-      case 'students':
-        navigate(`/siswa/${result.id}`);
-        break;
-      case 'classes':
-        navigate('/siswa');
-        break;
-      case 'schedule':
-        navigate('/jadwal');
-        break;
-      case 'attendance':
-        navigate('/absensi');
-        break;
-      default:
-        navigate('/dashboard');
-    }
-  };
 
   return (
     <>

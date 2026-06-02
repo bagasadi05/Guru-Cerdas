@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { AuthContext } from '../src/hooks/useAuth';
 import { ToastProvider } from '../src/hooks/useToast';
 import { SemesterProvider } from '../src/contexts/SemesterContext';
+import { I18nProvider } from '../src/utils/i18n';
 import { vi } from 'vitest';
 
 // Mock supabase to prevent errors in SemesterProvider
@@ -44,26 +45,28 @@ export function renderWithProviders(ui: React.ReactElement, { user = { id: 'test
 
     return render(
         <QueryClientProvider client={queryClient}>
-            <AuthContext.Provider value={{
-                user: user as any,
-                session: {} as any,
-                logout: async () => { },
-                loading: false,
-                login: vi.fn(),
-                signup: vi.fn(),
-                updateUser: vi.fn(),
-                enableScheduleNotifications: vi.fn(),
-                disableScheduleNotifications: vi.fn(),
-                isNotificationsEnabled: false
-            }}>
-                <ToastProvider>
-                    <SemesterProvider>
-                        <MemoryRouter>
-                            {ui}
-                        </MemoryRouter>
-                    </SemesterProvider>
-                </ToastProvider>
-            </AuthContext.Provider>
+            <I18nProvider>
+                <AuthContext.Provider value={{
+                    user: user as any,
+                    session: {} as any,
+                    logout: async () => { },
+                    loading: false,
+                    login: vi.fn(),
+                    signup: vi.fn(),
+                    updateUser: vi.fn(),
+                    enableScheduleNotifications: vi.fn(),
+                    disableScheduleNotifications: vi.fn(),
+                    isNotificationsEnabled: false
+                }}>
+                    <ToastProvider>
+                        <SemesterProvider>
+                            <MemoryRouter>
+                                {ui}
+                            </MemoryRouter>
+                        </SemesterProvider>
+                    </ToastProvider>
+                </AuthContext.Provider>
+            </I18nProvider>
         </QueryClientProvider>
     );
 }

@@ -57,17 +57,16 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/tinos": "^5.2.7",
-    "@google/genai": "^1.10.0",
     "@hookform/resolvers": "^5.2.2",
-    "@sentry/react": "^10.32.1",
-    "@supabase/supabase-js": "^2.51.0",
+    "@sentry/react": "^10.55.0",
+    "@supabase/supabase-js": "^2.106.2",
     "@tanstack/query-core": "^5.83.1",
     "@tanstack/query-sync-storage-persister": "^5.100.13",
     "@tanstack/react-query": "^5.51.1",
     "@tanstack/react-query-persist-client": "^5.100.13",
     "canvas-confetti": "^1.9.4",
-    "date-fns": "^4.1.0",
-    "framer-motion": "^12.23.26",
+    "date-fns": "^4.4.0",
+    "framer-motion": "^12.40.0",
     "html2canvas": "^1.4.1",
     "ics": "^3.8.1",
     "jspdf": "^3.0.4",
@@ -111,6 +110,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "fast-check": "^4.4.0",
     "globals": "^16.5.0",
     "jsdom": "^27.2.0",
@@ -132,5 +132,9 @@
     "workbox-precaching": "^7.4.0",
     "workbox-routing": "^7.4.0",
     "workbox-window": "^7.4.0"
+  },
+  "overrides": {
+    "dompurify": "^3.4.7",
+    "@xmldom/xmldom": "^0.9.8"
   }
 }

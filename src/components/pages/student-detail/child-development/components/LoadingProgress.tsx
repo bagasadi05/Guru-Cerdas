@@ -23,7 +23,7 @@ export const LoadingProgress: React.FC<{ currentStep: number }> = ({ currentStep
       </div>
 
       <div className="space-y-4">
-        {LOADING_STEPS.map((step, index) => {
+        {LOADING_STEPS.map((step, _index) => {
           const Icon = step.icon;
           const isCompleted = step.id < currentStep;
           const isCurrent = step.id === currentStep;
@@ -78,4 +78,4 @@ export const LoadingProgress: React.FC<{ currentStep: number }> = ({ currentStep
       </div>
     </div>
   );
-};
+};

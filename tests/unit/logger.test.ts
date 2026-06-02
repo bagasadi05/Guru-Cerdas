@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { logger, LogLevel, Logger } from '../../src/services/logger';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { logger, LogLevel } from '../../src/services/logger';
 
 // Mock localStorage
 const localStorageMock = (() => {

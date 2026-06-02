@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../test-utils';
 import React from 'react';
+import { generateSimpleAccessCode } from '../../src/utils/accessCode';
 
 // Mock supabase
 vi.mock('../../src/services/supabase', () => ({
@@ -267,14 +267,7 @@ describe('Student Statistics', () => {
 
 describe('Student Access Code', () => {
     it('should generate valid access code', () => {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        const generateCode = (): string => {
-            return Array.from({ length: 6 }, () =>
-                chars[Math.floor(Math.random() * chars.length)]
-            ).join('');
-        };
-
-        const code = generateCode();
+        const code = generateSimpleAccessCode();
 
         expect(code.length).toBe(6);
         expect(/^[A-Z0-9]+$/.test(code)).toBe(true);
@@ -287,17 +280,10 @@ describe('Student Access Code', () => {
 
     it('should regenerate unique codes', () => {
         const codes = new Set<string>();
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-        const generateCode = (): string => {
-            return Array.from({ length: 6 }, () =>
-                chars[Math.floor(Math.random() * chars.length)]
-            ).join('');
-        };
 
         // Generate 100 codes
         for (let i = 0; i < 100; i++) {
-            codes.add(generateCode());
+            codes.add(generateSimpleAccessCode());
         }
 
         // Most should be unique (statistically)

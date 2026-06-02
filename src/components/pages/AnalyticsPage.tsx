@@ -26,7 +26,7 @@ const AnalyticsPage: React.FC = () => {
         dateRange, setDateRange,
         selectedClassId, setSelectedClassId,
         classes, isLoading, refetch,
-        students, attendance, academicRecords, violations, quizPoints, tasks,
+        students, attendance: _attendance, academicRecords, violations: _violations, quizPoints: _quizPoints, tasks: _tasks,
         gradeStats, attendanceStats, classStats, atRiskStudents, topPerformingStudents,
         dailyAttendance, taskStats, genderStats, violationsStats, quizPointsStats
     } = useAnalyticsData();

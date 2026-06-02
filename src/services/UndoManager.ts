@@ -55,7 +55,7 @@ const DEFAULT_UNDO_TIMEOUT_MS = 10000;
 const MAX_HISTORY_ITEMS = 50;
 
 // P0 Fix: Batas fetch saat search aktif (mencegah fetch semua row ke memory)
-const MAX_SEARCH_FETCH = 500;
+const _MAX_SEARCH_FETCH = 500;
 
 /**
  * Generate unique action ID
@@ -264,7 +264,7 @@ export async function undo(actionId: string, currentUserId?: string): Promise<{ 
                         if (prevState) {
                             await supabase
                                 .from(action.entity)
-                                .update(prevState)
+                                .update(prevState as never)
                                 .eq('id', id);
                         }
                     }
@@ -276,7 +276,7 @@ export async function undo(actionId: string, currentUserId?: string): Promise<{ 
                 for (const id of action.entityIds) {
                     await supabase
                         .from(action.entity)
-                        .update({ deleted_at: new Date().toISOString() })
+                        .update({ deleted_at: new Date().toISOString() } as never)
                         .eq('id', id);
                 }
                 break;

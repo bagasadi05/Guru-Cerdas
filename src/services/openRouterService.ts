@@ -4,6 +4,7 @@
 const OPENROUTER_PROXY_URL = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
 const DEV_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
 const IS_DEV = import.meta.env.DEV === true;
+import { logger } from './logger';
 const OPENROUTER_DIRECT_URL = 'https://openrouter.ai/api/v1/chat/completions';
 // Default to same-domain proxy — works on Vercel without any env var needed
 const DEFAULT_PROXY = '/api/openrouter';
@@ -93,7 +94,7 @@ export async function generateOpenRouterContent(
             clearTimeout(timeoutId);
 
             if (response.status === 429) {
-                console.warn(`Model ${model} rate limited (429). Switch to next model.`);
+                logger.warn(`Model ${model} rate limited (429). Switch to next model.`, 'OpenRouter');
                 lastError = new Error(`Rate limit exceeded for ${model}`);
                 continue; // Try next model immediately
             }
@@ -102,7 +103,7 @@ export async function generateOpenRouterContent(
                 const errorText = await response.text();
                 // If 5xx error, also try next model
                 if (response.status >= 500) {
-                    console.warn(`Model ${model} server error (${response.status}). Switch to next model.`);
+                    logger.warn(`Model ${model} server error (${response.status}). Switch to next model.`, 'OpenRouter');
                     lastError = new Error(`Server error ${response.status} from ${model}`);
                     continue;
                 }
@@ -113,7 +114,7 @@ export async function generateOpenRouterContent(
             return await response.json();
 
         } catch (error: unknown) {
-            console.warn(`Failed with model ${model}:`, error);
+            logger.warn(`Failed with model ${model}:`, 'OpenRouter', error);
             lastError = error instanceof Error ? error : new Error(String(error));
             // If it's a timeout or network error, continue to next model
             if (lastError.name === 'AbortError' || lastError.message.includes('fetch')) {
@@ -125,7 +126,7 @@ export async function generateOpenRouterContent(
     }
 
     // If we're here, all models failed
-    console.error("All AI models failed.", lastError);
+    logger.error("All AI models failed.", lastError || 'OpenRouter', lastError);
     throw new Error("Layanan AI sedang sibuk atau tidak tersedia. Silakan coba beberapa saat lagi.");
 }
 
@@ -188,7 +189,7 @@ export async function generateOpenRouterJson<T>(
     } catch (e: unknown) {
         // Last ditch effort: regex for partial valid objects? 
         // For now, just logging is safer.
-        console.error("JSON Parse Error. Content was:", content, e);
+        logger.error("JSON Parse Error. Content was:", e instanceof Error ? e : 'OpenRouterJSON', { content });
         throw new Error("Respon AI tidak valid (JSON corrupt).");
     }
 }

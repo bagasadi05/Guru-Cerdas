@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { SearchIcon, UsersIcon, GraduationCapIcon, BookOpenIcon, ClipboardListIcon, Loader2Icon, ClockIcon, XIcon } from 'lucide-react';
 import { globalSearch, getSearchSuggestions, SearchResult, SearchEntityType } from '../../services/SearchService';

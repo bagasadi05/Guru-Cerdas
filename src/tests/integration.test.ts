@@ -5,7 +5,7 @@
  * bulk operations, and export functionality.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock Supabase
 vi.mock('../services/supabase', () => ({
@@ -28,7 +28,7 @@ vi.mock('../services/supabase', () => ({
 
 // Import services after mocking
 import { softDelete, restore, permanentDelete, softDeleteBulk, restoreBulk } from '../services/SoftDeleteService';
-import { recordAction, undo, getActionHistory, canUndo, getUndoTimeRemaining } from '../services/UndoManager';
+import { recordAction, undo, canUndo, getUndoTimeRemaining } from '../services/UndoManager';
 import { exportToPDF, exportToExcel, exportToCSV } from '../services/ExportService';
 
 describe('SoftDeleteService', () => {

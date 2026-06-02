@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock IndexedDB
 const mockIDBStore = new Map();
@@ -41,7 +41,7 @@ const mockIDBTransaction = {
     objectStore: vi.fn(() => mockIDBObjectStore)
 };
 
-const mockIDBDatabase = {
+const _mockIDBDatabase = {
     objectStoreNames: { contains: vi.fn(() => true) },
     createObjectStore: vi.fn(() => mockIDBObjectStore),
     transaction: vi.fn(() => mockIDBTransaction)
@@ -158,14 +158,14 @@ describe('Enhanced Offline Queue Service', () => {
     describe('Conflict Resolution Strategies', () => {
         it('local_wins should return local data', () => {
             const local = { name: 'Local Name' };
-            const server = { name: 'Server Name' };
+            const _server = { name: 'Server Name' };
 
             const resolved = local; // local_wins strategy
             expect(resolved.name).toBe('Local Name');
         });
 
         it('server_wins should return server data', () => {
-            const local = { name: 'Local Name' };
+            const _local = { name: 'Local Name' };
             const server = { name: 'Server Name' };
 
             const resolved = server; // server_wins strategy

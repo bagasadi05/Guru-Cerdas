@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { CheckIcon, TrashIcon, EditIcon, DownloadCloudIcon, XCircleIcon, CheckSquareIcon } from '../components/Icons';
+import { CheckIcon, XCircleIcon, CheckSquareIcon } from '../components/Icons';
 
 /**
  * Enhanced Bulk Selection System

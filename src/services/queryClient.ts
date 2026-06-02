@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { logger } from './logger';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
@@ -23,34 +24,41 @@ export const queryClient = new QueryClient({
   },
 });
 
-// Create sync storage persister for localStorage
-const persister = createSyncStoragePersister({
-  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-  key: 'portal_guru_query_cache',
-  throttleTime: 1000, // 1 second throttle to group multiple writes
-  retry: (opts) => {
-    const err = opts.error;
-    // Graceful handling for localStorage quota limits
-    if (err && (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
-      console.warn('LocalStorage quota exceeded for query cache persister, clearing client cache...');
-      try {
-        if (typeof window !== 'undefined') {
-          window.localStorage.removeItem('portal_guru_query_cache');
-        }
-      } catch (e) {
-        console.error('Failed to clear query cache from localStorage', e);
-      }
-    }
-    return undefined;
-  }
-});
+// Cache buster version — bump this when data shape changes to force invalidation
+const CACHE_BUSTER = 'v2';
 
-// Configure queryClient persistence
-persistQueryClient({
-  queryClient,
-  persister,
-  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days (matching gcTime)
-  buster: 'v1', // Cache buster version to force invalidation when layout/data changes
-});
+/**
+ * Initialize query persistence. Call this once during app startup
+ * (e.g., inside AppProviders) rather than at module scope to avoid
+ * race conditions with DOM readiness.
+ */
+export function initQueryPersistence(): void {
+  if (typeof window === 'undefined') return;
+
+  const persister = createSyncStoragePersister({
+    storage: window.localStorage,
+    key: 'portal_guru_query_cache',
+    throttleTime: 1000,
+    retry: (opts) => {
+      const err = opts.error;
+      if (err && (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+        logger.warn('LocalStorage quota exceeded for query cache persister, clearing client cache...');
+        try {
+          window.localStorage.removeItem('portal_guru_query_cache');
+        } catch (e) {
+          logger.error('Failed to clear query cache from localStorage', undefined, e);
+        }
+      }
+      return undefined;
+    }
+  });
+
+  persistQueryClient({
+    queryClient,
+    persister,
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days (matching gcTime)
+    buster: CACHE_BUSTER,
+  });
+}
 
 export default queryClient;

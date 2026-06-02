@@ -19,6 +19,7 @@ import {
 } from '../Icons';
 import { staggerContainerVariants, statsCardVariants } from '../../utils/animations';
 import { AnimatedCounter } from '../ui/AnimatedCounter';
+import { isTaskOverdue, isTaskDueToday } from '../../utils/dateHelpers';
 import type { DashboardQueryData } from '../../types';
 
 // =============================================================================
@@ -279,31 +280,6 @@ const getToneDotClass = (tone: StatCardConfig['tone']) => {
         default:
             return 'bg-sky-500';
     }
-};
-
-const parseDueDate = (dueDate: string | null) => {
-    if (!dueDate) return null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
-        const [year, month, day] = dueDate.split('-').map(Number);
-        return new Date(year, month - 1, day, 23, 59, 59, 999);
-    }
-
-    const parsed = new Date(dueDate);
-    if (Number.isNaN(parsed.getTime())) return null;
-    return parsed;
-};
-
-const isTaskOverdue = (dueDate: string | null, referenceDate: Date) => {
-    const parsed = parseDueDate(dueDate);
-    return parsed ? parsed.getTime() < referenceDate.getTime() : false;
-};
-
-const isTaskDueToday = (dueDate: string | null, referenceDate: Date) => {
-    const parsed = parseDueDate(dueDate);
-    if (!parsed || parsed.getTime() < referenceDate.getTime()) return false;
-    return parsed.getFullYear() === referenceDate.getFullYear()
-        && parsed.getMonth() === referenceDate.getMonth()
-        && parsed.getDate() === referenceDate.getDate();
 };
 
 export default StatsGrid;

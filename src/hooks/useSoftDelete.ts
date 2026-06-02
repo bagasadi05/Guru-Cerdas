@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from './useToast';
 import { useUndoToastContext } from '../components/ui/UndoToast';
 import { softDelete, softDeleteBulk, SoftDeleteEntity } from '../services/SoftDeleteService';
-import { recordAction, ActionType } from '../services/UndoManager';
+import { recordAction } from '../services/UndoManager';
 import { useAuth } from './useAuth';
 
 interface UseSoftDeleteOptions {

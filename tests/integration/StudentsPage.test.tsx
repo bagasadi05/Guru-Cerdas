@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../test-utils';
 import StudentsPage from '../../src/components/pages/StudentsPage';
 

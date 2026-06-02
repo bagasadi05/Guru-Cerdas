@@ -1,5 +1,5 @@
 import React from 'react';
-import { StudentRow, ClassRow } from './types';
+import { StudentRow } from './types';
 import { getStudentAvatar } from '../../utils/avatarUtils';
 import { QrCode } from 'lucide-react';
 

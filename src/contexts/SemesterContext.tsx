@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '../services/supabase';
+import { logger } from '../services/logger';
 import { SemesterRow, AcademicYearRow } from '../types';
 
 
@@ -48,7 +49,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                     : await semestersQuery;
 
             if (allSemestersError) {
-                console.error('Error fetching semesters:', allSemestersError);
+                logger.error('Error fetching semesters', allSemestersError as unknown as Error, undefined, 'SemesterContext');
             } else {
                 setSemesters(allSemesters as unknown as SemesterWithYear[]);
             }
@@ -62,7 +63,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
 
             if (semesterError) {
                 if (semesterError.code !== 'PGRST116') { // Not found error code
-                    console.error('Error fetching active semester:', semesterError);
+                    logger.error('Error fetching active semester', semesterError as unknown as Error, undefined, 'SemesterContext');
                 }
                 setActiveSemester(null);
                 setActiveAcademicYear(null);
@@ -81,13 +82,13 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                     .maybeSingle();
 
                 if (yearError) {
-                    console.error('Error fetching academic year:', yearError);
+                    logger.error('Error fetching academic year', yearError as unknown as Error, undefined, 'SemesterContext');
                 } else {
                     setActiveAcademicYear(yearData);
                 }
             }
         } catch (error) {
-            console.error('Unexpected error in fetchSemestersData:', error);
+            logger.error('Unexpected error in fetchSemestersData', error as Error, undefined, 'SemesterContext');
         } finally {
             setIsLoading(false);
         }

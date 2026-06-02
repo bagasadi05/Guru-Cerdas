@@ -9,6 +9,7 @@
  */
 
 import { supabase } from './supabase';
+import { logger } from './logger';
 
 /**
  * Notification types
@@ -197,7 +198,7 @@ export const getDueTasks = async (userId: string): Promise<DueTask[]> => {
         .order('due_date', { ascending: true });
 
     if (error) {
-        console.error('Error fetching due tasks for notifications:', error);
+        logger.error('Error fetching due tasks for notifications', undefined, error);
         return [];
     }
 
@@ -250,7 +251,7 @@ const checkAttendanceReminder = async (userId: string): Promise<void> => {
     ]);
 
     if (studentsError || attendanceError) {
-        console.error('Error checking attendance notification:', studentsError || attendanceError);
+        logger.error('Error checking attendance notification', undefined, studentsError || attendanceError);
         return;
     }
 
@@ -269,7 +270,7 @@ const checkAttendanceReminder = async (userId: string): Promise<void> => {
     }
 };
 
-const checkUnreadParentMessages = async (userId: string): Promise<void> => {
+const checkUnreadParentMessages = async (_userId: string): Promise<void> => {
     const preferences = getPreferences();
     if (!preferences.messageNotifications) return;
 
@@ -282,7 +283,7 @@ const checkUnreadParentMessages = async (userId: string): Promise<void> => {
         .limit(5);
 
     if (error) {
-        console.error('Error checking unread parent messages:', error);
+        logger.error('Error checking unread parent messages', undefined, error);
         return;
     }
 
@@ -309,7 +310,7 @@ const checkGradeTrendNotifications = async (userId: string): Promise<void> => {
         .limit(80);
 
     if (error) {
-        console.error('Error checking grade trend notifications:', error);
+        logger.error('Error checking grade trend notifications', undefined, error);
         return;
     }
 
@@ -367,7 +368,7 @@ export const checkAndNotify = async (userId: string, preloadedDueTasks?: DueTask
     localStorage.setItem(LAST_CHECK_KEY, now.toString());
 
     const dueTasks = preferences.taskReminders ? (preloadedDueTasks ?? await getDueTasks(userId)) : [];
-    let newNotifications = 0;
+    let _newNotifications = 0;
 
     for (const task of dueTasks) {
         if (task.isOverdue) {
@@ -378,7 +379,7 @@ export const checkAndNotify = async (userId: string, preloadedDueTasks?: DueTask
                 metadata: { taskId: task.id },
                 link: '/tugas',
             });
-            newNotifications++;
+            _newNotifications++;
         } else if (task.hoursUntilDue <= 24) {
             addNotification({
                 type: 'task_due',
@@ -387,7 +388,7 @@ export const checkAndNotify = async (userId: string, preloadedDueTasks?: DueTask
                 metadata: { taskId: task.id, hoursLeft: task.hoursUntilDue },
                 link: '/tugas',
             });
-            newNotifications++;
+            _newNotifications++;
         }
     }
 

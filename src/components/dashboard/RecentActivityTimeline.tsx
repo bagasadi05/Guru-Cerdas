@@ -4,8 +4,8 @@
  * Shows recent user activities in a polished timeline format
  */
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     Clock,
     CheckCircle,
@@ -124,7 +124,15 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
     activities,
     maxItems = 5,
 }) => {
-    const displayActivities = activities.slice(0, maxItems);
+    const [filter, setFilter] = useState<'all' | 'grade' | 'task' | 'attendance'>('all');
+    const navigate = useNavigate();
+
+    const filteredActivities = useMemo(() => {
+        if (filter === 'all') return activities;
+        return activities.filter(act => act.type === filter);
+    }, [activities, filter]);
+
+    const displayActivities = filteredActivities.slice(0, maxItems);
 
     if (activities.length === 0) {
         return (
@@ -152,90 +160,123 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
         <DashboardPanel>
             <DashboardPanelContent>
             {/* Header */}
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-sm">
                         <Activity className="w-5 h-5 text-white" />
                     </div>
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
                         Aktivitas Terbaru
                     </h2>
                 </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 dark:border-emerald-700/50 dark:bg-emerald-900/20">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Live</span>
+                <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 dark:border-emerald-700/50 dark:bg-emerald-900/20">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">Live</span>
                 </div>
             </div>
 
-            {/* Timeline */}
-            <div className="space-y-0 relative">
-                {displayActivities.map((activity, index) => {
-                    const colors = getActivityColor(activity.type);
-                    const isLast = index === displayActivities.length - 1;
-
-                    const card = (
-                        <div className={`group p-3 rounded-xl border ${colors.border} ${colors.bg} transition-all ${activity.link ? 'hover:shadow-md cursor-pointer' : ''}`}>
-                            <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                    <h3 className={`font-semibold text-sm ${colors.text} mb-1`}>
-                                        {activity.title}
-                                    </h3>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                                        {activity.description}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <Clock className="w-3 h-3 text-gray-400" />
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                            {formatTimeAgo(activity.timestamp)}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Arrow indicator */}
-                                {activity.link && (
-                                    <ChevronRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                                )}
-                            </div>
-                        </div>
-                    );
-
-                    return (
-                        <div
-                            key={activity.id}
-                            className="relative pl-8 pb-6 last:pb-0"
-                        >
-                            {/* Timeline Line */}
-                            {!isLast && (
-                                <div className="absolute left-[15px] top-8 bottom-0 w-0.5 bg-gradient-to-b from-gray-200 to-transparent dark:from-gray-700 dark:to-transparent" />
-                            )}
-
-                            {/* Icon */}
-                            <div className={`absolute left-0 top-0 w-8 h-8 rounded-full ${colors.icon} flex items-center justify-center shadow-md z-10`}>
-                                {activity.icon || getActivityIcon(activity.type)}
-                            </div>
-
-                            {/* Content Card */}
-                            {activity.link ? (
-                                <Link to={activity.link} className="ml-2 block">
-                                    {card}
-                                </Link>
-                            ) : (
-                                <div className="ml-2">
-                                    {card}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
+            {/* Micro Filter Bar */}
+            <div className="flex items-center gap-1.5 mb-4 border-b border-slate-100 dark:border-slate-800/80 pb-3 overflow-x-auto no-scrollbar whitespace-nowrap -mx-1 px-1">
+                {[
+                    { id: 'all', label: 'Semua' },
+                    { id: 'grade', label: 'Nilai' },
+                    { id: 'task', label: 'Tugas' },
+                    { id: 'attendance', label: 'Absensi' }
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setFilter(tab.id as any)}
+                        className={`text-xs font-bold px-3 py-1 rounded-lg transition-all flex-shrink-0 ${
+                            filter === tab.id
+                                ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20'
+                                : 'bg-slate-50 hover:bg-slate-100 text-slate-600 dark:bg-slate-800/40 dark:hover:bg-slate-800 dark:text-slate-400'
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
             </div>
 
+            {/* Timeline or Empty State */}
+            {filteredActivities.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center text-slate-400 dark:text-slate-500">
+                    <Clock className="w-8 h-8 opacity-30 mb-2" />
+                    <p className="text-xs font-semibold">Tidak ada aktivitas</p>
+                    <p className="text-[10px] mt-0.5 opacity-70">Untuk kategori filter ini</p>
+                </div>
+            ) : (
+                <div className="space-y-0 relative">
+                    {displayActivities.map((activity, index) => {
+                        const colors = getActivityColor(activity.type);
+                        const isLast = index === displayActivities.length - 1;
+
+                        const card = (
+                            <div className={`group p-3 rounded-xl border ${colors.border} ${colors.bg} transition-all ${activity.link ? 'hover:shadow-md cursor-pointer' : ''}`}>
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className={`font-bold text-xs ${colors.text} mb-1`}>
+                                            {activity.title}
+                                        </h3>
+                                        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                            {activity.description}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mt-2">
+                                            <Clock className="w-3 h-3 text-slate-400" />
+                                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                                                {formatTimeAgo(activity.timestamp)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Arrow indicator */}
+                                    {activity.link && (
+                                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                    )}
+                                </div>
+                            </div>
+                        );
+
+                        return (
+                            <div
+                                key={activity.id}
+                                className="relative pl-7 pb-5 last:pb-0"
+                            >
+                                {/* Timeline Line */}
+                                {!isLast && (
+                                    <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-gradient-to-b from-slate-200 to-transparent dark:from-slate-800 dark:to-transparent" />
+                                )}
+
+                                {/* Icon */}
+                                <div className={`absolute left-0 top-0 w-6 h-6 rounded-full ${colors.icon} flex items-center justify-center shadow-sm z-10`}>
+                                    {activity.icon || React.cloneElement(getActivityIcon(activity.type) as React.ReactElement, { className: 'w-3 h-3' })}
+                                </div>
+
+                                {/* Content Card */}
+                                {activity.link ? (
+                                    <Link to={activity.link} className="ml-1.5 block">
+                                        {card}
+                                    </Link>
+                                ) : (
+                                    <div className="ml-1.5">
+                                        {card}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
             {/* View All Button */}
-            {activities.length > maxItems && (
-                <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-700/60">
-                    <button className="w-full px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg text-sm font-semibold text-emerald-600 dark:text-emerald-400 transition-colors flex items-center justify-center gap-2 border border-emerald-200 dark:border-emerald-700/50">
+            {filteredActivities.length > maxItems && (
+                <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-850">
+                    <button 
+                        onClick={() => navigate('/riwayat')}
+                        className="w-full px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all flex items-center justify-center gap-2 border border-emerald-200/50 dark:border-emerald-900/30 active:scale-[0.98]"
+                    >
                         <span>Lihat Semua Aktivitas</span>
-                        <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-800 rounded-full text-xs">
-                            {activities.length}
+                        <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-800 rounded-full text-[10px]">
+                            {filteredActivities.length}
                         </span>
                     </button>
                 </div>
@@ -244,3 +285,4 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
         </DashboardPanel>
     );
 };
+

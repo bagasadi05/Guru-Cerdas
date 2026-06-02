@@ -11,7 +11,7 @@ const randomString = (length: number) => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ';
     return Array.from({ length }, () => chars[randomInt(0, chars.length - 1)]).join('');
 };
-const randomEmail = () => `${randomString(8).toLowerCase().trim()}@example.com`;
+const _randomEmail = () => `${randomString(8).toLowerCase().trim()}@example.com`;
 const randomPhone = () => `08${randomInt(10000000000, 99999999999)}`.substring(0, 12);
 const randomDate = () => {
     const start = new Date(2020, 0, 1);

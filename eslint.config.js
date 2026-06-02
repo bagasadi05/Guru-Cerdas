@@ -2,10 +2,11 @@ import js from '@eslint/js';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import unusedImports from 'eslint-plugin-unused-imports';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-    { ignores: ['dist', 'android/**'] },
+    { ignores: ['dist', 'android/**', 'storybook-static/**'] },
     {
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
         files: ['**/*.{ts,tsx}'],
@@ -16,6 +17,7 @@ export default tseslint.config(
         plugins: {
             'react-hooks': reactHooks,
             'react-refresh': reactRefresh,
+            'unused-imports': unusedImports,
         },
         rules: {
             ...reactHooks.configs.recommended.rules,
@@ -23,8 +25,27 @@ export default tseslint.config(
                 'warn',
                 { allowConstantExport: true },
             ],
+            // Auto-remove unused imports
+            'unused-imports/no-unused-imports': 'error',
+            // Stricter type safety
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                    caughtErrorsIgnorePattern: '^_',
+                },
+            ],
             '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/no-unused-vars': 'warn',
+            // Prevent accidental console logs in production code
+            'no-console': ['warn', { allow: ['warn', 'error'] }],
+            // Prefer const over let
+            'prefer-const': 'error',
+            // Prevent variable redeclaration
+            'no-redeclare': 'off',
+            '@typescript-eslint/no-redeclare': 'error',
+            // Disallow unused expressions
+            '@typescript-eslint/no-unused-expressions': 'error',
         },
     },
 );

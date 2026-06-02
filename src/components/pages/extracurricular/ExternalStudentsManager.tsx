@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { UserCog, Plus, Search, Trash2, Pencil, Trash } from 'lucide-react';
+import { UserCog, Plus, Search, Trash2, Pencil } from 'lucide-react';
 import { ExtracurricularStudent } from './types';
 
 interface ExternalStudentsManagerProps {

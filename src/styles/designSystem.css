@@ -2919,3 +2919,118 @@ html.theme-transitioning *::after {
         transform: translateY(0);
     }
 }
+
+/* ============================================
+ * INTERACTIVE TUTORIAL SPOTLIGHT
+ * ============================================ */
+
+/* Base ring shared by all action types */
+.tutorial-spotlight-ring {
+    border-radius: 14px;
+    z-index: 1;
+}
+
+/* CLICK action: bright pulsing indigo ring with glow */
+.tutorial-ring-click {
+    box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 0.95),
+        0 0 0 6px rgba(99, 102, 241, 0.9),
+        0 0 22px 6px rgba(99, 102, 241, 0.7);
+    animation: tutorial-pulse-indigo 1.4s ease-in-out infinite;
+}
+
+/* OBSERVE action: steady amber ring with glow */
+.tutorial-ring-observe {
+    box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 0.95),
+        0 0 0 6px rgba(245, 158, 11, 0.9),
+        0 0 22px 6px rgba(245, 158, 11, 0.65);
+    animation: tutorial-pulse-amber 1.8s ease-in-out infinite;
+}
+
+/* INTERACT action: dashed emerald ring */
+.tutorial-ring-interact {
+    box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 0.95),
+        0 0 0 6px rgba(16, 185, 129, 0.9),
+        0 0 22px 6px rgba(16, 185, 129, 0.65);
+    animation: tutorial-pulse-emerald 1.4s ease-in-out infinite;
+}
+
+/* SCROLL / default */
+.tutorial-ring-scroll,
+.tutorial-ring-navigate {
+    box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 0.9),
+        0 0 0 6px rgba(148, 163, 184, 0.8),
+        0 0 18px 4px rgba(148, 163, 184, 0.5);
+}
+
+@keyframes tutorial-pulse-indigo {
+    0%, 100% {
+        box-shadow:
+            0 0 0 3px rgba(255, 255, 255, 0.95),
+            0 0 0 6px rgba(99, 102, 241, 0.9),
+            0 0 22px 6px rgba(99, 102, 241, 0.7);
+    }
+    50% {
+        box-shadow:
+            0 0 0 4px rgba(255, 255, 255, 1),
+            0 0 0 9px rgba(99, 102, 241, 1),
+            0 0 34px 12px rgba(99, 102, 241, 0.85);
+    }
+}
+
+@keyframes tutorial-pulse-amber {
+    0%, 100% {
+        box-shadow:
+            0 0 0 3px rgba(255, 255, 255, 0.95),
+            0 0 0 6px rgba(245, 158, 11, 0.9),
+            0 0 22px 6px rgba(245, 158, 11, 0.65);
+    }
+    50% {
+        box-shadow:
+            0 0 0 4px rgba(255, 255, 255, 1),
+            0 0 0 8px rgba(245, 158, 11, 1),
+            0 0 30px 10px rgba(245, 158, 11, 0.8);
+    }
+}
+
+@keyframes tutorial-pulse-emerald {
+    0%, 100% {
+        box-shadow:
+            0 0 0 3px rgba(255, 255, 255, 0.95),
+            0 0 0 6px rgba(16, 185, 129, 0.9),
+            0 0 22px 6px rgba(16, 185, 129, 0.65);
+    }
+    50% {
+        box-shadow:
+            0 0 0 4px rgba(255, 255, 255, 1),
+            0 0 0 9px rgba(16, 185, 129, 1),
+            0 0 34px 12px rgba(16, 185, 129, 0.85);
+    }
+}
+
+/* Bouncing hand/pointer hint below the target */
+.tutorial-hand-pointer {
+    animation: tutorial-hand-bounce 1.1s ease-in-out infinite;
+}
+
+@keyframes tutorial-hand-bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(6px);
+    }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .tutorial-ring-click,
+    .tutorial-ring-observe,
+    .tutorial-ring-interact,
+    .tutorial-hand-pointer {
+        animation: none !important;
+    }
+}

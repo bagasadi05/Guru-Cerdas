@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { GraduationCap } from 'lucide-react';
 import ThemeToggle from '../ui/ThemeToggle';
 import NotificationPanel from '../ui/NotificationPanel';
 import { NetworkQualityIndicator, EnhancedSyncStatus } from '../ui/PerformanceIndicators';
@@ -8,6 +9,7 @@ interface ShellHeaderActionsProps {
     user: {
         avatarUrl?: string | null;
     } | null;
+    onOpenTutorial?: () => void;
 }
 
 const ShellIconButton: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -18,9 +20,22 @@ const ShellIconButton: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
 export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
     user,
+    onOpenTutorial,
 }) => {
     return (
         <div className="ml-auto flex items-center gap-3">
+            {/* Tutorial Button */}
+            {onOpenTutorial && (
+                <button
+                    onClick={onOpenTutorial}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                    aria-label="Tutorial Menu"
+                    title="Tutorial Menu"
+                >
+                    <GraduationCap className="w-5 h-5" />
+                </button>
+            )}
+
             <ShellIconButton>
                 <ThemeToggle />
             </ShellIconButton>

@@ -137,6 +137,10 @@ export function useMassInputState() {
         });
     };
 
+    const setIsScoresDirty = (val: boolean) => {
+        isScoresDirty.current = val;
+    };
+
     return {
         step, setStep,
         mode, setMode,
@@ -158,6 +162,7 @@ export function useMassInputState() {
         showImportModal, setShowImportModal,
         showChartModal, setShowChartModal,
         isScoresDirty,
+        setIsScoresDirty,
         bypassDuplicateGuard, setBypassDuplicateGuard,
         pendingImportData, setPendingImportData,
         handleModeSelect, handleBack, handleScoreChange, handleStudentSelect,

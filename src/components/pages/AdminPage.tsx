@@ -5,11 +5,8 @@ import {
     ShieldCheck,
     Loader2,
     AlertCircle,
-    Edit2,
-    Save,
     X,
     RefreshCw,
-    Search,
     Megaphone,
     Trash2,
     BarChart3,
@@ -17,15 +14,6 @@ import {
     Activity,
     AlertTriangle,
     Undo2,
-    HardDrive,
-    Cpu,
-    CheckCircle2,
-    Database,
-    Server,
-    Shield,
-    TrendingUp,
-    ChevronDown,
-    Clock,
     UserCheck,
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
@@ -44,6 +32,9 @@ import {
     OverviewTab,
     AnnouncementsTab,
     TeacherAssignmentsTab,
+    UsersTab,
+    ActivityLogsTab,
+    SystemTab,
 } from './admin';
 
 const USER_PAGE_SIZE = 20;
@@ -594,17 +585,17 @@ const AdminPage: React.FC = () => {
         { id: 'system', label: 'Sistem', icon: <Settings size={18} /> },
     ];
 
-    const userPageCount = Math.max(1, Math.ceil(userTotal / USER_PAGE_SIZE));
-    const deletedPageCount = Math.max(1, Math.ceil(deletedTotal / USER_PAGE_SIZE));
-    const logPageCount = Math.max(1, Math.ceil(logTotal / LOG_PAGE_SIZE));
+    const _userPageCount = Math.max(1, Math.ceil(userTotal / USER_PAGE_SIZE));
+    const _deletedPageCount = Math.max(1, Math.ceil(deletedTotal / USER_PAGE_SIZE));
+    const _logPageCount = Math.max(1, Math.ceil(logTotal / LOG_PAGE_SIZE));
 
     const userRangeStart = userTotal === 0 ? 0 : (userPage - 1) * USER_PAGE_SIZE + 1;
-    const userRangeEnd = userTotal === 0 ? 0 : Math.min(userRangeStart + users.length - 1, userTotal);
+    const _userRangeEnd = userTotal === 0 ? 0 : Math.min(userRangeStart + users.length - 1, userTotal);
     const deletedRangeStart = deletedTotal === 0 ? 0 : (deletedPage - 1) * USER_PAGE_SIZE + 1;
-    const deletedRangeEnd = deletedTotal === 0 ? 0 : Math.min(deletedRangeStart + deletedUsers.length - 1, deletedTotal);
+    const _deletedRangeEnd = deletedTotal === 0 ? 0 : Math.min(deletedRangeStart + deletedUsers.length - 1, deletedTotal);
     const logRangeStart = logTotal === 0 ? 0 : (logPage - 1) * LOG_PAGE_SIZE + 1;
-    const logRangeEnd = logTotal === 0 ? 0 : Math.min(logRangeStart + activityLogs.length - 1, logTotal);
-    const distributionMax = Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades, stats.totalTasks);
+    const _logRangeEnd = logTotal === 0 ? 0 : Math.min(logRangeStart + activityLogs.length - 1, logTotal);
+    const _distributionMax = Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades, stats.totalTasks);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950/20">
@@ -674,253 +665,33 @@ const AdminPage: React.FC = () => {
                         onTabChange={setActiveTab}
                     />
                 )}
-
                 {activeTab === 'users' && (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                        {/* Controls */}
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row gap-4">
-                            <div className="flex-1 relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Cari nama atau email..."
-                                    value={searchTerm}
-                                    onChange={(e) => {
-                                        setSearchTerm(e.target.value);
-                                        setUserPage(1);
-                                        setDeletedPage(1);
-                                    }}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                                />
-                            </div>
-                            <select
-                                value={roleFilter}
-                                onChange={(e) => {
-                                    setRoleFilter(e.target.value);
-                                    setUserPage(1);
-                                    setDeletedPage(1);
-                                }}
-                                className="px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                            >
-                                <option value="all">Semua Peran</option>
-                                <option value="admin">Admin</option>
-                                <option value="teacher">Guru</option>
-                                <option value="student">Siswa</option>
-                                <option value="parent">Orang Tua</option>
-                            </select>
-                        </div>
-
-                        {/* User Table */}
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50 dark:bg-gray-900/50">
-                                    <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        <th className="px-6 py-4 text-left">Pengguna</th>
-                                        <th className="px-6 py-4 text-left">Peran</th>
-                                        <th className="px-6 py-4 text-left">Bergabung</th>
-                                        <th className="px-6 py-4 text-right">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                    {usersLoading ? (
-                                        <tr>
-                                            <td colSpan={4} className="px-6 py-12 text-center">
-                                                <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
-                                            </td>
-                                        </tr>
-                                    ) : users.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                                                Tidak ada pengguna ditemukan
-                                            </td>
-                                        </tr>
-                                    ) : users.map((u) => (
-                                        <tr key={u.user_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                                                        {u.full_name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase() || 'U'}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-gray-900 dark:text-white">{u.full_name || 'Tanpa Nama'}</p>
-                                                        <p className="text-xs text-gray-500">{u.email}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {editingUserId === u.user_id ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <select
-                                                            value={newRole}
-                                                            onChange={(e) => setNewRole(e.target.value)}
-                                                            className="px-3 py-1.5 text-sm border-2 border-indigo-500 rounded-lg bg-white dark:bg-gray-900"
-                                                        >
-                                                            <option value="admin">Admin</option>
-                                                            <option value="teacher">Guru</option>
-                                                            <option value="student">Siswa</option>
-                                                            <option value="parent">Orang Tua</option>
-                                                        </select>
-                                                        <button onClick={() => handleUpdateRole(u.user_id)} disabled={updating} className="p-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600">
-                                                            {updating ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                                        </button>
-                                                        <button onClick={() => setEditingUserId(null)} className="p-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg">
-                                                            <X size={14} />
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClass(u.role || 'user')}`}>
-                                                        {getRoleLabel(u.role)}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-gray-500">
-                                                {u.created_at ? new Date(u.created_at).toLocaleDateString('id-ID') : '-'}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <button
-                                                        onClick={() => { setEditingUserId(u.user_id); setNewRole(u.role || 'teacher'); }}
-                                                        className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openDeleteModal(u)}
-                                                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
-                            <p className="text-sm text-gray-500">
-                                Menampilkan {userRangeStart}-{userRangeEnd} dari {userTotal}
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setUserPage(prev => Math.max(1, prev - 1))}
-                                    disabled={userPage === 1 || usersLoading}
-                                    className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-                                >
-                                    Sebelumnya
-                                </button>
-                                <span className="text-sm text-gray-500">
-                                    Halaman {userPage} dari {userPageCount}
-                                </span>
-                                <button
-                                    onClick={() => setUserPage(prev => Math.min(userPageCount, prev + 1))}
-                                    disabled={userPage >= userPageCount || usersLoading}
-                                    className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-                                >
-                                    Berikutnya
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Deleted Users Toggle */}
-                        {deletedTotal > 0 && (
-                            <div className="border-t border-gray-100 dark:border-gray-700">
-                                <button
-                                    onClick={() => setShowDeletedUsers(!showDeletedUsers)}
-                                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                                            <Trash2 size={16} className="text-red-500" />
-                                        </div>
-                                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                                            Tempat Sampah ({deletedTotal})
-                                        </span>
-                                    </div>
-                                    <ChevronDown className={`text-gray-400 transition-transform ${showDeletedUsers ? 'rotate-180' : ''}`} size={16} />
-                                </button>
-
-                                {showDeletedUsers && (
-                                    <div className="px-6 pb-6">
-                                        <div className="bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30 overflow-hidden">
-                                            <table className="w-full">
-                                                <thead className="bg-red-100/50 dark:bg-red-900/20">
-                                                    <tr className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
-                                                        <th className="px-6 py-3 text-left">Pengguna</th>
-                                                        <th className="px-6 py-3 text-left">Terhapus</th>
-                                                        <th className="px-6 py-3 text-right">Aksi</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-red-100 dark:divide-red-900/30">
-                                                    {deletedUsers.map((u) => (
-                                                        <tr key={u.user_id} className="hover:bg-red-100/30 dark:hover:bg-red-900/10">
-                                                            <td className="px-6 py-3">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 font-bold text-sm opacity-60">
-                                                                        {u.full_name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase() || 'U'}
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="font-medium text-gray-600 dark:text-gray-400 line-through">{u.full_name || 'Tanpa Nama'}</p>
-                                                                        <p className="text-xs text-gray-400">{u.email}</p>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-3 text-sm text-gray-500">
-                                                                {u.deleted_at ? new Date(u.deleted_at).toLocaleDateString('id-ID') : '-'}
-                                                            </td>
-                                                            <td className="px-6 py-3 text-right">
-                                                                <div className="flex justify-end gap-2">
-                                                                    <button
-                                                                        onClick={() => restoreUser(u)}
-                                                                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg"
-                                                                    >
-                                                                        <Undo2 size={14} />
-                                                                        Pulihkan
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => permanentDeleteUser(u.user_id)}
-                                                                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                                                                    >
-                                                                        <X size={14} />
-                                                                        Hapus Permanen
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4">
-                                            <p className="text-sm text-gray-500">
-                                                Menampilkan {deletedRangeStart}-{deletedRangeEnd} dari {deletedTotal}
-                                            </p>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => setDeletedPage(prev => Math.max(1, prev - 1))}
-                                                    disabled={deletedPage === 1 || usersLoading}
-                                                    className="px-3 py-2 text-sm bg-red-100/60 dark:bg-red-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
-                                                >
-                                                    Sebelumnya
-                                                </button>
-                                                <span className="text-sm text-gray-500">
-                                                    Halaman {deletedPage} dari {deletedPageCount}
-                                                </span>
-                                                <button
-                                                    onClick={() => setDeletedPage(prev => Math.min(deletedPageCount, prev + 1))}
-                                                    disabled={deletedPage >= deletedPageCount || usersLoading}
-                                                    className="px-3 py-2 text-sm bg-red-100/60 dark:bg-red-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
-                                                >
-                                                    Berikutnya
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                    <UsersTab
+                        users={users}
+                        deletedUsers={deletedUsers}
+                        usersLoading={usersLoading}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        roleFilter={roleFilter}
+                        setRoleFilter={setRoleFilter}
+                        userPage={userPage}
+                        setUserPage={setUserPage}
+                        deletedPage={deletedPage}
+                        setDeletedPage={setDeletedPage}
+                        editingUserId={editingUserId}
+                        setEditingUserId={setEditingUserId}
+                        newRole={newRole}
+                        setNewRole={setNewRole}
+                        updating={updating}
+                        handleUpdateRole={handleUpdateRole}
+                        openDeleteModal={openDeleteModal}
+                        restoreUser={restoreUser}
+                        permanentDeleteUser={permanentDeleteUser}
+                        userTotal={userTotal}
+                        deletedTotal={deletedTotal}
+                        showDeletedUsers={showDeletedUsers}
+                        setShowDeletedUsers={setShowDeletedUsers}
+                    />
                 )}
 
                 {activeTab === 'announcements' && (
@@ -945,300 +716,26 @@ const AdminPage: React.FC = () => {
                 )}
 
                 {activeTab === 'activity' && (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                                <h3 className="text-lg font-bold flex items-center gap-2">
-                                    <Activity size={20} className="text-indigo-500" />
-                                    Log Aktivitas
-                                </h3>
-                                <button
-                                    onClick={fetchActivityLogs}
-                                    className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-                                >
-                                    <RefreshCw size={16} />
-                                    Muat Ulang
-                                </button>
-                            </div>
-                            <div className="mt-4 flex flex-col md:flex-row gap-3">
-                                <div className="flex-1 relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                    <input
-                                        type="text"
-                                        placeholder="Cari log, pengguna, atau tabel..."
-                                        value={logSearchTerm}
-                                        onChange={(e) => {
-                                            setLogSearchTerm(e.target.value);
-                                            setLogPage(1);
-                                        }}
-                                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                                    />
-                                </div>
-                            </div>
-                            <p className="text-sm text-gray-500 mt-3">Riwayat semua aksi admin</p>
-                        </div>
-
-                        {logsLoading ? (
-                            <div className="p-12 text-center">
-                                <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
-                            </div>
-                        ) : activityLogs.length === 0 ? (
-                            <div className="p-12 text-center text-gray-500">
-                                <Activity size={48} className="mx-auto mb-4 opacity-30" />
-                                <p>Belum ada log aktivitas</p>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-gray-50 dark:bg-gray-900/50">
-                                        <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                            <th className="px-6 py-3 text-left">Waktu</th>
-                                            <th className="px-6 py-3 text-left">Pengguna</th>
-                                            <th className="px-6 py-3 text-left">Aksi</th>
-                                            <th className="px-6 py-3 text-left">Tabel</th>
-                                            <th className="px-6 py-3 text-left">Detail</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                        {activityLogs.map((log) => (
-                                            <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                                                <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                                    {new Date(log.created_at).toLocaleString('id-ID', {
-                                                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-                                                    })}
-                                                </td>
-                                                <td className="px-6 py-4 text-sm">
-                                                    {log.user_email || 'Sistem'}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 text-xs font-semibold rounded-lg ${log.action === 'INSERT' || log.action === 'RESTORE' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                        log.action === 'UPDATE' || log.action === 'UPDATE_ROLE' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                            log.action === 'DELETE' || log.action === 'SOFT_DELETE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                                'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                                                        }`}>
-                                                        {log.action}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm font-mono text-gray-600 dark:text-gray-400">
-                                                    {log.table_name}
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-gray-500">
-                                                    {log.record_id ? `ID: ${log.record_id.slice(0, 8)}...` : '-'}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
-                            <p className="text-sm text-gray-500">
-                                Menampilkan {logRangeStart}-{logRangeEnd} dari {logTotal}
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setLogPage(prev => Math.max(1, prev - 1))}
-                                    disabled={logPage === 1 || logsLoading}
-                                    className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-                                >
-                                    Sebelumnya
-                                </button>
-                                <span className="text-sm text-gray-500">
-                                    Halaman {logPage} dari {logPageCount}
-                                </span>
-                                <button
-                                    onClick={() => setLogPage(prev => Math.min(logPageCount, prev + 1))}
-                                    disabled={logPage >= logPageCount || logsLoading}
-                                    className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-                                >
-                                    Berikutnya
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <ActivityLogsTab
+                        activityLogs={activityLogs}
+                        logsLoading={logsLoading}
+                        logSearchTerm={logSearchTerm}
+                        setLogSearchTerm={setLogSearchTerm}
+                        logPage={logPage}
+                        setLogPage={setLogPage}
+                        logTotal={logTotal}
+                        fetchActivityLogs={fetchActivityLogs}
+                    />
                 )}
 
                 {activeTab === 'system' && (
-                    <div className="space-y-6">
-                        {/* Health Status Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${systemHealth.database === 'healthy' ? 'bg-green-100 dark:bg-green-900/30' :
-                                            systemHealth.database === 'degraded' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                                                'bg-red-100 dark:bg-red-900/30'
-                                            }`}>
-                                            <Database size={24} className={`${systemHealth.database === 'healthy' ? 'text-green-600' :
-                                                systemHealth.database === 'degraded' ? 'text-amber-600' :
-                                                    'text-red-600'
-                                                }`} />
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-gray-900 dark:text-white">Database</p>
-                                            <p className="text-xs text-gray-500">Supabase PostgreSQL</p>
-                                            <p className="text-xs text-gray-500">
-                                                Latensi {systemHealth.databaseLatencyMs !== null ? `${systemHealth.databaseLatencyMs} ms` : '-'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${systemHealth.database === 'healthy' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                        systemHealth.database === 'degraded' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                        }`}>
-                                        <span className={`w-2 h-2 rounded-full ${systemHealth.database === 'healthy' ? 'bg-green-500' :
-                                            systemHealth.database === 'degraded' ? 'bg-amber-500' :
-                                                'bg-red-500'
-                                            }`} />
-                                        {systemHealth.database === 'healthy' ? 'Sehat' : systemHealth.database === 'degraded' ? 'Lambat' : 'Offline'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                            <Server size={24} className="text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-gray-900 dark:text-white">API Supabase</p>
-                                            <p className="text-xs text-gray-500">Auth dan REST</p>
-                                            <p className="text-xs text-gray-500">
-                                                Latensi {systemHealth.apiLatencyMs !== null ? `${systemHealth.apiLatencyMs} ms` : '-'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${systemHealth.api === 'healthy' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                        systemHealth.api === 'degraded' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                        }`}>
-                                        <span className={`w-2 h-2 rounded-full ${systemHealth.api === 'healthy' ? 'bg-green-500' :
-                                            systemHealth.api === 'degraded' ? 'bg-amber-500' :
-                                                'bg-red-500'
-                                            }`} />
-                                        {systemHealth.api === 'healthy' ? 'Sehat' : systemHealth.api === 'degraded' ? 'Lambat' : 'Offline'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                                            <Shield size={24} className="text-purple-600" />
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-gray-900 dark:text-white">Keamanan</p>
-                                            <p className="text-xs text-gray-500">RLS Aktif</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                        <CheckCircle2 size={14} />
-                                        Terlindungi
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* System Info */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-bold flex items-center gap-2">
-                                    <Cpu size={20} className="text-indigo-500" />
-                                    Informasi Sistem
-                                </h3>
-                                <button
-                                    onClick={checkSystemHealth}
-                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-                                >
-                                    <RefreshCw size={14} />
-                                    Cek Kesehatan
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
-                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                                            <HardDrive size={16} className="text-gray-400" />
-                                            Total Rekaman
-                                        </span>
-                                        <span className="font-mono font-bold text-gray-900 dark:text-white">
-                                            {(stats.totalUsers + stats.totalStudents + stats.totalAttendance + stats.totalGrades + stats.totalTasks).toLocaleString()}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
-                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                                            <Users size={16} className="text-gray-400" />
-                                            Pengguna Aktif
-                                        </span>
-                                        <span className="font-mono font-bold text-gray-900 dark:text-white">{stats.totalUsers}</span>
-                                    </div>
-                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
-                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                                            <Trash2 size={16} className="text-gray-400" />
-                                            Pengguna Terhapus
-                                        </span>
-                                        <span className="font-mono font-bold text-gray-900 dark:text-white">{deletedTotal}</span>
-                                    </div>
-                                </div>
-                                <div className="space-y-4">
-                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
-                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                                            <Activity size={16} className="text-gray-400" />
-                                            Log Aktivitas
-                                        </span>
-                                        <span className="font-mono font-bold text-gray-900 dark:text-white">{logTotal}</span>
-                                    </div>
-                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
-                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                                            <TrendingUp size={16} className="text-gray-400" />
-                                            Versi Aplikasi
-                                        </span>
-                                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">v2.0.0</span>
-                                    </div>
-                                    <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
-                                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                                            <Clock size={16} className="text-gray-400" />
-                                            Cek Kesehatan Terakhir
-                                        </span>
-                                        <span className="font-mono text-sm text-gray-900 dark:text-white">
-                                            {systemHealth.lastChecked ? systemHealth.lastChecked.toLocaleTimeString('id-ID') : 'Belum Pernah'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Data Usage */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                                <BarChart3 size={20} className="text-indigo-500" />
-                                Distribusi Data
-                            </h3>
-                            <div className="space-y-4">
-                                {[
-                                    { label: 'Siswa', value: stats.totalStudents, max: distributionMax, color: 'bg-blue-500' },
-                                    { label: 'Absensi', value: stats.totalAttendance, max: distributionMax, color: 'bg-green-500' },
-                                    { label: 'Nilai', value: stats.totalGrades, max: distributionMax, color: 'bg-purple-500' },
-                                    { label: 'Tugas', value: stats.totalTasks, max: distributionMax, color: 'bg-orange-500' },
-                                ].map(item => (
-                                    <div key={item.label} className="space-y-2">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600 dark:text-gray-400">{item.label}</span>
-                                            <span className="font-mono font-bold text-gray-900 dark:text-white">{item.value.toLocaleString()}</span>
-                                        </div>
-                                        <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full ${item.color} rounded-full transition-all duration-500`}
-                                                style={{ width: item.max > 0 ? `${(item.value / item.max) * 100}%` : '0%' }}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+                    <SystemTab
+                        systemHealth={systemHealth}
+                        checkSystemHealth={checkSystemHealth}
+                        stats={stats}
+                        deletedTotal={deletedTotal}
+                        logTotal={logTotal}
+                    />
                 )}
 
                 {/* Error Toast */}

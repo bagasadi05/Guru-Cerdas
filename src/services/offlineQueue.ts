@@ -98,7 +98,7 @@ const initDB = (): Promise<IDBDatabase> => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onerror = () => {
-            console.error('Failed to open IndexedDB, falling back to localStorage');
+            logger.error('Failed to open IndexedDB, falling back to localStorage');
             reject(request.error);
         };
 
@@ -126,7 +126,7 @@ const getQueueFromStorageUtility = async (): Promise<QueuedMutation[]> => {
         const queue = await storageGetJSON<QueuedMutation[]>(QUEUE_KEY);
         return queue || [];
     } catch (e) {
-        console.error("Failed to read offline queue from storage utility", e);
+        logger.error('Failed to read offline queue from storage utility', undefined, e);
         await storageRemove(QUEUE_KEY);
         return [];
     }
@@ -384,7 +384,7 @@ const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
 
         return true;
     } catch (error) {
-        console.error(`Failed to process mutation ${mutation.id}:`, error);
+        logger.error(`Failed to process mutation ${mutation.id}`, undefined, error);
         throw error;
     }
 };
@@ -998,7 +998,6 @@ export async function cacheData<T>(
 export async function getCachedData<T>(key: string): Promise<T | null> {
     try {
         const database = await openDatabase();
-        const transaction = database.transaction(['cache'], 'readonly');
         const store = database.transaction(['cache'], 'readonly').objectStore('cache');
 
         return new Promise((resolve) => {
@@ -1109,7 +1108,7 @@ export const offlineQueue = new OfflineQueueService();
 
 // Initialize functional DB on module load when IndexedDB is available.
 if (typeof indexedDB !== 'undefined') {
-    initDB().catch(console.error);
+    initDB().catch((err) => logger.error('Failed to initialize IndexedDB', undefined, err));
 }
 
 export default offlineQueue;

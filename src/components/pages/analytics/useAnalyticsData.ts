@@ -12,7 +12,7 @@ import {
 
 // Constants
 const EMPTY_CLASSES: AnalyticsClass[] = [];
-const EMPTY_STUDENTS: Student[] = [];
+const _EMPTY_STUDENTS: Student[] = [];
 
 export const useAnalyticsData = () => {
     const { user } = useAuth();

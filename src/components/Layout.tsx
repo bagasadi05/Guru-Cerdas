@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import GreetingRobot from './GreetingRobot';
-import { useOnboarding } from './ui/OnboardingTour';
+import { useOnboarding, OnboardingTour } from './ui/OnboardingTour';
+import { InteractiveTutorialProvider, TutorialPicker } from './ui/InteractiveTutorial';
 import { SearchTrigger } from './SearchSystem';
 import { SkipLinks } from './AccessibilityComponents';
 import { UploadProgressIndicator } from './ui/PerformanceIndicators';
@@ -26,9 +27,10 @@ import { ShellHeaderActions } from './layout/ShellHeaderActions';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  useOnboarding(); // Hook used for side effects
+  const { showTour, endTour } = useOnboarding();
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -144,11 +146,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             {/* Mobile search icon */}
             <div className="sm:hidden">
-              <SearchTrigger className="!w-10 !h-10 !p-0 justify-center" />
+              <SearchTrigger iconOnly={true} />
             </div>
 
             <ShellHeaderActions
               user={user}
+              onOpenTutorial={() => setIsTutorialOpen(true)}
             />
           </div>
         </header>
@@ -213,8 +216,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       {/* Upload Progress Indicator - Floating */}
       <UploadProgressIndicator />
+
+      {/* Tutorial Picker Modal */}
+      <TutorialPicker
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
+      />
+
+      {/* Onboarding Tour Overlay */}
+      <OnboardingTour isOpen={showTour} onComplete={endTour} />
     </div>
   );
 };
 
-export default Layout;
+const LayoutWithTutorial: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
+
+  return (
+    <InteractiveTutorialProvider onNavigate={(path) => navigate(path)}>
+      <Layout>{children}</Layout>
+    </InteractiveTutorialProvider>
+  );
+};
+
+export default LayoutWithTutorial;

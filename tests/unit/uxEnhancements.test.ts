@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -33,7 +32,7 @@ describe('UX Enhancements', () => {
         it('should add to history on set', () => {
             const past = ['state1', 'state2'];
             const present = 'state3';
-            const future: string[] = [];
+            const _future: string[] = [];
 
             // After set
             const newPast = [...past, present];
@@ -82,7 +81,7 @@ describe('UX Enhancements', () => {
         });
 
         it('should clear future on new action', () => {
-            const future = ['f1', 'f2'];
+            const _future = ['f1', 'f2'];
             const newFuture: string[] = [];
 
             expect(newFuture.length).toBe(0);

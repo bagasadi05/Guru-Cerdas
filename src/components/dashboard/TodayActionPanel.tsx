@@ -9,6 +9,8 @@ import {
     TrendingDownIcon,
 } from '../Icons';
 import type { DashboardQueryData } from '../../types';
+import { isTaskOverdue, isTaskDueSoon } from '../../utils/dateHelpers';
+import { useI18n } from '../../utils/i18n';
 
 interface TodayActionPanelProps {
     data: DashboardQueryData;
@@ -63,20 +65,22 @@ const getLatestGradeDrops = (data: DashboardQueryData) => {
 
 export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data }) => {
     const navigate = useNavigate();
+    const { t } = useI18n();
 
     const actions = useMemo<TodayActionItem[]>(() => {
         const items: TodayActionItem[] = [];
+        const now = new Date();
         const totalStudents = data.students.length;
         const attendanceMissing = Math.max(totalStudents - data.dailyAttendanceSummary.total, 0);
-        const overdueTasks = data.tasks.filter((task) => isTaskOverdue(task.due_date)).length;
-        const dueSoonTasks = data.tasks.filter((task) => !isTaskOverdue(task.due_date) && isTaskDueSoon(task.due_date)).length;
+        const overdueTasks = data.tasks.filter((task) => isTaskOverdue(task.due_date, now)).length;
+        const dueSoonTasks = data.tasks.filter((task) => !isTaskOverdue(task.due_date, now) && isTaskDueSoon(task.due_date, now)).length;
         const unreadParentMessages = data.unreadParentMessages.length;
         const gradeDrops = getLatestGradeDrops(data);
 
         if (attendanceMissing > 0) {
             items.push({
                 id: 'attendance-missing',
-                title: 'Absensi belum lengkap',
+                title: t.dashboard.attendanceIncomplete,
                 description: `${attendanceMissing} dari ${totalStudents} siswa belum tercatat hari ini.`,
                 badge: `${attendanceMissing}`,
                 href: '/absensi',
@@ -88,7 +92,7 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data }) => {
         if (overdueTasks > 0 || dueSoonTasks > 0) {
             items.push({
                 id: 'task-deadline',
-                title: overdueTasks > 0 ? 'Tugas melewati deadline' : 'Tugas mendekati deadline',
+                title: overdueTasks > 0 ? t.dashboard.taskOverdue : t.dashboard.taskDueSoon,
                 description: overdueTasks > 0
                     ? `${overdueTasks} tugas perlu segera diselesaikan.`
                     : `${dueSoonTasks} tugas jatuh tempo dalam 24 jam.`,
@@ -103,7 +107,7 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data }) => {
             const firstMessage = data.unreadParentMessages[0];
             items.push({
                 id: 'parent-messages',
-                title: 'Pesan wali belum dibaca',
+                title: t.dashboard.unreadMessages,
                 description: unreadParentMessages === 1
                     ? firstMessage.message
                     : `${unreadParentMessages} pesan wali perlu ditinjau.`,
@@ -119,7 +123,7 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data }) => {
             const studentName = data.students.find((student) => student.id === firstDrop.studentId)?.name || 'Siswa';
             items.push({
                 id: 'grade-drop',
-                title: 'Tren nilai menurun',
+                title: t.dashboard.gradeDropTrend,
                 description: `${studentName} turun ${firstDrop.drop} poin di ${firstDrop.subject}.`,
                 badge: `${gradeDrops.length}`,
                 href: `/siswa/${firstDrop.studentId}`,
@@ -131,8 +135,8 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data }) => {
         if (items.length === 0) {
             items.push({
                 id: 'all-clear',
-                title: 'Tidak ada tindakan mendesak',
-                description: 'Absensi, pesan wali, tugas, dan tren nilai tidak menunjukkan masalah utama hari ini.',
+                title: t.dashboard.noUrgentActions,
+                description: t.dashboard.noUrgentDesc,
                 badge: 'OK',
                 href: '/dashboard',
                 tone: 'success',
@@ -141,7 +145,7 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data }) => {
         }
 
         return items.slice(0, 4);
-    }, [data]);
+    }, [data, t]);
 
     return (
         <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
@@ -149,10 +153,10 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data }) => {
                 <div>
                     <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200">
                         <BellIcon className="h-3.5 w-3.5" />
-                        Prioritas Guru
+                        {t.dashboard.teacherPriority}
                     </div>
-                    <h3 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">Butuh Tindakan Hari Ini</h3>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Ringkasan operasional yang perlu diputuskan tanpa membuka banyak menu.</p>
+                    <h3 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">{t.dashboard.actionsToday}</h3>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.dashboard.actionsSubtitle}</p>
                 </div>
                 <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                     {actions.length} item
@@ -180,31 +184,6 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data }) => {
             </div>
         </section>
     );
-};
-
-const isTaskOverdue = (dueDate: string | null) => {
-    if (!dueDate) return false;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
-        const [year, month, day] = dueDate.split('-').map(Number);
-        const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
-        return endOfDay.getTime() < Date.now();
-    }
-    const parsed = new Date(dueDate);
-    return !Number.isNaN(parsed.getTime()) && parsed.getTime() < Date.now();
-};
-
-const isTaskDueSoon = (dueDate: string | null) => {
-    if (!dueDate) return false;
-    let parsed: Date;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
-        const [year, month, day] = dueDate.split('-').map(Number);
-        parsed = new Date(year, month - 1, day, 23, 59, 59, 999);
-    } else {
-        parsed = new Date(dueDate);
-    }
-    if (Number.isNaN(parsed.getTime())) return false;
-    const diff = parsed.getTime() - Date.now();
-    return diff >= 0 && diff <= 24 * 60 * 60 * 1000;
 };
 
 export default TodayActionPanel;

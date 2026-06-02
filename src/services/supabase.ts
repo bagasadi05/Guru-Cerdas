@@ -3,7 +3,7 @@
  * Supabase Client Configuration
  * 
  * This module initializes and exports the Supabase client for database operations
- * and the Google GenAI client for AI-powered features in the Portal Guru application.
+ * in the Portal Guru application.
  * 
  * @module services/supabase
  * @since 1.0.0
@@ -15,10 +15,6 @@ import { networkResilience } from './networkResilience';
 import { addToQueue } from './offlineQueue';
 import { logger } from './logger';
 
-// --- IMPORTANT ---
-// The credentials below have been provided to make the application runnable.
-// In a production environment, use environment variables and avoid exposing
-// server-only secrets to the client bundle.
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -181,8 +177,7 @@ export const clearStaleAuthTokens = (): void => {
   }
 };
 
-// Centralized Google GenAI Client - DEPRECATED in favor of OpenRouter
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+// Centralized AI Client Configuration (OpenRouter)
 // NOTE: Never read VITE_OPENROUTER_API_KEY here — key is server-side only.
 const openRouterProxyUrl = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
 // In local dev only: direct key fallback (never bundled in production builds)
@@ -216,12 +211,6 @@ export const isAiEnabled = !!openRouterProxyUrl || !!devApiKey;
 if (!isAiEnabled) {
     logger.warn("AI API Keys are not set. AI features will not work.", "Supabase");
 }
-
-/**
- * Google GenAI client instance for AI-powered features.
- * @deprecated Use openRouterService instead for better free tier support.
- */
-// export const ai = new GoogleGenAI({ apiKey }); - Removed to prevent usage
 
 /**
  * Note on Offline Sync:

@@ -8,7 +8,7 @@
  * e.g. AuthProvider depends on QueryClientProvider and ThemeProvider.
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { ThemeProvider } from '../hooks/useTheme';
 import { AccessibilityProvider } from './ui/AccessibilityFeatures';
@@ -21,6 +21,7 @@ import { UploadProgressProvider } from './ui/PerformanceIndicators';
 import { UndoToastProvider } from './ui/UndoToast';
 import { KeyboardShortcutsProvider } from './advanced-features/KeyboardShortcutsProvider';
 import ErrorBoundary from './ErrorBoundary';
+import { initQueryPersistence } from '../services/queryClient';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -32,18 +33,27 @@ interface AppProvidersProps {
  *
  * Provider hierarchy (outermost → innermost):
  * ErrorBoundary → QueryClient → Theme → Accessibility →
- * Auth → I18n → Toast → Sync → Semester → UploadManager →
+ * I18n → Toast → Auth → Sync → Semester → UploadManager →
  * UploadProgress → UndoToast → KeyboardShortcuts → children
  */
 export function AppProviders({ children, queryClient }: AppProvidersProps) {
+  const persistenceInitialized = useRef(false);
+
+  useEffect(() => {
+    if (!persistenceInitialized.current) {
+      persistenceInitialized.current = true;
+      initQueryPersistence();
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <AccessibilityProvider>
-            <AuthProvider>
-              <I18nProvider>
-                <ToastProvider>
+            <I18nProvider>
+              <ToastProvider>
+                <AuthProvider>
                   <SyncProvider>
                     <SemesterProvider>
                       <UploadManagerProvider>
@@ -57,9 +67,9 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
                       </UploadManagerProvider>
                     </SemesterProvider>
                   </SyncProvider>
-                </ToastProvider>
-              </I18nProvider>
-            </AuthProvider>
+                </AuthProvider>
+              </ToastProvider>
+            </I18nProvider>
           </AccessibilityProvider>
         </ThemeProvider>
       </QueryClientProvider>

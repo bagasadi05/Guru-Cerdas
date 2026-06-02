@@ -10,8 +10,6 @@ import {
     InfoIcon,
     SettingsIcon,
     ShieldAlertIcon,
-    SparklesIcon,
-    TrendingUpIcon,
 } from '../../Icons';
 import type {
     PortalMoreSection,

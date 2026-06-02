@@ -3,6 +3,7 @@ import { logger } from '../services/logger';
 import { errorReporter } from '../services/errorHandling';
 import { AlertTriangleIcon, RefreshCwIcon, HomeIcon } from './Icons';
 import { Button } from './ui/Button';
+import { idTranslations, enTranslations, type Language } from '../utils/i18n';
 
 interface ErrorContext {
   userId?: string;
@@ -109,6 +110,20 @@ class ErrorBoundary extends Component<Props, State> {
     }
   }
 
+  private getLanguage(): Language {
+    try {
+      const saved = localStorage.getItem('portal-guru-language');
+      if (saved === 'en' || saved === 'id') return saved;
+    } catch {
+      // Ignore
+    }
+    return 'id';
+  }
+
+  private getTranslations() {
+    return this.getLanguage() === 'en' ? enTranslations : idTranslations;
+  }
+
   handleReload = () => {
     logger.info('User clicked reload after error', 'ErrorBoundary');
     window.location.reload();
@@ -147,11 +162,11 @@ class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
-              Terjadi Kesalahan
+              {this.getTranslations().errors.general}
             </h1>
 
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Maaf, terjadi kesalahan yang tidak terduga. Tim kami telah diberitahu tentang masalah ini.
+              {this.getTranslations().errors.contactSupport}
             </p>
 
             {import.meta.env.DEV && this.state.error && (
@@ -178,7 +193,7 @@ class ErrorBoundary extends Component<Props, State> {
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 <RefreshCwIcon className="w-4 h-4 mr-2" />
-                Coba Lagi
+                {this.getTranslations().errors.tryAgain}
               </Button>
               <Button
                 onClick={this.handleGoHome}
@@ -186,7 +201,7 @@ class ErrorBoundary extends Component<Props, State> {
                 className="flex-1"
               >
                 <HomeIcon className="w-4 h-4 mr-2" />
-                Beranda
+                {this.getTranslations().nav.dashboard}
               </Button>
             </div>
           </div>

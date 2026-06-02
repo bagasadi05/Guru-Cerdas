@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '../services/logger';
 import {
   generateAIInsight,
   cacheInsight,
@@ -83,7 +84,7 @@ export const useAIInsights = (
       setInsight(generatedInsight);
       setLastGeneratedDate(today);
     } catch (err) {
-      console.error('AI Insight Error:', err);
+      logger.error('AI Insight Error', err instanceof Error ? err : new Error(String(err)), undefined, 'AIInsights');
       setError('Gagal membuat wawasan AI. Silakan coba lagi.');
     } finally {
       setIsLoading(false);

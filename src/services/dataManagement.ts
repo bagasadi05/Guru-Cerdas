@@ -5,7 +5,7 @@
 
 import { supabase } from './supabase';
 import { logger } from './logger';
-import { generateSecureAccessCode, auditLog } from './securityEnhanced';
+import { auditLog } from './securityEnhanced';
 import { storageGet, storageSet } from '../utils/storage';
 
 // ============================================
@@ -125,7 +125,7 @@ export async function exportEntity(
  */
 export async function exportAllEntities(
     userId: string,
-    options: ExportOptions = { format: 'json', includeMetadata: true }
+    _options: ExportOptions = { format: 'json', includeMetadata: true }
 ): Promise<{ data: string; filename: string }> {
     const entities: EntityType[] = ['students', 'attendance', 'tasks', 'schedules', 'academic_records'];
     const allData: Record<string, any[]> = {};
@@ -188,7 +188,7 @@ export async function importEntity(
             const parsed = JSON.parse(fileContent);
             records = Array.isArray(parsed) ? parsed : parsed.data;
         }
-    } catch (e) {
+    } catch (_e) {
         throw new Error(`Invalid ${format.toUpperCase()} format`);
     }
 
@@ -267,7 +267,7 @@ export async function importFullBackup(
 // BACKUP & RESTORE
 // ============================================
 
-const BACKUP_STORAGE_KEY = 'portal_guru_backups';
+const _BACKUP_STORAGE_KEY = 'portal_guru_backups';
 
 /**
  * Create a backup and store it locally

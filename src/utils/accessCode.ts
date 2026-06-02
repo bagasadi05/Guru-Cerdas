@@ -62,21 +62,19 @@ const recordCodeGeneration = async (): Promise<void> => {
 };
 
 // Generate simple access code (6 chars, compatible with old system)
+// Uses cryptographically secure random values (crypto.getRandomValues)
 export const generateSimpleAccessCode = (): string => {
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-        result += ACCESS_CODE_CHARS.charAt(Math.floor(Math.random() * ACCESS_CODE_CHARS.length));
-    }
-    return result;
+    const array = new Uint32Array(6);
+    crypto.getRandomValues(array);
+    return Array.from(array, num => ACCESS_CODE_CHARS.charAt(num % ACCESS_CODE_CHARS.length)).join('');
 };
 
 // Generate secure access code (10 chars, mixed case)
+// Uses cryptographically secure random values (crypto.getRandomValues)
 export const generateSecureAccessCode = (): string => {
-    let result = '';
-    for (let i = 0; i < 10; i++) {
-        result += SECURE_CODE_CHARS.charAt(Math.floor(Math.random() * SECURE_CODE_CHARS.length));
-    }
-    return result;
+    const array = new Uint32Array(10);
+    crypto.getRandomValues(array);
+    return Array.from(array, num => SECURE_CODE_CHARS.charAt(num % SECURE_CODE_CHARS.length)).join('');
 };
 
 // Generate access code with rate limiting

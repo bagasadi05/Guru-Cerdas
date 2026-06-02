@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
-import { I18nProvider, useI18n, useTranslations, Language } from '../../src/contexts/I18nContext';
+import { I18nProvider, useI18n, useTranslations } from '../../src/utils/i18n';
 
 // Mock localStorage
 const localStorageMock = (() => {

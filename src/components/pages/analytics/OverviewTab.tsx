@@ -1,8 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { UsersIcon, CalendarIcon, BarChart3Icon, TrendingUpIcon, AlertCircleIcon, ExternalLink, Sparkles } from 'lucide-react';
-import { AttendanceStats, ClassStats, AtRiskItem, Student } from './types';
+import { UsersIcon, CalendarIcon, BarChart3Icon, TrendingUpIcon, AlertCircleIcon, Sparkles } from 'lucide-react';
+import { AttendanceStats, AtRiskItem, Student } from './types';
 
 interface OverviewTabProps {
     students: Student[];
@@ -13,6 +13,35 @@ interface OverviewTabProps {
     atRiskStudents: AtRiskItem[];
     topPerformingStudents: {student: Student, avg: number}[];
 }
+
+const StatCard = ({ title, value, subtitle, icon: Icon, color, trend }: any) => {
+    const colors: any = {
+        indigo: 'from-indigo-500 to-purple-600',
+        green: 'from-green-500 to-emerald-600',
+        amber: 'from-amber-500 to-orange-600',
+        blue: 'from-blue-500 to-cyan-600',
+    };
+
+    return (
+        <Card className="relative overflow-hidden bg-white dark:bg-slate-900 border-0 shadow-lg">
+            <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colors[color]} opacity-10 rounded-full -translate-y-8 translate-x-8`} />
+            <CardContent className="p-5">
+                <div className="flex items-start justify-between mb-2">
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
+                    <div className={`p-2.5 rounded-xl bg-gradient-to-br ${colors[color]}`}>
+                        <Icon className="w-5 h-5 text-white" />
+                    </div>
+                </div>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
+                {subtitle && (
+                    <p className={`text-xs mt-2 font-medium ${trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-slate-500'}`}>
+                        {subtitle}
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+    );
+};
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({ 
     students, classes, attendanceStats, taskStats, genderStats, atRiskStudents, topPerformingStudents 
@@ -47,35 +76,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     };
 
     const summary = generateSummary();
-
-    const StatCard = ({ title, value, subtitle, icon: Icon, color, trend }: any) => {
-        const colors: any = {
-            indigo: 'from-indigo-500 to-purple-600',
-            green: 'from-green-500 to-emerald-600',
-            amber: 'from-amber-500 to-orange-600',
-            blue: 'from-blue-500 to-cyan-600',
-        };
-
-        return (
-            <Card className="relative overflow-hidden bg-white dark:bg-slate-900 border-0 shadow-lg">
-                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colors[color]} opacity-10 rounded-full -translate-y-8 translate-x-8`} />
-                <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-2">
-                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
-                        <div className={`p-2.5 rounded-xl bg-gradient-to-br ${colors[color]}`}>
-                            <Icon className="w-5 h-5 text-white" />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
-                    {subtitle && (
-                        <p className={`text-xs mt-2 font-medium ${trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-slate-500'}`}>
-                            {subtitle}
-                        </p>
-                    )}
-                </CardContent>
-            </Card>
-        );
-    };
 
     return (
         <div className="space-y-6 animate-fade-in">

@@ -353,9 +353,10 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                 }
             }
 
+            const fromTable = (supabase.from as any)(table);
             const query = SOFT_DELETE_TABLES.has(table)
-                ? supabase.from(table).update({ deleted_at: new Date().toISOString() }).eq('id', id).eq('user_id', userId)
-                : supabase.from(table).delete().eq('id', id).eq('user_id', userId);
+                ? fromTable.update({ deleted_at: new Date().toISOString() }).eq('id', id).eq('user_id', userId)
+                : fromTable.delete().eq('id', id).eq('user_id', userId);
             const { error } = await query;
             if (error) throw error;
             await writeAuditLog({

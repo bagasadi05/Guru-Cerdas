@@ -9,7 +9,7 @@ export const ActionableRecommendation: React.FC<{
   category: string;
   actions: string[];
   onStartAction?: () => void;
-}> = ({ title, description, priority, category, actions, onStartAction }) => {
+}> = ({ title, description, priority, category, actions, onStartAction: _onStartAction }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const isLongDescription = description.length > 150;
@@ -77,4 +77,4 @@ export const ActionableRecommendation: React.FC<{
       )}
     </div>
   );
-};
+};

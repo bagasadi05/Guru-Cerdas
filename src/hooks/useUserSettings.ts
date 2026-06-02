@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuth } from './useAuth';
 import { useToast } from './useToast';
+import { logger } from '../services/logger';
 
 export interface UserSettings {
     user_id: string;
@@ -112,7 +113,7 @@ export const useUserSettings = () => {
             toast.success('Pengaturan berhasil disimpan');
         },
         onError: (err: any) => {
-            console.error('Error updating settings:', err);
+            logger.error('Error updating settings', err instanceof Error ? err : new Error(String(err)), undefined, 'UserSettings');
             toast.error('Gagal menyimpan pengaturan');
         }
     });

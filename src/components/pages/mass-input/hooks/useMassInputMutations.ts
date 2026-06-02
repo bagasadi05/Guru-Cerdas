@@ -232,7 +232,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             if (recordIds.length === 0) return 'Tidak ada nilai yang dipilih untuk dihapus.';
             const { error } = await supabase
                 .from('academic_records')
-                .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+                .update({ deleted_at: new Date().toISOString() } as never)
                 .in('id', recordIds);
             if (error) throw error;
             if (user) {
@@ -299,7 +299,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes].map((r: any) => r.error).filter((e: any) => e !== null);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (errors.length > 0) throw new Error(errors.map((e: any) => e!.message).join(', '));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         return { 
             student: studentRes.data as any, 
             reports: reportsRes.data || [], 

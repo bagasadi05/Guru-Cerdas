@@ -14,12 +14,13 @@ export const AttendanceClassSelector: React.FC<AttendanceClassSelectorProps> = (
   if (classes.length === 0) return null;
 
   return (
-    <div className="mb-6">
+    <div className="mb-6" data-tutorial="class-selector">
       <div className="flex flex-wrap items-center gap-2">
         {classes.map((classItem) => (
           <button
             key={classItem.id}
             onClick={() => onSelectClass(classItem.id)}
+            data-tutorial="class-pill"
             className={`h-9 sm:h-10 px-4 rounded-full font-semibold text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${
               selectedClass === classItem.id
                 ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'

@@ -1,9 +1,9 @@
 import { useEffect, useCallback, useState } from 'react';
 import { Database } from '../services/database.types';
+import { logger } from '../services/logger';
 import {
     checkAndNotify,
     getDueTasks,
-    getPreferences,
     DueTask,
     getUnreadCount
 } from '../services/NotificationService';
@@ -48,7 +48,7 @@ export const useTaskNotifications = (tasks?: Task[]): UseTaskNotificationsReturn
                     });
                 }
             } catch (error) {
-                console.error('Error syncing task notifications:', error);
+                logger.error('Error syncing task notifications', error as Error, undefined, 'TaskNotifications');
             }
         };
 
@@ -66,7 +66,7 @@ export const useTaskNotifications = (tasks?: Task[]): UseTaskNotificationsReturn
             setDueTasks(tasksData);
             setUnreadCount(count);
         } catch (error) {
-            console.error('Error checking task notifications:', error);
+            logger.error('Error checking task notifications', error as Error, undefined, 'TaskNotifications');
         } finally {
             setIsLoading(false);
         }
