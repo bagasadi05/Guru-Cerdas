@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { logger } from '../services/logger';
 import { Database } from '../services/database.types';
 
 type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
@@ -24,7 +25,7 @@ export const useScheduleNotifications = (schedule: ScheduleRow[]) => {
                     });
                 }
             } catch (error) {
-                console.error('Error syncing schedule notifications:', error);
+                logger.error('Error syncing schedule notifications', error as Error, undefined, 'ScheduleNotifications');
             }
         };
 

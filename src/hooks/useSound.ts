@@ -33,7 +33,7 @@ export const useSound = () => {
 
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.05);
-        } catch (e) {
+        } catch (_e) {
             // Silent fail for audio
         }
     }, []);

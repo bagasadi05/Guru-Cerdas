@@ -25,6 +25,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { triggerSubtleConfetti } from '../../utils/confetti';
+import { useSemester } from '../../contexts/SemesterContext';
 
 interface Student {
   id: string;
@@ -50,6 +51,13 @@ const BrankasPage: React.FC = () => {
   const { user } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
+  const { activeAcademicYear } = useSemester();
+
+  // Resolve the academic year label for a class, falling back to the
+  // currently active academic year when the class has none stored.
+  const getAcademicYearLabel = (cls: Pick<ClassItem, 'academic_year'>): string => {
+    return cls.academic_year || activeAcademicYear?.name || 'Belum diatur';
+  };
 
   // State Management
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
@@ -343,7 +351,7 @@ const BrankasPage: React.FC = () => {
                   Arsip Kelas: {detailClass.name}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
-                  Tahun Ajaran: {detailClass.academic_year || 'N/A'} • {classStudents.length} Siswa
+                  Tahun Ajaran: {getAcademicYearLabel(detailClass)} • {classStudents.length} Siswa
                 </p>
               </div>
             </div>
@@ -601,7 +609,7 @@ const BrankasPage: React.FC = () => {
                   </h3>
                   <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider mt-1.5 flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                    Tahun Ajaran: {cls.academic_year || 'N/A'}
+                    Tahun Ajaran: {getAcademicYearLabel(cls)}
                   </p>
                 </div>
 

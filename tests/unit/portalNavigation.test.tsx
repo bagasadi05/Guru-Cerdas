@@ -43,7 +43,8 @@ describe('PortalNavigation', () => {
 
         expect(screen.getByText('Konten Beranda')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('tab', { name: /Komunikasi/i }));
+        const komunikasiTabs = screen.getAllByRole('tab', { name: /Komunikasi/i });
+        fireEvent.click(komunikasiTabs[0]);
 
         expect(screen.getByText('Konten Komunikasi')).toBeInTheDocument();
         expect(screen.queryByText('Konten Beranda')).not.toBeInTheDocument();

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Trophy, Plus, Search, Trash2, Pencil } from 'lucide-react';
+import { Trophy, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { getJsPDF, getAutoTable, getXLSX } from '../../utils/dynamicImports';
@@ -14,14 +14,14 @@ import { useExtracurricularMutations } from './extracurricular/useExtracurricula
 
 // Views & Tabs
 import { ExtracurricularMasterView } from './extracurricular/ExtracurricularMasterView';
-import { ExtracurricularDetailView, DetailTabType } from './extracurricular/ExtracurricularDetailView';
+import { ExtracurricularDetailView } from './extracurricular/ExtracurricularDetailView';
 import { MembersTab } from './extracurricular/MembersTab';
 import { AttendanceTab } from './extracurricular/AttendanceTab';
 import { GradesTab } from './extracurricular/GradesTab';
 import { ExternalStudentsManager } from './extracurricular/ExternalStudentsManager';
 
 const ExtracurricularPage: React.FC = () => {
-    const { user } = useAuth();
+    const { user: _user } = useAuth();
     const toast = useToast();
 
     // ==================== STATE ====================
@@ -66,7 +66,7 @@ const ExtracurricularPage: React.FC = () => {
     const {
         loadingExtracurriculars, loadingAllExtraStudents,
         extracurriculars, selectedExtracurricularData, classes,
-        participants, allExtracurricularStudents, enrollments, attendanceRecords,
+        participants, allExtracurricularStudents, enrollments, attendanceRecords: _attendanceRecords,
         activeSemester, enrolledParticipantIds, attendanceMap, gradesMap,
         uniqueExtraStudentClasses, queryClient
     } = useExtracurricularData({

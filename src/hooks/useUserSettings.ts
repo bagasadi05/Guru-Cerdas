@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuth } from './useAuth';
 import { useToast } from './useToast';
-import { maybeSingleCompat } from '../services/supabaseQueryCompat';
+import { logger } from '../services/logger';
 
 export interface UserSettings {
     user_id: string;
@@ -53,10 +53,11 @@ export const useUserSettings = () => {
             if (!user) return null;
 
             // Try to fetch existing settings
-            const { data, error } = await maybeSingleCompat(supabase
+            const { data, error } = await supabase
                 .from('user_settings')
                 .select('*')
-                .eq('user_id', user.id));
+                .eq('user_id', user.id)
+                .maybeSingle();
 
             if (error) throw error;
 
@@ -112,7 +113,7 @@ export const useUserSettings = () => {
             toast.success('Pengaturan berhasil disimpan');
         },
         onError: (err: any) => {
-            console.error('Error updating settings:', err);
+            logger.error('Error updating settings', err instanceof Error ? err : new Error(String(err)), undefined, 'UserSettings');
             toast.error('Gagal menyimpan pengaturan');
         }
     });

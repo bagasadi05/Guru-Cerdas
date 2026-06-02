@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 describe('Advanced Features', () => {
     describe('Bulk Selection', () => {
@@ -225,7 +225,7 @@ describe('Advanced Features', () => {
 
     describe('Dashboard Configuration', () => {
         it('should save to localStorage', () => {
-            const storageKey = 'dashboard_layout';
+            const _storageKey = 'dashboard_layout';
             const widgets = [{ id: '1', type: 'stats' }];
             const data = JSON.stringify(widgets);
             expect(data).toContain('stats');

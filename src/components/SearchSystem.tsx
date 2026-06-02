@@ -301,7 +301,7 @@ export const GlobalSearchModal: React.FC<{
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Cari siswa, absensi, tugas..."
+                        placeholder="Cari siswa, kelas, tugas, atau nilai..."
                         className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 outline-none text-lg"
                     />
                     {query && (
@@ -461,17 +461,33 @@ export const GlobalSearchModal: React.FC<{
 // SEARCH TRIGGER BUTTON
 // ============================================
 
-export const SearchTrigger: React.FC<{ className?: string }> = ({ className = '' }) => {
+export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }> = ({ className = '', iconOnly = false }) => {
     const { open } = useGlobalSearch();
+
+    if (iconOnly) {
+        return (
+            <button
+                onClick={open}
+                className={`flex items-center justify-center w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 transition-all border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
+                aria-label="Cari"
+            >
+                <Search className="w-[18px] h-[18px]" />
+            </button>
+        );
+    }
 
     return (
         <button
             onClick={open}
-            className={`flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 transition-colors ${className}`}
+            className={`flex items-center justify-center sm:justify-between gap-2 w-10 h-10 sm:w-[340px] sm:h-10 px-0 sm:px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 transition-all border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
         >
-            <Search className="w-4 h-4" />
-            <span className="hidden sm:inline">Cari...</span>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 text-xs">
+            <div className="flex items-center justify-center sm:justify-start gap-2 overflow-hidden flex-1 text-left">
+                <Search className="w-4 h-4 flex-shrink-0" />
+                <span className="hidden sm:inline text-xs truncate flex-1 max-w-[240px]">
+                    Cari siswa, kelas, tugas, atau nilai...
+                </span>
+            </div>
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 text-[10px] font-bold shadow-sm flex-shrink-0">
                 ⌘K
             </kbd>
         </button>
@@ -506,7 +522,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
 }) => {
     const [selectedField, setSelectedField] = useState<string>('');
     const [value, setValue] = useState<string>('');
-    const [operator, setOperator] = useState<SearchFilter['operator']>('contains');
+    const [operator, _setOperator] = useState<SearchFilter['operator']>('contains');
 
     const handleAdd = () => {
         if (!selectedField || !value) return;

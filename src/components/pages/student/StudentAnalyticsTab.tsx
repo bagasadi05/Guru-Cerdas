@@ -53,7 +53,7 @@ const calculateLabelPositions = (labels: string[], centerX: number, centerY: num
 
 export const StudentAnalyticsTab: React.FC<StudentAnalyticsTabProps> = ({
     academicRecords,
-    classAverages,
+    classAverages: _classAverages,
 }) => {
     // Calculate average score per subject
     const subjectAverages = useMemo(() => {

@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Search, Users, Plus } from 'lucide-react';
 import { EnrollmentView } from './types';
-import { useExtracurricularData } from './useExtracurricularData';
 
 interface MembersTabProps {
     extracurricularId: string;
@@ -17,7 +16,7 @@ interface MembersTabProps {
 }
 
 export const MembersTab: React.FC<MembersTabProps> = ({
-    extracurricularId,
+    extracurricularId: _extracurricularId,
     enrollments,
     participants,
     enrolledParticipantIds,

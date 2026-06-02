@@ -347,6 +347,7 @@ export type Database = {
           deleted_at: string | null
           grade_level: number | null
           id: string
+          is_archived: boolean
           name: string
           updated_at: string | null
           user_id: string
@@ -357,6 +358,7 @@ export type Database = {
           deleted_at?: string | null
           grade_level?: number | null
           id?: string
+          is_archived?: boolean
           name: string
           updated_at?: string | null
           user_id: string
@@ -367,6 +369,7 @@ export type Database = {
           deleted_at?: string | null
           grade_level?: number | null
           id?: string
+          is_archived?: boolean
           name?: string
           updated_at?: string | null
           user_id?: string

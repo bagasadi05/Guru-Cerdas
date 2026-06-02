@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, clearStaleAuthTokens } from '../services/supabase';
-import type { User, Session } from '@supabase/supabase-js';
+import type { User, Session, AuthResponse, UserResponse } from '@supabase/supabase-js';
 import type { Database } from '../services/database.types';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { getStudentAvatar } from '../utils/avatarUtils';
+import { useToast } from './useToast';
+import { logger } from '../services/logger';
 
 /**
  * Represents an authenticated application user with profile information
@@ -47,19 +49,19 @@ const requestNotificationPermission = async (): Promise<boolean> => {
     if (isNativePlatform()) {
       // For Capacitor - use Local Notifications
       const result = await LocalNotifications.requestPermissions();
-      console.log('Notification permission result:', result);
+      logger.info('Notification permission result', 'Auth', result);
       return result.display === 'granted';
     } else {
       // For web browser
       if (!('Notification' in window)) {
-        console.log('Notifications not supported in this browser');
+        logger.info('Notifications not supported in this browser', 'Auth');
         return false;
       }
       const permission = await Notification.requestPermission();
       return permission === 'granted';
     }
   } catch (error) {
-    console.error('Error requesting notification permission:', error);
+    logger.error('Error requesting notification permission', error as Error, undefined, 'Auth');
     return false;
   }
 };
@@ -78,7 +80,7 @@ const scheduleNotifications = async (schedule: ScheduleWithClassName[]): Promise
 
       // If no schedule, just return success
       if (schedule.length === 0) {
-        console.log('No schedules to set notifications for');
+        logger.info('No schedules to set notifications for', 'Auth');
         return true;
       }
 
@@ -88,7 +90,7 @@ const scheduleNotifications = async (schedule: ScheduleWithClassName[]): Promise
       // Add listener for when notification fires (to re-schedule for next week)
       if (!notificationListenerRegistered) {
         LocalNotifications.addListener('localNotificationReceived', async (notification) => {
-          console.log('Notification received:', notification);
+          logger.info('Notification received', 'Auth', notification);
           // Re-schedule notifications for next week
           const storedSchedule = localStorage.getItem('portal_guru_schedule');
           if (storedSchedule) {
@@ -99,7 +101,7 @@ const scheduleNotifications = async (schedule: ScheduleWithClassName[]): Promise
                 scheduleNotifications(scheduleData);
               }, 1000);
             } catch (e) {
-              console.error('Error re-scheduling notifications:', e);
+              logger.error('Error re-scheduling notifications', e as Error, undefined, 'Auth');
             }
           }
         });
@@ -154,15 +156,15 @@ const scheduleNotifications = async (schedule: ScheduleWithClassName[]): Promise
         };
       });
 
-      console.log('Scheduling notifications:', notifications.length);
+      logger.info(`Scheduling ${notifications.length} notifications`, 'Auth');
 
       if (notifications.length > 0) {
         await LocalNotifications.schedule({ notifications });
-        console.log('Notifications scheduled successfully');
+        logger.info('Notifications scheduled successfully', 'Auth');
       }
       return true;
     } catch (error) {
-      console.error('Error scheduling native notifications:', error);
+      logger.error('Error scheduling native notifications', error as Error, undefined, 'Auth');
       throw error; // Re-throw to be caught by the caller
     }
   } else {
@@ -185,11 +187,11 @@ const setupServiceWorker = async (schedule?: ScheduleWithClassName[]): Promise<b
           payload: schedule,
         });
       } else if (!registration?.active) {
-        console.warn('Service worker aktif belum tersedia untuk sinkronisasi notifikasi.');
+        logger.warn('Service worker aktif belum tersedia untuk sinkronisasi notifikasi', 'Auth');
       }
       return !!registration?.active;
     } catch (error) {
-      console.error('Service Worker not ready:', error);
+      logger.error('Service Worker not ready', error as Error, undefined, 'Auth');
       return false;
     }
   }
@@ -211,13 +213,13 @@ interface AuthContextType {
   /** Indicates whether schedule notifications are enabled */
   isNotificationsEnabled: boolean;
   /** Authenticates a user with email and password */
-  login: (email: string, password?: string) => Promise<any>;
+  login: (email: string, password?: string) => Promise<AuthResponse>;
   /** Signs out the current user and disables notifications */
   logout: () => Promise<void>;
   /** Updates the current user's profile information */
-  updateUser: (data: { name?: string; school_name?: string; avatar_url?: string; password?: string }) => Promise<any>;
+  updateUser: (data: { name?: string; school_name?: string; avatar_url?: string; password?: string }) => Promise<UserResponse>;
   /** Registers a new user account */
-  signup: (name: string, email: string, password?: string) => Promise<any>;
+  signup: (name: string, email: string, password?: string) => Promise<AuthResponse>;
   /** Enables push notifications for schedule reminders */
   enableScheduleNotifications: (schedule: ScheduleWithClassName[]) => Promise<boolean>;
   /** Disables push notifications for schedule reminders */
@@ -259,6 +261,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
  * @since 1.0.0
  */
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const toast = useToast();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -308,7 +311,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Error fetching session:', error);
+          logger.error('Error fetching session', error as unknown as Error, undefined, 'Auth');
           // A failed/expired refresh token leaves the client in a broken state.
           // Clear the stale token and reset to a clean logged-out state.
           const message = error.message?.toLowerCase() ?? '';
@@ -324,7 +327,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(data.session);
         setUser(processUser(data.session?.user));
       } catch (err) {
-        console.error('Unexpected error fetching session:', err);
+        logger.error('Unexpected error fetching session', err as Error, undefined, 'Auth');
         setSession(null);
         setUser(null);
       } finally {
@@ -355,7 +358,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const permissionGranted = await requestNotificationPermission();
 
       if (!permissionGranted) {
-        alert('Izin notifikasi tidak diberikan.');
+        toast.warning('Izin notifikasi tidak diberikan.');
         return false;
       }
 
@@ -370,8 +373,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return false;
     } catch (error) {
-      console.error('Error enabling notifications:', error);
-      alert('Gagal mengaktifkan notifikasi.');
+      logger.error('Error enabling notifications', error as Error, undefined, 'Auth');
+      toast.error('Gagal mengaktifkan notifikasi.');
       return false;
     }
   };
@@ -392,7 +395,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     } catch (error) {
-      console.error('Failed to clear notifications:', error);
+      logger.error('Failed to clear notifications', error as Error, undefined, 'Auth');
     }
     localStorage.removeItem('scheduleNotificationsEnabled');
     setIsNotificationsEnabled(false);

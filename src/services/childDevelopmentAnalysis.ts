@@ -1,5 +1,6 @@
 import { isAiEnabled, supabase } from './supabase';
 import { generateOpenRouterJson } from './openRouterService';
+import { logger } from './logger';
 
 export interface ChildDevelopmentData {
   student: {
@@ -88,7 +89,7 @@ function generateFallbackAnalysis(
   totalViolations: number
 ): ComprehensiveChildAnalysis {
   const performanceLevel = averageScore >= 85 ? 'sangat baik' : averageScore >= 75 ? 'baik' : averageScore >= 65 ? 'cukup' : 'perlu peningkatan';
-  const attendanceLevel = attendanceRate >= 95 ? 'sangat baik' : attendanceRate >= 85 ? 'baik' : attendanceRate >= 75 ? 'cukup' : 'perlu peningkatan';
+  const _attendanceLevel = attendanceRate >= 95 ? 'sangat baik' : attendanceRate >= 85 ? 'baik' : attendanceRate >= 75 ? 'cukup' : 'perlu peningkatan';
 
   return {
     summary: {
@@ -129,19 +130,78 @@ function generateFallbackAnalysis(
       emotionalIntelligence: '🥰 Bisa mengerti perasaan teman, anak yang peka',
       discipline: attendanceRate >= 95 ? '🏅 Sangat Rajin (Teladan!)' : attendanceRate >= 85 ? '👍 Rajin' : attendanceRate >= 75 ? '👌 Cukup Rajin' : '💪 Perlu Semangat Lagi'
     },
-    psychomotor: {
-      motorSkills: '🏃‍♂️ Gerak tubuhnya lincah, aktif, dan sehat',
-      outstandingSkills: [
-        '🛠️ Suka praktek dan bikin karya seru',
-        '✍️ Tangannya terampil (tulisan/gambarnya rapi)',
-        '⚽ Jago mengikuti gerakan olahraga'
-      ],
-      areasNeedingStimulation: [
-        '🌳 Sering ajak main di taman biar makin kuat fisiknya',
-        '✂️ Ajak main origami atau lego untuk melatih jari'
-      ],
-      coordination: '🕺 Gerakannya luwes banget, tidak kaku'
-    },
+    psychomotor: (() => {
+      // Data-aware psychomotor analysis
+      const quizTotal = data.quizPoints.reduce((sum, q) => sum + (q.points || 0), 0);
+      const quizCount = data.quizPoints.length;
+      const keaktifan = quizTotal > 0 ? Math.min(quizTotal * 5, 100) : Math.min(quizCount * 15, 100);
+
+      // Find practical/arts subjects
+      const practicalSubjects = ['pjok', 'seni', 'sbdp', 'prakarya', 'keterampilan', 'seni budaya'];
+      const practicalRecords = data.academicRecords.filter(r =>
+        practicalSubjects.some(p => (r.subject || '').toLowerCase().includes(p))
+      );
+      const practicalAvg = practicalRecords.length > 0
+        ? Math.round(practicalRecords.reduce((s, r) => s + r.score, 0) / practicalRecords.length)
+        : null;
+
+      // Find strongest subject
+      const subjectMap: Record<string, { total: number; count: number }> = {};
+      data.academicRecords.forEach(r => {
+        const subj = r.subject || 'Lainnya';
+        if (!subjectMap[subj]) subjectMap[subj] = { total: 0, count: 0 };
+        subjectMap[subj].total += r.score;
+        subjectMap[subj].count++;
+      });
+      const topSubject = Object.entries(subjectMap)
+        .map(([s, d]) => ({ subject: s, avg: Math.round(d.total / d.count) }))
+        .sort((a, b) => b.avg - a.avg)[0];
+
+      const motorSkills = practicalAvg !== null && practicalAvg >= 80
+        ? `🏃\u200d♂️ Kemampuan praktik dan seni sangat baik (rata-rata ${practicalAvg})`
+        : keaktifan >= 60
+        ? '🏃\u200d♂️ Aktif berpartisipasi dan cukup terampil dalam kegiatan praktik'
+        : '🏃\u200d♂️ Sedang mengembangkan keterampilan fisik dan koordinasi';
+
+      const outstandingSkills = [];
+      if (practicalAvg !== null && practicalAvg >= 75) {
+        outstandingSkills.push(`🎨 Nilai praktik/seni bagus (rata-rata ${practicalAvg})`);
+      }
+      if (keaktifan >= 50) {
+        outstandingSkills.push(`🏆 Aktif dalam kuis dan kegiatan kelas (${quizCount} aktivitas, ${quizTotal} poin)`);
+      }
+      if (topSubject && topSubject.avg >= 80) {
+        outstandingSkills.push(`⭐ Terampil di ${topSubject.subject} (rata-rata ${topSubject.avg})`);
+      }
+      if (outstandingSkills.length === 0) {
+        outstandingSkills.push('🛠️ Suka praktek dan bikin karya seru', '✍️ Sedang mengembangkan keterampilan tangan');
+      }
+
+      const areasNeedingStimulation = [];
+      if (keaktifan < 40) {
+        areasNeedingStimulation.push('💡 Perlu lebih aktif berpartisipasi dalam kegiatan kelas');
+      }
+      if (practicalAvg !== null && practicalAvg < 70) {
+        areasNeedingStimulation.push('🎨 Dorong lebih banyak aktivitas seni dan prakarya di rumah');
+      }
+      areasNeedingStimulation.push('🌳 Sering ajak main di taman biar makin kuat fisiknya');
+      if (areasNeedingStimulation.length < 2) {
+        areasNeedingStimulation.push('✂️ Ajak main origami atau lego untuk melatih jari');
+      }
+
+      const coordination = keaktifan >= 70
+        ? '🕺 Koordinasi gerakan sangat baik, aktif dalam berbagai kegiatan fisik'
+        : keaktifan >= 40
+        ? '🕺 Koordinasi cukup baik, sedang berkembang dengan positif'
+        : '🌱 Koordinasi sedang berkembang, perlu lebih banyak aktivitas fisik';
+
+      return {
+        motorSkills,
+        outstandingSkills: outstandingSkills.slice(0, 3),
+        areasNeedingStimulation: areasNeedingStimulation.slice(0, 3),
+        coordination
+      };
+    })(),
     recommendations: {
       homeSupport: [
         'Dampingi anak belajar 30-45 menit setiap hari setelah pulang sekolah dengan suasana yang kondusif',
@@ -248,7 +308,7 @@ export async function generateComprehensiveChildAnalysis(
 
     // Check if AI is available
     if (!isAiEnabled) {
-      console.warn('AI service not available, using fallback analysis');
+      logger.warn('AI service not available, using fallback analysis');
       return generateFallbackAnalysis(data, averageScore, attendanceRate, violationSummary.total);
     }
 
@@ -294,8 +354,8 @@ Berikan analisis dalam format JSON dengan struktur:
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Error generating child development analysis:', error);
-    console.error('Error details:', errorMessage);
+    logger.error('Error generating child development analysis', undefined, error);
+    logger.error('Error details:', errorMessage);
 
     // Use fallback analysis
     const validAcademicRecords = (data.academicRecords || []).filter(r => r && typeof r.score === 'number');
@@ -330,7 +390,7 @@ export async function generateQuickInsights(
       ? Math.round(validAcademicRecords.reduce((sum, r) => sum + r.score, 0) / validAcademicRecords.length)
       : 0;
 
-    const attendanceRate = validAttendanceRecords.length > 0
+    const _attendanceRate = validAttendanceRecords.length > 0
       ? Math.round((validAttendanceRecords.filter(r => r.status === 'Hadir').length / validAttendanceRecords.length) * 100)
       : 100;
 
@@ -344,7 +404,7 @@ export async function generateQuickInsights(
       ]
     };
   } catch (error) {
-    console.error('Error generating quick insights:', error);
+    logger.error('Error generating quick insights', undefined, error);
     return {
       strengthSummary: 'Siswa menunjukkan potensi yang baik',
       concernSummary: 'Tidak ada concern khusus',
@@ -378,7 +438,7 @@ export async function getLatestAnalysisFromDb(
       generatedBy: data.generated_by as 'AI' | 'Offline Fallback'
     };
   } catch (error) {
-    console.error('Gagal mengambil analisis dari database:', error);
+    logger.error('Gagal mengambil analisis dari database', undefined, error);
     return null;
   }
 }
@@ -436,7 +496,7 @@ export async function saveAnalysisToDb(
       if (error) throw error;
     }
   } catch (error) {
-    console.error('Gagal menyimpan analisis ke database:', error);
+    logger.error('Gagal menyimpan analisis ke database', undefined, error);
     throw error;
   }
 }
@@ -499,7 +559,7 @@ export async function getAnalysisForSemesterFromDb(
       generatedBy: data.generated_by as 'AI' | 'Offline Fallback'
     };
   } catch (error) {
-    console.error('Gagal mengambil analisis semester dari database:', error);
+    logger.error('Gagal mengambil analisis semester dari database', undefined, error);
     return null;
   }
 }
@@ -528,7 +588,7 @@ export async function getComparativeAnalysisFromDb(
       generatedBy: data.generated_by as 'AI' | 'Offline Fallback'
     };
   } catch (error) {
-    console.error('Gagal mengambil analisis komparatif dari database:', error);
+    logger.error('Gagal mengambil analisis komparatif dari database', undefined, error);
     return null;
   }
 }
@@ -586,7 +646,7 @@ export async function saveComparativeAnalysisToDb(
       if (error) throw error;
     }
   } catch (error) {
-    console.error('Gagal menyimpan analisis komparatif ke database:', error);
+    logger.error('Gagal menyimpan analisis komparatif ke database', undefined, error);
     throw error;
   }
 }
@@ -729,7 +789,7 @@ export async function generateComparativeChildAnalysis(
 
     // Check if AI is available
     if (!isAiEnabled) {
-      console.warn('AI service not available, using comparative fallback analysis');
+      logger.warn('AI service not available, using comparative fallback analysis');
       return generateComparativeFallbackAnalysis(data1, data2, avgScore1, avgScore2, attRate1, attRate2, violationsCount1, violationsCount2);
     }
 
@@ -802,8 +862,8 @@ export async function generateComparativeChildAnalysis(
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Error generating comparative child development analysis:', error);
-    console.error('Error details:', errorMessage);
+    logger.error('Error generating comparative child development analysis', undefined, error);
+    logger.error('Error details:', errorMessage);
 
     const validAcademicRecords1 = (data1.academicRecords || []).filter(r => r && typeof r.score === 'number');
     const validAcademicRecords2 = (data2.academicRecords || []).filter(r => r && typeof r.score === 'number');

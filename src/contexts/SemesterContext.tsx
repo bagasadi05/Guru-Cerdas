@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '../services/supabase';
+import { logger } from '../services/logger';
 import { SemesterRow, AcademicYearRow } from '../types';
-import { maybeSingleCompat } from '../services/supabaseQueryCompat';
 
 
 interface StudentAccessPeriod {
@@ -49,20 +49,21 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                     : await semestersQuery;
 
             if (allSemestersError) {
-                console.error('Error fetching semesters:', allSemestersError);
+                logger.error('Error fetching semesters', allSemestersError as unknown as Error, undefined, 'SemesterContext');
             } else {
                 setSemesters(allSemesters as unknown as SemesterWithYear[]);
             }
 
             // Find the active semester
-            const { data: semesterData, error: semesterError } = await maybeSingleCompat(supabase
+            const { data: semesterData, error: semesterError } = await supabase
                 .from('semesters')
                 .select('*')
-                .eq('is_active', true));
+                .eq('is_active', true)
+                .maybeSingle();
 
             if (semesterError) {
                 if (semesterError.code !== 'PGRST116') { // Not found error code
-                    console.error('Error fetching active semester:', semesterError);
+                    logger.error('Error fetching active semester', semesterError as unknown as Error, undefined, 'SemesterContext');
                 }
                 setActiveSemester(null);
                 setActiveAcademicYear(null);
@@ -74,19 +75,20 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                 setActiveSemester(semesterData);
 
                 // Fetch associated academic year for active semester
-                const { data: yearData, error: yearError } = await maybeSingleCompat(supabase
+                const { data: yearData, error: yearError } = await supabase
                     .from('academic_years')
                     .select('*')
-                    .eq('id', semesterData.academic_year_id));
+                    .eq('id', semesterData.academic_year_id)
+                    .maybeSingle();
 
                 if (yearError) {
-                    console.error('Error fetching academic year:', yearError);
+                    logger.error('Error fetching academic year', yearError as unknown as Error, undefined, 'SemesterContext');
                 } else {
                     setActiveAcademicYear(yearData);
                 }
             }
         } catch (error) {
-            console.error('Unexpected error in fetchSemestersData:', error);
+            logger.error('Unexpected error in fetchSemestersData', error as Error, undefined, 'SemesterContext');
         } finally {
             setIsLoading(false);
         }

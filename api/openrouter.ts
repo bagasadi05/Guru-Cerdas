@@ -1,3 +1,5 @@
+import type { IncomingMessage, ServerResponse } from 'http';
+
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 30;
@@ -5,6 +7,18 @@ const RATE_LIMIT_BURST = 10;
 
 type RateLimitEntry = { count: number; resetAt: number; burstUsed: number };
 const rateLimitStore = new Map<string, RateLimitEntry>();
+
+interface ExtendedRequest extends IncomingMessage {
+  query: Record<string, string | string[]>;
+  cookies: Record<string, string>;
+  body?: Record<string, unknown>;
+}
+
+interface ExtendedResponse extends ServerResponse {
+  status(statusCode: number): ExtendedResponse;
+  json(jsonBody: unknown): void;
+  send(body: string | Buffer): void;
+}
 
 function isOriginAllowed(origin: string | undefined, allowedOrigin: string | undefined): boolean {
   if (!allowedOrigin) return false;
@@ -17,13 +31,18 @@ function isOriginAllowed(origin: string | undefined, allowedOrigin: string | und
   return allowedOrigins.includes(origin);
 }
 
-function getClientKey(req: any): string {
-  const remoteAddress = req.socket?.remoteAddress;
+function getClientKey(req: ExtendedRequest): string {
+  // Prevent client spoofing by prioritizing Vercel's secure routing headers
+  const xRealIp = req.headers['x-real-ip'];
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  const remoteAddress = typeof xRealIp === 'string' ? xRealIp :
+                        typeof xForwardedFor === 'string' ? xForwardedFor.split(',')[0].trim() :
+                        req.socket?.remoteAddress;
   const userAgent = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : 'unknown';
   return `${remoteAddress || 'unknown'}:${userAgent}`;
 }
 
-function allowRequest(key: string): { allowed: boolean; retryAfterMs: number } {
+function allowRequestInMemory(key: string): { allowed: boolean; retryAfterMs: number } {
   const now = Date.now();
   const existing = rateLimitStore.get(key);
 
@@ -45,7 +64,53 @@ function allowRequest(key: string): { allowed: boolean; retryAfterMs: number } {
   return { allowed: false, retryAfterMs: Math.max(0, existing.resetAt - now) };
 }
 
-function getRequestId(req: any): string {
+async function allowRequestRedis(key: string, redisUrl: string, redisToken: string): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  try {
+    const windowSeconds = Math.ceil(RATE_LIMIT_WINDOW_MS / 1000);
+    const limit = RATE_LIMIT_MAX + RATE_LIMIT_BURST;
+
+    // Use Upstash Redis pipeline to INCR and TTL atomically in a single network request
+    const response = await fetch(`${redisUrl}/pipeline`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${redisToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify([
+        ['INCR', key],
+        ['TTL', key]
+      ])
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upstash Redis HTTP error: ${response.status}`);
+    }
+
+    const results = await response.json();
+    const count = Number(results[0]?.result);
+    const ttl = Number(results[1]?.result);
+
+    // If TTL is -1 (no expiry set), set expiry to RATE_LIMIT_WINDOW_MS
+    if (ttl === -1) {
+      await fetch(`${redisUrl}/expire/${key}/${windowSeconds}`, {
+        headers: { Authorization: `Bearer ${redisToken}` }
+      });
+    }
+
+    if (count > limit) {
+      const retryAfterMs = ttl > 0 ? ttl * 1000 : RATE_LIMIT_WINDOW_MS;
+      return { allowed: false, retryAfterMs };
+    }
+
+    return { allowed: true, retryAfterMs: 0 };
+  } catch (err) {
+    // If Redis fails, gracefully fall back to the in-memory rate limiter so service doesn't go down
+    console.error('Redis Rate Limiter Error (falling back to in-memory):', err);
+    return allowRequestInMemory(key);
+  }
+}
+
+function getRequestId(req: ExtendedRequest): string {
   const headerId = req.headers['x-request-id'];
   if (typeof headerId === 'string' && headerId.length > 0) return headerId;
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -54,7 +119,7 @@ function getRequestId(req: any): string {
   return `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
-export default async function handler(req: any, res: any): Promise<void> {
+export default async function handler(req: ExtendedRequest, res: ExtendedResponse): Promise<void> {
   const requestId = getRequestId(req);
   res.setHeader('X-Request-Id', requestId);
 
@@ -85,8 +150,17 @@ export default async function handler(req: any, res: any): Promise<void> {
     return;
   }
 
-  const clientKey = getClientKey(req);
-  const rateLimit = allowRequest(clientKey);
+  const clientKey = `rl:${getClientKey(req)}`;
+  const redisUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const redisToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  let rateLimit;
+  if (redisUrl && redisToken) {
+    rateLimit = await allowRequestRedis(clientKey, redisUrl, redisToken);
+  } else {
+    rateLimit = allowRequestInMemory(clientKey);
+  }
+
   if (!rateLimit.allowed) {
     const retryAfterSeconds = Math.ceil(rateLimit.retryAfterMs / 1000);
     res.setHeader('Retry-After', String(retryAfterSeconds));

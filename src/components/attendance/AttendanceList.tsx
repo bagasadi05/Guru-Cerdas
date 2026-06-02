@@ -86,7 +86,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
 
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
-                            <div className="grid grid-cols-5 sm:flex sm:flex-nowrap sm:items-center gap-2 bg-slate-100/80 dark:bg-slate-800/60 p-2 rounded-2xl w-full sm:w-auto">
+                            <div className="grid grid-cols-5 sm:flex sm:flex-nowrap sm:items-center gap-2 bg-slate-100/80 dark:bg-slate-800/60 p-2 rounded-2xl w-full sm:w-auto" data-tutorial="attendance-status-group">
                                 {statusOptions.map((opt) => {
                                     const isActive = record?.status === opt.value;
 

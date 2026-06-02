@@ -3,12 +3,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { registerSW } from 'virtual:pwa-register';
+import { logger } from './services/logger';
 
 // Import local fonts for offline support
 import './styles/fonts.css';
-
-// Import dev testing utilities (available in browser console during development)
-import './utils/devTestUtils';
 
 // Import mobile initialization for Capacitor
 import { initializeMobile } from './services/mobileInit';
@@ -20,9 +18,11 @@ import * as Sentry from "@sentry/react";
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 const isProduction = import.meta.env.PROD;
+// Skip placeholder DSNs that start with 'https://your-' (unconfigured defaults)
+const isValidSentryDsn = typeof sentryDsn === 'string' && sentryDsn.startsWith('https://') && !sentryDsn.includes('your-');
 
-// Only initialize Sentry in production to avoid ERR_BLOCKED_BY_CLIENT errors from ad blockers
-if (sentryDsn && isProduction) {
+// Only initialize Sentry in production with a valid DSN to avoid ERR_BLOCKED_BY_CLIENT errors from ad blockers
+if (isValidSentryDsn && isProduction) {
   Sentry.init({
     dsn: sentryDsn,
     integrations: [
@@ -30,7 +30,7 @@ if (sentryDsn && isProduction) {
       Sentry.replayIntegration(),
     ],
     // Tracing
-    tracesSampleRate: 1.0, //  Capture 100% of the transactions
+    tracesSampleRate: 0.1, //  Capture 10% of the transactions
     // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
     tracePropagationTargets: ["localhost", "https://portal-guru.supabase.co"],
     // Session Replay
@@ -68,11 +68,11 @@ if (isProduction) {
 
   const updateSW = registerSW({
     onNeedRefresh() {
-      console.log('New content available, reloading to apply update.');
+      logger.info('New content available, reloading to apply update.', 'SW');
       void updateSW(true);
     },
     onOfflineReady() {
-      console.log('App is ready to work offline.');
+      logger.info('App is ready to work offline.', 'SW');
     },
   });
 }

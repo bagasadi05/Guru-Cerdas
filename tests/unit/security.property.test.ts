@@ -29,7 +29,7 @@ const AttendanceSchema = z.object({
     notes: z.string().max(500).optional()
 });
 
-const ScheduleSchema = z.object({
+const _ScheduleSchema = z.object({
     day: z.enum(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']),
     start_time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
     end_time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
@@ -377,7 +377,7 @@ describe('Property-Based Tests: Security and Input Validation', () => {
                     (normalText) => {
                         // Property: Normal text should not be flagged
                         // Note: Some edge cases may still match, so we're testing general behavior
-                        const result = containsSqlInjectionPattern(normalText);
+                        const _result = containsSqlInjectionPattern(normalText);
 
                         // Most normal text should pass
                         return true;

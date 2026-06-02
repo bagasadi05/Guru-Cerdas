@@ -38,7 +38,7 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
     const [foundTeacher, setFoundTeacher] = useState<TeacherData | null>(null);
     const [teacherClasses, setTeacherClasses] = useState<ClassWithStudents[]>([]);
     const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
-    const [isImporting, setIsImporting] = useState(false);
+    const [_isImporting, setIsImporting] = useState(false);
     const [importProgress, setImportProgress] = useState(0);
 
     const resetState = () => {

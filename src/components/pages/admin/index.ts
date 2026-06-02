@@ -8,3 +8,6 @@ export * from './constants';
 export * from './OverviewTab';
 export * from './AnnouncementsTab';
 export * from './TeacherAssignmentsTab';
+export * from './UsersTab';
+export * from './ActivityLogsTab';
+export * from './SystemTab';

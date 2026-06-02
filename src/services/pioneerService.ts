@@ -15,6 +15,8 @@
  * @module services/pioneerService
  */
 
+import { logger } from './logger';
+
 const PIONEER_API_URL = 'https://api.pioneer.ai/v1/messages';
 const PIONEER_MODEL = 'claude-opus-4-7';
 
@@ -162,7 +164,7 @@ export async function generatePioneerJson<T>(
     try {
         return JSON.parse(content) as T;
     } catch (e) {
-        console.error('Pioneer JSON Parse Error. Content:', content, e);
+        logger.error('Pioneer JSON Parse Error', undefined, { content, error: e });
         throw new Error('Respon Claude Opus 4.7 tidak valid (JSON corrupt).');
     }
 }

@@ -3,10 +3,9 @@ import { Button } from './Button';
 import {
     AlertTriangleIcon,
     AlertCircleIcon,
-    XCircleIcon,
-    RefreshCwIcon
+    XCircleIcon
 } from '../Icons';
-import { parseError, ActionableError } from '../../utils/errorMessages';
+import { parseError } from '../../utils/errorMessages';
 
 // Add RefreshCw to Icons if not exists
 // Using custom simple refresh icon inline if needed

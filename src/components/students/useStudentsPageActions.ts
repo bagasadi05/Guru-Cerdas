@@ -9,14 +9,7 @@ import { ExportFormat } from '../advanced-features/ExportPreviewModal';
 import { ClassRow, ConfirmModalState, StudentRow } from './types';
 import { getStudentAvatar } from '../../utils/avatarUtils';
 
-const generateAccessCode = (): string => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
+import { generateSimpleAccessCode } from '../../utils/accessCode';
 
 const pickLiveColumns = <T extends Record<string, unknown>>(data: T, columns: readonly string[]) => (
   Object.fromEntries(Object.entries(data).filter(([key]) => columns.includes(key)))
@@ -140,7 +133,7 @@ export const useStudentsPageActions = ({
     mutationFn: async (studentId: string) => {
       const { error } = await supabase
         .from('students')
-        .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+        .update({ deleted_at: new Date().toISOString() } as never)
         .eq('id', studentId);
       if (error) throw error;
     },
@@ -182,7 +175,7 @@ export const useStudentsPageActions = ({
     mutationFn: async (classId: string) => {
       const { error } = await supabase
         .from('classes')
-        .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+        .update({ deleted_at: new Date().toISOString() } as never)
         .eq('id', classId);
       if (error) throw error;
     },
@@ -206,7 +199,7 @@ export const useStudentsPageActions = ({
         studentsToUpdate.map(async (student) => {
           const { error } = await supabase
             .from('students')
-            .update({ access_code: generateAccessCode() })
+            .update({ access_code: generateSimpleAccessCode() })
             .eq('id', student.id);
           if (error) throw error;
         }),
@@ -409,7 +402,7 @@ export const useStudentsPageActions = ({
             studentsNeedCode.map(async (student) => {
               const { error } = await supabase
                 .from('students')
-                .update({ access_code: generateAccessCode() })
+                .update({ access_code: generateSimpleAccessCode() })
                 .eq('id', student.id);
               if (error) throw error;
             }),

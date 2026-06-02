@@ -286,7 +286,7 @@ describe('Property-Based Testing: Soft Delete Schema', () => {
           
           // Delete once
           const deleted1 = softDelete(activeStudent);
-          const timestamp1 = deleted1.deleted_at;
+          const _timestamp1 = deleted1.deleted_at;
           
           // Delete again (simulating multiple delete calls)
           const deleted2 = softDelete(deleted1);

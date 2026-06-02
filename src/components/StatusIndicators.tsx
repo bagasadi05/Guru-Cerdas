@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
-import { Wifi, WifiOff, Cloud, CloudOff, Upload, Download, Check, X, Clock, RefreshCw, AlertTriangle, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+import { Wifi, WifiOff, CloudOff, Upload, Check, X, Clock, RefreshCw, AlertTriangle, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 
 /**
  * Performance & Status Indicators
@@ -155,7 +155,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onSync }) 
             setQueuedOperations([]);
             setLastSynced(new Date());
             setStatus('synced');
-        } catch (error) {
+        } catch (_error) {
             setStatus('error');
         }
     }, [isOnline, queuedOperations, onSync]);
@@ -306,7 +306,7 @@ export const NetworkIndicator: React.FC<NetworkIndicatorProps> = ({
     className = '',
     showLabel = false
 }) => {
-    const { quality, effectiveType, downlink } = useNetworkStatus();
+    const { quality, effectiveType: _effectiveType, downlink: _downlink } = useNetworkStatus();
 
     const qualityConfig = {
         excellent: {
@@ -367,7 +367,7 @@ interface OfflineBannerProps {
 }
 
 export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) => {
-    const { isOnline, quality } = useNetworkStatus();
+    const { isOnline, quality: _quality } = useNetworkStatus();
     const { pendingCount, sync } = useSyncStatus();
     const [showReconnected, setShowReconnected] = useState(false);
     const wasOfflineRef = useRef(false);

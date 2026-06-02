@@ -8,6 +8,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from './useToast';
 import { exportData, ExportFormat, ColumnDefinition } from '../services/ExportService';
+import { logger } from '../services/logger';
 
 export interface UseExportOptions {
     entityName: string;
@@ -128,12 +129,7 @@ export function useExport(options: UseExportOptions) {
             toast.error(errorMessage);
 
             // Log error for debugging
-            console.error('[Export Error]', {
-                entityName,
-                format,
-                error,
-                timestamp: new Date().toISOString(),
-            });
+            logger.error('Export Error', error as Error, { entityName, format, timestamp: new Date().toISOString() }, 'Export');
 
             return false;
         }

@@ -3,14 +3,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useScheduleNotifications } from '../../hooks/useScheduleNotifications';
 import { useDashboardData } from '../../hooks/useDashboardData';
+import { useClock } from '../../hooks/useClock';
+import { useGradeAudit } from '../../hooks/useGradeAudit';
+import { useDashboardActivities } from '../../hooks/useDashboardActivities';
+import { isTaskOverdue, formatTaskDueDate } from '../../utils/dateHelpers';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   CalendarIcon,
   AlertTriangleIcon,
-  UserMinusIcon,
-  ClipboardPenIcon,
-  CheckCircleIcon,
-  UsersIcon,
   ClockIcon,
   BookOpenIcon,
   SearchIcon,
@@ -25,52 +25,20 @@ import StatsGrid from '../dashboard/StatsGrid';
 import { QuickActionCards } from '../dashboard/QuickActionCards';
 import DashboardPageSkeleton from '../skeletons/DashboardPageSkeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
-import { Select } from '../ui/Select';
+import DashboardGreeting from '../dashboard/DashboardGreeting';
+import GradeAuditWidget from '../dashboard/GradeAuditWidget';
+import ScheduleTimeline from '../dashboard/ScheduleTimeline';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import AttendanceStatsWidget from '../dashboard/AttendanceStatsWidget';
-import ParentMessagesWidget from '../dashboard/ParentMessagesWidget';
 import { ClassAnalyticsSection } from '../dashboard/ClassAnalyticsSection';
 import { LeaderboardCard } from '../gamification/LeaderboardCard';
 import TodayActionPanel from '../dashboard/TodayActionPanel';
-
+import { DashboardSummaryCards } from '../dashboard/DashboardSummaryCards';
 import ActivityFeedWidget from '../dashboard/ActivityFeedWidget';
+import ParentMessagesWidget from '../dashboard/ParentMessagesWidget';
 import { transformToGameData } from '../../services/gamificationService';
-import { Reminder } from '../dashboard/SmartReminders';
-import { ActivityItem } from '../dashboard/RecentActivityTimeline';
 import { ErrorState } from '../ui/ErrorState';
 import { useGlobalSearch } from '../SearchSystem';
-
-// ==========================================
-// CLIENT-SIDE HELPERS (Restored)
-// ==========================================
-
-const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
-
-const parseDateOnly = (value: string) => {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(year, month - 1, day);
-};
-
-const formatTaskDueDate = (dueDate: string) => {
-  const date = isDateOnly(dueDate) ? parseDateOnly(dueDate) : new Date(dueDate);
-  if (Number.isNaN(date.getTime())) return '-';
-  // ID-ID locale format
-  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-};
-
-const isTaskOverdue = (dueDate: string | null) => {
-  if (!dueDate) return false;
-  const now = new Date();
-  if (isDateOnly(dueDate)) {
-    const date = parseDateOnly(dueDate);
-    // Compare with end of day
-    const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-    return endOfDay < now;
-  }
-  const parsed = new Date(dueDate);
-  if (Number.isNaN(parsed.getTime())) return false;
-  return parsed < now;
-};
 
 // ==========================================
 // DASHBOARD PAGE
@@ -79,14 +47,22 @@ const isTaskOverdue = (dueDate: string | null) => {
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const currentTime = useClock();
   const [isFabOpen, setIsFabOpen] = useState(false);
-  const { open: openSearch } = useGlobalSearch();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    const timerId = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timerId);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
+  const { open: openSearch } = useGlobalSearch();
 
   const randomQuote = useMemo(() => {
     const quotes = [
@@ -107,277 +83,19 @@ const DashboardPage: React.FC = () => {
   // Sync schedule with Service Worker for notifications
   useScheduleNotifications(data?.schedule || []);
 
-  const [subjectForCompletionCheck, setSubjectForCompletionCheck] = useState('');
-  const [assessmentForCompletionCheck, setAssessmentForCompletionCheck] = useState('');
-  const [selectedClassForCheck, setSelectedClassForCheck] = useState<string>('');
+  const { studentsMissingGrade } = useGradeAudit({ data });
 
-  const uniqueSubjects = useMemo(() => {
-    const academicRecords = data?.academicRecords;
-    if (!academicRecords) return [];
-    const subjects = new Set(academicRecords.map((r) => r.subject));
-    return Array.from(subjects).sort();
-  }, [data]);
-
-  const uniqueAssessmentsForSubject = useMemo(() => {
-    const academicRecords = data?.academicRecords;
-    const students = data?.students;
-    if (!subjectForCompletionCheck || !academicRecords || !students) return [];
-
-    let relevantStudentIds: Set<string> | null = null;
-    if (selectedClassForCheck) {
-      relevantStudentIds = new Set(
-        students.filter((s) => s.class_id === selectedClassForCheck).map((s) => s.id),
-      );
-    }
-
-    const assessmentNames = academicRecords
-      .filter((r) => {
-        if (r.subject !== subjectForCompletionCheck) return false;
-        if (!r.assessment_name) return false;
-        if (relevantStudentIds && !relevantStudentIds.has(r.student_id)) return false;
-        return true;
-      })
-      .map((r) => r.assessment_name!.trim());
-
-    const uniqueAssessments = [...new Set(assessmentNames)].filter(Boolean);
-
-    return uniqueAssessments.sort((a: string, b: string) =>
-      a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }),
-    );
-  }, [data, subjectForCompletionCheck, selectedClassForCheck]);
-
-  // Set default subject when uniqueSubjects changes
-  const defaultSubject = uniqueSubjects.length > 0 ? uniqueSubjects[0] : '';
-  useEffect(() => {
-    if (defaultSubject && !subjectForCompletionCheck) {
-      const timer = setTimeout(() => {
-        setSubjectForCompletionCheck(defaultSubject);
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [defaultSubject, subjectForCompletionCheck]);
-
-  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSubjectForCompletionCheck(e.target.value);
-    setAssessmentForCompletionCheck('');
-  };
-
-  const studentsMissingGrade = useMemo(() => {
-    if (!subjectForCompletionCheck || !data?.students || !data?.academicRecords || !data?.classes)
-      return [];
-
-    const classMap = new Map((data.classes || []).map((c) => [c.id, c.name]));
-
-    let targetStudents = data.students;
-    if (selectedClassForCheck) {
-      targetStudents = targetStudents.filter((s) => s.class_id === selectedClassForCheck);
-    }
-
-    if (assessmentForCompletionCheck) {
-      const gradedStudentIds = new Set(
-        data.academicRecords
-          .filter(
-            (r) =>
-              r.subject === subjectForCompletionCheck &&
-              r.assessment_name === assessmentForCompletionCheck,
-          )
-          .map((r) => r.student_id),
-      );
-
-      return targetStudents
-        .filter((s) => !gradedStudentIds.has(s.id))
-        .map((s) => ({
-          ...s,
-          className: classMap.get(s.class_id ?? '') || 'N/A',
-          missingAssessment: assessmentForCompletionCheck,
-        }));
-    } else {
-      if (uniqueAssessmentsForSubject.length === 0) return [];
-
-      return targetStudents
-        .map((s) => {
-          const studentRecords = data.academicRecords.filter(
-            (r) => r.student_id === s.id && r.subject === subjectForCompletionCheck,
-          );
-          const studentAssessments = new Set(studentRecords.map((r) => r.assessment_name));
-
-          const missingAssessments = uniqueAssessmentsForSubject.filter(
-            (a) => !studentAssessments.has(a),
-          );
-
-          return {
-            ...s,
-            className: classMap.get(s.class_id ?? '') || 'N/A',
-            missingAssessments: missingAssessments,
-          };
-        })
-        .filter((s) => s.missingAssessments.length > 0);
-    }
-  }, [
-    subjectForCompletionCheck,
-    assessmentForCompletionCheck,
-    data,
-    selectedClassForCheck,
-    uniqueAssessmentsForSubject,
-  ]);
-
-  const totalStudentsForCheck = useMemo(() => {
-    const students = data?.students;
-    if (!students) return 0;
-    if (selectedClassForCheck) {
-      return students.filter((s) => s.class_id === selectedClassForCheck).length;
-    }
-    return students.length;
-  }, [data, selectedClassForCheck]);
-
-  const completionPercentage = useMemo(() => {
-    if (totalStudentsForCheck === 0) return 0;
-    return Math.round(
-      ((totalStudentsForCheck - studentsMissingGrade.length) / totalStudentsForCheck) * 100,
-    );
-  }, [totalStudentsForCheck, studentsMissingGrade.length]);
-
-  const handleOpenMassInput = () => {
-    if (!subjectForCompletionCheck) return;
-
-    let classIdToPass: string | null = selectedClassForCheck || null;
-    if (!classIdToPass && studentsMissingGrade.length > 0) {
-      classIdToPass = studentsMissingGrade[0].class_id;
-    }
-
-    let assessmentToPass = assessmentForCompletionCheck;
-    if (
-      !assessmentToPass &&
-      studentsMissingGrade.length > 0 &&
-      'missingAssessments' in studentsMissingGrade[0]
-    ) {
-      const missingStudent = studentsMissingGrade[0] as { missingAssessments: string[] };
-      assessmentToPass = missingStudent.missingAssessments[0] ?? '';
-    }
-
-    navigate('/input-massal', {
-      state: {
-        prefill: {
-          mode: 'subject_grade',
-          classId: classIdToPass,
-          subject: subjectForCompletionCheck,
-          assessment_name: assessmentToPass,
-        },
-      },
-    });
-  };
-
-  // Generate smart reminders based on data
-  const smartReminders: Reminder[] = useMemo(() => {
-    if (!data) return [];
-    const reminders: Reminder[] = [];
-
-    // Check for unrecorded attendance today
-    const { students = [], dailyAttendanceSummary } = data;
-    const attendanceRecorded = dailyAttendanceSummary?.total || 0;
-    if (students.length > 0 && attendanceRecorded < students.length) {
-      reminders.push({
-        id: 'attendance-incomplete',
-        type: 'warning',
-        title: 'Absensi Belum Lengkap',
-        message: `${students.length - attendanceRecorded} siswa belum diabsen hari ini`,
-        action: { label: 'Isi Sekarang', link: '/absensi' },
-        dismissible: true,
-      });
-    }
-
-    // Check for pending tasks
-    const pendingTasks = data.tasks?.filter((t) => t.status !== 'done').length || 0;
-    if (pendingTasks > 5) {
-      reminders.push({
-        id: 'tasks-pending',
-        type: 'info',
-        title: `${pendingTasks} Tugas Pending`,
-        message: 'Beberapa tugas belum diselesaikan',
-        action: { label: 'Lihat Tugas', link: '/tugas' },
-        dismissible: true,
-      });
-    }
-
-    // Check for low attendance
-    const attendancePercentage =
-      students.length > 0
-        ? Math.round(((dailyAttendanceSummary?.present || 0) / students.length) * 100)
-        : 100;
-    if (attendancePercentage < 70 && attendanceRecorded > 0) {
-      reminders.push({
-        id: 'low-attendance',
-        type: 'urgent',
-        title: 'Kehadiran Rendah!',
-        message: `Hanya ${attendancePercentage}% siswa hadir hari ini`,
-        action: { label: 'Cek Details', link: '/absensi' },
-        dismissible: false,
-      });
-    }
-
-    return reminders;
-  }, [data]);
-
-  // Generate recent activities from REAL data
-  const recentActivities: ActivityItem[] = useMemo(() => {
-    const activities: ActivityItem[] = [];
-
-    // 1. Attendance activities from today
-    if (data?.dailyAttendanceSummary?.total && data.dailyAttendanceSummary.total > 0) {
-      const latestAttendance = data.todayAttendanceRecords?.[0];
-      activities.push({
-        id: 'activity-attendance-today',
-        type: 'attendance',
-        title: 'Absensi Tercatat',
-        description: `${data.dailyAttendanceSummary.present} dari ${data.students?.length || 0} siswa hadir hari ini`,
-        timestamp: latestAttendance?.created_at
-          ? new Date(latestAttendance.created_at)
-          : new Date(),
-        link: '/absensi',
-      });
-    }
-
-    // 2. Recent grades/academic records
-    const recentGrades = data?.academicRecords?.slice(0, 3) || [];
-    recentGrades.forEach((record, index) => {
-      if (record.created_at) {
-        activities.push({
-          id: `activity-grade-${index}`,
-          type: 'grade',
-          title: 'Nilai Diinput',
-          description: `${record.subject} - ${record.assessment_name || 'Penilaian'} (Skor: ${record.score})`,
-          timestamp: new Date(record.created_at),
-          link: '/analytics',
-        });
-      }
-    });
-
-    // 3. Recent tasks created
-    const recentTasks = data?.recentTasks?.slice(0, 3) || [];
-    recentTasks.forEach((task, index) => {
-      if (task.created_at) {
-        activities.push({
-          id: `activity-task-${index}`,
-          type: 'task',
-          title: task.status === 'done' ? 'Tugas Selesai' : 'Tugas Dibuat',
-          description: task.title,
-          timestamp: new Date(task.created_at),
-          link: '/tugas',
-        });
-      }
-    });
-
-    // Sort by timestamp (newest first) and limit to 5
-    return activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 5);
-  }, [data]);
-
-  // Dismiss reminder handler
-  const [dismissedReminders, setDismissedReminders] = useState<Set<string>>(new Set());
-  const handleDismissReminder = (id: string) => {
-    setDismissedReminders((prev) => new Set([...prev, id]));
-  };
-
-  const activeReminders = smartReminders.filter((r) => !dismissedReminders.has(r.id));
+  // Activity feed (reminders + timeline) from existing hook
+  const { activeReminders, activities: recentActivities, dismissReminder: handleDismissReminder } = useDashboardActivities(
+    data ? {
+      students: data.students ?? [],
+      tasks: data.tasks ?? [],
+      recentTasks: data.recentTasks ?? [],
+      academicRecords: data.academicRecords ?? [],
+      dailyAttendanceSummary: data.dailyAttendanceSummary ?? { present: 0, total: 0 },
+      todayAttendanceRecords: data.todayAttendanceRecords ?? [],
+    } : null
+  );
 
   if (isLoading) return <DashboardPageSkeleton />;
 
@@ -444,61 +162,24 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       )}
-      {(() => {
-        const hour = currentTime.getHours();
-        let greeting = 'Selamat Pagi';
-        let icon = '🌅';
-        let quote = 'Mulailah hari dengan penuh semangat dan senyuman hangat! 😊';
-        if (hour >= 11 && hour < 15) {
-            greeting = 'Selamat Siang';
-            icon = '☀️';
-            quote = 'Semoga hari Anda penuh produktivitas dan keceriaan! ⚡';
-        } else if (hour >= 15 && hour < 19) {
-            greeting = 'Selamat Sore';
-            icon = '🌇';
-            quote = 'Lelah mengajar? Istirahat sejenak dan nikmati indahnya sore! ☕';
-        } else if (hour >= 19 || hour < 4) {
-            greeting = 'Selamat Malam';
-            icon = '🌙';
-            quote = 'Waktunya mengistirahatkan pikiran demi hari esok yang gemilang! 😴';
-        }
+      <DashboardGreeting
+        userName={user?.name}
+        isOnline={isOnline}
+        randomQuote={randomQuote}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
 
-        return (
-          <header className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/5 dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-pink-950/10 backdrop-blur-xl border border-white/20 dark:border-slate-800/40 p-6 rounded-3xl shadow-xl shadow-indigo-500/5 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-scale-in">
-              <div className="flex items-start gap-4">
-                  <span className="text-4xl filter drop-shadow-md animate-bounce select-none">{icon}</span>
-                  <div>
-                      <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                          {greeting}, {user?.name?.split(' ')[0] || 'Guru'}! 🌟
-                      </h1>
-                      <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-indigo-200/70 mt-1 italic">
-                          "{randomQuote}"
-                      </p>
-                  </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
-                  <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs px-3.5 py-1.5 rounded-2xl border border-emerald-200/20 shadow-sm">
-                      📅 {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-mono font-black text-sm px-3.5 py-1.5 rounded-2xl border border-indigo-200/20 shadow-sm tracking-widest">
-                      ⏰ {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':')}
-                  </div>
-              </div>
-          </header>
-        );
-      })()}
-
-      <div className="flex flex-col xl:grid xl:grid-cols-12 gap-6">
+      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
         {/* Left Column Part 1 */}
-        <div className="xl:col-span-9 space-y-6 order-1">
-          {' '}
+        <div className={`space-y-6 order-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9 lg:col-start-1' : 'lg:col-span-12'}`}>
           {/* Stats Section */}
-          <section>{data && <StatsGrid data={data} currentTime={currentTime} />}</section>
+          <section data-tutorial="dashboard-stats">{data && <StatsGrid data={data} currentTime={currentTime} />}</section>
           {data && <TodayActionPanel data={data} />}
           {/* Operational Section */}
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-4 px-2">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <span className="w-1.5 h-5 bg-emerald-500 rounded-full inline-block"></span>
                 Aksi Cepat & Wawasan
               </h2>
@@ -509,7 +190,7 @@ const DashboardPage: React.FC = () => {
             />
 
             {/* AI Insight Widget */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+            <div data-tutorial="ai-insight" className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
               <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-emerald-500/10">
                 <h3 className="flex items-center gap-2 font-semibold text-xl text-slate-900 dark:text-white">
                   <BrainCircuitIcon className="w-5 h-5 text-emerald-500" />
@@ -527,11 +208,11 @@ const DashboardPage: React.FC = () => {
         </div>
 
         {/* Left Column Part 2 */}
-        <div className="xl:col-span-9 space-y-6 order-3 xl:col-start-1">
+        <div className={`space-y-6 order-3 lg:col-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'}`}>
           {/* Analytics Section */}
           <section className="space-y-6">
             <div className="flex items-center gap-2 mb-4 px-2">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <span className="w-1.5 h-5 bg-emerald-500 rounded-full inline-block"></span>
                 Analisis Penilaian & Kehadiran
               </h2>
@@ -543,105 +224,7 @@ const DashboardPage: React.FC = () => {
               </div>
 
               {/* Grade Audit */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden flex flex-col border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
-                <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-amber-500/10">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-lg text-slate-900 dark:text-white">
-                        Audit Nilai
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Cek kelengkapan penilaian siswa
-                      </p>
-                    </div>
-                    <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
-                      <UserMinusIcon className="w-5 h-5 text-amber-500" />
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  <div className="space-y-4 mb-4">
-                    <Select
-                      value={selectedClassForCheck}
-                      onChange={(e) => setSelectedClassForCheck(e.target.value)}
-                    >
-                      <option value="">Semua Kelas</option>
-                      {classes.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </Select>
-                    <div className="flex gap-3">
-                      <Select
-                        value={subjectForCompletionCheck}
-                        onChange={handleSubjectChange}
-                        className="flex-1"
-                      >
-                        <option value="" disabled>
-                          Mapel
-                        </option>
-                        {uniqueSubjects.map((subject) => (
-                          <option key={subject} value={subject}>
-                            {subject}
-                          </option>
-                        ))}
-                      </Select>
-                      <Select
-                        value={assessmentForCompletionCheck}
-                        onChange={(e) => setAssessmentForCompletionCheck(e.target.value)}
-                        className="flex-1"
-                        disabled={uniqueAssessmentsForSubject.length === 0}
-                      >
-                        <option value="">Semua</option>
-                        {uniqueAssessmentsForSubject.map((assessment) => (
-                          <option key={assessment} value={assessment}>
-                            {assessment}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
-
-                  {subjectForCompletionCheck ? (
-                    <div className="flex-1">
-                      <div className="flex justify-between text-xs mb-2 font-semibold uppercase tracking-wider">
-                        <span className="text-slate-400">Progres</span>
-                        <span className="text-emerald-600">{completionPercentage}%</span>
-                      </div>
-                      <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden mb-4">
-                        <div
-                          className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-emerald-500 to-emerald-600"
-                          style={{ width: `${completionPercentage}%` }}
-                        ></div>
-                      </div>
-
-                      {studentsMissingGrade.length > 0 ? (
-                        <div className="mt-auto">
-                          <Button
-                            onClick={handleOpenMassInput}
-                            variant="primary"
-                            className="w-full"
-                            size="sm"
-                          >
-                            <ClipboardPenIcon className="w-4 h-4 mr-2" />
-                            Lengkapi ({studentsMissingGrade.length})
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="mt-auto text-center py-2 text-green-500 font-medium text-sm flex items-center justify-center gap-2">
-                          <CheckCircleIcon className="w-4 h-4" />
-                          Lengkap!
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
-                      Pilih mapel untuk cek
-                    </div>
-                  )}
-                </div>
-              </div>
+              <GradeAuditWidget data={data} classes={classes} />
             </div>
           </section>
           {/* Performance Section */}
@@ -682,10 +265,24 @@ const DashboardPage: React.FC = () => {
               classes={data.classes}
             />
           )}
+
+          {/* Summary Alerts Grid */}
+          {data && (
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 mb-2 px-2">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 animate-fade-in">
+                  <span className="w-1.5 h-5 bg-emerald-500 rounded-full inline-block"></span>
+                  Informasi & Tindakan Prioritas
+                </h2>
+              </div>
+              <DashboardSummaryCards data={data} />
+            </section>
+          )}
+
         </div>
 
         {/* Right Column */}
-        <div className="xl:col-span-3 space-y-4 order-2 xl:col-start-10 xl:row-span-4 xl:row-start-1">
+        <div className={`space-y-4 order-2 lg:row-span-4 lg:row-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-3 lg:col-start-10 block' : 'hidden lg:block lg:col-span-3 lg:col-start-10'}`}>
           <div className="bg-white dark:bg-slate-900 rounded-xl h-full max-h-[800px] flex flex-col overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
             <Tabs defaultValue="schedule" className="w-full flex flex-col h-full">
               <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-slate-50/60 dark:bg-slate-800/40 backdrop-blur-md">
@@ -699,108 +296,7 @@ const DashboardPage: React.FC = () => {
                 value="schedule"
                 className="flex-1 overflow-y-auto p-0 m-0 custom-scrollbar"
               >
-                <div className="relative p-6">
-                  {todaySchedule.length > 0 ? (
-                    <div className="space-y-0 pl-4 border-l-2 border-slate-200 dark:border-slate-800 ml-3">
-                      {todaySchedule.map((item) => {
-                        const now = currentTime;
-                        const [startH, startM] = item.start_time.split(':').map(Number);
-                        const [endH, endM] = item.end_time.split(':').map(Number);
-                        const startTime = new Date(now);
-                        startTime.setHours(startH, startM, 0, 0);
-                        const endTime = new Date(now);
-                        endTime.setHours(endH, endM, 0, 0);
-                        const isPast = now > endTime;
-                        const isCurrent = now >= startTime && now <= endTime;
-
-                        let progressPercent = 0;
-                        let minutesRemaining = 0;
-                        if (isCurrent) {
-                            const totalDuration = endTime.getTime() - startTime.getTime();
-                            const elapsed = now.getTime() - startTime.getTime();
-                            progressPercent = Math.min(100, Math.max(0, Math.round((elapsed / totalDuration) * 100)));
-                            minutesRemaining = Math.round((endTime.getTime() - now.getTime()) / 60000);
-                        }
-
-                        return (
-                          <div key={item.id} className="relative pl-8 pb-8 last:pb-0 group">
-                            {/* Timeline Dot */}
-                            <div
-                              className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 transition-all duration-500 ${isCurrent ? 'bg-emerald-500 border-emerald-200 dark:border-emerald-900 shadow-[0_0_0_4px_rgba(16,185,129,0.2)] scale-110' : 'bg-slate-200 dark:bg-slate-800 border-white dark:border-slate-900'}`}
-                            ></div>
-
-                            {/* Schedule Card */}
-                            <div
-                              className={`
-                                                            p-4 rounded-xl border transition-all duration-300
-                                                            ${
-                                                              isCurrent
-                                                                ? 'bg-emerald-50/50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 shadow-md shadow-emerald-500/10 transform scale-[1.02]'
-                                                                : 'bg-white/50 dark:bg-white/5 border-slate-100 dark:border-white/5 hover:bg-white dark:hover:bg-white/10'
-                                                            }
-                                                            ${isPast ? 'opacity-60 grayscale' : ''}
-                                                        `}
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <div>
-                                  <span
-                                    className={`text-[10px] font-bold px-2 py-1 rounded-lg mb-2 inline-block tracking-wide ${isCurrent ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
-                                  >
-                                    {item.start_time.slice(0, 5)} - {item.end_time.slice(0, 5)}
-                                  </span>
-                                  <h4 className="font-bold text-base text-slate-900 dark:text-white">
-                                    {item.subject}
-                                  </h4>
-                                </div>
-                                {isCurrent && (
-                                  <span className="flex h-3 w-3 relative">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-2">
-                                <UsersIcon className="w-4 h-4 text-slate-400" />
-                                {item.className}
-                              </p>
-                              {isCurrent && (
-                                <div className="mt-3 mb-3">
-                                  <div className="flex justify-between text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                                    <span>Berjalan ({progressPercent}%)</span>
-                                    <span>{minutesRemaining} menit lagi</span>
-                                  </div>
-                                  <div className="w-full bg-emerald-100 dark:bg-emerald-950/40 rounded-full h-1.5 overflow-hidden">
-                                    <div
-                                      className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
-                                      style={{ width: `${progressPercent}%` }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-500 border-t border-slate-100 dark:border-white/5 pt-3">
-                                <div className="flex items-center gap-1.5">
-                                  <ClockIcon className="w-3.5 h-3.5" />
-                                  <span>
-                                    {Math.round((endTime.getTime() - startTime.getTime()) / 60000)}{' '}
-                                    menit
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-20 text-center text-slate-400 dark:text-slate-500">
-                      <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6 animate-pulse">
-                        <CalendarIcon className="w-10 h-10 opacity-30" />
-                      </div>
-                      <p className="font-medium text-lg">Tidak ada jadwal hari ini.</p>
-                      <p className="text-sm mt-1 opacity-70">Nikmati waktu luang Anda!</p>
-                    </div>
-                  )}
-                </div>
+                <ScheduleTimeline schedule={todaySchedule} currentTime={currentTime} />
               </TabsContent>
               <TabsContent
                 value="tasks"
@@ -825,7 +321,7 @@ const DashboardPage: React.FC = () => {
                             </p>
                           </div>
                           <div
-                            className={`w-2.5 h-2.5 rounded-full mt-1.5 ${isTaskOverdue(task.due_date) ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`}
+                            className={`w-2.5 h-2.5 rounded-full mt-1.5 ${isTaskOverdue(task.due_date, currentTime) ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`}
                           ></div>
                         </div>
                       </div>

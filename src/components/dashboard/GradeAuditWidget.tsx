@@ -1,369 +1,191 @@
 /**
- * @fileoverview Grade Audit Widget Component
- * 
- * This component provides a grade completeness checker for teachers,
- * allowing them to see which students are missing grades for specific
- * subjects and assessments.
- * 
- * Features:
- * - Filter by class, subject, and assessment
- * - Progress bar showing completion percentage
- * - Quick action to navigate to mass grade input
- * 
+ * @fileoverview Grade Audit Widget
+ *
+ * Displays a filterable grade-completion audit: class, subject, and
+ * assessment selectors with a progress bar and a CTA to bulk-input
+ * missing grades.
+ *
  * @module components/dashboard/GradeAuditWidget
  */
 
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserMinusIcon, ClipboardPenIcon, CheckCircleIcon } from '../Icons';
+import { UserMinusIcon, ClipboardPenIcon, CheckCircleIcon, BookOpenIcon } from '../Icons';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
+import { useGradeAudit } from '../../hooks/useGradeAudit';
+import { useI18n } from '../../utils/i18n';
 import type { DashboardQueryData } from '../../types';
-import { DashboardPanel, DashboardPanelContent, DashboardPanelHeader } from './DashboardPanel';
-
-// =============================================================================
-// TYPES
-// =============================================================================
 
 interface GradeAuditWidgetProps {
-    /** Dashboard data containing students, classes, and academic records */
-    data: DashboardQueryData;
+  data: DashboardQueryData | undefined;
+  classes: DashboardQueryData['classes'];
 }
 
-interface StudentMissingGrade {
-    id: string;
-    name: string;
-    avatar_url?: string | null;
-    class_id: string | null;
-    className: string;
-    missingAssessment?: string;
-    missingAssessments?: string[];
-}
+const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data, classes }) => {
+  const navigate = useNavigate();
+  const { t } = useI18n();
 
-// =============================================================================
-// COMPONENT
-// =============================================================================
+  const {
+    uniqueSubjects,
+    subjectForCompletionCheck,
+    setSubjectForCompletionCheck,
+    assessmentForCompletionCheck,
+    setAssessmentForCompletionCheck,
+    selectedClassForCheck,
+    setSelectedClassForCheck,
+    uniqueAssessmentsForSubject,
+    studentsMissingGrade,
+    completionPercentage,
+  } = useGradeAudit({ data });
 
-/**
- * Widget for auditing grade completeness across subjects and assessments.
- * 
- * Allows teachers to:
- * - Select a class to filter students
- * - Select a subject to check
- * - Select a specific assessment or check all
- * - View progress percentage
- * - Navigate to mass input to complete missing grades
- * 
- * @param props - Component props
- * @param props.data - Dashboard data from useDashboardData hook
- * 
- * @example
- * ```tsx
- * <GradeAuditWidget data={dashboardData} />
- * ```
- */
-const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data }) => {
-    const navigate = useNavigate();
+  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSubjectForCompletionCheck(e.target.value);
+    setAssessmentForCompletionCheck('');
+  };
 
-    // Filter states - using empty string as "unset" sentinel
-    const [subjectForCheckInput, setSubjectForCheckInput] = useState<string | null>(null);
-    const [assessmentForCheckInput, setAssessmentForCheckInput] = useState<string | null>(null);
-    const [selectedClass, setSelectedClass] = useState('');
+  const handleOpenMassInput = () => {
+    if (!subjectForCompletionCheck) return;
 
-    // ==========================================================================
-    // DERIVED DATA
-    // ==========================================================================
+    let classIdToPass: string | null = selectedClassForCheck || null;
+    if (!classIdToPass && studentsMissingGrade.length > 0) {
+      classIdToPass = studentsMissingGrade[0].class_id;
+    }
 
-    /**
-     * Get unique subjects from academic records.
-     */
-    const uniqueSubjects = useMemo(() => {
-        const { academicRecords } = data;
-        if (!academicRecords) return [];
-        const subjects = new Set(academicRecords.map(r => r.subject));
-        return Array.from(subjects).sort();
-    }, [data]);
+    let assessmentToPass = assessmentForCompletionCheck;
+    if (
+      !assessmentToPass &&
+      studentsMissingGrade.length > 0 &&
+      'missingAssessments' in studentsMissingGrade[0]
+    ) {
+      const missingStudent = studentsMissingGrade[0] as { missingAssessments: string[] };
+      assessmentToPass = missingStudent.missingAssessments[0] ?? '';
+    }
 
-    /**
-     * Effective subject for check - uses first available if not explicitly set.
-     * This avoids the need for useEffect to set default value.
-     */
-    const subjectForCheck = useMemo(() => {
-        if (subjectForCheckInput !== null) return subjectForCheckInput;
-        return uniqueSubjects.length > 0 ? uniqueSubjects[0] : '';
-    }, [subjectForCheckInput, uniqueSubjects]);
+    navigate('/input-massal', {
+      state: {
+        prefill: {
+          mode: 'subject_grade',
+          classId: classIdToPass,
+          subject: subjectForCompletionCheck,
+          assessment_name: assessmentToPass,
+        },
+      },
+    });
+  };
 
-    /**
-     * Handler to update subject and reset assessment.
-     */
-    const setSubjectForCheck = (value: string) => {
-        setSubjectForCheckInput(value);
-        setAssessmentForCheckInput(null); // Reset assessment when subject changes
-    };
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden flex flex-col border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+      <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-amber-500/10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-base text-slate-900 dark:text-white">{t.dashboard.gradeAuditTitle}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {t.dashboard.gradeAuditSubtitle}
+            </p>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+            <UserMinusIcon className="w-5 h-5 text-amber-500" />
+          </div>
+        </div>
+      </div>
 
-    /**
-     * Effective assessment for check.
-     */
-    const assessmentForCheck = assessmentForCheckInput ?? '';
+      <div className="p-4 flex-1 flex flex-col">
+        <div className="space-y-4 mb-4">
+          <Select value={selectedClassForCheck} onChange={(e) => setSelectedClassForCheck(e.target.value)}>
+            <option value="">{t.dashboard.allClasses}</option>
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+          <div className="flex gap-3">
+            <Select
+              value={subjectForCompletionCheck}
+              onChange={handleSubjectChange}
+              className="flex-1"
+            >
+              <option value="" disabled>
+                {t.dashboard.subject}
+              </option>
+              {uniqueSubjects.map((subject) => (
+                <option key={subject} value={subject}>
+                  {subject}
+                </option>
+              ))}
+            </Select>
+            <Select
+              value={assessmentForCompletionCheck}
+              onChange={(e) => setAssessmentForCompletionCheck(e.target.value)}
+              className="flex-1"
+              disabled={uniqueAssessmentsForSubject.length === 0}
+            >
+              <option value="">{t.common.all}</option>
+              {uniqueAssessmentsForSubject.map((assessment) => (
+                <option key={assessment} value={assessment}>
+                  {assessment}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
 
-    /**
-     * Handler to update assessment.
-     */
-    const setAssessmentForCheck = (value: string) => {
-        setAssessmentForCheckInput(value || null);
-    };
+        {subjectForCompletionCheck ? (
+          <div className="flex-1">
+            <div className="mb-3">
+              <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                <span>{t.dashboard.completionProgress}</span>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                  {completionPercentage}%
+                </span>
+                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-200/20 shadow-sm">
+                  {t.dashboard.gradedComplete}
+                </span>
+              </div>
+            </div>
+            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden mb-4">
+              <div
+                className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-emerald-500 to-emerald-600"
+                style={{ width: `${completionPercentage}%` }}
+              ></div>
+            </div>
 
-    /**
-     * Get unique assessments for the selected subject.
-     * Filtered by class if one is selected.
-     */
-    const uniqueAssessmentsForSubject = useMemo(() => {
-        const { academicRecords, students } = data;
-        if (!subjectForCheck || !academicRecords || !students) return [];
-
-        // If a class is selected, only consider records for students in that class
-        let relevantStudentIds: Set<string> | null = null;
-        if (selectedClass) {
-            relevantStudentIds = new Set(
-                students
-                    .filter(s => s.class_id === selectedClass)
-                    .map(s => s.id)
-            );
-        }
-
-        const assessmentNames = academicRecords
-            .filter(r => {
-                if (r.subject !== subjectForCheck) return false;
-                if (!r.assessment_name) return false;
-                if (relevantStudentIds && !relevantStudentIds.has(r.student_id)) return false;
-                return true;
-            })
-            .map(r => r.assessment_name!.trim());
-
-        return [...new Set(assessmentNames)]
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-    }, [data, subjectForCheck, selectedClass]);
-
-    /**
-     * Calculate students missing grades for the selected subject/assessment.
-     */
-    const studentsMissingGrade: StudentMissingGrade[] = useMemo(() => {
-        if (!subjectForCheck || !data.students || !data.academicRecords || !data.classes) {
-            return [];
-        }
-
-        const classMap = new Map(data.classes.map(c => [c.id, c.name]));
-
-        // Filter students by class if selected
-        let targetStudents = data.students;
-        if (selectedClass) {
-            targetStudents = targetStudents.filter(s => s.class_id === selectedClass);
-        }
-
-        if (assessmentForCheck) {
-            // Check specific assessment
-            const gradedStudentIds = new Set(
-                data.academicRecords
-                    .filter(r => r.subject === subjectForCheck && r.assessment_name === assessmentForCheck)
-                    .map(r => r.student_id)
-            );
-
-            return targetStudents
-                .filter(s => !gradedStudentIds.has(s.id))
-                .map(s => ({
-                    ...s,
-                    className: classMap.get(s.class_id ?? '') || 'N/A',
-                    missingAssessment: assessmentForCheck
-                }));
-        } else {
-            // Check all assessments for this subject
-            if (uniqueAssessmentsForSubject.length === 0) return [];
-
-            return targetStudents
-                .map(s => {
-                    const studentRecords = data.academicRecords.filter(
-                        r => r.student_id === s.id && r.subject === subjectForCheck
-                    );
-                    const studentAssessments = new Set(studentRecords.map(r => r.assessment_name));
-                    const missingAssessments = uniqueAssessmentsForSubject.filter(
-                        a => !studentAssessments.has(a)
-                    );
-
-                    return {
-                        ...s,
-                        className: classMap.get(s.class_id ?? '') || 'N/A',
-                        missingAssessments
-                    };
-                })
-                .filter(s => s.missingAssessments.length > 0);
-        }
-    }, [subjectForCheck, assessmentForCheck, data, selectedClass, uniqueAssessmentsForSubject]);
-
-    /**
-     * Calculate total students for completion percentage.
-     */
-    const totalStudentsForCheck = useMemo(() => {
-        const { students } = data;
-        if (!students) return 0;
-        if (selectedClass) {
-            return students.filter(s => s.class_id === selectedClass).length;
-        }
-        return students.length;
-    }, [data, selectedClass]);
-
-    /**
-     * Calculate completion percentage.
-     */
-    const completionPercentage = useMemo(() => {
-        if (totalStudentsForCheck === 0) return 0;
-        return Math.round(
-            ((totalStudentsForCheck - studentsMissingGrade.length) / totalStudentsForCheck) * 100
-        );
-    }, [totalStudentsForCheck, studentsMissingGrade.length]);
-
-    // ==========================================================================
-    // HANDLERS
-    // ==========================================================================
-
-    /**
-     * Navigate to mass input page with pre-filled data.
-     */
-    const handleOpenMassInput = () => {
-        if (!subjectForCheck) return;
-
-        let classIdToPass: string | null = selectedClass || null;
-        if (!classIdToPass && studentsMissingGrade.length > 0) {
-            classIdToPass = studentsMissingGrade[0].class_id;
-        }
-
-        let assessmentToPass = assessmentForCheck;
-        if (!assessmentToPass && studentsMissingGrade.length > 0 && studentsMissingGrade[0].missingAssessments) {
-            assessmentToPass = studentsMissingGrade[0].missingAssessments[0];
-        }
-
-        navigate('/input-massal', {
-            state: {
-                prefill: {
-                    mode: 'subject_grade',
-                    classId: classIdToPass,
-                    subject: subjectForCheck,
-                    assessment_name: assessmentToPass
-                }
-            }
-        });
-    };
-
-    // ==========================================================================
-    // RENDER
-    // ==========================================================================
-
-    return (
-        <DashboardPanel className="flex flex-col">
-            {/* Header */}
-            <DashboardPanelHeader className="bg-amber-500/10">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="font-semibold text-lg text-slate-900 dark:text-white">
-                            Audit Nilai
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            Cek kelengkapan penilaian siswa
-                        </p>
-                    </div>
-                    <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
-                        <UserMinusIcon className="w-5 h-5 text-amber-500" />
-                    </div>
+            {studentsMissingGrade.length > 0 ? (
+              <div className="mt-auto">
+                <Button onClick={handleOpenMassInput} variant="primary" className="w-full" size="sm">
+                  <ClipboardPenIcon className="w-4 h-4 mr-2" />
+                  {t.dashboard.completeMissing} ({studentsMissingGrade.length})
+                </Button>
+              </div>
+            ) : (
+              <div className="mt-auto flex flex-col items-center justify-center py-4 text-center">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center mb-2">
+                  <CheckCircleIcon className="w-6 h-6 text-emerald-500" />
                 </div>
-            </DashboardPanelHeader>
-
-            {/* Content */}
-            <DashboardPanelContent className="flex-1 flex flex-col">
-                {/* Filters */}
-                <div className="space-y-4 mb-4">
-                    <Select
-                        value={selectedClass}
-                        onChange={(e) => setSelectedClass(e.target.value)}
-                    >
-                        <option value="">Semua Kelas</option>
-                        {data.classes.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </Select>
-
-                    <div className="flex gap-3">
-                        <Select
-                            value={subjectForCheck}
-                            onChange={(e) => setSubjectForCheck(e.target.value)}
-                            className="flex-1"
-                        >
-                            <option value="" disabled>Mapel</option>
-                            {uniqueSubjects.map((subject) => (
-                                <option key={subject} value={subject}>{subject}</option>
-                            ))}
-                        </Select>
-
-                        <Select
-                            value={assessmentForCheck}
-                            onChange={(e) => setAssessmentForCheck(e.target.value)}
-                            className="flex-1"
-                            disabled={uniqueAssessmentsForSubject.length === 0}
-                        >
-                            <option value="">Semua</option>
-                            {uniqueAssessmentsForSubject.map((assessment) => (
-                                <option key={assessment} value={assessment}>{assessment}</option>
-                            ))}
-                        </Select>
-                    </div>
-                </div>
-
-                {/* Progress Section */}
-                {subjectForCheck ? (
-                    <div className="flex-1">
-                        {/* Progress Header */}
-                        <div className="flex justify-between text-xs mb-2 font-semibold uppercase tracking-wider">
-                            <span className="text-slate-400">Progres</span>
-                            <span className="text-emerald-600">
-                                {completionPercentage}%
-                            </span>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden mb-4">
-                            <div
-                                className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-emerald-500 to-emerald-600"
-                                style={{ width: `${completionPercentage}%` }}
-                            />
-                        </div>
-
-                        {/* Action Button or Completion Message */}
-                        {studentsMissingGrade.length > 0 ? (
-                            <div className="mt-auto">
-                                <Button
-                                    onClick={handleOpenMassInput}
-                                    variant="primary"
-                                    className="w-full"
-                                    size="sm"
-                                >
-                                    <ClipboardPenIcon className="w-4 h-4 mr-2" />
-                                    Lengkapi ({studentsMissingGrade.length})
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="mt-auto text-center py-2 text-green-500 font-medium text-sm flex items-center justify-center gap-2">
-                                <CheckCircleIcon className="w-4 h-4" />
-                                Lengkap!
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
-                        Pilih mapel untuk cek
-                    </div>
-                )}
-            </DashboardPanelContent>
-        </DashboardPanel>
-    );
+                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">{t.dashboard.allGraded}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                  {t.dashboard.allGradedDesc}
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
+            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+              <BookOpenIcon className="w-6 h-6 text-slate-400 dark:text-slate-500" />
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.dashboard.selectSubject}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+              {t.dashboard.selectSubjectDesc}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default GradeAuditWidget;

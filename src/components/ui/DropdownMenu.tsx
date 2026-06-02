@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/refs */
 import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 
 interface DropdownMenuProps {
     children: React.ReactNode;

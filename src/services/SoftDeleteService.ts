@@ -41,7 +41,7 @@ export async function softDelete(
 
         const { error } = await supabase
             .from(entity)
-            .update({ deleted_at: deletedAt })
+            .update({ deleted_at: deletedAt } as never)
             .eq('id', id);
 
         if (error) throw error;
@@ -67,7 +67,7 @@ export async function softDeleteBulk(
 
         const { error } = await supabase
             .from(entity)
-            .update({ deleted_at: deletedAt })
+            .update({ deleted_at: deletedAt } as never)
             .in('id', ids);
 
         if (error) throw error;
@@ -91,7 +91,7 @@ export async function restore(
     try {
         const { error } = await supabase
             .from(entity)
-            .update({ deleted_at: null })
+            .update({ deleted_at: null } as never)
             .eq('id', id);
 
         if (error) throw error;
@@ -115,7 +115,7 @@ export async function restoreBulk(
     try {
         const { error } = await supabase
             .from(entity)
-            .update({ deleted_at: null })
+            .update({ deleted_at: null } as never)
             .in('id', ids);
 
         if (error) throw error;

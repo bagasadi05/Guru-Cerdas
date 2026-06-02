@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock crypto.getRandomValues
 const mockGetRandomValues = vi.fn((array: Uint8Array | Uint32Array) => {
@@ -415,7 +415,7 @@ describe('Enhanced Security Service', () => {
 
     describe('Password Generation', () => {
         it('should generate password of correct length', () => {
-            const length = 16;
+            const _length = 16;
             const password = 'Aa1!'.repeat(4);
             expect(password.length).toBe(16);
         });

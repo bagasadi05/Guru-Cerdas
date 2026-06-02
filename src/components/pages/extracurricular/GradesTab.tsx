@@ -22,7 +22,7 @@ interface GradesTabProps {
 const GRADE_OPTIONS = ['A', 'B', 'C', 'D'] as const;
 
 export const GradesTab: React.FC<GradesTabProps> = ({
-    extracurricularId,
+    extracurricularId: _extracurricularId,
     enrollments,
     gradesMap,
     gradeDrafts,

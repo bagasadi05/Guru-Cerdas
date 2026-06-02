@@ -271,7 +271,7 @@ class NetworkResilienceService {
       exponentialBackoff = true,
       retryCondition = DEFAULT_RETRY_POLICIES.default.retryCondition,
       onRetry,
-      priority,
+      priority: _priority,
       ...fetchOptions
     } = options;
 

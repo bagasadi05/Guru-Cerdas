@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../services/supabase';
 import { useToast } from '../../../hooks/useToast';
-import { CheckCircleIcon, PencilIcon, SendIcon, TrashIcon, UsersIcon } from '../../Icons';
+import { PencilIcon, SendIcon, TrashIcon, UsersIcon } from '../../Icons';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Modal } from '../../ui/Modal';
@@ -24,7 +24,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
     const unreadTeacherMessages = useMemo(() => (
         communications.filter((message) => message.sender === 'teacher' && !message.is_read).length
     ), [communications]);
-    const latestMessage = communications[communications.length - 1];
+    const _latestMessage = communications[communications.length - 1];
     const quickPrompts = [
         'Mohon info perkembangan belajar anak saya minggu ini.',
         'Apakah ada tugas yang perlu kami dampingi di rumah?',

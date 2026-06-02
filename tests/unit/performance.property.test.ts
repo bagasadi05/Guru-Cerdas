@@ -6,7 +6,7 @@
  * Each test runs minimum 100 iterations as specified in requirements
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import fc from 'fast-check';
 
 // ============================================

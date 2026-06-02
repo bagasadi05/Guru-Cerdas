@@ -187,8 +187,8 @@ describe('Data Visualization', () => {
 
     describe('Tooltip', () => {
         it('should position tooltip above point', () => {
-            const x = 100;
-            const y = 50;
+            const _x = 100;
+            const _y = 50;
             const transform = 'translate(-50%, -100%)';
             const marginTop = -10;
             expect(transform).toContain('-50%');

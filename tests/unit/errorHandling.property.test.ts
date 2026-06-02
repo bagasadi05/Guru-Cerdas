@@ -56,8 +56,8 @@ describe('Property-Based Testing: Error Capture and Context', () => {
   const errorMessageArbitrary = fc.string({ minLength: 1, maxLength: 200 });
   const stackTraceArbitrary = fc.string({ minLength: 10, maxLength: 1000 });
   const componentNameArbitrary = fc.string({ minLength: 1, maxLength: 50 });
-  const userIdArbitrary = fc.uuid();
-  const urlArbitrary = fc.webUrl();
+  const _userIdArbitrary = fc.uuid();
+  const _urlArbitrary = fc.webUrl();
   
   const jsErrorArbitrary = fc.record({
     name: fc.constantFrom('Error', 'TypeError', 'ReferenceError', 'SyntaxError'),

@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useToast } from '../../../../hooks/useToast';
 import { useMassInputData } from './useMassInputData';
 import { useMassInputState } from './useMassInputState';
-import { useMassInputMutations, findStudentMatch } from './useMassInputMutations';
+import { useMassInputMutations } from './useMassInputMutations';
 import { AcademicRecordRow, StudentFilter, StudentRow } from '../types';
 import { actionCards } from '../constants';
 
@@ -38,7 +38,7 @@ export function useMassInputViewModel() {
             }
         } else if (state.mode !== 'subject_grade') {
             state.setScores(prev => Object.keys(prev).length === 0 ? prev : {});
-            state.isScoresDirty.current = false;
+            state.setIsScoresDirty(false);
         }
     }, [data.existingGrades, state.mode]); // eslint-disable-line react-hooks/exhaustive-deps
 

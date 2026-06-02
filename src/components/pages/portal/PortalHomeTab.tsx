@@ -1,5 +1,5 @@
 import React from 'react';
-import { BellIcon, BookOpenIcon, BrainCircuitIcon, CalendarIcon, CheckCircleIcon, DownloadIcon, SendIcon, SettingsIcon, SparklesIcon } from '../../Icons';
+import { BellIcon, BookOpenIcon, BrainCircuitIcon, CalendarIcon, CheckCircleIcon, DownloadIcon, SendIcon, SparklesIcon } from '../../Icons';
 import type {
     PortalActivityItem,
     PortalAnnouncement,
@@ -33,7 +33,7 @@ const dateFormatter = new Intl.DateTimeFormat('id-ID', {
 });
 
 export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
-    student,
+    student: _student,
     attentionItems,
     guardianSummary,
     weeklySummary,
@@ -42,7 +42,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
     recentAnnouncements,
     onOpenTab,
     onOpenMoreSection,
-    onOpenSettings,
+    onOpenSettings: _onOpenSettings,
     onDownloadPdf,
 }) => {
     const summaryCards = [
@@ -99,7 +99,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
         },
     ];
 
-    const guardianStatusTone = guardianSummary?.status === 'perhatian'
+    const _guardianStatusTone = guardianSummary?.status === 'perhatian'
         ? 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/30 dark:bg-rose-950/30 dark:text-rose-100'
         : guardianSummary?.status === 'pantau'
             ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/30 dark:bg-amber-950/30 dark:text-amber-100'

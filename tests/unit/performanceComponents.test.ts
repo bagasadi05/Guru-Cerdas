@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
 
 describe('Performance Components', () => {
     describe('VirtualList', () => {
@@ -174,7 +173,7 @@ describe('Performance Components', () => {
 
     describe('LazyImage', () => {
         it('should support WebP source', () => {
-            const src = '/image.jpg';
+            const _src = '/image.jpg';
             const webpSrc = '/image.webp';
 
             expect(webpSrc.endsWith('.webp')).toBe(true);

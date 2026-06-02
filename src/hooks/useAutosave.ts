@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { logger } from '../services/logger';
 
 interface UseAutosaveOptions<T> {
     key: string;
@@ -80,7 +81,7 @@ export function useAutosave<T>({
             setHasDraft(true);
             setDraftTimestamp(new Date());
         } catch (error) {
-            console.warn('Autosave failed:', error);
+            logger.warn('Autosave failed', 'Autosave', error);
         }
     }, [enabled, storageKey]);
 

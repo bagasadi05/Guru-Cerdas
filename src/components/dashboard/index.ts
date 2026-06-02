@@ -33,3 +33,6 @@ export type { CollapsibleSectionProps } from './CollapsibleSection';
 
 export { ResponsiveGrid } from './ResponsiveGrid';
 export type { ResponsiveGridProps, GridVariant } from './ResponsiveGrid';
+
+export { DashboardSummaryCards } from './DashboardSummaryCards';
+

@@ -18,7 +18,7 @@ export async function safeApiCall<T>(
         retries = 3,
         backoff = 1000,
         context = 'API',
-        showErrorToast = true
+        showErrorToast: _showErrorToast = true
     } = options;
 
     let attempt = 0;

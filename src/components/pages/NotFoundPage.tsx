@@ -4,6 +4,15 @@ import { motion } from 'framer-motion';
 
 const AUTO_REDIRECT_SECONDS = 15;
 
+const PARTICLES_STATIC_DATA = [
+  { top: '25%', left: '15%', duration: 2.5, delay: 0.1 },
+  { top: '45%', left: '75%', duration: 3.2, delay: 0.5 },
+  { top: '65%', left: '30%', duration: 2.1, delay: 1.2 },
+  { top: '35%', left: '55%', duration: 3.8, delay: 0.2 },
+  { top: '75%', left: '85%', duration: 2.9, delay: 0.8 },
+  { top: '55%', left: '20%', duration: 3.5, delay: 1.5 },
+];
+
 /**
  * Premium 404 Not Found page with animated illustration,
  * countdown auto-redirect, and navigation options.
@@ -48,22 +57,22 @@ const NotFoundPage: React.FC = () => {
             </motion.span>
           </div>
           {/* Floating particles */}
-          {[...Array(6)].map((_, i) => (
+          {PARTICLES_STATIC_DATA.map((p, i) => (
             <motion.div
               key={i}
               className="absolute w-2 h-2 rounded-full bg-indigo-400/40 dark:bg-indigo-400/60"
               style={{
-                top: `${20 + Math.random() * 60}%`,
-                left: `${10 + Math.random() * 80}%`,
+                top: p.top,
+                left: p.left,
               }}
               animate={{
                 y: [0, -15, 0],
                 opacity: [0.3, 0.8, 0.3],
               }}
               transition={{
-                duration: 2 + Math.random() * 2,
+                duration: p.duration,
                 repeat: Infinity,
-                delay: Math.random() * 2,
+                delay: p.delay,
               }}
             />
           ))}

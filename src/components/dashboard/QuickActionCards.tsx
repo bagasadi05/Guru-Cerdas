@@ -70,12 +70,12 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
         <Clock className="w-5 h-5 text-gray-400" />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        {quickActions.map((action, index) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        {quickActions.map((action) => (
           <Link
             key={action.id}
             to={action.link}
-            className={`group relative p-4 rounded-xl ${action.bgColor} border border-slate-200/60 dark:border-slate-700/60 hover:shadow-md transition-all hover:-translate-y-0.5 active:scale-[0.98] flex flex-col items-start h-full min-h-[120px] ${index === quickActions.length - 1 && quickActions.length % 2 !== 0 ? 'col-span-2 md:col-span-1' : ''}`}
+            className={`group relative p-4 rounded-xl ${action.bgColor} border border-slate-200/60 dark:border-slate-700/60 hover:shadow-md transition-all hover:-translate-y-0.5 active:scale-[0.98] flex flex-col items-start h-full min-h-[120px]`}
           >
             <div className={`w-full ${action.color}`}>
               {/* Icon */}

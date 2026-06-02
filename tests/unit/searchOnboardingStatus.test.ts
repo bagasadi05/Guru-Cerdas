@@ -155,7 +155,7 @@ describe('Onboarding & Help', () => {
         });
 
         it('should complete tour and store in localStorage', () => {
-            const storageKey = 'tour_completed';
+            const _storageKey = 'tour_completed';
             let completed = false;
             const complete = () => {
                 completed = true;

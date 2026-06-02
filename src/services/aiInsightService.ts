@@ -9,6 +9,7 @@
 
 import { generateOpenRouterJson } from './openRouterService';
 import type { Database } from './database.types';
+import { logger } from './logger';
 
 // =============================================================================
 // TYPES
@@ -206,7 +207,7 @@ export const cacheInsight = (insight: AIInsight, userId?: string | null): void =
   try {
     localStorage.setItem(storageKey, JSON.stringify(storedData));
   } catch (error) {
-    console.error('Failed to cache AI insight:', error);
+    logger.error('Failed to cache AI insight', error as Error, undefined, 'AIInsight');
   }
 };
 
@@ -232,7 +233,7 @@ export const getCachedInsight = (userId?: string | null): AIInsight | null => {
     // Cache expired - return null
     return null;
   } catch (error) {
-    console.error('Error parsing stored insight:', error);
+    logger.error('Error parsing stored insight', error as Error, undefined, 'AIInsight');
     return null;
   }
 };

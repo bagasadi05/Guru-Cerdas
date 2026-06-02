@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 describe('Mobile UX', () => {
     describe('Touch Target Constants', () => {
@@ -191,7 +191,7 @@ describe('Mobile UX', () => {
         });
 
         it('should navigate to prev page on swipe right', () => {
-            const pages = ['/', '/students', '/attendance'];
+            const _pages = ['/', '/students', '/attendance'];
             let currentIndex = 1;
             const swipeRight = () => {
                 if (currentIndex > 0) currentIndex--;
@@ -201,7 +201,7 @@ describe('Mobile UX', () => {
         });
 
         it('should not navigate past first page', () => {
-            const pages = ['/', '/students'];
+            const _pages = ['/', '/students'];
             let currentIndex = 0;
             const swipeRight = () => {
                 if (currentIndex > 0) currentIndex--;

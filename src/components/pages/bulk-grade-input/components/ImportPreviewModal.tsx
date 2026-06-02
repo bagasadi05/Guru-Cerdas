@@ -54,7 +54,11 @@ export const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
                 confidence: match.confidence,
             };
         });
-        setRows(initialRows);
+        
+        const timer = setTimeout(() => {
+            setRows(initialRows);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [parsedData, students, isOpen]);
 
     // Handle manual selection of student

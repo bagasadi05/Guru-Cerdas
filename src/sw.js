@@ -34,12 +34,14 @@ registerRoute(
 );
 
 // Cache Supabase API responses (NetworkFirst - try network, fallback to cache)
+// Only cache unauthenticated GET requests to avoid serving user-specific data
+// from a previous session. Auth endpoints are always excluded.
 registerRoute(
     ({ url, request }) =>
         url.hostname.includes('supabase') &&
         request.method === 'GET' &&
-        !request.headers.has('authorization') &&
-        !request.headers.has('apikey'),
+        !url.pathname.includes('/auth/') &&
+        !request.headers.has('authorization'),
     new NetworkFirst({
         cacheName: 'supabase-api-cache',
         plugins: [

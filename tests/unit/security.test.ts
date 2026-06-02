@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
     hasXssAttempt,
     hasSqlInjectionAttempt,
@@ -6,10 +6,9 @@ import {
     generateSecureAccessCode,
     isValidAccessCode,
     validateAndSanitize,
-    runParentPortalSecurityAudit,
-    SecurityEventType
+    runParentPortalSecurityAudit
 } from '../../src/services/securityEnhanced';
-import { rateLimiter, useRateLimit } from '../../src/services/rateLimiter';
+import { rateLimiter } from '../../src/services/rateLimiter';
 
 // Mock localStorage
 const localStorageMock = (() => {

@@ -4,7 +4,7 @@
  * Tests invariants and properties that should always hold true.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import * as fc from 'fast-check';
 
 // Mock Supabase for testing
@@ -278,7 +278,7 @@ describe('Property 7: Bulk operation atomicity', () => {
  */
 describe('Property 8: Action history limit', () => {
     it('history should not exceed maximum limit', async () => {
-        const MAX_HISTORY = 50;
+        const _MAX_HISTORY = 50;
 
         // This is a conceptual test - actual implementation limits in UndoManager
         await fc.assert(
@@ -357,8 +357,8 @@ describe('Property 10: Template configuration preservation', () => {
                     columns: fc.array(fc.string(), { minLength: 1, maxLength: 10 }),
                     format: fc.constantFrom('pdf', 'excel', 'csv'),
                     dateRange: fc.option(fc.record({
-                        start: fc.date().map(d => d.toISOString().slice(0, 10)),
-                        end: fc.date().map(d => d.toISOString().slice(0, 10)),
+                        start: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01') }).map(d => d.toISOString().slice(0, 10)),
+                        end: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01') }).map(d => d.toISOString().slice(0, 10)),
                     })),
                 }),
                 async (template) => {

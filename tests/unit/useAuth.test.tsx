@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 
 // Mock Supabase before importing hooks
@@ -44,14 +44,18 @@ vi.mock('../../src/services/supabase', () => ({
                 eq: vi.fn(() => Promise.resolve({ data: null, error: null }))
             }))
         }))
-    }
+    },
+    clearStaleAuthTokens: vi.fn()
 }));
 
 import { AuthProvider, useAuth, AuthContext } from '../../src/hooks/useAuth';
+import { ToastProvider } from '../../src/hooks/useToast';
 
 describe('useAuth Hook', () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AuthProvider>{children}</AuthProvider>
+        <ToastProvider>
+            <AuthProvider>{children}</AuthProvider>
+        </ToastProvider>
     );
 
     beforeEach(() => {
