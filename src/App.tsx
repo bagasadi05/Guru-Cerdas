@@ -48,6 +48,7 @@ const ReportPage = lazy(() => import('@/components/pages/ReportPage'));
 const MassInputPage = lazy(() => import('@/components/pages/MassInputPage'));
 const BulkGradeInputPage = lazy(() => import('@/components/pages/BulkGradeInputPage'));
 const PortalLoginPage = lazy(() => import('@/components/pages/PortalLoginPage'));
+const GradeAdjustmentPage = lazy(() => import('@/components/pages/GradeAdjustmentPage'));
 // FIX: The lazy import for ParentPortalPage was failing because the component is a named export, not a default one.
 // The import has been updated to correctly resolve the named export for React.lazy.
 const ParentPortalPage = lazy(() => import('@/components/pages/ParentPortalPage').then(module => ({ default: module.ParentPortalPage })));
@@ -156,6 +157,7 @@ function AppContent() {
               <Route path="/tugas" element={<AsyncErrorBoundary context="TasksPage"><TasksPage /></AsyncErrorBoundary>} />
               <Route path="/input-massal" element={<AsyncErrorBoundary context="MassInputPage"><MassInputPage /></AsyncErrorBoundary>} />
               <Route path="/input-nilai-cepat" element={<AsyncErrorBoundary context="BulkGradeInputPage"><BulkGradeInputPage /></AsyncErrorBoundary>} />
+              <Route path="/katrol-nilai" element={<AsyncErrorBoundary context="GradeAdjustmentPage"><GradeAdjustmentPage /></AsyncErrorBoundary>} />
               <Route path="/sampah" element={<AsyncErrorBoundary context="TrashPage"><TrashPage /></AsyncErrorBoundary>} />
               <Route path="/riwayat" element={<AsyncErrorBoundary context="ActionHistoryPage"><ActionHistoryPage /></AsyncErrorBoundary>} />
               <Route path="/analytics" element={<AsyncErrorBoundary context="AnalyticsPage"><AnalyticsPage /></AsyncErrorBoundary>} />

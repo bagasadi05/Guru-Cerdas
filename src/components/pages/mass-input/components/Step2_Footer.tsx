@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../../../ui/Button';
-import { XCircleIcon, DownloadIcon, BarChartIcon } from '../../../Icons';
+import { XCircleIcon, DownloadIcon, BarChartIcon, SparklesIcon } from '../../../Icons';
 import { InputMode, ViolationRow } from '../types';
 import { exportGradesToExcel } from '../../../../utils/gradeExporter';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../../../ui/DropdownMenu';
@@ -30,13 +30,15 @@ interface Step2_FooterProps {
     className?: string;
     existingViolations?: any[];
     onShowChart?: () => void;
+    onShowAdjustment?: () => void;
 }
 
 export const Step2_Footer: React.FC<Step2_FooterProps> = ({
     summaryText, mode, selectedStudentIds, gradedCount, setScores, setSelectedStudentIds,
     isExporting, exportProgress, handleSubmit, isSubmitDisabled, submitButtonTooltip,
     isSubmitting, isDeleting,
-    scores, students, subjectGradeInfo, className, existingViolations, onShowChart
+    scores, students, subjectGradeInfo, className, existingViolations, onShowChart,
+    onShowAdjustment
 }) => {
     const handleExportExcel = async () => {
         if (!scores || !students) return;
@@ -169,6 +171,17 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                         </DropdownMenu>
                     )}
 
+                    {mode === 'subject_grade' && gradedCount > 0 && onShowAdjustment && (
+                        <Button
+                            onClick={onShowAdjustment}
+                            variant="outline"
+                            className="w-full sm:w-auto font-bold border-indigo-200 dark:border-indigo-900 bg-white dark:bg-gray-900 text-indigo-650 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 shadow-md shadow-indigo-500/5 flex items-center justify-center gap-2"
+                        >
+                            <SparklesIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+                            Katrol & Pratinjau
+                        </Button>
+                    )}
+
                     {isExporting ? (
                         <div className="w-full sm:w-64 text-center">
                             <div className="relative pt-1">
@@ -203,6 +216,6 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                     )}
                 </div>
             </div>
-        </footer >
+        </footer>
     );
 };

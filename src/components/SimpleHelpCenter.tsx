@@ -180,7 +180,7 @@ const simpleGuides: SimpleGuide[] = [
         steps: [
             {
                 title: '1️⃣ Buka Input Nilai',
-                description: 'Klik tulisan "Input Cepat" di menu sebelah kiri.',
+                description: 'Klik tulisan "Manajemen Nilai" di menu sebelah kiri.',
             },
             {
                 title: '2️⃣ Pilih Kelas dan Mapel',

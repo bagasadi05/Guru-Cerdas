@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
 import { ExcelImporter } from '../../ui/ExcelImporter';
 import { GradeDistributionChart } from '../../ui/GradeDistributionChart';
 import { ArrowLeftIcon } from '../../Icons';
+import { UnifiedGradeAdjustmentModal } from '../../ui/UnifiedGradeAdjustmentModal';
+import { useSemester } from '../../../contexts/SemesterContext';
 import { Step1_ModeSelection } from './components/Step1_ModeSelection';
 import { Step2_Configuration } from './components/Step2_Configuration';
 import { Step2_StudentList } from './components/Step2_StudentList';
@@ -101,6 +103,8 @@ export interface MassInputPageViewProps {
 
 export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
     const toast = useToast();
+    const { semesters } = useSemester();
+    const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
     const {
         step, mode, handleModeSelect, handleBack, currentCard,
         isConfigOpen, setIsConfigOpen, selectedClass, setSelectedClass, classes, isLoadingClasses,
@@ -339,6 +343,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         className={classes?.find(c => c.id === selectedClass)?.name}
                         existingViolations={existingViolations}
                         onShowChart={() => setShowChartModal(true)}
+                        onShowAdjustment={() => setShowAdjustmentModal(true)}
                     />
                 )}
 
@@ -349,6 +354,27 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                             <GradeDistributionChart scores={scores} kkm={75} />
                         </div>
                     </Modal>
+                )}
+
+                {/* Integrated Grade Adjustment & Print Preview Modal */}
+                {mode === 'subject_grade' && (
+                    <UnifiedGradeAdjustmentModal
+                        isOpen={showAdjustmentModal}
+                        onClose={() => setShowAdjustmentModal(false)}
+                        students={studentsData || []}
+                        scores={scores}
+                        onApply={(finalScores) => {
+                            setScores(finalScores);
+                            if (props.setScores) {
+                                props.setScores(finalScores);
+                            }
+                        }}
+                        kkm={75}
+                        subject={subjectGradeInfo.subject}
+                        assessmentName={subjectGradeInfo.assessment_name}
+                        className={classes?.find(c => c.id === selectedClass)?.name || ''}
+                        semesterLabel={subjectGradeInfo.semester ? semesters.find(s => s.id === subjectGradeInfo.semester)?.name : undefined}
+                    />
                 )}
             </div>
         </div>

@@ -97,6 +97,10 @@ export function useMassInputState() {
     }, [mode]);
 
     const handleModeSelect = (selectedMode: InputMode) => {
+        if (selectedMode === 'grade_adjustment') {
+            navigate('/katrol-nilai');
+            return;
+        }
         setMode(selectedMode);
         setStep(2);
         setIsCustomSubject(false);

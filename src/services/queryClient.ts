@@ -39,7 +39,7 @@ export function initQueryPersistence(): void {
     storage: window.localStorage,
     key: 'portal_guru_query_cache',
     throttleTime: 1000,
-    retry: (opts) => {
+    retry: (opts: { error: any }) => {
       const err = opts.error;
       if (err && (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
         logger.warn('LocalStorage quota exceeded for query cache persister, clearing client cache...');

@@ -7,7 +7,8 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { ExcelImporter } from '../ui/ExcelImporter';
-import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, AlertTriangleIcon, KeyboardIcon } from '../Icons';
+import { ArrowLeftIcon, SaveIcon, CheckCircleIcon, AlertTriangleIcon, KeyboardIcon, SparklesIcon } from '../Icons';
+import { UnifiedGradeAdjustmentModal } from '../ui/UnifiedGradeAdjustmentModal';
 import { useNavigate } from 'react-router-dom';
 import { exportGradesToExcel } from '../../utils/gradeExporter';
 import { Database } from '../../services/database.types';
@@ -42,7 +43,7 @@ const BulkGradeInputPage: React.FC = () => {
     const toast = useToast();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { activeSemester, isLocked: isSemesterLocked } = useSemester();
+    const { activeSemester, semesters, isLocked: isSemesterLocked } = useSemester();
 
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [selectedSubject, setSelectedSubject] = useState<string>(SUBJECTS[0]);
@@ -56,6 +57,7 @@ const BulkGradeInputPage: React.FC = () => {
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showAIPasteModal, setShowAIPasteModal] = useState(false);
+    const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
     const [pendingImportData, setPendingImportData] = useState<{ name: string; score: string | number }[]>([]);
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [lastSaveCount, setLastSaveCount] = useState(0);
@@ -699,22 +701,30 @@ const BulkGradeInputPage: React.FC = () => {
                     />
                 )}
 
-                {/* Save Button */}
+                {/* Save and Adjustment Buttons */}
                 {selectedClass && grades.length > 0 && (
-                    <div className="sticky bottom-4 lg:bottom-8">
+                    <div className="sticky bottom-4 lg:bottom-8 flex flex-col sm:flex-row gap-3">
+                        <Button
+                            onClick={() => setShowAdjustmentModal(true)}
+                            variant="outline"
+                            className="flex-1 h-14 text-lg font-bold border-indigo-200 dark:border-indigo-900 bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 shadow-lg shadow-indigo-500/5 flex items-center justify-center gap-2"
+                        >
+                            <SparklesIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+                            Katrol & Pratinjau Cetak
+                        </Button>
                         <Button
                             onClick={handleSaveAll}
                             disabled={saveMutation.isPending || filledCount === 0 || semesterLocked || !selectedSemester || availableSubjects.length === 0}
-                            className="w-full h-14 text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl shadow-indigo-500/30 disabled:opacity-50"
+                            className="flex-1 h-14 text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {saveMutation.isPending ? (
                                 <>
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                     Menyimpan...
                                 </>
                             ) : (
                                 <>
-                                    <SaveIcon className="w-5 h-5 mr-2" />
+                                    <SaveIcon className="w-5 h-5" />
                                     Simpan Semua Nilai ({filledCount})
                                     <kbd className="hidden md:inline ml-2 px-1.5 py-0.5 text-xs bg-white/20 rounded">Ctrl+S</kbd>
                                 </>
@@ -849,6 +859,27 @@ const BulkGradeInputPage: React.FC = () => {
                 onClose={() => setShowAIPasteModal(false)}
                 students={students || []}
                 onParseSuccess={handleAIPasteSuccess}
+            />
+
+            {/* Integrated Grade Adjustment & Print Preview Modal */}
+            <UnifiedGradeAdjustmentModal
+                isOpen={showAdjustmentModal}
+                onClose={() => setShowAdjustmentModal(false)}
+                students={students || []}
+                scores={grades.reduce((acc, g) => ({ ...acc, [g.studentId]: String(g.score) }), {})}
+                onApply={(finalScores) => {
+                    setGrades(prev => prev.map(g => ({
+                        ...g,
+                        score: finalScores[g.studentId] !== undefined && finalScores[g.studentId] !== '' 
+                            ? Number(finalScores[g.studentId]) 
+                            : ''
+                    })));
+                }}
+                kkm={kkm}
+                subject={selectedSubject}
+                assessmentName={assessmentName}
+                className={classes?.find(c => c.id === selectedClass)?.name || ''}
+                semesterLabel={selectedSemester ? semesters.find(s => s.id === selectedSemester)?.name : undefined}
             />
         </div>
     );
