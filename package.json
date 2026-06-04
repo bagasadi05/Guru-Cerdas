@@ -66,6 +66,7 @@
     "@tanstack/react-query-persist-client": "^5.100.13",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.4.0",
+    "exceljs": "^4.4.0",
     "framer-motion": "^12.40.0",
     "html2canvas": "^1.4.1",
     "ics": "^3.8.1",

@@ -1,4 +1,5 @@
-import { getXLSX } from './dynamicImports';
+import { getXLSX, getExcelJS } from './dynamicImports';
+import { findStudentMatch } from './studentMatcher';
 
 interface ExportGradeData {
     studentName: string;
@@ -177,7 +178,7 @@ export const exportGradesWithTemplate = async (
     className: string,
     activeScenario: string
 ): Promise<void> => {
-    const XLSX = await getXLSX();
+    const ExcelJS = await getExcelJS();
     
     // 1. Determine template name
     const isSas = activeAssessmentsList.some(name => 
@@ -193,12 +194,26 @@ export const exportGradesWithTemplate = async (
         throw new Error(`Gagal memuat template: ${response.statusText}`);
     }
     const arrayBuffer = await response.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(arrayBuffer);
     
+    // Clear strikethrough styling which is set by default on templates
+    workbook.worksheets.forEach(ws => {
+        ws.eachRow((row) => {
+            row.eachCell({ includeEmpty: true }, (cell) => {
+                if (cell.font) {
+                    cell.font = { ...cell.font, strike: false };
+                }
+            });
+        });
+    });
+    
+    const usedSheetNames = new Set<string>();
+
     // 3. For each assessment to export, fill in the data
     activeAssessmentsList.forEach(assessName => {
         // Find corresponding sheet
-        let sheetName = workbook.SheetNames[0]; // fallback to first sheet
+        let worksheet = workbook.worksheets[0]; // fallback to first worksheet
         
         if (!isSas) {
             // Try to match sum number from assessName (e.g. "Sumatif 2" or "PH 2" -> "SUM 2")
@@ -206,8 +221,9 @@ export const exportGradesWithTemplate = async (
             if (match) {
                 const num = match[1];
                 const sumSheetName = `SUM ${num}`;
-                if (workbook.SheetNames.includes(sumSheetName)) {
-                    sheetName = sumSheetName;
+                const found = workbook.getWorksheet(sumSheetName);
+                if (found) {
+                    worksheet = found;
                 }
             }
         } else {
@@ -216,31 +232,90 @@ export const exportGradesWithTemplate = async (
             if (match) {
                 const num = match[1];
                 const sasSheetName = `SAS ${num}`;
-                if (workbook.SheetNames.includes(sasSheetName)) {
-                    sheetName = sasSheetName;
+                const found = workbook.getWorksheet(sasSheetName);
+                if (found) {
+                    worksheet = found;
                 }
             }
         }
         
-        const sheet = workbook.Sheets[sheetName];
-        if (!sheet) return;
+        if (!worksheet) return;
+        usedSheetNames.add(worksheet.name);
         
-        // Update E2 (Row index 1, Column index 4) with Class and Subject: e.g. "III.B/Bahasa Indonesia"
-        const classSubjectRef = XLSX.utils.encode_cell({ r: 1, c: 4 });
-        sheet[classSubjectRef] = { t: 's', v: `${className}/${selectedSubject}` };
+        // Update E2 (Row index 2, Column index 5 in 1-based index) with Class and Subject: e.g. "III.B/Bahasa Indonesia"
+        worksheet.getCell(2, 5).value = `${className}/${selectedSubject}`;
         
-        // Get sheet range
-        const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
+        // Update B2 (Row index 2, Column index 2 in 1-based index) with assessment name: e.g. "SAS 1"
+        worksheet.getCell(2, 2).value = assessName;
         
-        // Loop through rows starting from row 7 (r = 6)
-        for (let r = 6; r <= range.e.r; r++) {
-            const studentIdCell = sheet[XLSX.utils.encode_cell({ r, c: 1 })]; // Column B
-            if (!studentIdCell || !studentIdCell.v) continue;
+        // Find header row and map column indices dynamically
+        let headerRowIndex = 6; // default to Row 6 (1-based)
+        let idCol = 2; // Column B (default)
+        let nisCol = 3; // Column C (default)
+        let nisnCol = 4; // Column D (default)
+        let nameCol = 5; // Column E (default)
+        let nilaiCol = 6; // Column F (default)
+        
+        // Search rows 3 to 10 to find the header row index
+        for (let r = 3; r <= Math.min(10, worksheet.rowCount); r++) {
+            let foundHeader = false;
+            for (let c = 1; c <= Math.min(15, worksheet.columnCount); c++) {
+                const cellVal = worksheet.getCell(r, c).value;
+                if (cellVal) {
+                    const val = String(cellVal).trim().toLowerCase();
+                    if (val.includes('id siswa') || val.includes('id_siswa') || val === 'nama' || val === 'nilai') {
+                        headerRowIndex = r;
+                        foundHeader = true;
+                        break;
+                    }
+                }
+            }
+            if (foundHeader) break;
+        }
+        
+        // Map columns in the header row
+        const headerRow = worksheet.getRow(headerRowIndex);
+        for (let c = 1; c <= worksheet.columnCount; c++) {
+            const cellVal = headerRow.getCell(c).value;
+            if (cellVal) {
+                const val = String(cellVal).trim().toLowerCase();
+                if (val.includes('id siswa') || val.includes('id_siswa')) {
+                    idCol = c;
+                } else if (val === 'nis') {
+                    nisCol = c;
+                } else if (val === 'nisn') {
+                    nisnCol = c;
+                } else if (val === 'nama' || val.includes('nama siswa') || val.includes('nama lengkap')) {
+                    nameCol = c;
+                } else if (val === 'nilai') {
+                    nilaiCol = c;
+                }
+            }
+        }
+        
+        // Loop through rows starting after the header row
+        for (let r = headerRowIndex + 1; r <= worksheet.rowCount; r++) {
+            const studentId = String(worksheet.getCell(r, idCol).value || '').trim();
+            const nameVal = String(worksheet.getCell(r, nameCol).value || '').trim();
             
-            const studentId = String(studentIdCell.v).trim();
+            if (!studentId && !nameVal) continue;
             
-            // Find student in listData by ID
-            const student = listData.find(s => s.id === studentId);
+            // Match student in listData using hierarchical/multiple criteria
+            let student = null;
+            
+            // 1. Try matching by student ID
+            if (studentId) {
+                student = listData.find(s => s.id === studentId);
+            }
+            
+            // 2. Try matching by Name (handles variations, abbreviations, subsets) using findStudentMatch helper
+            if (!student && nameVal) {
+                const matchResult = findStudentMatch(nameVal, listData);
+                if (matchResult && matchResult.confidence >= 75) {
+                    student = listData.find(s => s.id === matchResult.studentId);
+                }
+            }
+            
             if (!student) continue;
             
             // Get score value
@@ -264,15 +339,34 @@ export const exportGradesWithTemplate = async (
             }
             
             if (scoreValue !== null && !isNaN(scoreValue)) {
-                const targetCellRef = XLSX.utils.encode_cell({ r, c: 5 }); // Column F
-                sheet[targetCellRef] = { t: 'n', v: scoreValue };
+                // Set the value directly. ExcelJS preserves cell formatting/styling.
+                worksheet.getCell(r, nilaiCol).value = scoreValue;
             }
         }
     });
     
+    // Remove unused sheets from the workbook (e.g. SUM 5 to SUM 15 when only 4 assessments are used)
+    if (usedSheetNames.size > 0) {
+        const sheetsToDelete: string[] = [];
+        workbook.worksheets.forEach(ws => {
+            if (!usedSheetNames.has(ws.name)) {
+                sheetsToDelete.push(ws.name);
+            }
+        });
+        sheetsToDelete.forEach(name => {
+            workbook.removeWorksheet(name);
+        });
+    }
+    
     // 4. Save workbook
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
     const filename = `nilai_terkatrol_${selectedSubject}_${activeAssessmentName}.xlsx`.replace(/\s+/g, '_');
-    XLSX.writeFile(workbook, filename);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
 };
 
 export default {

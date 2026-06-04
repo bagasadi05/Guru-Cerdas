@@ -7,12 +7,14 @@
 
 // Type definitions for lazy-loaded modules
 type XLSXModule = typeof import('xlsx');
+type ExcelJSModule = typeof import('exceljs');
 type JsPDFModule = typeof import('jspdf');
 type AutoTableModule = typeof import('jspdf-autotable');
 type Html2CanvasModule = typeof import('html2canvas');
 
 // Cached module references
 let xlsxModule: XLSXModule | null = null;
+let exceljsModule: ExcelJSModule | null = null;
 let jspdfModule: JsPDFModule | null = null;
 let autoTableModule: AutoTableModule | null = null;
 let html2canvasModule: Html2CanvasModule | null = null;
@@ -30,6 +32,17 @@ export async function getXLSX(): Promise<XLSXModule> {
         xlsxModule = await import('xlsx');
     }
     return xlsxModule;
+}
+
+/**
+ * Dynamically imports the ExcelJS library for Excel template operations.
+ * The module is cached after the first load.
+ */
+export async function getExcelJS(): Promise<ExcelJSModule> {
+    if (!exceljsModule) {
+        exceljsModule = await import('exceljs');
+    }
+    return exceljsModule;
 }
 
 /**
