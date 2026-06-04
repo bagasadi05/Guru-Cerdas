@@ -165,8 +165,119 @@ export const copyGradesToClipboard = async (
     }
 };
 
+/**
+ * Export grade data using the school's Excel templates
+ */
+export const exportGradesWithTemplate = async (
+    listData: any[],
+    finalScores: Record<string, string>,
+    selectedSubject: string,
+    activeAssessmentName: string,
+    activeAssessmentsList: string[],
+    className: string,
+    activeScenario: string
+): Promise<void> => {
+    const XLSX = await getXLSX();
+    
+    // 1. Determine template name
+    const isSas = activeAssessmentsList.some(name => 
+        name.toUpperCase().includes('SAS') || 
+        name.toUpperCase().includes('SAT') || 
+        name.toUpperCase().includes('AKHIR')
+    );
+    const templateUrl = isSas ? '/Template nilai SAT-SAS.xlsx' : '/Template nilai PH.xlsx';
+    
+    // 2. Fetch the template
+    const response = await fetch(templateUrl);
+    if (!response.ok) {
+        throw new Error(`Gagal memuat template: ${response.statusText}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    
+    // 3. For each assessment to export, fill in the data
+    activeAssessmentsList.forEach(assessName => {
+        // Find corresponding sheet
+        let sheetName = workbook.SheetNames[0]; // fallback to first sheet
+        
+        if (!isSas) {
+            // Try to match sum number from assessName (e.g. "Sumatif 2" or "PH 2" -> "SUM 2")
+            const match = assessName.match(/(\d+)/);
+            if (match) {
+                const num = match[1];
+                const sumSheetName = `SUM ${num}`;
+                if (workbook.SheetNames.includes(sumSheetName)) {
+                    sheetName = sumSheetName;
+                }
+            }
+        } else {
+            // For SAS, match "SAS 1", "SAS 2" etc.
+            const match = assessName.match(/(\d+)/);
+            if (match) {
+                const num = match[1];
+                const sasSheetName = `SAS ${num}`;
+                if (workbook.SheetNames.includes(sasSheetName)) {
+                    sheetName = sasSheetName;
+                }
+            }
+        }
+        
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) return;
+        
+        // Update E2 (Row index 1, Column index 4) with Class and Subject: e.g. "III.B/Bahasa Indonesia"
+        const classSubjectRef = XLSX.utils.encode_cell({ r: 1, c: 4 });
+        sheet[classSubjectRef] = { t: 's', v: `${className}/${selectedSubject}` };
+        
+        // Get sheet range
+        const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
+        
+        // Loop through rows starting from row 7 (r = 6)
+        for (let r = 6; r <= range.e.r; r++) {
+            const studentIdCell = sheet[XLSX.utils.encode_cell({ r, c: 1 })]; // Column B
+            if (!studentIdCell || !studentIdCell.v) continue;
+            
+            const studentId = String(studentIdCell.v).trim();
+            
+            // Find student in listData by ID
+            const student = listData.find(s => s.id === studentId);
+            if (!student) continue;
+            
+            // Get score value
+            const key = activeAssessmentsList.length > 1 ? `${student.id}_${assessName}` : student.id;
+            let scoreValue: number | null = null;
+            
+            if (finalScores[key] !== undefined && finalScores[key] !== '') {
+                scoreValue = Number(finalScores[key]);
+            } else {
+                // Fallback to scenario value if not overridden
+                const assessData = student.assessments ? student.assessments[assessName] : student;
+                if (assessData) {
+                    if (activeScenario === 'original' && assessData.original !== null) {
+                        scoreValue = assessData.original;
+                    } else if (activeScenario === 'formula' && assessData.formula !== null) {
+                        scoreValue = assessData.formula;
+                    } else if (activeScenario === 'ai' && assessData.ai !== null) {
+                        scoreValue = assessData.ai;
+                    }
+                }
+            }
+            
+            if (scoreValue !== null && !isNaN(scoreValue)) {
+                const targetCellRef = XLSX.utils.encode_cell({ r, c: 5 }); // Column F
+                sheet[targetCellRef] = { t: 'n', v: scoreValue };
+            }
+        }
+    });
+    
+    // 4. Save workbook
+    const filename = `nilai_terkatrol_${selectedSubject}_${activeAssessmentName}.xlsx`.replace(/\s+/g, '_');
+    XLSX.writeFile(workbook, filename);
+};
+
 export default {
     exportGradesToExcel,
     exportGradesToCSV,
     copyGradesToClipboard,
+    exportGradesWithTemplate,
 };

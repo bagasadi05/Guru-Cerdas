@@ -5,7 +5,7 @@ import { Input } from './Input';
 import { calculateFormulaScore, analyzeAndAdjustGradesWithAI, AIStudentAdjustment } from '../../services/gradeAdjustmentService';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
-import { exportGradesToExcel } from '../../utils/gradeExporter';
+import { exportGradesToExcel, exportGradesWithTemplate } from '../../utils/gradeExporter';
 import { 
     SparklesIcon, 
     PrinterIcon, 
@@ -204,23 +204,20 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
 
     // Export preview grades to Excel
     const handleExportExcel = async () => {
-        const data = listData.map(item => ({
-            studentName: item.name,
-            studentId: item.id,
-            score: finalScores[item.id] || '',
-        }));
-
         try {
-            await exportGradesToExcel(data, {
-                filename: `nilai_terkatrol_${subject}_${assessmentName}.xlsx`,
+            await exportGradesWithTemplate(
+                listData,
+                finalScores,
                 subject,
-                assessmentName: `${assessmentName} (Katrol ${activeScenario.toUpperCase()})`,
+                assessmentName,
+                [assessmentName],
                 className,
-                includeStats: true,
-            });
-            toast.success('Daftar nilai berhasil diexport ke Excel!');
-        } catch (error) {
-            toast.error('Gagal mengekspor data.');
+                activeScenario
+            );
+            toast.success('Daftar nilai berhasil diexport ke Excel menggunakan template sekolah!');
+        } catch (error: any) {
+            console.error(error);
+            toast.error(`Gagal mengekspor data: ${error.message || error}`);
         }
     };
 

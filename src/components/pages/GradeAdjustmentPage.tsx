@@ -14,7 +14,7 @@ import {
     analyzeAndAdjustGradesWithAI, 
     AIStudentAdjustment 
 } from '../../services/gradeAdjustmentService';
-import { exportGradesToExcel } from '../../utils/gradeExporter';
+import { exportGradesToExcel, exportGradesWithTemplate } from '../../utils/gradeExporter';
 import { getXLSX } from '../../utils/dynamicImports';
 import { 
     SparklesIcon, 
@@ -493,82 +493,21 @@ export const GradeAdjustmentPage: React.FC = () => {
     const handleExportExcel = async () => {
         try {
             const className = classes?.find(c => c.id === selectedClass)?.name || '';
-            const filename = `nilai_terkatrol_${selectedSubject}_${activeAssessmentName}.xlsx`.replace(/\s+/g, '_');
-
-            if (activeAssessmentsList.length > 1) {
-                const XLSX = await getXLSX();
-                const wb = XLSX.utils.book_new();
-
-                const dataRows = listData.map((item, idx) => {
-                    const row: Record<string, any> = {
-                        'No': idx + 1,
-                        'Nama Siswa': item.name,
-                    };
-                    
-                    activeAssessmentsList.forEach(assessName => {
-                        const orig = item.assessments[assessName]?.original;
-                        const key = `${item.id}_${assessName}`;
-                        const final = finalScores[key] !== undefined ? finalScores[key] : (orig !== null ? String(orig) : '');
-                        
-                        row[`${assessName} (Asli)`] = orig !== null ? orig : '-';
-                        row[`${assessName} (Akhir)`] = (orig !== null && final !== '') ? Number(final) : '-';
-                    });
-
-                    row['Rerata Asli'] = item.originalAvg !== null ? item.originalAvg : '-';
-                    row['Rerata Akhir'] = getStudentFinalStats(item) !== null ? getStudentFinalStats(item) : '-';
-                    return row;
-                });
-
-                const ws = XLSX.utils.json_to_sheet(dataRows);
-                
-                const colWidths = [
-                    { wch: 5 },
-                    { wch: 25 },
-                ];
-                activeAssessmentsList.forEach(() => {
-                    colWidths.push({ wch: 12 });
-                    colWidths.push({ wch: 12 });
-                });
-                colWidths.push({ wch: 12 });
-                colWidths.push({ wch: 12 });
-                ws['!cols'] = colWidths;
-
-                XLSX.utils.book_append_sheet(wb, ws, 'Nilai Terkatrol');
-
-                const infoData = [
-                    ['LAPORAN NILAI KATROL MULTI-PENILAIAN'],
-                    [''],
-                    ['Mata Pelajaran', selectedSubject],
-                    ['Jenis Evaluasi', activeAssessmentName],
-                    ['Kelas', className],
-                    ['Tanggal', new Date().toLocaleDateString('id-ID')],
-                    ['KKM', kkm],
-                    ['Skenario Katrol', activeScenario.toUpperCase()],
-                ];
-                const infoWs = XLSX.utils.aoa_to_sheet(infoData);
-                XLSX.utils.book_append_sheet(wb, infoWs, 'Info Laporan');
-
-                XLSX.writeFile(wb, filename);
-                toast.success('Daftar nilai multi-penilaian berhasil diexport ke Excel!');
-            } else {
-                const data = listData.map(item => ({
-                    studentName: item.name,
-                    studentId: item.id,
-                    score: finalScores[item.id] !== undefined && finalScores[item.id] !== '' ? Number(finalScores[item.id]) : '',
-                })).filter(d => d.score !== '');
-
-                await exportGradesToExcel(data, {
-                    filename,
-                    subject: selectedSubject,
-                    assessmentName: `${activeAssessmentName} (Katrol ${activeScenario.toUpperCase()})`,
-                    className,
-                    includeStats: true,
-                });
-                toast.success('Daftar nilai berhasil diexport ke Excel!');
-            }
+            
+            await exportGradesWithTemplate(
+                listData,
+                finalScores,
+                selectedSubject,
+                activeAssessmentName,
+                activeAssessmentsList,
+                className,
+                activeScenario
+            );
+            
+            toast.success('Daftar nilai berhasil diexport ke Excel menggunakan template sekolah!');
         } catch (error: any) {
             console.error(error);
-            toast.error('Gagal mengekspor data.');
+            toast.error(`Gagal mengekspor data: ${error.message || error}`);
         }
     };
 
