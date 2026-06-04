@@ -259,7 +259,7 @@ export const GradeAdjustmentPage: React.FC = () => {
             activeAssessmentsList.forEach(assessName => {
                 const record = existingRecords.find(r => r.student_id === s.id && r.assessment_name === assessName);
                 const original = record ? record.score : null;
-                const formula = original !== null ? calculateFormulaScore(original, weight, constant) : null;
+                const formula = original !== null ? calculateFormulaScore(original, weight, constant, targetAverageRange.min) : null;
                 
                 const aiData = aiAdjustments.find(a => a.student_id === s.id && (a as any).assessment_name === assessName);
                 const aiVal = (aiData && original !== null) ? aiData.ai_score : formula;
@@ -291,7 +291,7 @@ export const GradeAdjustmentPage: React.FC = () => {
 
             const singleRecord = existingRecords.find(r => r.student_id === s.id && r.assessment_name === activeAssessmentName);
             const singleOriginal = singleRecord ? singleRecord.score : null;
-            const singleFormula = singleOriginal !== null ? calculateFormulaScore(singleOriginal, weight, constant) : null;
+            const singleFormula = singleOriginal !== null ? calculateFormulaScore(singleOriginal, weight, constant, targetAverageRange.min) : null;
             const singleAiData = aiAdjustments.find(a => a.student_id === s.id);
             const singleAiVal = (singleAiData && singleOriginal !== null) ? singleAiData.ai_score : singleFormula;
             const singleAiRationale = singleAiData ? singleAiData.rationale : '';
@@ -428,7 +428,7 @@ export const GradeAdjustmentPage: React.FC = () => {
 
     // Manual grade revision
     const handleManualScoreChange = (studentId: string, value: string) => {
-        const val = value === '' ? '' : String(Math.min(98, Math.max(0, parseInt(value) || 0)));
+        const val = value === '' ? '' : String(Math.min(98, Math.max(targetAverageRange.min, parseInt(value) || 0)));
         setFinalScores(prev => ({ ...prev, [studentId]: val }));
         
         const nextOverrides = new Set(manualOverrides);

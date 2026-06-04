@@ -45,6 +45,16 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
     const toast = useToast();
     const { user } = useAuth();
 
+    const targetAvgRange = useMemo(() => {
+        if (!className) return { min: 81, max: 98 };
+        const match = className.match(/([1-6])/);
+        if (match) {
+            const level = parseInt(match[1]);
+            if (level >= 4 && level <= 6) return { min: 84, max: 98 };
+        }
+        return { min: 81, max: 98 };
+    }, [className]);
+
     // Excel formula configuration: Score * weight + constant
     const [weight, setWeight] = useState<number>(0.6);
     const [constant, setConstant] = useState<number>(40);
@@ -67,7 +77,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
     const listData = useMemo(() => {
         return students.map((s, index) => {
             const original = scores[s.id] !== undefined && scores[s.id] !== '' ? Number(scores[s.id]) : 0;
-            const formula = calculateFormulaScore(original, weight, constant);
+            const formula = calculateFormulaScore(original, weight, constant, targetAvgRange.min);
             const aiData = aiAdjustments.find(a => a.student_id === s.id);
             const aiVal = aiData ? aiData.ai_score : formula;
             const aiRationale = aiData ? aiData.rationale : '';
@@ -82,7 +92,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                 index: index + 1
             };
         });
-    }, [students, scores, weight, constant, aiAdjustments]);
+    }, [students, scores, weight, constant, aiAdjustments, targetAvgRange]);
 
     // Initialize final scores when modal opens or scenario/formula changes
     useEffect(() => {
@@ -156,7 +166,8 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                 assessmentName,
                 kkm,
                 weight,
-                constant
+                constant,
+                targetAvgRange
             );
 
             setAiAdjustments(result.adjustments);
@@ -172,7 +183,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
 
     // Apply manual override to a specific student
     const handleManualScoreChange = (studentId: string, value: string) => {
-        const val = value === '' ? '' : String(Math.min(98, Math.max(0, parseInt(value) || 0)));
+        const val = value === '' ? '' : String(Math.min(98, Math.max(targetAvgRange.min, parseInt(value) || 0)));
         setFinalScores(prev => ({ ...prev, [studentId]: val }));
         
         const nextOverrides = new Set(manualOverrides);
