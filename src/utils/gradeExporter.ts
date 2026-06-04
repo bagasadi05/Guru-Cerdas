@@ -193,7 +193,7 @@ export const exportGradesWithTemplate = async (
         throw new Error(`Gagal memuat template: ${response.statusText}`);
     }
     const arrayBuffer = await response.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
     
     // 3. For each assessment to export, fill in the data
     activeAssessmentsList.forEach(assessName => {
