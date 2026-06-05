@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
@@ -203,7 +203,7 @@ export const GradeAdjustmentPage: React.FC = () => {
         return activeAssessmentName ? [activeAssessmentName] : EMPTY_ARRAY;
     }, [activeAssessmentName, savedAssessmentNames]);
 
-    const getStudentFinalStats = (item: any) => {
+    const getStudentFinalStats = useCallback((item: any) => {
         let sum = 0;
         let count = 0;
         activeAssessmentsList.forEach(assessName => {
@@ -214,8 +214,8 @@ export const GradeAdjustmentPage: React.FC = () => {
             count++;
         });
         const finalAvg = count > 0 ? Math.round((sum / count) * 10) / 10 : 0;
-        return finalAvg;
-    };
+        return Math.min(98, finalAvg); // Cap the student's final average at 98
+    }, [activeAssessmentsList, finalScores]);
 
     // Fetch existing grades from database
     const { data: existingRecords = EMPTY_ARRAY, isLoading: loadingGrades } = useQuery({
@@ -354,6 +354,20 @@ export const GradeAdjustmentPage: React.FC = () => {
     }, [activeScenario, listData, activeAssessmentsList]);
 
     const stats = useMemo(() => {
+        if (activeAssessmentsList.length > 1) {
+            const studentAverages = listData.map(item => getStudentFinalStats(item));
+            if (studentAverages.length === 0) return { avg: 0, passingCount: 0, passingPct: 0 };
+            const sum = studentAverages.reduce((a, b) => a + b, 0);
+            const avg = Math.round((sum / studentAverages.length) * 10) / 10;
+            const passingCount = studentAverages.filter(v => v >= kkm).length;
+            const passingPct = Math.round((passingCount / studentAverages.length) * 100);
+            return {
+                avg,
+                passingCount,
+                passingPct
+            };
+        }
+
         const values = Object.values(finalScores)
             .filter(v => v !== undefined && v !== '')
             .map(Number)
@@ -370,7 +384,7 @@ export const GradeAdjustmentPage: React.FC = () => {
             passingCount,
             passingPct
         };
-    }, [finalScores, kkm]);
+    }, [finalScores, kkm, listData, activeAssessmentsList, getStudentFinalStats]);
 
     // AI Audit Action
     const handleRunAiAudit = async () => {
