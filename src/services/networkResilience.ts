@@ -295,7 +295,12 @@ class NetworkResilienceService {
           const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
           (error as any).status = response.status;
           (error as any).response = response;
-          throw error;
+          
+          if (attempt < retries && retryCondition(error, attempt)) {
+            throw error;
+          } else {
+            return response;
+          }
         }
 
         // Success - log if this was a retry

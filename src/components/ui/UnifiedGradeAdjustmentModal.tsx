@@ -183,7 +183,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
 
     // Apply manual override to a specific student
     const handleManualScoreChange = (studentId: string, value: string) => {
-        const val = value === '' ? '' : String(Math.min(98, Math.max(targetAvgRange.min, parseInt(value) || 0)));
+        const val = value === '' ? '' : String(Math.min(100, Math.max(targetAvgRange.min, parseInt(value) || 0)));
         setFinalScores(prev => ({ ...prev, [studentId]: val }));
         
         const nextOverrides = new Set(manualOverrides);
@@ -529,7 +529,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                                                             <input
                                                                 type="number"
                                                                 min="0"
-                                                                max="98"
+                                                                max="100"
                                                                 value={scoreValue}
                                                                 onChange={(e) => handleManualScoreChange(item.id, e.target.value)}
                                                                 className={`no-print w-16 text-center text-xs font-bold border rounded p-1 ${

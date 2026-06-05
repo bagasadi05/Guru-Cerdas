@@ -169,9 +169,33 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 export const clearStaleAuthTokens = (): void => {
   try {
     if (typeof window === 'undefined') return;
+    
+    // Clear localStorage
     Object.keys(window.localStorage)
       .filter((key) => key.startsWith('portal-guru-auth') || key.startsWith('sb-'))
       .forEach((key) => window.localStorage.removeItem(key));
+
+    // Clear sessionStorage
+    Object.keys(window.sessionStorage)
+      .filter((key) => key.startsWith('portal-guru-auth') || key.startsWith('sb-'))
+      .forEach((key) => window.sessionStorage.removeItem(key));
+
+    // Clear cookies starting with sb- or portal-guru-auth
+    document.cookie.split(';').forEach((cookie) => {
+      const eqIdx = cookie.indexOf('=');
+      const name = eqIdx > -1 ? cookie.substring(0, eqIdx).trim() : cookie.trim();
+      if (name.startsWith('sb-') || name.startsWith('portal-guru-auth')) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+        
+        // Also try cleaning subdomain cookies
+        const domainParts = window.location.hostname.split('.');
+        if (domainParts.length > 2) {
+          const rootDomain = '.' + domainParts.slice(-2).join('.');
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${rootDomain};`;
+        }
+      }
+    });
   } catch (error) {
     logger.warn('Failed to clear stale auth tokens', 'Supabase', error);
   }
