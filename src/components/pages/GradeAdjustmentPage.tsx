@@ -213,7 +213,7 @@ export const GradeAdjustmentPage: React.FC = () => {
             sum += num;
             count++;
         });
-        const finalAvg = count > 0 ? Math.round((sum / count) * 10) / 10 : 0;
+        const finalAvg = count > 0 ? Math.round(sum / count) : 0;
         return Math.min(98, finalAvg); // Cap the student's final average at 98
     }, [activeAssessmentsList, finalScores]);
 
@@ -285,9 +285,9 @@ export const GradeAdjustmentPage: React.FC = () => {
                 }
             });
 
-            const originalAvg = originalCount > 0 ? Math.round((originalSum / originalCount) * 10) / 10 : null;
-            const formulaAvg = formulaCount > 0 ? Math.round((formulaSum / formulaCount) * 10) / 10 : null;
-            const aiAvg = aiCount > 0 ? Math.round((aiSum / aiCount) * 10) / 10 : null;
+            const originalAvg = originalCount > 0 ? Math.round(originalSum / originalCount) : null;
+            const formulaAvg = formulaCount > 0 ? Math.round(formulaSum / formulaCount) : null;
+            const aiAvg = aiCount > 0 ? Math.round(aiSum / aiCount) : null;
 
             const singleRecord = existingRecords.find(r => r.student_id === s.id && r.assessment_name === activeAssessmentName);
             const singleOriginal = singleRecord ? singleRecord.score : null;
@@ -358,7 +358,7 @@ export const GradeAdjustmentPage: React.FC = () => {
             const studentAverages = listData.map(item => getStudentFinalStats(item));
             if (studentAverages.length === 0) return { avg: 0, passingCount: 0, passingPct: 0 };
             const sum = studentAverages.reduce((a, b) => a + b, 0);
-            const avg = Math.round((sum / studentAverages.length) * 10) / 10;
+            const avg = Math.round(sum / studentAverages.length);
             const passingCount = studentAverages.filter(v => v >= kkm).length;
             const passingPct = Math.round((passingCount / studentAverages.length) * 100);
             return {
@@ -375,7 +375,7 @@ export const GradeAdjustmentPage: React.FC = () => {
         
         if (values.length === 0) return { avg: 0, passingCount: 0, passingPct: 0 };
         const sum = values.reduce((a, b) => a + b, 0);
-        const avg = Math.round((sum / values.length) * 10) / 10;
+        const avg = Math.round(sum / values.length);
         const passingCount = values.filter(v => v >= kkm).length;
         const passingPct = Math.round((passingCount / values.length) * 100);
 

@@ -137,7 +137,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
         
         if (values.length === 0) return { avg: 0, passingCount: 0, passingPct: 0 };
         const sum = values.reduce((a, b) => a + b, 0);
-        const avg = Math.round((sum / values.length) * 10) / 10;
+        const avg = Math.round(sum / values.length);
         const passingCount = values.filter(v => v >= kkm).length;
         const passingPct = Math.round((passingCount / values.length) * 100);
 

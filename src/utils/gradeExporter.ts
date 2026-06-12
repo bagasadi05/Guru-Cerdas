@@ -62,7 +62,7 @@ export const exportGradesToExcel = async (
     const stats = validScores.length > 0 ? {
         total: data.length,
         filled: validScores.length,
-        average: Math.round((validScores.reduce((a, b) => a + b, 0) / validScores.length) * 10) / 10,
+        average: Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length),
         min: Math.min(...validScores),
         max: Math.max(...validScores),
         aboveKkm: validScores.filter(s => s >= kkm).length,
