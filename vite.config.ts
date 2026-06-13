@@ -110,6 +110,10 @@ export default defineConfig(({ mode }) => {
             'vendor-icons': ['lucide-react'],
             // Supabase
             'vendor-supabase': ['@supabase/supabase-js'],
+            // Sentry
+            'vendor-sentry': ['@sentry/react'],
+            // Forms
+            'vendor-forms': ['react-hook-form', '@hookform/resolvers'],
             // Capacitor plugins
             'vendor-capacitor': [
               '@capacitor/app',

@@ -14,10 +14,8 @@ import PwaPrompt from './components/PwaPrompt';
 import { queryClient } from './services/queryClient';
 import { AppProviders } from './components/AppProviders';
 import { OfflineBanner } from './components/StatusIndicators';
-import { GlobalSearchProvider, GlobalSearchModal } from './components/SearchSystem';
+import { GlobalSearchProvider } from './components/SearchSystem';
 import { TourProvider, HelpButton } from './components/OnboardingHelp';
-import { SimpleHelpCenter } from './components/SimpleHelpCenter';
-import { KeyboardShortcutsPanel } from './components/advanced-features/KeyboardShortcutsPanel';
 import { useKeyboardShortcuts } from './components/advanced-features/useKeyboardShortcuts';
 import { startCleanupScheduler } from './services/CleanupService';
 import { useSessionTimeout } from './hooks/useSessionTimeout';
@@ -59,6 +57,10 @@ const AdminPage = lazy(() => import('@/components/pages/AdminPage'));
 const ExtracurricularPage = lazy(() => import('@/components/pages/ExtracurricularPage'));
 const NotFoundPage = lazy(() => import('@/components/pages/NotFoundPage'));
 const BrankasPage = lazy(() => import('@/components/pages/BrankasPage'));
+
+const SimpleHelpCenter = lazy(() => import('./components/SimpleHelpCenter').then(m => ({ default: m.SimpleHelpCenter })));
+const GlobalSearchModal = lazy(() => import('./components/SearchSystem').then(m => ({ default: m.GlobalSearchModal })));
+const KeyboardShortcutsPanel = lazy(() => import('./components/advanced-features/KeyboardShortcutsPanel').then(m => ({ default: m.KeyboardShortcutsPanel })));
 
 
 // A wrapper for routes that require authentication.
@@ -173,13 +175,15 @@ function AppContent() {
 
           <PwaPrompt />
           <OfflineBanner />
-          <GlobalSearchModal onSelect={handleSearchResult} />
+          <Suspense fallback={null}>
+            <GlobalSearchModal onSelect={handleSearchResult} />
+            <SimpleHelpCenter
+              isOpen={showHelp}
+              onClose={() => setShowHelp(false)}
+            />
+            <KeyboardShortcutsPanel isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
+          </Suspense>
           <HelpButton onClick={() => setShowHelp(true)} />
-          <SimpleHelpCenter
-            isOpen={showHelp}
-            onClose={() => setShowHelp(false)}
-          />
-          <KeyboardShortcutsPanel isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
 
           {/* Session Timeout Warning */}
           {session && (
