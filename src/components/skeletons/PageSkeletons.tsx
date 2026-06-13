@@ -265,6 +265,187 @@ export const MassInputPageSkeleton: React.FC = () => (
     </div>
 );
 
+// ============================================
+// REPORT PAGE SKELETON
+// ============================================
+export const ReportPageSkeleton: React.FC = () => (
+    <div className="h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950 font-sans overflow-hidden animate-fade-in">
+        {/* Sidebar / Settings Panel Skeleton */}
+        <aside className="hidden md:flex w-80 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col p-5 space-y-6">
+            <div className="flex items-center gap-2 pb-4 border-b border-slate-200 dark:border-slate-800">
+                <Skeleton className="w-5 h-5 rounded" />
+                <Skeleton className="h-6 w-32" />
+            </div>
+            <div className="space-y-4 flex-1">
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-full rounded-xl" />
+                    </div>
+                ))}
+            </div>
+            <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <Skeleton className="h-12 w-full rounded-xl" />
+                <Skeleton className="h-12 w-full rounded-xl" />
+            </div>
+        </aside>
+
+        {/* Main Preview Area Skeleton */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-100 dark:bg-black/20">
+            {/* Desktop Header Skeleton */}
+            <header className="h-16 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 z-10 flex-shrink-0">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-8 w-24 rounded-lg" />
+                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
+                    <Skeleton className="h-6 w-40" />
+                </div>
+                <Skeleton className="h-8 w-60 rounded-full" />
+            </header>
+
+            {/* Preview Content Skeleton */}
+            <main className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center custom-scrollbar bg-gradient-to-br from-slate-100 to-indigo-50 dark:from-slate-900 dark:to-indigo-950">
+                <div className="w-full md:w-[210mm] md:min-h-[297mm] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xl rounded-2xl p-6 md:p-[20mm] border border-slate-200 dark:border-slate-700 space-y-6">
+                    {/* Header Letterhead */}
+                    <div className="border border-slate-300 dark:border-slate-700 rounded-2xl p-4 md:p-5 flex items-center gap-4">
+                        <Skeleton className="w-16 h-16 md:w-20 md:h-20 rounded-xl" />
+                        <div className="flex-1 space-y-2 text-center">
+                            <Skeleton className="h-3 w-3/4 mx-auto" />
+                            <Skeleton className="h-4 w-1/2 mx-auto" />
+                            <Skeleton className="h-3 w-2/3 mx-auto" />
+                        </div>
+                    </div>
+
+                    {/* Student Info Grid */}
+                    <div className="grid grid-cols-2 gap-4 py-4 border-b border-slate-200 dark:border-slate-800">
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </div>
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-2/3" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </div>
+                    </div>
+
+                    {/* Academic Table Skeleton */}
+                    <div className="space-y-3">
+                        <div className="flex gap-4 border-b border-slate-300 dark:border-slate-700 pb-2">
+                            <Skeleton className="h-5 w-12" />
+                            <Skeleton className="h-5 flex-1" />
+                            <Skeleton className="h-5 w-20" />
+                            <Skeleton className="h-5 w-24" />
+                        </div>
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="flex gap-4 py-2 border-b border-slate-100 dark:border-slate-800/50">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-4 flex-1" />
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-4 w-24" />
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Signature section */}
+                    <div className="grid grid-cols-3 gap-6 pt-12">
+                        <div className="space-y-2 text-center">
+                            <Skeleton className="h-3 w-24 mx-auto" />
+                            <div className="h-16" />
+                            <Skeleton className="h-4 w-32 mx-auto" />
+                        </div>
+                        <div className="space-y-2 text-center">
+                            <Skeleton className="h-3 w-24 mx-auto" />
+                            <div className="h-16" />
+                            <Skeleton className="h-4 w-32 mx-auto" />
+                        </div>
+                        <div className="space-y-2 text-center">
+                            <Skeleton className="h-3 w-24 mx-auto" />
+                            <div className="h-16" />
+                            <Skeleton className="h-4 w-32 mx-auto" />
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+);
+
+// ============================================
+// PARENT PORTAL PAGE SKELETON
+// ============================================
+export const ParentPortalPageSkeleton: React.FC = () => (
+    <div className="fixed inset-0 overflow-y-auto bg-slate-100 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 animate-fade-in">
+        {/* Header Skeleton */}
+        <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3">
+            <div className="max-w-6xl mx-auto flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Skeleton className="w-10 h-10 rounded-full" />
+                    <div className="space-y-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-20" />
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Skeleton className="w-8 h-8 rounded-full" />
+                    <Skeleton className="w-8 h-8 rounded-full" />
+                </div>
+            </div>
+        </header>
+
+        {/* Content Wrapper */}
+        <main className="max-w-6xl mx-auto px-4 py-6 space-y-6 pb-24">
+            {/* Quick Actions / Navigation Skeleton */}
+            <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex flex-col items-center p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-2">
+                        <Skeleton className="w-10 h-10 rounded-full" />
+                        <Skeleton className="h-3 w-16" />
+                    </div>
+                ))}
+            </div>
+
+            {/* Announcement / Welcome Card */}
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900/30 rounded-3xl p-5 md:p-6 space-y-3">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+            </div>
+
+            {/* Primary content grid: Stats & Schedule */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Stats Widget Skeleton */}
+                <div className="md:col-span-2 space-y-4">
+                    <Skeleton className="h-6 w-32" />
+                    <div className="grid grid-cols-2 gap-4">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-3">
+                                <Skeleton className="w-8 h-8 rounded-lg" />
+                                <Skeleton className="h-6 w-16" />
+                                <Skeleton className="h-3 w-24" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Today's Schedule Skeleton */}
+                <div className="md:col-span-1 space-y-4">
+                    <Skeleton className="h-6 w-40" />
+                    <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 space-y-4">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="flex gap-3 items-start border-l-2 border-indigo-500 pl-3">
+                                <div className="space-y-1 flex-1">
+                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="h-3 w-20" />
+                                </div>
+                                <Skeleton className="h-5 w-16 rounded" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+);
+
 // Export all skeletons
 export default {
     AttendancePageSkeleton,
@@ -273,4 +454,6 @@ export default {
     SettingsPageSkeleton,
     StudentDetailPageSkeleton,
     MassInputPageSkeleton,
+    ReportPageSkeleton,
+    ParentPortalPageSkeleton,
 };

@@ -14,6 +14,7 @@ import { useToast } from '../../hooks/useToast';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import { useSemester } from '../../contexts/SemesterContext';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../utils/academicRecordUtils';
+import { ReportPageSkeleton } from '../skeletons';
 
 type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
 
@@ -309,7 +310,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
         }, { Sakit: 0, Izin: 0, Alpha: 0 });
     }, [filteredAttendance]);
 
-    if (isLoading) return <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950"><div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>;
+    if (isLoading) return <ReportPageSkeleton />;
     if (isError) return <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950 text-red-500">Error: {error.message}</div>;
     if (!data) return null;
 

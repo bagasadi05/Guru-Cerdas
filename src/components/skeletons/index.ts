@@ -22,7 +22,9 @@ export {
     TasksPageSkeleton,
     SettingsPageSkeleton,
     StudentDetailPageSkeleton,
-    MassInputPageSkeleton
+    MassInputPageSkeleton,
+    ReportPageSkeleton,
+    ParentPortalPageSkeleton
 } from './PageSkeletons';
 
 // Also export existing page skeletons
