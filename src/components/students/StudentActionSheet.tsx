@@ -13,6 +13,7 @@ interface StudentActionSheetProps {
   onDelete: (student: StudentRow) => void;
   onCopyCode: (code: string) => void;
   onGenerateCodeInfo: () => void;
+  isAdmin?: boolean;
 }
 
 export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
@@ -24,6 +25,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
   onDelete,
   onCopyCode,
   onGenerateCodeInfo,
+  isAdmin = false,
 }) => {
   if (!student) return null;
 
@@ -44,7 +46,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
           </div>
         </Link>
 
-        {canManageActiveClass ? (
+        {isAdmin ? (
           <button
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
             onClick={() => {
@@ -98,9 +100,9 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
           </button>
         )}
 
-        {canManageActiveClass ? <div className="h-px bg-gray-200 dark:bg-gray-800 my-1"></div> : null}
+        {isAdmin ? <div className="h-px bg-gray-200 dark:bg-gray-800 my-1"></div> : null}
 
-        {canManageActiveClass ? (
+        {isAdmin ? (
           <button
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left group"
             onClick={() => {

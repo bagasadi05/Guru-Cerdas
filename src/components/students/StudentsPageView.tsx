@@ -129,6 +129,7 @@ interface StudentsPageViewProps {
   classModal: StudentsPageClassModalProps;
   bulkBar: StudentsPageBulkActionProps;
   modalStack: StudentsPageModalStackProps;
+  isAdmin?: boolean;
 }
 
 export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
@@ -139,6 +140,7 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
   classModal,
   bulkBar,
   modalStack,
+  isAdmin = false,
 }) => {
   return (
     <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8 animate-fade-in-up">
@@ -151,7 +153,11 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
               : 'Mode baca untuk kelas yang ditugaskan. Detail siswa tetap bisa dibuka tanpa mengubah data master.'}
           </p>
         </div>
-        <StudentsHeaderActions onAction={actionSheet.onHeaderAction} canManageActiveClass={classSection.canManageActiveClass} />
+        <StudentsHeaderActions 
+          onAction={actionSheet.onHeaderAction} 
+          canManageActiveClass={classSection.canManageActiveClass} 
+          isAdmin={isAdmin}
+        />
       </header>
 
       <div className="space-y-6">
@@ -184,6 +190,7 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
                 onSort={classSection.onSort}
                 onAddStudent={classSection.onAddStudent}
                 canManageActiveClass={classSection.canManageActiveClass}
+                isAdmin={isAdmin}
               />
             </TabsContent>
           ))}
@@ -195,6 +202,7 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
         isOpen={!!actionSheet.selectedStudentForActions}
         onClose={actionSheet.onCloseStudentActions}
         canManageActiveClass={actionSheet.canManageActiveClass}
+        isAdmin={isAdmin}
         onEdit={actionSheet.onEditStudent}
         onDelete={actionSheet.onDeleteStudent}
         onCopyCode={actionSheet.onCopyCode}

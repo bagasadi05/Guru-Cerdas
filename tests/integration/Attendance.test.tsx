@@ -92,6 +92,8 @@ describe('AttendancePage Integration', () => {
                 <AuthContext.Provider value={{
                     user: { id: 'test-user', email: 'test@example.com' } as any,
                     session: {} as any,
+                    userRole: null,
+                    isAdmin: false,
                     logout: async () => { },
                     loading: false,
                     login: vi.fn(),

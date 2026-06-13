@@ -16,9 +16,10 @@ interface ToastApi {
 interface UseStudentsPageViewModelOptions {
   userId?: string;
   toast: ToastApi;
+  isAdmin?: boolean;
 }
 
-export const useStudentsPageViewModel = ({ userId, toast }: UseStudentsPageViewModelOptions) => {
+export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false }: UseStudentsPageViewModelOptions) => {
   const data = useStudentsPageData({ userId, toast });
 
   const ui = useStudentsPageUiState({ classes: data.classes, toast });
@@ -175,6 +176,7 @@ export const useStudentsPageViewModel = ({ userId, toast }: UseStudentsPageViewM
       isImportFromTeacherModalOpen: ui.isImportFromTeacherModalOpen,
       onCloseImportFromTeacherModal: () => ui.setIsImportFromTeacherModalOpen(false),
     },
+    isAdmin,
   };
 
   return {

@@ -11,3 +11,4 @@ export * from './TeacherAssignmentsTab';
 export * from './UsersTab';
 export * from './ActivityLogsTab';
 export * from './SystemTab';
+export * from './StudentsMasterDataTab';

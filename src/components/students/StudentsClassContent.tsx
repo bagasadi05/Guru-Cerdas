@@ -11,6 +11,7 @@ interface StudentsClassContentProps {
   searchTerm: string;
   viewMode: 'grid' | 'list';
   canManageActiveClass: boolean;
+  isAdmin?: boolean;
   isSelected: (id: string) => boolean;
   toggleItem: (id: string) => void;
   isAllSelected: boolean;
@@ -26,6 +27,7 @@ export const StudentsClassContent: React.FC<StudentsClassContentProps> = ({
   searchTerm,
   viewMode,
   canManageActiveClass,
+  isAdmin = false,
   isSelected,
   toggleItem,
   isAllSelected,
@@ -52,7 +54,7 @@ export const StudentsClassContent: React.FC<StudentsClassContentProps> = ({
           <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
             Belum ada siswa di kelas ini atau tidak ada yang cocok dengan filter pencarian Anda.
           </p>
-          {canManageActiveClass ? (
+          {isAdmin ? (
             <Button
               onClick={onAddStudent}
               className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -79,6 +81,7 @@ export const StudentsClassContent: React.FC<StudentsClassContentProps> = ({
           sortConfig={sortConfig}
           onSort={onSort}
           canManageActiveClass={canManageActiveClass}
+          isAdmin={isAdmin}
         />
       )}
     </>

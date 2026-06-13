@@ -208,6 +208,10 @@ interface AuthContextType {
   session: Session | null;
   /** Current authenticated user with profile data, null if not authenticated */
   user: AppUser | null;
+  /** Current user's role from user_roles table (e.g. 'admin', 'teacher') */
+  userRole: string | null;
+  /** Convenience boolean indicating if the current user is an admin */
+  isAdmin: boolean;
   /** Indicates whether authentication state is being loaded */
   loading: boolean;
   /** Indicates whether schedule notifications are enabled */
@@ -264,6 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const toast = useToast();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<AppUser | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -307,6 +312,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
   useEffect(() => {
+    const fetchUserRole = async (userId: string | undefined) => {
+      if (!userId) {
+        setUserRole(null);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .single();
+        
+        if (!error && data) {
+          setUserRole(data.role);
+        } else {
+          setUserRole(null);
+        }
+      } catch (err) {
+        logger.error('Error fetching user role', err as Error, undefined, 'Auth');
+        setUserRole(null);
+      }
+    };
+
     const fetchSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
@@ -320,16 +348,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await supabase.auth.signOut().catch(() => undefined);
             setSession(null);
             setUser(null);
+            setUserRole(null);
             setLoading(false);
             return;
           }
         }
         setSession(data.session);
         setUser(processUser(data.session?.user));
+        await fetchUserRole(data.session?.user?.id);
       } catch (err) {
         logger.error('Unexpected error fetching session', err as Error, undefined, 'Auth');
         setSession(null);
         setUser(null);
+        setUserRole(null);
       } finally {
         setLoading(false);
       }
@@ -337,14 +368,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     fetchSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // When a token refresh fails, Supabase emits SIGNED_OUT with a null session.
       // Clean up any leftover stale tokens so the next load starts fresh.
       if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
         clearStaleAuthTokens();
+        setUserRole(null);
       }
       setSession(session);
       setUser(processUser(session?.user));
+      if (session?.user?.id) {
+        await fetchUserRole(session.user.id);
+      }
     });
 
     return () => {
@@ -418,6 +453,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value: AuthContextType = {
     session,
     user,
+    userRole,
+    isAdmin: userRole === 'admin',
     loading,
     isNotificationsEnabled,
     login: (email, password) => supabase.auth.signInWithPassword({ email: email!, password: password! }),

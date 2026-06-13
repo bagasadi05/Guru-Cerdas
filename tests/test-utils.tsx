@@ -49,6 +49,8 @@ export function renderWithProviders(ui: React.ReactElement, { user = { id: 'test
                 <AuthContext.Provider value={{
                     user: user as any,
                     session: {} as any,
+                    userRole: null,
+                    isAdmin: false,
                     logout: async () => { },
                     loading: false,
                     login: vi.fn(),

@@ -30,4 +30,5 @@ export interface StudentTableProps extends StudentViewProps {
     sortConfig: SortConfig;
     onSort: (key: string) => void;
     canManageActiveClass?: boolean;
+    isAdmin?: boolean;
 }

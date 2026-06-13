@@ -7,8 +7,8 @@ import { useStudentsPageViewModel } from '../students/useStudentsPageViewModel';
 
 const StudentsPage: React.FC = () => {
     const toast = useToast();
-    const { user } = useAuth();
-    const { isLoading, viewProps } = useStudentsPageViewModel({ userId: user?.id, toast });
+    const { user, isAdmin } = useAuth();
+    const { isLoading, viewProps } = useStudentsPageViewModel({ userId: user?.id, toast, isAdmin });
 
     if (isLoading) return <StudentsPageSkeleton />;
 

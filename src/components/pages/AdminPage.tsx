@@ -15,6 +15,7 @@ import {
     AlertTriangle,
     Undo2,
     UserCheck,
+    GraduationCap,
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -35,6 +36,7 @@ import {
     UsersTab,
     ActivityLogsTab,
     SystemTab,
+    StudentsMasterDataTab,
 } from './admin';
 
 const USER_PAGE_SIZE = 20;
@@ -578,7 +580,8 @@ const AdminPage: React.FC = () => {
 
     const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
         { id: 'overview', label: 'Ringkasan', icon: <BarChart3 size={18} /> },
-        { id: 'users', label: 'Pengguna', icon: <Users size={18} /> },
+        { id: 'students', label: 'Kelola Siswa', icon: <GraduationCap size={18} /> },
+        { id: 'users', label: 'Pengguna & Guru', icon: <Users size={18} /> },
         { id: 'assignments', label: 'Penugasan Guru', icon: <UserCheck size={18} /> },
         { id: 'announcements', label: 'Pengumuman', icon: <Megaphone size={18} /> },
         { id: 'activity', label: 'Aktivitas', icon: <Activity size={18} /> },
@@ -665,6 +668,11 @@ const AdminPage: React.FC = () => {
                         onTabChange={setActiveTab}
                     />
                 )}
+                
+                {activeTab === 'students' && (
+                    <StudentsMasterDataTab />
+                )}
+
                 {activeTab === 'users' && (
                     <UsersTab
                         users={users}

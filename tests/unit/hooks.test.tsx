@@ -69,6 +69,8 @@ describe('AuthContext', () => {
         const mockAuthValue = {
             user: null,
             session: null,
+            userRole: null,
+            isAdmin: false,
             loading: false,
             login: vi.fn(),
             signup: vi.fn(),
@@ -98,6 +100,8 @@ describe('AuthContext', () => {
         const mockAuthValue = {
             user: mockUser as any,
             session: {} as any,
+            userRole: null,
+            isAdmin: false,
             loading: false,
             login: vi.fn(),
             signup: vi.fn(),

@@ -134,6 +134,8 @@ describe('AuthContext Direct', () => {
         const mockValue = {
             user: null,
             session: null,
+            userRole: null,
+            isAdmin: false,
             loading: false,
             login: vi.fn(),
             signup: vi.fn(),
@@ -166,6 +168,8 @@ describe('AuthContext Direct', () => {
         const mockValue = {
             user: mockUser as any,
             session: { user: mockUser } as any,
+            userRole: null,
+            isAdmin: false,
             loading: false,
             login: vi.fn(),
             signup: vi.fn(),

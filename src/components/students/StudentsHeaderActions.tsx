@@ -16,6 +16,7 @@ import {
 interface StudentsHeaderActionsProps {
   onAction: (actionId: StudentsHeaderActionId) => void;
   canManageActiveClass: boolean;
+  isAdmin?: boolean;
 }
 
 const outlineActionClasses =
@@ -69,22 +70,23 @@ const renderOverflowMenu = (
   </DropdownMenu>
 );
 
-export const StudentsHeaderActions: React.FC<StudentsHeaderActionsProps> = ({ onAction, canManageActiveClass }) => {
-  const desktopActions = canManageActiveClass
-    ? studentsHeaderActionSets.desktop
-    : studentsHeaderActionSets.desktop.filter((action) => action.id === 'export');
-  const tabletPrimary = canManageActiveClass
-    ? studentsHeaderActionSets.tabletPrimary
-    : studentsHeaderActionSets.tabletPrimary.filter((action) => action.id === 'export');
-  const tabletOverflow = canManageActiveClass
-    ? studentsHeaderActionSets.tabletOverflow
-    : [];
-  const mobilePrimary = canManageActiveClass
-    ? studentsHeaderActionSets.mobilePrimary
-    : [];
-  const mobileOverflow = canManageActiveClass
-    ? studentsHeaderActionSets.mobileOverflow
-    : studentsHeaderActionSets.mobileOverflow.filter((action) => action.id === 'export');
+export const StudentsHeaderActions: React.FC<StudentsHeaderActionsProps> = ({ onAction, canManageActiveClass, isAdmin = false }) => {
+  const filterActions = (actions: StudentsHeaderAction[]) => {
+    return actions.filter(action => {
+      // Always allow export
+      if (action.id === 'export') return true;
+      // Allow manage class if teacher can manage
+      if (action.id === 'manage_class') return canManageActiveClass;
+      // Restrict all other actions (add_student, import_excel, import_teacher) to Admin
+      return isAdmin;
+    });
+  };
+
+  const desktopActions = filterActions(studentsHeaderActionSets.desktop);
+  const tabletPrimary = filterActions(studentsHeaderActionSets.tabletPrimary);
+  const tabletOverflow = filterActions(studentsHeaderActionSets.tabletOverflow);
+  const mobilePrimary = filterActions(studentsHeaderActionSets.mobilePrimary);
+  const mobileOverflow = filterActions(studentsHeaderActionSets.mobileOverflow);
 
   return (
     <div className="flex items-center gap-3">
