@@ -8,6 +8,8 @@ interface ChildDevelopmentAnalysisTabProps {
   allAttendanceRecords?: any[];
   allViolations?: any[];
   allQuizPoints?: any[];
+  selectedSemesterId?: string | null;
+  selectedAcademicYearId?: string | null;
 }
 
 export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabProps> = (props) => {

@@ -90,6 +90,7 @@ const StudentDetailPage = () => {
         semesters: _semesters,
         selectedSemesterId,
         setSelectedSemesterId,
+        selectedSemester,
         selectedSemesterLabel,
         studentProfile,
         isLoading,
@@ -421,6 +422,7 @@ const StudentDetailPage = () => {
                                         allAttendanceRecords={studentDetails?.attendanceRecords || []}
                                         allViolations={studentDetails?.violations || []}
                                         allQuizPoints={studentDetails?.quizPoints || []}
+                                        selectedSemesterId={selectedSemesterId}
                                     />
                                 </Suspense>
                             )}

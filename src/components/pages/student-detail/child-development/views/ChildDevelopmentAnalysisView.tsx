@@ -23,6 +23,7 @@ import {
   ChildDevelopmentData,
   saveAnalysisToDb,
   getLatestAnalysisFromDb,
+  getAnalysisForSemesterFromDb,
   ComparativeChildAnalysis,
   generateComparativeChildAnalysis,
   getComparativeAnalysisFromDb,
@@ -47,6 +48,8 @@ interface ChildDevelopmentAnalysisTabProps {
   allViolations?: any[];
   allQuizPoints?: any[];
   defaultMode?: 'single' | 'comparative';
+  selectedSemesterId?: string | null;
+  selectedAcademicYearId?: string | null;
 }
 
 export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabProps> = ({
@@ -55,7 +58,9 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
   allAttendanceRecords = [],
   allViolations = [],
   allQuizPoints = [],
-  defaultMode = 'single'
+  defaultMode = 'single',
+  selectedSemesterId = null,
+  selectedAcademicYearId = null
 }) => {
   const [analysis, setAnalysis] = useState<ComprehensiveChildAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -133,9 +138,16 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
   const studentPolygonPoints = useMemo(() => calculateRadarPoints(studentScores, maxScore, centerX, centerY, radius), [studentScores, maxScore, centerX, centerY, radius]);
 
   const getStorageKey = useCallback(
-    () => `child_analysis_${studentData.student.id}`,
-    [studentData.student.id]
+    () => `child_analysis_${studentData.student.id}${selectedSemesterId ? `_${selectedSemesterId}` : ''}`,
+    [studentData.student.id, selectedSemesterId]
   );
+
+  const selectedSemester = useMemo(() => {
+    if (!selectedSemesterId) return null;
+    return semesters.find((s: any) => s.id === selectedSemesterId);
+  }, [semesters, selectedSemesterId]);
+
+  const resolvedAcademicYearId = selectedAcademicYearId || selectedSemester?.academic_year_id || activeAcademicYear?.id;
 
   // === DYNAMIC GROUPING FOR SEMESTER COMPARISON ===
   const activeYearSemesters = useMemo(() => {
@@ -415,11 +427,18 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
   useEffect(() => {
     const loadAnalysis = async () => {
       try {
-        const dbAnalysis = await getLatestAnalysisFromDb(studentData.student.id);
+        const dbAnalysis = selectedSemesterId
+          ? await getAnalysisForSemesterFromDb(studentData.student.id, selectedSemesterId)
+          : await getLatestAnalysisFromDb(studentData.student.id);
+
         if (dbAnalysis) {
           setAnalysis(dbAnalysis);
           setGeneratedAt((dbAnalysis as any).generatedAt || null);
           return;
+        } else {
+          // Reset analysis if not found in db or local storage for this semester
+          setAnalysis(null);
+          setGeneratedAt(null);
         }
       } catch (err) {
         console.error('Gagal memuat analisis dari Supabase, mencoba localStorage:', err);
@@ -435,11 +454,14 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           console.error('Failed to parse saved analysis:', e);
           localStorage.removeItem(getStorageKey());
         }
+      } else {
+        setAnalysis(null);
+        setGeneratedAt(null);
       }
     };
 
     loadAnalysis();
-  }, [studentData.student.id, getStorageKey]);
+  }, [studentData.student.id, selectedSemesterId, getStorageKey]);
 
   // Load comparative analysis
   useEffect(() => {
@@ -619,7 +641,9 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         await saveAnalysisToDb(
           studentData.student.id,
           result,
-          result.generatedBy || 'AI'
+          result.generatedBy || 'AI',
+          resolvedAcademicYearId,
+          selectedSemesterId
         );
       } catch (dbError) {
         console.error('Supabase Sync Error:', dbError);
