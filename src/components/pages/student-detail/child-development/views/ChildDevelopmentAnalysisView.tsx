@@ -39,6 +39,13 @@ import { LoadingProgress } from '../components/LoadingProgress';
 import { CompLoadingProgress } from '../components/CompLoadingProgress';
 import { PeriodComparison } from '../components/PeriodComparison';
 import { ActionableRecommendation } from '../components/ActionableRecommendation';
+import { ScoreRing } from '../components/ScoreRing';
+import { GlanceHeroCard } from '../components/GlanceHeroCard';
+import { QuickInsightStrip } from '../components/QuickInsightStrip';
+import { DevelopmentScoreCard } from '../components/DevelopmentScoreCard';
+import { SubjectPerformanceChart } from '../components/SubjectPerformanceChart';
+import { DevelopmentTimeline } from '../components/DevelopmentTimeline';
+import { WarningBanner } from '../components/WarningBanner';
 import { useUserSettings } from '../../../../../hooks/useUserSettings';
 
 interface ChildDevelopmentAnalysisTabProps {
@@ -125,6 +132,19 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
   const subjects = subjectAverages.map((s: any) => s.subject);
   const studentScores = subjectAverages.map((s: any) => s.average);
   const overallAverage = studentScores.length > 0 ? Math.round(studentScores.reduce((a: any, b: any) => a + b, 0) / studentScores.length) : 0;
+
+  const attendanceRate = useMemo(() => {
+    const attendanceRecords = studentData.attendanceRecords || [];
+    return attendanceRecords.length > 0
+      ? Math.round((attendanceRecords.filter((a: any) => a.status === 'Hadir').length / attendanceRecords.length) * 100)
+      : 100;
+  }, [studentData.attendanceRecords]);
+
+  const keaktifan = useMemo(() => {
+    const quizTotal = studentData.quizPoints.reduce((sum, q) => sum + (q.points || 0), 0);
+    const quizCount = studentData.quizPoints.length;
+    return quizTotal > 0 ? Math.min(quizTotal * 5, 100) : Math.min(quizCount * 15, 100);
+  }, [studentData.quizPoints]);
 
   const isRadarChartValid = subjects.length >= 3;
   const chartSize = 260;
@@ -1595,35 +1615,59 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
         {/* Overall averages cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-500/20 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-400/20 rounded-full blur-xl -mr-6 -mt-6" />
-            <p className="text-sm opacity-80 font-medium">Rata-rata Semester 1 (Ganjil)</p>
-            <p className="text-4xl font-extrabold mt-2">{avgScoreSem1}</p>
-            <div className="mt-4 text-xs bg-indigo-700/40 rounded-lg px-2.5 py-1 inline-block border border-indigo-400/20 font-semibold">
-              {sem1Academic.length} Rekor Nilai
+          {/* Semester 1 Card */}
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-slate-700/60 p-5 shadow-sm flex items-center gap-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl -mr-6 -mt-6" />
+            <ScoreRing
+              score={avgScoreSem1}
+              size={72}
+              strokeWidth={8}
+            />
+            <div>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Rata-rata Semester 1</p>
+              <h4 className="text-lg font-extrabold text-slate-800 dark:text-white mt-0.5">Semester Ganjil</h4>
+              <span className="mt-2 inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 px-2 py-0.5 text-[10px] font-bold">
+                {sem1Academic.length} Rekor Nilai
+              </span>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg shadow-emerald-500/20 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/20 rounded-full blur-xl -mr-6 -mt-6" />
-            <p className="text-sm opacity-80 font-medium">Rata-rata Semester 2 (Genap)</p>
-            <p className="text-4xl font-extrabold mt-2">{avgScoreSem2}</p>
-            <div className="mt-4 text-xs bg-emerald-700/40 rounded-lg px-2.5 py-1 inline-block border border-emerald-400/20 font-semibold">
-              {sem2Academic.length} Rekor Nilai
+
+          {/* Semester 2 Card */}
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-slate-700/60 p-5 shadow-sm flex items-center gap-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl -mr-6 -mt-6" />
+            <ScoreRing
+              score={avgScoreSem2}
+              size={72}
+              strokeWidth={8}
+            />
+            <div>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Rata-rata Semester 2</p>
+              <h4 className="text-lg font-extrabold text-slate-800 dark:text-white mt-0.5">Semester Genap</h4>
+              <span className="mt-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-bold">
+                {sem2Academic.length} Rekor Nil
+              </span>
             </div>
           </div>
-          <div className={`rounded-2xl p-6 text-white shadow-lg relative overflow-hidden ${
+
+          {/* Growth Card */}
+          <div className={`rounded-2xl p-5 text-white shadow-lg relative overflow-hidden flex flex-col justify-between ${
             avgScoreDiff >= 0 
               ? 'bg-gradient-to-br from-teal-500 to-cyan-600 shadow-teal-500/20' 
               : 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/20'
           }`}>
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl -mr-6 -mt-6" />
-            <p className="text-sm opacity-80 font-medium">Pertumbuhan Akademik</p>
-            <p className="text-4xl font-extrabold mt-2">
-              {avgScoreDiff >= 0 ? `+${avgScoreDiff}` : avgScoreDiff}
-            </p>
-            <div className="mt-4 text-xs bg-white/20 rounded-lg px-2.5 py-1 inline-block border border-white/10 font-semibold">
-              {avgScoreDiff >= 0 ? '📈 Kenaikan Performa' : '📉 Butuh Bimbingan'}
+            <div>
+              <p className="text-xs opacity-80 font-bold uppercase tracking-wider">Pertumbuhan Akademik</p>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <span className="text-3xl font-extrabold">
+                  {avgScoreDiff >= 0 ? `+${avgScoreDiff}` : avgScoreDiff}
+                </span>
+                <span className="text-sm font-medium">poin</span>
+              </div>
             </div>
+            <p className="text-xs font-semibold mt-3 bg-white/20 rounded-lg px-2.5 py-1 inline-block border border-white/10">
+              {avgScoreDiff >= 0 ? '📈 Kenaikan Performa' : '📉 Butuh Bimbingan'}
+            </p>
           </div>
         </div>
 
@@ -2351,173 +2395,97 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-3">Rata-rata: <span className="font-bold text-indigo-600 dark:text-indigo-400">{overallAverage}</span></p>
             </div>
             {/* Bar Chart */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
-              <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Nilai per Mata Pelajaran</h4>
-              <div className="space-y-3">
-                {subjectAverages.map((item: any, index: any) => (
-                  <div key={index}>
-                    <div className="flex justify-between text-sm mb-1"><span className="font-medium text-slate-700 dark:text-slate-300">{item.subject}</span><span className={`font-bold ${item.average >= 75 ? 'text-emerald-600' : item.average >= 60 ? 'text-amber-600' : 'text-rose-600'}`}>{item.average}</span></div>
-                    <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all duration-500 ${item.average >= 75 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' : item.average >= 60 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rose-400 to-rose-500'}`} style={{ width: `${item.average}%` }} /></div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <SubjectPerformanceChart
+              subjects={subjectAverages}
+              kkmLine={75}
+            />
           </div>
         )}
 
         {/* AI Analysis CTA */}
         <div className="flex flex-col items-center justify-center py-12 px-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl border border-purple-200 dark:border-purple-800">
           <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-full p-6 mb-6">
-            <BrainCircuitIcon className="w-16 h-16 text-purple-600 dark:text-purple-400" />
+            <BrainCircuitIcon className="w-16 h-16 text-purple-600 dark:text-purple-400 animate-pulse" />
           </div>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-            Analisis Perkembangan Anak
+            Laporan Perkembangan Anak
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-8">
-            Dapatkan analisis komprehensif tentang perkembangan kognitif, afektif, dan psikomotor anak Anda dengan bantuan AI.
+          <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-8 text-sm">
+            Dapatkan rangkuman tumbuh kembang akademik, sikap harian, dan keterampilan fisik siswa secara menyeluruh.
           </p>
           <Button
             onClick={handleGenerateAnalysis}
             size="lg"
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-bold px-8 shadow-md"
           >
             <SparklesIcon className="w-5 h-5 mr-2" />
-            Generate Analisis Lengkap
+            ✨ Buat Laporan Perkembangan
           </Button>
         </div>
       </div>
     );
   }
 
+  const getStatusColor = (colorClass: string) => {
+    if (colorClass.includes('emerald')) return 'text-emerald-650 dark:text-emerald-400';
+    if (colorClass.includes('blue')) return 'text-blue-600 dark:text-blue-400';
+    if (colorClass.includes('rose')) return 'text-rose-600 dark:text-rose-400';
+    return 'text-amber-600 dark:text-amber-400';
+  };
+
   return (
     <div className="space-y-6 pb-8" ref={reportRef}>
       {renderSegmentedControl()}
-      {/* Header Laporan */}
-      <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800">
-        <CardHeader className="pb-4">
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-full p-3">
-                <BrainCircuitIcon className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <CardTitle className="text-2xl font-bold">Ringkasan Perkembangan Anak</CardTitle>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${
-                    analysis.generatedBy === 'Offline Fallback'
-                      ? 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                      : 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/50'
-                  }`}>
-                    {analysis.generatedBy === 'Offline Fallback' ? '📴 Offline Standard' : '✨ AI Generated'}
-                  </span>
-                </div>
-                <CardDescription className="mt-1 font-medium">
-                  {analysis.summary.name} • {analysis.summary.age} Tahun • Kelas {analysis.summary.class}
-                  {generatedAt && (
-                    <span className="ml-2 text-slate-400 dark:text-slate-500 text-xs">
-                      • Dibuat: {new Date(generatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  )}
-                  {generatedAt && (Date.now() - new Date(generatedAt).getTime()) > 30 * 24 * 60 * 60 * 1000 && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-[10px] font-semibold">Stale</span>
-                  )}
-                </CardDescription>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={handleExportReport}
-                variant="outline"
-                size="sm"
-                className="bg-white/50 dark:bg-black/20 font-semibold hover:shadow-sm"
-              >
-                <DownloadIcon className="w-4 h-4 mr-2" />
-                Export PDF Premium
-              </Button>
-              <Button
-                onClick={handleGenerateAnalysis}
-                variant="ghost"
-                size="sm"
-                className="font-semibold"
-              >
-                <RefreshCwIcon className="w-4 h-4 mr-2" />
-                Refresh
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+
+      {/* Header Laporan / GlanceHeroCard */}
+      <GlanceHeroCard
+        studentName={analysis.summary.name}
+        studentAge={analysis.summary.age}
+        studentClass={analysis.summary.class}
+        overallScore={overallAverage}
+        generatedBy={analysis.generatedBy}
+        generatedAt={generatedAt}
+        isStale={generatedAt ? (Date.now() - new Date(generatedAt).getTime()) > 30 * 24 * 60 * 60 * 1000 : false}
+        overallAssessment={analysis.summary.overallAssessment}
+        onExportPdf={handleExportReport}
+        onRefresh={handleGenerateAnalysis}
+      />
 
       {/* 30-Second Glance Ringkasan Ananda */}
       {glanceSummary && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 dark:from-emerald-500/5 dark:to-teal-500/0 border border-emerald-500/20 dark:border-emerald-500/10 rounded-2xl p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl -mr-6 -mt-6" />
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/25 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 font-semibold text-lg">
-              🌟
-            </div>
-            <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-wide uppercase mb-1">Kekuatan Utama Ananda</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-              {glanceSummary.superpower}
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.05 }}
-            className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 dark:from-amber-500/5 dark:to-orange-500/0 border border-amber-500/20 dark:border-amber-500/10 rounded-2xl p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl -mr-6 -mt-6" />
-            <div className="w-10 h-10 rounded-xl bg-amber-500/25 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3 font-semibold text-lg">
-              🎯
-            </div>
-            <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-wide uppercase mb-1">Tantangan Seru</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-              {glanceSummary.challenge}
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="bg-gradient-to-br from-indigo-500/10 to-sky-500/5 dark:from-indigo-500/5 dark:to-sky-500/0 border border-indigo-500/20 dark:border-indigo-500/10 rounded-2xl p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl -mr-6 -mt-6" />
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/25 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-3 font-semibold text-lg">
-              🏠
-            </div>
-            <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-wide uppercase mb-1">Tips Praktis Rumah</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-              {glanceSummary.homeTip}
-            </p>
-          </motion.div>
-        </div>
+        <QuickInsightStrip
+          superpower={glanceSummary.superpower}
+          challenge={glanceSummary.challenge}
+          homeTip={glanceSummary.homeTip}
+        />
       )}
 
-      {/* Status Perkembangan badges */}
-      <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-4">
-        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Status Perkembangan Ananda:</span>
-        <div className="flex flex-wrap gap-2">
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${developmentBadges.cognitive.color}`}>
-            <span className={`w-2.5 h-2.5 rounded-full ${developmentBadges.cognitive.dot}`} />
-            <span>Kognitif: {developmentBadges.cognitive.label}</span>
-          </div>
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${developmentBadges.affective.color}`}>
-            <span className={`w-2.5 h-2.5 rounded-full ${developmentBadges.affective.dot}`} />
-            <span>Afektif: {developmentBadges.affective.label}</span>
-          </div>
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${developmentBadges.psychomotor.color}`}>
-            <span className={`w-2.5 h-2.5 rounded-full ${developmentBadges.psychomotor.dot}`} />
-            <span>Psikomotorik: {developmentBadges.psychomotor.label}</span>
-          </div>
-        </div>
+      {/* Status Perkembangan cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <DevelopmentScoreCard
+          aspect="cognitive"
+          statusLabel={developmentBadges.cognitive.label}
+          statusColor={getStatusColor(developmentBadges.cognitive.color)}
+          statusDot={developmentBadges.cognitive.dot}
+          score={overallAverage}
+          highlights={analysis.cognitive.strengths.slice(0, 3)}
+        />
+        <DevelopmentScoreCard
+          aspect="affective"
+          statusLabel={developmentBadges.affective.label}
+          statusColor={getStatusColor(developmentBadges.affective.color)}
+          statusDot={developmentBadges.affective.dot}
+          score={attendanceRate}
+          highlights={analysis.affective.positiveCharacters.slice(0, 3)}
+        />
+        <DevelopmentScoreCard
+          aspect="psychomotor"
+          statusLabel={developmentBadges.psychomotor.label}
+          statusColor={getStatusColor(developmentBadges.psychomotor.color)}
+          statusDot={developmentBadges.psychomotor.dot}
+          score={keaktifan}
+          highlights={analysis.psychomotor.outstandingSkills.slice(0, 3)}
+        />
       </div>
 
       {/* Accordion Expand Button */}
@@ -2525,7 +2493,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         <Button
           onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
           variant="outline"
-          className="rounded-full shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-bold px-6 py-5 flex items-center gap-2 hover:bg-slate-50 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
+          className="rounded-full shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-bold px-6 py-5 flex items-center gap-2 hover:bg-slate-50 text-indigo-650 dark:text-indigo-400 hover:text-indigo-750"
         >
           {isDetailsExpanded ? 'Sembunyikan Detail Analisis' : 'Lihat Detail Analisis AI & Grafik Radar'}
           <motion.span
@@ -2548,19 +2516,6 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden space-y-6"
           >
-            {/* Overall Assessment Text */}
-            <Card className="border-slate-200 dark:border-slate-800">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100">Ulasan Perkembangan Komprehensif</CardTitle>
-                <CardDescription>Ulasan holistik tentang performa dan kepribadian siswa di kelas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
-                  {analysis.summary.overallAssessment}
-                </p>
-              </CardContent>
-            </Card>
-
             {/* Period Comparison in Analysis View */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <PeriodComparison
@@ -2569,24 +2524,24 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 label="Rata-rata Saat Ini"
               />
               <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                <p className="text-xs text-gray-500 mb-1">Trend Kehadiran</p>
+                <p className="text-xs text-slate-500 mb-1 font-medium">Kehadiran Kelas</p>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  <span className="text-2xl font-bold text-green-605 dark:text-green-400">
                     {studentData.attendanceRecords.filter((a: any) => a.status === 'Hadir').length}
                   </span>
-                  <span className="text-sm text-gray-400 font-medium">
+                  <span className="text-sm text-slate-400 font-medium">
                     / {studentData.attendanceRecords.length} hari
                   </span>
                 </div>
               </div>
               <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                <p className="text-xs text-gray-500 mb-1">Poin Keaktifan</p>
+                <p className="text-xs text-slate-500 mb-1 font-medium">Partisipasi Kuis</p>
                 <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {studentData.quizPoints.length}
                 </span>
               </div>
               <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                <p className="text-xs text-gray-500 mb-1">Pelanggaran</p>
+                <p className="text-xs text-slate-500 mb-1 font-medium">Pelanggaran</p>
                 <span className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {studentData.violations.reduce((a: any, b: any) => a + b.points, 0)} poin
                 </span>
@@ -2598,7 +2553,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Radar Chart with Safety Check */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
-                  <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Spider Chart: Performa per Mapel</h4>
+                  <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Peta Kekuatan Akademik</h4>
                   {isRadarChartValid ? (
                     <div className="flex justify-center">
                       <svg width={chartSize} height={chartSize} className="overflow-visible">
@@ -2622,20 +2577,13 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                       </p>
                     </div>
                   )}
-                  <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-3">Rata-rata: <span className="font-bold text-indigo-600 dark:text-indigo-400">{overallAverage}</span></p>
+                  <p className="text-center text-xs text-slate-505 dark:text-slate-400 mt-3">Rata-rata: <span className="font-bold text-indigo-600 dark:text-indigo-400">{overallAverage}</span></p>
                 </div>
-                {/* Bar Chart */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
-                  <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Nilai per Mata Pelajaran</h4>
-                  <div className="space-y-3">
-                    {subjectAverages.map((item: any, index: any) => (
-                      <div key={index}>
-                        <div className="flex justify-between text-sm mb-1"><span className="font-medium text-slate-700 dark:text-slate-300">{item.subject}</span><span className={`font-bold ${item.average >= 75 ? 'text-emerald-600' : item.average >= 60 ? 'text-amber-600' : 'text-rose-600'}`}>{item.average}</span></div>
-                        <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all duration-500 ${item.average >= 75 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' : item.average >= 60 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-rose-400 to-rose-500'}`} style={{ width: `${item.average}%` }} /></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                {/* Subject Performance Chart */}
+                <SubjectPerformanceChart
+                  subjects={subjectAverages}
+                  kkmLine={75}
+                />
               </div>
             )}
 
@@ -2647,7 +2595,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                     <PlayCircleIcon className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-slate-800 dark:text-white">Rekomendasi Aksi Guru & Orang Tua</CardTitle>
+                    <CardTitle className="text-slate-800 dark:text-white">Langkah yang Bisa Dilakukan</CardTitle>
                     <CardDescription>Langkah-langkah konkret yang dirancang khusus untuk memandu Ananda</CardDescription>
                   </div>
                 </div>
@@ -2661,188 +2609,16 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               </CardContent>
             </Card>
 
-            {/* A. Cognitive Development */}
-            <Card className="border-slate-200 dark:border-slate-800">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg p-2">
-                    <BookOpenIcon className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-slate-800 dark:text-white">A. Perkembangan Pola Pikir & Akademik (Kognitif)</CardTitle>
-                    <CardDescription>Tinjauan gaya belajar dan kemampuan analisis akademis</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30 rounded-xl p-4">
-                    <h5 className="font-bold text-green-800 dark:text-green-400 mb-2 flex items-center gap-2">
-                      <CheckCircleIcon className="w-4 h-4" /> Kekuatan
-                    </h5>
-                    <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
-                      {analysis.cognitive.strengths.map((s: any, i: any) => <li key={i}>• {s}</li>)}
-                    </ul>
-                  </div>
-                  <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4">
-                    <h5 className="font-bold text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-2">
-                      <TrendingUpIcon className="w-4 h-4" /> Area Pengembangan
-                    </h5>
-                    <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
-                      {analysis.cognitive.areasForDevelopment.map((a: any, i: any) => <li key={i}>• {a}</li>)}
-                    </ul>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-900/20 rounded-xl p-4">
-                    <h5 className="font-bold text-blue-900 dark:text-blue-300 mb-1 text-sm uppercase tracking-wide">Gaya Belajar Ananda</h5>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{analysis.cognitive.learningStyle}</p>
-                  </div>
-                  <div className="bg-cyan-50/50 dark:bg-cyan-900/10 border border-cyan-100/50 dark:border-cyan-900/20 rounded-xl p-4">
-                    <h5 className="font-bold text-cyan-900 dark:text-cyan-300 mb-1 text-sm uppercase tracking-wide">Kemampuan Berpikir Kritis</h5>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{analysis.cognitive.criticalThinking}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Rencana Pengembangan */}
+            <DevelopmentTimeline
+              threeMonthTargets={analysis.recommendations.developmentPlan.threeMonths}
+              sixMonthTargets={analysis.recommendations.developmentPlan.sixMonths}
+            />
 
-            {/* B. Affective Development */}
-            <Card className="border-slate-200 dark:border-slate-800">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-lg p-2">
-                    <UsersIcon className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-slate-800 dark:text-white">B. Perkembangan Karakter & Emosi (Afektif)</CardTitle>
-                    <CardDescription>Kedisiplinan, kecerdasan emosional, dan sosialitas siswa</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-xl p-4">
-                  <h5 className="font-bold text-emerald-800 dark:text-emerald-400 mb-2.5 text-sm uppercase tracking-wide">Karakter Positif Menonjol</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {analysis.affective.positiveCharacters.map((c: any, i: any) => (
-                      <span key={i} className="px-3 py-1.5 bg-emerald-100/60 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-900/50 rounded-full text-xs font-semibold">✓ {c}</span>
-                    ))}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-pink-50/50 dark:bg-pink-900/10 border border-pink-100/50 dark:border-pink-900/20 rounded-xl p-4">
-                    <h5 className="font-bold text-pink-900 dark:text-pink-300 mb-1.5 text-sm uppercase tracking-wide">Kemampuan Sosial</h5>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{analysis.affective.socialSkills}</p>
-                  </div>
-                  <div className="bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100/50 dark:border-purple-900/20 rounded-xl p-4">
-                    <h5 className="font-bold text-purple-900 dark:text-purple-300 mb-1.5 text-sm uppercase tracking-wide">Kecerdasan Emosional & Kedisiplinan</h5>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
-                      {analysis.affective.emotionalIntelligence}. Tingkat kedisiplinan dinilai {analysis.affective.discipline}.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* C. Psychomotor Development */}
-            <Card className="border-slate-200 dark:border-slate-800">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg p-2">
-                    <CheckSquareIcon className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-slate-800 dark:text-white">C. Keterampilan Fisik & Kreativitas (Psikomotorik)</CardTitle>
-                    <CardDescription>Kemampuan koordinasi, kekuatan motorik, dan kerajinan tangan</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30 rounded-xl p-4">
-                    <h5 className="font-bold text-green-800 dark:text-green-400 mb-2 flex items-center gap-2">
-                      🌟 Keterampilan Menonjol
-                    </h5>
-                    <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
-                      {analysis.psychomotor.outstandingSkills.map((s: any, i: any) => <li key={i}>★ {s}</li>)}
-                    </ul>
-                  </div>
-                  <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4">
-                    <h5 className="font-bold text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-2">
-                      ► Area Perlu Stimulasi
-                    </h5>
-                    <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 font-medium">
-                      {analysis.psychomotor.areasNeedingStimulation.map((a: any, i: any) => <li key={i}>► {a}</li>)}
-                    </ul>
-                  </div>
-                </div>
-                <div className="bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-900/20 rounded-xl p-4">
-                  <h5 className="font-bold text-emerald-900 dark:text-emerald-300 mb-1 text-sm uppercase tracking-wide">Koordinasi & Kekuatan Motorik</h5>
-                  <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
-                    {analysis.psychomotor.motorSkills}. Koordinasi gerakan tubuh terbukti {analysis.psychomotor.coordination}.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* D. Development Plan & Warnings */}
-            <Card className="bg-gradient-to-br from-amber-50 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10 border-amber-200/60 dark:border-amber-900/50">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg p-2">
-                    <CalendarIcon className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-slate-800 dark:text-white">D. Rencana Pengembangan Akademik & Karakter</CardTitle>
-                    <CardDescription>Target jangka pendek 3 bulan dan jangka menengah 6 bulan</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border-l-4 border-amber-500 shadow-sm border border-slate-200/50 dark:border-slate-800">
-                    <h5 className="font-bold text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
-                      <ClockIcon className="w-4 h-4 text-amber-500" /> Target 3 Bulan
-                    </h5>
-                    <ul className="space-y-2 text-sm font-medium">
-                      {analysis.recommendations.developmentPlan.threeMonths.map((item: any, index: any) => (
-                        <li key={index} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                          <span className="text-amber-500 font-bold">→</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border-l-4 border-orange-500 shadow-sm border border-slate-200/50 dark:border-slate-800">
-                    <h5 className="font-bold text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
-                      <CalendarIcon className="w-4 h-4 text-orange-500" /> Target 6 Bulan
-                    </h5>
-                    <ul className="space-y-2 text-sm font-medium">
-                      {analysis.recommendations.developmentPlan.sixMonths.map((item: any, index: any) => (
-                        <li key={index} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                          <span className="text-orange-500 font-bold">→</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Warning Signs */}
-                <div className="bg-rose-50/50 dark:bg-rose-950/20 rounded-xl p-4 border border-rose-200/60 dark:border-rose-900/50">
-                  <h5 className="font-bold text-rose-800 dark:text-rose-400 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
-                    <AlertCircleIcon className="w-4 h-4 text-rose-600" /> Tanda Peringatan (Perlu Diwaspadai)
-                  </h5>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-                    {analysis.recommendations.warningsSigns.map((sign: any, index: any) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <AlertCircleIcon className="w-3.5 h-3.5 text-rose-500 flex-shrink-0 mt-0.5" />
-                        <span>{sign}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Warning Banner */}
+            <WarningBanner
+              warnings={analysis.recommendations.warningsSigns}
+            />
 
             {/* Footer Note */}
             <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/10 dark:to-blue-950/10 rounded-2xl p-6 border border-purple-200/50 dark:border-purple-900/50">

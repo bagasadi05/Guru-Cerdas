@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 export const PeriodComparison: React.FC<{
   currentAvg: number;
@@ -10,21 +11,47 @@ export const PeriodComparison: React.FC<{
   const isImproved = diff > 0;
   const isDeclined = diff < 0;
 
+  // Determine color based on trend
+  const trendColor = isImproved
+    ? 'text-emerald-600 dark:text-emerald-400'
+    : isDeclined
+    ? 'text-rose-600 dark:text-rose-400'
+    : 'text-slate-400 dark:text-slate-500';
+
+  const trendBg = isImproved
+    ? 'bg-emerald-50 dark:bg-emerald-950/30'
+    : isDeclined
+    ? 'bg-rose-50 dark:bg-rose-950/30'
+    : 'bg-slate-50 dark:bg-slate-800';
+
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <div className="flex items-end gap-2">
-        <span className="text-2xl font-bold text-gray-900 dark:text-white">{currentAvg}</span>
+    <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow duration-300">
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">{label}</p>
+      <div className="flex items-end gap-2.5">
+        <motion.span
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="text-2xl font-bold text-slate-800 dark:text-white"
+        >
+          {currentAvg}
+        </motion.span>
         {previousAvg > 0 && (
-          <span className={`text-sm font-medium flex items-center gap-1 ${isImproved ? 'text-green-500' : isDeclined ? 'text-red-500' : 'text-gray-400'
-            }`}>
+          <motion.span
+            initial={{ x: -8, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${trendColor} ${trendBg}`}
+          >
             {isImproved ? '↑' : isDeclined ? '↓' : '→'} {Math.abs(Number(percentChange))}%
-          </span>
+          </motion.span>
         )}
       </div>
       {previousAvg > 0 && (
-        <p className="text-xs text-gray-400 mt-1">Sebelumnya: {previousAvg}</p>
+        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 font-medium">
+          Sebelumnya: <span className="font-semibold">{previousAvg}</span>
+        </p>
       )}
     </div>
   );
-};
+};

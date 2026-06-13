@@ -11,6 +11,9 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      watch: {
+        usePolling: true,
+      },
     },
     plugins: [
       react(),
@@ -71,8 +74,7 @@ export default defineConfig(({ mode }) => {
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         },
         devOptions: {
-          enabled: true,
-          type: 'module',
+          enabled: false,
         }
       }),
       // Bundle analyzer (only in analyze mode)
