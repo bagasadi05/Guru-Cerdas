@@ -159,7 +159,7 @@ function isModelAllowed(model: string | undefined): boolean {
   if (!model) return false;
   if (model.endsWith(':free')) return true;
   const whitelist = [
-    'nvidia/nemotron-3-ultra-550b-a55b:free',
+    'google/gemma-4-31b-it:free',
     'arcee-ai/trinity-large-preview:free',
     'google/gemini-2.0-flash-exp:free',
     'meta-llama/llama-3.2-3b-instruct:free',
