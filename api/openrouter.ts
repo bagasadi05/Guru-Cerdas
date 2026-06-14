@@ -21,8 +21,17 @@ interface ExtendedResponse extends ServerResponse {
 }
 
 function isOriginAllowed(origin: string | undefined, allowedOrigin: string | undefined): boolean {
-  if (!allowedOrigin) return false;
   if (!origin) return false;
+
+  // Automatically allow localhost and 127.0.0.1 in development
+  const isDev = process.env.NODE_ENV !== 'production' || process.env.VITE_APP_ENV === 'development';
+  if (isDev) {
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return true;
+    }
+  }
+
+  if (!allowedOrigin) return false;
   const allowedOrigins = allowedOrigin
     .split(',')
     .map((item) => item.trim())
@@ -217,7 +226,12 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
   }
   const origin = typeof req.headers.origin === 'string' ? req.headers.origin : refererOrigin;
   if (!isOriginAllowed(origin, allowedOrigin)) {
-    res.status(403).json({ error: 'Origin not allowed' });
+    res.status(403).json({ 
+      error: 'Origin not allowed', 
+      detectedOrigin: origin || 'unknown',
+      allowedOrigin: allowedOrigin || 'not configured',
+      requestId 
+    });
     return;
   }
 
