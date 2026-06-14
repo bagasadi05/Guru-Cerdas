@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, clearStaleAuthTokens } from '../services/supabase';
 import type { User, Session, AuthResponse, UserResponse } from '@supabase/supabase-js';
 import type { Database } from '../services/database.types';
-import { Capacitor } from '@capacitor/core';
-import { LocalNotifications } from '@capacitor/local-notifications';
 import { getStudentAvatar } from '../utils/avatarUtils';
 import { useToast } from './useToast';
 import { logger } from '../services/logger';
@@ -32,34 +30,17 @@ type ScheduleWithClassName = Database['public']['Tables']['schedules']['Row'] & 
   className?: string;
 };
 
-let notificationListenerRegistered = false;
-
 /**
- * Check if running on native mobile platform
- */
-const isNativePlatform = (): boolean => {
-  return Capacitor.isNativePlatform();
-};
-
-/**
- * Request notification permission for native or web
+ * Request notification permission for web/PWA
  */
 const requestNotificationPermission = async (): Promise<boolean> => {
   try {
-    if (isNativePlatform()) {
-      // For Capacitor - use Local Notifications
-      const result = await LocalNotifications.requestPermissions();
-      logger.info('Notification permission result', 'Auth', result);
-      return result.display === 'granted';
-    } else {
-      // For web browser
-      if (!('Notification' in window)) {
-        logger.info('Notifications not supported in this browser', 'Auth');
-        return false;
-      }
-      const permission = await Notification.requestPermission();
-      return permission === 'granted';
+    if (!('Notification' in window)) {
+      logger.info('Notifications not supported in this browser', 'Auth');
+      return false;
     }
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
   } catch (error) {
     logger.error('Error requesting notification permission', error as Error, undefined, 'Auth');
     return false;
@@ -67,110 +48,10 @@ const requestNotificationPermission = async (): Promise<boolean> => {
 };
 
 /**
- * Schedule local notifications for mobile or set up service worker for web
+ * Schedule notifications via service worker for PWA
  */
 const scheduleNotifications = async (schedule: ScheduleWithClassName[]): Promise<boolean> => {
-  if (isNativePlatform()) {
-    try {
-      // Cancel any existing notifications first
-      const pending = await LocalNotifications.getPending();
-      if (pending.notifications.length > 0) {
-        await LocalNotifications.cancel({ notifications: pending.notifications });
-      }
-
-      // If no schedule, just return success
-      if (schedule.length === 0) {
-        logger.info('No schedules to set notifications for', 'Auth');
-        return true;
-      }
-
-      // Store schedule in localStorage for re-scheduling after notification fires
-      localStorage.setItem('portal_guru_schedule', JSON.stringify(schedule));
-
-      // Add listener for when notification fires (to re-schedule for next week)
-      if (!notificationListenerRegistered) {
-        LocalNotifications.addListener('localNotificationReceived', async (notification) => {
-          logger.info('Notification received', 'Auth', notification);
-          // Re-schedule notifications for next week
-          const storedSchedule = localStorage.getItem('portal_guru_schedule');
-          if (storedSchedule) {
-            try {
-              const scheduleData = JSON.parse(storedSchedule);
-              // Small delay before re-scheduling
-              setTimeout(() => {
-                scheduleNotifications(scheduleData);
-              }, 1000);
-            } catch (e) {
-              logger.error('Error re-scheduling notifications', e as Error, undefined, 'Auth');
-            }
-          }
-        });
-        notificationListenerRegistered = true;
-      }
-
-      // Schedule notifications for each class
-      const notifications = schedule.map((item, index) => {
-        // Parse schedule time
-        const [startHour, startMinute] = item.start_time.split(':').map(Number);
-        const dayMap: Record<string, number> = {
-          'Senin': 1, 'Selasa': 2, 'Rabu': 3, 'Kamis': 4,
-          'Jumat': 5, 'Sabtu': 6, 'Minggu': 0
-        };
-        const targetDay = dayMap[item.day] ?? 1;
-
-        // Calculate next occurrence of this day at the scheduled time minus 5 minutes
-        const now = new Date();
-        const notifyDate = new Date();
-
-        // Handle the 5-minute offset (avoid negative minutes)
-        let notifyMinute = startMinute - 5;
-        let notifyHour = startHour;
-        if (notifyMinute < 0) {
-          notifyMinute += 60;
-          notifyHour -= 1;
-          if (notifyHour < 0) notifyHour = 23;
-        }
-
-        notifyDate.setHours(notifyHour, notifyMinute, 0, 0);
-
-        // Set to the correct day of week
-        const currentDay = now.getDay();
-        let daysUntil = targetDay - currentDay;
-        if (daysUntil < 0) daysUntil += 7;
-        if (daysUntil === 0 && notifyDate <= now) {
-          daysUntil = 7; // Schedule for next week if the time has passed today
-        }
-        notifyDate.setDate(now.getDate() + daysUntil);
-
-        return {
-          id: 1000 + index,
-          title: '📚 Pengingat Jadwal',
-          body: `${item.className || item.subject} akan dimulai dalam 5 menit`,
-          schedule: {
-            at: notifyDate,
-            allowWhileIdle: true
-          },
-          sound: 'default',
-          smallIcon: 'ic_stat_notification',
-          largeIcon: 'ic_launcher',
-        };
-      });
-
-      logger.info(`Scheduling ${notifications.length} notifications`, 'Auth');
-
-      if (notifications.length > 0) {
-        await LocalNotifications.schedule({ notifications });
-        logger.info('Notifications scheduled successfully', 'Auth');
-      }
-      return true;
-    } catch (error) {
-      logger.error('Error scheduling native notifications', error as Error, undefined, 'Auth');
-      throw error; // Re-throw to be caught by the caller
-    }
-  } else {
-    // For web - use service worker
-    return await setupServiceWorker(schedule);
-  }
+  return await setupServiceWorker(schedule);
 };
 
 /**
@@ -445,14 +326,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const disableScheduleNotifications = async () => {
     try {
-      if (isNativePlatform()) {
-        // Cancel all scheduled notifications on mobile
-        const pending = await LocalNotifications.getPending();
-        if (pending.notifications.length > 0) {
-          await LocalNotifications.cancel({ notifications: pending.notifications });
-        }
-      } else if ('serviceWorker' in navigator) {
-        // Clear service worker notifications on web
+      if ('serviceWorker' in navigator) {
+        // Clear service worker notifications on web/PWA
         const registration = await navigator.serviceWorker.getRegistration();
         if (registration && registration.active) {
           registration.active.postMessage({ type: 'CLEAR_SCHEDULE' });

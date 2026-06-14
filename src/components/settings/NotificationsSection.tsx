@@ -8,7 +8,7 @@ import { Database } from '../../services/database.types';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Switch } from '../ui/Switch';
 import { AlertCircleIcon, BellIcon, CheckCircleIcon, ClockIcon, CheckSquareIcon, CalendarIcon, RefreshCwIcon } from '../Icons';
-import { PlayCircle, Upload, Volume, Volume2, Smartphone } from 'lucide-react';
+import { PlayCircle, Upload, Volume, Volume2 } from 'lucide-react';
 import { getPreferences, getUnreadCount, savePreferences, NotificationPreferences } from '../../services/NotificationService';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
@@ -24,16 +24,10 @@ import {
     setSoundVolume,
     SoundType
 } from '../../services/notificationSoundSettings';
-import { Capacitor } from '@capacitor/core';
 import { SettingsCard } from './SettingsCard';
 
 type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
 type ScheduleWithClassName = ScheduleRow & { className?: string };
-
-const loadRingtonePicker = async () => {
-    const module = await import('../../plugins/RingtonePicker');
-    return module.default;
-};
 
 const NotificationsSection: React.FC = () => {
     const { enableScheduleNotifications, disableScheduleNotifications, user, isNotificationsEnabled } = useAuth();
@@ -54,15 +48,6 @@ const NotificationsSection: React.FC = () => {
     const [volume, setVolume] = useState(0.7);
     const [hasCustomSound, setHasCustomSound] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // System ringtone state (for Android native picker)
-    const [systemRingtoneTitle, setSystemRingtoneTitle] = useState<string | null>(
-        localStorage.getItem('portal_guru_system_ringtone_title')
-    );
-    const [systemRingtoneUri, setSystemRingtoneUri] = useState<string | null>(
-        localStorage.getItem('portal_guru_system_ringtone_uri')
-    );
-    const isAndroid = Capacitor.getPlatform() === 'android';
 
     const refreshNotificationStatus = async () => {
         const permission = typeof window !== 'undefined' && 'Notification' in window
@@ -121,46 +106,6 @@ const NotificationsSection: React.FC = () => {
             window.removeEventListener('focus', refreshNotificationStatus);
         };
     }, []);
-
-    // Handler for opening native ringtone picker (Android only)
-    const handleSystemRingtoneSelect = async () => {
-        if (!isAndroid) {
-            toast.warning("Fitur ini hanya tersedia di Android");
-            return;
-        }
-
-        try {
-            const ringtonePicker = await loadRingtonePicker();
-            const result = await ringtonePicker.openPicker({
-                type: 'notification',
-                title: 'Pilih Nada Notifikasi',
-                currentUri: systemRingtoneUri || undefined,
-            });
-
-            if (!result.cancelled) {
-                if (result.isSilent) {
-                    setSelectedSound('none');
-                    void setScheduleSound('none');
-                    toast.info("Notifikasi diatur ke mode diam");
-                } else if (result.uri) {
-                    setSystemRingtoneUri(result.uri);
-                    setSystemRingtoneTitle(result.title || 'System Sound');
-                    localStorage.setItem('portal_guru_system_ringtone_uri', result.uri);
-                    localStorage.setItem('portal_guru_system_ringtone_title', result.title || 'System Sound');
-
-                    setSelectedSound('system');
-                    void setScheduleSound('system');
-                    toast.success(`Nada dipilih: ${result.title}`);
-
-                    // Preview the selected ringtone
-                    ringtonePicker.previewSound({ uri: result.uri });
-                }
-            }
-        } catch (error) {
-            console.error('Error opening ringtone picker:', error);
-            toast.error("Gagal membuka pemilih ringtone");
-        }
-    };
 
     const { data: scheduleData } = useQuery({
         queryKey: ['scheduleWithClasses', user?.id],
@@ -461,20 +406,13 @@ const NotificationsSection: React.FC = () => {
 
                     {/* Sound Options Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {SOUND_OPTIONS
-                            .filter(sound => sound.id !== 'system' || isAndroid) // Only show system on Android
-                            .map((sound) => {
+                        {SOUND_OPTIONS.map((sound) => {
                                 const isSelected = selectedSound === sound.id;
                                 const isCustomDisabled = sound.id === 'custom' && !hasCustomSound;
-                                const isSystemSound = sound.id === 'system';
 
                                 const handleClick = () => {
                                     if (isCustomDisabled) return;
-                                    if (isSystemSound) {
-                                        handleSystemRingtoneSelect();
-                                    } else {
-                                        handleSoundSelect(sound.id);
-                                    }
+                                    handleSoundSelect(sound.id);
                                 };
 
                                 return (
@@ -502,18 +440,11 @@ const NotificationsSection: React.FC = () => {
                                         <div className="text-center">
                                             <span className="text-2xl block mb-2">{sound.icon}</span>
                                             <p className="font-bold text-sm text-slate-900 dark:text-white">{sound.name}</p>
-                                            {/* Show selected system ringtone name */}
-                                            {isSystemSound && systemRingtoneTitle && isSelected ? (
-                                                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 truncate">
-                                                    {systemRingtoneTitle}
-                                                </p>
-                                            ) : (
-                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{sound.description}</p>
-                                            )}
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{sound.description}</p>
                                         </div>
 
                                         {/* Preview button for built-in sounds */}
-                                        {sound.id !== 'none' && sound.id !== 'custom' && sound.id !== 'system' && (
+                                        {sound.id !== 'none' && sound.id !== 'custom' && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -523,20 +454,6 @@ const NotificationsSection: React.FC = () => {
                                                 title="Preview suara"
                                             >
                                                 <PlayCircle className="w-4 h-4" />
-                                            </button>
-                                        )}
-
-                                        {/* System ringtone picker button */}
-                                        {isSystemSound && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleSystemRingtoneSelect();
-                                                }}
-                                                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                                                title="Pilih dari ringtone sistem"
-                                            >
-                                                <Smartphone className="w-4 h-4" />
                                             </button>
                                         )}
 

@@ -118,12 +118,16 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
         if (!autoSync) return;
 
         const handleOnline = () => {
-            logger.info('Connection restored, triggering sync', 'useOfflineSync');
+            logger.info('Connection restored or app focused, triggering sync', 'useOfflineSync');
             sync();
         };
 
         window.addEventListener('online', handleOnline);
-        return () => window.removeEventListener('online', handleOnline);
+        window.addEventListener('focus', handleOnline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('focus', handleOnline);
+        };
     }, [autoSync, sync]);
 
     // Register background sync

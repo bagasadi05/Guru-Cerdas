@@ -251,8 +251,8 @@ export const exportGradesWithTemplate = async (
         // Find header row and map column indices dynamically
         let headerRowIndex = 6; // default to Row 6 (1-based)
         let idCol = 2; // Column B (default)
-        let nisCol = 3; // Column C (default)
-        let nisnCol = 4; // Column D (default)
+        let _nisCol = 3; // Column C (default)
+        let _nisnCol = 4; // Column D (default)
         let nameCol = 5; // Column E (default)
         let nilaiCol = 6; // Column F (default)
         
@@ -282,9 +282,9 @@ export const exportGradesWithTemplate = async (
                 if (val.includes('id siswa') || val.includes('id_siswa')) {
                     idCol = c;
                 } else if (val === 'nis') {
-                    nisCol = c;
+                    _nisCol = c;
                 } else if (val === 'nisn') {
-                    nisnCol = c;
+                    _nisnCol = c;
                 } else if (val === 'nama' || val.includes('nama siswa') || val.includes('nama lengkap')) {
                     nameCol = c;
                 } else if (val === 'nilai') {

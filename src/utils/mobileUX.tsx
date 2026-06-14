@@ -14,6 +14,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 // KEYBOARD HANDLING HOOK
 // ============================================
 
+import { useKeyboardAwareness as useCentralKeyboardAwareness } from '../hooks/useKeyboardAwareness';
+
 interface KeyboardDimensions {
     isKeyboardVisible: boolean;
     keyboardHeight: number;
@@ -21,74 +23,14 @@ interface KeyboardDimensions {
 
 /**
  * Hook to detect virtual keyboard visibility and adjust content accordingly
+ * Delegated to central useKeyboardAwareness hook for reliability and to avoid duplication.
  */
 export function useKeyboardAwareness(): KeyboardDimensions {
-    const [dimensions, setDimensions] = useState<KeyboardDimensions>({
-        isKeyboardVisible: false,
-        keyboardHeight: 0,
-    });
-
-    useEffect(() => {
-        // Check if we're on a mobile device
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        if (!isMobile) return;
-
-        // Use visualViewport API for better keyboard detection
-        const viewport = window.visualViewport;
-
-        if (viewport) {
-            const handleResize = () => {
-                const windowHeight = window.innerHeight;
-                const viewportHeight = viewport.height;
-                const keyboardHeight = windowHeight - viewportHeight;
-
-                setDimensions({
-                    isKeyboardVisible: keyboardHeight > 100, // Threshold for keyboard
-                    keyboardHeight: keyboardHeight > 100 ? keyboardHeight : 0,
-                });
-            };
-
-            viewport.addEventListener('resize', handleResize);
-            return () => viewport.removeEventListener('resize', handleResize);
-        } else {
-            // Fallback for older browsers using focus detection
-            const handleFocus = (e: FocusEvent) => {
-                const target = e.target as HTMLElement;
-                const isInputLike = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
-
-                if (isInputLike) {
-                    // Estimate keyboard height (usually ~40% of screen on mobile)
-                    const estimatedKeyboardHeight = window.innerHeight * 0.4;
-                    setDimensions({
-                        isKeyboardVisible: true,
-                        keyboardHeight: estimatedKeyboardHeight,
-                    });
-
-                    // Scroll element into view with some padding
-                    setTimeout(() => {
-                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 300);
-                }
-            };
-
-            const handleBlur = () => {
-                setDimensions({
-                    isKeyboardVisible: false,
-                    keyboardHeight: 0,
-                });
-            };
-
-            document.addEventListener('focusin', handleFocus);
-            document.addEventListener('focusout', handleBlur);
-
-            return () => {
-                document.removeEventListener('focusin', handleFocus);
-                document.removeEventListener('focusout', handleBlur);
-            };
-        }
-    }, []);
-
-    return dimensions;
+    const keyboard = useCentralKeyboardAwareness();
+    return {
+        isKeyboardVisible: keyboard.isVisible,
+        keyboardHeight: keyboard.height,
+    };
 }
 
 // ============================================

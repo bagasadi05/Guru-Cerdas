@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import GreetingRobot from './GreetingRobot';
+import { MenuIcon } from './Icons';
 import { useOnboarding, OnboardingTour } from './ui/OnboardingTour';
 import { InteractiveTutorialProvider, TutorialPicker } from './ui/InteractiveTutorial';
 import { SearchTrigger } from './SearchSystem';
@@ -57,7 +58,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Pull-to-refresh handler
   const queryClient = useQueryClient();
   const handleRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries();
+    await queryClient.invalidateQueries({ type: 'active' });
   }, [queryClient]);
 
   // Enhanced Mobile Navigation Hooks
@@ -138,9 +139,23 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         >
           <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm"></div>
 
-          <div className="relative z-10 flex items-center gap-4 w-full">
+          <div className="relative z-10 flex items-center gap-3 w-full">
+            {/* Mobile hamburger: opens the main sidebar */}
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+                aria-label="Buka menu navigasi"
+                aria-expanded={isMobileSidebarOpen}
+                aria-controls="navigation"
+              >
+                <MenuIcon className="w-5 h-5" />
+              </button>
+            )}
+
             {/* Search button */}
-            <div id="search">
+            <div id="search" className="hidden sm:block">
               <SearchTrigger className="hidden sm:flex" />
             </div>
 

@@ -14,8 +14,7 @@ import {
     analyzeAndAdjustGradesWithAI, 
     AIStudentAdjustment 
 } from '../../services/gradeAdjustmentService';
-import { exportGradesToExcel, exportGradesWithTemplate } from '../../utils/gradeExporter';
-import { getXLSX } from '../../utils/dynamicImports';
+import { exportGradesWithTemplate } from '../../utils/gradeExporter';
 import { 
     SparklesIcon, 
     PrinterIcon, 
@@ -24,10 +23,9 @@ import {
     RefreshCwIcon, 
     PlayCircleIcon,
     AlertTriangleIcon,
-    CheckCircleIcon,
     ArrowLeftIcon
 } from '../Icons';
-import { getAssignedSubjects, TeacherClassAssignmentRow } from '../../services/teacherAssignments';
+import { TeacherClassAssignmentRow } from '../../services/teacherAssignments';
 import { Database } from '../../services/database.types';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
@@ -108,7 +106,7 @@ export const GradeAdjustmentPage: React.FC = () => {
     });
 
     // Fetch classes
-    const { data: classes, isLoading: loadingClasses } = useQuery({
+    const { data: classes } = useQuery({
         queryKey: ['classes', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
@@ -462,7 +460,6 @@ export const GradeAdjustmentPage: React.FC = () => {
                 activeAssessmentsList.forEach(assessName => {
                     const key = activeAssessmentsList.length > 1 ? `${item.id}_${assessName}` : item.id;
                     const scoreValue = finalScores[key];
-                    const originalScore = item.assessments[assessName]?.original;
 
                     // If empty/null and no record exists, do not upsert.
                     // If a record exists but score was deleted, skip to avoid saving null.

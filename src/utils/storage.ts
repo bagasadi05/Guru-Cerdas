@@ -1,18 +1,14 @@
 /**
- * Universal Storage Utility
- * 
- * Provides a unified, async storage API that automatically selects
- * the best backend depending on the platform:
- * 
- * - **Native (Android/iOS)**: Uses `@capacitor/preferences` (secure, sandboxed).
+ * Universal Storage Utility (PWA / Web only)
+ *
+ * Provides a unified, async storage API for the browser:
+ *
  * - **Web**: Uses IndexedDB via a lightweight wrapper (larger quota, async, XSS-resilient).
  * - **Fallback**: In-memory `Map` (data lost on refresh, but app won't crash).
- * 
+ *
  * NEVER falls back to `localStorage`, which is synchronous, limited (5 MB),
  * and vulnerable to XSS exfiltration.
  */
-
-import { Capacitor } from '@capacitor/core';
 
 // ============================================
 // TYPES
@@ -30,44 +26,7 @@ interface StorageBackend {
 // ============================================
 
 /**
- * Capacitor Preferences backend (for native mobile)
- */
-const createCapacitorBackend = (): StorageBackend => {
-    // Lazy import to avoid bundling Capacitor on web-only builds
-    let _preferences: typeof import('@capacitor/preferences').Preferences | null = null;
-
-    const getPrefs = async () => {
-        if (!_preferences) {
-            const mod = await import('@capacitor/preferences');
-            _preferences = mod.Preferences;
-        }
-        return _preferences;
-    };
-
-    return {
-        async get(key) {
-            const prefs = await getPrefs();
-            const { value } = await prefs.get({ key });
-            return value;
-        },
-        async set(key, value) {
-            const prefs = await getPrefs();
-            await prefs.set({ key, value });
-        },
-        async remove(key) {
-            const prefs = await getPrefs();
-            await prefs.remove({ key });
-        },
-        async keys() {
-            const prefs = await getPrefs();
-            const { keys } = await prefs.keys();
-            return keys;
-        },
-    };
-};
-
-/**
- * IndexedDB backend (for web)
+ * IndexedDB backend (for web / PWA)
  */
 const createIndexedDBBackend = (): StorageBackend => {
     const DB_NAME = 'portal_guru_storage';
@@ -161,19 +120,7 @@ let _backend: StorageBackend | null = null;
 const getBackend = async (): Promise<StorageBackend> => {
     if (_backend) return _backend;
 
-    // 1. Native? → Capacitor Preferences
-    if (Capacitor.isNativePlatform()) {
-        try {
-            _backend = createCapacitorBackend();
-            // Quick health check
-            await _backend.get('__health__');
-            return _backend;
-        } catch {
-            // Capacitor Preferences unavailable — fall through
-        }
-    }
-
-    // 2. Web? → IndexedDB
+    // 1. Web / PWA → IndexedDB
     if (typeof indexedDB !== 'undefined') {
         try {
             _backend = createIndexedDBBackend();
@@ -185,7 +132,7 @@ const getBackend = async (): Promise<StorageBackend> => {
         }
     }
 
-    // 3. Fallback → Memory
+    // 2. Fallback → Memory
     console.warn('[Storage] Falling back to in-memory storage. Data will be lost on refresh.');
     _backend = createMemoryBackend();
     return _backend;

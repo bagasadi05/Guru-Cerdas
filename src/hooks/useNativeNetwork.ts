@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { Network, ConnectionStatus } from '@capacitor/network';
 import { logger } from '../services/logger';
 
 /**
- * Native network status hook using Capacitor Network plugin
- * Falls back to browser APIs when not running in native context
+ * Network status hook for PWA / web browsers.
+ * Uses browser online/offline events and navigator.onLine.
  */
 export interface NetworkState {
     isConnected: boolean;
@@ -14,79 +12,52 @@ export interface NetworkState {
 }
 
 export const useNativeNetwork = () => {
-    const [state, setState] = useState<NetworkState>({
-        isConnected: true,
-        connectionType: 'unknown',
-        wasOffline: false
+    const [state, setState] = useState<NetworkState>(() => {
+        const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+        return {
+            isConnected: isOnline,
+            connectionType: isOnline ? 'wifi' : 'none',
+            wasOffline: !isOnline
+        };
     });
 
-    const checkConnection = useCallback(async () => {
-        if (Capacitor.isNativePlatform()) {
-            try {
-                const status = await Network.getStatus();
-                setState(prev => ({
-                    isConnected: status.connected,
-                    connectionType: status.connectionType,
-                    wasOffline: !status.connected ? true : prev.wasOffline
-                }));
-            } catch (error) {
-                logger.error('Error checking network status', error as Error, undefined, 'Network');
-            }
-        } else {
-            // Web fallback
-            setState(prev => ({
-                isConnected: navigator.onLine,
-                connectionType: navigator.onLine ? 'wifi' : 'none',
-                wasOffline: !navigator.onLine ? true : prev.wasOffline
-            }));
-        }
+    const checkConnection = useCallback(() => {
+        const isOnline = navigator.onLine;
+        setState(prev => ({
+            isConnected: isOnline,
+            connectionType: isOnline ? 'wifi' : 'none',
+            wasOffline: !isOnline ? true : prev.wasOffline
+        }));
     }, []);
 
     useEffect(() => {
-        // Initial check (async to avoid cascading renders)
-        Promise.resolve().then(() => checkConnection());
 
-        if (Capacitor.isNativePlatform()) {
-            // Native listener
-            const listener = Network.addListener('networkStatusChange', (status: ConnectionStatus) => {
-                logger.info('Network status changed', 'Network', status);
-                setState(prev => ({
-                    isConnected: status.connected,
-                    connectionType: status.connectionType,
-                    wasOffline: !status.connected ? true : prev.wasOffline
-                }));
-            });
+        const handleOnline = () => {
+            logger.info('Network status changed', 'Network', { connected: true });
+            setState(prev => ({
+                ...prev,
+                isConnected: true,
+                connectionType: 'wifi'
+            }));
+        };
 
-            return () => {
-                listener.then(l => l.remove());
-            };
-        } else {
-            // Web fallback listeners
-            const handleOnline = () => {
-                setState(prev => ({
-                    ...prev,
-                    isConnected: true,
-                    connectionType: 'wifi'
-                }));
-            };
+        const handleOffline = () => {
+            logger.info('Network status changed', 'Network', { connected: false });
+            setState(prev => ({
+                ...prev,
+                isConnected: false,
+                connectionType: 'none',
+                wasOffline: true
+            }));
+        };
 
-            const handleOffline = () => {
-                setState(prev => ({
-                    ...prev,
-                    isConnected: false,
-                    connectionType: 'none',
-                    wasOffline: true
-                }));
-            };
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
 
-            window.addEventListener('online', handleOnline);
-            window.addEventListener('offline', handleOffline);
-
-            return () => {
-                window.removeEventListener('online', handleOnline);
-                window.removeEventListener('offline', handleOffline);
-            };
-        }
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
     }, [checkConnection]);
 
     // Reset wasOffline after reconnection

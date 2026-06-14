@@ -6,7 +6,7 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?logo=supabase)](https://supabase.com/)
 [![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8?logo=pwa)](https://web.dev/progressive-web-apps/)
 
@@ -89,9 +89,8 @@ Aplikasi ini dibangun dengan teknologi web modern dan mendukung fitur **Progress
 ### PWA & Mobile
 | Teknologi | Fungsi |
 |-----------|--------|
-| [Vite PWA](https://vite-pwa-org.netlify.app/) | Service Worker |
+| [Vite PWA](https://vite-pwa-org.netlify.app/) | PWA / Service Worker |
 | [Workbox](https://developer.chrome.com/docs/workbox) | Offline Caching |
-| [Capacitor](https://capacitorjs.com/) | Native Features |
 
 ---
 
@@ -216,15 +215,6 @@ npm run build
 ```
 
 Output akan berada di folder `dist/`.
-
-### Build APK (Android)
-```bash
-# Sync dengan Capacitor
-npx cap sync android
-
-# Build APK
-cd android && ./gradlew assembleRelease
-```
 
 ### Preview Production Build
 ```bash

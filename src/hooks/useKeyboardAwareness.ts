@@ -38,6 +38,7 @@ export function useKeyboardAwareness(options: UseKeyboardAwarenessOptions = {}):
   });
 
   const previousHeight = useRef(0);
+  const isKeyboardVisibleRef = useRef(false);
   const animationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Apply/remove body classes for bottom nav and FAB visibility
@@ -69,10 +70,18 @@ export function useKeyboardAwareness(options: UseKeyboardAwarenessOptions = {}):
         const windowHeight = window.innerHeight;
         const viewportHeight = viewport.height;
         const keyboardHeight = windowHeight - viewportHeight;
-        const isKeyboardVisible = keyboardHeight > 100;
+        
+        // Only count keyboard as visible if an input element is currently focused
+        const activeEl = document.activeElement;
+        const isInputFocused = activeEl && (
+          ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName) ||
+          (activeEl as HTMLElement).contentEditable === 'true'
+        );
+        const isKeyboardVisible = keyboardHeight > 100 && !!isInputFocused;
 
-        // Detect animation state
-        if (isKeyboardVisible !== state.isVisible) {
+        // Detect animation state using ref to avoid stale closures
+        if (isKeyboardVisible !== isKeyboardVisibleRef.current) {
+          isKeyboardVisibleRef.current = isKeyboardVisible;
           setState((prev) => ({ ...prev, animating: true }));
           if (animationTimer.current) clearTimeout(animationTimer.current);
           animationTimer.current = setTimeout(() => {
@@ -105,6 +114,7 @@ export function useKeyboardAwareness(options: UseKeyboardAwarenessOptions = {}):
 
         if (isInputLike || isContentEditable) {
           const estimatedHeight = window.innerHeight * 0.4;
+          isKeyboardVisibleRef.current = true;
           setState({
             isVisible: true,
             height: estimatedHeight,
@@ -124,6 +134,7 @@ export function useKeyboardAwareness(options: UseKeyboardAwarenessOptions = {}):
       };
 
       const handleFocusOut = () => {
+        isKeyboardVisibleRef.current = false;
         setState({
           isVisible: false,
           height: 0,
@@ -140,7 +151,7 @@ export function useKeyboardAwareness(options: UseKeyboardAwarenessOptions = {}):
         if (animationTimer.current) clearTimeout(animationTimer.current);
       };
     }
-  }, [scrollToFocused, scrollOffset]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scrollToFocused, scrollOffset]);  
 
   // Auto-scroll to focused input when keyboard appears (visualViewport path)
   useEffect(() => {

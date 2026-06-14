@@ -8,12 +8,6 @@ import { logger } from './services/logger';
 // Import local fonts for offline support
 import './styles/fonts.css';
 
-// Import mobile initialization for Capacitor
-import { initializeMobile } from './services/mobileInit';
-
-// Initialize mobile plugins (no-op on web)
-initializeMobile();
-
 import * as Sentry from "@sentry/react";
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;

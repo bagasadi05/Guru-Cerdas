@@ -7,7 +7,6 @@ import {
   SettingsIcon,
   CheckSquareIcon,
   ClipboardPenIcon,
-  SparklesIcon,
 } from '../Icons';
 import { Trash2, History, BarChart3, ShieldCheck, Trophy, Archive } from 'lucide-react';
 

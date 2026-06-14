@@ -22,7 +22,6 @@ import { useSessionTimeout } from './hooks/useSessionTimeout';
 import { SessionTimeoutWarning } from './components/ui/SessionTimeoutWarning';
 import { cleanupExpiredBackups } from './utils/dataBackup';
 import { SkipToMainContent } from './utils/pageAccessibility';
-import { useAndroidBackButton } from './hooks/useAndroidBackButton';
 import { useAppSearch } from './hooks/useAppSearch';
 import { useNavigate } from 'react-router-dom';
 
@@ -111,7 +110,6 @@ function AppContent() {
   const { registerShortcut } = useKeyboardShortcuts();
 
   // Extracted hooks
-  useAndroidBackButton();
   const { handleSearch, handleSearchResult } = useAppSearch();
 
   React.useEffect(() => {

@@ -16,7 +16,7 @@ import { storageGet, storageSet, storageRemove } from '../utils/storage';
 /**
  * Available built-in sound types
  */
-export type SoundType = 'default' | 'chime' | 'bell' | 'pop' | 'gentle' | 'custom' | 'system' | 'none';
+export type SoundType = 'default' | 'chime' | 'bell' | 'pop' | 'gentle' | 'custom' | 'none';
 
 /**
  * Sound option configuration
@@ -26,7 +26,6 @@ export interface SoundOption {
     name: string;
     description: string;
     icon: string;
-    isNative?: boolean;
 }
 
 /**
@@ -62,13 +61,6 @@ export const SOUND_OPTIONS: SoundOption[] = [
         name: 'Lembut',
         description: 'Pengingat yang halus',
         icon: '🌸',
-    },
-    {
-        id: 'system',
-        name: 'Ringtone HP',
-        description: 'Pilih dari nada sistem',
-        icon: '📱',
-        isNative: true,
     },
     {
         id: 'custom',
@@ -207,9 +199,6 @@ export const previewSound = (soundType: SoundType): void => {
         case 'custom':
             playCustomSound();
             break;
-        case 'system':
-            playSystemSound();
-            break;
         case 'none':
             // Do nothing
             break;
@@ -286,29 +275,6 @@ const playCustomSound = async (): Promise<void> => {
         });
     } catch (e) {
         console.warn('Error playing custom sound:', e);
-        playNotificationSound();
-    }
-};
-
-/**
- * Play system ringtone (Android only)
- * Uses the native RingtonePicker plugin to play the saved system sound
- */
-const playSystemSound = async (): Promise<void> => {
-    const uri = await storageGet('portal_guru_system_ringtone_uri');
-
-    if (!uri) {
-        // Fallback to default if no system sound selected
-        playNotificationSound();
-        return;
-    }
-
-    try {
-        // Dynamic import to avoid issues on web
-        const { default: RingtonePicker } = await import('../plugins/RingtonePicker');
-        await RingtonePicker.previewSound({ uri });
-    } catch (e) {
-        console.warn('Could not play system sound, falling back to default:', e);
         playNotificationSound();
     }
 };

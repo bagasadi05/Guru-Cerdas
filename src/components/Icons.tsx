@@ -64,6 +64,7 @@ import {
     ChevronUp,
     Heart,
     Info,
+    Menu,
     RefreshCw,
     Activity,
     Filter,
@@ -152,6 +153,7 @@ export const ChevronDownIcon = ChevronDown;
 export const ChevronUpIcon = ChevronUp;
 export const HeartIcon = Heart;
 export const InfoIcon = Info;
+export const MenuIcon = Menu;
 export const RefreshCwIcon = RefreshCw;
 export const ActivityIcon = Activity;
 export const FilterIcon = Filter;

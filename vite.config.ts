@@ -113,16 +113,6 @@ export default defineConfig(({ mode }) => {
             'vendor-sentry': ['@sentry/react'],
             // Forms
             'vendor-forms': ['react-hook-form', '@hookform/resolvers'],
-            // Capacitor plugins
-            'vendor-capacitor': [
-              '@capacitor/app',
-              '@capacitor/haptics',
-              '@capacitor/keyboard',
-              '@capacitor/local-notifications',
-              '@capacitor/network',
-              '@capacitor/splash-screen',
-              '@capacitor/status-bar'
-            ],
           },
           // Asset naming for cache busting
           assetFileNames: (assetInfo) => {

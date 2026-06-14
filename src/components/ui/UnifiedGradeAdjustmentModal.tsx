@@ -5,16 +5,14 @@ import { Input } from './Input';
 import { calculateFormulaScore, analyzeAndAdjustGradesWithAI, AIStudentAdjustment } from '../../services/gradeAdjustmentService';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
-import { exportGradesToExcel, exportGradesWithTemplate } from '../../utils/gradeExporter';
+import { exportGradesWithTemplate } from '../../utils/gradeExporter';
 import { 
     SparklesIcon, 
     PrinterIcon, 
     FileSpreadsheetIcon, 
     SaveIcon, 
     PlayCircleIcon, 
-    RefreshCwIcon,
-    AlertTriangleIcon,
-    CheckCircleIcon
+    RefreshCwIcon
 } from '../Icons';
 
 interface UnifiedGradeAdjustmentModalProps {

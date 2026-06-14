@@ -1,14 +1,9 @@
 /**
- * Enhanced Haptic Feedback Hook
- * Provides pattern-based haptic feedback with native and web fallback support.
- *
- * Native (Capacitor): Uses Haptics.impact() and Haptics.notification() APIs
- * Web fallback: Uses navigator.vibrate() with pattern arrays
- * Silent failure: All methods wrapped in try/catch for unsupported devices
+ * Enhanced Haptic Feedback Hook (PWA / Web only)
+ * Provides pattern-based haptic feedback using the web Vibration API.
+ * Silent failure for devices without vibration support.
  */
 
-import { Capacitor } from '@capacitor/core';
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { useCallback, useMemo } from 'react';
 
 /**
@@ -22,19 +17,19 @@ export interface HapticPatterns {
   error: () => Promise<void>;
 }
 
-const isNative = (): boolean => Capacitor.isNativePlatform();
+const vibrateIfSupported = (pattern: number | number[]): void => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    navigator.vibrate(pattern);
+  }
+};
 
 /**
  * Light tap haptic - for button taps and interactive element presses
- * Native: ImpactStyle.Light | Web: vibrate([10])
+ * Web: vibrate([10])
  */
 export const hapticTap = async (): Promise<void> => {
   try {
-    if (isNative()) {
-      await Haptics.impact({ style: ImpactStyle.Light });
-    } else if (navigator?.vibrate) {
-      navigator.vibrate([10]);
-    }
+    vibrateIfSupported([10]);
   } catch {
     // Silent fail for devices without vibration support
   }
@@ -42,15 +37,11 @@ export const hapticTap = async (): Promise<void> => {
 
 /**
  * Medium select haptic - for list item selection
- * Native: ImpactStyle.Medium | Web: vibrate([20])
+ * Web: vibrate([20])
  */
 export const hapticSelect = async (): Promise<void> => {
   try {
-    if (isNative()) {
-      await Haptics.impact({ style: ImpactStyle.Medium });
-    } else if (navigator?.vibrate) {
-      navigator.vibrate([20]);
-    }
+    vibrateIfSupported([20]);
   } catch {
     // Silent fail for devices without vibration support
   }
@@ -58,15 +49,11 @@ export const hapticSelect = async (): Promise<void> => {
 
 /**
  * Success haptic - for completed actions (save, submit)
- * Native: NotificationType.Success | Web: vibrate([10, 50, 10])
+ * Web: vibrate([10, 50, 10])
  */
 export const hapticSuccess = async (): Promise<void> => {
   try {
-    if (isNative()) {
-      await Haptics.notification({ type: NotificationType.Success });
-    } else if (navigator?.vibrate) {
-      navigator.vibrate([10, 50, 10]);
-    }
+    vibrateIfSupported([10, 50, 10]);
   } catch {
     // Silent fail for devices without vibration support
   }
@@ -74,15 +61,11 @@ export const hapticSuccess = async (): Promise<void> => {
 
 /**
  * Warning haptic - for actions that require attention but are not critical
- * Native: NotificationType.Warning | Web: vibrate([15, 100, 15, 100, 15])
+ * Web: vibrate([15, 100, 15, 100, 15])
  */
 export const hapticWarning = async (): Promise<void> => {
   try {
-    if (isNative()) {
-      await Haptics.notification({ type: NotificationType.Warning });
-    } else if (navigator?.vibrate) {
-      navigator.vibrate([15, 100, 15, 100, 15]);
-    }
+    vibrateIfSupported([15, 100, 15, 100, 15]);
   } catch {
     // Silent fail for devices without vibration support
   }
@@ -90,15 +73,11 @@ export const hapticWarning = async (): Promise<void> => {
 
 /**
  * Error haptic - for error occurrences
- * Native: NotificationType.Error | Web: vibrate([50, 50, 50])
+ * Web: vibrate([50, 50, 50])
  */
 export const hapticError = async (): Promise<void> => {
   try {
-    if (isNative()) {
-      await Haptics.notification({ type: NotificationType.Error });
-    } else if (navigator?.vibrate) {
-      navigator.vibrate([50, 50, 50]);
-    }
+    vibrateIfSupported([50, 50, 50]);
   } catch {
     // Silent fail for devices without vibration support
   }

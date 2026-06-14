@@ -15,7 +15,6 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     onAction,
     sortConfig,
     onSort,
-    canManageActiveClass,
     isAdmin = false
 }) => {
     const toast = useToast();

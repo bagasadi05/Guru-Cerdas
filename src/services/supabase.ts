@@ -113,7 +113,20 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
     
     if (isMutation && !isAuth) {
       await queueOfflineRequest(url, init);
-      throw new Error('Request queued for offline processing');
+      
+      let mockBodyText = JSON.stringify({ offline: true, queued: true });
+      if (init?.body) {
+        mockBodyText = typeof init.body === 'string' ? init.body : JSON.stringify(init.body);
+      }
+      
+      return new Response(mockBodyText, {
+        status: 201,
+        statusText: 'Created (Offline Queued)',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Offline-Queued': 'true'
+        }
+      });
     }
     
     throw error;

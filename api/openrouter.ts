@@ -35,7 +35,7 @@ function isOriginAllowed(origin: string | undefined, allowedOrigin: string | und
     if (pattern.includes('*')) {
       const regexStr = '^' + pattern
         .replace(/\*/g, '__WILDCARD__')
-        .replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') // Escape regex characters
+        .replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') // Escape regex characters
         .replace(/__WILDCARD__/g, '[a-zA-Z0-9-]+') + '$';  // Match alphanumeric and dash subdomains
       const regex = new RegExp(regexStr);
       return regex.test(origin);
@@ -146,12 +146,56 @@ function getRequestId(req: ExtendedRequest): string {
   return `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
+function isModelAllowed(model: string | undefined): boolean {
+  if (!model) return false;
+  if (model.endsWith(':free')) return true;
+  const whitelist = [
+    'nvidia/nemotron-3-super-120b-a12b:free',
+    'arcee-ai/trinity-large-preview:free',
+    'google/gemini-2.0-flash-exp:free',
+    'meta-llama/llama-3.2-3b-instruct:free',
+  ];
+  return whitelist.includes(model);
+}
+
+function isBodyValid(body: any): boolean {
+  if (!body || typeof body !== 'object') return false;
+
+  // Validate model
+  if (typeof body.model !== 'string' || !isModelAllowed(body.model)) {
+    return false;
+  }
+
+  // Validate messages
+  if (!Array.isArray(body.messages)) return false;
+  
+  // Reasonable limit of messages
+  if (body.messages.length > 50) return false;
+
+  for (const msg of body.messages) {
+    if (!msg || typeof msg !== 'object') return false;
+    if (msg.role !== 'user' && msg.role !== 'assistant' && msg.role !== 'system') return false;
+    if (typeof msg.content !== 'string') return false;
+    
+    // Limit message content size to prevent payload attack (max 50KB per message)
+    if (msg.content.length > 50000) return false;
+  }
+
+  return true;
+}
+
 export default async function handler(req: ExtendedRequest, res: ExtendedResponse): Promise<void> {
   const requestId = getRequestId(req);
   res.setHeader('X-Request-Id', requestId);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  // Validate request body
+  if (!isBodyValid(req.body)) {
+    res.status(400).json({ error: 'Invalid request body or model not allowed', requestId });
     return;
   }
 

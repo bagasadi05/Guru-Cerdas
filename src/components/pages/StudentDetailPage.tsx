@@ -90,7 +90,6 @@ const StudentDetailPage = () => {
         semesters: _semesters,
         selectedSemesterId,
         setSelectedSemesterId,
-        selectedSemester,
         selectedSemesterLabel,
         studentProfile,
         isLoading,
