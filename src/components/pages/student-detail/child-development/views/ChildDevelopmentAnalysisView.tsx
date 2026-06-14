@@ -48,6 +48,146 @@ import { DevelopmentTimeline } from '../components/DevelopmentTimeline';
 import { WarningBanner } from '../components/WarningBanner';
 import { useUserSettings } from '../../../../../hooks/useUserSettings';
 
+// Helper function to sanitize text for jsPDF rendering (stripping emojis/unicode >= 256 except bullet U+2022)
+const cleanTextForPDF = (text: string | null | undefined): string => {
+  if (!text) return '';
+  let cleaned = text
+    .replace(/[\u201c\u201d\u201e\u201f\u2033\u2036]/g, '"')
+    .replace(/[\u2018\u2019\u201a\u201b\u2032\u2035]/g, "'")
+    .replace(/[\u2013\u2014\u2015]/g, '-')
+    .replace(/\u2022/g, '•')
+    .replace(/\u2026/g, '...');
+  let result = '';
+  for (let i = 0; i < cleaned.length; i++) {
+    const charCode = cleaned.charCodeAt(i);
+    if (charCode < 256 || charCode === 0x2022) {
+      result += cleaned[i];
+    }
+  }
+  return result.split('\n').map(line => line.trim()).join('\n');
+};
+
+// Helper function to abbreviate long Indonesian subject names for PDF charts
+const abbreviateSubject = (subject: string): string => {
+  const s = subject.toLowerCase().trim();
+  if (s.includes('pancasila') || s.includes('kewarganegaraan') || s === 'ppkn') return 'PPKn';
+  if (s.includes('jasmani') || s.includes('olahraga') || s === 'pjok') return 'PJOK';
+  if (s.includes('bahasa indonesia')) return 'B. Indo';
+  if (s.includes('bahasa inggris')) return 'B. Ingg';
+  if (s.includes('bahasa arab')) return 'B. Arab';
+  if (s.includes('al-qur')) return 'Al-Qur\'an';
+  if (s.includes('akidah') || s.includes('aqidah')) return 'Akidah';
+  if (s.includes('fiqih') || s.includes('fiqh')) return 'Fiqih';
+  if (s.includes('sejarah kebudayaan islam') || s.includes('ski')) return 'SKI';
+  if (s.includes('matematika')) return 'MTK';
+  if (s.includes('ilmu pengetahuan alam') || s.includes('ipa')) return 'IPA';
+  if (s.includes('ilmu pengetahuan sosial') || s === 'ips') return 'IPS';
+  if (s.includes('seni budaya') || s.includes('sbdp')) return 'SBdP';
+  if (subject.length > 12) {
+    return subject.substring(0, 10) + '..';
+  }
+  return subject;
+};
+
+// Helper function to draw a clean vector radar chart directly in jsPDF
+const drawRadarChartInPDF = (
+  doc: any,
+  x: number,
+  y: number,
+  size: number,
+  labels: string[],
+  datasets: { values: number[]; strokeColor: [number, number, number]; label: string }[]
+) => {
+  const centerX = x + size / 2;
+  const centerY = y + size / 2;
+  const radius = size / 2 - 15;
+  const numPoints = labels.length;
+  const maxScore = 100;
+
+  // Draw concentric background polygons
+  const levels = [20, 40, 60, 80, 100];
+  doc.setLineWidth(0.1);
+  doc.setDrawColor(203, 213, 225); // Slate 300
+  levels.forEach(level => {
+    const pts: [number, number][] = [];
+    for (let i = 0; i < numPoints; i++) {
+      const angle = -Math.PI / 2 + (2 * Math.PI * i) / numPoints;
+      const r = radius * (level / maxScore);
+      pts.push([centerX + r * Math.cos(angle), centerY + r * Math.sin(angle)]);
+    }
+    for (let i = 0; i < pts.length; i++) {
+      const p1 = pts[i];
+      const p2 = pts[(i + 1) % pts.length];
+      doc.line(p1[0], p1[1], p2[0], p2[1]);
+    }
+  });
+
+  // Draw axes & labels
+  for (let i = 0; i < numPoints; i++) {
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / numPoints;
+    const ax = centerX + radius * Math.cos(angle);
+    const ay = centerY + radius * Math.sin(angle);
+    doc.line(centerX, centerY, ax, ay);
+
+    // Label positioning
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 116, 139); // Slate 500
+    const labelDistance = radius + 4;
+    const lx = centerX + labelDistance * Math.cos(angle);
+    const ly = centerY + labelDistance * Math.sin(angle);
+    
+    let align: 'center' | 'left' | 'right' = 'center';
+    const cosVal = Math.cos(angle);
+    if (cosVal > 0.1) align = 'left';
+    else if (cosVal < -0.1) align = 'right';
+    doc.text(labels[i], lx, ly + 1.5, { align });
+  }
+
+  // Draw datasets
+  datasets.forEach(dataset => {
+    const pts: [number, number][] = [];
+    for (let i = 0; i < numPoints; i++) {
+      const val = dataset.values[i] ?? 0;
+      const angle = -Math.PI / 2 + (2 * Math.PI * i) / numPoints;
+      const r = radius * (val / maxScore);
+      pts.push([centerX + r * Math.cos(angle), centerY + r * Math.sin(angle)]);
+    }
+
+    // Draw polygon outline
+    doc.setLineWidth(0.8);
+    doc.setDrawColor(dataset.strokeColor[0], dataset.strokeColor[1], dataset.strokeColor[2]);
+    for (let i = 0; i < pts.length; i++) {
+      const p1 = pts[i];
+      const p2 = pts[(i + 1) % pts.length];
+      doc.line(p1[0], p1[1], p2[0], p2[1]);
+    }
+
+    // Draw small circles at data vertices
+    doc.setFillColor(dataset.strokeColor[0], dataset.strokeColor[1], dataset.strokeColor[2]);
+    pts.forEach(p => {
+      doc.circle(p[0], p[1], 1.0, 'FD');
+    });
+  });
+
+  // Draw Legend
+  const legendY = centerY + radius + 11;
+  doc.setFontSize(8);
+  datasets.forEach((dataset, idx) => {
+    // Centering calculations
+    const totalWidth = datasets.length * 40;
+    const startX = centerX - totalWidth / 2 + 5;
+    const lx = startX + idx * 40;
+    
+    doc.setFillColor(dataset.strokeColor[0], dataset.strokeColor[1], dataset.strokeColor[2]);
+    doc.rect(lx, legendY - 2, 4, 2, 'F');
+    
+    doc.setTextColor(71, 85, 105);
+    doc.setFont('helvetica', 'normal');
+    doc.text(dataset.label, lx + 6, legendY);
+  });
+};
+
 interface ChildDevelopmentAnalysisTabProps {
   studentData: ChildDevelopmentData;
   allAcademicRecords?: any[];
@@ -746,7 +886,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9.5);
       doc.setTextColor(71, 85, 105);
-      const splitOverall = doc.splitTextToSize(analysis.summary.overallAssessment, pageWidth - margin * 2);
+      const splitOverall = doc.splitTextToSize(cleanTextForPDF(analysis.summary.overallAssessment), pageWidth - margin * 2);
       doc.text(splitOverall, margin, y);
       y += splitOverall.length * 4.5 + 4;
 
@@ -802,6 +942,34 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
       y = (doc as any).lastAutoTable.finalY + 8;
 
+      // Draw Academic Performance Radar Chart
+      if (subjectAverages.length >= 3) {
+        if (y > 190) {
+          doc.addPage();
+          y = 20;
+        }
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 41, 59);
+        doc.text('Visualisasi Performa Akademik', pageWidth / 2, y, { align: 'center' });
+        y += 5;
+
+        drawRadarChartInPDF(
+          doc,
+          (pageWidth - 65) / 2,
+          y,
+          65,
+          subjectAverages.map(s => abbreviateSubject(s.subject)),
+          [{
+            values: subjectAverages.map(s => s.average),
+            strokeColor: [79, 70, 229],
+            label: 'Rata-rata Nilai'
+          }]
+        );
+        y += 78;
+      }
+
       // Check if we need to add a new page (prevent orphans)
       if (y > 220) {
         doc.addPage();
@@ -824,9 +992,9 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
-      doc.text(`• Gaya Belajar: ${analysis.cognitive.learningStyle}`, margin + 3, y);
+      doc.text(`• Gaya Belajar: ${cleanTextForPDF(analysis.cognitive.learningStyle)}`, margin + 3, y);
       y += 4.5;
-      doc.text(`• Berpikir Kritis: ${analysis.cognitive.criticalThinking}`, margin + 3, y);
+      doc.text(`• Berpikir Kritis: ${cleanTextForPDF(analysis.cognitive.criticalThinking)}`, margin + 3, y);
       y += 4.5;
 
       doc.setFont('helvetica', 'bold');
@@ -834,7 +1002,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       y += 4;
       doc.setFont('helvetica', 'normal');
       analysis.cognitive.strengths.slice(0, 2).forEach((str: any) => {
-        const lines = doc.splitTextToSize(`- ${str}`, pageWidth - margin * 2 - 6);
+        const lines = doc.splitTextToSize(`- ${cleanTextForPDF(str)}`, pageWidth - margin * 2 - 6);
         doc.text(lines, margin + 5, y);
         y += lines.length * 4.5;
       });
@@ -855,9 +1023,9 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
-      doc.text(`• Kemampuan Sosial: ${analysis.affective.socialSkills}`, margin + 3, y);
+      doc.text(`• Kemampuan Sosial: ${cleanTextForPDF(analysis.affective.socialSkills)}`, margin + 3, y);
       y += 4.5;
-      doc.text(`• Kedisiplinan: ${analysis.affective.discipline}`, margin + 3, y);
+      doc.text(`• Kedisiplinan: ${cleanTextForPDF(analysis.affective.discipline)}`, margin + 3, y);
       y += 4.5;
 
       doc.setFont('helvetica', 'bold');
@@ -865,7 +1033,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       y += 4;
       doc.setFont('helvetica', 'normal');
       analysis.affective.positiveCharacters.slice(0, 2).forEach((char: any) => {
-        const lines = doc.splitTextToSize(`- ${char}`, pageWidth - margin * 2 - 6);
+        const lines = doc.splitTextToSize(`- ${cleanTextForPDF(char)}`, pageWidth - margin * 2 - 6);
         doc.text(lines, margin + 5, y);
         y += lines.length * 4.5;
       });
@@ -886,9 +1054,9 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
-      doc.text(`• Kemampuan Motorik: ${analysis.psychomotor.motorSkills}`, margin + 3, y);
+      doc.text(`• Kemampuan Motorik: ${cleanTextForPDF(analysis.psychomotor.motorSkills)}`, margin + 3, y);
       y += 4.5;
-      doc.text(`• Koordinasi Fisik: ${analysis.psychomotor.coordination}`, margin + 3, y);
+      doc.text(`• Koordinasi Fisik: ${cleanTextForPDF(analysis.psychomotor.coordination)}`, margin + 3, y);
       y += 4.5;
 
       doc.setFont('helvetica', 'bold');
@@ -896,7 +1064,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       y += 4;
       doc.setFont('helvetica', 'normal');
       analysis.psychomotor.outstandingSkills.slice(0, 2).forEach((skill: any) => {
-        const lines = doc.splitTextToSize(`- ${skill}`, pageWidth - margin * 2 - 6);
+        const lines = doc.splitTextToSize(`- ${cleanTextForPDF(skill)}`, pageWidth - margin * 2 - 6);
         doc.text(lines, margin + 5, y);
         y += lines.length * 4.5;
       });
@@ -924,7 +1092,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
       analysis.recommendations.homeSupport.slice(0, 3).forEach((support: any, idx: any) => {
-        const lines = doc.splitTextToSize(`${idx + 1}. ${support}`, pageWidth - margin * 2 - 4);
+        const lines = doc.splitTextToSize(`${idx + 1}. ${cleanTextForPDF(support)}`, pageWidth - margin * 2 - 4);
         doc.text(lines, margin + 2, y);
         y += lines.length * 4.5;
       });
@@ -935,8 +1103,8 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         startY: y,
         head: [['Rencana Target 3 Bulan', 'Rencana Target 6 Bulan']],
         body: [[
-          analysis.recommendations.developmentPlan.threeMonths.slice(0, 3).map((t: any) => `• ${t}`).join('\n\n'),
-          analysis.recommendations.developmentPlan.sixMonths.slice(0, 3).map((t: any) => `• ${t}`).join('\n\n')
+          analysis.recommendations.developmentPlan.threeMonths.slice(0, 3).map((t: any) => `• ${cleanTextForPDF(t)}`).join('\n\n'),
+          analysis.recommendations.developmentPlan.sixMonths.slice(0, 3).map((t: any) => `• ${cleanTextForPDF(t)}`).join('\n\n')
         ]],
         theme: 'grid',
         headStyles: { fillColor: [245, 158, 11], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
@@ -1269,7 +1437,39 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         }
       });
 
-      y = (doc as any).lastAutoTable.finalY + 12;
+      y = (doc as any).lastAutoTable.finalY + 8;
+
+      if (y > 180) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text('Grafik Perbandingan Perkembangan Holistik', pageWidth / 2, y, { align: 'center' });
+      y += 5;
+
+      drawRadarChartInPDF(
+        doc,
+        (pageWidth - 65) / 2,
+        y,
+        65,
+        compHolisticDimensions.labels,
+        [
+          {
+            values: compHolisticDimensions.sem1,
+            strokeColor: [148, 163, 184], // Muted slate for S1
+            label: 'Semester 1'
+          },
+          {
+            values: compHolisticDimensions.sem2,
+            strokeColor: [79, 70, 229], // Indigo for S2
+            label: 'Semester 2'
+          }
+        ]
+      );
+      y += 78;
 
       // Add a page break for the detailed narratives
       doc.addPage();
@@ -1285,7 +1485,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       y += 6;
 
       // General comparative overview
-      doc.setFontSize(9.5);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(30, 41, 59);
       doc.text('A. RINGKASAN DINAMIKA PERKEMBANGAN', margin, y);
@@ -1293,7 +1493,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
-      const overallText = doc.splitTextToSize(comparativeAnalysis.summary.overallComparison, pageWidth - (margin * 2));
+      const overallText = doc.splitTextToSize(cleanTextForPDF(comparativeAnalysis.summary.overallComparison), pageWidth - (margin * 2));
       doc.text(overallText, margin, y);
       y += (overallText.length * 4) + 6;
 
@@ -1330,8 +1530,8 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(71, 85, 105);
         let s1Y = y + 10;
-        sem1Bullets.slice(0, 3).forEach(b => {
-          const splitB = doc.splitTextToSize(`• ${b}`, colWidth - 6);
+        sem1Bullets.slice(0, 2).forEach(b => {
+          const splitB = doc.splitTextToSize(`• ${cleanTextForPDF(b)}`, colWidth - 6);
           doc.text(splitB, margin + 3, s1Y);
           s1Y += (splitB.length * 3.5);
         });
@@ -1346,8 +1546,8 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(71, 85, 105);
         let s2Y = y + 10;
-        sem2Bullets.slice(0, 3).forEach(b => {
-          const splitB = doc.splitTextToSize(`• ${b}`, colWidth - 6);
+        sem2Bullets.slice(0, 2).forEach(b => {
+          const splitB = doc.splitTextToSize(`• ${cleanTextForPDF(b)}`, colWidth - 6);
           doc.text(splitB, margin + colWidth + 11, s2Y);
           s2Y += (splitB.length * 3.5);
         });
@@ -1356,11 +1556,11 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
         // Narrative below columns
         doc.setFont('helvetica', 'italic');
-        doc.setFontSize(9);
+        doc.setFontSize(8.5);
         doc.setTextColor(100, 116, 139);
-        const splitNarrative = doc.splitTextToSize(`" ${narrative} "`, pageWidth - (margin * 2));
+        const splitNarrative = doc.splitTextToSize(`" ${cleanTextForPDF(narrative)} "`, pageWidth - (margin * 2));
         doc.text(splitNarrative, margin, y);
-        y += (splitNarrative.length * 4) + 6;
+        y += (splitNarrative.length * 3.8) + 6;
       };
 
       // Aspect 1: Kognitif
@@ -1407,7 +1607,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       doc.text('A. Dukungan Pembelajaran di Rumah (Home Support)', margin, y);
       y += 4;
 
-      const homeSupportRows = comparativeAnalysis.recommendations.homeSupport.map((support: any, idx: any) => [idx + 1, support]);
+      const homeSupportRows = comparativeAnalysis.recommendations.homeSupport.map((support: any, idx: any) => [idx + 1, cleanTextForPDF(support)]);
       autoTable(doc, {
         startY: y,
         body: homeSupportRows,
@@ -1429,9 +1629,9 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       y += 4;
 
       const stimulationRows = [
-        ['Stimulasi Kognitif', comparativeAnalysis.recommendations.stimulation.cognitive.join('\n')],
-        ['Stimulasi Afektif', comparativeAnalysis.recommendations.stimulation.affective.join('\n')],
-        ['Stimulasi Psikomotorik', comparativeAnalysis.recommendations.stimulation.psychomotor.join('\n')]
+        ['Stimulasi Kognitif', cleanTextForPDF(comparativeAnalysis.recommendations.stimulation.cognitive.join('\n'))],
+        ['Stimulasi Afektif', cleanTextForPDF(comparativeAnalysis.recommendations.stimulation.affective.join('\n'))],
+        ['Stimulasi Psikomotorik', cleanTextForPDF(comparativeAnalysis.recommendations.stimulation.psychomotor.join('\n'))]
       ];
 
       autoTable(doc, {

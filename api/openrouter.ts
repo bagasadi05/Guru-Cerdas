@@ -28,7 +28,34 @@ function isOriginAllowed(origin: string | undefined, allowedOrigin: string | und
     .map((item) => item.trim())
     .filter(Boolean);
 
-  return allowedOrigins.includes(origin);
+  return allowedOrigins.some(pattern => {
+    if (pattern === origin) return true;
+
+    // Match wildcards (e.g. https://*.guru-cerdas.my.id)
+    if (pattern.includes('*')) {
+      const regexStr = '^' + pattern
+        .replace(/\*/g, '__WILDCARD__')
+        .replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') // Escape regex characters
+        .replace(/__WILDCARD__/g, '[a-zA-Z0-9-]+') + '$';  // Match alphanumeric and dash subdomains
+      const regex = new RegExp(regexStr);
+      return regex.test(origin);
+    }
+
+    // Automatically match subdomains of pattern domain (e.g. www.domain.com matches domain.com)
+    try {
+      const patternUrl = new URL(pattern);
+      const originUrl = new URL(origin);
+      if (patternUrl.protocol === originUrl.protocol) {
+        const pHost = patternUrl.hostname.toLowerCase();
+        const oHost = originUrl.hostname.toLowerCase();
+        return oHost === pHost || oHost.endsWith('.' + pHost);
+      }
+    } catch {
+      // Fallback if URL parsing fails
+    }
+
+    return false;
+  });
 }
 
 function getClientKey(req: ExtendedRequest): string {
