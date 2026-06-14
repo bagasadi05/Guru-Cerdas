@@ -269,13 +269,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<AppUser | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
+  const [roleLoaded, setRoleLoaded] = useState(false);
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('scheduleNotificationsEnabled') === 'true';
     }
     return false;
   });
+
+  const loading = !sessionLoaded || (!!session && !roleLoaded);
 
   /**
    * Processes raw Supabase user data into application user format
@@ -310,13 +313,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   };
 
-
+  // 1. Fetch user role when session becomes available
   useEffect(() => {
-    const fetchUserRole = async (userId: string | undefined) => {
-      if (!userId) {
-        setUserRole(null);
-        return;
-      }
+    let active = true;
+    const fetchUserRole = async (userId: string) => {
+      console.log(`[Auth] fetchUserRole started for: ${userId}`);
+      setRoleLoaded(false);
       try {
         const { data, error } = await supabase
           .from('user_roles')
@@ -324,65 +326,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .eq('user_id', userId)
           .single();
         
-        if (!error && data) {
-          setUserRole(data.role);
-        } else {
-          setUserRole(null);
+        console.log(`[Auth] fetchUserRole fetched: role=${data?.role}, error=${error?.message || 'none'}`);
+        if (active) {
+          if (!error && data) {
+            setUserRole(data.role);
+          } else {
+            setUserRole(null);
+          }
+          setRoleLoaded(true);
         }
       } catch (err) {
+        console.error('[Auth] Error fetching user role:', err);
         logger.error('Error fetching user role', err as Error, undefined, 'Auth');
-        setUserRole(null);
+        if (active) {
+          setUserRole(null);
+          setRoleLoaded(true);
+        }
       }
     };
 
+    if (session?.user?.id) {
+      void fetchUserRole(session.user.id);
+    } else {
+      setUserRole(null);
+      setRoleLoaded(false);
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id]);
+
+  // 2. Initialize session and listen for auth state changes
+  useEffect(() => {
+    console.log('[Auth] initializing session listener');
     const fetchSession = async () => {
       try {
+        console.log('[Auth] calling supabase.auth.getSession()');
         const { data, error } = await supabase.auth.getSession();
+        console.log('[Auth] getSession finished, session:', !!data?.session, 'error:', error?.message || 'none');
         if (error) {
           logger.error('Error fetching session', error as unknown as Error, undefined, 'Auth');
           // A failed/expired refresh token leaves the client in a broken state.
           // Clear the stale token and reset to a clean logged-out state.
           const message = error.message?.toLowerCase() ?? '';
           if (message.includes('refresh') || message.includes('token') || error.status === 400) {
+            console.warn('[Auth] Expired or invalid refresh token detected, clearing tokens...');
             clearStaleAuthTokens();
             await supabase.auth.signOut().catch(() => undefined);
             setSession(null);
             setUser(null);
             setUserRole(null);
-            setLoading(false);
+            setSessionLoaded(true);
             return;
           }
         }
         setSession(data.session);
         setUser(processUser(data.session?.user));
-        await fetchUserRole(data.session?.user?.id);
       } catch (err) {
+        console.error('[Auth] Unexpected error in fetchSession:', err);
         logger.error('Unexpected error fetching session', err as Error, undefined, 'Auth');
         setSession(null);
         setUser(null);
         setUserRole(null);
       } finally {
-        setLoading(false);
+        setSessionLoaded(true);
       }
     };
 
     fetchSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('[Auth] Registering onAuthStateChange listener');
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`[Auth] onAuthStateChange callback: event=${event}, session=${!!session}`);
       // When a token refresh fails, Supabase emits SIGNED_OUT with a null session.
       // Clean up any leftover stale tokens so the next load starts fresh.
       if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+        console.warn('[Auth] Sign out or token refresh failure, clearing tokens...');
         clearStaleAuthTokens();
         setUserRole(null);
       }
       setSession(session);
       setUser(processUser(session?.user));
-      if (session?.user?.id) {
-        await fetchUserRole(session.user.id);
-      }
     });
 
     return () => {
+      console.log('[Auth] unsubscribing from auth state changes');
       subscription?.unsubscribe();
     };
   }, []);

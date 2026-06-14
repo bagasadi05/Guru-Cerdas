@@ -14,6 +14,8 @@ import { ClassRow, ConfirmModalState, SortConfig, StudentRow } from './types';
 import { StudentsHeaderActionId } from './studentsMenuConfig';
 import { ExportFormat } from '../advanced-features/ExportPreviewModal';
 import { ParsedRow } from '../../services/ImportService';
+import { Button } from '../ui/Button';
+import { PlusIcon, UsersIcon } from '../Icons';
 
 interface StudentsPageFilterProps {
   searchTerm: string;
@@ -155,46 +157,70 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
         </div>
         <StudentsHeaderActions 
           onAction={actionSheet.onHeaderAction} 
-          canManageActiveClass={classSection.canManageActiveClass} 
+          canManageActiveClass={classSection.canManageActiveClass || classSection.classes.length === 0} 
           isAdmin={isAdmin}
         />
       </header>
 
       <div className="space-y-6">
-        <StudentFilters
-          searchTerm={filters.searchTerm}
-          onSearchChange={filters.onSearchChange}
-          viewMode={filters.viewMode}
-          onViewModeChange={filters.onViewModeChange}
-          genderFilter={filters.genderFilter}
-          onGenderFilterChange={filters.onGenderFilterChange}
-          accessCodeFilter={filters.accessCodeFilter}
-          onAccessCodeFilterChange={filters.onAccessCodeFilterChange}
-        />
+        {classSection.classes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 sm:py-24 px-4 text-center animate-fade-in bg-white dark:bg-gray-800/50 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+            <div className="relative mb-6">
+              <span className="absolute -top-3 -left-4 w-10 h-10 bg-indigo-100/70 dark:bg-indigo-900/30 rounded-full blur-sm" />
+              <span className="absolute -bottom-3 -right-5 w-12 h-12 bg-sky-100/70 dark:bg-sky-900/20 rounded-full blur-sm" />
+              <div className="relative w-20 h-20 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center">
+                <UsersIcon className="w-9 h-9 text-indigo-400 dark:text-indigo-300" />
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 font-serif">Belum Ada Kelas</h3>
+            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
+              Anda belum memiliki data kelas. Silakan buat kelas baru terlebih dahulu untuk mulai mengelola siswa.
+            </p>
+            <Button
+              onClick={classModal.onAddClass}
+              className="rounded-xl shadow-lg shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              <PlusIcon className="w-4 h-4 mr-2" /> Buat Kelas Baru
+            </Button>
+          </div>
+        ) : (
+          <>
+            <StudentFilters
+              searchTerm={filters.searchTerm}
+              onSearchChange={filters.onSearchChange}
+              viewMode={filters.viewMode}
+              onViewModeChange={filters.onViewModeChange}
+              genderFilter={filters.genderFilter}
+              onGenderFilterChange={filters.onGenderFilterChange}
+              accessCodeFilter={filters.accessCodeFilter}
+              onAccessCodeFilterChange={filters.onAccessCodeFilterChange}
+            />
 
-        <Tabs value={classSection.activeClassId} onValueChange={classSection.onActiveClassChange} className="w-full">
-          <StudentsClassTabsHeader classes={classSection.classes} />
+            <Tabs value={classSection.activeClassId} onValueChange={classSection.onActiveClassChange} className="w-full">
+              <StudentsClassTabsHeader classes={classSection.classes} />
 
-          {classSection.classes.map((classItem) => (
-            <TabsContent key={classItem.id} value={classItem.id} className="mt-0 focus:outline-none">
-              <StudentsClassContent
-                students={classSection.studentsForActiveClass}
-                searchTerm={classSection.searchTerm}
-                viewMode={classSection.viewMode}
-                isSelected={classSection.isSelected}
-                toggleItem={classSection.toggleItem}
-                isAllSelected={classSection.isAllSelected}
-                toggleAll={classSection.toggleAll}
-                onStudentAction={classSection.onStudentAction}
-                sortConfig={classSection.sortConfig}
-                onSort={classSection.onSort}
-                onAddStudent={classSection.onAddStudent}
-                canManageActiveClass={classSection.canManageActiveClass}
-                isAdmin={isAdmin}
-              />
-            </TabsContent>
-          ))}
-        </Tabs>
+              {classSection.classes.map((classItem) => (
+                <TabsContent key={classItem.id} value={classItem.id} className="mt-0 focus:outline-none">
+                  <StudentsClassContent
+                    students={classSection.studentsForActiveClass}
+                    searchTerm={classSection.searchTerm}
+                    viewMode={classSection.viewMode}
+                    isSelected={classSection.isSelected}
+                    toggleItem={classSection.toggleItem}
+                    isAllSelected={classSection.isAllSelected}
+                    toggleAll={classSection.toggleAll}
+                    onStudentAction={classSection.onStudentAction}
+                    sortConfig={classSection.sortConfig}
+                    onSort={classSection.onSort}
+                    onAddStudent={classSection.onAddStudent}
+                    canManageActiveClass={classSection.canManageActiveClass}
+                    isAdmin={isAdmin}
+                  />
+                </TabsContent>
+              ))}
+            </Tabs>
+          </>
+        )}
       </div>
 
       <StudentActionSheet

@@ -75,6 +75,17 @@ if (isProduction) {
       logger.info('App is ready to work offline.', 'SW');
     },
   });
+
+  // Check for service worker updates every hour to keep long-open tabs up-to-date
+  const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000;
+  const intervalId = setInterval(() => {
+    logger.info('Checking for service worker updates...', 'SW');
+    void updateSW();
+  }, UPDATE_CHECK_INTERVAL);
+
+  window.addEventListener('beforeunload', () => {
+    clearInterval(intervalId);
+  });
 }
 
 const rootElement = document.getElementById('root');

@@ -106,12 +106,12 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
   const students = studentsData || EMPTY_STUDENTS;
   const activeClass = classes.find((classItem) => classItem.id === activeClassId) || null;
   const canManageActiveClass = activeClass?.user_id === userId || hasHomeroomAssignment(userAssignments, activeClassId);
-  const isLoading = isLoadingClasses || isLoadingStudents;
-  const isError = isClassesError || isStudentsError;
-  const queryError = classesError || studentsError;
+  const isLoading = isLoadingClasses || (!!activeClassId && isLoadingStudents);
+  const isError = isClassesError || (!!activeClassId && isStudentsError);
+  const queryError = classesError || (activeClassId ? studentsError : null);
 
   useEffect(() => {
-    if (isError) {
+    if (isError && queryError) {
       toast.error(`Gagal memuat data: ${(queryError as Error).message}`);
     }
   }, [isError, queryError, toast]);

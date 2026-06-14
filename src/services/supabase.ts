@@ -91,17 +91,21 @@ const queueOfflineRequest = async (url: string, init?: RequestInit): Promise<voi
 
 const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   const url = typeof input === 'string' ? input : input.toString();
+  console.log(`[SupabaseFetch] Request starting: ${url} (${init?.method || 'GET'})`);
   const isAuth = url.includes('/auth/');
   const isMutation = isMutationRequest(init?.method);
   
   try {
-    return await networkResilience.fetch(url, {
+    const response = await networkResilience.fetch(url, {
       ...init,
       priority: getRequestPriority(url),
       retries: getRetryCount(url),
       queueWhenOffline: isMutation && !isAuth // Only queue mutations, never auth or GET requests
     });
+    console.log(`[SupabaseFetch] Request succeeded: ${url} (${response.status})`);
+    return response;
   } catch (error) {
+    console.error(`[SupabaseFetch] Request failed: ${url}`, error);
     logger.error('Supabase request failed', error as Error, {
       url,
       method: init?.method || 'GET'

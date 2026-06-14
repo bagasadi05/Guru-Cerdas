@@ -84,7 +84,80 @@ class ErrorBoundary extends Component<Props, State> {
     if (this.props.onError) {
       this.props.onError(error, errorInfo, errorContext);
     }
+
+    // Check for Chunk Load Errors
+    if (this.isChunkLoadError(error)) {
+      const lastReload = sessionStorage.getItem('last-chunk-error-reload');
+      const now = Date.now();
+      
+      // Throttle automatic reloads to prevent infinite reload loops (once every 30 seconds max)
+      if (!lastReload || now - parseInt(lastReload, 10) > 30000) {
+        sessionStorage.setItem('last-chunk-error-reload', String(now));
+        logger.warn('Chunk load error detected. Initiating automatic recovery...', 'ErrorBoundary');
+        void this.recoverFromChunkError();
+      } else {
+        logger.warn('Chunk load error detected but automatic reload was throttled to prevent loop.', 'ErrorBoundary');
+      }
+    }
   }
+
+  private isChunkLoadError(error: Error | null): boolean {
+    if (!error) return false;
+    const message = error.message || String(error);
+    const name = error.name || '';
+    return (
+      message.includes('Failed to fetch dynamically imported module') ||
+      message.includes('error loading dynamically imported module') ||
+      name === 'ChunkLoadError' ||
+      message.includes('ChunkLoadError') ||
+      message.includes('Loading chunk')
+    );
+  }
+
+  private recoverFromChunkError = async () => {
+    try {
+      // Only perform SW unregistration and cache deletion if the user is online.
+      // If offline, we shouldn't unregister the service worker as it's needed for offline mode.
+      if (navigator.onLine !== false) {
+        logger.info('User is online. Attempting Service Worker update/refresh to recover...', 'ErrorBoundary');
+        
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          if (registrations.length > 0) {
+            // Step 1: Request SW updates
+            for (const registration of registrations) {
+              await registration.update().catch(() => {});
+            }
+            
+            // Wait 1.5 seconds to see if the update triggers controllerchange (which reloads)
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            
+            // Step 2: If we are still here, force unregister and clear cache to fetch a fresh page
+            logger.warn('Update check complete but page did not reload. Force clearing Service Workers...', 'ErrorBoundary');
+            for (const registration of registrations) {
+              await registration.unregister().catch(() => {});
+            }
+          }
+        }
+
+        // Step 3: Clear caches
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          for (const key of keys) {
+            await caches.delete(key).catch(() => {});
+          }
+        }
+      } else {
+        logger.info('User is offline. Skipping Service Worker unregistration to preserve offline capabilities.', 'ErrorBoundary');
+      }
+    } catch (err) {
+      logger.error('Error during chunk error recovery', err as Error, undefined, 'ErrorBoundary');
+    } finally {
+      // Always reload the page in the end
+      logger.info('Reloading page now...', 'ErrorBoundary');
+      window.location.reload();
+    }
+  };
 
   private getUserId(): string | undefined {
     // Try to get user ID from various sources
@@ -151,6 +224,8 @@ class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      const isChunkError = this.isChunkLoadError(this.state.error);
+
       // Default error UI
       return (
         <div className="flex flex-col items-center justify-center min-h-[500px] bg-gray-100 dark:bg-gray-950 text-center p-8">
@@ -162,11 +237,17 @@ class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
-              {this.getTranslations().errors.general}
+              {isChunkError 
+                ? (this.getLanguage() === 'id' ? 'Aplikasi Diperbarui' : 'Application Updated')
+                : this.getTranslations().errors.general}
             </h1>
 
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {this.getTranslations().errors.contactSupport}
+              {isChunkError 
+                ? (this.getLanguage() === 'id' 
+                    ? 'Versi baru aplikasi telah tersedia. Silakan muat ulang halaman untuk menerapkan pembaruan.' 
+                    : 'A new version of the application is available. Please reload the page to apply the update.')
+                : this.getTranslations().errors.contactSupport}
             </p>
 
             {import.meta.env.DEV && this.state.error && (
@@ -188,13 +269,23 @@ class ErrorBoundary extends Component<Props, State> {
             )}
 
             <div className="flex gap-3">
-              <Button
-                onClick={this.handleRetry}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                <RefreshCwIcon className="w-4 h-4 mr-2" />
-                {this.getTranslations().errors.tryAgain}
-              </Button>
+              {isChunkError ? (
+                <Button
+                  onClick={this.recoverFromChunkError}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  <RefreshCwIcon className="w-4 h-4 mr-2" />
+                  {this.getLanguage() === 'id' ? 'Muat Ulang Aplikasi' : 'Reload Application'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={this.handleRetry}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  <RefreshCwIcon className="w-4 h-4 mr-2" />
+                  {this.getTranslations().errors.tryAgain}
+                </Button>
+              )}
               <Button
                 onClick={this.handleGoHome}
                 variant="outline"
