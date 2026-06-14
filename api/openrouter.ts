@@ -159,7 +159,7 @@ function isModelAllowed(model: string | undefined): boolean {
   if (!model) return false;
   if (model.endsWith(':free')) return true;
   const whitelist = [
-    'nvidia/nemotron-3-super-120b-a12b:free',
+    'nvidia/nemotron-3-ultra-550b-a55b:free',
     'arcee-ai/trinity-large-preview:free',
     'google/gemini-2.0-flash-exp:free',
     'meta-llama/llama-3.2-3b-instruct:free',
@@ -214,7 +214,17 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
     return;
   }
 
-  const allowedOrigin = process.env.OPENROUTER_ALLOWED_ORIGIN;
+  let allowedOrigin = process.env.OPENROUTER_ALLOWED_ORIGIN;
+  if (!allowedOrigin) {
+    const defaultOrigins = ['https://guru-cerdas.my.id', 'https://www.guru-cerdas.my.id'];
+    if (process.env.VERCEL_URL) {
+      defaultOrigins.push(`https://${process.env.VERCEL_URL}`);
+    }
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+      defaultOrigins.push(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+    }
+    allowedOrigin = defaultOrigins.join(',');
+  }
   const referer = typeof req.headers.referer === 'string' ? req.headers.referer : undefined;
   let refererOrigin: string | undefined;
   if (referer) {
