@@ -252,5 +252,18 @@ jobs:
           working-directory: ./
           scope: ${{ secrets.VERCEL_ORG_ID }}
 
+      - name: Trigger Supabase deploy
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'supabase-deploy.yml',
+              ref: 'main'
+            });
+            console.log('✅ Triggered Supabase deploy workflow');
+
       - name: Notify deployment success
-        run: echo "✅ Deployed to production successfully!"
+        run: echo "✅ Deployed frontend to production. Supabase deploy triggered."

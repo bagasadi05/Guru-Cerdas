@@ -1,35 +1,60 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { logger } from '../services/logger';
-import { Database } from '../services/database.types';
+import { pushNotificationService } from '../services/PushNotificationService';
+import { supabase } from '../services/supabase';
 
-type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
+/**
+ * usePushSubscriptionSync
+ *
+ * Replaces the old in-SW setTimeout scheduler. This hook ensures that:
+ *   1. Whenever a user logs in, the existing push subscription (if any) is
+ *      persisted in the `push_subscriptions` table.
+ *   2. If the SW reports a subscription change event, the client re-syncs
+ *      its subscription with the server.
+ *
+ * Note: scheduling of notifications is now server-side. The Supabase
+ * `dispatch-push` Edge Function (triggered by pg_cron) is responsible for
+ * sending Web Push messages to subscribed users.
+ */
+export const usePushSubscriptionSync = (userId: string | null | undefined) => {
+  const lastUserIdRef = useRef<string | null>(null);
 
-export const useScheduleNotifications = (schedule: ScheduleRow[]) => {
-    useEffect(() => {
-        if (!('serviceWorker' in navigator) || !('Notification' in window)) {
-            return;
-        }
+  useEffect(() => {
+    if (!userId) return;
+    if (lastUserIdRef.current === userId) return;
+    lastUserIdRef.current = userId;
 
-        const shouldSync = localStorage.getItem('scheduleNotificationsEnabled') === 'true';
-        if (!shouldSync || Notification.permission !== 'granted' || schedule.length === 0) {
-            return;
-        }
+    void pushNotificationService.sync(userId).catch((err) => {
+      logger.warn('Push subscription sync on login failed', 'PushSubscriptionSync', err);
+    });
+  }, [userId]);
 
-        const syncSchedule = async () => {
-            try {
-                const registration = await navigator.serviceWorker.getRegistration();
-                if (registration?.active) {
-                    registration.active.postMessage({
-                        type: 'SCHEDULE_UPDATED',
-                        payload: schedule
-                    });
-                }
-            } catch (error) {
-                logger.error('Error syncing schedule notifications', error as Error, undefined, 'ScheduleNotifications');
-            }
-        };
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
 
-        syncSchedule();
+    const handleMessage = (event: MessageEvent) => {
+      if (!event.data || typeof event.data !== 'object') return;
+      if (event.data.type === 'PUSH_SUBSCRIPTION_EXPIRED') {
+        // Defer to allow Supabase auth state to settle
+        setTimeout(async () => {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (user) {
+            void pushNotificationService.sync(user.id).catch((err) => {
+              logger.warn('Push resync after expiry failed', 'PushSubscriptionSync', err);
+            });
+          }
+        }, 1000);
+      }
+    };
 
-    }, [schedule]);
+    navigator.serviceWorker.addEventListener('message', handleMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleMessage);
+    };
+  }, []);
 };
+
+// Backward-compatible alias - older code imported useScheduleNotifications.
+export const useScheduleNotifications = usePushSubscriptionSync;

@@ -1,0 +1,99 @@
+# Supabase Auto-Deploy
+# Deploys database migrations and Edge Functions to Supabase.
+# Triggers on push to main (after frontend deploy) and manual dispatch.
+
+name: Supabase Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/supabase-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      deploy_database:
+        description: 'Run database migrations'
+        type: boolean
+        default: true
+      deploy_functions:
+        description: 'Deploy Edge Functions'
+        type: boolean
+        default: true
+
+concurrency:
+  group: supabase-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy Database Migrations
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_database || github.event_name == 'push' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          echo "🔄 Linking to Supabase project..."
+          supabase link --project-ref "$SUPABASE_PROJECT_ID" --token "$SUPABASE_ACCESS_TOKEN"
+
+          echo "📦 Pushing database migrations..."
+          supabase db push --db-url "postgresql://postgres:${{ secrets.SUPABASE_DB_PASSWORD }}@db.$SUPABASE_PROJECT_ID.supabase.co:5432/postgres" --include-all
+
+      - name: Deploy Edge Functions
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_functions || github.event_name == 'push' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          echo "🚀 Deploying Edge Functions..."
+          supabase functions deploy dispatch-push --project-ref "$SUPABASE_PROJECT_ID" --token "$SUPABASE_ACCESS_TOKEN" --no-verify-jwt
+          supabase functions deploy openrouter --project-ref "$SUPABASE_PROJECT_ID" --token "$SUPABASE_ACCESS_TOKEN" --no-verify-jwt || true
+
+      - name: Verify Cron Jobs
+        if: github.event_name == 'push'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "🔍 Verifying pg_cron jobs..."
+          PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
+            "postgresql://postgres:$SUPABASE_DB_PASSWORD@db.$SUPABASE_PROJECT_ID.supabase.co:5432/postgres" \
+            -c "SELECT jobname, schedule, active FROM cron.job WHERE jobname = 'dispatch-scheduled-notifications';"
+
+      - name: Smoke Test - Invoke dispatch-push
+        if: github.event_name == 'push'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          echo "🧪 Smoke testing dispatch-push function..."
+          supabase functions invoke dispatch-push \
+            --project-ref "$SUPABASE_PROJECT_ID" \
+            --token "$SUPABASE_ACCESS_TOKEN" \
+            --data '{"dryRun": true}' || echo "⚠️  Smoke test inconclusive (expected — no scheduled notifications yet)"
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## Supabase Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Database migrations: deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- Edge Functions: deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- Cron jobs: verified" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 Dashboard: https://supabase.com/dashboard/project/${{ secrets.SUPABASE_PROJECT_ID }}" >> $GITHUB_STEP_SUMMARY

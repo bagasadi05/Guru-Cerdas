@@ -99,101 +99,97 @@ registerRoute(
     })
 );
 
-// Existing notification logic
-let timeoutIds = [];
-const dayMap = { 'Senin': 1, 'Selasa': 2, 'Rabu': 3, 'Kamis': 4, 'Jumat': 5, 'Sabtu': 6, 'Minggu': 0 };
+// ============================================
+// WEB PUSH NOTIFICATION HANDLERS
+// ============================================
+// Notifications are now driven by the Supabase `dispatch-push` Edge Function
+// which sends push messages via the browser's Push Service. The Service Worker
+// is woken up by the `push` event - this works even when the PWA is closed or
+// the device screen is off, unlike the previous in-SW setTimeout approach.
 
-function showNotification(item) {
-    const className = item.className || item.class_id;
-    self.registration.showNotification('Pengingat Kelas: ' + item.subject, {
-        body: 'Kelas ' + className + ' akan dimulai pada pukul ' + item.start_time + '.',
-        icon: '/logo.svg', // Use new SVG logo for notifications
-        requireInteraction: true,
-        tag: item.id,
-    });
-}
+self.addEventListener('push', (event) => {
+    let payload = {
+        title: 'Guru Cerdas',
+        body: 'Anda memiliki notifikasi baru.',
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/badge-72x72.png',
+        tag: undefined,
+        data: {},
+        requireInteraction: false,
+        actions: [],
+    };
 
-function scheduleNotifications(schedule) {
-    clearScheduledNotifications();
-    const now = new Date();
-    const todayIndex = now.getDay();
-    const upcomingClasses = schedule.filter(item => {
-        if (dayMap[item.day] !== todayIndex) return false;
-        const [hours, minutes] = item.start_time.split(':');
-        const classTime = new Date();
-        classTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-        return classTime > now;
-    });
-    upcomingClasses.forEach(item => {
-        const [hours, minutes] = item.start_time.split(':');
-        const classTime = new Date();
-        classTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-        // Remind 5 minutes before
-        const notificationTime = new Date(classTime.getTime() - 5 * 60 * 1000);
-        if (notificationTime > now) {
-            const delay = notificationTime.getTime() - now.getTime();
-            const id = setTimeout(() => {
-                showNotification(item);
-            }, delay);
-            timeoutIds.push(id);
+    if (event.data) {
+        try {
+            const parsed = event.data.json();
+            payload = {
+                ...payload,
+                ...parsed,
+                data: parsed.data ?? {},
+            };
+        } catch (err) {
+            // Fallback to text body if not valid JSON
+            const text = event.data.text();
+            if (text) payload.body = text;
         }
-    });
-}
+    }
 
-function clearScheduledNotifications() {
-    timeoutIds.forEach(clearTimeout);
-    timeoutIds = [];
-}
+    const options = {
+        body: payload.body,
+        icon: payload.icon,
+        badge: payload.badge,
+        tag: payload.tag,
+        data: payload.data,
+        requireInteraction: payload.requireInteraction,
+        actions: payload.actions,
+        vibrate: [200, 100, 200],
+        timestamp: Date.now(),
+    };
 
-let taskTimeoutIds = [];
+    event.waitUntil(
+        self.registration.showNotification(payload.title, options)
+    );
+});
 
-function showTaskNotification(task) {
-    self.registration.showNotification('Pengingat Tugas: ' + task.title, {
-        body: 'Tugas "' + task.title + '" jatuh tempo hari ini.',
-        icon: '/logo.svg',
-        requireInteraction: true,
-        tag: 'task-' + task.id,
-    });
-}
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
 
-function scheduleTaskNotifications(tasks) {
-    clearScheduledTaskNotifications();
-    const now = new Date();
+    const data = event.notification.data || {};
+    const targetUrl = typeof data.url === 'string' ? data.url : '/';
 
-    tasks.forEach(task => {
-        if (task.status === 'done' || !task.due_date) return;
+    if (event.action === 'dismiss') {
+        return;
+    }
 
-        const dueDate = new Date(task.due_date);
-        dueDate.setHours(0, 0, 0, 0);
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        // If due date is today
-        if (dueDate.getTime() === today.getTime()) {
-            // Schedule for 9 AM or now if it's past 9 AM but still today
-            const notificationTime = new Date();
-            notificationTime.setHours(9, 0, 0, 0);
-
-            if (notificationTime < now) {
-                // If it's already past 9 AM, verify if we haven't notified yet (simplified: just notify now if it's not too late in the day)
-                // For simplicity in this demo, we'll notify 1 minute from now if it's the first time loading
-                const delay = 60 * 1000; // 1 minute delay
-                const id = setTimeout(() => showTaskNotification(task), delay);
-                taskTimeoutIds.push(id);
-            } else {
-                const delay = notificationTime.getTime() - now.getTime();
-                const id = setTimeout(() => showTaskNotification(task), delay);
-                taskTimeoutIds.push(id);
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            for (const client of clientList) {
+                if ('focus' in client) {
+                    client.postMessage({ type: 'PUSH_CLICK', payload: data });
+                    return client.focus();
+                }
             }
-        }
-    });
-}
+            if (self.clients.openWindow) {
+                return self.clients.openWindow(targetUrl);
+            }
+        })
+    );
+});
 
-function clearScheduledTaskNotifications() {
-    taskTimeoutIds.forEach(clearTimeout);
-    taskTimeoutIds = [];
-}
+self.addEventListener('pushsubscriptionchange', (event) => {
+    // The push subscription expired or rotated. The client will re-subscribe
+    // on next visit; we just notify any open clients to trigger that flow.
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+            clients.forEach((client) => {
+                client.postMessage({
+                    type: 'PUSH_SUBSCRIPTION_EXPIRED',
+                    payload: { oldEndpoint: event.oldSubscription?.endpoint },
+                });
+            });
+        })
+    );
+});
 
 async function clearSupabaseCache() {
     await caches.delete('supabase-api-cache');
@@ -329,18 +325,14 @@ self.addEventListener('periodicsync', (event) => {
 
 self.addEventListener('message', (event) => {
     if (event.data) {
-        if (event.data.type === 'SCHEDULE_UPDATED') {
-            scheduleNotifications(event.data.payload);
-        } else if (event.data.type === 'CLEAR_SCHEDULE') {
-            clearScheduledNotifications();
-        } else if (event.data.type === 'TASKS_UPDATED') {
-            scheduleTaskNotifications(event.data.payload);
-        } else if (event.data.type === 'CLEAR_SUPABASE_CACHE') {
+        if (event.data.type === 'CLEAR_SUPABASE_CACHE') {
             event.waitUntil(clearSupabaseCache());
         } else if (event.data.type === 'QUEUE_SYNC_REQUEST') {
             event.waitUntil(addToSyncQueue(event.data.request, event.data.data));
         } else if (event.data.type === 'TRIGGER_SYNC') {
             event.waitUntil(handleBackgroundSync());
         }
+        // SCHEDULE_UPDATED, CLEAR_SCHEDULE, TASKS_UPDATED are deprecated -
+        // scheduling now happens server-side via the dispatch-push Edge Function.
     }
 });

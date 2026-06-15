@@ -169,26 +169,23 @@ export const copyGradesToClipboard = async (
 /**
  * Export grade data using the school's Excel templates
  */
-export const exportGradesWithTemplate = async (
+/**
+ * Helper to generate and download a single Excel file using a template
+ */
+const generateSingleExportFile = async (
     listData: any[],
     finalScores: Record<string, string>,
     selectedSubject: string,
-    activeAssessmentName: string,
-    activeAssessmentsList: string[],
+    assessmentNameForFile: string,
+    assessmentsList: string[],
     className: string,
-    activeScenario: string
+    activeScenario: string,
+    isSas: boolean
 ): Promise<void> => {
     const ExcelJS = await getExcelJS();
-    
-    // 1. Determine template name
-    const isSas = activeAssessmentsList.some(name => 
-        name.toUpperCase().includes('SAS') || 
-        name.toUpperCase().includes('SAT') || 
-        name.toUpperCase().includes('AKHIR')
-    );
     const templateUrl = isSas ? '/Template nilai SAT-SAS.xlsx' : '/Template nilai PH.xlsx';
     
-    // 2. Fetch the template
+    // Fetch the template
     const response = await fetch(templateUrl);
     if (!response.ok) {
         throw new Error(`Gagal memuat template: ${response.statusText}`);
@@ -210,8 +207,8 @@ export const exportGradesWithTemplate = async (
     
     const usedSheetNames = new Set<string>();
 
-    // 3. For each assessment to export, fill in the data
-    activeAssessmentsList.forEach(assessName => {
+    // For each assessment to export, fill in the data
+    assessmentsList.forEach(assessName => {
         // Find corresponding sheet
         let worksheet = workbook.worksheets[0]; // fallback to first worksheet
         
@@ -318,12 +315,15 @@ export const exportGradesWithTemplate = async (
             
             if (!student) continue;
             
-            // Get score value
-            const key = activeAssessmentsList.length > 1 ? `${student.id}_${assessName}` : student.id;
+            // Get score value (check compound key first, then fallback to student.id)
+            const compoundKey = `${student.id}_${assessName}`;
+            const simpleKey = student.id;
             let scoreValue: number | null = null;
             
-            if (finalScores[key] !== undefined && finalScores[key] !== '') {
-                scoreValue = Number(finalScores[key]);
+            if (finalScores[compoundKey] !== undefined && finalScores[compoundKey] !== '') {
+                scoreValue = Number(finalScores[compoundKey]);
+            } else if (finalScores[simpleKey] !== undefined && finalScores[simpleKey] !== '') {
+                scoreValue = Number(finalScores[simpleKey]);
             } else {
                 // Fallback to scenario value if not overridden
                 const assessData = student.assessments ? student.assessments[assessName] : student;
@@ -339,13 +339,12 @@ export const exportGradesWithTemplate = async (
             }
             
             if (scoreValue !== null && !isNaN(scoreValue)) {
-                // Set the value directly. ExcelJS preserves cell formatting/styling.
                 worksheet.getCell(r, nilaiCol).value = scoreValue;
             }
         }
     });
     
-    // Remove unused sheets from the workbook (e.g. SUM 5 to SUM 15 when only 4 assessments are used)
+    // Remove unused sheets from the workbook
     if (usedSheetNames.size > 0) {
         const sheetsToDelete: string[] = [];
         workbook.worksheets.forEach(ws => {
@@ -358,15 +357,73 @@ export const exportGradesWithTemplate = async (
         });
     }
     
-    // 4. Save workbook
+    // Save workbook
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    const filename = `nilai_terkatrol_${selectedSubject}_${activeAssessmentName}.xlsx`.replace(/\s+/g, '_');
+    const filename = `nilai_terkatrol_${selectedSubject}_${assessmentNameForFile}.xlsx`.replace(/\s+/g, '_');
     link.download = filename;
     link.click();
     URL.revokeObjectURL(link.href);
+};
+
+export const exportGradesWithTemplate = async (
+    listData: any[],
+    finalScores: Record<string, string>,
+    selectedSubject: string,
+    activeAssessmentName: string,
+    activeAssessmentsList: string[],
+    className: string,
+    activeScenario: string
+): Promise<void> => {
+    const isSasAssessment = (name: string) => 
+        name.toUpperCase().includes('SAS') || 
+        name.toUpperCase().includes('SAT') || 
+        name.toUpperCase().includes('AKHIR');
+
+    if (activeAssessmentName === '-- Semua Penilaian --') {
+        const phList = activeAssessmentsList.filter(name => !isSasAssessment(name));
+        const sasList = activeAssessmentsList.filter(name => isSasAssessment(name));
+
+        if (phList.length > 0) {
+            await generateSingleExportFile(
+                listData,
+                finalScores,
+                selectedSubject,
+                'Semua_PH',
+                phList,
+                className,
+                activeScenario,
+                false
+            );
+        }
+        if (sasList.length > 0) {
+            await generateSingleExportFile(
+                listData,
+                finalScores,
+                selectedSubject,
+                'Semua_SAT_SAS',
+                sasList,
+                className,
+                activeScenario,
+                true
+            );
+        }
+        return;
+    }
+
+    const isSas = activeAssessmentsList.some(name => isSasAssessment(name));
+    await generateSingleExportFile(
+        listData,
+        finalScores,
+        selectedSubject,
+        activeAssessmentName,
+        activeAssessmentsList,
+        className,
+        activeScenario,
+        isSas
+    );
 };
 
 export default {

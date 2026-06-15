@@ -33,7 +33,7 @@ type ClassRow = Database['public']['Tables']['classes']['Row'];
 
 const SUBJECTS = [
     'Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'IPA', 'IPS',
-    'PKN', 'Seni Budaya', 'PJOK', 'Informatika', 'Agama'
+    'Pancasila', 'PKN', 'Seni Budaya', 'PJOK', 'Informatika', 'Agama'
 ];
 
 const DEFAULT_KKM = 75;

@@ -11,6 +11,7 @@ const DEFAULT_SUBJECT_OPTIONS = [
     'Bahasa Inggris',
     'IPA',
     'IPS',
+    'Pancasila',
     'PKN',
     'Seni Budaya',
     'PJOK',

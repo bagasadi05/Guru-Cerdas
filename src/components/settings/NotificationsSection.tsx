@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
@@ -8,8 +8,10 @@ import { Database } from '../../services/database.types';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Switch } from '../ui/Switch';
 import { AlertCircleIcon, BellIcon, CheckCircleIcon, ClockIcon, CheckSquareIcon, CalendarIcon, RefreshCwIcon } from '../Icons';
-import { PlayCircle, Upload, Volume, Volume2 } from 'lucide-react';
+import { PlayCircle, Upload, Volume, Volume2, SendIcon } from 'lucide-react';
 import { getPreferences, getUnreadCount, savePreferences, NotificationPreferences } from '../../services/NotificationService';
+import { pushNotificationService, type PushStatusResult } from '../../services/PushNotificationService';
+import { logger } from '../../services/logger';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import {
@@ -29,19 +31,16 @@ import { SettingsCard } from './SettingsCard';
 type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
 type ScheduleWithClassName = ScheduleRow & { className?: string };
 
+const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
 const NotificationsSection: React.FC = () => {
-    const { enableScheduleNotifications, disableScheduleNotifications, user, isNotificationsEnabled } = useAuth();
+    const { user } = useAuth();
     const toast = useToast();
     const isOnline = useOfflineStatus();
     const [isLoading, setIsLoading] = useState(false);
     const [taskPrefs, setTaskPrefs] = useState<NotificationPreferences>(getPreferences());
-    const [notificationStatus, setNotificationStatus] = useState({
-        permission: 'checking',
-        serviceWorker: 'checking',
-        scheduleEnabled: false,
-        unreadCount: 0,
-        isDevMode: false,
-    });
+    const [pushStatus, setPushStatus] = useState<PushStatusResult | null>(null);
+    const [isTesting, setIsTesting] = useState(false);
 
     // Sound picker state
     const [selectedSound, setSelectedSound] = useState<SoundType>('default');
@@ -49,22 +48,14 @@ const NotificationsSection: React.FC = () => {
     const [hasCustomSound, setHasCustomSound] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const refreshNotificationStatus = async () => {
-        const permission = typeof window !== 'undefined' && 'Notification' in window
-            ? Notification.permission
-            : 'unsupported';
-        const registration = typeof navigator !== 'undefined' && 'serviceWorker' in navigator
-            ? await navigator.serviceWorker.getRegistration()
-            : null;
-
-        setNotificationStatus({
-            permission,
-            serviceWorker: registration?.active ? 'active' : registration ? 'registered' : 'inactive',
-            scheduleEnabled: localStorage.getItem('scheduleNotificationsEnabled') === 'true',
-            unreadCount: getUnreadCount(),
-            isDevMode: import.meta.env.DEV,
-        });
-    };
+    const refreshNotificationStatus = useCallback(async () => {
+        try {
+            const status = await pushNotificationService.getStatus(user?.id ?? null);
+            setPushStatus(status);
+        } catch (err) {
+            logger.warn('Failed to refresh push status', 'NotificationsSection', err);
+        }
+    }, [user?.id]);
 
     useEffect(() => {
         let isMounted = true;
@@ -87,11 +78,12 @@ const NotificationsSection: React.FC = () => {
         };
 
         void loadSoundPreferences();
+        void refreshNotificationStatus();
 
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [refreshNotificationStatus]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -99,15 +91,17 @@ const NotificationsSection: React.FC = () => {
         }, 0);
         window.addEventListener('portal-guru-notifications-updated', refreshNotificationStatus);
         window.addEventListener('focus', refreshNotificationStatus);
+        window.addEventListener('push-status-changed', refreshNotificationStatus);
 
         return () => {
             window.clearTimeout(timer);
             window.removeEventListener('portal-guru-notifications-updated', refreshNotificationStatus);
             window.removeEventListener('focus', refreshNotificationStatus);
+            window.removeEventListener('push-status-changed', refreshNotificationStatus);
         };
-    }, []);
+    }, [refreshNotificationStatus]);
 
-    const { data: scheduleData } = useQuery({
+    const { data: _scheduleData } = useQuery({
         queryKey: ['scheduleWithClasses', user?.id],
         queryFn: async () => {
             const { data: schedule, error: scheduleError } = await supabase
@@ -136,24 +130,63 @@ const NotificationsSection: React.FC = () => {
     });
 
     const handleToggle = async (checked: boolean) => {
-        setIsLoading(true);
-        if (checked) {
-            if (!scheduleData || scheduleData.length === 0) {
-                toast.warning("Tidak ada data jadwal untuk notifikasi.");
-                setIsLoading(false);
-                return;
-            }
-            const success = await enableScheduleNotifications(scheduleData as ScheduleWithClassName[]);
-            if (success) {
-                toast.success("Notifikasi jadwal diaktifkan!");
-            } else {
-                toast.error("Gagal mengaktifkan notifikasi.");
-            }
-        } else {
-            await disableScheduleNotifications();
-            toast.info("Notifikasi jadwal dinonaktifkan.");
+        if (!user) {
+            toast.error('Silakan login terlebih dahulu.');
+            return;
         }
-        setIsLoading(false);
+        setIsLoading(true);
+        try {
+            if (checked) {
+                const status = await pushNotificationService.enable(user.id);
+                setPushStatus(status);
+                if (status.permission === 'granted' && status.subscribed) {
+                    toast.success('Notifikasi push diaktifkan!');
+                } else if (status.permission === 'denied') {
+                    toast.error('Izin notifikasi diblokir. Buka Settings browser untuk mengizinkan.');
+                } else {
+                    toast.warning('Notifikasi belum sepenuhnya aktif. Coba lagi.');
+                }
+            } else {
+                const status = await pushNotificationService.disable(user.id);
+                setPushStatus(status);
+                toast.info('Notifikasi push dinonaktifkan.');
+            }
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+            toast.error(message);
+            logger.error('Push toggle failed', err as Error, undefined, 'NotificationsSection');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleTestPush = async () => {
+        if (!user) {
+            toast.error('Login dulu untuk tes push.');
+            return;
+        }
+        if (!pushStatus?.subscribed) {
+            toast.warning('Aktifkan notifikasi dulu.');
+            return;
+        }
+        setIsTesting(true);
+        try {
+            // Show a local notification via the SW to confirm the chain works.
+            const reg = await navigator.serviceWorker.ready;
+            await reg.showNotification('Tes Notifikasi - Guru Cerdas', {
+                body: 'Kalau kamu melihat ini, notifikasi push berfungsi di device ini. Pesan sebenarnya akan dikirim dari server.',
+                icon: '/icons/icon-192x192.png',
+                badge: '/icons/badge-72x72.png',
+                tag: 'test-push',
+                requireInteraction: false,
+            });
+            toast.success('Notifikasi tes ditampilkan.');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Gagal menampilkan tes.';
+            toast.error(message);
+        } finally {
+            setIsTesting(false);
+        }
     };
 
     const handleTaskPrefChange = (key: keyof NotificationPreferences, value: NotificationPreferences[keyof NotificationPreferences]) => {
@@ -210,6 +243,47 @@ const NotificationsSection: React.FC = () => {
         toast.info("Nada custom dihapus");
     };
 
+    const permission = pushStatus?.permission ?? 'default';
+    const subscribed = !!pushStatus?.subscribed;
+    const serverRegistered = !!pushStatus?.serverRegistered;
+    const enabled = !!pushStatus?.enabled;
+    const unsupported = pushStatus !== null && !pushStatus.supported;
+
+    const statusCards = [
+        {
+            label: 'Izin Browser',
+            value: permission === 'granted'
+                ? 'Diizinkan'
+                : permission === 'default'
+                    ? 'Belum diminta'
+                    : permission === 'denied'
+                        ? 'Diblokir'
+                        : 'Tidak didukung',
+            healthy: permission === 'granted',
+        },
+        {
+            label: 'Push Subscription',
+            value: unsupported
+                ? 'Tidak didukung'
+                : subscribed
+                    ? serverRegistered
+                        ? 'Aktif & terdaftar'
+                        : 'Aktif (belum disinkronkan)'
+                    : 'Belum subscribe',
+            healthy: subscribed && serverRegistered,
+        },
+        {
+            label: 'Status User',
+            value: enabled ? 'Aktif' : 'Nonaktif',
+            healthy: enabled,
+        },
+        {
+            label: 'Belum Dibaca',
+            value: `${getUnreadCount()}`,
+            healthy: getUnreadCount() === 0,
+        },
+    ];
+
     return (
         <div className="space-y-6">
             <SettingsCard className="overflow-hidden">
@@ -220,49 +294,29 @@ const NotificationsSection: React.FC = () => {
                                 Status Sistem Notifikasi
                             </CardTitle>
                             <CardDescription className="text-base">
-                                Pantau izin browser, service worker, dan jumlah notifikasi yang belum dibaca.
+                                Pantau izin browser, subscription push, dan jumlah notifikasi yang belum dibaca.
                             </CardDescription>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => void refreshNotificationStatus()}>
-                            <RefreshCwIcon className="w-4 h-4 mr-2" />
-                            Periksa
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => void handleTestPush()}
+                                disabled={isTesting || !subscribed}
+                            >
+                                <SendIcon className="w-4 h-4 mr-2" />
+                                Tes Push
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => void refreshNotificationStatus()}>
+                                <RefreshCwIcon className="w-4 h-4 mr-2" />
+                                Periksa
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="pt-6 sm:pt-8 space-y-4">
                     <div className="grid gap-3 md:grid-cols-4">
-                        {[
-                            {
-                                label: 'Izin Browser',
-                                value: notificationStatus.permission === 'granted'
-                                    ? 'Diizinkan'
-                                    : notificationStatus.permission === 'default'
-                                        ? 'Belum diminta'
-                                        : notificationStatus.permission === 'denied'
-                                            ? 'Diblokir'
-                                            : 'Tidak didukung',
-                                healthy: notificationStatus.permission === 'granted',
-                            },
-                            {
-                                label: 'Service Worker',
-                                value: notificationStatus.serviceWorker === 'active'
-                                    ? 'Aktif'
-                                    : notificationStatus.serviceWorker === 'registered'
-                                        ? 'Terdaftar'
-                                        : 'Tidak aktif',
-                                healthy: notificationStatus.serviceWorker === 'active',
-                            },
-                            {
-                                label: 'Jadwal',
-                                value: notificationStatus.scheduleEnabled ? 'Aktif' : 'Nonaktif',
-                                healthy: notificationStatus.scheduleEnabled,
-                            },
-                            {
-                                label: 'Belum Dibaca',
-                                value: `${notificationStatus.unreadCount}`,
-                                healthy: notificationStatus.unreadCount === 0,
-                            },
-                        ].map((item) => (
+                        {statusCards.map((item) => (
                             <div
                                 key={item.label}
                                 className={`rounded-2xl border p-4 ${item.healthy
@@ -278,9 +332,19 @@ const NotificationsSection: React.FC = () => {
                             </div>
                         ))}
                     </div>
-                    {notificationStatus.isDevMode && (
+                    {unsupported && (
+                        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-100">
+                            Browser ini tidak mendukung Web Push API. Notifikasi in-app tetap berfungsi.
+                        </div>
+                    )}
+                    {isIOS && !pushStatus?.iOSPWA && (
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+                            <strong>Pengguna iPhone/iPad:</strong> untuk menerima notifikasi push, install aplikasi ini ke Home Screen (Share → Add to Home Screen), kemudian buka dari ikon Home Screen.
+                        </div>
+                    )}
+                    {!isOnline && (
                         <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-800 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-sky-100">
-                            Mode development terdeteksi. Push/browser notification berbasis service worker baru aktif setelah build production, tetapi panel notifikasi in-app tetap bisa diuji.
+                            Anda sedang offline. Perubahan preferensi akan dikirim otomatis saat online kembali.
                         </div>
                     )}
                 </CardContent>
@@ -293,18 +357,25 @@ const NotificationsSection: React.FC = () => {
                     <CardDescription className="text-base">Kelola bagaimana Anda menerima pemberitahuan penting.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 sm:pt-8 space-y-3 sm:space-y-4">
-                    {/* Schedule Reminder */}
+                    {/* Push Master Switch */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-green-200 dark:hover:border-green-800 transition-colors">
                         <div className="flex items-center gap-3 sm:gap-4">
                             <div className="p-2 sm:p-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex-shrink-0">
                                 <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
                             <div className="min-w-0">
-                                <p className="font-bold text-sm sm:text-lg text-slate-900 dark:text-white">Pengingat Jadwal Kelas</p>
-                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Notifikasi 5 menit sebelum kelas.</p>
+                                <p className="font-bold text-sm sm:text-lg text-slate-900 dark:text-white">Notifikasi Push</p>
+                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                                    Terima pengingat jadwal &amp; tugas langsung di HP, bahkan saat aplikasi ditutup.
+                                </p>
                             </div>
                         </div>
-                        <Switch checked={isNotificationsEnabled} onChange={(e) => handleToggle(e.target.checked)} disabled={isLoading || !isOnline} className="data-[state=checked]:bg-green-600 flex-shrink-0" />
+                        <Switch
+                            checked={enabled}
+                            onChange={(e) => handleToggle(e.target.checked)}
+                            disabled={isLoading || !isOnline || unsupported}
+                            className="data-[state=checked]:bg-green-600 flex-shrink-0"
+                        />
                     </div>
 
                     {/* Task Reminders */}
