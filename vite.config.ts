@@ -102,7 +102,7 @@ export default defineConfig(({ mode }) => {
             // Charts
             'vendor-charts': ['recharts'],
             // PDF/Excel export libs
-            'vendor-export': ['jspdf', 'jspdf-autotable', 'html2canvas', 'xlsx'],
+            'vendor-export': ['jspdf', 'jspdf-autotable', 'html2canvas', 'exceljs'],
             // Utility libraries
             'vendor-utils': ['zod', 'date-fns'],
             // Icons (heavy)

@@ -52,7 +52,7 @@ export const useExcelParser = () => {
         try {
             const XLSX = await getXLSX();
             const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data, { type: 'array' });
+            const workbook = await XLSX.read(data, { type: 'array' });
 
             // Get first sheet
             const sheetName = workbook.SheetNames[0];

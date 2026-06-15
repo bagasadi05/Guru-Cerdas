@@ -10,6 +10,7 @@ import { storageGet, storageSet, storageGetJSON, storageSetJSON, storageRemove }
 import { supabase } from './supabase';
 import type { Database } from './database.types';
 import { generateSimpleAccessCode } from '../utils/accessCode';
+import DOMPurify from 'dompurify';
 
 // ============================================
 // SECURITY EVENTS & LOGGING (Merged from security.ts)
@@ -154,47 +155,7 @@ export function sanitizeForXss(input: string): string {
  */
 export function sanitizeContent(html: string): string {
     if (typeof html !== 'string') return '';
-
-    let sanitized = html;
-
-    // Remove script tags and their content
-    sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-
-    // Remove style tags and their content
-    sanitized = sanitized.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
-
-    // Remove event handlers (onclick, onerror, etc.)
-    sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
-    sanitized = sanitized.replace(/\s*on\w+\s*=\s*[^\s>]*/gi, '');
-
-    // Remove javascript: URLs
-    sanitized = sanitized.replace(/href\s*=\s*["']javascript:[^"']*["']/gi, 'href="#"');
-    sanitized = sanitized.replace(/src\s*=\s*["']javascript:[^"']*["']/gi, 'src=""');
-
-    // Remove data: URLs (except for images)
-    sanitized = sanitized.replace(/src\s*=\s*["']data:(?!image)[^"']*["']/gi, 'src=""');
-
-    // Remove iframe, object, embed tags
-    sanitized = sanitized.replace(/<(iframe|object|embed)[^>]*>.*?<\/\1>/gi, '');
-    sanitized = sanitized.replace(/<(iframe|object|embed)[^>]*\/?>/gi, '');
-
-    // Remove form and input tags
-    sanitized = sanitized.replace(/<(form|input|button|select|textarea)[^>]*>.*?<\/\1>/gi, '');
-    sanitized = sanitized.replace(/<(form|input|button|select|textarea)[^>]*\/?>/gi, '');
-
-    // Remove base and meta tags
-    sanitized = sanitized.replace(/<(base|meta)[^>]*\/?>/gi, '');
-
-    // Remove link tags (external stylesheets)
-    sanitized = sanitized.replace(/<link[^>]*\/?>/gi, '');
-
-    // Remove expression() in CSS
-    sanitized = sanitized.replace(/expression\s*\([^)]*\)/gi, '');
-
-    // Remove behavior in CSS
-    sanitized = sanitized.replace(/behavior\s*:\s*url[^;]*/gi, '');
-
-    return sanitized.trim();
+    return DOMPurify.sanitize(html).trim();
 }
 
 /**

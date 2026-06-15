@@ -1,18 +1,17 @@
 import { QueryClient } from '@tanstack/react-query';
 import { logger } from './logger';
-import { persistQueryClient } from '@tanstack/react-query-persist-client';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { persistQueryClient, Persister, PersistedClient } from '@tanstack/react-query-persist-client';
+import { storageGetJSON, storageSetJSON, storageRemove } from '../utils/storage';
 
 /**
- * Centrally configured QueryClient with automatic localStorage persistence.
+ * Centrally configured QueryClient with automatic IndexedDB persistence.
  * This enables robust offline caching support across browser reloads for
  * MI Al Irsyad Kota Madiun portal (Guru-Cerdas).
  * 
  * Configured features:
  * - staleTime: 5 minutes (data remains fresh for 5 minutes)
  * - gcTime: 7 days (cached data is kept in storage for 7 days before garbage collection)
- * - Persister: createSyncStoragePersister with 1s throttling
- * - QuotaExceededError safety mechanism (automatically clears cache if localStorage gets full)
+ * - Persister: Custom Async Persister using XSS-resilient IndexedDB storage
  */
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,23 +34,31 @@ const CACHE_BUSTER = 'v2';
 export function initQueryPersistence(): void {
   if (typeof window === 'undefined') return;
 
-  const persister = createSyncStoragePersister({
-    storage: window.localStorage,
-    key: 'portal_guru_query_cache',
-    throttleTime: 1000,
-    retry: (opts: { error: any }) => {
-      const err = opts.error;
-      if (err && (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
-        logger.warn('LocalStorage quota exceeded for query cache persister, clearing client cache...');
-        try {
-          window.localStorage.removeItem('portal_guru_query_cache');
-        } catch (e) {
-          logger.error('Failed to clear query cache from localStorage', undefined, e);
-        }
+  const persister: Persister = {
+    persistClient: async (client: PersistedClient) => {
+      try {
+        await storageSetJSON('portal_guru_query_cache', client);
+      } catch (err) {
+        logger.error('Failed to persist query client to IndexedDB', undefined, err);
       }
-      return undefined;
+    },
+    restoreClient: async () => {
+      try {
+        const client = await storageGetJSON<PersistedClient>('portal_guru_query_cache');
+        return client ?? undefined;
+      } catch (err) {
+        logger.error('Failed to restore query client from IndexedDB', undefined, err);
+        return undefined;
+      }
+    },
+    removeClient: async () => {
+      try {
+        await storageRemove('portal_guru_query_cache');
+      } catch (err) {
+        logger.error('Failed to remove query client from IndexedDB', undefined, err);
+      }
     }
-  });
+  };
 
   persistQueryClient({
     queryClient,

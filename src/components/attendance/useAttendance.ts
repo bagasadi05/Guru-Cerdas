@@ -12,7 +12,7 @@ import { queryKeys } from '../../lib/queryKeys';
 import { hasHomeroomAssignment, type TeacherClassAssignmentRow } from '../../services/teacherAssignments';
 import { AttendanceRecord, AttendanceStatus, AttendanceInsert, AiAnalysis, StudentRow, ClassRow, AttendanceRow } from '../../types';
 import { statusOptions } from '../../constants';
-import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
+import { getAutoTable, getJsPDF, getXLSX } from '../../utils/dynamicImports';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../utils/confetti';
 import { type AttendanceViewMode } from './attendanceMenuConfig';
@@ -824,8 +824,8 @@ export const useAttendance = () => {
                 doc.save(`Laporan_Absensi_Semester_${exportSemesterId}.pdf`);
                 toast.success("Laporan PDF berhasil diunduh!");
             } else if (format === 'excel') {
-                const { utils, writeFile } = await import('xlsx');
-                const wb = utils.book_new();
+                const XLSX = await getXLSX();
+                const wb = XLSX.utils.book_new();
 
                 for (const classData of studentsByClass) {
                     const sheetData = classData.students.map((student: StudentRow, index: number) => {
@@ -848,11 +848,11 @@ export const useAttendance = () => {
                         };
                     });
 
-                    const ws = utils.json_to_sheet(sheetData);
-                    utils.book_append_sheet(wb, ws, `Kelas ${classData.name}`);
+                    const ws = XLSX.utils.json_to_sheet(sheetData);
+                    XLSX.utils.book_append_sheet(wb, ws, `Kelas ${classData.name}`);
                 }
 
-                writeFile(wb, `Laporan_Absensi_${exportPeriod === 'monthly' ? exportMonth : 'Semester'}.xlsx`);
+                await XLSX.writeFile(wb, `Laporan_Absensi_${exportPeriod === 'monthly' ? exportMonth : 'Semester'}.xlsx`);
                 toast.success("Laporan Excel berhasil diunduh!");
             }
         } catch (err: unknown) {

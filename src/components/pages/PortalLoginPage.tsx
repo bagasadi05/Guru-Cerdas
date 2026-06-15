@@ -1,14 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import { pageVariants } from '../../utils/animations';
+import { authSecurity } from '../../services/AuthSecurityService';
 
 const PortalLoginPage: React.FC = () => {
     const navigate = useNavigate();
     const [accessCode, setAccessCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [lockedOut, setLockedOut] = useState(false);
+    const [lockoutTimeLeft, setLockoutTimeLeft] = useState(0);
+
+    const checkLockoutStatus = async () => {
+        const status = await authSecurity.isAccountLocked('parent_portal_client');
+        if (status.locked) {
+            setLockedOut(true);
+            setLockoutTimeLeft(status.remainingTime);
+            setError(`Terlalu banyak percobaan masuk yang gagal. Portal dikunci sementara selama ${authSecurity.formatLockoutTime(status.remainingTime)}.`);
+        } else {
+            setLockedOut(false);
+            setLockoutTimeLeft(0);
+        }
+    };
+
+    useEffect(() => {
+        checkLockoutStatus();
+    }, []);
+
+    // Countdown timer for lockout
+    useEffect(() => {
+        if (!lockedOut || lockoutTimeLeft <= 0) return;
+
+        const interval = setInterval(() => {
+            setLockoutTimeLeft(prev => {
+                if (prev <= 1000) {
+                    clearInterval(interval);
+                    setLockedOut(false);
+                    setError(null);
+                    return 0;
+                }
+                const newTime = prev - 1000;
+                setError(`Terlalu banyak percobaan masuk yang gagal. Portal dikunci sementara selama ${authSecurity.formatLockoutTime(newTime)}.`);
+                return newTime;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [lockedOut, lockoutTimeLeft]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,6 +62,14 @@ const PortalLoginPage: React.FC = () => {
             return;
         }
 
+        // Check lockout first
+        const lockoutStatus = await authSecurity.isAccountLocked('parent_portal_client');
+        if (lockoutStatus.locked) {
+            setError(`Terlalu banyak percobaan masuk yang gagal. Portal dikunci sementara selama ${authSecurity.formatLockoutTime(lockoutStatus.remainingTime)}.`);
+            setLoading(false);
+            return;
+        }
+
         // Use the dedicated RPC function for verifying the access code.
         // This is more secure and reliable, especially if RLS is active.
         const { data: students, error: rpcError } = await supabase
@@ -29,26 +77,39 @@ const PortalLoginPage: React.FC = () => {
                 access_code_param: code
             });
 
-        setLoading(false);
-
         if (rpcError) {
             console.error("Supabase portal login RPC error:", rpcError);
             setError("Gagal memverifikasi kode. Ini mungkin disebabkan oleh konfigurasi database (RLS/Functions). Pastikan fungsi di Supabase sudah benar.");
+            setLoading(false);
             return;
         }
 
         if (!students || students.length === 0) {
-            setError("Kode akses tidak valid. Pastikan Anda memasukkan kode yang benar dari guru.");
+            // Failed attempt: record it
+            const lockoutResult = await authSecurity.recordFailedAttempt('parent_portal_client');
+            setLoading(false);
+            if (lockoutResult.locked) {
+                setLockedOut(true);
+                setLockoutTimeLeft(15 * 60 * 1000); // 15 mins default
+                setError(`Terlalu banyak percobaan masuk yang gagal. Portal dikunci selama 15 menit.`);
+            } else {
+                setError(`Kode akses tidak valid. Sisa percobaan: ${lockoutResult.remainingAttempts}`);
+            }
             return;
         }
 
         if (students.length > 1) {
             // The RPC might handle this, but we add a client-side check for safety.
             setError("Ditemukan beberapa siswa dengan kode akses yang mirip. Harap hubungi guru Anda untuk kode yang unik.");
+            setLoading(false);
             return;
         }
 
         const student = students[0];
+
+        // Success: clear lockout and store code
+        await authSecurity.clearLockout('parent_portal_client');
+        setLoading(false);
 
         // The RPC returns the correctly-cased access code from the database.
         // We must store *this* code in the session, not the user's input,
@@ -100,8 +161,9 @@ const PortalLoginPage: React.FC = () => {
                                 autoComplete="off"
                                 autoCorrect="off"
                                 spellCheck="false"
+                                disabled={lockedOut}
                                 maxLength={6}
-                                className="text-center font-bold tracking-[0.3em] uppercase"
+                                className="text-center font-bold tracking-[0.3em] uppercase disabled:opacity-50"
                                 style={{ paddingLeft: '15px', paddingRight: '15px' }}
                             />
                         </div>
@@ -110,7 +172,7 @@ const PortalLoginPage: React.FC = () => {
                             <p className="text-center text-sm text-yellow-300 mb-4">{error}</p>
                         )}
 
-                        <button type="submit" className="form-btn" disabled={loading}>
+                        <button type="submit" className="form-btn" disabled={loading || lockedOut}>
                             {loading ? 'Memverifikasi...' : 'Lanjutkan'}
                         </button>
                     </form>

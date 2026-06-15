@@ -88,10 +88,14 @@ export const parseFile = async (file: File): Promise<{ headers: string[]; rows: 
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
 
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             try {
                 const data = e.target?.result;
-                const workbook = XLSX.read(data, { type: 'array' });
+                if (!data || typeof data === 'string') {
+                    reject(new Error('Gagal membaca data file. Pastikan format file benar.'));
+                    return;
+                }
+                const workbook = await XLSX.read(data, { type: 'array' });
 
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
@@ -262,11 +266,11 @@ export const generateTemplate = async (format: 'xlsx' | 'csv' = 'xlsx'): Promise
     XLSX.utils.book_append_sheet(workbook, worksheet, format === 'csv' ? 'Template' : 'Data Siswa');
 
     if (format === 'csv') {
-        const csvBuffer = XLSX.write(workbook, { bookType: 'csv', type: 'array' });
+        const csvBuffer = await XLSX.write(workbook, { bookType: 'csv', type: 'array' });
         return new Blob([csvBuffer], { type: 'text/csv' });
     }
 
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const excelBuffer = await XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     return new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 };
 

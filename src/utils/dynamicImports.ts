@@ -6,30 +6,30 @@
  */
 
 // Type definitions for lazy-loaded modules
-type XLSXModule = typeof import('xlsx');
+type XLSXShimModule = typeof import('./xlsxShim');
 type ExcelJSModule = typeof import('exceljs');
 type JsPDFModule = typeof import('jspdf');
 type AutoTableModule = typeof import('jspdf-autotable');
 type Html2CanvasModule = typeof import('html2canvas');
 
 // Cached module references
-let xlsxModule: XLSXModule | null = null;
+let xlsxModule: XLSXShimModule | null = null;
 let exceljsModule: ExcelJSModule | null = null;
 let jspdfModule: JsPDFModule | null = null;
 let autoTableModule: AutoTableModule | null = null;
 let html2canvasModule: Html2CanvasModule | null = null;
 
 /**
- * Dynamically imports the XLSX library for Excel operations.
+ * Dynamically imports the XLSX compatibility shim for Excel operations.
  * The module is cached after the first load.
  * 
  * @example
  * const XLSX = await getXLSX();
  * const workbook = XLSX.utils.book_new();
  */
-export async function getXLSX(): Promise<XLSXModule> {
+export async function getXLSX(): Promise<XLSXShimModule> {
     if (!xlsxModule) {
-        xlsxModule = await import('xlsx');
+        xlsxModule = await import('./xlsxShim');
     }
     return xlsxModule;
 }
