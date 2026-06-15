@@ -65,6 +65,8 @@ export const GradeAdjustmentPage: React.FC = () => {
     const [customAssessmentName, setCustomAssessmentName] = useState<string>('');
     const [isCustomAssessment, setIsCustomAssessment] = useState<boolean>(false);
     const [kkm] = useState<number>(DEFAULT_KKM);
+    const [kkmInput, setKkmInput] = useState<number>(70);
+    const [materiInput, setMateriInput] = useState<string>('');
 
     // Excel formula configuration: Score * weight + constant
     const [weight, setWeight] = useState<number>(0.6);
@@ -154,12 +156,12 @@ export const GradeAdjustmentPage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('students')
-                .select('id, name')
+                .select('id, name, nis, nisn')
                 .eq('class_id', selectedClass)
                 .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
-            return data as Pick<StudentRow, 'id' | 'name'>[];
+            return data as Pick<StudentRow, 'id' | 'name' | 'nis' | 'nisn'>[];
         },
         enabled: !!selectedClass,
     });
@@ -297,6 +299,8 @@ export const GradeAdjustmentPage: React.FC = () => {
             return {
                 id: s.id,
                 name: s.name,
+                nis: (s as any).nis,
+                nisn: (s as any).nisn,
                 original: singleOriginal,
                 formula: singleFormula,
                 ai: singleAiVal,
@@ -512,7 +516,9 @@ export const GradeAdjustmentPage: React.FC = () => {
                 activeAssessmentName,
                 activeAssessmentsList,
                 className,
-                activeScenario
+                activeScenario,
+                kkmInput,
+                materiInput
             );
             
             toast.success('Daftar nilai berhasil diexport ke Excel menggunakan template sekolah!');
@@ -703,6 +709,40 @@ export const GradeAdjustmentPage: React.FC = () => {
                                             value={constant}
                                             onChange={(e) => setConstant(Math.max(0, Math.min(100, parseInt(e.target.value) || 40)))}
                                             className="h-9 text-center font-bold"
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Excel Export Settings */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-sm font-bold flex items-center gap-1.5">
+                                        <span className="w-2 h-4 rounded-sm bg-emerald-500"></span>
+                                        Pengaturan File Excel
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-500 mb-1">Nilai KKM / KKTP</label>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            value={kkmInput}
+                                            onChange={(e) => setKkmInput(Math.max(0, Math.min(100, parseInt(e.target.value) || 70)))}
+                                            className="h-9 font-bold text-center"
+                                            placeholder="Contoh: 70"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-500 mb-1">Materi Pembelajaran</label>
+                                        <Input
+                                            type="text"
+                                            value={materiInput}
+                                            onChange={(e) => setMateriInput(e.target.value)}
+                                            className="h-9"
+                                            placeholder="Contoh: Perkalian Pecahan..."
                                         />
                                     </div>
                                 </CardContent>

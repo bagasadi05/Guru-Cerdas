@@ -180,7 +180,9 @@ const generateSingleExportFile = async (
     assessmentsList: string[],
     className: string,
     activeScenario: string,
-    isSas: boolean
+    isSas: boolean,
+    kkmValue?: number,
+    materiValue?: string
 ): Promise<void> => {
     const ExcelJS = await getExcelJS();
     const templateUrl = isSas ? '/Template nilai SAT-SAS.xlsx' : '/Template nilai PH.xlsx';
@@ -244,6 +246,16 @@ const generateSingleExportFile = async (
         
         // Update B2 (Row index 2, Column index 2 in 1-based index) with assessment name: e.g. "SAS 1"
         worksheet.getCell(2, 2).value = assessName;
+
+        // Update B3 (Row index 3, Column index 2 in 1-based index) with Materi
+        if (materiValue !== undefined) {
+            worksheet.getCell(3, 2).value = materiValue;
+        }
+
+        // Update B5 (Row index 5, Column index 2 in 1-based index) with KKTP / KKM
+        if (kkmValue !== undefined) {
+            worksheet.getCell(5, 2).value = kkmValue;
+        }
         
         // Find header row and map column indices dynamically
         let headerRowIndex = 6; // default to Row 6 (1-based)
@@ -290,30 +302,24 @@ const generateSingleExportFile = async (
             }
         }
         
-        // Loop through rows starting after the header row
-        for (let r = headerRowIndex + 1; r <= worksheet.rowCount; r++) {
-            const studentId = String(worksheet.getCell(r, idCol).value || '').trim();
-            const nameVal = String(worksheet.getCell(r, nameCol).value || '').trim();
+        // Loop through listData and write them to the rows in the worksheet
+        listData.forEach((student, index) => {
+            const r = headerRowIndex + 1 + index;
             
-            if (!studentId && !nameVal) continue;
+            // Set No (column index 1 in 1-based index)
+            worksheet.getCell(r, 1).value = index + 1;
             
-            // Match student in listData using hierarchical/multiple criteria
-            let student = null;
+            // Set ID Siswa
+            if (idCol) worksheet.getCell(r, idCol).value = student.id;
             
-            // 1. Try matching by student ID
-            if (studentId) {
-                student = listData.find(s => s.id === studentId);
-            }
+            // Set NIS
+            if (_nisCol && student.nis !== undefined) worksheet.getCell(r, _nisCol).value = student.nis;
             
-            // 2. Try matching by Name (handles variations, abbreviations, subsets) using findStudentMatch helper
-            if (!student && nameVal) {
-                const matchResult = findStudentMatch(nameVal, listData);
-                if (matchResult && matchResult.confidence >= 75) {
-                    student = listData.find(s => s.id === matchResult.studentId);
-                }
-            }
+            // Set NISN
+            if (_nisnCol && student.nisn !== undefined) worksheet.getCell(r, _nisnCol).value = student.nisn;
             
-            if (!student) continue;
+            // Set Name
+            if (nameCol) worksheet.getCell(r, nameCol).value = student.name;
             
             // Get score value (check compound key first, then fallback to student.id)
             const compoundKey = `${student.id}_${assessName}`;
@@ -340,7 +346,19 @@ const generateSingleExportFile = async (
             
             if (scoreValue !== null && !isNaN(scoreValue)) {
                 worksheet.getCell(r, nilaiCol).value = scoreValue;
+            } else {
+                worksheet.getCell(r, nilaiCol).value = '';
             }
+        });
+        
+        // Clear remaining rows in the template
+        for (let r = headerRowIndex + 1 + listData.length; r <= worksheet.rowCount; r++) {
+            worksheet.getCell(r, 1).value = '';
+            if (idCol) worksheet.getCell(r, idCol).value = '';
+            if (_nisCol) worksheet.getCell(r, _nisCol).value = '';
+            if (_nisnCol) worksheet.getCell(r, _nisnCol).value = '';
+            if (nameCol) worksheet.getCell(r, nameCol).value = '';
+            if (nilaiCol) worksheet.getCell(r, nilaiCol).value = '';
         }
     });
     
@@ -375,7 +393,9 @@ export const exportGradesWithTemplate = async (
     activeAssessmentName: string,
     activeAssessmentsList: string[],
     className: string,
-    activeScenario: string
+    activeScenario: string,
+    kkmValue?: number,
+    materiValue?: string
 ): Promise<void> => {
     const isSasAssessment = (name: string) => 
         name.toUpperCase().includes('SAS') || 
@@ -395,7 +415,9 @@ export const exportGradesWithTemplate = async (
                 phList,
                 className,
                 activeScenario,
-                false
+                false,
+                kkmValue,
+                materiValue
             );
         }
         if (sasList.length > 0) {
@@ -407,7 +429,9 @@ export const exportGradesWithTemplate = async (
                 sasList,
                 className,
                 activeScenario,
-                true
+                true,
+                kkmValue,
+                materiValue
             );
         }
         return;
@@ -422,7 +446,9 @@ export const exportGradesWithTemplate = async (
         activeAssessmentsList,
         className,
         activeScenario,
-        isSas
+        isSas,
+        kkmValue,
+        materiValue
     );
 };
 
