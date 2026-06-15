@@ -75,7 +75,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
     const listData = useMemo(() => {
         return students.map((s, index) => {
             const original = scores[s.id] !== undefined && scores[s.id] !== '' ? Number(scores[s.id]) : 0;
-            const formula = calculateFormulaScore(original, weight, constant, targetAvgRange.min);
+            const formula = calculateFormulaScore(original, weight, constant, targetAvgRange.min, targetAvgRange.max);
             const aiData = aiAdjustments.find(a => a.student_id === s.id);
             const aiVal = aiData ? aiData.ai_score : formula;
             const aiRationale = aiData ? aiData.rationale : '';
@@ -181,7 +181,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
 
     // Apply manual override to a specific student
     const handleManualScoreChange = (studentId: string, value: string) => {
-        const val = value === '' ? '' : String(Math.min(100, Math.max(targetAvgRange.min, parseInt(value) || 0)));
+        const val = value === '' ? '' : String(Math.min(targetAvgRange.max, Math.max(targetAvgRange.min, parseInt(value) || 0)));
         setFinalScores(prev => ({ ...prev, [studentId]: val }));
         
         const nextOverrides = new Set(manualOverrides);
@@ -527,7 +527,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                                                             <input
                                                                 type="number"
                                                                 min="0"
-                                                                max="100"
+                                                                max={targetAvgRange.max}
                                                                 value={scoreValue}
                                                                 onChange={(e) => handleManualScoreChange(item.id, e.target.value)}
                                                                 className={`no-print w-16 text-center text-xs font-bold border rounded p-1 ${

@@ -256,8 +256,7 @@ export const GradeAdjustmentPage: React.FC = () => {
 
             activeAssessmentsList.forEach(assessName => {
                 const record = existingRecords.find(r => r.student_id === s.id && r.assessment_name === assessName);
-                const original = record ? record.score : null;
-                const formula = original !== null ? calculateFormulaScore(original, weight, constant, targetAverageRange.min) : null;
+                                const formula = original !== null ? calculateFormulaScore(original, weight, constant, targetAverageRange.min, targetAverageRange.max) : null;
                 
                 const aiData = aiAdjustments.find(a => a.student_id === s.id && (a as any).assessment_name === assessName);
                 const aiVal = (aiData && original !== null) ? aiData.ai_score : formula;
@@ -289,7 +288,7 @@ export const GradeAdjustmentPage: React.FC = () => {
 
             const singleRecord = existingRecords.find(r => r.student_id === s.id && r.assessment_name === activeAssessmentName);
             const singleOriginal = singleRecord ? singleRecord.score : null;
-            const singleFormula = singleOriginal !== null ? calculateFormulaScore(singleOriginal, weight, constant, targetAverageRange.min) : null;
+            const singleFormula = singleOriginal !== null ? calculateFormulaScore(singleOriginal, weight, constant, targetAverageRange.min, targetAverageRange.max) : null;
             const singleAiData = aiAdjustments.find(a => a.student_id === s.id);
             const singleAiVal = (singleAiData && singleOriginal !== null) ? singleAiData.ai_score : singleFormula;
             const singleAiRationale = singleAiData ? singleAiData.rationale : '';
@@ -440,7 +439,7 @@ export const GradeAdjustmentPage: React.FC = () => {
 
     // Manual grade revision
     const handleManualScoreChange = (studentId: string, value: string) => {
-        const val = value === '' ? '' : String(Math.min(100, Math.max(targetAverageRange.min, parseInt(value) || 0)));
+        const val = value === '' ? '' : String(Math.min(targetAverageRange.max, Math.max(targetAverageRange.min, parseInt(value) || 0)));
         setFinalScores(prev => ({ ...prev, [studentId]: val }));
         
         const nextOverrides = new Set(manualOverrides);
@@ -982,7 +981,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                                     <input
                                                                                         type="number"
                                                                                         min="0"
-                                                                                        max="100"
+                                                                                        max={targetAverageRange.max}
                                                                                         value={scoreValue}
                                                                                         onChange={(e) => handleManualScoreChange(key, e.target.value)}
                                                                                         className={`no-print w-14 text-center text-xs font-bold border rounded p-0.5 ${
@@ -1041,7 +1040,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                         <input
                                                                             type="number"
                                                                             min="0"
-                                                                            max="100"
+                                                                            max={targetAverageRange.max}
                                                                             value={scoreValue}
                                                                             onChange={(e) => handleManualScoreChange(item.id, e.target.value)}
                                                                             className={`no-print w-16 text-center text-xs font-bold border rounded p-1 ${

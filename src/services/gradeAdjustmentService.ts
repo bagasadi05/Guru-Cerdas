@@ -22,11 +22,12 @@ export const calculateFormulaScore = (
     score: number,
     weight: number = 0.6,
     constant: number = 40,
-    minGrade: number = 0
+    minGrade: number = 0,
+    maxGrade: number = 100
 ): number => {
     if (score < 0 || score > 100) return score;
     const adjusted = (score * weight) + constant;
-    return Math.min(100, Math.max(minGrade, Math.round(adjusted)));
+    return Math.min(maxGrade, Math.max(minGrade, Math.round(adjusted)));
 };
 
 /**
@@ -44,7 +45,7 @@ export const analyzeAndAdjustGradesWithAI = async (
 ): Promise<AIGradeAdjustmentResult> => {
     // Generate scores for prompt comparison
     const studentListForAI = students.map(s => {
-        const formulaScore = calculateFormulaScore(s.score, formulaWeight, formulaConstant, targetAvgRange.min);
+        const formulaScore = calculateFormulaScore(s.score, formulaWeight, formulaConstant, targetAvgRange.min, targetAvgRange.max);
         return {
             student_id: s.id,
             student_name: s.name,
@@ -60,11 +61,11 @@ Tujuan utama audit Anda adalah mencegah "efek kompresi" (high-tier compression b
 PENTING: Rata-rata akhir kelas setelah penyesuaian (ai_score) WAJIB berada di kisaran target rata-rata sekolah: ${targetAvgRange.min} - ${targetAvgRange.max}.
 
 Pedoman Penyesuaian AI (ai_score):
-1. Batas nilai tertinggi (maksimal) setelah katrol adalah 100. Nilai siswa (ai_score) boleh mencapai 100, terutama bagi siswa dengan nilai asli tinggi.
+1. Batas nilai tertinggi (maksimal) setelah katrol adalah ${targetAvgRange.max}. Nilai siswa (ai_score) boleh mencapai ${targetAvgRange.max}, terutama bagi siswa dengan nilai asli tinggi.
 2. Nilai terendah setelah katrol adalah ${targetAvgRange.min}. Tidak boleh ada nilai siswa (ai_score) di bawah ${targetAvgRange.min}.
 3. Nilai di bawah KKM (${kkm}) yang terkatrol oleh rumus excel ke nilai tuntas (misal 50 menjadi 70) biarkan tuntas, namun pastikan siswa dengan nilai asli tinggi (81-98) mendapatkan apresiasi tambahan (ai_score lebih tinggi dari formula_score) agar jarak prestasi mereka tetap proporsional dan tidak terkejar terlalu dekat oleh siswa nilai rendah.
 4. Rata-rata akhir rekomendasi nilai (ai_score) untuk seluruh siswa harus berada di rentang ${targetAvgRange.min} sampai ${targetAvgRange.max}.
-5. Rekomendasi ai_score harus berkisar antara ${targetAvgRange.min} - 100 dan merupakan bilangan bulat.
+5. Rekomendasi ai_score harus berkisar antara ${targetAvgRange.min} - ${targetAvgRange.max} dan merupakan bilangan bulat.
 6. Justifikasi singkat (rationale) dalam Bahasa Indonesia untuk setiap penyesuaian.
 7. Analisis kelas singkat (class_analysis) tentang sebaran prestasi.
 
@@ -93,7 +94,7 @@ ${JSON.stringify(studentListForAI, null, 2)}
 
 Tugas Anda:
 1. Evaluasi sebaran nilai tersebut.
-2. Hitung rekomendasi nilai baru (ai_score) yang adil untuk setiap siswa. Pastikan siswa di kisaran 81-98 tidak dirugikan oleh kompresi linear rumus tersebut, tidak ada nilai melebihi 100 atau di bawah ${targetAvgRange.min}, dan RATA-RATA KELAS AKHIR memenuhi target (${targetAvgRange.min} - ${targetAvgRange.max}).
+2. Hitung rekomendasi nilai baru (ai_score) yang adil untuk setiap siswa. Pastikan siswa di kisaran 81-98 tidak dirugikan oleh kompresi linear rumus tersebut, tidak ada nilai melebihi ${targetAvgRange.max} atau di bawah ${targetAvgRange.min}, dan RATA-RATA KELAS AKHIR memenuhi target (${targetAvgRange.min} - ${targetAvgRange.max}).
 3. Kembalikan data dalam format JSON yang valid sesuai instruksi sistem.`;
 
 
@@ -102,7 +103,7 @@ Tugas Anda:
         
         // Post-process fallback validation: make sure every student is represented
         const resolvedAdjustments = students.map(s => {
-            const formulaScore = calculateFormulaScore(s.score, formulaWeight, formulaConstant, targetAvgRange.min);
+            const formulaScore = calculateFormulaScore(s.score, formulaWeight, formulaConstant, targetAvgRange.min, targetAvgRange.max);
             const aiAdjusted = result.adjustments?.find(a => a.student_id === s.id);
             
             if (aiAdjusted) {
@@ -111,7 +112,7 @@ Tugas Anda:
                     student_name: s.name,
                     original_score: s.score,
                     formula_score: formulaScore,
-                    ai_score: Math.min(100, Math.max(targetAvgRange.min, Math.round(Number(aiAdjusted.ai_score) || formulaScore))),
+                    ai_score: Math.min(targetAvgRange.max, Math.max(targetAvgRange.min, Math.round(Number(aiAdjusted.ai_score) || formulaScore))),
                     rationale: aiAdjusted.rationale || 'Penyesuaian terhitung otomatis.'
                 };
             }
