@@ -256,7 +256,8 @@ export const GradeAdjustmentPage: React.FC = () => {
 
             activeAssessmentsList.forEach(assessName => {
                 const record = existingRecords.find(r => r.student_id === s.id && r.assessment_name === assessName);
-                                const formula = original !== null ? calculateFormulaScore(original, weight, constant, targetAverageRange.min, targetAverageRange.max) : null;
+                const original = record ? record.score : null;
+                const formula = original !== null ? calculateFormulaScore(original, weight, constant, targetAverageRange.min, targetAverageRange.max) : null;
                 
                 const aiData = aiAdjustments.find(a => a.student_id === s.id && (a as any).assessment_name === assessName);
                 const aiVal = (aiData && original !== null) ? aiData.ai_score : formula;
