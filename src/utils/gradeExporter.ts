@@ -182,7 +182,7 @@ const generateSingleExportFile = async (
     activeScenario: string,
     isSas: boolean,
     kkmValue?: number,
-    materiValue?: string
+    materiValues?: Record<string, string>
 ): Promise<void> => {
     const ExcelJS = await getExcelJS();
     const templateUrl = isSas ? '/Template nilai SAT-SAS.xlsx' : '/Template nilai PH.xlsx';
@@ -248,6 +248,7 @@ const generateSingleExportFile = async (
         worksheet.getCell(2, 2).value = assessName;
 
         // Update B3 (Row index 3, Column index 2 in 1-based index) with Materi
+        const materiValue = materiValues ? materiValues[assessName] : undefined;
         if (materiValue !== undefined) {
             worksheet.getCell(3, 2).value = materiValue;
         }
@@ -395,7 +396,7 @@ export const exportGradesWithTemplate = async (
     className: string,
     activeScenario: string,
     kkmValue?: number,
-    materiValue?: string
+    materiValues?: Record<string, string>
 ): Promise<void> => {
     const isSasAssessment = (name: string) => 
         name.toUpperCase().includes('SAS') || 
@@ -417,7 +418,7 @@ export const exportGradesWithTemplate = async (
                 activeScenario,
                 false,
                 kkmValue,
-                materiValue
+                materiValues
             );
         }
         if (sasList.length > 0) {
@@ -431,7 +432,7 @@ export const exportGradesWithTemplate = async (
                 activeScenario,
                 true,
                 kkmValue,
-                materiValue
+                materiValues
             );
         }
         return;
@@ -448,7 +449,7 @@ export const exportGradesWithTemplate = async (
         activeScenario,
         isSas,
         kkmValue,
-        materiValue
+        materiValues
     );
 };
 

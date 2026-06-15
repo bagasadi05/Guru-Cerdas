@@ -66,7 +66,7 @@ export const GradeAdjustmentPage: React.FC = () => {
     const [isCustomAssessment, setIsCustomAssessment] = useState<boolean>(false);
     const [kkm] = useState<number>(DEFAULT_KKM);
     const [kkmInput, setKkmInput] = useState<number>(70);
-    const [materiInput, setMateriInput] = useState<string>('');
+    const [materiInputs, setMateriInputs] = useState<Record<string, string>>({});
 
     // Excel formula configuration: Score * weight + constant
     const [weight, setWeight] = useState<number>(0.6);
@@ -518,7 +518,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                 className,
                 activeScenario,
                 kkmInput,
-                materiInput
+                materiInputs
             );
             
             toast.success('Daftar nilai berhasil diexport ke Excel menggunakan template sekolah!');
@@ -736,14 +736,36 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-500 mb-1">Materi Pembelajaran</label>
-                                        <Input
-                                            type="text"
-                                            value={materiInput}
-                                            onChange={(e) => setMateriInput(e.target.value)}
-                                            className="h-9"
-                                            placeholder="Contoh: Perkalian Pecahan..."
-                                        />
+                                        {activeAssessmentsList.length <= 1 ? (
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-slate-500 mb-1">Materi Pembelajaran</label>
+                                                <Input
+                                                    type="text"
+                                                    value={materiInputs[activeAssessmentsList[0] || ''] || ''}
+                                                    onChange={(e) => setMateriInputs(prev => ({ ...prev, [activeAssessmentsList[0] || '']: e.target.value }))}
+                                                    className="h-9"
+                                                    placeholder="Contoh: Perkalian Pecahan..."
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                <label className="block text-[11px] font-bold text-slate-500">Materi Pembelajaran per Penilaian</label>
+                                                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                                    {activeAssessmentsList.map(assessName => (
+                                                        <div key={assessName} className="flex flex-col gap-0.5">
+                                                            <span className="text-[10px] font-semibold text-slate-400">{assessName}</span>
+                                                            <Input
+                                                                type="text"
+                                                                value={materiInputs[assessName] || ''}
+                                                                onChange={(e) => setMateriInputs(prev => ({ ...prev, [assessName]: e.target.value }))}
+                                                                className="h-8 text-xs"
+                                                                placeholder={`Materi ${assessName}...`}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
