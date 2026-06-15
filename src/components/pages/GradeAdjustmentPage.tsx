@@ -136,10 +136,19 @@ export const GradeAdjustmentPage: React.FC = () => {
         
         let level = activeClass.grade_level;
         if (level === null || level === undefined) {
-            // Extract from class name (e.g. "1A", "4B" -> first digit)
-            const match = activeClass.name.match(/^([1-6])/);
-            if (match) {
-                level = parseInt(match[1]);
+            // Match standard numbers 1-6
+            const matchNum = activeClass.name.match(/^([1-6])/);
+            if (matchNum) {
+                level = parseInt(matchNum[1]);
+            } else {
+                // Match Roman Numerals (I to VI)
+                const upperName = activeClass.name.toUpperCase();
+                if (upperName.startsWith('VI')) level = 6;
+                else if (upperName.startsWith('V')) level = 5;
+                else if (upperName.startsWith('IV')) level = 4;
+                else if (upperName.startsWith('III')) level = 3;
+                else if (upperName.startsWith('II')) level = 2;
+                else if (upperName.startsWith('I')) level = 1;
             }
         }
 
@@ -156,12 +165,12 @@ export const GradeAdjustmentPage: React.FC = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('students')
-                .select('id, name, nis, nisn')
+                .select('id, name')
                 .eq('class_id', selectedClass)
                 .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
-            return data as Pick<StudentRow, 'id' | 'name' | 'nis' | 'nisn'>[];
+            return data as Pick<StudentRow, 'id' | 'name'>[];
         },
         enabled: !!selectedClass,
     });

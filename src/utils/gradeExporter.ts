@@ -381,7 +381,7 @@ const generateSingleExportFile = async (
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    const filename = `nilai_terkatrol_${selectedSubject}_${assessmentNameForFile}.xlsx`.replace(/\s+/g, '_');
+    const filename = `nilai_terkatrol_${className}_${selectedSubject}_${assessmentNameForFile}.xlsx`.replace(/[\s\/]+/g, '_');
     link.download = filename;
     link.click();
     URL.revokeObjectURL(link.href);
