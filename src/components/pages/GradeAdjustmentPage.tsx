@@ -39,6 +39,11 @@ const SUBJECTS = [
 const DEFAULT_KKM = 75;
 const EMPTY_ARRAY: any[] = [];
 
+const isSasAssessment = (name: string): boolean => 
+    name.toUpperCase().includes('SAS') || 
+    name.toUpperCase().includes('SAT') || 
+    name.toUpperCase().includes('AKHIR');
+
 const canAccessClass = (
     classOwnerId: string | null,
     currentUserId?: string | null,
@@ -211,6 +216,10 @@ export const GradeAdjustmentPage: React.FC = () => {
         }
         return activeAssessmentName ? [activeAssessmentName] : EMPTY_ARRAY;
     }, [activeAssessmentName, savedAssessmentNames]);
+
+    const nonSasAssessments = useMemo(() => {
+        return activeAssessmentsList.filter(name => !isSasAssessment(name));
+    }, [activeAssessmentsList]);
 
     const getStudentFinalStats = useCallback((item: any) => {
         let sum = 0;
@@ -744,38 +753,40 @@ export const GradeAdjustmentPage: React.FC = () => {
                                             placeholder="Contoh: 70"
                                         />
                                     </div>
-                                    <div>
-                                        {activeAssessmentsList.length <= 1 ? (
-                                            <div>
-                                                <label className="block text-[11px] font-bold text-slate-500 mb-1">Materi Pembelajaran</label>
-                                                <Input
-                                                    type="text"
-                                                    value={materiInputs[activeAssessmentsList[0] || ''] || ''}
-                                                    onChange={(e) => setMateriInputs(prev => ({ ...prev, [activeAssessmentsList[0] || '']: e.target.value }))}
-                                                    className="h-9"
-                                                    placeholder="Contoh: Perkalian Pecahan..."
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-2">
-                                                <label className="block text-[11px] font-bold text-slate-500">Materi Pembelajaran per Penilaian</label>
-                                                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                                                    {activeAssessmentsList.map(assessName => (
-                                                        <div key={assessName} className="flex flex-col gap-0.5">
-                                                            <span className="text-[10px] font-semibold text-slate-400">{assessName}</span>
-                                                            <Input
-                                                                type="text"
-                                                                value={materiInputs[assessName] || ''}
-                                                                onChange={(e) => setMateriInputs(prev => ({ ...prev, [assessName]: e.target.value }))}
-                                                                className="h-8 text-xs"
-                                                                placeholder={`Materi ${assessName}...`}
-                                                            />
-                                                        </div>
-                                                    ))}
+                                    {nonSasAssessments.length > 0 && (
+                                        <div>
+                                            {nonSasAssessments.length === 1 ? (
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-500 mb-1">Materi Pembelajaran</label>
+                                                    <Input
+                                                        type="text"
+                                                        value={materiInputs[nonSasAssessments[0]] || ''}
+                                                        onChange={(e) => setMateriInputs(prev => ({ ...prev, [nonSasAssessments[0]]: e.target.value }))}
+                                                        className="h-9"
+                                                        placeholder="Contoh: Perkalian Pecahan..."
+                                                    />
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    <label className="block text-[11px] font-bold text-slate-500">Materi Pembelajaran per Penilaian</label>
+                                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                                        {nonSasAssessments.map(assessName => (
+                                                            <div key={assessName} className="flex flex-col gap-0.5">
+                                                                <span className="text-[10px] font-semibold text-slate-400">{assessName}</span>
+                                                                <Input
+                                                                    type="text"
+                                                                    value={materiInputs[assessName] || ''}
+                                                                    onChange={(e) => setMateriInputs(prev => ({ ...prev, [assessName]: e.target.value }))}
+                                                                    className="h-8 text-xs"
+                                                                    placeholder={`Materi ${assessName}...`}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
 

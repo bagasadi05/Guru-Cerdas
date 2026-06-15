@@ -247,8 +247,8 @@ const generateSingleExportFile = async (
         // Update B2 (Row index 2, Column index 2 in 1-based index) with assessment name: e.g. "SAS 1"
         worksheet.getCell(2, 2).value = assessName;
 
-        // Update B3 (Row index 3, Column index 2 in 1-based index) with Materi
-        const materiValue = materiValues ? materiValues[assessName] : undefined;
+        // Update B3 (Row index 3, Column index 2 in 1-based index) with Materi (only for PH, not SAT/SAS)
+        const materiValue = (!isSas && materiValues) ? materiValues[assessName] : undefined;
         if (materiValue !== undefined) {
             worksheet.getCell(3, 2).value = materiValue;
         }
