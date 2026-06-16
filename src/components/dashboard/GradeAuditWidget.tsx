@@ -75,7 +75,7 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data, classes }) =>
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden flex flex-col border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl p-0 overflow-hidden flex flex-col border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
       <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-amber-500/10">
         <div className="flex items-center justify-between">
           <div>
