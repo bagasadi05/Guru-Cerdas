@@ -262,7 +262,15 @@ export const useToast = () => {
   }
   
   return {
-    success: (message: string, options?: { duration?: number }) => context.addToast(message, { ...options, type: 'success' }),
+    success: (message: string, options?: { duration?: number }) => {
+      if (typeof window !== 'undefined' && (window as any).__last_supabase_offline_queued) {
+        const timeDiff = Date.now() - (window as any).__last_supabase_offline_queued;
+        if (timeDiff < 1000) {
+          return context.addToast("Perubahan disimpan lokal (menunggu sinkron)", { ...options, type: 'info' });
+        }
+      }
+      return context.addToast(message, { ...options, type: 'success' });
+    },
     error: (message: string, options?: { duration?: number }) => context.addToast(message, { ...options, type: 'error' }),
     info: (message: string, options?: { duration?: number }) => context.addToast(message, { ...options, type: 'info' }),
     warning: (message: string, options?: { duration?: number }) => context.addToast(message, { ...options, type: 'warning' }),
