@@ -162,7 +162,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                 )}
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="text-gray-400">
+                        <Button variant="ghost" size="icon" className="text-gray-400" aria-label="Menu aksi siswa">
                             <MoreVerticalIcon className="w-5 h-5" />
                         </Button>
                     </div>
