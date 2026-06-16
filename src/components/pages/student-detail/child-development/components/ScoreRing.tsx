@@ -39,6 +39,9 @@ const getScoreColor = (score: number, maxScore: number) => {
   return { stroke: 'stroke-rose-500', text: 'text-rose-600 dark:text-rose-400' };
 };
 
+/**
+ * ScoreRing component that respects prefers-reduced-motion settings.
+ */
 export const ScoreRing: React.FC<ScoreRingProps> = ({
   score,
   maxScore = 100,
