@@ -294,7 +294,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                     onClick={item.action}
                                     className="group rounded-3xl border border-slate-100 bg-slate-50/50 p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-slate-200 hover:bg-white hover:shadow-sm dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-slate-700 dark:hover:bg-slate-800"
                                 >
-                                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 text-white dark:bg-amber-400 dark:text-slate-950 shadow-sm transition-transform duration-300 group-hover:scale-105">
+                                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600 text-white dark:bg-amber-400 dark:text-slate-950 shadow-sm transition-transform duration-300 group-hover:scale-105">
                                         <item.icon className="h-4.5 w-4.5" />
                                     </div>
                                     <h5 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">{item.label}</h5>

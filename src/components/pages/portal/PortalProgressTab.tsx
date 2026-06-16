@@ -157,10 +157,10 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
             <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Perkembangan</p>
+                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Perkembangan</p>
                         <h3 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">Ringkasan akademik dan evaluasi siswa</h3>
                     </div>
-                    <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white" onClick={onDownloadPdf}><DownloadIcon className="mr-2 inline-block h-4 w-4" />Unduh PDF</button>
+                    <button className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition-colors" onClick={onDownloadPdf}><DownloadIcon className="mr-2 inline-block h-4 w-4" />Unduh PDF</button>
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -219,7 +219,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.assessmentsCount}</td>
                                                 <td className="px-4 py-3">
-                                                    <span className="inline-flex rounded-full bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                                    <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
                                                         {row.averageScore.toFixed(1)}
                                                     </span>
                                                 </td>

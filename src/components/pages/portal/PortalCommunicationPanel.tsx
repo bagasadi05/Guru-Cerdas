@@ -132,7 +132,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                 key={prompt}
                                 type="button"
                                 onClick={() => setNewMessage(prompt)}
-                                className="inline-flex items-center rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-amber-400 hover:border-slate-300 dark:hover:bg-slate-800 border border-slate-200/70 shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:scale-95 dark:bg-slate-900 dark:border-slate-800"
+                                className="inline-flex items-center rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-amber-400 hover:border-slate-300 dark:hover:bg-slate-800 border border-slate-200/70 shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:scale-95 dark:bg-slate-900 dark:border-slate-800"
                             >
                                 💬 {prompt}
                             </button>
@@ -145,7 +145,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                     {communications.length === 0 ? (
                         <div className="flex h-full flex-col items-center justify-center text-center text-slate-400 dark:text-slate-500">
                             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-sm dark:bg-slate-800">
-                                <SendIcon className="h-7 w-7 text-indigo-500" />
+                                <SendIcon className="h-7 w-7 text-emerald-500" />
                             </div>
                             <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">Belum ada obrolan.</p>
                             <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-500 dark:text-slate-400">
@@ -170,7 +170,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                     <div className="relative max-w-[72%] group/bubble">
                                         <div className={`p-3.5 rounded-2xl text-sm shadow-sm leading-relaxed ${
                                             isParent 
-                                                ? 'bg-gradient-to-br from-indigo-650 to-violet-750 text-white rounded-tr-sm shadow-indigo-600/5' 
+                                                ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-tr-sm shadow-emerald-600/5' 
                                                 : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-sm border border-slate-200/40 dark:border-slate-700/40 shadow-slate-900/5'
                                         }`}>
                                             {/* File/Image Attachment */}
@@ -264,14 +264,14 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                         value={newMessage}
                         onChange={(event) => setNewMessage(event.target.value)}
                         placeholder="Ketik pesan untuk wali kelas..."
-                        className="flex-1 h-11 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 rounded-2xl shadow-sm pl-4 text-sm"
+                        className="flex-1 h-11 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 rounded-2xl shadow-sm pl-4 text-sm"
                         disabled={isSending}
                     />
                     <Button 
                         type="submit" 
                         size="icon" 
                         disabled={isSending || !newMessage.trim()} 
-                        className="h-11 w-11 rounded-2xl bg-indigo-650 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/10 flex items-center justify-center active:scale-95 transition-all"
+                        className="h-11 w-11 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/10 flex items-center justify-center active:scale-95 transition-all"
                     >
                         <SendIcon className="w-4.5 h-4.5" />
                     </Button>
@@ -286,10 +286,10 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                         const message = formData.get('message') as string;
                         updateMessage({ messageId: modalState.data!.id, newMessageText: message });
                     }}>
-                        <textarea name="message" defaultValue={modalState.data.message} rows={5} className="w-full mt-1 p-3 border rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"></textarea>
+                        <textarea name="message" defaultValue={modalState.data.message} rows={5} className="w-full mt-1 p-3 border rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"></textarea>
                         <div className="flex justify-end gap-2 pt-4">
                             <Button type="button" variant="ghost" onClick={() => setModalState({ type: 'closed', data: null })}>Batal</Button>
-                            <Button type="submit" disabled={isUpdating} className="bg-indigo-600 text-white hover:bg-indigo-700">{isUpdating ? 'Menyimpan...' : 'Simpan'}</Button>
+                            <Button type="submit" disabled={isUpdating} className="bg-emerald-600 text-white hover:bg-emerald-700">{isUpdating ? 'Menyimpan...' : 'Simpan'}</Button>
                         </div>
                     </form>
                 </Modal>
