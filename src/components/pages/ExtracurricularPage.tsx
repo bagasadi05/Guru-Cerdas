@@ -306,7 +306,7 @@ const ExtracurricularPage: React.FC = () => {
                 { wch: 5 }, { wch: 5 }, { wch: 5 }, { wch: 5 }
             ];
             XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Bulanan");
-            XLSX.writeFile(workbook, `Rekap_Presensi_${selectedExtracurricularData.name}_${monthName}.xlsx`);
+            await XLSX.writeFile(workbook, `Rekap_Presensi_${selectedExtracurricularData.name}_${monthName}.xlsx`);
             toast.success('Download Excel berhasil');
         } catch (err: any) { toast.error(`Gagal export: ${err.message}`); }
     };
@@ -350,7 +350,7 @@ const ExtracurricularPage: React.FC = () => {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Nilai");
         worksheet["!cols"] = [{ wch: 5 }, { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 30 }];
-        XLSX.writeFile(workbook, `Nilai_Ekskul_${selectedExtracurricularData.name}_${new Date().toISOString().split('T')[0]}.xlsx`);
+        await XLSX.writeFile(workbook, `Nilai_Ekskul_${selectedExtracurricularData.name}_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
     // ==================== RENDER ====================

@@ -170,7 +170,7 @@ export const useExcelParser = () => {
         XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
         // Download
-        XLSX.writeFile(wb, filename);
+        await XLSX.writeFile(wb, filename);
     }, []);
 
     /**
@@ -248,7 +248,7 @@ export const useExcelParser = () => {
 
         XLSX.utils.book_append_sheet(wb, ws, 'Data Nilai');
 
-        XLSX.writeFile(wb, filename);
+        await XLSX.writeFile(wb, filename);
     }, []);
 
     return {

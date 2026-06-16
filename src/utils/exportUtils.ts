@@ -76,7 +76,7 @@ export const exportToExcel = async (data: ExportRow[], fileName: string, sheetNa
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(data);
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+    await XLSX.writeFile(workbook, `${fileName}.xlsx`);
 };
 
 /**
@@ -232,7 +232,7 @@ export const exportAttendanceToExcel = async (
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Absensi');
-    XLSX.writeFile(workbook, fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`);
+    await XLSX.writeFile(workbook, fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`);
 };
 
 /**
@@ -367,7 +367,7 @@ export const exportClassGradesToExcel = async (
     ws['!cols'] = wscols;
 
     XLSX.utils.book_append_sheet(wb, ws, "Nilai");
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
+    await XLSX.writeFile(wb, `${fileName}.xlsx`);
 };
 
 /**
@@ -511,7 +511,7 @@ export const exportClassSummaryToExcel = async (
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, "Ringkasan");
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
+    await XLSX.writeFile(wb, `${fileName}.xlsx`);
 };
 
 /**
@@ -587,6 +587,6 @@ export const exportSemesterAttendanceToExcel = async (
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Rekap Kehadiran Semester');
-    XLSX.writeFile(workbook, fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`);
+    await XLSX.writeFile(workbook, fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`);
 };
 

@@ -109,7 +109,7 @@ export const exportGradesToExcel = async (
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
     // Download
-    XLSX.writeFile(wb, filename);
+    await XLSX.writeFile(wb, filename);
 };
 
 /**

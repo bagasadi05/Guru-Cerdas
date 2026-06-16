@@ -235,7 +235,7 @@ export async function exportToExcel(options: ExportOptions): Promise<ExportResul
 
         // Generate file
         const fullFilename = `${filename}.xlsx`;
-        XLSX.writeFile(wb, fullFilename);
+        await XLSX.writeFile(wb, fullFilename);
 
         onProgress?.(100);
 

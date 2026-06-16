@@ -364,7 +364,7 @@ export const useStudentsPageActions = ({
     });
   };
 
-  const handleBulkExport = (ids: string[]) => {
+  const handleBulkExport = async (ids: string[]) => {
     const selectedStudents = studentsForActiveClass.filter((student) => ids.includes(student.id));
     if (selectedStudents.length === 0) {
       toast.warning('Tidak ada siswa terpilih untuk diekspor.');
@@ -380,7 +380,7 @@ export const useStudentsPageActions = ({
       'Kode Akses': student.access_code || 'Belum Ada',
     }));
 
-    exportToExcel(dataToExport, `Data_Siswa_Terpilih_${currentClassName}`, `Data Siswa Terpilih - ${currentClassName}`);
+    await exportToExcel(dataToExport, `Data_Siswa_Terpilih_${currentClassName}`, `Data Siswa Terpilih - ${currentClassName}`);
     toast.success(`${selectedStudents.length} siswa berhasil diekspor!`);
     clearSelection();
   };
@@ -429,7 +429,7 @@ export const useStudentsPageActions = ({
     setIsExportModalOpen(true);
   };
 
-  const handleExportConfirm = (format: ExportFormat, selectedColumns: string[]) => {
+  const handleExportConfirm = async (format: ExportFormat, selectedColumns: string[]) => {
     const currentClassName = classes.find((item) => item.id === activeClassId)?.name || 'Semua Kelas';
     const dataToExport = studentsForActiveClass.map((student, index) => {
       const row: Record<string, string | number | boolean | null | undefined> = {
@@ -462,13 +462,13 @@ export const useStudentsPageActions = ({
     });
 
     if (format === 'xlsx' || format === 'csv') {
-      exportToExcel(dataToExport, `Data_Siswa_${currentClassName.replace(/\s+/g, '_')}`, `Data Siswa - ${currentClassName}`);
+      await exportToExcel(dataToExport, `Data_Siswa_${currentClassName.replace(/\s+/g, '_')}`, `Data Siswa - ${currentClassName}`);
       toast.success(`Data siswa berhasil diekspor ke ${format.toUpperCase()}!`);
       return;
     }
 
     toast.info(`Format ${format.toUpperCase()} belum didukung sepenuhnya, menggunakan Excel.`);
-    exportToExcel(dataToExport, `Data_Siswa_${currentClassName.replace(/\s+/g, '_')}`, `Data Siswa - ${currentClassName}`);
+    await exportToExcel(dataToExport, `Data_Siswa_${currentClassName.replace(/\s+/g, '_')}`, `Data Siswa - ${currentClassName}`);
   };
 
   const handleImportStudents = async (validRows: ParsedRow[]) => {

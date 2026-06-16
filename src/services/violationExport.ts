@@ -233,7 +233,7 @@ export const exportViolationsToExcel = async (options: ViolationExportOptions): 
     ws['!cols'] = wscols;
 
     XLSX.utils.book_append_sheet(wb, ws, 'Pelanggaran');
-    XLSX.writeFile(wb, `Data_Pelanggaran_${studentName.replace(/\s+/g, '_')}.xlsx`);
+    await XLSX.writeFile(wb, `Data_Pelanggaran_${studentName.replace(/\s+/g, '_')}.xlsx`);
 };
 
 // ============================
@@ -498,6 +498,6 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     });
 
-    XLSX.writeFile(workbook, `Laporan_Pelanggaran_${className.replace(/\s+/g, '_')}.xlsx`);
+    await XLSX.writeFile(workbook, `Laporan_Pelanggaran_${className.replace(/\s+/g, '_')}.xlsx`);
 };
 
