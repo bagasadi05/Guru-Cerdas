@@ -4,6 +4,8 @@
 
 import { supabase } from "./supabase";
 import { logger } from "./logger";
+
+const db = supabase as any;
 import {
   getPushSubscriptionState,
   serializeSubscription,
@@ -68,7 +70,7 @@ export class PushNotificationService {
     const subscription = await subscribeToPush(VAPID_PUBLIC_KEY);
     const serialized = serializeSubscription(subscription);
 
-    const { error } = await supabase.from("push_subscriptions").upsert(
+    const { error } = await db.from("push_subscriptions").upsert(
       {
         user_id: userId,
         endpoint: serialized.endpoint,
@@ -107,7 +109,7 @@ export class PushNotificationService {
     }
     const existing = await unsubscribeFromPush();
 
-    const { error } = await supabase
+    const { error } = await db
       .from("push_subscriptions")
       .update({ is_active: false })
       .eq("user_id", userId);
@@ -138,7 +140,7 @@ export class PushNotificationService {
     // Confirm the server has an active row matching this endpoint.
     let serverRegistered = false;
     if (local.subscription) {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("push_subscriptions")
         .select("id, is_active")
         .eq("endpoint", local.subscription.endpoint)
@@ -166,7 +168,7 @@ export class PushNotificationService {
     if (!local.subscription) return;
     const serialized = serializeSubscription(local.subscription);
 
-    const { error } = await supabase.from("push_subscriptions").upsert(
+    const { error } = await db.from("push_subscriptions").upsert(
       {
         user_id: userId,
         endpoint: serialized.endpoint,

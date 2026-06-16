@@ -81,7 +81,7 @@ const DashboardPage: React.FC = () => {
     error instanceof Error ? error.message : 'Gagal memuat data dashboard. Silakan coba lagi.';
 
   // Sync schedule with Service Worker for notifications
-  useScheduleNotifications(data?.schedule || []);
+  useScheduleNotifications(user?.id);
 
   const { studentsMissingGrade } = useGradeAudit({ data });
 
