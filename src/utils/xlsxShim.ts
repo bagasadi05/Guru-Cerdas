@@ -86,7 +86,11 @@ export const utils = {
         return worksheet.rows
             .map(row => 
                 row.map(cell => {
-                    const str = String(cell ?? '');
+                    let str = String(cell ?? '');
+                    // Guard against CSV formula injection (OWASP suggestion)
+                    if (typeof cell !== 'number' && (str.startsWith('=') || str.startsWith('+') || str.startsWith('-') || str.startsWith('@'))) {
+                        str = `'${str}`;
+                    }
                     // Escape quotes and wrap in quotes if contains commas, quotes, or newlines
                     if (str.includes(',') || str.includes('"') || str.includes('\n')) {
                         return `"${str.replace(/"/g, '""')}"`;
@@ -121,14 +125,27 @@ export async function read(data: ArrayBuffer | Uint8Array, options?: any): Promi
                 for (let i = 1; i < rowValues.length; i++) {
                     const val = rowValues[i];
                     if (val && typeof val === 'object') {
-                        if ('result' in val) {
-                            values.push(val.result);
+                        if (val instanceof Date) {
+                            values.push(val);
                         } else if ('richText' in val && Array.isArray((val as any).richText)) {
                             values.push((val as any).richText.map((rt: any) => rt.text || '').join(''));
-                        } else if ('text' in val) {
-                            values.push((val as any).text);
+                        } else if ('text' in val || 'hyperlink' in val) {
+                            values.push((val as any).text || (val as any).hyperlink);
+                        } else if ('result' in val) {
+                            const result = val.result;
+                            if (result instanceof Date) {
+                                values.push(result);
+                            } else if (result && typeof result === 'object') {
+                                if ('text' in result || 'hyperlink' in result) {
+                                    values.push((result as any).text || (result as any).hyperlink);
+                                } else {
+                                    values.push(String(result));
+                                }
+                            } else {
+                                values.push(result);
+                            }
                         } else {
-                            values.push(JSON.stringify(val));
+                            values.push(String(val));
                         }
                     } else {
                         values.push(val);
