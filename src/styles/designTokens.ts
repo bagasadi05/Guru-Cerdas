@@ -304,7 +304,6 @@ export const typography = {
     fontFamily: {
         sans: 'Inter, system-ui, -apple-system, sans-serif',
         serif: 'Tinos, Georgia, serif',
-        mono: 'JetBrains Mono, Consolas, monospace',
     },
 
     // Font sizes
