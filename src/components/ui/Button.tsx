@@ -11,11 +11,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'default', children, onClick, ...props }, ref) => {
     const { playClick } = useSound();
     // Enhanced accessibility: improved focus ring, better contrast
-    const baseClasses = "relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 ease-out min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed transform-gpu active:scale-[0.98]";
+    const baseClasses = "relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 ease-out min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed transform-gpu active:scale-[0.98]";
 
     const variantClasses = {
-      default: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm shadow-indigo-500/20 hover:from-indigo-700 hover:to-purple-700 hover:shadow-md hover:shadow-indigo-500/25',
-      primary: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm shadow-indigo-500/20 hover:from-indigo-700 hover:to-purple-700 hover:shadow-md hover:shadow-indigo-500/25',
+      default: 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 hover:shadow-md',
+      primary: 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 hover:shadow-md',
       secondary: 'bg-slate-700 text-white hover:bg-slate-600 hover:shadow-md',
       success: 'bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-md',
       destructive: 'bg-rose-600 text-white shadow-sm shadow-rose-500/20 hover:bg-rose-700 hover:shadow-md hover:shadow-rose-500/25',
