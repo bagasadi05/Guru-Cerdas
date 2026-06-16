@@ -91,7 +91,7 @@ const queueOfflineRequest = async (url: string, init?: RequestInit): Promise<voi
 
 const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   const url = typeof input === 'string' ? input : input.toString();
-  console.log(`[SupabaseFetch] Request starting: ${url} (${init?.method || 'GET'})`);
+  logger.debug(`[SupabaseFetch] Request starting: ${url} (${init?.method || 'GET'})`);
   const isAuth = url.includes('/auth/');
   const isMutation = isMutationRequest(init?.method);
   
@@ -102,10 +102,10 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
       retries: getRetryCount(url),
       queueWhenOffline: isMutation && !isAuth // Only queue mutations, never auth or GET requests
     });
-    console.log(`[SupabaseFetch] Request succeeded: ${url} (${response.status})`);
+    logger.debug(`[SupabaseFetch] Request succeeded: ${url} (${response.status})`);
     return response;
   } catch (error) {
-    console.error(`[SupabaseFetch] Request failed: ${url}`, error);
+    logger.debug(`[SupabaseFetch] Request failed: ${url}`, undefined, error);
     logger.error('Supabase request failed', error as Error, {
       url,
       method: init?.method || 'GET'
@@ -114,14 +114,21 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
     if (isMutation && !isAuth) {
       await queueOfflineRequest(url, init);
       
+      if (typeof window !== 'undefined') {
+        (window as any).__last_supabase_offline_queued = Date.now();
+      }
+
+      const method = init?.method?.toUpperCase();
       let mockBodyText = JSON.stringify({ offline: true, queued: true });
-      if (init?.body) {
+      if (method === 'POST') {
+        mockBodyText = '[]';
+      } else if (init?.body) {
         mockBodyText = typeof init.body === 'string' ? init.body : JSON.stringify(init.body);
       }
       
       return new Response(mockBodyText, {
-        status: 201,
-        statusText: 'Created (Offline Queued)',
+        status: 202,
+        statusText: 'Accepted (Offline Queued)',
         headers: { 
           'Content-Type': 'application/json',
           'X-Offline-Queued': 'true'
@@ -249,7 +256,7 @@ const devApiKey = import.meta.env.DEV ? (import.meta.env.VITE_OPENROUTER_API_KEY
  * 
  * @since 1.0.0
  */
-export const isAiEnabled = !!openRouterProxyUrl || !!devApiKey;
+export const isAiEnabled = !import.meta.env.DEV || !!openRouterProxyUrl || !!devApiKey;
 
 if (!isAiEnabled) {
     logger.warn("AI API Keys are not set. AI features will not work.", "Supabase");
