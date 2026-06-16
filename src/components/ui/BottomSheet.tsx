@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { XCircleIcon } from '../Icons';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { duration, easing } from '../../styles/motion';
 
 interface BottomSheetProps {
     isOpen: boolean;
@@ -10,66 +13,133 @@ interface BottomSheetProps {
 }
 
 const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, title }) => {
-    const [isVisible, setIsVisible] = useState(false);
+    const sheetRef = useRef<HTMLDivElement>(null);
+    const previousActiveElement = useRef<HTMLElement | null>(null);
+    const { shouldReduceMotion } = useReducedMotion();
+    const isClient = typeof document !== 'undefined';
 
     useEffect(() => {
         if (isOpen) {
-            setTimeout(() => setIsVisible(true), 0);
+            previousActiveElement.current = document.activeElement as HTMLElement;
             document.body.style.overflow = 'hidden';
-        } else {
-            const timer = setTimeout(() => setIsVisible(false), 300); // Match transition duration
-            document.body.style.overflow = '';
-            return () => clearTimeout(timer);
+
+            // Focus the sheet/container for accessibility
+            setTimeout(() => {
+                const sheetContainer = sheetRef.current;
+                if (sheetContainer) {
+                    const focusableElements = sheetContainer.querySelectorAll<HTMLElement>(
+                        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                    );
+                    if (focusableElements.length > 0) {
+                        focusableElements[0].focus();
+                    } else {
+                        sheetContainer.focus();
+                    }
+                }
+            }, 100);
         }
+
+        return () => {
+            document.body.style.overflow = '';
+            if (previousActiveElement.current && !isOpen) {
+                previousActiveElement.current.focus();
+            }
+        };
     }, [isOpen]);
 
-    if (!isVisible && !isOpen) return null;
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (!isOpen) return;
+
+            if (event.key === 'Escape') {
+                onClose();
+                return;
+            }
+
+            if (event.key === 'Tab' && sheetRef.current) {
+                const focusableElements = sheetRef.current.querySelectorAll<HTMLElement>(
+                    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                );
+
+                if (focusableElements.length === 0) return;
+
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+
+                if (event.shiftKey && document.activeElement === firstElement) {
+                    event.preventDefault();
+                    lastElement.focus();
+                } else if (!event.shiftKey && document.activeElement === lastElement) {
+                    event.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
+
+    if (!isClient) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-            {/* Backdrop */}
-            <div
-                className={`
-          absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300
-          ${isOpen ? 'opacity-100' : 'opacity-0'}
-        `}
-                onClick={onClose}
-            />
-
-            {/* Sheet Content */}
-            <div
-                className={`
-          relative w-full max-w-lg bg-white dark:bg-gray-900 
-          rounded-t-2xl sm:rounded-2xl shadow-xl 
-          transform transition-transform duration-300 ease-out
-          max-h-[90vh] flex flex-col
-          ${isOpen ? 'translate-y-0 scale-100' : 'translate-y-full sm:translate-y-10 sm:scale-95'}
-        `}
-            >
-                {/* Handle bar for mobile feel */}
-                <div className="w-full flex justify-center pt-3 pb-1 sm:hidden" onClick={onClose}>
-                    <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full" />
-                </div>
-
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {title || 'Menu'}
-                    </h3>
-                    <button
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: shouldReduceMotion ? 0 : duration.base }}
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                         onClick={onClose}
-                        className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                        <XCircleIcon className="w-6 h-6 text-gray-500" />
-                    </button>
-                </div>
+                        aria-hidden="true"
+                    />
 
-                {/* Scrollable Content */}
-                <div className="overflow-y-auto p-4">
-                    {children}
+                    {/* Sheet Content */}
+                    <motion.div
+                        ref={sheetRef}
+                        tabIndex={-1}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="bottomsheet-title"
+                        initial={shouldReduceMotion ? { opacity: 0 } : { y: '100%', scale: 1 }}
+                        animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, scale: 1 }}
+                        exit={shouldReduceMotion ? { opacity: 0 } : { y: '100%', scale: 1 }}
+                        transition={shouldReduceMotion ? { duration: 0 } : { duration: duration.base, ease: easing.easeOut }}
+                        className="relative w-full max-w-lg bg-white dark:bg-slate-900 
+                                  rounded-t-2xl sm:rounded-2xl shadow-xl 
+                                  max-h-[90vh] flex flex-col focus:outline-none z-10"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Handle bar for mobile feel */}
+                        <div className="w-full flex justify-center pt-3 pb-1 sm:hidden" onClick={onClose}>
+                            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer" />
+                        </div>
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                            <h3 id="bottomsheet-title" className="text-lg font-semibold text-gray-900 dark:text-white">
+                                {title || 'Menu'}
+                            </h3>
+                            <button
+                                onClick={onClose}
+                                aria-label="Close bottom sheet"
+                                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                                <XCircleIcon className="w-6 h-6 text-gray-500" />
+                            </button>
+                        </div>
+
+                        {/* Scrollable Content */}
+                        <div className="overflow-y-auto p-4">
+                            {children}
+                        </div>
+                    </motion.div>
                 </div>
-            </div>
-        </div>,
+            )}
+        </AnimatePresence>,
         document.body
     );
 };

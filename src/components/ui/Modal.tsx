@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './Button';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface ModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const isClient = typeof document !== 'undefined';
+  const { shouldReduceMotion } = useReducedMotion();
 
   useEffect(() => {
     if (isOpen) {
@@ -97,6 +99,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
           className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
           aria-labelledby="modal-title"
           role="dialog"
@@ -105,10 +108,10 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
         >
           <motion.div
             ref={modalRef as React.RefObject<HTMLDivElement>}
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 20 }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 20 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", damping: 25, stiffness: 300 }}
             className={`relative w-full ${maxWidth} mx-4 max-h-[90vh] sm:max-h-[85vh] flex flex-col`}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
             id="modal-container"
