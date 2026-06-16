@@ -78,7 +78,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
             onClick={handleNavClick}
             className="flex flex-col items-center justify-center gap-1 
                       relative touch-manipulation focus-visible:outline-none 
-                      focus-visible:ring-2 focus-visible:ring-indigo-500/50 
+                      focus-visible:ring-2 focus-visible:ring-emerald-500/50 
                       focus-visible:ring-offset-2 rounded-xl transition-all duration-200"
             style={{ minWidth: '60px', minHeight: '52px' }}
             aria-label={item.label}
@@ -89,8 +89,8 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
                 {isActive && (
                   <div
                     className="absolute top-1.5 left-1/2 -translate-x-1/2 
-                              w-6 h-[3px] bg-indigo-500 dark:bg-indigo-400 
-                              rounded-full shadow-[0_1px_4px_rgba(99,102,241,0.4)]"
+                              w-6 h-[3px] bg-emerald-500 dark:bg-emerald-400 
+                              rounded-full shadow-[0_1px_4px_rgba(16,185,129,0.4)]"
                   />
                 )}
 
@@ -98,7 +98,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
                 <div
                   className={`p-1.5 rounded-xl transition-all duration-300 ${
                     isActive
-                      ? 'bg-indigo-500/10 dark:bg-indigo-500/15 scale-105'
+                      ? 'bg-emerald-500/10 dark:bg-emerald-500/15 scale-105'
                       : 'bg-transparent hover:bg-slate-100/50 dark:hover:bg-slate-800/30'
                   }`}
                   style={{ marginTop: '4px' }}
@@ -106,7 +106,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
                   <item.icon
                     className={`w-5 h-5 transition-colors duration-200 ${
                       isActive
-                        ? 'text-indigo-600 dark:text-indigo-400'
+                        ? 'text-emerald-600 dark:text-emerald-400'
                         : 'text-slate-500 dark:text-slate-400'
                     }`}
                   />
@@ -116,7 +116,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
                 <span
                   className={`text-[10px] leading-3 transition-colors duration-200 ${
                               isActive
-                                ? 'font-semibold text-indigo-600 dark:text-indigo-400'
+                                ? 'font-semibold text-emerald-600 dark:text-emerald-400'
                                 : 'font-medium text-slate-600 dark:text-slate-400'
                             }`}
                 >
@@ -132,7 +132,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           onClick={handleMoreClick}
           className="flex flex-col items-center justify-center gap-0.5 
                     relative touch-manipulation focus-visible:outline-none 
-                    focus-visible:ring-2 focus-visible:ring-indigo-500/50 
+                    focus-visible:ring-2 focus-visible:ring-emerald-500/50 
                     focus-visible:ring-offset-2 rounded-xl transition-all duration-200"
           style={{ minWidth: '60px', minHeight: '52px' }}
           aria-label="More options"
@@ -144,8 +144,8 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           {isMoreMenuHighlighted && (
             <div
               className="absolute top-1.5 left-1/2 -translate-x-1/2 
-                        w-6 h-[3px] bg-indigo-500 dark:bg-indigo-400 
-                        rounded-full shadow-[0_1px_4px_rgba(99,102,241,0.4)]"
+                        w-6 h-[3px] bg-emerald-500 dark:bg-emerald-400 
+                        rounded-full shadow-[0_1px_4px_rgba(16,185,129,0.4)]"
             />
           )}
 
@@ -153,7 +153,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           <div
             className={`p-1.5 rounded-xl transition-all duration-300 ${
               isMoreMenuHighlighted
-                ? 'bg-indigo-500/10 dark:bg-indigo-500/15 scale-105'
+                ? 'bg-emerald-500/10 dark:bg-emerald-500/15 scale-105'
                 : 'bg-transparent hover:bg-slate-100/50 dark:hover:bg-slate-800/30'
             }`}
             style={{ marginTop: '4px' }}
@@ -161,7 +161,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
             <MoreHorizontalIcon
               className={`w-5 h-5 transition-colors duration-200 ${
                 isMoreMenuHighlighted
-                  ? 'text-indigo-600 dark:text-indigo-400'
+                  ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             />
@@ -171,7 +171,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           <span
             className={`text-[10px] leading-3 transition-colors duration-200 ${
                         isMoreMenuHighlighted
-                          ? 'font-semibold text-indigo-600 dark:text-indigo-400'
+                          ? 'font-semibold text-emerald-600 dark:text-emerald-400'
                           : 'font-medium text-slate-600 dark:text-slate-400'
                       }`}
           >

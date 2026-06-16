@@ -37,7 +37,7 @@ const getValidationStateClasses = (hasError: boolean, showSuccess: boolean) => {
         return 'border-emerald-500 focus:border-emerald-500 focus-visible:ring-emerald-500';
     }
 
-    return 'border-slate-300 dark:border-slate-600 focus:border-indigo-500 focus-visible:ring-indigo-500';
+    return 'border-slate-300 dark:border-slate-600 focus:border-emerald-500 focus-visible:ring-emerald-500';
 };
 
 export const ValidatedInput = React.forwardRef<HTMLInputElement, ValidatedInputProps>(
