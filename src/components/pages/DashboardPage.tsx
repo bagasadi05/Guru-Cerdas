@@ -19,6 +19,7 @@ import {
   PlusIcon,
 } from '../Icons';
 import { Button } from '../ui/Button';
+import { SectionHeading } from '../ui/SectionHeading';
 import { WelcomeEmptyState } from '../EmptyStates';
 import { AIInsightWidget } from '../dashboard/AIInsightWidget';
 import StatsGrid from '../dashboard/StatsGrid';
@@ -178,19 +179,14 @@ const DashboardPage: React.FC = () => {
           {data && <TodayActionPanel data={data} />}
           {/* Operational Section */}
           <section className="space-y-4">
-            <div className="flex items-center gap-2 mb-4 px-2">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="w-1.5 h-5 bg-emerald-500 rounded-full inline-block"></span>
-                Aksi Cepat & Wawasan
-              </h2>
-            </div>
+            <SectionHeading>Aksi Cepat & Wawasan</SectionHeading>
             <QuickActionCards
               pendingGrades={studentsMissingGrade.length}
               incompleteTasks={tasks.length}
             />
 
             {/* AI Insight Widget */}
-            <div data-tutorial="ai-insight" className="bg-white dark:bg-slate-900 rounded-xl p-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+            <div data-tutorial="ai-insight" className="bg-white dark:bg-slate-900 rounded-2xl p-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
               <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-emerald-500/10">
                 <h3 className="flex items-center gap-2 font-semibold text-xl text-slate-900 dark:text-white">
                   <BrainCircuitIcon className="w-5 h-5 text-emerald-500" />
@@ -211,12 +207,7 @@ const DashboardPage: React.FC = () => {
         <div className={`space-y-6 order-3 lg:col-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'}`}>
           {/* Analytics Section */}
           <section className="space-y-6">
-            <div className="flex items-center gap-2 mb-4 px-2">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="w-1.5 h-5 bg-emerald-500 rounded-full inline-block"></span>
-                Analisis Penilaian & Kehadiran
-              </h2>
-            </div>
+            <SectionHeading>Analisis Penilaian & Kehadiran</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Attendance Chart */}
               <div className="flex flex-col">
@@ -231,10 +222,7 @@ const DashboardPage: React.FC = () => {
           {data && (data.classes.length > 0 || data.students.length > 0) && (
             <section className="space-y-6">
               <div className="flex items-center gap-2 mb-4 px-2">
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                  <span className="w-1.5 h-5 bg-emerald-500 rounded-full inline-block"></span>
-                  Performa Kelas & Siswa
-                </h2>
+              <SectionHeading>Performa Kelas & Siswa</SectionHeading>
               </div>
 
               {/* Class Analytics */}
@@ -269,12 +257,7 @@ const DashboardPage: React.FC = () => {
           {/* Summary Alerts Grid */}
           {data && (
             <section className="space-y-4">
-              <div className="flex items-center gap-2 mb-2 px-2">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 animate-fade-in">
-                  <span className="w-1.5 h-5 bg-emerald-500 rounded-full inline-block"></span>
-                  Informasi & Tindakan Prioritas
-                </h2>
-              </div>
+              <SectionHeading animate>Informasi & Tindakan Prioritas</SectionHeading>
               <DashboardSummaryCards data={data} />
             </section>
           )}
@@ -283,7 +266,7 @@ const DashboardPage: React.FC = () => {
 
         {/* Right Column */}
         <div className={`space-y-4 order-2 lg:row-span-4 lg:row-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-3 lg:col-start-10 block' : 'hidden lg:block lg:col-span-3 lg:col-start-10'}`}>
-          <div className="bg-white dark:bg-slate-900 rounded-xl h-full max-h-[800px] flex flex-col overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl h-full max-h-[800px] flex flex-col overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
             <Tabs defaultValue="schedule" className="w-full flex flex-col h-full">
               <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-slate-50/60 dark:bg-slate-800/40 backdrop-blur-md">
                 <TabsList className="w-full grid grid-cols-2">
@@ -307,7 +290,7 @@ const DashboardPage: React.FC = () => {
                     tasks.slice(0, 10).map((task) => (
                       <div
                         key={task.id}
-                        className="p-4 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-xl hover:shadow-md transition-all group cursor-pointer"
+                        className="p-4 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl hover:shadow-md transition-all group cursor-pointer"
                       >
                         <div className="flex items-start justify-between">
                           <div>
@@ -321,7 +304,7 @@ const DashboardPage: React.FC = () => {
                             </p>
                           </div>
                           <div
-                            className={`w-2.5 h-2.5 rounded-full mt-1.5 ${isTaskOverdue(task.due_date, currentTime) ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`}
+                            className={`w-2.5 h-2.5 rounded-full mt-1.5 ${isTaskOverdue(task.due_date, currentTime) ? 'bg-red-500 shadow-sm shadow-red-500/50' : 'bg-blue-500 shadow-sm shadow-blue-500/50'}`}
                           ></div>
                         </div>
                       </div>
@@ -365,18 +348,18 @@ const DashboardPage: React.FC = () => {
           className={`flex flex-col gap-3 transition-all duration-300 ${isFabOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-10 pointer-events-none'}`}
         >
           <Link to="/jadwal" className="flex items-center gap-3 pr-1 group">
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg shadow-black/10 text-sm font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               Jadwal
             </span>
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-amber-500 shadow-xl flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
+            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-emerald-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
               <CalendarIcon className="w-6 h-6" />
             </div>
           </Link>
           <button onClick={openSearch} className="flex items-center gap-3 pr-1 group">
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg shadow-black/10 text-sm font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               Cari
             </span>
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-sky-500 shadow-xl flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
+            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
               <SearchIcon className="w-6 h-6" />
             </div>
           </button>
@@ -385,18 +368,18 @@ const DashboardPage: React.FC = () => {
             className="flex items-center gap-3 pr-1 group"
           >
             {' '}
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg shadow-black/10 text-sm font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               AI Chat
             </span>
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-purple-500 shadow-xl flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
+            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-emerald-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
               <BrainCircuitIcon className="w-6 h-6" />
             </div>
           </button>
           <Link to="/pengaturan" className="flex items-center gap-3 pr-1 group">
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg shadow-black/10 text-sm font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               Pengaturan
             </span>
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-500 shadow-xl flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
+            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-400 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
               <SettingsIcon className="w-6 h-6" />
             </div>
           </Link>
