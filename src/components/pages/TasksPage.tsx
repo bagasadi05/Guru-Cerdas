@@ -694,7 +694,7 @@ const TasksPage: React.FC = () => {
                     <div className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress</div>
                 </div>
                 <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-4 sm:p-6 text-center">
-                    <div className="text-2xl sm:text-4xl font-bold text-emerald-500 mb-1">{stats.done}</div>
+                    <div className="text-2xl sm:text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">{stats.done}</div>
                     <div className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Selesai</div>
                 </div>
             </div>

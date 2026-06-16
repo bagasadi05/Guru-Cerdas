@@ -64,12 +64,12 @@ Standardized border radius for consistent rounding.
 | Token | Value | Tailwind Class | Use Case |
 |-------|-------|----------------|----------|
 | `none` | 0 | `rounded-none` | Sharp corners |
-| `sm` | 4px | `rounded` | Subtle rounding |
-| `md` | 8px | `rounded-lg` | **Buttons, Inputs** |
-| `lg` | 12px | `rounded-xl` | **Cards, Nav items** |
-| `xl` | 16px | `rounded-2xl` | **Modals, Dropdowns** |
-| `2xl` | 24px | `rounded-3xl` | Feature cards |
-| `3xl` | 32px | `rounded-[2rem]` | Hero elements |
+| `sm` | 8px | `rounded-lg` | **Buttons, Inputs** |
+| `md` | 12px | `rounded-xl` | **Dropdowns, Tooltips** |
+| `lg` | 16px | `rounded-2xl` | **Cards, Nav items, Modals** |
+| `xl` | 20px | `rounded-[1.25rem]` | Large rounded sections |
+| `2xl` | 24px | `rounded-3xl` | Prominent elements |
+| `3xl` | 32px | `rounded-[2rem]` | Extra prominent elements |
 | `full` | 9999px | `rounded-full` | **Badges, Avatars** |
 
 ### Component Standards
@@ -79,13 +79,13 @@ Standardized border radius for consistent rounding.
 | Button | 8px | `rounded-lg` |
 | Input | 8px | `rounded-lg` |
 | Card | 16px | `rounded-2xl` |
-| Modal | 24px | `rounded-3xl` |
-| Bottom Sheet | 24px top | `rounded-t-3xl` |
+| Modal | 16px | `rounded-2xl` |
+| Bottom Sheet | 16px top | `rounded-t-2xl` |
 | Badge/Pill | 9999px | `rounded-full` |
 | Avatar | 9999px | `rounded-full` |
 | Dropdown | 16px | `rounded-2xl` |
-| Tooltip | 8px | `rounded-lg` |
-| Nav Item | 12px | `rounded-xl` |
+| Tooltip | 12px | `rounded-xl` |
+| Nav Item | 16px | `rounded-2xl` |
 
 ### Usage
 
@@ -93,11 +93,11 @@ Standardized border radius for consistent rounding.
 // ✅ Correct - Use component standards
 <button className="rounded-lg">Button</button>
 <div className="rounded-2xl">Card</div>
-<div className="rounded-3xl">Modal</div>
+<div className="rounded-2xl">Modal</div>
 
 // ❌ Avoid inconsistent radius
 <button className="rounded-xl">...</button>  // Use rounded-lg for buttons
-<div className="rounded-md">Card</div>       // Use rounded-2xl for cards
+<div className="rounded-[14px]">Card</div>   // Use rounded-2xl for cards
 ```
 
 ---
@@ -134,7 +134,8 @@ Elevation system for visual hierarchy.
 For branded/interactive elements:
 
 ```css
---shadow-primary: 0 4px 14px rgba(99, 102, 241, 0.25);   /* Indigo */
+--shadow-primary: 0 4px 14px rgba(16, 185, 129, 0.25);   /* Emerald */
+--shadow-accent: 0 4px 14px rgba(99, 102, 241, 0.25);    /* Indigo */
 --shadow-success: 0 4px 14px rgba(16, 185, 129, 0.25);   /* Green */
 --shadow-warning: 0 4px 14px rgba(245, 158, 11, 0.25);   /* Amber */
 --shadow-error: 0 4px 14px rgba(239, 68, 68, 0.25);      /* Red */
@@ -145,7 +146,7 @@ For branded/interactive elements:
 ```tsx
 // ✅ Correct
 <div className="shadow-sm hover:shadow-lg">Card</div>
-<button className="shadow-sm shadow-indigo-500/20">Primary Button</button>
+<button className="shadow-sm shadow-emerald-500/20">Primary Button</button>
 
 // ❌ Avoid
 <div className="shadow-md">Card</div>  // Use shadow-sm for default
@@ -206,12 +207,12 @@ For branded/interactive elements:
 
 ```tsx
 // ✅ Correct
-<button className="bg-indigo-600 hover:bg-indigo-700">Primary</button>
+<button className="bg-emerald-500 hover:bg-emerald-600">Primary</button>
 <span className="text-emerald-600">Success text</span>
 <div className="bg-slate-50 dark:bg-slate-800">Card</div>
 
 // ❌ Avoid using arbitrary colors
-<button className="bg-purple-500">...</button>  // Use indigo palette
+<button className="bg-purple-500">...</button>  // Use brand palettes
 <span className="text-green-400">...</span>      // Use emerald palette
 ```
 
@@ -225,7 +226,6 @@ For branded/interactive elements:
 |-------|------|----------|
 | `sans` | Inter | **Default - body text, UI** |
 | `serif` | Tinos | Headings, Display text |
-| `mono` | JetBrains Mono | Code, Technical content |
 
 ### Font Sizes
 
@@ -349,7 +349,7 @@ import { componentStyles } from '@/styles/designTokens';
 ```
 
 **Output:**
-- `rounded-xl` (16px)
+- `rounded-2xl` (16px)
 - `shadow-sm` → `shadow-lg` on hover
 - `bg-white dark:bg-slate-800`
 - `border border-slate-200 dark:border-slate-700`
@@ -365,7 +365,7 @@ import { componentStyles } from '@/styles/designTokens';
 
 **Output:**
 - `rounded-lg` (8px)
-- `bg-indigo-600 hover:bg-indigo-700`
+- `bg-emerald-500 hover:bg-emerald-600`
 - `shadow-sm hover:shadow-md`
 - `active:scale-95`
 
@@ -378,7 +378,7 @@ import { componentStyles } from '@/styles/designTokens';
 **Output:**
 - `rounded-lg` (8px)
 - `border-slate-200 dark:border-slate-700`
-- `focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20`
+- `focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20`
 
 ### Modal
 
@@ -389,7 +389,7 @@ import { componentStyles } from '@/styles/designTokens';
 ```
 
 **Output:**
-- `rounded-3xl` (24px)
+- `rounded-2xl` (16px)
 - `shadow-2xl`
 - `bg-white dark:bg-slate-900`
 
@@ -418,7 +418,7 @@ import { componentStyles } from '@/styles/designTokens';
 |---------|---------|--------|--------|
 | Button | `px-4 py-2` | `rounded-lg` | `shadow-sm` |
 | Card | `p-4` or `p-6` | `rounded-2xl` | `shadow-sm` |
-| Modal | `p-6` | `rounded-3xl` | `shadow-2xl` |
+| Modal | `p-6` | `rounded-2xl` | `shadow-2xl` |
 | Input | `px-4 py-3` | `rounded-lg` | none |
 | Badge | `px-2.5 py-0.5` | `rounded-full` | none |
 
@@ -458,4 +458,4 @@ function MyCard({ children, interactive = false }) {
 
 ---
 
-*Last updated: December 2024*
+*Last updated: June 2026*

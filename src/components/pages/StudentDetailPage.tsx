@@ -203,7 +203,7 @@ const StudentDetailPage = () => {
                             <img src={getStudentAvatar(student.avatar_url, student.gender, student.id)} alt={student.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg dark:border-white/10" />
                             <input type="file" ref={photoInputRef} onChange={handlePhotoChange} accept="image/png, image/jpeg" className="hidden" disabled={isUploadingPhoto || !isOnline} />
                             {canManageStudentProfile ? (
-                                <button onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} className="absolute -bottom-1 -right-1 p-2 bg-purple-600 text-white rounded-full shadow-md hover:scale-110 transition-transform">
+                                <button onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} className="absolute -bottom-1 -right-1 p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-md hover:scale-110 transition-transform">
                                     <CameraIcon className="w-4 h-4" />
                                 </button>
                             ) : null}
@@ -275,7 +275,7 @@ const StudentDetailPage = () => {
                 </header>
 
                 {/* Semester Selector */}
-                <div className="mt-6 mb-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-xl p-3 border border-gray-200 dark:border-white/10 animate-fade-in-up">
+                <div className="mt-6 mb-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-3 border border-gray-200 dark:border-white/10 animate-fade-in-up">
                     <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter Semester:</span>
                     <SemesterSelector
                         value={selectedSemesterId || 'all'}

@@ -564,7 +564,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                     </Button>
                     <div>
                         <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                            <SparklesIcon className="w-8 h-8 text-indigo-500 animate-pulse" />
+                            <SparklesIcon className="w-8 h-8 text-emerald-500 animate-pulse" />
                             Katrol Nilai & Evaluasi Cerdas
                         </h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-1">
@@ -613,7 +613,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         setAssessmentName('');
                                         setCustomAssessmentName('');
                                     }} 
-                                    className="text-[10px] text-indigo-500 font-bold hover:underline"
+                                    className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
                                 >
                                     {isCustomAssessment ? 'Pilih Tersimpan' : 'Ketik Manual'}
                                 </button>
@@ -664,7 +664,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                     </div>
                 ) : loadingStudents || loadingGrades ? (
                     <div className="no-print py-16 flex flex-col items-center justify-center text-center">
-                        <RefreshCwIcon className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
+                        <RefreshCwIcon className="w-10 h-10 animate-spin text-emerald-500 mb-4" />
                         <p className="text-slate-500">Memuat berkas nilai dari database...</p>
                     </div>
                 ) : listData.length === 0 || existingRecords.length === 0 ? (
@@ -695,7 +695,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-sm font-bold flex items-center gap-1.5">
-                                        <span className="w-2 h-4 rounded-sm bg-indigo-500"></span>
+                                        <span className="w-2 h-4 rounded-sm bg-emerald-500"></span>
                                         Bobot Rumus Katrol
                                     </CardTitle>
                                 </CardHeader>
@@ -791,18 +791,18 @@ export const GradeAdjustmentPage: React.FC = () => {
                             </Card>
 
                             {/* AI Cerdas Audit Panel */}
-                            <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/10 border border-indigo-200/50 dark:border-indigo-900/30 rounded-2xl">
-                                <h3 className="text-sm font-bold text-indigo-950 dark:text-indigo-300 mb-2 flex items-center gap-1.5">
-                                    <SparklesIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                            <div className="p-4 bg-emerald-50/30 dark:bg-emerald-950/10 border border-emerald-200/50 dark:border-emerald-900/30 rounded-2xl">
+                                <h3 className="text-sm font-bold text-emerald-950 dark:text-emerald-300 mb-2 flex items-center gap-1.5">
+                                    <SparklesIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                                     Audit AI Cerdas (81-98)
                                 </h3>
-                                <p className="text-xs text-indigo-900/70 dark:text-indigo-400/70 mb-4 leading-relaxed">
+                                <p className="text-xs text-emerald-900/70 dark:text-emerald-400/70 mb-4 leading-relaxed">
                                     Evaluasi sebaran nilai berbasis AI OpenRouter untuk mengantisipasi kompresi dan melindungi peringkat nilai tinggi.
                                 </p>
                                 <Button
                                     onClick={handleRunAiAudit}
                                     disabled={isAiLoading}
-                                    className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20"
+                                    className="w-full h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
                                 >
                                     {isAiLoading ? (
                                         <>
@@ -817,8 +817,8 @@ export const GradeAdjustmentPage: React.FC = () => {
                                     )}
                                 </Button>
                                 {classAnalysis && (
-                                    <div className="mt-4 p-3 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-indigo-950 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 max-h-36 overflow-y-auto">
-                                        <strong className="text-indigo-600 dark:text-indigo-400">Analisis Kelas AI:</strong>
+                                    <div className="mt-4 p-3 bg-white dark:bg-slate-900 rounded-xl border border-emerald-100 dark:border-emerald-950 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 max-h-36 overflow-y-auto">
+                                        <strong className="text-emerald-600 dark:text-emerald-400">Analisis Kelas AI:</strong>
                                         <p className="mt-1">{classAnalysis}</p>
                                     </div>
                                 )}
@@ -858,7 +858,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         disabled={aiAdjustments.length === 0}
                                         className={`text-left px-3 py-2.5 text-xs font-semibold rounded-lg border transition-all flex items-center justify-between ${
                                             activeScenario === 'ai'
-                                                ? 'bg-indigo-900 text-white border-indigo-900 dark:bg-indigo-400 dark:text-slate-950 dark:border-indigo-400 shadow'
+                                                ? 'bg-emerald-500 text-white border-emerald-500 dark:bg-emerald-400 dark:text-slate-950 dark:border-emerald-400 shadow'
                                                 : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 disabled:opacity-40'
                                         }`}
                                     >
@@ -900,7 +900,8 @@ export const GradeAdjustmentPage: React.FC = () => {
                                 <Button
                                     onClick={() => saveMutation.mutate()}
                                     disabled={saveMutation.isPending || semesterLocked}
-                                    className="w-full h-12 flex items-center justify-center gap-1.5 font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/20"
+                                    variant="primary"
+                                    className="w-full h-12 flex items-center justify-center gap-1.5 font-bold"
                                 >
                                     {saveMutation.isPending ? (
                                         <>
@@ -1007,7 +1008,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         </div>
                                         <div className="flex justify-between py-1 border-b border-slate-50">
                                             <span className="font-semibold text-slate-500">Skenario Terpilih:</span>
-                                            <span className="font-bold text-indigo-600 capitalize">{activeScenario}</span>
+                                            <span className="font-bold text-emerald-600 capitalize">{activeScenario}</span>
                                         </div>
                                     </div>
 
@@ -1104,7 +1105,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                     <div className="flex flex-col">
                                                                         <span>{item.name}</span>
                                                                         {isAiAdjusted && activeScenario === 'ai' && item.aiRationale && (
-                                                                            <span className="no-print text-[9px] text-indigo-500 font-medium italic mt-0.5">
+                                                                            <span className="no-print text-[9px] text-emerald-600 dark:text-emerald-400 font-medium italic mt-0.5">
                                                                                 ✨ {item.aiRationale}
                                                                             </span>
                                                                         )}
@@ -1115,7 +1116,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                 <td className="border border-slate-350 p-2 text-center text-slate-500 font-semibold">
                                                                     <div className="flex items-center justify-center gap-1">
                                                                         <span>{item.ai}</span>
-                                                                        {isAiAdjusted && <span className="no-print text-indigo-500 text-[10px]">✨</span>}
+                                                                        {isAiAdjusted && <span className="no-print text-emerald-500 text-[10px]">✨</span>}
                                                                     </div>
                                                                 </td>
                                                                 <td className="border border-slate-350 p-1 text-center font-bold">

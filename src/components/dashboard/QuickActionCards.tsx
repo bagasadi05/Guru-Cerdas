@@ -75,7 +75,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
           <Link
             key={action.id}
             to={action.link}
-            className={`group relative p-4 rounded-xl ${action.bgColor} border border-slate-200/60 dark:border-slate-700/60 hover:shadow-md transition-all hover:-translate-y-0.5 active:scale-[0.98] flex flex-col items-start h-full min-h-[120px]`}
+            className={`group relative p-4 rounded-2xl ${action.bgColor} border border-slate-200/60 dark:border-slate-700/60 hover:shadow-md transition-all hover:-translate-y-0.5 active:scale-[0.98] flex flex-col items-start h-full min-h-[120px]`}
           >
             <div className={`w-full ${action.color}`}>
               {/* Icon */}

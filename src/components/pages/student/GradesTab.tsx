@@ -217,7 +217,7 @@ const GradesSummary: React.FC<{ records: AcademicRecordRow[]; kkm: number }> = (
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
                     <p className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">{stats.tuntas}</p>
-                    <p className="text-[11px] sm:text-xs text-emerald-500">Tuntas</p>
+                    <p className="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400">Tuntas</p>
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-100 dark:border-cyan-800/30">
                     <p className="text-lg sm:text-xl font-bold text-cyan-600 dark:text-cyan-400">{stats.tuntasPercent}%</p>
