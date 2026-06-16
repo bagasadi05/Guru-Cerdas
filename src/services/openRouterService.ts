@@ -13,9 +13,9 @@ const DEFAULT_PROXY = '/api/openrouter';
 const PRIMARY_MODEL = 'google/gemma-4-31b-it:free';
 const FALLBACK_MODELS = [
     PRIMARY_MODEL,
-    'arcee-ai/trinity-large-preview:free',
-    "google/gemini-2.0-flash-exp:free",
-    "meta-llama/llama-3.2-3b-instruct:free",
+    'google/gemma-4-26b-a4b-it:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'meta-llama/llama-3.2-3b-instruct:free',
 ];
 
 export interface OpenRouterMessage {
@@ -43,12 +43,8 @@ export async function generateOpenRouterContent(
     messages: OpenRouterMessage[],
     useReasoning: boolean = true
 ): Promise<OpenRouterResponse> {
-    if (!OPENROUTER_PROXY_URL && !DEFAULT_PROXY && !(IS_DEV && DEV_API_KEY)) {
-        throw new Error(
-            IS_DEV
-                ? "Set VITE_OPENROUTER_API_KEY in .env for local dev, or VITE_OPENROUTER_PROXY_URL for proxy mode."
-                : "VITE_OPENROUTER_PROXY_URL is not set. Please configure the serverless proxy URL in your .env file."
-        );
+    if (IS_DEV && !DEV_API_KEY && !OPENROUTER_PROXY_URL) {
+        throw new Error("Set VITE_OPENROUTER_API_KEY in .env for local dev, or VITE_OPENROUTER_PROXY_URL for proxy mode.");
     }
 
     // Resolve endpoint + headers:

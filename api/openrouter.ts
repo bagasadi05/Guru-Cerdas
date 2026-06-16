@@ -160,9 +160,13 @@ function isModelAllowed(model: string | undefined): boolean {
   if (model.endsWith(':free')) return true;
   const whitelist = [
     'google/gemma-4-31b-it:free',
-    'arcee-ai/trinity-large-preview:free',
-    'google/gemini-2.0-flash-exp:free',
+    'google/gemma-4-31b-it',
+    'google/gemma-4-26b-a4b-it:free',
+    'google/gemma-4-26b-a4b-it',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'meta-llama/llama-3.3-70b-instruct',
     'meta-llama/llama-3.2-3b-instruct:free',
+    'meta-llama/llama-3.2-3b-instruct',
   ];
   return whitelist.includes(model);
 }
