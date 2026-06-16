@@ -155,28 +155,28 @@ For branded/interactive elements:
 
 ## Colors
 
-### Primary Palette (Indigo)
+### Primary Palette (Emerald)
 
 | Shade | Hex | Use Case |
 |-------|-----|----------|
-| 50 | `#eef2ff` | Light backgrounds |
-| 100 | `#e0e7ff` | Hover states |
-| 200 | `#c7d2fe` | Borders |
-| 300 | `#a5b4fc` | Icons |
-| 400 | `#818cf8` | Hover icons |
-| **500** | `#6366f1` | **Primary buttons, Links** |
-| 600 | `#4f46e5` | Active states |
-| 700 | `#4338ca` | Dark variant |
-| 800 | `#3730a3` | Dark backgrounds |
-| 900 | `#312e81` | Darkest |
+| 50 | `#f0fdf4` | Light success backgrounds |
+| 100 | `#dcfce7` | Hover success states |
+| 200 | `#bbf7d0` | Borders |
+| 300 | `#86efac` | Icons |
+| 400 | `#4ade80` | Hover icons |
+| **500** | `#10b981` | **Primary brand color, buttons, links** |
+| 600 | `#059669` | Active states |
+| 700 | `#047857` | Dark variant |
+| 800 | `#065f46` | Dark backgrounds |
+| 900 | `#064e3b` | Darkest |
 
-### Secondary Palette (Emerald)
+### Accent Palette (Indigo)
 
 | Shade | Hex | Use Case |
 |-------|-----|----------|
-| 50 | `#ecfdf5` | Light success backgrounds |
-| **500** | `#10b981` | **Success states, Secondary actions** |
-| 600 | `#059669` | Active success |
+| 50 | `#eef2ff` | Light accent backgrounds |
+| **500** | `#6366f1` | **Accent highlights, links** |
+| 600 | `#4f46e5` | Active accent states |
 
 ### Neutral Palette (Slate)
 
@@ -224,7 +224,7 @@ For branded/interactive elements:
 | Token | Font | Use Case |
 |-------|------|----------|
 | `sans` | Inter | **Default - body text, UI** |
-| `serif` | Playfair Display | Headings, Display text |
+| `serif` | Tinos | Headings, Display text |
 | `mono` | JetBrains Mono | Code, Technical content |
 
 ### Font Sizes
