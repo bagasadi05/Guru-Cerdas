@@ -13,10 +13,11 @@ This design system provides a standardized set of design tokens and component st
 3. [Shadows](#shadows)
 4. [Colors](#colors)
 5. [Typography](#typography)
-6. [Transitions](#transitions)
-7. [Z-Index](#z-index)
-8. [Component Styles](#component-styles)
-9. [Usage Guidelines](#usage-guidelines)
+6. [Transitions & Motion](#transitions--motion)
+7. [Accessibility (A11y)](#accessibility-a11y)
+8. [Z-Index](#z-index)
+9. [Component Styles](#component-styles)
+10. [Usage Guidelines](#usage-guidelines)
 
 ---
 
@@ -265,9 +266,13 @@ For branded/interactive elements:
 
 ---
 
-## Transitions
+## Transitions & Motion
 
-### Durations
+### CSS Transitions
+
+For standard CSS transitions, use the following tokens:
+
+#### Durations
 
 | Token | Duration | Use Case |
 |-------|----------|----------|
@@ -277,7 +282,7 @@ For branded/interactive elements:
 | `slow` | 300ms | Page transitions |
 | `slower` | 500ms | Complex animations |
 
-### Easings
+#### Easings
 
 | Token | Curve | Use Case |
 |-------|-------|----------|
@@ -286,15 +291,93 @@ For branded/interactive elements:
 | `ease-in-out` | `cubic-bezier(0.4, 0, 0.2, 1)` | Continuous motion |
 | `bounce` | `cubic-bezier(0.68, -0.55, 0.265, 1.55)` | Playful interactions |
 
-### Usage
+### Framer Motion Tokens
+
+For React animations using `framer-motion`, import unified tokens from [motion.ts](file:///c:/Users/yuiop/Documents/Coding/Guru-Cerdas/Guru-Cerdas/src/styles/motion.ts).
+
+#### Standard Durations & Easings
+```typescript
+import { duration, easing } from '@/styles/motion';
+
+// Durations (seconds)
+duration.fast // 0.15s (150ms)
+duration.base // 0.25s (250ms)
+duration.slow // 0.40s (400ms)
+
+// Easings
+easing.easeOut // cubic-bezier(0.16, 1, 0.3, 1) (easeOutExpo)
+easing.spring  // Spring transition config (damping: 25, stiffness: 300)
+```
+
+#### Reusable Animation Variants
+We expose predefined, accessible variants to ensure standard entry/exit behavior:
+- `fadeIn`: Simple fade animation.
+- `slideUp`: Fade and slide up by 16px.
+- `scaleIn`: Fade and scale from 95% to 100%.
+- `staggerContainer`: Staggers children by 0.05 seconds with a 0.05s initial delay.
 
 ```tsx
-// ✅ Standard transition
-<div className="transition-all duration-200 ease-out">...</div>
+import { motion } from 'framer-motion';
+import { slideUp, staggerContainer } from '@/styles/motion';
 
-// ✅ Shorthand
-<div className="transition-colors">...</div>  // Color changes only
-<div className="transition-transform">...</div>  // Transform only
+function List({ items }) {
+  return (
+    <motion.div variants={staggerContainer} initial="initial" animate="animate">
+      {items.map(item => (
+        <motion.div key={item.id} variants={slideUp}>
+          {item.name}
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
+```
+
+---
+
+## Accessibility (A11y)
+
+The application is built to be accessible to all users, adhering to WCAG 2.1 AA standards.
+
+### 1. Focus Indicators
+All interactive elements must have a clear, high-contrast focus ring when focused using a keyboard. Avoid browser default outlines.
+- **Tailwind Class**: `focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-emerald-500`
+- Ensure `focus:outline-none` is combined with `focus-visible:ring-...`.
+
+### 2. Screen Readers & Labels
+Icon-only buttons **must** have descriptive text labels for screen readers.
+- Never use a raw icon inside a button without an label.
+- Always provide an `aria-label` or use the unified `IconButton` component from [accessibility.tsx](file:///c:/Users/yuiop/Documents/Coding/Guru-Cerdas/Guru-Cerdas/src/utils/accessibility.tsx):
+```tsx
+import { IconButton } from '@/utils/accessibility';
+import { EditIcon } from '@/components/Icons';
+
+// ✅ Correct
+<IconButton 
+  icon={<EditIcon />} 
+  label="Ubah Data Siswa" 
+  onClick={handleEdit} 
+/>
+```
+
+### 3. Reduced Motion
+Always respect user operating system preferences for reduced motion.
+- Use the `useReducedMotion()` hook from `framer-motion`.
+- For large transitions (animations > 0.5s, large slide/scale factors), shorten the duration or bypass the animation entirely when reduced motion is requested:
+
+```tsx
+import { useReducedMotion } from 'framer-motion';
+
+function Component() {
+  const shouldReduceMotion = useReducedMotion();
+  const transition = shouldReduceMotion 
+    ? { duration: 0.1 } 
+    : { duration: 1.0, ease: "easeOut" };
+    
+  return (
+    <motion.div animate={{ scale: 1 }} transition={transition} />
+  );
+}
 ```
 
 ---
@@ -458,4 +541,4 @@ function MyCard({ children, interactive = false }) {
 
 ---
 
-*Last updated: June 2026*
+*Last updated: June 2026 (Design Sprint 4)*
