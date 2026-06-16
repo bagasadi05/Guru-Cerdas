@@ -46,17 +46,17 @@ const RoleSelectionPage: React.FC = () => {
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 text-shadow-md animate-fade-in">
                         Selamat Datang di Guru Cerdas
                     </h1>
-                    <p className="text-lg text-gray-600 dark:text-indigo-200 mb-8 md:mb-12 max-w-2xl mx-auto animate-fade-in animation-delay-200">
+                    <p className="text-lg text-gray-600 dark:text-emerald-200 mb-8 md:mb-12 max-w-2xl mx-auto animate-fade-in animation-delay-200">
                         Platform digital untuk manajemen kelas yang efisien dan portal informasi siswa.
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 animate-fade-in-up animation-delay-400">
                         {/* Teacher Card */}
                         <div className="group">
-                            <div className="login-card mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-sky-500 dark:group-hover:border-purple-400 dark:group-hover:shadow-purple-500/30">
+                            <div className="login-card mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-emerald-500 dark:group-hover:border-emerald-400 dark:group-hover:shadow-emerald-500/30">
                                 <div className="flex justify-center mb-6">
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-sky-100 to-blue-200 dark:from-purple-500/20 dark:to-indigo-500/20 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 transition-transform group-hover:scale-110">
-                                        <GraduationCapIcon className="w-8 h-8 sm:w-10 sm:h-10 text-sky-600 dark:text-purple-300" />
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-500/20 dark:to-emerald-600/20 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 transition-transform group-hover:scale-110">
+                                        <GraduationCapIcon className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600 dark:text-emerald-400" />
                                     </div>
                                 </div>
                                 <h2 className="form-title mb-2">Saya Seorang Guru</h2>
@@ -69,10 +69,10 @@ const RoleSelectionPage: React.FC = () => {
 
                         {/* Parent/Student Card */}
                         <div className="group">
-                            <div className="login-card mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-sky-500 dark:group-hover:border-cyan-400 dark:group-hover:shadow-cyan-500/30">
+                            <div className="login-card mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-indigo-500 dark:group-hover:border-indigo-400 dark:group-hover:shadow-indigo-500/30">
                                 <div className="flex justify-center mb-6">
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-cyan-100 to-sky-200 dark:from-cyan-500/20 dark:to-sky-500/20 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 transition-transform group-hover:scale-110">
-                                        <UsersIcon className="w-8 h-8 sm:w-10 sm:h-10 text-cyan-600 dark:text-cyan-300" />
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-500/20 dark:to-indigo-600/20 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 transition-transform group-hover:scale-110">
+                                        <UsersIcon className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-600 dark:text-indigo-400" />
                                     </div>
                                 </div>
                                 <h2 className="form-title mb-2">Saya Orang Tua/Siswa</h2>

@@ -163,23 +163,23 @@
 .form-group-icon input:focus {
   outline: none;
   background: white;
-  border-color: #0284c7;
-  box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.2);
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
 .dark .form-group-icon input:focus {
   background: rgba(17, 24, 39, 1);
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
 }
 
 .form-group-icon input:focus + .icon {
-  color: #0284c7;
+  color: #10b981;
   transform: translateY(-50%) scale(1.15) rotate(-8deg);
 }
 
 .dark .form-group-icon input:focus + .icon {
-  color: #60a5fa;
+  color: #4ade80;
   transform: translateY(-50%) scale(1.15) rotate(-8deg);
 }
 
@@ -188,7 +188,7 @@
   padding: 14px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   font-size: 16px;
   font-weight: 600;
@@ -196,21 +196,21 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 5px 15px rgba(2, 132, 199, 0.2);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
 }
 
 .dark .form-btn {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
 }
 
 .form-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(2, 132, 199, 0.3);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
 }
 
 .dark .form-btn:hover:not(:disabled) {
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
 }
 
 .form-btn:disabled { cursor: not-allowed; background: #9ca3af; }
@@ -227,7 +227,7 @@
 
 .form-links a,
 .form-links button {
-  color: #0369a1;
+  color: #059669;
   text-decoration: none;
   font-size: 14px;
   transition: color 0.3s ease;
@@ -240,7 +240,7 @@
 .dark .form-links a,
 .dark .form-links button { color: #9ca3af; }
 .form-links a:hover,
-.form-links button:hover { color: #075985; }
+.form-links button:hover { color: #047857; }
 .dark .form-links a:hover,
 .dark .form-links button:hover { color: white; }
 

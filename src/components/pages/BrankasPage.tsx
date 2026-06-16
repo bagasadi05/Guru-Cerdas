@@ -258,7 +258,7 @@ const BrankasPage: React.FC = () => {
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-950/20">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mx-auto" />
+          <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mx-auto" />
           <p className="mt-4 text-slate-500 dark:text-slate-400 font-medium">Memuat Brankas Kelas...</p>
         </div>
       </div>
@@ -271,7 +271,7 @@ const BrankasPage: React.FC = () => {
       <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
               <FolderLock className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -294,7 +294,7 @@ const BrankasPage: React.FC = () => {
             }}
             className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
               activeTab === 'active'
-                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-white shadow-md shadow-slate-200/40 dark:shadow-none'
+                ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-white shadow-md shadow-slate-200/40 dark:shadow-none'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -308,7 +308,7 @@ const BrankasPage: React.FC = () => {
             }}
             className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
               activeTab === 'archived'
-                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-white shadow-md shadow-slate-200/40 dark:shadow-none'
+                ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-white shadow-md shadow-slate-200/40 dark:shadow-none'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -324,7 +324,7 @@ const BrankasPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari kelas..."
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
           />
         </div>
       </div>
@@ -333,7 +333,7 @@ const BrankasPage: React.FC = () => {
       {detailClass ? (
         <div className="bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 rounded-3xl shadow-xl overflow-hidden animate-fade-in-up">
           {/* Detail Header */}
-          <div className="p-6 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border-b border-slate-200/60 dark:border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="p-6 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 border-b border-slate-200/60 dark:border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
@@ -347,7 +347,7 @@ const BrankasPage: React.FC = () => {
               </button>
               <div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Archive className="w-5 h-5 text-indigo-500" />
+                  <Archive className="w-5 h-5 text-emerald-500" />
                   Arsip Kelas: {detailClass.name}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
@@ -374,7 +374,7 @@ const BrankasPage: React.FC = () => {
                       value={studentSearchQuery}
                       onChange={(e) => setStudentSearchQuery(e.target.value)}
                       placeholder="Cari siswa..."
-                      className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                      className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
                     />
                   </div>
                 )}
@@ -383,7 +383,7 @@ const BrankasPage: React.FC = () => {
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-2">
                 {loadingStudents ? (
                   <div className="py-20 text-center">
-                    <Loader2 className="w-6 h-6 text-indigo-500 animate-spin mx-auto" />
+                    <Loader2 className="w-6 h-6 text-emerald-500 animate-spin mx-auto" />
                   </div>
                 ) : classStudents.length === 0 ? (
                   <div className="py-20 text-center text-slate-400 italic text-sm">Tidak ada siswa terdaftar.</div>
@@ -396,8 +396,8 @@ const BrankasPage: React.FC = () => {
                       onClick={() => setSelectedStudent(student)}
                       className={`w-full flex items-center gap-3 p-3 rounded-2xl border text-left transition-all ${
                         selectedStudent?.id === student.id
-                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                          : 'bg-white dark:bg-slate-900 border-slate-200/70 dark:border-slate-800 text-slate-800 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-slate-700 hover:shadow-sm'
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+                          : 'bg-white dark:bg-slate-900 border-slate-200/70 dark:border-slate-800 text-slate-800 dark:text-slate-300 hover:border-emerald-300 dark:hover:border-slate-700 hover:shadow-sm'
                       }`}
                     >
                       <img
@@ -407,7 +407,7 @@ const BrankasPage: React.FC = () => {
                       />
                       <div className="overflow-hidden flex-1">
                         <p className="font-bold text-sm truncate">{student.name}</p>
-                        <p className={`text-[10px] ${selectedStudent?.id === student.id ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'} font-semibold truncate mt-0.5`}>
+                        <p className={`text-[10px] ${selectedStudent?.id === student.id ? 'text-emerald-200' : 'text-slate-400 dark:text-slate-500'} font-semibold truncate mt-0.5`}>
                           Gender: {student.gender}
                         </p>
                       </div>
@@ -441,7 +441,7 @@ const BrankasPage: React.FC = () => {
                       href={`/cetak-rapot/${selectedStudent.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md shadow-indigo-500/20 hover:shadow-lg transition-all"
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-md shadow-emerald-500/20 hover:shadow-lg transition-all"
                     >
                       <Printer className="w-4 h-4" />
                       Cetak Rapor Lama
@@ -450,7 +450,7 @@ const BrankasPage: React.FC = () => {
 
                   {loadingStudentHistory ? (
                     <div className="py-20 text-center">
-                      <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto" />
+                      <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto" />
                     </div>
                   ) : studentStats ? (
                     <div className="space-y-6">
@@ -578,13 +578,13 @@ const BrankasPage: React.FC = () => {
             {displayedClasses.map((cls) => (
               <div
                 key={cls.id}
-                className="bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 rounded-3xl p-5 shadow-lg relative overflow-hidden group hover:shadow-xl hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[180px]"
+                className="bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 rounded-3xl p-5 shadow-lg relative overflow-hidden group hover:shadow-xl hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[180px]"
               >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-600 opacity-50"></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-indigo-600 opacity-50"></div>
                 <div>
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     {cls.is_archived ? (
                       <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1">
@@ -599,10 +599,10 @@ const BrankasPage: React.FC = () => {
                     )}
                   </div>
 
-                  <h3 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-2">
                     Kelas {cls.name}
                     {cls.grade_level && (
-                      <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-lg border border-indigo-200/50 dark:border-indigo-500/20">
+                      <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded-lg border border-emerald-200/50 dark:border-emerald-500/20">
                         Tingkat {cls.grade_level}
                       </span>
                     )}
@@ -641,7 +641,7 @@ const BrankasPage: React.FC = () => {
                   ) : (
                     <Button
                       onClick={() => setConfirmArchiveClass(cls)}
-                      className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold shadow-md shadow-indigo-500/20 hover:shadow-lg transition-all"
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold shadow-md shadow-emerald-500/20 hover:shadow-lg transition-all"
                     >
                       <Archive className="w-4 h-4 mr-1.5" />
                       Simpan di Brankas
@@ -687,7 +687,7 @@ const BrankasPage: React.FC = () => {
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="Ketik ARSIP di sini"
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-center tracking-widest text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner"
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-center tracking-widest text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
             />
           </div>
 
@@ -705,7 +705,7 @@ const BrankasPage: React.FC = () => {
             <Button
               onClick={handleArchive}
               disabled={archiveMutation.isPending || confirmText !== 'ARSIP'}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-500/20"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-500/20"
             >
               {archiveMutation.isPending ? 'Mengarsipkan...' : 'Ya, Masukkan Brankas'}
             </Button>
