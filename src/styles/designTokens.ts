@@ -269,9 +269,9 @@ export const colorClasses = {
         ring: 'ring-slate-500',
     },
     success: {
-        bg: 'bg-green-500',
-        bgLight: 'bg-green-50 dark:bg-green-900/20',
-        text: 'text-green-600 dark:text-green-400',
+        bg: 'bg-emerald-500',
+        bgLight: 'bg-emerald-50/50 dark:bg-emerald-900/20',
+        text: 'text-emerald-600 dark:text-emerald-400',
     },
     warning: {
         bg: 'bg-yellow-500',

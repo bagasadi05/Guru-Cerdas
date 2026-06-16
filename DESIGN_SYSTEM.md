@@ -136,7 +136,7 @@ For branded/interactive elements:
 ```css
 --shadow-primary: 0 4px 14px rgba(16, 185, 129, 0.25);   /* Emerald */
 --shadow-accent: 0 4px 14px rgba(99, 102, 241, 0.25);    /* Indigo */
---shadow-success: 0 4px 14px rgba(16, 185, 129, 0.25);   /* Green */
+--shadow-success: 0 4px 14px rgba(16, 185, 129, 0.25);   /* Emerald */
 --shadow-warning: 0 4px 14px rgba(245, 158, 11, 0.25);   /* Amber */
 --shadow-error: 0 4px 14px rgba(239, 68, 68, 0.25);      /* Red */
 ```
@@ -401,7 +401,7 @@ import { componentStyles } from '@/styles/designTokens';
 
 1. **Use the spacing scale** - Always use Tailwind spacing classes (`p-4`, `p-6`, etc.)
 2. **Follow component radius standards** - Buttons are `rounded-lg`, Cards are `rounded-2xl`
-3. **Use semantic colors** - Error = red, Success = green, Warning = amber
+3. **Use semantic colors** - Error = red, Success = emerald, Warning = amber
 4. **Maintain shadow hierarchy** - Cards get `shadow-sm`, Modals get `shadow-2xl`
 5. **Import from designTokens** - Use `componentStyles` for consistency
 
