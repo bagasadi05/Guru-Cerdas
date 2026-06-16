@@ -751,7 +751,7 @@ const AdminPage: React.FC = () => {
                     <div className="fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3">
                         <AlertCircle size={20} />
                         <span>{error}</span>
-                        <button onClick={() => setError(null)}><X size={18} /></button>
+                        <button onClick={() => setError(null)} aria-label="Tutup pesan error"><X size={18} /></button>
                     </div>
                 )}
 

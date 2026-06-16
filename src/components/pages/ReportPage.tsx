@@ -326,7 +326,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                         <SettingsIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         Pengaturan Rapor
                     </h2>
-                    <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsSettingsOpen(false)}>
+                    <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsSettingsOpen(false)} aria-label="Tutup pengaturan rapor">
                         <ArrowLeftIcon className="w-5 h-5" />
                     </Button>
                 </div>
@@ -473,12 +473,12 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                 {/* Mobile Header */}
                 <header className="flex-shrink-0 h-16 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 md:hidden z-20">
                     <div className="flex items-center gap-3">
-                        <Link to={`/siswa/${studentId}`} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <Link to={`/siswa/${studentId}`} aria-label="Kembali ke detail siswa" className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                             <ArrowLeftIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                         </Link>
                         <h1 className="font-bold text-slate-900 dark:text-white">Pratinjau Rapor</h1>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
+                    <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)} aria-label="Buka pengaturan rapor">
                         <SettingsIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                     </Button>
                 </header>

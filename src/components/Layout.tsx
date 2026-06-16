@@ -121,7 +121,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Desktop sidebar - hidden on mobile */}
       <div
         className={`fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 lg:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isMobileSidebarOpen ? 'block' : 'hidden lg:block'}`}
-        id="navigation"
+        id="main-navigation"
         role="navigation"
         aria-label="Main navigation"
       >

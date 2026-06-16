@@ -29,7 +29,7 @@ export const KeyboardShortcutsPanel: React.FC<{
             </kbd>
             Pintasan Keyboard
           </h2>
-          <button onClick={onClose} className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button onClick={onClose} aria-label="Tutup pintasan keyboard" className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
             <X className="h-5 w-5 text-slate-500" />
           </button>
         </div>
