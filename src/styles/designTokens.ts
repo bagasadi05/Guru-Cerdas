@@ -97,8 +97,8 @@ export const componentRadius = {
     button: radiusClasses.sm,
     /** Inputs - rounded-lg (0.5rem / 8px) */
     input: radiusClasses.sm,
-    /** Cards - rounded-xl (0.75rem / 12px) */
-    card: radiusClasses.md,
+    /** Cards - rounded-2xl (1rem / 16px) */
+    card: radiusClasses.lg,
     /** Modals/Dialogs - rounded-2xl (1rem / 16px) */
     modal: radiusClasses.lg,
     /** Bottom sheets - rounded-t-2xl */
@@ -127,17 +127,17 @@ export const shadows = {
     /** No shadow */
     none: 'none',
     /** Extra small - subtle elevation */
-    xs: '0 1px 2px rgba(0, 0, 0, 0.05)',
+    xs: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
     /** Small - pressed/low elevation */
-    sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
+    sm: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
     /** Medium - hover/raised */
-    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.08)',
     /** Large - floating elements */
-    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
     /** Extra large - overlays */
-    xl: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
     /** 2XL - prominent modals */
-    '2xl': '0 8px 24px rgba(0, 0, 0, 0.12)',
+    '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
 } as const;
 
 // Tailwind class mappings
@@ -222,23 +222,23 @@ export const colors = {
     // Semantic colors
     success: {
         light: '#dcfce7',
-        main: '#22c55e',
-        dark: '#166534',
+        main: '#10b981',
+        dark: '#064e3b',
     },
     warning: {
         light: '#fef9c3',
-        main: '#eab308',
-        dark: '#a16207',
+        main: '#f59e0b',
+        dark: '#78350f',
     },
     error: {
         light: '#fee2e2',
         main: '#ef4444',
-        dark: '#991b1b',
+        dark: '#7f1d1d',
     },
     info: {
         light: '#dbeafe',
         main: '#3b82f6',
-        dark: '#1e40af',
+        dark: '#1e3a8a',
     },
 
     // Accent colors
@@ -303,7 +303,7 @@ export const typography = {
     // Font families
     fontFamily: {
         sans: 'Inter, system-ui, -apple-system, sans-serif',
-        serif: 'Playfair Display, Georgia, serif',
+        serif: 'Tinos, Georgia, serif',
         mono: 'JetBrains Mono, Consolas, monospace',
     },
 
