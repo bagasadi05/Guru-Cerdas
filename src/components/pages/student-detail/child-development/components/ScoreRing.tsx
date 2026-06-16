@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
 /**
  * ScoreRing — Animated circular progress indicator.
@@ -46,6 +48,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
   showScore = true,
   className = '',
 }) => {
+  const { shouldReduceMotion } = useReducedMotion();
   // Clamp the score between 0 and maxScore for safety
   const clampedScore = Math.max(0, Math.min(score, maxScore));
   const ratio = clampedScore / maxScore;
@@ -90,7 +93,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             strokeDashoffset={circumference}
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: circumference * (1 - ratio) }}
-            transition={{
+            transition={shouldReduceMotion ? { duration: 0 } : {
               duration: 1.2,
               ease: [0.34, 1.56, 0.64, 1], // spring-like overshoot
               delay: 0.15,
@@ -103,9 +106,9 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
           <motion.span
             className={`absolute inset-0 flex items-center justify-center font-bold ${text}`}
             style={{ fontSize: size * 0.28 }}
-            initial={{ opacity: 0, scale: 0.6 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.slow, delay: 0.4 }}
           >
             {Math.round(clampedScore)}
           </motion.span>

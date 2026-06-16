@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { duration as motionDuration, easing } from '../styles/motion';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import GreetingRobot from './GreetingRobot';
@@ -187,7 +188,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  transition={{ duration: motionDuration.base, ease: "easeInOut" }}
                   className="h-full"
                 >
                   {children}

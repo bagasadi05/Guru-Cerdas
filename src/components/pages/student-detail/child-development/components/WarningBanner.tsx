@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { duration as motionDuration } from '../../../../../styles/motion';
 import { AlertCircleIcon, ChevronDownIcon } from '../../../../Icons';
 
 // ── Prop Types ──────────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ export const WarningBanner: React.FC<WarningBannerProps> = ({
           </span>
           <motion.span
             animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: motionDuration.base }}
           >
             <ChevronDownIcon className="w-4 h-4 text-rose-400 dark:text-rose-500" />
           </motion.span>
@@ -74,7 +75,7 @@ export const WarningBanner: React.FC<WarningBannerProps> = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            transition={{ duration: motionDuration.base, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 pt-1 border-t border-rose-200/60 dark:border-rose-800/60">

@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
 // ── Prop Types ──────────────────────────────────────────────────────────────
 interface SubjectPerformanceChartProps {
@@ -23,7 +25,7 @@ const getBarGradientDark = (score: number): string => {
   if (score >= 85) return 'dark:from-emerald-500 dark:to-emerald-700';
   if (score >= 75) return 'dark:from-blue-500 dark:to-blue-700';
   if (score >= 60) return 'dark:from-amber-500 dark:to-amber-600';
-  return 'dark:from-rose-500 dark:to-rose-600';
+  return 'dark:from-rose-500 dark:to-rose-700';
 };
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -32,6 +34,7 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
   kkmLine = 75,
   className = '',
 }) => {
+  const { shouldReduceMotion } = useReducedMotion();
   // ── Empty state ─────────────────────────────────────────────────────────
   if (!subjects || subjects.length === 0) {
     return (
@@ -106,9 +109,9 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
                       ${getBarGradient(clampedScore)}
                       ${getBarGradientDark(clampedScore)}
                     `}
-                    initial={{ width: 0 }}
+                    initial={shouldReduceMotion ? { width: barWidth } : { width: 0 }}
                     animate={{ width: barWidth }}
-                    transition={{
+                    transition={shouldReduceMotion ? { duration: 0 } : {
                       duration: 0.7,
                       ease: [0.25, 0.46, 0.45, 0.94],
                       delay: 0.1 * idx,
@@ -120,9 +123,9 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
                     <motion.span
                       className="absolute inset-y-0 flex items-center text-xs font-bold text-white drop-shadow-sm"
                       style={{ right: `calc(100% - ${barWidth} + 8px)` }}
-                      initial={{ opacity: 0 }}
+                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: 0.1 * idx + 0.5 }}
+                      transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, delay: 0.1 * idx + 0.5 }}
                     >
                       {average}
                     </motion.span>
@@ -130,9 +133,9 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
                     <motion.span
                       className="absolute inset-y-0 flex items-center text-xs font-bold text-slate-600 dark:text-slate-300"
                       style={{ left: `calc(${barWidth} + 6px)` }}
-                      initial={{ opacity: 0 }}
+                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: 0.1 * idx + 0.5 }}
+                      transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, delay: 0.1 * idx + 0.5 }}
                     >
                       {average}
                     </motion.span>

@@ -26,6 +26,8 @@ import { useSemester } from '../../../../../contexts/SemesterContext';
 import { useMemo } from 'react';
 import { getJsPDF, getAutoTable } from '../../../../../utils/dynamicImports';
 import { motion, AnimatePresence } from 'framer-motion';
+import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { addPdfHeader, ensureLogosLoaded } from '../../../../../utils/pdfHeaderUtils';
 import { calculateRadarPoints, calculateAxisEndpoints, calculateLabelPositions } from '../utils/radarChartUtils';
 import { LoadingProgress } from '../components/LoadingProgress';
@@ -202,6 +204,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
   selectedSemesterId = null,
   selectedAcademicYearId = null
 }) => {
+  const { shouldReduceMotion } = useReducedMotion();
   const [analysis, setAnalysis] = useState<ComprehensiveChildAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(1);
@@ -2275,13 +2278,13 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             {/* Overall Growth narrative summary */}
             {comparativeAnalysis.summary.overallComparison && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-gradient-to-br from-indigo-500/10 to-purple-500/5 dark:from-indigo-500/5 dark:to-purple-500/0 border border-indigo-500/20 dark:border-indigo-500/10 rounded-2xl p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden"
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base }}
+                className="bg-gradient-to-br from-emerald-500/10 to-slate-500/5 dark:from-emerald-500/5 dark:to-slate-500/0 border border-emerald-500/20 dark:border-emerald-500/10 rounded-2xl p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl -mr-6 -mt-6" />
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/25 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-3 font-semibold text-lg">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl -mr-6 -mt-6" />
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 dark:bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-450 mb-3 font-semibold text-lg">
                   🌱
                 </div>
                 <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-wide uppercase mb-1">Ulasan Pertumbuhan Menyeluruh Ananda</h4>
@@ -2686,12 +2689,12 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         <Button
           onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
           variant="outline"
-          className="rounded-full shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-bold px-6 py-5 flex items-center gap-2 hover:bg-slate-50 text-indigo-650 dark:text-indigo-400 hover:text-indigo-750"
+          className="rounded-full shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-bold px-6 py-5 flex items-center gap-2 hover:bg-slate-50 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
         >
           {isDetailsExpanded ? 'Sembunyikan Detail Analisis' : 'Lihat Detail Analisis AI & Grafik Radar'}
           <motion.span
             animate={{ rotate: isDetailsExpanded ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.fast }}
             className="inline-block"
           >
             ↓
@@ -2706,7 +2709,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, ease: 'easeInOut' }}
             className="overflow-hidden space-y-6"
           >
             {/* Period Comparison in Analysis View */}

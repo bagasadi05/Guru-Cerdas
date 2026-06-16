@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { CheckIcon } from '../../../../Icons';
 
 // ── Prop Types ──────────────────────────────────────────────────────────────
@@ -57,6 +59,7 @@ const ScoreRing: React.FC<{
   trackColor: string;
   trackColorDark: string;
 }> = ({ score, size = 64, strokeWidth = 5, color, trackColor, trackColorDark }) => {
+  const { shouldReduceMotion } = useReducedMotion();
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const progress = Math.min(Math.max(score, 0), 100);
@@ -96,7 +99,7 @@ const ScoreRing: React.FC<{
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 1, ease: 'easeOut', delay: 0.3 }}
         />
       </svg>
       {/* Center label */}
@@ -118,13 +121,14 @@ export const DevelopmentScoreCard: React.FC<DevelopmentScoreCardProps> = ({
   className = '',
 }) => {
   const config = ASPECT_CONFIG[aspect];
+  const { shouldReduceMotion } = useReducedMotion();
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-      whileHover={{ scale: 1.02 }}
+      transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.slow, ease: easing.easeOut }}
+      whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
       className={`
         relative overflow-hidden rounded-2xl
         bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm

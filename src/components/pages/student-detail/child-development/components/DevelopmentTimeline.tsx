@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
 import { ClockIcon, CalendarIcon } from '../../../../Icons';
+import { duration as motionDuration } from '../../../../../styles/motion';
+import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
 // ── Prop Types ──────────────────────────────────────────────────────────────
 interface DevelopmentTimelineProps {
@@ -11,16 +13,6 @@ interface DevelopmentTimelineProps {
   className?: string;
 }
 
-// ── Animation Variants ──────────────────────────────────────────────────────
-const itemVariants: Variants = {
-  hidden: { opacity: 0, x: -12 },
-  visible: (i: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: { delay: 0.15 * i, duration: 0.35, ease: 'easeOut' },
-  }),
-};
-
 // ── Timeline Section ────────────────────────────────────────────────────────
 const TimelineSection: React.FC<{
   title: string;
@@ -29,7 +21,19 @@ const TimelineSection: React.FC<{
   accentColor: string;       // e.g. "bg-amber-500"
   accentPulse: string;       // e.g. "bg-amber-400"
   indexOffset: number;        // stagger offset for second section
-}> = ({ title, icon, targets, accentColor, accentPulse, indexOffset }) => (
+}> = ({ title, icon, targets, accentColor, accentPulse, indexOffset }) => {
+  const { shouldReduceMotion } = useReducedMotion();
+
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, x: shouldReduceMotion ? 0 : -12 },
+    visible: (i: number) => ({
+      opacity: 1,
+      x: 0,
+      transition: shouldReduceMotion ? { duration: 0 } : { delay: 0.15 * i, duration: motionDuration.fast, ease: 'easeOut' },
+    }),
+  };
+
+  return (
   <div className="relative pl-8">
     {/* ── Milestone node with pulse ────────────────────────────────── */}
     <div className="absolute left-0 top-0 flex items-center justify-center">
@@ -79,7 +83,8 @@ const TimelineSection: React.FC<{
       )}
     </ul>
   </div>
-);
+  );
+};
 
 // ── Main Component ──────────────────────────────────────────────────────────
 export const DevelopmentTimeline: React.FC<DevelopmentTimelineProps> = ({

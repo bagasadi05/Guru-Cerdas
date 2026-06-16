@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { ScoreRing } from './ScoreRing';
 import { DownloadIcon, RefreshCwIcon, SparklesIcon, WifiOffIcon, AlertTriangleIcon } from '../../../../Icons';
 import { Button } from '../../../../ui/Button';
@@ -56,12 +58,13 @@ export const GlanceHeroCard: React.FC<GlanceHeroCardProps> = ({
   onRefresh,
 }) => {
   const isAI = generatedBy === 'AI';
+  const { shouldReduceMotion } = useReducedMotion();
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: 'easeOut' }}
+      transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.slow, ease: easing.easeOut }}
       className={[
         'relative overflow-hidden rounded-2xl border shadow-lg',
         // Gradient background
@@ -81,9 +84,9 @@ export const GlanceHeroCard: React.FC<GlanceHeroCardProps> = ({
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
           {/* Score Ring */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.slow, delay: 0.1 }}
             className="flex-shrink-0"
           >
             <ScoreRing
