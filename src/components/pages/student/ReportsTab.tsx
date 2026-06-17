@@ -6,11 +6,11 @@ import { ReportRow } from './types';
 
 // Report Categories
 export const REPORT_CATEGORIES = {
-    akademik: { label: 'Akademik', color: 'blue', icon: '📚', description: 'Catatan terkait pembelajaran & nilai' },
-    perilaku: { label: 'Perilaku', color: 'orange', icon: '👤', description: 'Catatan sikap & perilaku siswa' },
-    kesehatan: { label: 'Kesehatan', color: 'green', icon: '🏥', description: 'Catatan kondisi kesehatan' },
-    prestasi: { label: 'Prestasi', color: 'purple', icon: '🏆', description: 'Pencapaian & prestasi siswa' },
-    lainnya: { label: 'Lainnya', color: 'gray', icon: '📝', description: 'Catatan umum lainnya' },
+    akademik: { label: 'Akademik', color: 'indigo', icon: '📚', description: 'Catatan terkait pembelajaran & nilai' },
+    perilaku: { label: 'Perilaku', color: 'slate', icon: '👤', description: 'Catatan sikap & perilaku siswa' },
+    kesehatan: { label: 'Kesehatan', color: 'emerald', icon: '🏥', description: 'Catatan kondisi kesehatan' },
+    prestasi: { label: 'Prestasi', color: 'indigo', icon: '🏆', description: 'Pencapaian & prestasi siswa' },
+    lainnya: { label: 'Lainnya', color: 'slate', icon: '📝', description: 'Catatan umum lainnya' },
 } as const;
 
 export type ReportCategory = keyof typeof REPORT_CATEGORIES;
@@ -61,13 +61,13 @@ const ReportsStats: React.FC<{ reports: ReportRow[] }> = ({ reports }) => {
                 <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{stats.total}</p>
                 <p className="text-xs text-slate-500">Total Catatan</p>
             </div>
-            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.byCategory.akademik || 0}</p>
-                <p className="text-xs text-blue-500">📚 Akademik</p>
+            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30">
+                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.byCategory.akademik || 0}</p>
+                <p className="text-xs text-indigo-500">📚 Akademik</p>
             </div>
-            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
-                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.byCategory.perilaku || 0}</p>
-                <p className="text-xs text-amber-500">👤 Perilaku</p>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/30">
+                <p className="text-2xl font-bold text-slate-600 dark:text-slate-400">{stats.byCategory.perilaku || 0}</p>
+                <p className="text-xs text-slate-500">👤 Perilaku</p>
             </div>
             <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30">
                 <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.byCategory.prestasi || 0}</p>
