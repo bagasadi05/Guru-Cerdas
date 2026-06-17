@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { duration as motionDuration } from '../../../../../styles/motion';
+import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { AlertCircleIcon, ChevronDownIcon } from '../../../../Icons';
 
 // ── Prop Types ──────────────────────────────────────────────────────────────
@@ -16,6 +17,7 @@ export const WarningBanner: React.FC<WarningBannerProps> = ({
   className = '',
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { shouldReduceMotion } = useReducedMotion();
 
   // Don't render anything if there are no warnings
   if (!warnings || warnings.length === 0) return null;
@@ -60,7 +62,7 @@ export const WarningBanner: React.FC<WarningBannerProps> = ({
           </span>
           <motion.span
             animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: motionDuration.base }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, ease: easing.easeOut }}
           >
             <ChevronDownIcon className="w-4 h-4 text-rose-400 dark:text-rose-500" />
           </motion.span>
@@ -72,10 +74,10 @@ export const WarningBanner: React.FC<WarningBannerProps> = ({
         {isExpanded && (
           <motion.div
             key="warning-content"
-            initial={{ height: 0, opacity: 0 }}
+            initial={shouldReduceMotion ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: motionDuration.base, ease: 'easeInOut' }}
+            exit={shouldReduceMotion ? { height: 0, opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 pt-1 border-t border-rose-200/60 dark:border-rose-800/60">
