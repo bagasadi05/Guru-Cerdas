@@ -19,6 +19,10 @@ import { MembersTab } from './extracurricular/MembersTab';
 import { AttendanceTab } from './extracurricular/AttendanceTab';
 import { GradesTab } from './extracurricular/GradesTab';
 import { ExternalStudentsManager } from './extracurricular/ExternalStudentsManager';
+import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
+import { Textarea } from '../ui/Textarea';
+import { Checkbox } from '../ui/Checkbox';
 
 const ExtracurricularPage: React.FC = () => {
     const { user: _user } = useAuth();
@@ -487,48 +491,48 @@ const ExtracurricularPage: React.FC = () => {
                         <form onSubmit={(e) => { e.preventDefault(); mutations.extracurricularMutation.mutate(formData); }} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Ekstrakurikuler *</label>
-                                <input required type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500" />
+                                <Input required type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Kategori</label>
-                                    <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500">
+                                    <Select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}>
                                         <option value="">Pilih Kategori</option>
                                         <option value="Olahraga">Olahraga</option>
                                         <option value="Seni">Seni</option>
                                         <option value="Akademik">Akademik</option>
                                         <option value="Keagamaan">Keagamaan</option>
                                         <option value="Lainnya">Lainnya</option>
-                                    </select>
+                                    </Select>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Maks Peserta</label>
-                                    <input type="number" min="1" value={formData.max_participants} onChange={(e) => setFormData({ ...formData, max_participants: parseInt(e.target.value) || 30 })} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500" />
+                                    <Input type="number" min="1" value={formData.max_participants} onChange={(e) => setFormData({ ...formData, max_participants: parseInt(e.target.value) || 30 })} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hari Jadwal</label>
-                                    <select value={formData.schedule_day} onChange={(e) => setFormData({ ...formData, schedule_day: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500">
+                                    <Select value={formData.schedule_day} onChange={(e) => setFormData({ ...formData, schedule_day: e.target.value })}>
                                         <option value="">Pilih Hari</option>
                                         {['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'].map(d => <option key={d} value={d}>{d}</option>)}
-                                    </select>
+                                    </Select>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Jam Jadwal</label>
-                                    <input type="time" value={formData.schedule_time} onChange={(e) => setFormData({ ...formData, schedule_time: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500" />
+                                    <Input type="time" value={formData.schedule_time} onChange={(e) => setFormData({ ...formData, schedule_time: e.target.value })} />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Pembina</label>
-                                <input type="text" value={formData.coach_name} onChange={(e) => setFormData({ ...formData, coach_name: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500" />
+                                <Input type="text" value={formData.coach_name} onChange={(e) => setFormData({ ...formData, coach_name: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Deskripsi</label>
-                                <textarea rows={3} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 resize-none" />
+                                <Textarea rows={3} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
                             </div>
                             <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
-                                <input type="checkbox" id="is_active" checked={formData.is_active} onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })} className="w-5 h-5 rounded text-amber-500 focus:ring-amber-500 bg-white border-slate-300" />
+                                <Checkbox id="is_active" checked={formData.is_active} onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })} />
                                 <label htmlFor="is_active" className="text-sm font-medium text-slate-700 dark:text-slate-300">Ekstrakurikuler Aktif</label>
                             </div>
                             <div className="pt-2 flex gap-3">
@@ -570,11 +574,11 @@ const ExtracurricularPage: React.FC = () => {
                             <div className="space-y-4">
                                 {newStudentRows.map((row, index) => (
                                     <div key={index} className="flex gap-3">
-                                        <input required type="text" value={row.name} onChange={(e) => { const n = [...newStudentRows]; n[index].name = e.target.value; setNewStudentRows(n); }} placeholder="Nama Siswa" className="flex-[2] px-3 py-2 rounded-xl border dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
-                                        <select value={row.gender} onChange={(e) => { const n = [...newStudentRows]; n[index].gender = e.target.value as Gender; setNewStudentRows(n); }} className="flex-1 px-3 py-2 rounded-xl border dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white">
+                                        <Input required type="text" value={row.name} onChange={(e) => { const n = [...newStudentRows]; n[index].name = e.target.value; setNewStudentRows(n); }} placeholder="Nama Siswa" className="flex-[2]" />
+                                        <Select value={row.gender} onChange={(e) => { const n = [...newStudentRows]; n[index].gender = e.target.value as Gender; setNewStudentRows(n); }} className="flex-1">
                                             <option value="Laki-laki">L</option><option value="Perempuan">P</option>
-                                        </select>
-                                        <input type="text" value={row.class_name} onChange={(e) => { const n = [...newStudentRows]; n[index].class_name = e.target.value; setNewStudentRows(n); }} placeholder="Kelas (Opsional)" className="flex-1 px-3 py-2 rounded-xl border dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                                        </Select>
+                                        <Input type="text" value={row.class_name} onChange={(e) => { const n = [...newStudentRows]; n[index].class_name = e.target.value; setNewStudentRows(n); }} placeholder="Kelas (Opsional)" className="flex-1" />
                                     </div>
                                 ))}
                             </div>
@@ -595,11 +599,11 @@ const ExtracurricularPage: React.FC = () => {
                     <div className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Edit Siswa Eksternal</h2>
                         <form onSubmit={(e) => { e.preventDefault(); mutations.updateExtraStudentMutation.mutate(editingExtraStudent, { onSuccess: () => setEditingExtraStudent(null) }); }} className="space-y-4">
-                            <input required type="text" value={editingExtraStudent.name} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, name: e.target.value})} className="w-full px-3 py-2 rounded-xl border dark:border-slate-600 dark:bg-slate-700 dark:text-white" placeholder="Nama" />
-                            <select value={editingExtraStudent.gender} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, gender: e.target.value})} className="w-full px-3 py-2 rounded-xl border dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                            <Input required type="text" value={editingExtraStudent.name} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, name: e.target.value})} placeholder="Nama" />
+                            <Select value={editingExtraStudent.gender} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, gender: e.target.value})}>
                                 <option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
-                            </select>
-                            <input type="text" value={editingExtraStudent.class_name || ''} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, class_name: e.target.value})} className="w-full px-3 py-2 rounded-xl border dark:border-slate-600 dark:bg-slate-700 dark:text-white" placeholder="Kelas" />
+                            </Select>
+                            <Input type="text" value={editingExtraStudent.class_name || ''} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, class_name: e.target.value})} placeholder="Kelas" />
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setEditingExtraStudent(null)} className="flex-1 py-2 rounded-xl border dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 dark:text-white">Batal</button>
                                 <button type="submit" disabled={mutations.updateExtraStudentMutation.isPending} className="flex-1 py-2 bg-amber-500 text-white rounded-xl font-bold">Simpan</button>

@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import { pageVariants } from '../../utils/animations';
 import { authSecurity } from '../../services/AuthSecurityService';
+import { Input } from '../ui/Input';
+import { AlertCircleIcon } from '../Icons';
 
 const PortalLoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -148,7 +150,7 @@ const PortalLoginPage: React.FC = () => {
 
                     <form onSubmit={handleSubmit}>
                         <div className="form-group-icon">
-                            <input
+                            <Input
                                 type="text"
                                 placeholder="KODE AKSES"
                                 required
@@ -169,7 +171,10 @@ const PortalLoginPage: React.FC = () => {
                         </div>
 
                         {error && (
-                            <p className="text-center text-sm text-yellow-300 mb-4">{error}</p>
+                            <p className="flex items-center justify-center gap-1 text-xs text-rose-600 dark:text-rose-400 animate-fade-in mb-4" role="alert">
+                                <AlertCircleIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                                {error}
+                            </p>
                         )}
 
                         <button type="submit" className="form-btn" disabled={loading || lockedOut}>

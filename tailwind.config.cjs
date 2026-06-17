@@ -101,6 +101,7 @@ module.exports = {
         '6xl': '4rem',     // 64px
         '7xl': '5rem',     // 80px
         '8xl': '6rem',     // 96px
+        '4.5': '1.125rem', // 18px
       },
       zIndex: {
         behind: '-1',

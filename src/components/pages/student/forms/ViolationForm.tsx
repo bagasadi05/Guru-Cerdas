@@ -5,6 +5,7 @@ import { validationResolver } from '../../../../utils/formValidation';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
 import { Select } from '../../../ui/Select';
+import { Textarea } from '../../../ui/Textarea';
 import { ViolationRow } from '../types';
 import { violationList } from '../../../../services/violations.data';
 import { SEVERITY_LEVELS, SeverityLevel } from '../violationMeta';
@@ -206,10 +207,9 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
             {/* Follow-up Notes */}
             <div>
                 <label className="block text-sm font-medium mb-1">Catatan Tindak Lanjut (Opsional)</label>
-                <textarea
+                <Textarea
                     {...register('follow_up_notes')}
                     placeholder="Catatan tambahan atau rencana tindak lanjut..."
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     rows={3}
                 />
             </div>

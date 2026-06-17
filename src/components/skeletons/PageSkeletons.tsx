@@ -82,7 +82,7 @@ export const SchedulePageSkeleton: React.FC = () => (
                 <div key={dayIndex} className="space-y-3">
                     <Skeleton className="h-12 rounded-xl" />
                     {Array.from({ length: 6 }).map((_, slotIndex) => (
-                        <div key={slotIndex} className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-3 space-y-2 border border-indigo-200 dark:border-indigo-800">
+                        <div key={slotIndex} className="bg-gradient-to-br from-emerald-50/50 to-slate-50 dark:from-emerald-950/10 dark:to-slate-900 rounded-xl p-3 space-y-2 border border-emerald-200/50 dark:border-emerald-900/25">
                             <Skeleton className="h-4 w-20" />
                             <Skeleton className="h-5 w-full" />
                             <Skeleton className="h-3 w-16" />
@@ -303,7 +303,7 @@ export const ReportPageSkeleton: React.FC = () => (
             </header>
 
             {/* Preview Content Skeleton */}
-            <main className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center custom-scrollbar bg-gradient-to-br from-slate-100 to-indigo-50 dark:from-slate-900 dark:to-indigo-950">
+            <main className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center custom-scrollbar bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-950">
                 <div className="w-full md:w-[210mm] md:min-h-[297mm] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xl rounded-2xl p-6 md:p-[20mm] border border-slate-200 dark:border-slate-700 space-y-6">
                     {/* Header Letterhead */}
                     <div className="border border-slate-300 dark:border-slate-700 rounded-2xl p-4 md:p-5 flex items-center gap-4">
@@ -404,7 +404,7 @@ export const ParentPortalPageSkeleton: React.FC = () => (
             </div>
 
             {/* Announcement / Welcome Card */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900/30 rounded-3xl p-5 md:p-6 space-y-3">
+            <div className="bg-gradient-to-br from-emerald-50/50 to-slate-50 dark:from-emerald-950/10 dark:to-slate-900/50 border border-emerald-100/50 dark:border-emerald-900/20 rounded-3xl p-5 md:p-6 space-y-3">
                 <Skeleton className="h-6 w-48" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4" />
@@ -431,7 +431,7 @@ export const ParentPortalPageSkeleton: React.FC = () => (
                     <Skeleton className="h-6 w-40" />
                     <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 space-y-4">
                         {Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="flex gap-3 items-start border-l-2 border-indigo-500 pl-3">
+                            <div key={i} className="flex gap-3 items-start border-l-2 border-emerald-500 pl-3">
                                 <div className="space-y-1 flex-1">
                                     <Skeleton className="h-4 w-32" />
                                     <Skeleton className="h-3 w-20" />

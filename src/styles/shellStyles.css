@@ -267,12 +267,12 @@
 }
 
 .form-radio:checked {
-  border-color: #0284c7;
-  background-color: #0284c7;
+  border-color: #059669;
+  background-color: #059669;
 }
 
 .dark .form-radio { border-color: #6b7280; }
-.dark .form-radio:checked { border-color: #818cf8; background-color: #818cf8; }
+.dark .form-radio:checked { border-color: #34d399; background-color: #34d399; }
 
 /* ============================================
    RIPPLE EFFECT
