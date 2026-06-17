@@ -125,10 +125,10 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, ti
                             </h3>
                             <button
                                 onClick={onClose}
-                                aria-label="Close bottom sheet"
-                                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                aria-label="Tutup bottom sheet"
+                                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                             >
-                                <XCircleIcon className="w-6 h-6 text-gray-500" />
+                                <XCircleIcon className="w-6 h-6 text-gray-500" aria-hidden="true" />
                             </button>
                         </div>
 

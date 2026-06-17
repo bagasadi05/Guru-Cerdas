@@ -176,15 +176,16 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                         placeholder="Cari siswa, kelas, tugas, atau jadwal..."
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); setShowHistory(false); setActiveIndex(0); }}
-                        className="w-full h-14 bg-transparent pl-12 pr-12 text-base md:text-lg border-b border-gray-200 dark:border-gray-700 focus:outline-none"
+                        className="w-full h-14 bg-transparent pl-12 pr-12 text-base md:text-lg border-b border-gray-200 dark:border-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset"
                         aria-label="Kotak Pencarian Global"
                     />
                     {searchTerm && (
                         <button
                             onClick={() => { setSearchTerm(''); setActiveIndex(0); }}
-                            className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
+                            aria-label="Hapus pencarian"
+                            className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded"
                         >
-                            <XIcon className="h-5 w-5" />
+                            <XIcon className="h-5 w-5" aria-hidden="true" />
                         </button>
                     )}
                 </div>
