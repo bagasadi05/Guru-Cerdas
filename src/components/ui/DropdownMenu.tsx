@@ -78,7 +78,7 @@ export const DropdownTrigger: React.FC<DropdownTriggerProps> = ({ children, clas
         <button
             ref={context.triggerRef}
             type="button"
-            className={`inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 ${className}`}
+            className={`inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-950 ${className}`}
             onClick={handleClick}
             aria-haspopup="true"
             aria-expanded={context.isOpen}
@@ -98,7 +98,7 @@ export const DropdownContent: React.FC<DropdownContentProps> = ({ children, clas
 
     return (
         <div
-            className={`dropdown-content absolute z-50 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none animate-fade-in-up ${alignmentClasses} ${className}`}
+            className={`dropdown-content absolute z-50 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none animate-fade-in-up ${alignmentClasses} ${className}`}
             role="menu"
             aria-orientation="vertical"
             aria-labelledby="menu-button"
@@ -124,7 +124,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onClick, c
     return (
         <button
             className={`
-                group flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white
+                group flex w-full items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white
                 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 ${className}
             `}
@@ -134,7 +134,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onClick, c
             disabled={disabled}
         >
             {icon && (
-                <span className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300">
+                <span className="mr-3 h-5 w-5 text-slate-400 group-hover:text-slate-500 dark:text-slate-500 dark:group-hover:text-slate-300">
                     {icon}
                 </span>
             )}

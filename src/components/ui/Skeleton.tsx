@@ -7,7 +7,7 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Skeleton: React.FC<SkeletonProps> = ({ className, ...props }) => {
   return (
     <div
-      className={`skeleton-shimmer rounded-md bg-slate-200 dark:bg-slate-700/60 ${className}`}
+      className={`skeleton-shimmer rounded-xl bg-slate-200 dark:bg-slate-800 ${className}`}
       {...props}
     />
   );

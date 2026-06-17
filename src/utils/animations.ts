@@ -4,6 +4,7 @@
  */
 
 import { Variants } from 'framer-motion';
+import { duration as motionDuration, easing } from '../styles/motion';
 
 // Page transition animations
 export const pageVariants: Variants = {
@@ -15,15 +16,15 @@ export const pageVariants: Variants = {
         opacity: 1,
         y: 0,
         transition: {
-            duration: 0.4,
-            ease: [0.25, 0.46, 0.45, 0.94], // easeOutQuad
+            duration: motionDuration.base,
+            ease: easing.easeOut,
         },
     },
     exit: {
         opacity: 0,
         y: -20,
         transition: {
-            duration: 0.3,
+            duration: motionDuration.fast,
         },
     },
 };
@@ -32,8 +33,12 @@ export const pageVariants: Variants = {
 export const fadeInVariants: Variants = {
     initial: { opacity: 0 },
     animate: {
-        opacity: 1,
-        transition: { duration: 0.4 },
+      opacity: 1,
+      transition: { duration: motionDuration.base, ease: 'easeOut' },
+    },
+    exit: {
+      opacity: 0,
+      transition: { duration: motionDuration.fast, ease: 'easeIn' },
     },
 };
 
@@ -47,15 +52,15 @@ export const scaleUpVariants: Variants = {
         opacity: 1,
         scale: 1,
         transition: {
-            duration: 0.3,
-            ease: [0.16, 1, 0.3, 1], // easeOutExpo
+            duration: motionDuration.base,
+            ease: easing.easeOut,
         },
     },
     exit: {
         opacity: 0,
         scale: 0.95,
         transition: {
-            duration: 0.2,
+            duration: motionDuration.fast,
         },
     },
 };
@@ -64,14 +69,21 @@ export const scaleUpVariants: Variants = {
 export const slideUpVariants: Variants = {
     initial: {
         opacity: 0,
-        y: 30,
+        y: 24,
     },
     animate: {
         opacity: 1,
         y: 0,
         transition: {
-            duration: 0.5,
-            ease: [0.16, 1, 0.3, 1],
+            duration: motionDuration.base,
+            ease: easing.easeOut,
+        },
+    },
+    exit: {
+        opacity: 0,
+        y: 24,
+        transition: {
+            duration: motionDuration.fast,
         },
     },
 };
@@ -80,8 +92,8 @@ export const slideUpVariants: Variants = {
 export const staggerContainerVariants: Variants = {
     animate: {
         transition: {
-            staggerChildren: 0.08,
-            delayChildren: 0.1,
+            staggerChildren: 0.05,
+            delayChildren: 0.05,
         },
     },
 };
@@ -89,14 +101,14 @@ export const staggerContainerVariants: Variants = {
 export const staggerItemVariants: Variants = {
     initial: {
         opacity: 0,
-        y: 20,
+        y: 16,
     },
     animate: {
         opacity: 1,
         y: 0,
         transition: {
-            duration: 0.4,
-            ease: [0.25, 0.46, 0.45, 0.94],
+            duration: motionDuration.base,
+            ease: easing.easeOut,
         },
     },
 };
@@ -111,7 +123,7 @@ export const cardHoverVariants: Variants = {
         scale: 1.02,
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
         transition: {
-            duration: 0.2,
+            duration: motionDuration.fast,
             ease: 'easeOut',
         },
     },
@@ -123,8 +135,8 @@ export const cardHoverVariants: Variants = {
 // Button press animation
 export const buttonPressVariants: Variants = {
     initial: { scale: 1 },
-    hover: { scale: 1.05 },
-    tap: { scale: 0.95 },
+    hover: { scale: 1.02 },
+    tap: { scale: 0.98 },
 };
 
 // Pulse animation (for notifications, badges)
@@ -142,14 +154,14 @@ export const pulseVariants: Variants = {
 // Slide in from left (for sidebar items)
 export const slideInLeftVariants: Variants = {
     initial: {
-        x: -20,
+        x: -16,
         opacity: 0,
     },
     animate: {
         x: 0,
         opacity: 1,
         transition: {
-            duration: 0.3,
+            duration: motionDuration.base,
             ease: 'easeOut',
         },
     },
@@ -158,23 +170,23 @@ export const slideInLeftVariants: Variants = {
 // Slide in from right
 export const slideInRightVariants: Variants = {
     initial: {
-        x: 20,
+        x: 16,
         opacity: 0,
     },
     animate: {
         x: 0,
         opacity: 1,
         transition: {
-            duration: 0.3,
+            duration: motionDuration.base,
             ease: 'easeOut',
         },
     },
 };
 
 // Number counter animation helper
-export const getCounterTransition = (duration: number = 1) => ({
-    duration,
-    ease: [0.16, 1, 0.3, 1],
+export const getCounterTransition = (durationValue = motionDuration.base) => ({
+    duration: durationValue,
+    ease: easing.easeOut,
 });
 
 // Modal/overlay backdrop
@@ -188,25 +200,25 @@ export const backdropVariants: Variants = {
 export const modalVariants: Variants = {
     initial: {
         opacity: 0,
-        scale: 0.9,
-        y: 20,
+        scale: 0.95,
+        y: 16,
     },
     animate: {
         opacity: 1,
         scale: 1,
         y: 0,
         transition: {
-            type: 'spring',
-            damping: 25,
-            stiffness: 300,
+            type: easing.spring.type,
+            damping: easing.spring.damping,
+            stiffness: easing.spring.stiffness,
         },
     },
     exit: {
         opacity: 0,
-        scale: 0.9,
-        y: 20,
+        scale: 0.95,
+        y: 16,
         transition: {
-            duration: 0.2,
+            duration: motionDuration.fast,
         },
     },
 };
@@ -215,25 +227,25 @@ export const modalVariants: Variants = {
 export const toastVariants: Variants = {
     initial: {
         opacity: 0,
-        y: 50,
-        scale: 0.9,
+        y: 32,
+        scale: 0.95,
     },
     animate: {
         opacity: 1,
         y: 0,
         scale: 1,
         transition: {
-            type: 'spring',
-            damping: 20,
-            stiffness: 300,
+            type: easing.spring.type,
+            damping: easing.spring.damping,
+            stiffness: easing.spring.stiffness,
         },
     },
     exit: {
         opacity: 0,
-        y: 20,
-        scale: 0.9,
+        y: 16,
+        scale: 0.95,
         transition: {
-            duration: 0.2,
+            duration: motionDuration.fast,
         },
     },
 };
@@ -241,7 +253,7 @@ export const toastVariants: Variants = {
 // Floating animation (for decorative elements)
 export const floatingVariants: Variants = {
     animate: {
-        y: [0, -10, 0],
+        y: [0, -8, 0],
         transition: {
             duration: 3,
             repeat: Infinity,
@@ -284,7 +296,7 @@ export const checkmarkVariants: Variants = {
         pathLength: 1,
         opacity: 1,
         transition: {
-            duration: 0.5,
+            duration: motionDuration.slow,
             ease: 'easeOut',
         },
     },
@@ -294,22 +306,22 @@ export const checkmarkVariants: Variants = {
 export const statsCardVariants: Variants = {
     initial: {
         opacity: 0,
-        y: 20,
-        scale: 0.95,
+        y: 16,
+        scale: 0.98,
     },
     animate: {
         opacity: 1,
         y: 0,
         scale: 1,
         transition: {
-            duration: 0.5,
-            ease: [0.16, 1, 0.3, 1],
+            duration: motionDuration.base,
+            ease: easing.easeOut,
         },
     },
     hover: {
-        y: -5,
+        y: -4,
         transition: {
-            duration: 0.2,
+            duration: motionDuration.fast,
         },
     },
 };

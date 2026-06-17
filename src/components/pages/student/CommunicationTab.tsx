@@ -342,8 +342,8 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                                 </div>
                                 {msg.sender === 'teacher' && msg.user_id === currentUserId && isOnline && (
                                     <div className="absolute top-0 -left-20 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 bg-gray-200 dark:bg-black/30" onClick={() => onEditMessage(msg)}><PencilIcon className="w-3.5 h-3.5" /></Button>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 bg-gray-200 dark:bg-black/30 text-red-600 dark:text-red-400" onClick={() => onDeleteMessage(msg.id)}><TrashIcon className="w-3.5 h-3.5" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 bg-gray-200 dark:bg-black/30" onClick={() => onEditMessage(msg)} aria-label="Edit pesan"><PencilIcon className="w-3.5 h-3.5" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 bg-gray-200 dark:bg-black/30 text-red-600 dark:text-red-400" onClick={() => onDeleteMessage(msg.id)} aria-label="Hapus pesan"><TrashIcon className="w-3.5 h-3.5" /></Button>
                                     </div>
                                 )}
                             </div>

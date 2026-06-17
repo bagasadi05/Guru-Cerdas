@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSound } from '../../hooks/useSound';
 import { motion, HTMLMotionProps } from 'framer-motion';
+import { componentStyles } from '../../styles/designTokens';
 
 interface ButtonProps extends HTMLMotionProps<"button"> {
   variant?: 'default' | 'primary' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'success';
@@ -14,13 +15,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const baseClasses = "relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 ease-out min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed transform-gpu active:scale-[0.98]";
 
     const variantClasses = {
-      default: 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 hover:shadow-md',
-      primary: 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 hover:shadow-md',
+      default: componentStyles.buttonPrimary,
+      primary: componentStyles.buttonPrimary,
       secondary: 'bg-slate-700 text-white hover:bg-slate-600 hover:shadow-md',
-      success: 'bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-md',
+      success: componentStyles.buttonPrimary,
       destructive: 'bg-rose-600 text-white shadow-sm shadow-rose-500/20 hover:bg-rose-700 hover:shadow-md hover:shadow-rose-500/25',
       outline: 'ripple-dark bg-transparent border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
-      ghost: 'ripple-dark bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
+      ghost: componentStyles.buttonGhost,
     };
 
     const sizeClasses = {

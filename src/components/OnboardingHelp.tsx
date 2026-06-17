@@ -438,7 +438,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                             )}
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600">
+                    <button onClick={onClose} aria-label="Tutup bantuan" className="p-2 text-slate-400 hover:text-slate-600">
                         <X className="w-5 h-5" />
                     </button>
                 </div>

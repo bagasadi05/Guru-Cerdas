@@ -135,7 +135,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         <div className="w-full min-h-screen p-4 sm:p-6 md:p-8 pb-24 flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-y-auto">
             <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
                 <header className="flex items-center gap-4 mb-6">
-                    <Button variant="outline" size="icon" onClick={handleBack} className="bg-white dark:bg-white/10 border-slate-200 dark:border-white/20 hover:bg-slate-100 dark:hover:bg-white/20 flex-shrink-0">
+                    <Button variant="outline" size="icon" onClick={handleBack} aria-label="Kembali ke langkah sebelumnya" className="bg-white dark:bg-white/10 border-slate-200 dark:border-white/20 hover:bg-slate-100 dark:hover:bg-white/20 flex-shrink-0">
                         <ArrowLeftIcon className="w-4 h-4" />
                     </Button>
                     <div>

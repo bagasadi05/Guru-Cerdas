@@ -114,9 +114,9 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
     }
 
     return (
-        <div className={`p-4 rounded-xl ${styles.bg} ${styles.border} border ${className}`}>
+        <div className={`p-4 rounded-2xl ${styles.bg} ${styles.border} border ${className}`}>
             <div className="flex items-start gap-4">
-                <div className={`p-2 rounded-lg ${styles.bg}`}>
+                <div className={`p-2 rounded-xl ${styles.bg}`}>
                     <Icon className={`w-6 h-6 ${styles.icon}`} />
                 </div>
                 <div className="flex-grow space-y-2">
@@ -153,7 +153,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
                                     variant="ghost"
                                     size="sm"
                                     onClick={onDismiss}
-                                    className="text-gray-500"
+                                    className="text-slate-500 dark:text-slate-400"
                                 >
                                     Tutup
                                 </Button>
@@ -191,10 +191,10 @@ export const ErrorFallback: React.FC<{
             <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
                 <XCircleIcon className="w-8 h-8 text-red-500" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                 Terjadi Kesalahan
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
                 {error.message || 'Aplikasi mengalami kesalahan yang tidak terduga.'}
             </p>
             {resetErrorBoundary && (

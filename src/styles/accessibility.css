@@ -595,7 +595,6 @@ body.keyboard-hide-fab .enhanced-fab {
 
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
-
     *,
     *::before,
     *::after {
@@ -605,6 +604,16 @@ body.keyboard-hide-fab .enhanced-fab {
         scroll-behavior: auto !important;
     }
 }
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+
 
 /* ============================================
    PERFORMANCE OPTIMIZATION - WILL-CHANGE HINTS

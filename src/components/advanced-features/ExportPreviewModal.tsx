@@ -70,7 +70,7 @@ export function ExportPreviewModal<T>({
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
             <p className="text-sm text-slate-500">{data.length} data akan diekspor</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button onClick={onClose} aria-label="Tutup pratinjau" className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
             <X className="h-5 w-5 text-slate-500" />
           </button>
         </div>

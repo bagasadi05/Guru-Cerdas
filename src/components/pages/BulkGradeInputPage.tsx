@@ -592,13 +592,13 @@ const BulkGradeInputPage: React.FC = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+                        <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Kembali ke halaman sebelumnya">
                             <ArrowLeftIcon className="w-5 h-5" />
                         </Button>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Input Nilai Cepat</h1>
                             <p className="text-gray-500 dark:text-gray-400">Masukkan nilai untuk semua siswa dalam satu kelas</p>
-                            <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium border border-green-200 dark:border-green-800/50">
+                            <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium border border-emerald-200 dark:border-emerald-800/50">
                                 <span className="text-[10px]">💡</span>
                                 <span>Bisa langsung Copy dari Excel, lalu Paste (Ctrl+V) di kotak nilai</span>
                             </div>
