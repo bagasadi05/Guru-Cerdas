@@ -43,7 +43,7 @@ export const EditStudentForm: React.FC<EditStudentFormProps> = ({ defaultValues,
                         <span className="ml-2">Perempuan</span>
                     </label>
                 </div>
-                {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender.message}</p>}
+                {errors.gender && <p className="text-rose-500 text-xs mt-1">{errors.gender.message}</p>}
             </div>
             <div>
                 <label className="block text-sm font-medium mb-1">Kelas</label>
