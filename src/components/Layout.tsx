@@ -114,14 +114,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Mobile sidebar overlay */}
       {isMobileSidebarOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-overlay lg:hidden"
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}
 
       {/* Desktop sidebar - hidden on mobile */}
       <div
-        className={`fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 lg:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isMobileSidebarOpen ? 'block' : 'hidden lg:block'}`}
+        className={`fixed lg:static inset-y-0 left-0 z-modal transform transition-transform duration-300 lg:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isMobileSidebarOpen ? 'block' : 'hidden lg:block'}`}
         id="main-navigation"
         role="navigation"
         aria-label="Main navigation"
@@ -135,7 +135,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <div className="flex flex-col flex-1 w-full overflow-hidden relative z-10">
         {/* Header */}
         <header
-          className="h-16 lg:h-20 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-20 transition-all duration-300"
+          className="h-16 lg:h-20 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-sticky transition-all duration-300"
           role="banner"
         >
           <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm"></div>

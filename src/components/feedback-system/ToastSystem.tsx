@@ -140,7 +140,7 @@ export const ToastProvider: React.FC<{
         }}>
             {children}
             <div
-                className={`fixed ${positionClasses[position]} z-[100] flex w-full max-w-sm flex-col gap-2 pointer-events-none`}
+                className={`fixed ${positionClasses[position]} z-toast flex w-full max-w-sm flex-col gap-2 pointer-events-none`}
                 role="region"
                 aria-label="Notifikasi"
                 aria-live="polite"

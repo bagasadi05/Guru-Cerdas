@@ -102,6 +102,18 @@ module.exports = {
         '7xl': '5rem',     // 80px
         '8xl': '6rem',     // 96px
       },
+      zIndex: {
+        behind: '-1',
+        base: '0',
+        dropdown: '10',
+        sticky: '20',
+        fixed: '30',
+        overlay: '40',
+        modal: '50',
+        popover: '60',
+        toast: '70',
+        max: '9999',
+      },
       boxShadow: {
         xs: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
         sm: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
