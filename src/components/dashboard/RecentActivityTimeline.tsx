@@ -243,7 +243,7 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                             >
                                 {/* Timeline Line */}
                                 {!isLast && (
-                                    <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-gradient-to-b from-slate-200 to-transparent dark:from-slate-800 dark:to-transparent" />
+                                    <div className="absolute left-2.5 top-6 bottom-0 w-0.5 bg-gradient-to-b from-slate-200 to-transparent dark:from-slate-800 dark:to-transparent" />
                                 )}
 
                                 {/* Icon */}

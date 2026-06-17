@@ -115,7 +115,7 @@ export const DevelopmentTimeline: React.FC<DevelopmentTimelineProps> = ({
         {/* Vertical gradient line */}
         <div
           className="
-            absolute left-[5px] top-0 bottom-0 w-0.5
+            absolute left-1.25 top-0 bottom-0 w-0.5
             bg-gradient-to-b from-amber-400 via-amber-500 to-orange-500
             rounded-full
           "

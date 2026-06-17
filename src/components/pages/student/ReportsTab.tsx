@@ -151,7 +151,7 @@ const TimelineView: React.FC<{
                                     className="group relative pl-8 pb-4 border-l-2 border-gray-200 dark:border-gray-700 last:border-l-0"
                                 >
                                     {/* Timeline dot */}
-                                    <div className={`absolute left-[-5px] top-0 w-3 h-3 rounded-full bg-${categoryColor}-500 ring-4 ring-white dark:ring-gray-900`} />
+                                    <div className={`absolute -left-1.5 top-0 w-3 h-3 rounded-full bg-${categoryColor}-500 ring-4 ring-white dark:ring-gray-900`} />
 
                                     {/* Card */}
                                     <div className={`relative p-4 rounded-xl bg-gradient-to-r from-${categoryColor}-50/50 to-transparent dark:from-${categoryColor}-900/10 border border-${categoryColor}-100 dark:border-${categoryColor}-800/30 hover:shadow-lg transition-shadow`}>

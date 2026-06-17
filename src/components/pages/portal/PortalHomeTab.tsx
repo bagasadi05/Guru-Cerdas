@@ -396,7 +396,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                             </button>
                         </div>
 
-                        <div className="mt-4 space-y-4 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-slate-800">
+                        <div className="mt-4 space-y-4 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100 dark:before:bg-slate-800">
                             {recentActivities.length === 0 ? (
                                 <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">Belum ada aktivitas tercatat.</p>
                             ) : (
