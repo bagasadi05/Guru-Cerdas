@@ -64,7 +64,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test
+        run: npm run test:coverage
         env:
           VITE_SUPABASE_URL: https://test.supabase.co
           VITE_SUPABASE_ANON_KEY: test-anon-key
@@ -174,7 +174,7 @@ jobs:
       - name: Run Lighthouse CI
         uses: treosh/lighthouse-ci-action@v10
         with:
-          configPath: ./lighthouserc.js
+          configPath: ./lighthouserc.cjs
           uploadArtifacts: true
           temporaryPublicStorage: true
 
