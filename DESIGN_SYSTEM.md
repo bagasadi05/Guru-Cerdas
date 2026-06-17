@@ -29,18 +29,21 @@ Use the spacing scale for all padding, margin, and gap values.
 
 | Token | Value | Tailwind Class | Use Case |
 |-------|-------|----------------|----------|
-| `none` | 0 | `p-0`, `m-0` | Reset spacing |
+| `none` | 0px | `p-0`, `m-0` | Reset spacing |
 | `2xs` | 2px | `p-0.5` | Micro spacing |
 | `xs` | 4px | `p-1` | Tight spacing |
 | `sm` | 8px | `p-2` | Small spacing |
 | `md` | 12px | `p-3` | Medium spacing |
 | `lg` | 16px | `p-4` | **Default component padding** |
+| `4.5` | 18px | `p-4.5` | Tight-large (e.g., icon+label gap) |
 | `xl` | 20px | `p-5` | Large spacing |
 | `2xl` | 24px | `p-6` | Section padding |
 | `3xl` | 32px | `p-8` | Large sections |
 | `4xl` | 40px | `p-10` | Hero sections |
 | `5xl` | 48px | `p-12` | Page sections |
 | `6xl` | 64px | `p-16` | Major sections |
+| `7xl` | 80px | `p-20` | Hero blocks |
+| `8xl` | 96px | `p-24` | Maximum layout spacing |
 
 ### Usage
 
@@ -232,6 +235,7 @@ For branded/interactive elements:
 
 | Token | Size | Tailwind | Use Case |
 |-------|------|----------|----------|
+| `xxs` | 10px | `text-xxs` | Micro labels, badges, gender markers |
 | `xs` | 12px | `text-xs` | Captions, Labels |
 | `sm` | 14px | `text-sm` | Secondary text |
 | `base` | 16px | `text-base` | **Body text** |
@@ -241,6 +245,8 @@ For branded/interactive elements:
 | `3xl` | 30px | `text-3xl` | H3 |
 | `4xl` | 36px | `text-4xl` | H2, Page titles |
 | `5xl` | 48px | `text-5xl` | H1, Hero |
+
+**Note:** `text-xxs` is registered in `tailwind.config.cjs` fontSize extension and maps to `0.625rem` (10px).
 
 ### Heading Styles
 
@@ -295,19 +301,25 @@ For standard CSS transitions, use the following tokens:
 
 For React animations using `framer-motion`, import unified tokens from [motion.ts](file:///c:/Users/yuiop/Documents/Coding/Guru-Cerdas/Guru-Cerdas/src/styles/motion.ts).
 
-#### Standard Durations & Easings
-```typescript
-import { duration, easing } from '@/styles/motion';
+#### Durations
 
-// Durations (seconds)
-duration.fast // 0.15s (150ms)
-duration.base // 0.25s (250ms)
-duration.slow // 0.40s (400ms)
+| Token | Seconds | Use Case |
+|-------|---------|----------|
+| `fast` | 0.15s (150ms) | Micro-interactions (hover, focus) |
+| `base` | 0.25s (250ms) | **Default - most UI transitions** |
+| `slow` | 0.40s (400ms) | Page transitions, larger moves |
+| `chart` | 0.70s (700ms) | Chart/visualization animations |
+| `long` | 1.00s (1000ms) | Long-form transitions |
+| `deliberate` | 1.20s (1200ms) | Deliberate, emphasized motion |
 
-// Easings
-easing.easeOut // cubic-bezier(0.16, 1, 0.3, 1) (easeOutExpo)
-easing.spring  // Spring transition config (damping: 25, stiffness: 300)
-```
+#### Easings
+
+| Token | Curve | Use Case |
+|-------|-------|----------|
+| `easeOut` | `cubic-bezier(0.16, 1, 0.3, 1)` (easeOutExpo) | **Default - entering, settling** |
+| `easeInOutQuad` | `cubic-bezier(0.25, 0.46, 0.45, 0.94)` | Continuous motion, two-way transitions |
+| `overshoot` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Spring-like overshoot, attention |
+| `spring` | `{ type: 'spring', damping: 25, stiffness: 300 }` | Bouncy natural motion |
 
 #### Reusable Animation Variants
 We expose predefined, accessible variants to ensure standard entry/exit behavior:
@@ -315,6 +327,24 @@ We expose predefined, accessible variants to ensure standard entry/exit behavior
 - `slideUp`: Fade and slide up by 16px.
 - `scaleIn`: Fade and scale from 95% to 100%.
 - `staggerContainer`: Staggers children by 0.05 seconds with a 0.05s initial delay.
+
+```typescript
+import { duration, easing } from '@/styles/motion';
+
+// Durations
+duration.fast        // 0.15s
+duration.base        // 0.25s
+duration.slow        // 0.40s
+duration.chart       // 0.70s
+duration.long        // 1.00s
+duration.deliberate  // 1.20s
+
+// Easings
+easing.easeOut        // [0.16, 1, 0.3, 1]
+easing.easeInOutQuad  // [0.25, 0.46, 0.45, 0.94]
+easing.overshoot      // [0.34, 1.56, 0.64, 1]
+easing.spring         // { type: 'spring', damping: 25, stiffness: 300 }
+```
 
 ```tsx
 import { motion } from 'framer-motion';
@@ -337,17 +367,18 @@ function List({ items }) {
 
 ## Accessibility (A11y)
 
-The application is built to be accessible to all users, adhering to WCAG 2.1 AA standards.
+The application is built to be accessible to all users, adhering to **WCAG 2.1 AA** standards. All ui/* primitives (`Button`, `Input`, `Textarea`, `Checkbox`, `Modal`, `DropdownMenu`, `BottomSheet`, `FAB`, `FAB Menu`, `GlobalSearch`, `SwipeableListItem`) are accessible by default.
 
 ### 1. Focus Indicators
-All interactive elements must have a clear, high-contrast focus ring when focused using a keyboard. Avoid browser default outlines.
-- **Tailwind Class**: `focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-emerald-500`
-- Ensure `focus:outline-none` is combined with `focus-visible:ring-...`.
+All interactive elements must have a clear, high-contrast focus ring when focused using a keyboard. Avoid browser default outlines. The standard emerald focus ring is defined as:
+- **Tailwind Class**: `focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-emerald-400 dark:focus-visible:ring-offset-slate-900`
+- Combine `focus:outline-none` with `focus-visible:ring-...` (NOT `focus:ring-...`) to only show the ring for keyboard users, not on click/touch.
+- Never remove focus rings from interactive elements.
 
 ### 2. Screen Readers & Labels
-Icon-only buttons **must** have descriptive text labels for screen readers.
-- Never use a raw icon inside a button without an label.
-- Always provide an `aria-label` or use the unified `IconButton` component from [accessibility.tsx](file:///c:/Users/yuiop/Documents/Coding/Guru-Cerdas/Guru-Cerdas/src/utils/accessibility.tsx):
+Icon-only buttons **must** have descriptive text labels for screen readers. Use either `aria-label` directly or the unified `IconButton` component. Inputs must have either a visible `<label htmlFor>` or an `aria-label`. Decorative icons should be marked `aria-hidden="true"`. Live regions exist via `AnnouncerProvider`/`useAnnounce` for dynamic updates.
+- Never use a raw icon inside a button without a label.
+- Use the unified `IconButton` component from [accessibility.tsx](file:///c:/Users/yuiop/Documents/Coding/Guru-Cerdas/Guru-Cerdas/src/utils/accessibility.tsx):
 ```tsx
 import { IconButton } from '@/utils/accessibility';
 import { EditIcon } from '@/components/Icons';
@@ -363,22 +394,37 @@ import { EditIcon } from '@/components/Icons';
 ### 3. Reduced Motion
 Always respect user operating system preferences for reduced motion.
 - Use the `useReducedMotion()` hook from `framer-motion`.
-- For large transitions (animations > 0.5s, large slide/scale factors), shorten the duration or bypass the animation entirely when reduced motion is requested:
+- For large transitions (animations > 0.5s, large slide/scale factors), shorten the duration or bypass the animation entirely when reduced motion is requested.
+- All `FloatingActionMenu`, `BottomSheet`, `Modal`, and global motion variants already check `shouldReduceMotion` internally.
 
 ```tsx
 import { useReducedMotion } from 'framer-motion';
 
 function Component() {
   const shouldReduceMotion = useReducedMotion();
-  const transition = shouldReduceMotion 
-    ? { duration: 0.1 } 
+  const transition = shouldReduceMotion
+    ? { duration: 0.1 }
     : { duration: 1.0, ease: "easeOut" };
-    
+
   return (
     <motion.div animate={{ scale: 1 }} transition={transition} />
   );
 }
 ```
+
+### 4. Color Contrast (WCAG 2.1 AA)
+All text and interactive elements must meet AA contrast minimums. The design system palette is calibrated for this:
+- **Normal text (< 18px or < 14px bold)**: minimum **4.5:1** contrast against background.
+- **Large text (≥ 18px or ≥ 14px bold)**: minimum **3:1** contrast against background.
+- **Non-text UI elements** (icons, focus rings, borders distinguishing state): minimum **3:1**.
+
+Approved color pairs (verified AA on light and dark):
+- Body text: `text-slate-700` on `bg-white` (8.6:1 light) / `text-slate-200` on `bg-slate-900` (12.6:1 dark).
+- Muted text: `text-slate-500` on `bg-white` (4.6:1 light) / `text-slate-400` on `bg-slate-900` (5.7:1 dark).
+- Primary action: `text-white` on `bg-emerald-500` (2.9:1 — use for large/bold text or non-text only).
+- Focus ring: `ring-emerald-500` (visible 3:1 on both white and slate-900).
+
+Avoid pairing `text-slate-400` (placeholder) on `bg-slate-200` or `text-yellow-300` on dark backgrounds — these fail AA.
 
 ---
 
@@ -541,4 +587,4 @@ function MyCard({ children, interactive = false }) {
 
 ---
 
-*Last updated: June 2026 (Design Sprint 4)*
+*Last updated: June 2026 (Design Sprint 8 — QA Final, Aksesibilitas, Dokumentasi & Sign-off)*

@@ -464,6 +464,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Cari artikel bantuan..."
+                                    aria-label="Cari artikel bantuan"
                                     className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                             </div>
@@ -655,18 +656,30 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, className = '' })
 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <button onClick={togglePlay} className="text-white">
-                                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                            <button
+                                onClick={togglePlay}
+                                aria-label={isPlaying ? 'Jeda video' : 'Putar video'}
+                                className="text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
+                            >
+                                {isPlaying ? <Pause className="w-5 h-5" aria-hidden="true" /> : <Play className="w-5 h-5" aria-hidden="true" />}
                             </button>
-                            <button onClick={toggleMute} className="text-white">
-                                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                            <button
+                                onClick={toggleMute}
+                                aria-label={isMuted ? 'Aktifkan suara' : 'Bisukan'}
+                                className="text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
+                            >
+                                {isMuted ? <VolumeX className="w-5 h-5" aria-hidden="true" /> : <Volume2 className="w-5 h-5" aria-hidden="true" />}
                             </button>
                             <span className="text-sm text-white/80">
                                 {formatTime(currentTime)} / {formatTime(duration)}
                             </span>
                         </div>
-                        <button onClick={toggleFullscreen} className="text-white">
-                            <Maximize className="w-5 h-5" />
+                        <button
+                            onClick={toggleFullscreen}
+                            aria-label="Layar penuh"
+                            className="text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
+                        >
+                            <Maximize className="w-5 h-5" aria-hidden="true" />
                         </button>
                     </div>
                 </div>

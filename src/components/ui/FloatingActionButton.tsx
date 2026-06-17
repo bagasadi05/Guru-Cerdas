@@ -120,10 +120,12 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
                         <button
                             key={index}
                             onClick={() => handleQuickAction(action)}
+                            aria-label={action.label}
                             className={`
                                 flex items-center gap-3 px-4 py-2.5 rounded-full shadow-lg
                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
                                 hover:bg-gray-50 dark:hover:bg-gray-700
+                                focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
                                 transition-all duration-200 transform
                                 animate-slide-up
                             `}
@@ -149,7 +151,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
                     dark:bg-purple-600 dark:hover:bg-purple-700 dark:active:bg-purple-800
                     text-white transition-all duration-200
                     hover:scale-110 active:scale-95
-                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 dark:focus:ring-purple-500
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400
                     ${!size ? 'w-14 h-14' : ''}
                     ${isExpanded ? 'rotate-45' : ''}
                     ${className}

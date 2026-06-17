@@ -79,8 +79,11 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
         whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-emerald-500 hover:bg-emerald-600 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+        onKeyDown={(e) => { if (e.key === 'Escape' && isOpen) setIsOpen(false); }}
+        className="w-14 h-14 bg-emerald-500 hover:bg-emerald-600 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
         aria-label={isOpen ? 'Tutup menu aksi cepat' : 'Buka menu aksi cepat'}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
         <motion.div
           animate={shouldReduceMotion ? {} : { rotate: isOpen ? 45 : 0 }}

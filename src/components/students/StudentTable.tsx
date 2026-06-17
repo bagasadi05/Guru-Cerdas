@@ -120,11 +120,21 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                         </Link>
                                         {isAdmin && (
                                             <>
-                                                <button onClick={() => onAction(student, 'edit')} className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-emerald-900/20 transition-colors" title="Edit Siswa">
-                                                    <PencilIcon className="w-4 h-4" />
+                                                <button
+                                                    onClick={() => onAction(student, 'edit')}
+                                                    aria-label={`Edit siswa ${student.name}`}
+                                                    title="Edit Siswa"
+                                                    className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-emerald-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                                >
+                                                    <PencilIcon className="w-4 h-4" aria-hidden="true" />
                                                 </button>
-                                                <button onClick={() => onAction(student, 'delete')} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Hapus Siswa">
-                                                    <TrashIcon className="w-4 h-4" />
+                                                <button
+                                                    onClick={() => onAction(student, 'delete')}
+                                                    aria-label={`Hapus siswa ${student.name}`}
+                                                    title="Hapus Siswa"
+                                                    className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                                >
+                                                    <TrashIcon className="w-4 h-4" aria-hidden="true" />
                                                 </button>
                                             </>
                                         )}

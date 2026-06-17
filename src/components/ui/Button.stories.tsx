@@ -179,3 +179,39 @@ export const AllSizes: Story = {
     </div>
   ),
 };
+
+/**
+ * Display on light background. Toggle the Storybook background to compare.
+ */
+export const OnLight: Story = {
+  name: 'On Light Background',
+  parameters: { backgrounds: { default: 'light' } },
+  render: () => (
+    <div className="p-6 bg-white">
+      <div className="flex gap-2 flex-wrap">
+        <Button variant="default">Default</Button>
+        <Button variant="destructive">Destructive</Button>
+        <Button variant="outline">Outline</Button>
+        <Button variant="ghost">Ghost</Button>
+      </div>
+    </div>
+  ),
+};
+
+/**
+ * Display on dark background. Toggle the Storybook background to compare.
+ */
+export const OnDark: Story = {
+  name: 'On Dark Background',
+  parameters: { backgrounds: { default: 'dark' } },
+  render: () => (
+    <div className="p-6 bg-slate-950">
+      <div className="flex gap-2 flex-wrap">
+        <Button variant="default">Default</Button>
+        <Button variant="destructive">Destructive</Button>
+        <Button variant="outline">Outline</Button>
+        <Button variant="ghost">Ghost</Button>
+      </div>
+    </div>
+  ),
+};

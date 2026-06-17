@@ -649,14 +649,16 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                     placeholder="Cari panduan... (tekan / untuk fokus)"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
+                                    aria-label="Cari panduan"
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
                                 />
                                 {searchQuery && (
                                     <button
                                         onClick={() => setSearchQuery('')}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"
+                                        aria-label="Hapus pencarian panduan"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                                     >
-                                        <X className="w-4 h-4 text-slate-400" />
+                                        <X className="w-4 h-4 text-slate-400" aria-hidden="true" />
                                     </button>
                                 )}
                             </div>

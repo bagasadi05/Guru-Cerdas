@@ -29,11 +29,13 @@ const DropdownContext = React.createContext<{
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
     triggerRef: React.RefObject<HTMLButtonElement>;
+    contentRef: React.RefObject<HTMLDivElement>;
 } | null>(null);
 
 export const DropdownMenu: React.FC<DropdownMenuProps> = ({ children }) => {
     const [isOpen, setIsOpen] = useState(false);
     const triggerRef = useRef<HTMLButtonElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
 
     // Close on click outside
     useEffect(() => {
@@ -55,8 +57,52 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({ children }) => {
         };
     }, [isOpen]);
 
+    // Keyboard: ArrowDown opens menu and focuses first item, ArrowUp/Down navigate items, Esc closes
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKey = (e: KeyboardEvent) => {
+            const content = contentRef.current;
+            if (!content) return;
+            const items = Array.from(content.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not([disabled])'));
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setIsOpen(false);
+                triggerRef.current?.focus();
+                return;
+            }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const current = document.activeElement as HTMLElement;
+                const idx = items.findIndex((el) => el === current);
+                const next = items[(idx + 1) % items.length] || items[0];
+                next?.focus();
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const current = document.activeElement as HTMLElement;
+                const idx = items.findIndex((el) => el === current);
+                const next = items[(idx - 1 + items.length) % items.length] || items[0];
+                next?.focus();
+                return;
+            }
+            if (e.key === 'Home') {
+                e.preventDefault();
+                items[0]?.focus();
+                return;
+            }
+            if (e.key === 'End') {
+                e.preventDefault();
+                items[items.length - 1]?.focus();
+                return;
+            }
+        };
+        document.addEventListener('keydown', handleKey);
+        return () => document.removeEventListener('keydown', handleKey);
+    }, [isOpen]);
+
     return (
-        <DropdownContext.Provider value={{ isOpen, setIsOpen, triggerRef }}>
+        <DropdownContext.Provider value={{ isOpen, setIsOpen, triggerRef, contentRef }}>
             <div className="relative inline-block text-left">
                 {children}
             </div>
@@ -74,12 +120,20 @@ export const DropdownTrigger: React.FC<DropdownTriggerProps> = ({ children, clas
         if (onClick) onClick();
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            context.setIsOpen(true);
+        }
+    };
+
     return (
         <button
             ref={context.triggerRef}
             type="button"
-            className={`inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-950 ${className}`}
+            className={`inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 dark:focus-visible:ring-offset-slate-950 ${className}`}
             onClick={handleClick}
+            onKeyDown={handleKeyDown}
             aria-haspopup="true"
             aria-expanded={context.isOpen}
         >
@@ -98,6 +152,7 @@ export const DropdownContent: React.FC<DropdownContentProps> = ({ children, clas
 
     return (
         <div
+            ref={context.contentRef}
             className={`dropdown-content absolute z-50 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none animate-fade-in-up ${alignmentClasses} ${className}`}
             role="menu"
             aria-orientation="vertical"
@@ -125,6 +180,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onClick, c
         <button
             className={`
                 group flex w-full items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white
+                focus:outline-none focus-visible:bg-slate-100 focus-visible:dark:bg-slate-800 focus-visible:text-slate-900 focus-visible:dark:text-white
                 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 ${className}
             `}

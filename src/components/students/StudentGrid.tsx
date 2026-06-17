@@ -35,8 +35,12 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                                 />
                             </div>
                             <div className="absolute top-3 right-3">
-                                <button onClick={() => onAction(student, 'menu')} className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-colors">
-                                    <MoreVerticalIcon className="w-5 h-5" />
+                                <button
+                                    onClick={() => onAction(student, 'menu')}
+                                    aria-label={`Menu aksi siswa ${student.name}`}
+                                    className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                                >
+                                    <MoreVerticalIcon className="w-5 h-5" aria-hidden="true" />
                                 </button>
                             </div>
                         </div>

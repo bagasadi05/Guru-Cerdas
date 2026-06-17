@@ -176,8 +176,12 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                             <button onClick={() => handleUpdateRole(u.user_id)} disabled={updating} className="p-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600">
                                                 {updating ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                             </button>
-                                            <button onClick={() => setEditingUserId(null)} className="p-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg">
-                                                <X size={14} />
+                                            <button
+                                                onClick={() => setEditingUserId(null)}
+                                                aria-label="Batal edit"
+                                                className="p-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                            >
+                                                <X size={14} aria-hidden="true" />
                                             </button>
                                         </div>
                                     ) : (
