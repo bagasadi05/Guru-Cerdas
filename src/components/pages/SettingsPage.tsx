@@ -208,7 +208,7 @@ const SettingsPage: React.FC = () => {
                                                 {item.title}
                                                 <ArrowRight className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all ${theme.text}`} />
                                             </p>
-                                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{item.desc}</p>
+                                            <p className="text-xxs sm:text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{item.desc}</p>
                                         </div>
                                     </button>
                                 );
@@ -220,7 +220,7 @@ const SettingsPage: React.FC = () => {
                 {/* Popular Topics Navigation Helpers (Empty Search State) */}
                 {searchQuery === '' && (
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-3 px-3 scrollbar-hide">
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">Asisten Cerdas:</span>
+                        <span className="text-xxs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">Asisten Cerdas:</span>
                         <button
                             onClick={() => setActiveTab('appearance')}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-indigo-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
@@ -283,7 +283,7 @@ const SettingsPage: React.FC = () => {
                     <aside className="hidden lg:block lg:col-span-3">
                         <nav className="flex flex-col gap-2 p-3 rounded-3xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-xl sticky top-4">
                             <div className="px-3 py-2.5 mb-2 border-b border-slate-100 dark:border-white/5">
-                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Menu Navigasi</p>
+                                <p className="text-xxs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Menu Navigasi</p>
                             </div>
                             {navItems.map((item) => {
                                 const theme = getTabTheme(item.id);

@@ -23,7 +23,7 @@ export const IDCard: React.FC<IDCardProps> = ({ student, className = 'VII-A', sc
                 {/* Header */}
                 <div className="flex justify-between items-start text-white">
                     <div>
-                        <h3 className="text-[10px] font-medium opacity-90 uppercase tracking-wider">KARTU PELAJAR</h3>
+                        <h3 className="text-xxs font-medium opacity-90 uppercase tracking-wider">KARTU PELAJAR</h3>
                         <h1 className="text-xs font-bold leading-tight mt-0.5">{schoolName}</h1>
                     </div>
                     {/* Logo Placeholder */}
@@ -47,7 +47,7 @@ export const IDCard: React.FC<IDCardProps> = ({ student, className = 'VII-A', sc
                     <div className="flex-grow pb-1">
                         <h2 className="text-sm font-bold text-gray-900 uppercase leading-snug line-clamp-2">{student.name}</h2>
 
-                        <div className="mt-2 text-[9px] space-y-0.5 text-gray-600">
+                        <div className="mt-2 text-xxs space-y-0.5 text-gray-600">
                             <div className="flex">
                                 <span className="w-12 font-medium">BORN</span>
                                 <span>: -</span>

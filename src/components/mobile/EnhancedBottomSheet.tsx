@@ -236,7 +236,7 @@ const EnhancedBottomSheet: React.FC<EnhancedBottomSheetProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100]"
+      className="fixed inset-0 z-overlay"
       aria-hidden={!isOpen}
     >
       {/* Backdrop */}
@@ -254,7 +254,7 @@ const EnhancedBottomSheet: React.FC<EnhancedBottomSheetProps> = ({
       {/* Bottom Sheet */}
       <div
         ref={sheetRef}
-        className="absolute bottom-0 left-0 right-0 z-[101]
+        className="absolute bottom-0 left-0 right-0 z-modal
                    bg-white dark:bg-slate-900
                    rounded-t-3xl shadow-2xl
                    border-t border-slate-200 dark:border-slate-700

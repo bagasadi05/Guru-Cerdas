@@ -76,7 +76,7 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
           className="absolute top-0 bottom-0 border-l-2 border-dashed border-rose-300 dark:border-rose-600 z-10 pointer-events-none"
           style={{ left: `calc(${kkmLine}% + 0px)` }}
         >
-          <span className="absolute -top-5 -translate-x-1/2 text-[10px] font-medium text-rose-400 dark:text-rose-500 whitespace-nowrap">
+          <span className="absolute -top-5 -translate-x-1/2 text-xxs font-medium text-rose-400 dark:text-rose-500 whitespace-nowrap">
             KKM
           </span>
         </div>

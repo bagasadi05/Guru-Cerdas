@@ -613,7 +613,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         setAssessmentName('');
                                         setCustomAssessmentName('');
                                     }} 
-                                    className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
+                                    className="text-xxs text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
                                 >
                                     {isCustomAssessment ? 'Pilih Tersimpan' : 'Ketik Manual'}
                                 </button>
@@ -772,7 +772,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                     <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                                                         {nonSasAssessments.map(assessName => (
                                                             <div key={assessName} className="flex flex-col gap-0.5">
-                                                                <span className="text-[10px] font-semibold text-slate-400">{assessName}</span>
+                                                                <span className="text-xxs font-semibold text-slate-400">{assessName}</span>
                                                                 <Input
                                                                     type="text"
                                                                     value={materiInputs[assessName] || ''}
@@ -866,7 +866,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         <SparklesIcon className="w-3.5 h-3.5" />
                                     </button>
                                     {manualOverrides.size > 0 && (
-                                        <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[10px]">
+                                        <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xxs">
                                             <span className="font-bold text-amber-600 dark:text-amber-400">{manualOverrides.size} Revisi Manual</span>
                                             <button 
                                                 onClick={() => setManualOverrides(new Set())}
@@ -953,7 +953,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         <h1 className="text-xl font-bold uppercase tracking-wider leading-snug">
                                             {user?.school_name || 'MI AL IRSYAD KOTA MADIUN'}
                                         </h1>
-                                        <p className="text-[10px] text-slate-500 font-semibold tracking-wide">
+                                        <p className="text-xxs text-slate-500 font-semibold tracking-wide">
                                             Kementerian Agama Republik Indonesia – Kantor Kota Madiun
                                         </p>
                                         <h2 className="text-xs font-extrabold uppercase mt-4 tracking-widest text-slate-800 bg-slate-100 px-3 py-1 rounded">
@@ -997,7 +997,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                 }>
                                                     {stats.avg}
                                                 </span>
-                                                <span className="text-[10px] text-slate-400 font-medium">
+                                                <span className="text-xxs text-slate-400 font-medium">
                                                     (Target: {targetAverageRange.min}-{targetAverageRange.max})
                                                 </span>
                                             </div>
@@ -1017,7 +1017,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         <table className="w-full text-xs text-left border-collapse border border-slate-350">
                                             <thead>
                                                 {activeAssessmentsList.length > 1 ? (
-                                                    <tr className="bg-slate-100 text-slate-800 uppercase text-[9px] tracking-wider border-b border-slate-350">
+                                                    <tr className="bg-slate-100 text-slate-800 uppercase text-xxs tracking-wider border-b border-slate-350">
                                                         <th className="border border-slate-350 p-2 text-center w-8">No</th>
                                                         <th className="border border-slate-350 p-2 min-w-36">Nama Siswa</th>
                                                         {activeAssessmentsList.map(assessName => (
@@ -1027,7 +1027,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                         <th className="border border-slate-350 p-2 text-center w-20">Rerata Akhir</th>
                                                     </tr>
                                                 ) : (
-                                                    <tr className="bg-slate-100 text-slate-800 uppercase text-[9px] tracking-wider border-b border-slate-350">
+                                                    <tr className="bg-slate-100 text-slate-800 uppercase text-xxs tracking-wider border-b border-slate-350">
                                                         <th className="border border-slate-350 p-2 text-center w-8">No</th>
                                                         <th className="border border-slate-350 p-2">Nama Siswa</th>
                                                         <th className="border border-slate-350 p-2 text-center w-20">Nilai Asli</th>
@@ -1058,7 +1058,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                     return (
                                                                         <td key={assessName} className="border border-slate-350 p-1 text-center font-bold">
                                                                             <div className="flex flex-col items-center justify-center gap-1 py-1">
-                                                                                <span className="text-[10px] text-slate-400 font-semibold leading-none">
+                                                                                <span className="text-xxs text-slate-400 font-semibold leading-none">
                                                                                     Asli: {originalScore}
                                                                                 </span>
                                                                                 <div className="relative flex items-center justify-center">
@@ -1105,7 +1105,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                     <div className="flex flex-col">
                                                                         <span>{item.name}</span>
                                                                         {isAiAdjusted && activeScenario === 'ai' && item.aiRationale && (
-                                                                            <span className="no-print text-[9px] text-emerald-600 dark:text-emerald-400 font-medium italic mt-0.5">
+                                                                            <span className="no-print text-xxs text-emerald-600 dark:text-emerald-400 font-medium italic mt-0.5">
                                                                                 ✨ {item.aiRationale}
                                                                             </span>
                                                                         )}
@@ -1116,7 +1116,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                 <td className="border border-slate-350 p-2 text-center text-slate-500 font-semibold">
                                                                     <div className="flex items-center justify-center gap-1">
                                                                         <span>{item.ai}</span>
-                                                                        {isAiAdjusted && <span className="no-print text-emerald-500 text-[10px]">✨</span>}
+                                                                        {isAiAdjusted && <span className="no-print text-emerald-500 text-xxs">✨</span>}
                                                                     </div>
                                                                 </td>
                                                                 <td className="border border-slate-350 p-1 text-center font-bold">

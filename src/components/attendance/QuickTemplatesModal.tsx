@@ -144,7 +144,7 @@ export const QuickTemplatesModal: React.FC<QuickTemplatesModalProps> = ({
                                         {template.description}
                                     </p>
                                     <div className="mt-2">
-                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                                        <span className="text-xxs px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
                                             {template.applyToAll ? 'Semua Siswa' : 'Siswa Belum Diisi'}
                                         </span>
                                     </div>

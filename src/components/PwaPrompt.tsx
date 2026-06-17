@@ -66,7 +66,7 @@ const PwaPrompt: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-20 lg:bottom-4 left-4 right-4 lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-lg z-[60] animate-slide-up">
+    <div className="fixed bottom-20 lg:bottom-4 left-4 right-4 lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-lg z-popover animate-slide-up">
       <div className="bg-gradient-to-r from-sky-600 to-blue-600 dark:from-purple-600 dark:to-blue-600 backdrop-blur-lg text-white rounded-2xl shadow-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 border border-white/20">
         <div className="flex items-center gap-3 flex-1">
           <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">

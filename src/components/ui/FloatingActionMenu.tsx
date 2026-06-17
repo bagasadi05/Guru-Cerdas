@@ -35,7 +35,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
   };
 
   return (
-    <div className={`fixed ${positionClasses[position]} z-40`}>
+    <div className={`fixed ${positionClasses[position]} z-fixed`}>
       {/* Action Items */}
       <AnimatePresence>
         {isOpen && (

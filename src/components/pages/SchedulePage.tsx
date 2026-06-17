@@ -182,11 +182,11 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, isOngoing, isPast, on
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800/50 flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                         <div className={`w-1.5 h-1.5 rounded-full ${isOngoing ? 'bg-green-500 animate-pulse' : isPast ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-500'}`}></div>
-                        <span className={`text-[10px] font-medium ${isOngoing ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                        <span className={`text-xxs font-medium ${isOngoing ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`}>
                             {isOngoing ? 'Berlangsung' : isPast ? 'Selesai' : 'Nanti'}
                         </span>
                     </div>
-                    <span className="text-[10px] font-mono text-slate-400 dark:text-slate-600">
+                    <span className="text-xxs font-mono text-slate-400 dark:text-slate-600">
                         {getDuration(item.start_time, item.end_time)}m
                     </span>
                 </div>

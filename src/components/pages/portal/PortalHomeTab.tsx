@@ -185,7 +185,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                             }`}>
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                     <div>
-                                        <div className="inline-flex items-center gap-2 rounded-full border border-teal-200/60 bg-teal-50/70 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:border-teal-400/20 dark:bg-teal-400/10 dark:text-teal-200">
+                                        <div className="inline-flex items-center gap-2 rounded-full border border-teal-200/60 bg-teal-50/70 px-3 py-1 text-xxs font-bold uppercase tracking-wider text-teal-700 dark:border-teal-400/20 dark:bg-teal-400/10 dark:text-teal-200">
                                             <BrainCircuitIcon className="h-3.5 w-3.5" />
                                             AI Kesimpulan Wali Murid
                                         </div>
@@ -212,7 +212,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                 <div className="mt-6 grid gap-3 grid-cols-2 sm:grid-cols-4">
                                     {guardianSummary.highlights.map((item) => (
                                         <div key={item.label} className="rounded-2xl border border-white/60 bg-white/70 p-3.5 shadow-sm dark:border-white/5 dark:bg-slate-800/40">
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{item.label}</p>
+                                            <p className="text-xxs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{item.label}</p>
                                             <p className="mt-1.5 text-xl font-extrabold text-slate-900 dark:text-white">{item.value}</p>
                                             <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{item.description}</p>
                                         </div>
@@ -252,7 +252,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                             <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
                                 <div className="bg-slate-950 p-5 text-white dark:bg-slate-900 sm:p-6 flex flex-col justify-between">
                                     <div>
-                                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">{weeklySummary.title}</p>
+                                        <p className="text-xxs font-extrabold uppercase tracking-wider text-emerald-400">{weeklySummary.title}</p>
                                         <h4 className="mt-2.5 text-xl font-bold">Catatan Singkat Pekan Ini</h4>
                                         <p className="mt-3 text-sm leading-relaxed text-slate-300">{weeklySummary.narrative}</p>
                                     </div>
@@ -266,11 +266,11 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                 </div>
 
                                 <div className="p-5 sm:p-6 flex flex-col justify-center">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3.5">Statistik Mingguan</p>
+                                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3.5">Statistik Mingguan</p>
                                     <div className="grid gap-3 grid-cols-2">
                                         {weeklySummary.stats.map((stat) => (
                                             <div key={stat.label} className={`rounded-2xl border p-3.5 ${getWeeklyTone(stat.tone)}`}>
-                                                <p className="text-[10px] font-bold uppercase tracking-wider opacity-75">{stat.label}</p>
+                                                <p className="text-xxs font-bold uppercase tracking-wider opacity-75">{stat.label}</p>
                                                 <p className="mt-2 text-2xl font-black">{stat.value}</p>
                                                 <p className="mt-0.5 text-[11px] leading-relaxed opacity-85">{stat.description}</p>
                                             </div>
@@ -347,7 +347,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                                 <p className="text-xs opacity-90 leading-relaxed mt-0.5">{item.description}</p>
                                             </div>
                                             {item.badge && (
-                                                <span className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold dark:bg-black/20 self-center">
+                                                <span className="rounded-full bg-white/80 px-2 py-0.5 text-xxs font-bold dark:bg-black/20 self-center">
                                                     {item.badge}
                                                 </span>
                                             )}
@@ -374,7 +374,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                         <div className="flex items-start justify-between gap-3">
                                             <p className="font-bold text-sm text-slate-900 dark:text-white leading-relaxed">{announcement.title}</p>
                                             {announcement.date && (
-                                                <span className="text-[10px] font-medium text-slate-400 whitespace-nowrap">{dateFormatter.format(new Date(announcement.date))}</span>
+                                                <span className="text-xxs font-medium text-slate-400 whitespace-nowrap">{dateFormatter.format(new Date(announcement.date))}</span>
                                             )}
                                         </div>
                                         <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{announcement.content}</p>
@@ -396,7 +396,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                             </button>
                         </div>
 
-                        <div className="mt-4 space-y-4 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-slate-800">
+                        <div className="mt-4 space-y-4 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100 dark:before:bg-slate-800">
                             {recentActivities.length === 0 ? (
                                 <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">Belum ada aktivitas tercatat.</p>
                             ) : (
@@ -407,7 +407,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                         <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 transition-all">
                                             <p className="font-bold text-sm text-slate-900 dark:text-white">{activity.title}</p>
                                             <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{activity.description}</p>
-                                            <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                            <p className="mt-2 text-xxs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                                                 {dateFormatter.format(new Date(activity.createdAt))}
                                             </p>
                                         </div>

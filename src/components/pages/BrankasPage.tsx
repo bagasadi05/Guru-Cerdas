@@ -407,7 +407,7 @@ const BrankasPage: React.FC = () => {
                       />
                       <div className="overflow-hidden flex-1">
                         <p className="font-bold text-sm truncate">{student.name}</p>
-                        <p className={`text-[10px] ${selectedStudent?.id === student.id ? 'text-emerald-200' : 'text-slate-400 dark:text-slate-500'} font-semibold truncate mt-0.5`}>
+                        <p className={`text-xxs ${selectedStudent?.id === student.id ? 'text-emerald-200' : 'text-slate-400 dark:text-slate-500'} font-semibold truncate mt-0.5`}>
                           Gender: {student.gender}
                         </p>
                       </div>
@@ -459,25 +459,25 @@ const BrankasPage: React.FC = () => {
                         <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-200/50 dark:border-emerald-500/10 flex flex-col items-center justify-center text-center shadow-sm">
                           <Award className="w-5 h-5 text-emerald-500 mb-1" />
                           <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{studentStats.avgScore}</span>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Rata-rata Nilai</span>
+                          <span className="text-xxs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Rata-rata Nilai</span>
                         </div>
 
                         <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-500/5 border border-blue-200/50 dark:border-blue-500/10 flex flex-col items-center justify-center text-center shadow-sm">
                           <Calendar className="w-5 h-5 text-blue-500 mb-1" />
                           <span className="text-2xl font-black text-blue-600 dark:text-blue-400">{studentStats.attendanceRate}%</span>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Kehadiran</span>
+                          <span className="text-xxs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Kehadiran</span>
                         </div>
 
                         <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/5 border border-amber-200/50 dark:border-amber-500/10 flex flex-col items-center justify-center text-center shadow-sm">
                           <Sparkles className="w-5 h-5 text-amber-500 mb-1" />
                           <span className="text-2xl font-black text-amber-600 dark:text-amber-400">{studentStats.totalQuizPoints}</span>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Poin Keaktifan</span>
+                          <span className="text-xxs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Poin Keaktifan</span>
                         </div>
 
                         <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-500/5 border border-red-200/50 dark:border-red-500/10 flex flex-col items-center justify-center text-center shadow-sm">
                           <ShieldAlert className="w-5 h-5 text-red-500 mb-1" />
                           <span className="text-2xl font-black text-red-600 dark:text-red-400">{studentStats.totalViolations}</span>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Poin Pelanggaran</span>
+                          <span className="text-xxs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Poin Pelanggaran</span>
                         </div>
                       </div>
 
@@ -497,7 +497,7 @@ const BrankasPage: React.FC = () => {
                                 <div key={record.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm">
                                   <div className="overflow-hidden">
                                     <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{record.subject}</p>
-                                    <p className="text-[9px] text-slate-400 font-semibold truncate mt-0.5">{record.assessment_name || 'Asesmen'}</p>
+                                    <p className="text-xxs text-slate-400 font-semibold truncate mt-0.5">{record.assessment_name || 'Asesmen'}</p>
                                   </div>
                                   <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-black rounded-lg border border-emerald-500/20">
                                     {record.score}
@@ -522,19 +522,19 @@ const BrankasPage: React.FC = () => {
                             <div className="grid grid-cols-2 gap-3.5">
                               <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
                                 <p className="text-lg font-black text-emerald-600 dark:text-emerald-400">{studentStats.present}</p>
-                                <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">Hadir</p>
+                                <p className="text-xxs font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">Hadir</p>
                               </div>
                               <div className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-xl text-center">
                                 <p className="text-lg font-black text-sky-600 dark:text-sky-400">{studentStats.sakit}</p>
-                                <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">Sakit</p>
+                                <p className="text-xxs font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">Sakit</p>
                               </div>
                               <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center">
                                 <p className="text-lg font-black text-amber-600 dark:text-amber-400">{studentStats.izin}</p>
-                                <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">Izin</p>
+                                <p className="text-xxs font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">Izin</p>
                               </div>
                               <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-center">
                                 <p className="text-lg font-black text-rose-600 dark:text-rose-400">{studentStats.alpha}</p>
-                                <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">Alpha</p>
+                                <p className="text-xxs font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">Alpha</p>
                               </div>
                             </div>
                           </div>
@@ -587,12 +587,12 @@ const BrankasPage: React.FC = () => {
                       <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     {cls.is_archived ? (
-                      <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1">
+                      <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xxs font-black rounded-lg uppercase tracking-wider flex items-center gap-1">
                         <Lock className="w-3 h-3" />
                         Terarsip
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1">
+                      <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xxs font-black rounded-lg uppercase tracking-wider flex items-center gap-1">
                         <Unlock className="w-3 h-3" />
                         Aktif
                       </span>
@@ -602,7 +602,7 @@ const BrankasPage: React.FC = () => {
                   <h3 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-2">
                     Kelas {cls.name}
                     {cls.grade_level && (
-                      <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded-lg border border-emerald-200/50 dark:border-emerald-500/20">
+                      <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xxs font-bold rounded-lg border border-emerald-200/50 dark:border-emerald-500/20">
                         Tingkat {cls.grade_level}
                       </span>
                     )}

@@ -79,7 +79,7 @@ const NotificationItem: React.FC<{
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
                     {notification.message}
                 </p>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                <p className="text-xxs text-gray-400 dark:text-gray-500 mt-1">
                     {formatTimeAgo(notification.timestamp)}
                 </p>
             </div>
@@ -183,7 +183,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
             >
                 <BellIcon className="w-5 h-5" />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-red-500 text-white text-xxs font-bold flex items-center justify-center animate-pulse">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}

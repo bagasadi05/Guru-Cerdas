@@ -79,7 +79,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-overlay">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
@@ -94,7 +94,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
       {/* Bottom Sheet */}
       <div
         ref={sheetRef}
-        className="absolute bottom-0 left-0 right-0 z-[101]
+        className="absolute bottom-0 left-0 right-0 z-modal
                   bg-white dark:bg-slate-900 
                   rounded-t-3xl shadow-2xl 
                   border-t border-slate-200 dark:border-slate-700

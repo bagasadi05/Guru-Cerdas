@@ -157,7 +157,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                         }, 0);
                         return (
                             <div key={stat.key} className={`rounded-xl p-3 border border-slate-100 dark:border-slate-800 ${stat.bg} flex flex-col items-center justify-center`}>
-                                <p className={`text-[10px] font-bold tracking-wider ${stat.color} uppercase mb-1`}>{stat.label}</p>
+                                <p className={`text-xxs font-bold tracking-wider ${stat.color} uppercase mb-1`}>{stat.label}</p>
                                 <p className={`text-2xl font-black ${stat.color}`}>{count}</p>
                             </div>
                         );
@@ -192,7 +192,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                             <td className="px-6 py-4">
                                                 <div className="font-semibold text-slate-800 dark:text-white">{enrollment.name}</div>
                                                 {enrollment.participantType === 'extracurricular_student' && (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 mt-1">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xxs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 mt-1">
                                                         Siswa Ekskul
                                                     </span>
                                                 )}

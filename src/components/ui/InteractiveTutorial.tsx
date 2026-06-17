@@ -952,7 +952,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
                             <span className="text-white/90 text-xs font-semibold truncate">{flowTitle}</span>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="text-white/60 text-[10px] font-mono">{stepIndex + 1}/{totalSteps}</span>
+                            <span className="text-white/60 text-xxs font-mono">{stepIndex + 1}/{totalSteps}</span>
                             <button
                                 onClick={onSkip}
                                 className="p-1 rounded-md hover:bg-white/20 text-white/70 hover:text-white transition-colors"
@@ -981,7 +981,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
                         <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/50 mb-3">
                             <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">{getActionLabel()}</span>
                             {countdown !== null && (
-                                <span className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
+                                <span className="flex items-center gap-1 text-xxs text-slate-400 font-mono">
                                     <Timer className="w-3 h-3" />
                                     {countdown}s
                                 </span>
@@ -1040,7 +1040,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
                         </div>
 
                         {/* Keyboard hint */}
-                        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-center gap-3 text-[10px] text-slate-400">
+                        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-center gap-3 text-xxs text-slate-400">
                             <span className="flex items-center gap-1"><Keyboard className="w-3 h-3" /> ← → navigasi</span>
                             <span>Esc tutup</span>
                         </div>
@@ -1179,9 +1179,9 @@ export const TutorialPicker: React.FC<TutorialPickerProps> = ({ isOpen, onClose 
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{flow.description}</p>
                                 </div>
                                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                    <span className="text-[10px] text-slate-400 font-medium">{flow.steps.length} langkah</span>
+                                    <span className="text-xxs text-slate-400 font-medium">{flow.steps.length} langkah</span>
                                     {isCompleted ? (
-                                        <span className="text-[10px] text-emerald-500 font-medium flex items-center gap-0.5">
+                                        <span className="text-xxs text-emerald-500 font-medium flex items-center gap-0.5">
                                             <RotateCcw className="w-2.5 h-2.5" /> Ulangi
                                         </span>
                                     ) : (
@@ -1195,14 +1195,14 @@ export const TutorialPicker: React.FC<TutorialPickerProps> = ({ isOpen, onClose 
 
                 {/* Footer */}
                 <div className="p-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between">
-                    <p className="text-[10px] text-slate-400 flex items-center gap-1.5">
+                    <p className="text-xxs text-slate-400 flex items-center gap-1.5">
                         <MousePointerClick className="w-3 h-3" />
                         Praktik langsung di halaman asli
                     </p>
                     {completedCount > 0 && (
                         <button
                             onClick={handleReset}
-                            className="text-[10px] text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1"
+                            className="text-xxs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1"
                         >
                             <RotateCcw className="w-3 h-3" />
                             Reset progress

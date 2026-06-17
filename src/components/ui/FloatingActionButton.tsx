@@ -110,7 +110,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     return (
         <div
             ref={containerRef}
-            className={`fixed z-40 ${!offset ? positionClasses[position] : ''}`}
+            className={`fixed z-fixed ${!offset ? positionClasses[position] : ''}`}
             style={offset ? { position: 'fixed', ...style } : {}}
         >
             {/* Quick Actions Menu */}

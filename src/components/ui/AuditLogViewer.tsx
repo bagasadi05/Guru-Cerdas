@@ -209,7 +209,7 @@ export const ChangelogBadge: React.FC<{
         <ClockIcon className="w-3 h-3" />
         Riwayat
         {changeCount !== undefined && changeCount > 0 && (
-            <span className="px-1.5 py-0.5 bg-indigo-500 text-white rounded-full text-[10px]">
+            <span className="px-1.5 py-0.5 bg-indigo-500 text-white rounded-full text-xxs">
                 {changeCount}
             </span>
         )}

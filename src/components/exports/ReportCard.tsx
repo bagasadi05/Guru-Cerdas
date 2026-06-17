@@ -116,7 +116,7 @@ export const ReportCard = React.forwardRef<HTMLDivElement, ReportCardProps>(({ d
                     <p className="font-bold border-b border-slate-800 inline-block min-w-[150px] pb-1">{data.teacher?.full_name || '...................'}</p>
                 </div>
             </div>
-            <div className="mt-12 text-center text-[10px] text-slate-400">
+            <div className="mt-12 text-center text-xxs text-slate-400">
                 Dokumen ini dicetak secara otomatis melalui aplikasi Portal Guru.
             </div>
         </div>

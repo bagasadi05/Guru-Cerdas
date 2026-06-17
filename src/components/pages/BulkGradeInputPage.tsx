@@ -577,7 +577,7 @@ const BulkGradeInputPage: React.FC = () => {
                         className={`w-24 text-center ${g.score !== '' ? colorClass.border : ''}`}
                     />
                     {isBelowKkm && (
-                        <span className="absolute -bottom-4 left-0 right-0 text-[10px] text-amber-500 text-center">
+                        <span className="absolute -bottom-4 left-0 right-0 text-xxs text-amber-500 text-center">
                             &lt; KKM
                         </span>
                     )}
@@ -599,7 +599,7 @@ const BulkGradeInputPage: React.FC = () => {
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Input Nilai Cepat</h1>
                             <p className="text-gray-500 dark:text-gray-400">Masukkan nilai untuk semua siswa dalam satu kelas</p>
                             <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium border border-emerald-200 dark:border-emerald-800/50">
-                                <span className="text-[10px]">💡</span>
+                                <span className="text-xxs">💡</span>
                                 <span>Bisa langsung Copy dari Excel, lalu Paste (Ctrl+V) di kotak nilai</span>
                             </div>
                         </div>

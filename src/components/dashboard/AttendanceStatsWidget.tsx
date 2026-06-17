@@ -231,29 +231,29 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center mb-2 shadow-lg">
                         <CheckCircleIcon className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-[28px] font-extrabold leading-none text-emerald-600 dark:text-emerald-400">{overallStats.hadir}</span>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Hadir</p>
+                    <span className="text-3xl font-extrabold leading-none text-emerald-600 dark:text-emerald-400">{overallStats.hadir}</span>
+                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 mt-1">Hadir</p>
                 </div>
                 <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center mb-2 shadow-lg">
                         <AlertTriangleIcon className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-[28px] font-extrabold leading-none text-blue-600 dark:text-blue-400">{overallStats.sakit}</span>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Sakit</p>
+                    <span className="text-3xl font-extrabold leading-none text-blue-600 dark:text-blue-400">{overallStats.sakit}</span>
+                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 mt-1">Sakit</p>
                 </div>
                 <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-2 shadow-lg">
                         <UsersIcon className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-[28px] font-extrabold leading-none text-amber-600 dark:text-amber-400">{overallStats.izin}</span>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Izin</p>
+                    <span className="text-3xl font-extrabold leading-none text-amber-600 dark:text-amber-400">{overallStats.izin}</span>
+                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 mt-1">Izin</p>
                 </div>
                 <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-rose-50 dark:bg-rose-900/20 rounded-lg">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center mb-2 shadow-lg">
                         <XCircleIcon className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-[28px] font-extrabold leading-none text-rose-600 dark:text-rose-400">{overallStats.alpha}</span>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Alpha</p>
+                    <span className="text-3xl font-extrabold leading-none text-rose-600 dark:text-rose-400">{overallStats.alpha}</span>
+                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 mt-1">Alpha</p>
                 </div>
             </div>
 

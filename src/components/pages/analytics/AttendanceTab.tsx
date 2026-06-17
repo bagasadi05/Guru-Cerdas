@@ -46,7 +46,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ dailyAttendance, a
                 <div className="flex mt-4 sm:mt-8 overflow-hidden">
                     <div className="flex-shrink-0 flex flex-col justify-between pr-2 sm:pr-3 text-right" style={{ height: `${chartHeight}px` }}>
                         {yAxisLabels.map((val, i) => (
-                            <span key={i} className="text-[10px] text-slate-500 dark:text-slate-400 leading-none">{val}</span>
+                            <span key={i} className="text-xxs text-slate-500 dark:text-slate-400 leading-none">{val}</span>
                         ))}
                     </div>
 
@@ -94,7 +94,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ dailyAttendance, a
                                 return (
                                     <div key={i} className="flex-1 text-center" style={{ minWidth: `${barWidth}px` }}>
                                         {showLabel && (
-                                            <span className="text-[10px] text-slate-500 whitespace-nowrap inline-block transform -rotate-30" style={{ transform: 'rotate(-30deg)' }}>
+                                            <span className="text-xxs text-slate-500 whitespace-nowrap inline-block transform -rotate-30" style={{ transform: 'rotate(-30deg)' }}>
                                                 {day.date.substring(5)}
                                             </span>
                                         )}
@@ -109,19 +109,19 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ dailyAttendance, a
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-200 dark:border-slate-700/50">
                     <div className="text-center p-2 rounded-lg bg-green-500/10">
                         <p className="text-base sm:text-lg font-bold text-green-500">{data.reduce((sum, d) => sum + d.hadir, 0)}</p>
-                        <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wide">Hadir</p>
+                        <p className="text-xxs sm:text-xxs text-slate-500 uppercase tracking-wide">Hadir</p>
                     </div>
                     <div className="text-center p-2 rounded-lg bg-blue-500/10">
                         <p className="text-base sm:text-lg font-bold text-blue-500">{data.reduce((sum, d) => sum + d.izin, 0)}</p>
-                        <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wide">Izin</p>
+                        <p className="text-xxs sm:text-xxs text-slate-500 uppercase tracking-wide">Izin</p>
                     </div>
                     <div className="text-center p-2 rounded-lg bg-amber-500/10">
                         <p className="text-base sm:text-lg font-bold text-amber-500">{data.reduce((sum, d) => sum + d.sakit, 0)}</p>
-                        <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wide">Sakit</p>
+                        <p className="text-xxs sm:text-xxs text-slate-500 uppercase tracking-wide">Sakit</p>
                     </div>
                     <div className="text-center p-2 rounded-lg bg-rose-500/10">
                         <p className="text-base sm:text-lg font-bold text-rose-500">{data.reduce((sum, d) => sum + d.alpha, 0)}</p>
-                        <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wide">Alpha</p>
+                        <p className="text-xxs sm:text-xxs text-slate-500 uppercase tracking-wide">Alpha</p>
                     </div>
                 </div>
             </div>
@@ -148,7 +148,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ dailyAttendance, a
                 <div className="relative w-44 h-44 rounded-full flex items-center justify-center" style={{ background: conicGradient }}>
                     <div className="w-28 h-28 rounded-full bg-white dark:bg-slate-900 flex flex-col items-center justify-center shadow-inner">
                         <span className="text-3xl font-bold text-slate-900 dark:text-white">{total}</span>
-                        <span className="text-[10px] text-slate-500">Total Absen</span>
+                        <span className="text-xxs text-slate-500">Total Absen</span>
                     </div>
                 </div>
                 <div className="flex-1 space-y-3 min-w-[200px]">

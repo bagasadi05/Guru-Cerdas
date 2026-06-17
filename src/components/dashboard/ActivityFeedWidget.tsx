@@ -32,7 +32,7 @@ const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
                                 <Bell className="w-3.5 h-3.5" />
                                 <span>Pengingat</span>
                                 {reminderCount > 0 && (
-                                    <span className="absolute -top-1 -right-4 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] text-white font-bold leading-none">
+                                    <span className="absolute -top-1 -right-4 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-xxs text-white font-bold leading-none">
                                         {reminderCount}
                                     </span>
                                 )}

@@ -187,7 +187,7 @@ export const StudentAnalyticsTab: React.FC<StudentAnalyticsTabProps> = ({
                                     y={pos.y}
                                     textAnchor="middle"
                                     dominantBaseline="middle"
-                                    className="text-[10px] font-medium fill-slate-600 dark:fill-slate-400"
+                                    className="text-xxs font-medium fill-slate-600 dark:fill-slate-400"
                                 >
                                     {pos.label.length > 10 ? pos.label.substring(0, 10) + '...' : pos.label}
                                 </text>

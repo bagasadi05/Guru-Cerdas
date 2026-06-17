@@ -1822,7 +1822,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             <div>
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Rata-rata Semester 1</p>
               <h4 className="text-lg font-extrabold text-slate-800 dark:text-white mt-0.5">Semester Ganjil</h4>
-              <span className="mt-2 inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 px-2 py-0.5 text-[10px] font-bold">
+              <span className="mt-2 inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 px-2 py-0.5 text-xxs font-bold">
                 {sem1Academic.length} Rekor Nilai
               </span>
             </div>
@@ -1839,7 +1839,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             <div>
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Rata-rata Semester 2</p>
               <h4 className="text-lg font-extrabold text-slate-800 dark:text-white mt-0.5">Semester Genap</h4>
-              <span className="mt-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-bold">
+              <span className="mt-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 px-2 py-0.5 text-xxs font-bold">
                 {sem2Academic.length} Rekor Nil
               </span>
             </div>
@@ -1979,7 +1979,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                         y={pos.y} 
                         textAnchor="middle" 
                         dominantBaseline="middle" 
-                        className="text-[10px] font-bold fill-slate-600 dark:fill-slate-400 hover:fill-indigo-650 dark:hover:fill-indigo-400 transition-colors"
+                        className="text-xxs font-bold fill-slate-600 dark:fill-slate-400 hover:fill-indigo-650 dark:hover:fill-indigo-400 transition-colors"
                       >
                         {pos.label}
                       </text>
@@ -1994,14 +1994,14 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             {/* Legenda & Mini Stats */}
             <div className="border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-4 grid grid-cols-2 gap-4 text-xs font-semibold">
               <div className="flex flex-col items-center p-2 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/20">
-                <span className="text-[10px] text-slate-500 font-medium">Rata-rata Dimensi S1</span>
+                <span className="text-xxs text-slate-500 font-medium">Rata-rata Dimensi S1</span>
                 <span className="text-base font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
                   {Math.round(compHolisticDimensions.sem1.reduce((a,b)=>a+b,0)/5)}
                 </span>
               </div>
 
               <div className="flex flex-col items-center p-2 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-100/50 dark:border-emerald-900/20">
-                <span className="text-[10px] text-slate-500 font-medium">Rata-rata Dimensi S2</span>
+                <span className="text-xxs text-slate-500 font-medium">Rata-rata Dimensi S2</span>
                 <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                   {Math.round(compHolisticDimensions.sem2.reduce((a,b)=>a+b,0)/5)}
                 </span>
@@ -2034,7 +2034,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                   <div key={idx} className="group">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-semibold text-slate-700 dark:text-slate-300">{item.subject}</span>
-                      <div className="flex gap-3 text-[10px]">
+                      <div className="flex gap-3 text-xxs">
                         <span className="text-indigo-600 dark:text-indigo-400 font-bold">Sem 1: {item.sem1 ?? '-'}</span>
                         <span className="text-emerald-600 dark:text-emerald-400 font-bold">Sem 2: {item.sem2 ?? '-'}</span>
                       </div>
@@ -2043,27 +2043,27 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                       {/* Semester 1 Bar */}
                       {item.sem1 !== null && (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] text-slate-400 font-semibold w-7">Sem 1</span>
+                          <span className="text-xxs text-slate-400 font-semibold w-7">Sem 1</span>
                           <div className="flex-1 h-2 bg-slate-200/50 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div 
                               className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-indigo-505 transition-all duration-505" 
                               style={{ width: `${item.sem1}%` }} 
                             />
                           </div>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold w-5 text-right">{item.sem1}</span>
+                          <span className="text-xxs text-slate-500 dark:text-slate-400 font-semibold w-5 text-right">{item.sem1}</span>
                         </div>
                       )}
                       {/* Semester 2 Bar */}
                       {item.sem2 !== null && (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] text-slate-400 font-semibold w-7">Sem 2</span>
+                          <span className="text-xxs text-slate-400 font-semibold w-7">Sem 2</span>
                           <div className="flex-1 h-2 bg-slate-200/50 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div 
                               className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-505 transition-all duration-505" 
                               style={{ width: `${item.sem2}%` }} 
                             />
                           </div>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold w-5 text-right">{item.sem2}</span>
+                          <span className="text-xxs text-slate-500 dark:text-slate-400 font-semibold w-5 text-right">{item.sem2}</span>
                         </div>
                       )}
                     </div>
@@ -2093,10 +2093,10 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 <p className="text-2xl font-bold mt-1 text-indigo-600 dark:text-indigo-400">
                   {compAttendanceStats.sem1.percentage}%
                 </p>
-                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                <p className="text-xxs text-slate-500 mt-2 font-medium">
                   Hadir: {compAttendanceStats.sem1.hadir} hari
                 </p>
-                <p className="text-[9px] text-slate-400 mt-1">
+                <p className="text-xxs text-slate-400 mt-1">
                   S/I/A: {compAttendanceStats.sem1.sakit}/{compAttendanceStats.sem1.izin}/{compAttendanceStats.sem1.alpha}
                 </p>
               </div>
@@ -2105,10 +2105,10 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 <p className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
                   {compAttendanceStats.sem2.percentage}%
                 </p>
-                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                <p className="text-xxs text-slate-500 mt-2 font-medium">
                   Hadir: {compAttendanceStats.sem2.hadir} hari
                 </p>
-                <p className="text-[9px] text-slate-400 mt-1">
+                <p className="text-xxs text-slate-400 mt-1">
                   S/I/A: {compAttendanceStats.sem2.sakit}/{compAttendanceStats.sem2.izin}/{compAttendanceStats.sem2.alpha}
                 </p>
               </div>
@@ -2134,7 +2134,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-300">
                   {compViolationStats.sem1.points}
                 </p>
-                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                <p className="text-xxs text-slate-500 mt-2 font-medium">
                   {compViolationStats.sem1.count} Pelanggaran
                 </p>
               </div>
@@ -2143,7 +2143,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 <p className={`text-2xl font-bold mt-1 ${compViolationStats.sem2.points > compViolationStats.sem1.points ? 'text-rose-600 dark:text-rose-400 font-extrabold' : 'text-emerald-600 dark:text-emerald-400'}`}>
                   {compViolationStats.sem2.points}
                 </p>
-                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                <p className="text-xxs text-slate-500 mt-2 font-medium">
                   {compViolationStats.sem2.count} Pelanggaran
                 </p>
               </div>
@@ -2169,7 +2169,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-300">
                   {sem1Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0)}
                 </p>
-                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                <p className="text-xxs text-slate-500 mt-2 font-medium">
                   {sem1Quizzes.length} Aktivitas
                 </p>
               </div>
@@ -2178,7 +2178,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 <p className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
                   {sem2Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0)}
                 </p>
-                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                <p className="text-xxs text-slate-500 mt-2 font-medium">
                   {sem2Quizzes.length} Aktivitas
                 </p>
               </div>
@@ -2246,7 +2246,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                           </span>
                         )}
                         {compGeneratedAt && (Date.now() - new Date(compGeneratedAt).getTime()) > 30 * 24 * 60 * 60 * 1000 && (
-                          <span className="ml-1 px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-[10px] font-semibold">Stale</span>
+                          <span className="ml-1 px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-xxs font-semibold">Stale</span>
                         )}
                       </CardDescription>
                     </div>
@@ -2574,7 +2574,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                     {axisEndpoints.map((axis, i) => (<line key={i} x1={axis.x1} y1={axis.y1} x2={axis.x2} y2={axis.y2} stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />))}
                     <polygon points={studentPolygonPoints} fill="rgba(99, 102, 241, 0.3)" stroke="rgb(99, 102, 241)" strokeWidth="2" />
                     {subjects.map((_, i) => { const angle = i * (2 * Math.PI / subjects.length) - Math.PI / 2; const ratio = studentScores[i] / maxScore; return (<circle key={i} cx={centerX + radius * ratio * Math.cos(angle)} cy={centerY + radius * ratio * Math.sin(angle)} r="5" fill="white" stroke="rgb(99, 102, 241)" strokeWidth="2" />); })}
-                    {labelPositions.map((pos, i) => (<text key={i} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" className="text-[10px] font-medium fill-slate-600 dark:fill-slate-400">{pos.label.length > 10 ? pos.label.substring(0, 10) + '...' : pos.label}</text>))}
+                    {labelPositions.map((pos, i) => (<text key={i} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" className="text-xxs font-medium fill-slate-600 dark:fill-slate-400">{pos.label.length > 10 ? pos.label.substring(0, 10) + '...' : pos.label}</text>))}
                   </svg>
                 </div>
               ) : (
@@ -2759,7 +2759,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                         {axisEndpoints.map((axis, i) => (<line key={i} x1={axis.x1} y1={axis.y1} x2={axis.x2} y2={axis.y2} stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />))}
                         <polygon points={studentPolygonPoints} fill="rgba(99, 102, 241, 0.3)" stroke="rgb(99, 102, 241)" strokeWidth="2" />
                         {subjects.map((_, i) => { const angle = i * (2 * Math.PI / subjects.length) - Math.PI / 2; const ratio = studentScores[i] / maxScore; return (<circle key={i} cx={centerX + radius * ratio * Math.cos(angle)} cy={centerY + radius * ratio * Math.sin(angle)} r="5" fill="white" stroke="rgb(99, 102, 241)" strokeWidth="2" />); })}
-                        {labelPositions.map((pos, i) => (<text key={i} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" className="text-[10px] font-medium fill-slate-600 dark:fill-slate-400">{pos.label.length > 10 ? pos.label.substring(0, 10) + '...' : pos.label}</text>))}
+                        {labelPositions.map((pos, i) => (<text key={i} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" className="text-xxs font-medium fill-slate-600 dark:fill-slate-400">{pos.label.length > 10 ? pos.label.substring(0, 10) + '...' : pos.label}</text>))}
                       </svg>
                     </div>
                   ) : (

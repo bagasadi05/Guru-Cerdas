@@ -308,6 +308,7 @@ export const typography = {
 
     // Font sizes
     fontSize: {
+        xxs: '0.625rem',     // 10px
         xs: '0.75rem',      // 12px
         sm: '0.875rem',     // 14px
         base: '1rem',       // 16px
@@ -579,15 +580,15 @@ export const mobileSpecs = {
         gridCols: 'grid-cols-4',
         gap: 'gap-2',
         badgeSize: 'w-10 h-10',
-        valueSize: 'text-[28px] font-extrabold',
-        labelSize: 'text-[10px] font-bold uppercase tracking-wider',
+        valueSize: 'text-3xl font-extrabold',
+        labelSize: 'text-xxs font-bold uppercase tracking-wider',
     },
     /** Bottom navigation specifications */
     bottomNav: {
         height: 'h-[68px]',
         iconSize: 'w-6 h-6',
         activeIconSize: 'w-[26px] h-[26px]',
-        labelSize: 'text-[10px]',
+        labelSize: 'text-xxs',
         itemMinSize: 'min-w-[48px] min-h-[48px]',
     },
     /** Header specifications */

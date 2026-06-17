@@ -76,14 +76,14 @@ export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule
                                     >
                                         <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-1">
                                             <ClockIcon className="w-3 h-3" />
-                                            <span className="text-[10px] font-mono font-medium">{item.start_time}</span>
+                                            <span className="text-xxs font-mono font-medium">{item.start_time}</span>
                                         </div>
                                         <h4 className="font-bold text-slate-800 dark:text-gray-100 text-sm leading-tight mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                             {item.subject}
                                         </h4>
                                         <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-500">
                                             <UsersIcon className="w-3 h-3" />
-                                            <span className="text-[10px] font-medium">{item.class_id}</span>
+                                            <span className="text-xxs font-medium">{item.class_id}</span>
                                         </div>
                                     </div>
                                 ))}

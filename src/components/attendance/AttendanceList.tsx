@@ -52,7 +52,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                     const statusOpt = statusOptions.find(opt => opt.value === record.status);
                                     if (!statusOpt) return null;
                                     return (
-                                        <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-white text-[10px] font-bold
+                                        <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-white text-xxs font-bold
                                             ${statusOpt.value === 'Hadir' ? 'bg-emerald-500' :
                                                 statusOpt.value === 'Sakit' ? 'bg-sky-500' :
                                                     statusOpt.value === 'Izin' ? 'bg-amber-500' : 'bg-rose-500'}`}
@@ -63,7 +63,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                 })()}
                             </div>
                             <div className="min-w-0">
-                                <h4 className="font-semibold text-[15px] leading-snug text-slate-800 dark:text-white line-clamp-2">
+                                <h4 className="font-semibold text-sm leading-snug text-slate-800 dark:text-white line-clamp-2">
                                     {student.name}
                                 </h4>
                                 {record?.note ? (
@@ -72,11 +72,11 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                     </p>
                                 ) : (
                                     record?.status ? (
-                                        <p className="text-[13px] text-slate-500 dark:text-slate-400 truncate">
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
                                             Status: <span className="font-medium text-slate-700 dark:text-slate-200">{record.status}</span>
                                         </p>
                                     ) : (
-                                        <p className="text-[13px] font-medium text-amber-500 dark:text-amber-400 truncate">
+                                        <p className="text-sm font-medium text-amber-500 dark:text-amber-400 truncate">
                                             Belum diabsen
                                         </p>
                                     )

@@ -111,7 +111,7 @@ export const QuickInsightStrip: React.FC<QuickInsightStripProps> = ({
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">
               {cfg.title}
             </p>
-            <p className="text-[13px] font-medium leading-snug text-slate-700 dark:text-slate-200 line-clamp-3">
+            <p className="text-sm font-medium leading-snug text-slate-700 dark:text-slate-200 line-clamp-3">
               {values[cfg.key]}
             </p>
           </div>

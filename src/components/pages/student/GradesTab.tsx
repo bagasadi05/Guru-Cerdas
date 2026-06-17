@@ -137,7 +137,7 @@ const GradesChart: React.FC<{
                                     }}
                                 />
                             </div>
-                            <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
+                            <div className="flex justify-between text-xxs text-slate-400 mt-0.5">
                                 <span>{item.count} penilaian</span>
                                 <span className="flex items-center gap-1">
                                     {isAboveKkm ? (
@@ -320,7 +320,7 @@ const GradesPanel: React.FC<{
                                                 <div className="flex items-center gap-2">
                                                     <h4 className="font-bold text-base text-gray-900 dark:text-white">{record.assessment_name || 'Penilaian'}</h4>
                                                     {record.score < kkm && (
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                                                        <span className="text-xxs px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
                                                             Remidi
                                                         </span>
                                                     )}

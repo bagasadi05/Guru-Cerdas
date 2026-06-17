@@ -191,7 +191,7 @@ export const QuickTemplatesDropdown: React.FC<QuickTemplatesDropdownProps> = ({
                                     </p>
                                 </div>
                                 <span className={`
-                                    text-[10px] px-2 py-0.5 rounded-full
+                                    text-xxs px-2 py-0.5 rounded-full
                                     bg-slate-100 dark:bg-slate-700
                                     text-slate-500 dark:text-slate-400
                                     whitespace-nowrap

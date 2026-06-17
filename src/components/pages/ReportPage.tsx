@@ -517,9 +517,9 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                         />
                                     </div>
                                     <div className="flex-1 text-center">
-                                        <p className="text-[10px] md:text-xs uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">Kementerian Agama Republik Indonesia</p>
-                                        <p className="text-[10px] md:text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 mt-1">Madrasah Ibtidaiyah</p>
-                                        <h1 className="text-lg md:text-[28px] font-bold uppercase tracking-[0.08em] font-serif text-slate-900 dark:text-white mt-2">Laporan Hasil Belajar Siswa</h1>
+                                        <p className="text-xxs md:text-xs uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">Kementerian Agama Republik Indonesia</p>
+                                        <p className="text-xxs md:text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 mt-1">Madrasah Ibtidaiyah</p>
+                                        <h1 className="text-lg md:text-3xl font-bold uppercase tracking-[0.08em] font-serif text-slate-900 dark:text-white mt-2">Laporan Hasil Belajar Siswa</h1>
                                         <h2 className="text-sm md:text-lg font-bold mt-2 text-emerald-800 dark:text-emerald-300">MI AL IRSYAD AL ISLAMIYYAH KOTA MADIUN</h2>
                                         <p className="text-[11px] md:text-sm mt-2 text-slate-600 dark:text-slate-400">Jl. Diponegoro No. 123, Madiun, Jawa Timur | Telp. (0351) 123456</p>
                                     </div>

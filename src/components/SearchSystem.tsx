@@ -286,7 +286,7 @@ export const GlobalSearchModal: React.FC<{
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4">
+        <div className="fixed inset-0 z-modal flex items-start justify-center pt-[10vh] px-4">
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={close} />
 
@@ -471,7 +471,7 @@ export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }>
                 className={`flex items-center justify-center w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 transition-all border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
                 aria-label="Cari"
             >
-                <Search className="w-[18px] h-[18px]" />
+                <Search className="w-4.5 h-4.5" />
             </button>
         );
     }
@@ -487,7 +487,7 @@ export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }>
                     Cari siswa, kelas, tugas, atau nilai...
                 </span>
             </div>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 text-[10px] font-bold shadow-sm flex-shrink-0">
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 text-xxs font-bold shadow-sm flex-shrink-0">
                 ⌘K
             </kbd>
         </button>

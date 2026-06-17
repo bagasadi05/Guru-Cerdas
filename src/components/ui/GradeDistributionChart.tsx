@@ -102,19 +102,19 @@ export const GradeDistributionChart: React.FC<GradeDistributionChartProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-center">
                     <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{distribution.stats?.mean}</p>
-                    <p className="text-[10px] text-blue-500 uppercase tracking-wide">Rata-rata</p>
+                    <p className="text-xxs text-blue-500 uppercase tracking-wide">Rata-rata</p>
                 </div>
                 <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-center">
                     <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{distribution.stats?.median}</p>
-                    <p className="text-[10px] text-purple-500 uppercase tracking-wide">Median</p>
+                    <p className="text-xxs text-purple-500 uppercase tracking-wide">Median</p>
                 </div>
                 <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-center">
                     <p className="text-lg font-bold text-green-600 dark:text-green-400">{distribution.stats?.aboveKkmPercent}%</p>
-                    <p className="text-[10px] text-green-500 uppercase tracking-wide">Tuntas</p>
+                    <p className="text-xxs text-green-500 uppercase tracking-wide">Tuntas</p>
                 </div>
                 <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-center">
                     <p className="text-lg font-bold text-gray-600 dark:text-gray-400">±{distribution.stats?.stdDev}</p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Std Dev</p>
+                    <p className="text-xxs text-gray-500 uppercase tracking-wide">Std Dev</p>
                 </div>
             </div>
 
@@ -123,7 +123,7 @@ export const GradeDistributionChart: React.FC<GradeDistributionChartProps> = ({
                 <div className="flex items-end justify-between h-32 gap-1 px-2">
                     {distribution.buckets.map((bucket, index) => (
                         <div key={index} className="flex-1 flex flex-col items-center gap-1">
-                            <span className="text-[10px] text-gray-500 font-medium">
+                            <span className="text-xxs text-gray-500 font-medium">
                                 {bucket.count > 0 ? bucket.count : ''}
                             </span>
                             <div
@@ -139,7 +139,7 @@ export const GradeDistributionChart: React.FC<GradeDistributionChartProps> = ({
                 <div className="flex justify-between gap-1 px-2 border-t border-gray-200 dark:border-gray-700 pt-2">
                     {distribution.buckets.map((bucket, index) => (
                         <div key={index} className="flex-1 text-center">
-                            <span className="text-[9px] text-gray-500 dark:text-gray-400">
+                            <span className="text-xxs text-gray-500 dark:text-gray-400">
                                 {bucket.range}
                             </span>
                         </div>

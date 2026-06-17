@@ -401,7 +401,7 @@ export const EnhancedSyncStatus: React.FC<EnhancedSyncStatusProps> = ({
                         <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-ping" />
                     )}
                     {failedCount > 0 && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center">
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xxs font-bold flex items-center justify-center">
                             {failedCount}
                         </div>
                     )}

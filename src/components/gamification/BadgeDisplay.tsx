@@ -98,7 +98,7 @@ export const BadgeIcons: React.FC<{ badges: Badge[] }> = ({ badges }) => {
                 </span>
             ))}
             {badges.length > 3 && (
-                <span className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                <span className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xxs font-bold text-slate-500">
                     +{badges.length - 3}
                 </span>
             )}
