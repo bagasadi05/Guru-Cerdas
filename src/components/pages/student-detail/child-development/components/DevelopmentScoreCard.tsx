@@ -99,7 +99,7 @@ const ScoreRing: React.FC<{
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
-          transition={shouldReduceMotion ? { duration: 0 } : { duration: 1, ease: 'easeOut', delay: 0.3 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.long, ease: easing.easeOut, delay: 0.3 }}
         />
       </svg>
       {/* Center label */}
