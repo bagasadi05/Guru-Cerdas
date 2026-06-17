@@ -50,7 +50,7 @@ export const SecureInput: React.FC<SecureInputProps> = ({
                     className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                 >
                     {label}
-                    {props.required && <span className="text-red-500 ml-1">*</span>}
+                    {props.required && <span className="text-rose-500 ml-1">*</span>}
                 </label>
             )}
             <input
@@ -60,8 +60,8 @@ export const SecureInput: React.FC<SecureInputProps> = ({
                 className={`
                     w-full px-4 py-2.5 rounded-xl border
                     ${error
-                        ? 'border-red-300 dark:border-red-600 focus:ring-red-500'
-                        : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-500'
+                        ? 'border-rose-300 dark:border-rose-600 focus:ring-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-500'
                     }
                     bg-white dark:bg-slate-800 
                     text-slate-900 dark:text-white
@@ -73,7 +73,7 @@ export const SecureInput: React.FC<SecureInputProps> = ({
                 {...props}
             />
             {error && (
-                <p className="mt-1.5 text-sm text-red-500">{error}</p>
+                <p className="mt-1.5 text-sm text-rose-500">{error}</p>
             )}
         </div>
     );
@@ -122,7 +122,7 @@ export const SecureTextarea: React.FC<SecureTextareaProps> = ({
                     className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                 >
                     {label}
-                    {props.required && <span className="text-red-500 ml-1">*</span>}
+                    {props.required && <span className="text-rose-500 ml-1">*</span>}
                 </label>
             )}
             <textarea
@@ -132,8 +132,8 @@ export const SecureTextarea: React.FC<SecureTextareaProps> = ({
                 className={`
                     w-full px-4 py-2.5 rounded-xl border resize-none
                     ${error
-                        ? 'border-red-300 dark:border-red-600 focus:ring-red-500'
-                        : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-500'
+                        ? 'border-rose-300 dark:border-rose-600 focus:ring-rose-500'
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-500'
                     }
                     bg-white dark:bg-slate-800 
                     text-slate-900 dark:text-white
@@ -145,7 +145,7 @@ export const SecureTextarea: React.FC<SecureTextareaProps> = ({
                 {...props}
             />
             {error && (
-                <p className="mt-1.5 text-sm text-red-500">{error}</p>
+                <p className="mt-1.5 text-sm text-rose-500">{error}</p>
             )}
         </div>
     );
@@ -229,14 +229,14 @@ export const SecureFileInput: React.FC<SecureFileInputProps> = ({
                     className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                 >
                     {label}
-                    {required && <span className="text-red-500 ml-1">*</span>}
+                    {required && <span className="text-rose-500 ml-1">*</span>}
                 </label>
             )}
             <div className={`
                 relative border-2 border-dashed rounded-xl p-6 text-center
                 ${error
-                    ? 'border-red-300 dark:border-red-600'
-                    : 'border-slate-200 dark:border-slate-700 hover:border-indigo-400'
+                    ? 'border-rose-300 dark:border-rose-600'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-emerald-400'
                 }
                 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 transition-colors
@@ -273,7 +273,7 @@ export const SecureFileInput: React.FC<SecureFileInputProps> = ({
                 </p>
             </div>
             {error && (
-                <p className="mt-1.5 text-sm text-red-500">{error}</p>
+                <p className="mt-1.5 text-sm text-rose-500">{error}</p>
             )}
         </div>
     );
@@ -348,7 +348,7 @@ export const SecureImageInput: React.FC<SecureImageInputProps> = ({
             {label && (
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     {label}
-                    {props.required && <span className="text-red-500 ml-1">*</span>}
+                    {props.required && <span className="text-rose-500 ml-1">*</span>}
                 </label>
             )}
 
@@ -382,7 +382,7 @@ export const SecureImageInput: React.FC<SecureImageInputProps> = ({
             )}
 
             {error && !localPreview && (
-                <p className="mt-1.5 text-sm text-red-500">{error}</p>
+                <p className="mt-1.5 text-sm text-rose-500">{error}</p>
             )}
         </div>
     );

@@ -4,6 +4,7 @@ import { academicRules, AcademicFormValues } from '../schemas';
 import { validationResolver } from '../../../../utils/formValidation';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
+import { Textarea } from '../../../ui/Textarea';
 import { AcademicRecordRow } from '../types';
 
 interface AcademicFormProps {
@@ -42,12 +43,11 @@ export const AcademicForm: React.FC<AcademicFormProps> = ({ defaultValues, onSub
             </div>
             <div>
                 <label className="block text-sm font-medium mb-1">Catatan (Opsional)</label>
-                <textarea
+                <Textarea
                     {...register('notes')}
                     rows={3}
                     placeholder="cth. Sangat baik dalam materi aljabar."
-                    className="w-full mt-1 block rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600"
-                ></textarea>
+                />
             </div>
             <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="ghost" onClick={onClose}>Batal</Button>

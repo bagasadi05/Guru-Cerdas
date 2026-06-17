@@ -4,6 +4,7 @@ import { reportRules, ReportFormValues } from '../schemas';
 import { validationResolver } from '../../../../utils/formValidation';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
+import { Textarea } from '../../../ui/Textarea';
 import { ReportRow } from '../types';
 import { COMMON_TAGS, REPORT_CATEGORIES, ReportCategory } from '../reportMeta';
 import { UploadIcon, XIcon, FileTextIcon } from 'lucide-react';
@@ -125,16 +126,13 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
             {/* Notes */}
             <div>
                 <label className="block text-sm font-medium mb-1">Catatan Detail</label>
-                <textarea
+                <Textarea
                     {...register('notes')}
                     rows={4}
                     placeholder="Tuliskan catatan lengkap..."
-                    className={`w-full px-3 py-2 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 ${errors.notes
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                        : 'border-gray-200 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500'
-                        }`}
+                    className={errors.notes ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : ''}
                 />
-                {errors.notes && <p className="text-red-500 text-xs mt-1">{errors.notes.message}</p>}
+                {errors.notes && <p className="text-rose-500 text-xs mt-1">{errors.notes.message}</p>}
             </div>
 
             {/* Tags */}
@@ -158,15 +156,15 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
 
                 {/* Custom tag input */}
                 <div className="flex gap-2">
-                    <input
+                    <Input
                         type="text"
                         value={customTag}
                         onChange={(e) => setCustomTag(e.target.value)}
                         placeholder="Tag kustom..."
-                        className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className="flex-1 px-3 py-1.5 text-sm h-10"
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomTag())}
                     />
-                    <Button type="button" variant="outline" size="sm" onClick={handleAddCustomTag}>
+                    <Button type="button" variant="outline" size="sm" onClick={handleAddCustomTag} className="h-10">
                         Tambah
                     </Button>
                 </div>
