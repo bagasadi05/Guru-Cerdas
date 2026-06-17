@@ -116,7 +116,7 @@ export const CharacterTab: React.FC<CharacterTabProps> = ({ violationsStats, qui
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-xs font-bold text-red-600 dark:text-red-400">{item.count}x Melanggar</p>
-                                                    <p className="text-[10px] text-slate-500">{item.points} poin</p>
+                                                    <p className="text-xxs text-slate-500">{item.points} poin</p>
                                                 </div>
                                             </div>
                                         ))}

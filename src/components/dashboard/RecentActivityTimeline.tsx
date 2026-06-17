@@ -171,7 +171,7 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                 </div>
                 <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 dark:border-emerald-700/50 dark:bg-emerald-900/20">
                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">Live</span>
+                    <span className="text-xxs font-bold text-emerald-700 dark:text-emerald-400">Live</span>
                 </div>
             </div>
 
@@ -202,7 +202,7 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                 <div className="flex flex-col items-center justify-center py-10 text-center text-slate-400 dark:text-slate-500">
                     <Clock className="w-8 h-8 opacity-30 mb-2" />
                     <p className="text-xs font-semibold">Tidak ada aktivitas</p>
-                    <p className="text-[10px] mt-0.5 opacity-70">Untuk kategori filter ini</p>
+                    <p className="text-xxs mt-0.5 opacity-70">Untuk kategori filter ini</p>
                 </div>
             ) : (
                 <div className="space-y-0 relative">
@@ -275,7 +275,7 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                         className="w-full px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all flex items-center justify-center gap-2 border border-emerald-200/50 dark:border-emerald-900/30 active:scale-[0.98]"
                     >
                         <span>Lihat Semua Aktivitas</span>
-                        <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-800 rounded-full text-[10px]">
+                        <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-800 rounded-full text-xxs">
                             {filteredActivities.length}
                         </span>
                     </button>

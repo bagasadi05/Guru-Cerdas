@@ -132,7 +132,7 @@ const AppearanceSection: React.FC = () => {
                                 <div className="flex items-center gap-2">
                                     <p className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200">Kurangi Gerakan</p>
                                     {autoLowPerfMode && (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-bold">
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xxs font-bold">
                                             <SmartphoneIcon className="w-3 h-3" />
                                             Auto
                                         </span>

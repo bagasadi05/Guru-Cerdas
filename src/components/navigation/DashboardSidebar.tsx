@@ -43,7 +43,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
               <h1 className="text-lg font-bold tracking-wide text-slate-800 dark:text-white uppercase font-serif">
                 Portal Guru
               </h1>
-              <p className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 tracking-[0.2em] uppercase opacity-80">
+              <p className="text-xxs font-medium text-emerald-600 dark:text-emerald-400 tracking-[0.2em] uppercase opacity-80">
                 Ecosystem
               </p>
             </div>
@@ -64,7 +64,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
                 <p className="font-semibold text-sm text-slate-800 dark:text-white truncate">
                   {user?.name}
                 </p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                <p className="text-xxs text-slate-500 dark:text-slate-400 truncate">
                   {user?.email}
                 </p>
               </div>
@@ -83,7 +83,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
                   sectionIndex === 0 ? '' : 'pt-4 border-t border-slate-200/70 dark:border-white/5'
                 }
               >
-                <p className="px-4 pb-2 text-[9px] font-medium uppercase tracking-[0.18em] text-slate-500/80 dark:text-slate-500/70">
+                <p className="px-4 pb-2 text-xxs font-medium uppercase tracking-[0.18em] text-slate-500/80 dark:text-slate-500/70">
                   {section.label}
                 </p>
                 <div className="space-y-1">

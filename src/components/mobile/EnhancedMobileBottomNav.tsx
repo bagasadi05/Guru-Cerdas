@@ -114,7 +114,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
 
                 {/* Label with Responsive Size */}
                 <span
-                  className={`text-[10px] leading-3 transition-colors duration-200 ${
+                  className={`text-xxs leading-3 transition-colors duration-200 ${
                               isActive
                                 ? 'font-semibold text-emerald-600 dark:text-emerald-400'
                                 : 'font-medium text-slate-600 dark:text-slate-400'
@@ -169,7 +169,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
 
           {/* Label */}
           <span
-            className={`text-[10px] leading-3 transition-colors duration-200 ${
+            className={`text-xxs leading-3 transition-colors duration-200 ${
                         isMoreMenuHighlighted
                           ? 'font-semibold text-emerald-600 dark:text-emerald-400'
                           : 'font-medium text-slate-600 dark:text-slate-400'

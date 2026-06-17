@@ -18,8 +18,8 @@ export const AttendanceStats: React.FC<AttendanceStatsProps> = ({ summary }) => 
                     <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${opt.gradient} flex items-center justify-center mb-2 shadow-lg`}>
                         <opt.icon className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-[28px] font-extrabold leading-none text-slate-800 dark:text-white">{summary[opt.value]}</span>
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">{opt.label}</span>
+                    <span className="text-3xl font-extrabold leading-none text-slate-800 dark:text-white">{summary[opt.value]}</span>
+                    <span className="text-xxs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">{opt.label}</span>
                 </div>
             ))}
         </div>

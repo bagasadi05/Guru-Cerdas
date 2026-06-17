@@ -124,7 +124,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                                             <td className="px-6 py-4">
                                                 <div className="font-medium text-slate-800 dark:text-white">{student.name}</div>
                                                 {student.type === 'extracurricular_student' && (
-                                                    <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                                                    <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xxs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                                                         Siswa Eksternal/Ekskul
                                                     </span>
                                                 )}

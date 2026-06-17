@@ -153,15 +153,15 @@ export const SyncProgressIndicator: React.FC<SyncProgressIndicatorProps> = ({ cl
                             <div className="grid grid-cols-3 gap-2 text-center">
                                 <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
                                     <div className="text-lg font-bold text-slate-700 dark:text-slate-300">{progress.total}</div>
-                                    <div className="text-[10px] text-slate-500">Total</div>
+                                    <div className="text-xxs text-slate-500">Total</div>
                                 </div>
                                 <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
                                     <div className="text-lg font-bold text-green-600 dark:text-green-400">{progress.succeeded}</div>
-                                    <div className="text-[10px] text-green-600 dark:text-green-400">Berhasil</div>
+                                    <div className="text-xxs text-green-600 dark:text-green-400">Berhasil</div>
                                 </div>
                                 <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
                                     <div className="text-lg font-bold text-red-600 dark:text-red-400">{progress.failed}</div>
-                                    <div className="text-[10px] text-red-600 dark:text-red-400">Gagal</div>
+                                    <div className="text-xxs text-red-600 dark:text-red-400">Gagal</div>
                                 </div>
                             </div>
                         )}

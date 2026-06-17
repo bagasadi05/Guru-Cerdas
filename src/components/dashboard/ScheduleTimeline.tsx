@@ -85,7 +85,7 @@ const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({ schedule, currentTi
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <span
-                      className={`text-[10px] font-bold px-2 py-1 rounded-lg mb-2 inline-block tracking-wide ${
+                      className={`text-xxs font-bold px-2 py-1 rounded-lg mb-2 inline-block tracking-wide ${
                         isCurrent
                           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
                           : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
@@ -110,7 +110,7 @@ const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({ schedule, currentTi
                 </p>
                 {isCurrent && (
                   <div className="mt-3 mb-3">
-                    <div className="flex justify-between text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">
+                    <div className="flex justify-between text-xxs font-bold text-emerald-600 dark:text-emerald-400 mb-1">
                       <span>{t.dashboard.inProgress} ({progressPercent}%)</span>
                       <span>{minutesRemaining} {t.dashboard.minutesRemaining}</span>
                     </div>

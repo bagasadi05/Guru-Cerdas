@@ -74,7 +74,7 @@ export const ActionableRecommendation: React.FC<{
         </div>
 
         {/* Title */}
-        <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-1.5 text-[15px]">{title}</h4>
+        <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-1.5 text-sm">{title}</h4>
 
         {/* Description */}
         <div className={`text-sm text-slate-600 dark:text-slate-400 leading-relaxed ${!isDescriptionExpanded && isLongDescription ? 'line-clamp-2' : ''}`}>
@@ -115,7 +115,7 @@ export const ActionableRecommendation: React.FC<{
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 pt-3 border-t border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-black/20">
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-2.5 uppercase tracking-wider">Langkah yang bisa dilakukan:</p>
+              <p className="text-xxs font-bold text-slate-400 dark:text-slate-500 mb-2.5 uppercase tracking-wider">Langkah yang bisa dilakukan:</p>
               <ol className="space-y-2">
                 {actions.map((action, idx) => (
                   <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300">

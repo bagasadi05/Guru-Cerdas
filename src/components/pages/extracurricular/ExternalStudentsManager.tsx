@@ -117,7 +117,7 @@ export const ExternalStudentsManager: React.FC<ExternalStudentsManagerProps> = (
                                 <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-lg uppercase flex-shrink-0">
                                     {student.name.charAt(0)}
                                 </div>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase ${
+                                <span className={`px-2 py-0.5 rounded text-xxs font-bold tracking-wider uppercase ${
                                     student.gender === 'Laki-laki' 
                                         ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                                         : 'bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'

@@ -208,7 +208,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
             <span className="w-2.5 h-2.5 rounded-full bg-rose-400 shrink-0"></span>
             <span>Tidak Hadir: {notHadir}%</span>
           </div>
-          <div className="col-span-2 text-[10px] text-slate-400 dark:text-slate-500 italic mt-0.5">
+          <div className="col-span-2 text-xxs text-slate-400 dark:text-slate-500 italic mt-0.5">
             Data izin/sakit/alfa belum tersedia
           </div>
         </div>
@@ -247,7 +247,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
           </div>
         </div>
 
-        <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 italic text-center">
+        <div className="text-xxs text-slate-400 dark:text-slate-500 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 italic text-center">
           Klik salah satu kelas untuk melengkapi data
         </div>
       </div>
@@ -274,7 +274,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate flex-1 min-w-0" title={task.title}>
                   {task.title}
                 </span>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border whitespace-nowrap flex-shrink-0 ${
+                <span className={`text-xxs font-semibold px-2 py-0.5 rounded-lg border whitespace-nowrap flex-shrink-0 ${
                   task.isUrgent 
                     ? 'text-rose-600 bg-rose-50 border-rose-200/40 dark:text-rose-400 dark:bg-rose-950/20 dark:border-rose-900/20' 
                     : 'text-slate-500 bg-slate-100 border-slate-200/30 dark:text-slate-400 dark:bg-slate-850 dark:border-slate-800/20'
@@ -329,7 +329,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
                     <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200 truncate flex-1 min-w-0">
                       {student.name}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 dark:text-slate-500 px-1.5 py-0.5 rounded border border-slate-200/5 whitespace-nowrap flex-shrink-0">
+                    <span className="text-xxs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 dark:text-slate-500 px-1.5 py-0.5 rounded border border-slate-200/5 whitespace-nowrap flex-shrink-0">
                       {student.class}
                     </span>
                   </div>

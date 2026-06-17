@@ -106,7 +106,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                 alt="Guru"
                             />
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-300">Wali Kelas Anda</p>
+                                <p className="text-xxs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-300">Wali Kelas Anda</p>
                                 <h3 className="mt-0.5 text-base font-extrabold text-slate-900 dark:text-white sm:text-lg">{teacher?.full_name || 'Wali Kelas'}</h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Konsultasi perkembangan belajar {student.name}</p>
                             </div>
@@ -114,11 +114,11 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                         <div className="grid grid-cols-2 gap-2 sm:flex">
                             <div className="rounded-2xl border border-white/60 bg-white/70 px-4 py-2.5 text-center shadow-sm dark:border-white/5 dark:bg-white/5">
                                 <p className="text-base font-black text-slate-900 dark:text-white">{communications.length}</p>
-                                <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Pesan</p>
+                                <p className="text-xxs font-medium text-slate-400 dark:text-slate-500">Pesan</p>
                             </div>
                             <div className="rounded-2xl border border-white/60 bg-white/70 px-4 py-2.5 text-center shadow-sm dark:border-white/5 dark:bg-white/5">
                                 <p className="text-base font-black text-rose-600 dark:text-rose-350">{unreadTeacherMessages}</p>
-                                <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Pesan Baru</p>
+                                <p className="text-xxs font-medium text-slate-400 dark:text-slate-500">Pesan Baru</p>
                             </div>
                         </div>
                     </div>
@@ -208,13 +208,13 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                             <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.message}</p>
                                             
                                             {/* Micro Timestamp & Read Checks */}
-                                            <div className={`flex items-center gap-1.5 text-[9px] mt-2 font-bold justify-end ${isParent ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            <div className={`flex items-center gap-1.5 text-xxs mt-2 font-bold justify-end ${isParent ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'}`}>
                                                 <span>{new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                                                 {isParent && msg.is_read && (
-                                                    <span className="text-[10px] select-none text-emerald-350">✔✔</span>
+                                                    <span className="text-xxs select-none text-emerald-350">✔✔</span>
                                                 )}
                                                 {isParent && !msg.is_read && (
-                                                    <span className="text-[10px] select-none opacity-60">✔</span>
+                                                    <span className="text-xxs select-none opacity-60">✔</span>
                                                 )}
                                             </div>
                                         </div>

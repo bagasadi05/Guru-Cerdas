@@ -141,7 +141,7 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data, classes }) =>
                 <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
                   {completionPercentage}%
                 </span>
-                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-200/20 shadow-sm">
+                <span className="text-xxs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-200/20 shadow-sm">
                   {t.dashboard.gradedComplete}
                 </span>
               </div>

@@ -59,7 +59,7 @@ export const AttendanceSummaryWidget: React.FC<AttendanceSummaryWidgetProps> = (
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-2xl font-black text-slate-900 dark:text-white">{total}</span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Total Siswa</span>
+                    <span className="text-xxs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Total Siswa</span>
                 </div>
             </div>
 
@@ -68,7 +68,7 @@ export const AttendanceSummaryWidget: React.FC<AttendanceSummaryWidgetProps> = (
                     <div key={i} className="p-3 rounded-2xl border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center text-center transition-all hover:scale-[1.02]">
                         <span className={`text-xl font-black ${seg.color}`}>{seg.count}</span>
                         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">{seg.label}</span>
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">{seg.percent}%</span>
+                        <span className="text-xxs font-bold text-slate-400 dark:text-slate-500 mt-0.5">{seg.percent}%</span>
                     </div>
                 ))}
             </div>

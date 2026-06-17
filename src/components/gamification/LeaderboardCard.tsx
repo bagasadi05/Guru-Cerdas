@@ -112,7 +112,7 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
                                     <p className="font-bold text-amber-600 dark:text-amber-400">
                                         {entry.totalPoints}
                                     </p>
-                                    <p className="text-[10px] text-slate-400">poin</p>
+                                    <p className="text-xxs text-slate-400">poin</p>
                                 </div>
                             </Link>
                         ))}

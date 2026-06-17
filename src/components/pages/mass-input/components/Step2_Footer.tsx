@@ -138,7 +138,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
 
                                 <DownloadIcon className="w-4 h-4" />
                                 <span>Export Data</span>
-                                <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30">
+                                <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xxs font-bold rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30">
                                     {existingViolations.length}
                                 </span>
 

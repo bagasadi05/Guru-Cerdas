@@ -159,14 +159,14 @@ const AttendancePage: React.FC = () => {
                                 <CalendarIcon className="w-5 h-5 sm:w-7 sm:h-7" />
                             </div>
                             <div className="text-left flex-1 min-w-0">
-                                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-green-100 mb-0.5 sm:mb-1">Tanggal Absensi</p>
+                                <p className="text-xxs sm:text-xs font-bold uppercase tracking-wider text-green-100 mb-0.5 sm:mb-1">Tanggal Absensi</p>
                                 <h2 className="text-base sm:text-2xl font-bold text-white leading-tight">
                                     {new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                 </h2>
                             </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                            {selectedDate === today && <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
+                            {selectedDate === today && <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
                             {selectedDate === today && <span className="sm:hidden inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-bold bg-white/20 text-white border border-white/20">HARI INI</span>}
                             <div className="w-11 h-11 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-colors">
                                 <ChevronDownIcon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />

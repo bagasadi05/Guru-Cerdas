@@ -525,7 +525,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                             <p>Citra Dewi 78</p>
                             <p>1. Diana Putri 92</p>
                         </div>
-                        <p className="mt-2 text-[10px] text-indigo-500 dark:text-indigo-300/70">
+                        <p className="mt-2 text-xxs text-indigo-500 dark:text-indigo-300/70">
                             AI akan mencocokkan nama dengan daftar siswa secara otomatis.
                         </p>
                     </div>

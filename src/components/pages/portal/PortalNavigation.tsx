@@ -51,10 +51,10 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ activeTab, u
                                         <tab.icon className="h-5 w-5" />
                                     </span>
                                     {tab.value === 'komunikasi' && unreadMessagesCount > 0 && (
-                                        <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-md shadow-rose-500/20">{unreadMessagesCount}</span>
+                                        <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xxs font-bold text-white shadow-md shadow-rose-500/20">{unreadMessagesCount}</span>
                                     )}
                                     {tab.value === 'beranda' && attentionCount > 0 && (
-                                        <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-md shadow-amber-500/20">{attentionCount}</span>
+                                        <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xxs font-bold text-white shadow-md shadow-amber-500/20">{attentionCount}</span>
                                     )}
                                 </div>
                                 <div className="mt-4">
@@ -81,7 +81,7 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ activeTab, u
                                     <tab.icon className="h-5 w-5" />
                                 </span>
 
-                                <span className={`mt-0.5 text-[10px] font-semibold tracking-wide transition-colors ${isActive ? 'text-emerald-600 dark:text-amber-400' : 'text-slate-400'}`}>
+                                <span className={`mt-0.5 text-xxs font-semibold tracking-wide transition-colors ${isActive ? 'text-emerald-600 dark:text-amber-400' : 'text-slate-400'}`}>
                                     {tab.label}
                                 </span>
 

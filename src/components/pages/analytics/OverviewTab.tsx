@@ -90,7 +90,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div>
                     <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-2">
                         Kesimpulan Cerdas
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold uppercase">AI Generated</span>
+                        <span className="text-xxs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold uppercase">AI Generated</span>
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                         {summary.text}

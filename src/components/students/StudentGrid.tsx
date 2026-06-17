@@ -50,7 +50,7 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                                     className="w-28 h-28 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg bg-white dark:bg-gray-700"
                                 />
                                 <div className={`absolute bottom-1 right-1 w-8 h-8 rounded-full border-4 border-white dark:border-gray-800 flex items-center justify-center shadow-sm ${student.gender === 'Laki-laki' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                                    <span className="text-white text-[10px] font-bold">{student.gender === 'Laki-laki' ? 'L' : 'P'}</span>
+                                    <span className="text-white text-xxs font-bold">{student.gender === 'Laki-laki' ? 'L' : 'P'}</span>
                                 </div>
                             </div>
 

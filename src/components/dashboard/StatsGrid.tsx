@@ -199,7 +199,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                                 <div className={`w-11 h-11 rounded-lg flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-sm text-white transform group-hover:scale-105 transition-transform duration-300`}>
                                     <stat.icon className="w-6 h-6" />
                                 </div>
-                                <span className={`max-w-[108px] truncate rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${getToneBadgeClass(stat.tone)}`}>
+                                <span className={`max-w-[108px] truncate rounded-full px-2.5 py-1 text-xxs font-bold uppercase tracking-[0.12em] ${getToneBadgeClass(stat.tone)}`}>
                                     {stat.statusLabel}
                                 </span>
                             </div>

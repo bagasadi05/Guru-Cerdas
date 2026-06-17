@@ -122,6 +122,9 @@ module.exports = {
         xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
         '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
       },
+      fontSize: {
+        xxs: '0.625rem', // 10px
+      },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         serif: ['Tinos', 'serif'],

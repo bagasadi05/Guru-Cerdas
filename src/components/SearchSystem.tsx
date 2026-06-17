@@ -487,7 +487,7 @@ export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }>
                     Cari siswa, kelas, tugas, atau nilai...
                 </span>
             </div>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 text-[10px] font-bold shadow-sm flex-shrink-0">
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 text-xxs font-bold shadow-sm flex-shrink-0">
                 ⌘K
             </kbd>
         </button>

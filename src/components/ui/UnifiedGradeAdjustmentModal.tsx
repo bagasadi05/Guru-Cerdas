@@ -360,12 +360,12 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
 
                         {manualOverrides.size > 0 && (
                             <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                                <span className="text-xxs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                                     {manualOverrides.size} Edit Manual
                                 </span>
                                 <button
                                     onClick={handleResetOverrides}
-                                    className="text-[10px] font-bold text-slate-400 hover:text-red-500 transition-colors"
+                                    className="text-xxs font-bold text-slate-400 hover:text-red-500 transition-colors"
                                 >
                                     Reset Manual
                                 </button>
@@ -486,7 +486,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                             <div className="overflow-x-auto">
                                 <table className="w-full text-xs text-left border-collapse border border-slate-300">
                                     <thead>
-                                        <tr className="bg-slate-100 text-slate-800 uppercase text-[10px] tracking-wider border-b border-slate-300">
+                                        <tr className="bg-slate-100 text-slate-800 uppercase text-xxs tracking-wider border-b border-slate-300">
                                             <th className="border border-slate-300 p-2 text-center w-8">No</th>
                                             <th className="border border-slate-300 p-2">Nama Siswa</th>
                                             <th className="border border-slate-300 p-2 text-center w-20">Nilai Asli</th>
@@ -509,7 +509,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                                                         <div className="flex flex-col">
                                                             <span>{item.name}</span>
                                                             {isAiAdjusted && activeScenario === 'ai' && item.aiRationale && (
-                                                                <span className="no-print text-[9px] text-indigo-500 font-medium italic mt-0.5">
+                                                                <span className="no-print text-xxs text-indigo-500 font-medium italic mt-0.5">
                                                                     ✨ {item.aiRationale}
                                                                 </span>
                                                             )}

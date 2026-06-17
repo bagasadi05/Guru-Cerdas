@@ -108,7 +108,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                                                     {enrollment.className || 'Tidak ada kelas'}
                                                 </div>
                                                 {enrollment.participantType === 'extracurricular_student' && (
-                                                    <span className="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                                                    <span className="inline-block mt-2 px-2 py-0.5 rounded text-xxs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                                                         Siswa Ekskul
                                                     </span>
                                                 )}
