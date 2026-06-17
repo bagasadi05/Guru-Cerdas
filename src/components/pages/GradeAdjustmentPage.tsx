@@ -1068,12 +1068,12 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                                         max={targetAverageRange.max}
                                                                                         value={scoreValue}
                                                                                         onChange={(e) => handleManualScoreChange(key, e.target.value)}
-                                                                                        className={`no-print w-14 text-center text-xs font-bold border rounded p-0.5 ${
+                                                                                        className={`no-print w-14 text-center text-xs font-bold border rounded p-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
                                                                                             isFailed 
-                                                                                                ? 'border-red-300 bg-red-50 text-red-700' 
+                                                                                                ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400' 
                                                                                                 : manualOverrides.has(key)
-                                                                                                    ? 'border-amber-300 bg-amber-50 text-amber-800'
-                                                                                                    : 'border-slate-200 text-slate-900 bg-white'
+                                                                                                    ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400'
+                                                                                                    : 'border-slate-200 text-slate-900 bg-white dark:border-slate-700 dark:text-white dark:bg-slate-800'
                                                                                         }`}
                                                                                     />
                                                                                     <span className="hidden print:inline-block font-bold text-xs text-slate-800">
@@ -1127,12 +1127,12 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                             max={targetAverageRange.max}
                                                                             value={scoreValue}
                                                                             onChange={(e) => handleManualScoreChange(item.id, e.target.value)}
-                                                                            className={`no-print w-16 text-center text-xs font-bold border rounded p-1 ${
+                                                                            className={`no-print w-16 text-center text-xs font-bold border rounded p-1 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
                                                                                 isFailed 
-                                                                                    ? 'border-red-300 bg-red-50 text-red-700' 
+                                                                                    ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400' 
                                                                                     : manualOverrides.has(item.id)
-                                                                                        ? 'border-amber-300 bg-amber-50 text-amber-800'
-                                                                                        : 'border-slate-200 text-slate-900 bg-white'
+                                                                                        ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400'
+                                                                                        : 'border-slate-200 text-slate-900 bg-white dark:border-slate-700 dark:text-white dark:bg-slate-800'
                                                                             }`}
                                                                         />
                                                                         <span className="hidden print:inline-block font-extrabold text-sm">
