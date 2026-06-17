@@ -45,18 +45,18 @@ const FloatingWrapper: React.FC<{ children: React.ReactNode; delay?: number }> =
 const StudentsIllustration: React.FC<{ className?: string }> = ({ className = '' }) => (
     <div className={`relative ${className}`}>
         {/* Main circle background */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 animate-pulse" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 animate-pulse" />
 
         {/* Floating elements */}
         <div className="relative w-40 h-40 flex items-center justify-center">
             <FloatingWrapper delay={0}>
-                <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-indigo-200 dark:bg-indigo-800 flex items-center justify-center">
-                    <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-emerald-200 dark:bg-emerald-800 flex items-center justify-center">
+                    <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
             </FloatingWrapper>
             <FloatingWrapper delay={200}>
-                <div className="absolute -top-1 right-2 w-6 h-6 rounded-full bg-purple-200 dark:bg-purple-800 flex items-center justify-center">
-                    <GraduationCap className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                <div className="absolute -top-1 right-2 w-6 h-6 rounded-full bg-teal-200 dark:bg-teal-800 flex items-center justify-center">
+                    <GraduationCap className="w-3 h-3 text-teal-600 dark:text-teal-400" />
                 </div>
             </FloatingWrapper>
             <FloatingWrapper delay={400}>
@@ -67,7 +67,7 @@ const StudentsIllustration: React.FC<{ className?: string }> = ({ className = ''
 
             {/* Main icon */}
             <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-800 shadow-lg flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
-                <Users className="w-10 h-10 text-indigo-500" />
+                <Users className="w-10 h-10 text-emerald-500" />
             </div>
         </div>
     </div>
@@ -275,7 +275,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
                 {primaryAction && (
                     <button
                         onClick={primaryAction.onClick}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transform hover:-translate-y-0.5 transition-all duration-200"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transform hover:-translate-y-0.5 transition-all duration-200"
                     >
                         {primaryAction.icon || <Plus className="w-5 h-5" />}
                         {primaryAction.label}
@@ -497,7 +497,7 @@ export const CompactEmptyState: React.FC<CompactEmptyStateProps> = ({
         {action && (
             <button
                 onClick={action.onClick}
-                className="text-sm text-indigo-500 hover:text-indigo-600 font-medium inline-flex items-center gap-1"
+                className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-500 font-medium inline-flex items-center gap-1"
             >
                 {action.icon}
                 {action.label}
@@ -527,7 +527,7 @@ export const InlineEmptyState: React.FC<InlineEmptyStateProps> = ({
             {action && (
                 <button
                     onClick={action.onClick}
-                    className="ml-2 text-indigo-500 hover:text-indigo-600 font-medium"
+                    className="ml-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-500 font-medium"
                 >
                     {action.label}
                 </button>
@@ -556,7 +556,7 @@ export const WelcomeEmptyState: React.FC<WelcomeEmptyStateProps> = ({
     <div className={`flex flex-col items-center justify-center py-16 px-6 text-center ${className}`}>
         {/* Welcome illustration */}
         <div className="relative mb-8">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center animate-pulse-glow">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center animate-pulse-glow">
                 <span className="text-5xl">👋</span>
             </div>
             <FloatingWrapper delay={200}>
@@ -576,7 +576,7 @@ export const WelcomeEmptyState: React.FC<WelcomeEmptyStateProps> = ({
         <div className="flex flex-col sm:flex-row gap-3">
             <button
                 onClick={onGetStarted}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transform hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transform hover:-translate-y-0.5 transition-all"
             >
                 <Sparkles className="w-5 h-5" />
                 Mulai Sekarang
@@ -600,7 +600,7 @@ export const WelcomeEmptyState: React.FC<WelcomeEmptyStateProps> = ({
                 { icon: <ClipboardList className="w-5 h-5" />, title: 'Buat Tugas', desc: 'Kelola pekerjaan kelas' }
             ].map((tip, i) => (
                 <div key={i} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-left">
-                    <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-2">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-950/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
                         {tip.icon}
                     </div>
                     <h4 className="font-medium text-slate-900 dark:text-white text-sm">{tip.title}</h4>
