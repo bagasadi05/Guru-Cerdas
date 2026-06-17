@@ -97,8 +97,8 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: circumference * (1 - ratio) }}
             transition={shouldReduceMotion ? { duration: 0 } : {
-              duration: 1.2,
-              ease: [0.34, 1.56, 0.64, 1], // spring-like overshoot
+              duration: motionDuration.deliberate,
+              ease: easing.overshoot,
               delay: 0.15,
             }}
           />

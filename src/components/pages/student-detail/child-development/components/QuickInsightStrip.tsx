@@ -27,7 +27,7 @@ const INSIGHT_CONFIG = [
     emoji: '🌟',
     title: 'Kekuatan Utama',
     emojiBg: 'bg-amber-100 dark:bg-amber-900/30',
-    cardGradient: 'from-amber-50/80 to-orange-50/50 dark:from-amber-900/10 dark:to-orange-900/10',
+    cardGradient: 'from-amber-50/80 to-amber-100/40 dark:from-amber-900/10 dark:to-amber-950/10',
     borderColor: 'border-amber-200/60 dark:border-amber-800/40',
   },
   {

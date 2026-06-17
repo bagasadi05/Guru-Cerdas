@@ -4,7 +4,7 @@
  */
 
 import { Variants } from 'framer-motion';
-import { duration as motionDuration, easing } from '../styles/motion';
+import { duration as motionDuration, easing, fadeIn, slideUp, scaleIn, staggerContainer } from '../styles/motion';
 
 // Page transition animations
 export const pageVariants: Variants = {
@@ -29,74 +29,11 @@ export const pageVariants: Variants = {
     },
 };
 
-// Fade in animation
-export const fadeInVariants: Variants = {
-    initial: { opacity: 0 },
-    animate: {
-      opacity: 1,
-      transition: { duration: motionDuration.base, ease: 'easeOut' },
-    },
-    exit: {
-      opacity: 0,
-      transition: { duration: motionDuration.fast, ease: 'easeIn' },
-    },
-};
-
-// Scale up animation (good for modals, cards)
-export const scaleUpVariants: Variants = {
-    initial: {
-        opacity: 0,
-        scale: 0.95,
-    },
-    animate: {
-        opacity: 1,
-        scale: 1,
-        transition: {
-            duration: motionDuration.base,
-            ease: easing.easeOut,
-        },
-    },
-    exit: {
-        opacity: 0,
-        scale: 0.95,
-        transition: {
-            duration: motionDuration.fast,
-        },
-    },
-};
-
-// Slide up animation (good for lists, cards appearing from bottom)
-export const slideUpVariants: Variants = {
-    initial: {
-        opacity: 0,
-        y: 24,
-    },
-    animate: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: motionDuration.base,
-            ease: easing.easeOut,
-        },
-    },
-    exit: {
-        opacity: 0,
-        y: 24,
-        transition: {
-            duration: motionDuration.fast,
-        },
-    },
-};
-
-// Staggered children animation (for lists)
-export const staggerContainerVariants: Variants = {
-    animate: {
-        transition: {
-            staggerChildren: 0.05,
-            delayChildren: 0.05,
-        },
-    },
-};
+// Re-export standard variants from motion.ts as aliases
+export const fadeInVariants: Variants = fadeIn;
+export const scaleUpVariants: Variants = scaleIn;
+export const slideUpVariants: Variants = slideUp;
+export const staggerContainerVariants: Variants = staggerContainer;
 
 export const staggerItemVariants: Variants = {
     initial: {
@@ -124,7 +61,7 @@ export const cardHoverVariants: Variants = {
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
         transition: {
             duration: motionDuration.fast,
-            ease: 'easeOut',
+            ease: easing.easeOut,
         },
     },
     tap: {
@@ -162,7 +99,7 @@ export const slideInLeftVariants: Variants = {
         opacity: 1,
         transition: {
             duration: motionDuration.base,
-            ease: 'easeOut',
+            ease: easing.easeOut,
         },
     },
 };
@@ -178,7 +115,7 @@ export const slideInRightVariants: Variants = {
         opacity: 1,
         transition: {
             duration: motionDuration.base,
-            ease: 'easeOut',
+            ease: easing.easeOut,
         },
     },
 };
@@ -297,7 +234,7 @@ export const checkmarkVariants: Variants = {
         opacity: 1,
         transition: {
             duration: motionDuration.slow,
-            ease: 'easeOut',
+            ease: easing.easeOut,
         },
     },
 };

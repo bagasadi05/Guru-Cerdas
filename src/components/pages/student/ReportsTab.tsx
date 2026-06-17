@@ -57,29 +57,29 @@ const ReportsStats: React.FC<{ reports: ReportRow[] }> = ({ reports }) => {
 
     return (
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30">
-                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.total}</p>
-                <p className="text-xs text-indigo-500">Total Catatan</p>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/30">
+                <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{stats.total}</p>
+                <p className="text-xs text-slate-500">Total Catatan</p>
             </div>
             <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.byCategory.akademik || 0}</p>
                 <p className="text-xs text-blue-500">📚 Akademik</p>
             </div>
-            <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/30">
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.byCategory.perilaku || 0}</p>
-                <p className="text-xs text-orange-500">👤 Perilaku</p>
+            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
+                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.byCategory.perilaku || 0}</p>
+                <p className="text-xs text-amber-500">👤 Perilaku</p>
             </div>
-            <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30">
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.byCategory.prestasi || 0}</p>
-                <p className="text-xs text-purple-500">🏆 Prestasi</p>
+            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30">
+                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.byCategory.prestasi || 0}</p>
+                <p className="text-xs text-indigo-500">🏆 Prestasi</p>
             </div>
-            <div className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30">
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.thisMonth}</p>
-                <p className="text-xs text-green-500">Bulan Ini</p>
+            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.thisMonth}</p>
+                <p className="text-xs text-emerald-500">Bulan Ini</p>
             </div>
-            <div className="p-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-100 dark:border-cyan-800/30">
-                <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{stats.withAttachment}</p>
-                <p className="text-xs text-cyan-500">📎 Lampiran</p>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/30">
+                <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{stats.withAttachment}</p>
+                <p className="text-xs text-slate-500">📎 Lampiran</p>
             </div>
         </div>
     );
@@ -126,13 +126,13 @@ const TimelineView: React.FC<{
     return (
         <div className="relative">
             {/* Timeline line */}
-            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 via-purple-500 to-pink-500" />
+            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-500 via-teal-500 to-indigo-500" />
 
             {monthKeys.map((monthKey) => (
                 <div key={monthKey} className="mb-8">
                     {/* Month header */}
                     <div className="flex items-center gap-3 mb-4 relative">
-                        <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center z-10">
+                        <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center z-10">
                             <CalendarIcon className="w-5 h-5 text-white" />
                         </div>
                         <h3 className="text-lg font-bold text-gray-800 dark:text-white">{monthKey}</h3>
@@ -310,7 +310,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Cari catatan..."
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     />
                 </div>
 
@@ -344,13 +344,13 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
                 <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <button
                         onClick={() => setViewMode('timeline')}
-                        className={`px-3 py-2 text-sm ${viewMode === 'timeline' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
+                        className={`px-3 py-2 text-sm ${viewMode === 'timeline' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
                     >
                         Timeline
                     </button>
                     <button
                         onClick={() => setViewMode('list')}
-                        className={`px-3 py-2 text-sm ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
+                        className={`px-3 py-2 text-sm ${viewMode === 'list' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
                     >
                         List
                     </button>
@@ -360,7 +360,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
                 {hasActiveFilters && (
                     <button
                         onClick={clearFilters}
-                        className="px-3 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                        className="px-3 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
                     >
                         <XIcon className="w-3 h-3" />
                         Reset
@@ -427,7 +427,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
                                             </div>
                                         )}
                                         {r.attachment_url && (
-                                            <div className="mt-2 flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400">
+                                            <div className="mt-2 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                                                 <FileTextIcon className="w-3 h-3" />
                                                 <span>Ada lampiran</span>
                                             </div>

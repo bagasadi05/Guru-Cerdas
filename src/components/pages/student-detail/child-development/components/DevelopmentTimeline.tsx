@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
 import { ClockIcon, CalendarIcon } from '../../../../Icons';
-import { duration as motionDuration } from '../../../../../styles/motion';
+import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
 // ── Prop Types ──────────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ const TimelineSection: React.FC<{
     visible: (i: number) => ({
       opacity: 1,
       x: 0,
-      transition: shouldReduceMotion ? { duration: 0 } : { delay: 0.15 * i, duration: motionDuration.fast, ease: 'easeOut' },
+      transition: shouldReduceMotion ? { duration: 0 } : { delay: 0.15 * i, duration: motionDuration.fast, ease: easing.easeOut },
     }),
   };
 
@@ -40,7 +40,7 @@ const TimelineSection: React.FC<{
       <span
         className={`
           absolute w-5 h-5 rounded-full ${accentPulse} opacity-40
-          animate-ping
+          ${shouldReduceMotion ? '' : 'animate-ping'}
         `}
       />
       <span

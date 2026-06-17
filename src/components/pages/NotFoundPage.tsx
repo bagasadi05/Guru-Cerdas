@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import { easing } from '../../styles/motion';
 
 const AUTO_REDIRECT_SECONDS = 15;
 
@@ -20,6 +21,7 @@ const PARTICLES_STATIC_DATA = [
 const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(AUTO_REDIRECT_SECONDS);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (countdown <= 0) {
@@ -33,25 +35,25 @@ const NotFoundPage: React.FC = () => {
   return (
     <div className="min-h-screen cosmic-bg flex items-center justify-center p-6">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: shouldReduceMotion ? 0 : 0.6, ease: 'easeOut' }}
         className="text-center max-w-md w-full"
       >
         {/* Animated 404 Illustration */}
         <motion.div
           className="relative mx-auto mb-8 w-48 h-48"
-          initial={{ scale: 0.8 }}
+          initial={shouldReduceMotion ? { scale: 1 } : { scale: 0.8 }}
           animate={{ scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5, type: 'spring' }}
+          transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.2, ...easing.spring }}
         >
           {/* Glowing circle background */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500/20 to-violet-500/20 dark:from-indigo-500/30 dark:to-violet-500/30 animate-pulse" />
           <div className="absolute inset-3 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/50 dark:to-violet-900/50 flex items-center justify-center">
             <motion.span
               className="text-6xl font-black bg-gradient-to-br from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent"
-              animate={{ rotateY: [0, 10, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
+              animate={shouldReduceMotion ? { rotateY: 0 } : { rotateY: [0, 10, -10, 0] }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: Infinity, repeatDelay: 2 }}
             >
               404
             </motion.span>
@@ -65,11 +67,11 @@ const NotFoundPage: React.FC = () => {
                 top: p.top,
                 left: p.left,
               }}
-              animate={{
+              animate={shouldReduceMotion ? { y: 0, opacity: 0.5 } : {
                 y: [0, -15, 0],
                 opacity: [0.3, 0.8, 0.3],
               }}
-              transition={{
+              transition={shouldReduceMotion ? { duration: 0 } : {
                 duration: p.duration,
                 repeat: Infinity,
                 delay: p.delay,
