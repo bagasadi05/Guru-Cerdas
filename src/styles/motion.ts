@@ -5,11 +5,16 @@ export const duration = {
   fast: 0.15, // 150ms
   base: 0.25, // 250ms
   slow: 0.40, // 400ms
+  chart: 0.70, // 700ms
+  long: 1.00, // 1000ms
+  deliberate: 1.20, // 1200ms
 } as const;
 
 // Standard easings
 export const easing = {
   easeOut: [0.16, 1, 0.3, 1], // easeOutExpo
+  overshoot: [0.34, 1.56, 0.64, 1], // spring-like overshoot
+  easeInOutQuad: [0.25, 0.46, 0.45, 0.94],
   spring: {
     type: 'spring',
     damping: 25,

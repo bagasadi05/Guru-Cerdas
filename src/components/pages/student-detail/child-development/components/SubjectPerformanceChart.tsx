@@ -112,8 +112,8 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
                     initial={shouldReduceMotion ? { width: barWidth } : { width: 0 }}
                     animate={{ width: barWidth }}
                     transition={shouldReduceMotion ? { duration: 0 } : {
-                      duration: 0.7,
-                      ease: [0.25, 0.46, 0.45, 0.94],
+                      duration: motionDuration.chart,
+                      ease: easing.easeInOutQuad,
                       delay: 0.1 * idx,
                     }}
                   />

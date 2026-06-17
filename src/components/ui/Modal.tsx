@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './Button';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { easing } from '../../styles/motion';
 
 interface ModalProps {
   isOpen: boolean;
@@ -111,7 +112,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 20 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 20 }}
-            transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", damping: 25, stiffness: 300 }}
+            transition={shouldReduceMotion ? { duration: 0 } : easing.spring}
             className={`relative w-full ${maxWidth} mx-4 max-h-[90vh] sm:max-h-[85vh] flex flex-col`}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
             id="modal-container"
@@ -121,7 +122,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             <div className="flex justify-between items-center gap-4">
               <div className="flex items-center gap-3">
                 {icon && (
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20" aria-hidden="true">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" aria-hidden="true">
                     {icon}
                   </div>
                 )}
