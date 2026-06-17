@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
+import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
 /**
  * QuickInsightStrip — Three bite-sized insights at a glance.
@@ -46,30 +48,31 @@ const INSIGHT_CONFIG = [
   },
 ] as const;
 
-/** Staggered children animation orchestrator */
-const containerVariants: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.05,
-    },
-  },
-};
-
-const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: 'easeOut' },
-  },
-};
-
 export const QuickInsightStrip: React.FC<QuickInsightStripProps> = ({
   superpower,
   challenge,
   homeTip,
 }) => {
+  const { shouldReduceMotion } = useReducedMotion();
+
+  /** Staggered children animation orchestrator */
+  const containerVariants: Variants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : 0.05,
+      },
+    },
+  };
+
+  const cardVariants: Variants = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 12 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.slow, ease: easing.easeOut },
+    },
+  };
   // Map prop values to the config order
   const values: Record<string, string> = { superpower, challenge, homeTip };
 

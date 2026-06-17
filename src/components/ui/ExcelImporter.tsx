@@ -139,7 +139,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                     <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
                 </div>
                 {onCancel && (
-                    <Button variant="ghost" size="icon" onClick={onCancel}>
+                    <Button variant="ghost" size="icon" onClick={onCancel} aria-label="Batal impor Excel">
                         <XIcon className="w-5 h-5" />
                     </Button>
                 )}

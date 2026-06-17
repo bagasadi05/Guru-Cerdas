@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { duration as motionDuration, easing } from '../styles/motion';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import GreetingRobot from './GreetingRobot';
@@ -100,8 +101,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       {/* Background Gradients */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/5 rounded-full blur-[100px]"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-slate-500/5 rounded-full blur-[100px]"></div>
       </div>
 
       {showGreeting && user && (
@@ -145,10 +146,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <button
                 type="button"
                 onClick={() => setIsMobileSidebarOpen(true)}
-                className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+                className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
                 aria-label="Buka menu navigasi"
                 aria-expanded={isMobileSidebarOpen}
-                aria-controls="navigation"
+                aria-controls="main-navigation"
               >
                 <MenuIcon className="w-5 h-5" />
               </button>
@@ -187,7 +188,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  transition={{ duration: motionDuration.base, ease: "easeInOut" }}
                   className="h-full"
                 >
                   {children}

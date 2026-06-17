@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ArrowRightIcon } from '../../../../Icons';
 import { MarkdownText } from '../../../../ui/MarkdownText';
 import { motion, AnimatePresence } from 'framer-motion';
+import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
 const categoryEmojis: Record<string, string> = {
   'Kognitif': '📚',
@@ -22,6 +24,7 @@ export const ActionableRecommendation: React.FC<{
   actions: string[];
   onStartAction?: () => void;
 }> = ({ title, description, priority, category, actions, onStartAction: _onStartAction }) => {
+  const { shouldReduceMotion } = useReducedMotion();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const isLongDescription = description.length > 150;
@@ -94,7 +97,7 @@ export const ActionableRecommendation: React.FC<{
           {isExpanded ? 'Sembunyikan' : 'Lihat Langkah'}
           <motion.span
             animate={{ rotate: isExpanded ? 90 : 0 }}
-            transition={{ duration: 0.2 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.fast }}
           >
             <ArrowRightIcon className="w-3.5 h-3.5" />
           </motion.span>
@@ -108,7 +111,7 @@ export const ActionableRecommendation: React.FC<{
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 pt-3 border-t border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-black/20">

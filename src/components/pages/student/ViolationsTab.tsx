@@ -200,10 +200,10 @@ const ViolationCard: React.FC<{
                             <BellIcon className="h-4 w-4" />
                         </Button>
                     )}
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} disabled={!isOnline || !canModify} title={!canModify ? 'Semester Terkunci' : 'Edit'}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} disabled={!isOnline || !canModify} title={!canModify ? 'Semester Terkunci' : 'Edit'} aria-label={!canModify ? 'Semester Terkunci' : 'Edit pelanggaran'}>
                         {canModify ? <PencilIcon className="h-4 w-4" /> : <LockIcon className="h-4 w-4 text-amber-500" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={onDelete} disabled={!isOnline || !canModify} title={!canModify ? 'Semester Terkunci' : 'Hapus'}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={onDelete} disabled={!isOnline || !canModify} title={!canModify ? 'Semester Terkunci' : 'Hapus'} aria-label={!canModify ? 'Semester Terkunci' : 'Hapus pelanggaran'}>
                         <TrashIcon className="h-4 w-4" />
                     </Button>
                 </div>

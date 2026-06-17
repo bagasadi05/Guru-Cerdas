@@ -157,10 +157,10 @@ const TimelineView: React.FC<{
                                     <div className={`relative p-4 rounded-xl bg-gradient-to-r from-${categoryColor}-50/50 to-transparent dark:from-${categoryColor}-900/10 border border-${categoryColor}-100 dark:border-${categoryColor}-800/30 hover:shadow-lg transition-shadow`}>
                                         {/* Actions */}
                                         <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(report)} disabled={!isOnline || report.user_id !== currentUserId}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(report)} disabled={!isOnline || report.user_id !== currentUserId} aria-label="Edit laporan">
                                                 <PencilIcon className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={() => onDelete(report.id)} disabled={!isOnline || report.user_id !== currentUserId}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={() => onDelete(report.id)} disabled={!isOnline || report.user_id !== currentUserId} aria-label="Hapus laporan">
                                                 <TrashIcon className="h-4 w-4" />
                                             </Button>
                                         </div>
@@ -400,10 +400,10 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
                                 return (
                                     <div key={r.id} className="group relative p-4 rounded-lg bg-gray-50 dark:bg-black/20 hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
                                         <div className="absolute top-3 right-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(r)} disabled={!isOnline || r.user_id !== currentUserId}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(r)} disabled={!isOnline || r.user_id !== currentUserId} aria-label="Edit laporan">
                                                 <PencilIcon className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={() => onDelete(r.id)} disabled={!isOnline || r.user_id !== currentUserId}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={() => onDelete(r.id)} disabled={!isOnline || r.user_id !== currentUserId} aria-label="Hapus laporan">
                                                 <TrashIcon className="h-4 w-4" />
                                             </Button>
                                         </div>

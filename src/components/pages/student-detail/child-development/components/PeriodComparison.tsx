@@ -1,11 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
 export const PeriodComparison: React.FC<{
   currentAvg: number;
   previousAvg: number;
   label: string;
 }> = ({ currentAvg, previousAvg, label }) => {
+  const { shouldReduceMotion } = useReducedMotion();
   const diff = currentAvg - previousAvg;
   const percentChange = previousAvg > 0 ? ((diff / previousAvg) * 100).toFixed(1) : 0;
   const isImproved = diff > 0;
@@ -29,18 +32,18 @@ export const PeriodComparison: React.FC<{
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">{label}</p>
       <div className="flex items-end gap-2.5">
         <motion.span
-          initial={{ scale: 0.8, opacity: 0 }}
+          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, ease: easing.easeOut }}
           className="text-2xl font-bold text-slate-800 dark:text-white"
         >
           {currentAvg}
         </motion.span>
         {previousAvg > 0 && (
           <motion.span
-            initial={{ x: -8, opacity: 0 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { x: -8, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, delay: 0.15 }}
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${trendColor} ${trendBg}`}
           >
             {isImproved ? '↑' : isDeclined ? '↓' : '→'} {Math.abs(Number(percentChange))}%
