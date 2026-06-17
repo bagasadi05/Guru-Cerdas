@@ -106,9 +106,9 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                 alt="Guru"
                             />
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-650 dark:text-indigo-300">Wali Kelas Anda</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-300">Wali Kelas Anda</p>
                                 <h3 className="mt-0.5 text-base font-extrabold text-slate-900 dark:text-white sm:text-lg">{teacher?.full_name || 'Wali Kelas'}</h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-450">Konsultasi perkembangan belajar {student.name}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Konsultasi perkembangan belajar {student.name}</p>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2 sm:flex">
@@ -245,7 +245,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                     {/* Parent Avatar */}
                                     {isParent && (
                                         <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-100 to-indigo-200 dark:from-indigo-950 dark:to-indigo-900 border border-indigo-200 dark:border-indigo-850 flex items-center justify-center flex-shrink-0 shadow-sm mt-1">
-                                            <UsersIcon className="w-3.5 h-3.5 text-indigo-650 dark:text-indigo-350" />
+                                            <UsersIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-350" />
                                         </div>
                                     )}
                                 </div>

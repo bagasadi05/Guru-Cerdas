@@ -68,15 +68,15 @@ export const GlanceHeroCard: React.FC<GlanceHeroCardProps> = ({
       className={[
         'relative overflow-hidden rounded-2xl border shadow-lg',
         // Gradient background
-        'bg-gradient-to-br from-purple-50 via-white to-blue-50',
-        'dark:from-purple-900/20 dark:via-slate-900 dark:to-blue-900/20',
-        'border-purple-100 dark:border-slate-700/60',
+        'bg-gradient-to-br from-indigo-50 via-white to-blue-50',
+        'dark:from-indigo-900/20 dark:via-slate-900 dark:to-blue-900/20',
+        'border-indigo-100 dark:border-slate-700/60',
       ].join(' ')}
     >
       {/* Subtle decorative blob (background only) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-purple-200/30 blur-3xl dark:bg-purple-600/10"
+        className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-indigo-200/30 blur-3xl dark:bg-indigo-600/10"
       />
 
       <div className="relative z-10 p-5 sm:p-6">

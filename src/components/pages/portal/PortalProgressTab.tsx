@@ -175,7 +175,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Mata pelajaran tercatat</p>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
-                        <SparklesIcon className="h-5 w-5 text-purple-500" />
+                        <SparklesIcon className="h-5 w-5 text-blue-500" />
                         <p className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">{quizPoints.length}</p>
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Poin keaktifan</p>
                     </div>
@@ -262,7 +262,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                             </div>
                             <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                                 <div
-                                    className="h-full rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 transition-all duration-500"
+                                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-rose-500 transition-all duration-500"
                                     style={{ width: `${progressPercent}%` }}
                                 />
                             </div>
@@ -292,12 +292,12 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Sudah digunakan</p>
                                 </div>
                                 <div className="rounded-3xl border border-white/80 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/10">
-                                    <TrendingUpIcon className="h-5 w-5 text-orange-500" />
+                                    <TrendingUpIcon className="h-5 w-5 text-amber-500" />
                                     <p className="mt-3 text-2xl font-bold text-slate-950 dark:text-white">+{weeklyPoints}</p>
                                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Poin 7 hari terakhir</p>
                                 </div>
                                 <div className="rounded-3xl border border-white/80 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/10">
-                                    <BookOpenIcon className="h-5 w-5 text-violet-500" />
+                                    <BookOpenIcon className="h-5 w-5 text-indigo-500" />
                                     <p className="mt-3 text-2xl font-bold text-slate-950 dark:text-white">{pointSubjects.length}</p>
                                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Mapel/area aktif</p>
                                 </div>
@@ -305,9 +305,8 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
 
                             <div className="mt-6 grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
                                 <div className="rounded-[28px] border border-white/80 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/10">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">Aktivitas Terbaru</p>
                                     <div className="mt-4 flex items-start gap-4">
-                                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-xl font-black text-white shadow-lg shadow-amber-500/20">
+                                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-xl font-black text-white shadow-lg shadow-amber-500/20">
                                             +{latestPoint?.points ?? 0}
                                         </div>
                                         <div className="min-w-0">
@@ -358,7 +357,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                                                     </div>
                                                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                                                         <div
-                                                            className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
+                                                            className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-600"
                                                             style={{ width: `${Math.min(100, Math.round((points / totalQuizPoints) * 100))}%` }}
                                                         />
                                                     </div>
@@ -406,10 +405,10 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                                                                 Terakhir {pointDateFormatter.format(new Date(item.latestDate))}
                                                             </p>
                                                         </div>
-                                                        <span className="rounded-full bg-violet-100 px-3 py-1 text-sm font-bold text-violet-700 dark:bg-violet-400/15 dark:text-violet-200">+{item.total}</span>
+                                                        <span className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-bold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">+{item.total}</span>
                                                     </div>
                                                     <div className="mt-4 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                                        <SparklesIcon className="h-4 w-4 text-violet-500" />
+                                                        <SparklesIcon className="h-4 w-4 text-indigo-500" />
                                                         {item.count} aktivitas tercatat
                                                     </div>
                                                 </div>

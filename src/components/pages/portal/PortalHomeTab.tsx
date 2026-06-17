@@ -377,7 +377,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                                 <span className="text-[10px] font-medium text-slate-400 whitespace-nowrap">{dateFormatter.format(new Date(announcement.date))}</span>
                                             )}
                                         </div>
-                                        <p className="mt-2 text-xs leading-relaxed text-slate-650 dark:text-slate-350">{announcement.content}</p>
+                                        <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{announcement.content}</p>
                                     </div>
                                 ))
                             )}

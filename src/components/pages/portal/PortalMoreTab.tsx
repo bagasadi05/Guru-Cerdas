@@ -54,10 +54,10 @@ const sectionDescriptions: Record<PortalMoreSection, string> = {
 };
 
 const sectionTone: Record<PortalMoreSection, string> = {
-    tugas: 'from-indigo-500 to-sky-500',
+    tugas: 'from-indigo-500 to-blue-500',
     jadwal: 'from-emerald-500 to-teal-500',
-    perilaku: 'from-rose-500 to-orange-500',
-    dokumen: 'from-amber-500 to-yellow-500',
+    perilaku: 'from-rose-500 to-amber-500',
+    dokumen: 'from-amber-400 to-amber-500',
     pengaturan: 'from-slate-700 to-slate-950',
 };
 
