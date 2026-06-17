@@ -302,11 +302,16 @@ export const GlobalSearchModal: React.FC<{
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Cari siswa, kelas, tugas, atau nilai..."
+                        aria-label="Pencarian global"
                         className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 outline-none text-lg"
                     />
                     {query && (
-                        <button onClick={() => setQuery('')} className="p-1 text-slate-400 hover:text-slate-600">
-                            <X className="w-4 h-4" />
+                        <button
+                            onClick={() => setQuery('')}
+                            aria-label="Hapus pencarian"
+                            className="p-1 text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded"
+                        >
+                            <X className="w-4 h-4" aria-hidden="true" />
                         </button>
                     )}
                     <div className="hidden sm:flex items-center gap-1 text-xs text-slate-400">
@@ -342,8 +347,12 @@ export const GlobalSearchModal: React.FC<{
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm"
                             >
                                 {filter.label || filter.field}: {String(filter.value)}
-                                <button onClick={() => removeFilter(filter.field)} className="hover:text-indigo-900">
-                                    <X className="w-3 h-3" />
+                                <button
+                                    onClick={() => removeFilter(filter.field)}
+                                    aria-label={`Hapus filter ${filter.label || filter.field}`}
+                                    className="hover:text-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded"
+                                >
+                                    <X className="w-3 h-3" aria-hidden="true" />
                                 </button>
                             </span>
                         ))}
@@ -569,6 +578,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                         value={value}
                         onChange={(e) => setValue(e.target.value)}
                         placeholder="Nilai..."
+                        aria-label="Nilai filter"
                         className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
                     />
                 )}

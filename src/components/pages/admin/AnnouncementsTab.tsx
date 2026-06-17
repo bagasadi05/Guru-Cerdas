@@ -215,8 +215,12 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
                                             <span>{a.created_at ? new Date(a.created_at).toLocaleDateString('id-ID') : '-'}</span>
                                         </div>
                                     </div>
-                                    <button onClick={() => onDeleteAnnouncement(a.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
-                                        <Trash2 size={16} />
+                                    <button
+                                        onClick={() => onDeleteAnnouncement(a.id)}
+                                        aria-label="Hapus pengumuman"
+                                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                    >
+                                        <Trash2 size={16} aria-hidden="true" />
                                     </button>
                                 </div>
                             </div>
