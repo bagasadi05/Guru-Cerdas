@@ -150,7 +150,7 @@ const StudentDetailPage = () => {
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                         {(queryError as Error).message}
                     </p>
-                    <Button onClick={() => navigate('/students')} variant="outline" className="w-full">
+                    <Button onClick={() => navigate('/siswa')} variant="outline" className="w-full">
                         <ArrowLeftIcon className="w-4 h-4 mr-2" />
                         Kembali ke Daftar Siswa
                     </Button>
@@ -168,7 +168,7 @@ const StudentDetailPage = () => {
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                         Data siswa tidak tersedia atau telah dihapus.
                     </p>
-                    <Button onClick={() => navigate('/students')} variant="outline" className="w-full">
+                    <Button onClick={() => navigate('/siswa')} variant="outline" className="w-full">
                         <ArrowLeftIcon className="w-4 h-4 mr-2" />
                         Kembali ke Daftar Siswa
                     </Button>
@@ -188,7 +188,7 @@ const StudentDetailPage = () => {
                 <Breadcrumb
                     items={[
                         { label: 'Beranda', path: '/dashboard' },
-                        { label: 'Siswa', path: '/students' },
+                        { label: 'Siswa', path: '/siswa' },
                         { label: student.name }
                     ]}
                     className="mb-4"
