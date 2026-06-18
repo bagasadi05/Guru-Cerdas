@@ -182,7 +182,7 @@ const StudentDetailPage = () => {
     const canManageStudentProfile = student.user_id === user?.id;
 
     return (
-        <div className="space-y-8 p-4 md:p-6 pb-8 lg:pb-6 animate-fade-in-up bg-gray-50 dark:bg-gray-900 min-h-screen max-w-7xl mx-auto">
+        <div className="space-y-8 p-4 md:p-6 pb-8 lg:pb-6 bg-gray-50 dark:bg-gray-900 min-h-screen max-w-7xl mx-auto">
             <div className="no-print">
                 {/* Breadcrumb Navigation */}
                 <Breadcrumb

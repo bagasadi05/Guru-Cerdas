@@ -92,7 +92,7 @@ const AnalyticsPage: React.FC = () => {
     ] as const;
 
     return (
-        <div className="min-h-screen p-4 md:p-8 space-y-6 animate-fade-in pb-24 lg:pb-8">
+        <div className="min-h-screen p-4 md:p-8 space-y-6 pb-24 lg:pb-8">
             {/* Minimalist Header */}
             <header className="flex flex-col gap-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
