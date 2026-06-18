@@ -139,8 +139,8 @@ describe('Mobile UX', () => {
         });
 
         it('should have correct active state check', () => {
-            const currentPath = '/students/123';
-            const navPath = '/students';
+            const currentPath = '/siswa/123';
+            const navPath = '/siswa';
             const isActive = currentPath.startsWith(navPath);
             expect(isActive).toBe(true);
         });
@@ -174,14 +174,14 @@ describe('Mobile UX', () => {
 
     describe('Swipeable Page', () => {
         it('should find current page index', () => {
-            const pages = ['/', '/students', '/attendance', '/tasks'];
-            const currentPath = '/attendance';
+            const pages = ['/', '/siswa', '/absensi', '/tugas'];
+            const currentPath = '/absensi';
             const index = pages.indexOf(currentPath);
             expect(index).toBe(2);
         });
 
         it('should navigate to next page on swipe left', () => {
-            const pages = ['/', '/students', '/attendance'];
+            const pages = ['/', '/siswa', '/absensi'];
             let currentIndex = 1;
             const swipeLeft = () => {
                 if (currentIndex < pages.length - 1) currentIndex++;
@@ -191,7 +191,7 @@ describe('Mobile UX', () => {
         });
 
         it('should navigate to prev page on swipe right', () => {
-            const _pages = ['/', '/students', '/attendance'];
+            const _pages = ['/', '/siswa', '/absensi'];
             let currentIndex = 1;
             const swipeRight = () => {
                 if (currentIndex > 0) currentIndex--;
@@ -201,7 +201,7 @@ describe('Mobile UX', () => {
         });
 
         it('should not navigate past first page', () => {
-            const _pages = ['/', '/students'];
+            const _pages = ['/', '/siswa'];
             let currentIndex = 0;
             const swipeRight = () => {
                 if (currentIndex > 0) currentIndex--;
@@ -211,7 +211,7 @@ describe('Mobile UX', () => {
         });
 
         it('should not navigate past last page', () => {
-            const pages = ['/', '/students'];
+            const pages = ['/', '/siswa'];
             let currentIndex = 1;
             const swipeLeft = () => {
                 if (currentIndex < pages.length - 1) currentIndex++;

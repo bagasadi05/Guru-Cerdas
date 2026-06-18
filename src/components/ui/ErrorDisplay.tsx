@@ -50,7 +50,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
                 if (onLogin) {
                     onLogin();
                 } else {
-                    window.location.href = '/login';
+                    window.location.href = '/guru-login';
                 }
                 break;
             default:
