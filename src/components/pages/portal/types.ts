@@ -131,6 +131,22 @@ export type TeacherInfo = {
     avatar_url: string;
 } | null;
 
+export interface PortalStudentAchievement {
+    id: string;
+    student_id: string;
+    title: string;
+    category: 'akademik' | 'non_akademik' | 'seni' | 'olahraga' | 'keagamaan' | 'lainnya';
+    level: 'sekolah' | 'kecamatan' | 'kabupaten_kota' | 'provinsi' | 'nasional' | 'internasional';
+    rank: 'juara_1' | 'juara_2' | 'juara_3' | 'harapan' | 'finalis' | 'partisipan' | null;
+    organizer: string | null;
+    date: string;
+    description: string | null;
+    certificate_url: string | null;
+    certificate_name: string | null;
+    points: number | null;
+    created_at?: string | null;
+}
+
 // Complete Portal Data
 export interface PortalData {
     student: PortalStudentInfo;
@@ -143,6 +159,7 @@ export interface PortalData {
     schedules: PortalSchedule[];
     tasks: PortalTask[];
     announcements: PortalAnnouncement[];
+    achievements: PortalStudentAchievement[];
     teacher: TeacherInfo;
     schoolInfo: PortalSchoolInfo;
 }
