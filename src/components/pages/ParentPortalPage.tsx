@@ -31,6 +31,7 @@ import {
     PortalNavigation,
     PortalProgressTab,
     SettingsModal,
+    PortalAchievementsPanel,
     type PortalAcademicRecord,
     type PortalAnnouncement,
     type PortalAttendance,
@@ -46,6 +47,7 @@ import {
     type PortalTask,
     type PortalViolation,
     type TeacherInfo,
+    type PortalStudentAchievement,
 } from './portal';
 import { ParentPortalPageSkeleton } from '../skeletons';
 
@@ -182,6 +184,7 @@ const fetchPortalData = async (studentId: string, accessCode: string): Promise<P
         schedules: toArray<PortalSchedule>(portalResult.schedules),
         tasks: toArray<PortalTask>(portalResult.tasks),
         announcements: toArray<PortalAnnouncement>(portalResult.announcements),
+        achievements: toArray<PortalStudentAchievement>(portalResult.achievements),
         teacher: toObject<TeacherInfo>(portalResult.teacher, null),
         schoolInfo: toObject<PortalSchoolInfo>(portalResult.schoolInfo, { school_name: 'Sekolah' }),
     };
@@ -283,6 +286,10 @@ export const ParentPortalPage: React.FC = () => {
 
     const filteredAnnouncements = useMemo(() => (
         data ? filterRecordsBySemesterTerm(data.announcements, selectedSemesterFilter, semesterTermsById) : []
+    ), [data, selectedSemesterFilter, semesterTermsById]);
+
+    const filteredAchievements = useMemo(() => (
+        data ? filterRecordsBySemesterTerm(data.achievements, selectedSemesterFilter, semesterTermsById) : []
     ), [data, selectedSemesterFilter, semesterTermsById]);
 
     const averageScore = useMemo(() => (
@@ -504,7 +511,7 @@ export const ParentPortalPage: React.FC = () => {
                             />
                         </TabsContent>
 
-                        <TabsContent value="perkembangan">
+                        <TabsContent value="perkembangan" className="space-y-6">
                             <PortalProgressTab
                                 academicRecords={filteredAcademicRecords}
                                 quizPoints={filteredQuizPoints}
@@ -520,6 +527,7 @@ export const ParentPortalPage: React.FC = () => {
                                     />
                                 }
                             />
+                            <PortalAchievementsPanel achievements={filteredAchievements} />
                         </TabsContent>
 
                         <TabsContent value="kehadiran">

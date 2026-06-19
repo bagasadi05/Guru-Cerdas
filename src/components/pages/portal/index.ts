@@ -24,3 +24,4 @@ export { PortalCommunicationPanel } from './PortalCommunicationPanel';
 export { PortalCommunicationTab } from './PortalCommunicationTab';
 export { PortalMoreTab } from './PortalMoreTab';
 export { PortalNavigation } from './PortalNavigation';
+export { PortalAchievementsPanel } from './PortalAchievementsPanel';
