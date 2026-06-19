@@ -51,6 +51,9 @@ const ReportsTab = lazy(() => import('./student/ReportsTab').then((module) => ({
 const CommunicationTab = lazy(() => import('./student/CommunicationTab').then((module) => ({ default: module.CommunicationTab })));
 const ExtracurricularTab = lazy(() => import('./student/ExtracurricularTab').then((module) => ({ default: module.ExtracurricularTab })));
 const ChildDevelopmentAnalysisTab = lazy(() => import('./student-detail/child-development').then((module) => ({ default: module.ChildDevelopmentAnalysisTab })));
+const AchievementsTab = lazy(() => import('./student/AchievementsTab').then((module) => ({ default: module.AchievementsTab })));
+
+import { useStudentAchievements, useDeleteAchievement } from '../../hooks/useAchievements';
 
 const StudentDetailTabFallback = () => (
     <div className="space-y-4 p-4 sm:p-6">
@@ -139,6 +142,11 @@ const StudentDetailPage = () => {
         unreadMessagesCount,
     } = useStudentDetailPage();
 
+    const { data: achievements = [], isLoading: isAchievementsLoading } = useStudentAchievements(studentId || '');
+    const deleteAchievementMutation = useDeleteAchievement(studentId || '', () => {
+        setModalState({ type: 'closed' });
+    });
+
     if (isLoading) return <StudentDetailPageSkeleton />;
 
     if (isError) {
@@ -180,6 +188,19 @@ const StudentDetailPage = () => {
     const student = studentProfile.student;
     const classes = studentProfile.classes;
     const canManageStudentProfile = student.user_id === user?.id;
+
+    const handleDeleteAchievement = (id: string) => {
+        setModalState({
+            type: 'confirmDelete',
+            title: 'Konfirmasi Hapus',
+            message: 'Apakah Anda yakin ingin menghapus data prestasi ini secara permanen beserta file sertifikatnya?',
+            onConfirm: () => {
+                setModalState(prev => ({ ...prev, isPending: true }));
+                deleteAchievementMutation.mutate(id);
+            },
+            isPending: false
+        });
+    };
 
     return (
         <div className="space-y-8 p-4 md:p-6 pb-8 lg:pb-6 bg-gray-50 dark:bg-gray-900 min-h-screen max-w-7xl mx-auto">
@@ -315,6 +336,10 @@ const StudentDetailPage = () => {
                                             <Trophy className="w-4 h-4 mr-1.5 inline" />
                                             Ekstrakurikuler
                                         </TabsTrigger>
+                                        <TabsTrigger value="achievements" className="h-11">
+                                            <Trophy className="w-4 h-4 mr-1.5 inline" />
+                                            Prestasi
+                                        </TabsTrigger>
                                         <TabsTrigger value="reports" className="h-11">Catatan Guru</TabsTrigger>
                                         <TabsTrigger value="development" className="h-11">
                                             <BrainCircuitIcon className="w-4 h-4 mr-1.5 inline" />
@@ -374,6 +399,22 @@ const StudentDetailPage = () => {
                                         studentExtracurriculars={filteredExtracurriculars}
                                         attendanceRecords={filteredExAttendance}
                                         grades={filteredExGrades}
+                                    />
+                                </Suspense>
+                            )}
+                        </TabsContent>
+                        <TabsContent value="achievements" className="p-4 sm:p-6 bg-white dark:bg-slate-900 border-x border-b border-gray-200 dark:border-white/10 rounded-b-2xl">
+                            {activeTab === 'achievements' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <AchievementsTab
+                                        achievements={achievements}
+                                        isLoading={isAchievementsLoading}
+                                        onAdd={() => setModalState({ type: 'achievement', mode: 'add', data: null } as any)}
+                                        onEdit={(r) => setModalState({ type: 'achievement', mode: 'edit', data: r } as any)}
+                                        onDelete={handleDeleteAchievement}
+                                        isOnline={isOnline}
+                                        currentUserId={user?.id}
+                                        canAdd={canManageStudentProfile}
                                     />
                                 </Suspense>
                             )}
