@@ -16,12 +16,21 @@ interface BreadcrumbProps {
 const routeLabels: Record<string, string> = {
     '': 'Beranda',
     'dashboard': 'Dashboard',
-    'students': 'Siswa',
-    'attendance': 'Absensi',
-    'schedule': 'Jadwal',
-    'tasks': 'Tugas',
-    'settings': 'Pengaturan',
+    'siswa': 'Siswa',
+    'absensi': 'Absensi',
+    'jadwal': 'Jadwal',
+    'tugas': 'Tugas',
+    'pengaturan': 'Pengaturan',
     'cetak-rapot': 'Cetak Rapor',
+    'sampah': 'Sampah',
+    'riwayat': 'Riwayat Aksi',
+    'ekstrakurikuler': 'Ekstrakurikuler',
+    'brankas': 'Brankas Kelas',
+    'input-massal': 'Manajemen Nilai',
+    'input-nilai-cepat': 'Input Nilai Cepat',
+    'katrol-nilai': 'Katrol Nilai',
+    'admin': 'Panel Admin',
+    'analytics': 'Analytics',
 };
 
 export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className = '' }) => {
