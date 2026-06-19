@@ -1,6 +1,35 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Mock Canvas getContext in JSDOM environment
+if (typeof window !== 'undefined') {
+    (HTMLCanvasElement.prototype as any).getContext = function (type: string) {
+        if (type === '2d') {
+            return {
+                clearRect: () => {},
+                drawImage: () => {},
+                fillRect: () => {},
+                getImageData: () => ({ data: new Uint8ClampedArray() }),
+                putImageData: () => {},
+                createImageData: () => ({}),
+                setTransform: () => {},
+                scale: () => {},
+                translate: () => {},
+                rotate: () => {},
+                arc: () => {},
+                rect: () => {},
+                fill: () => {},
+                stroke: () => {},
+                beginPath: () => {},
+                closePath: () => {},
+                moveTo: () => {},
+                lineTo: () => {},
+            } as unknown as CanvasRenderingContext2D;
+        }
+        return null;
+    };
+}
+
 // Mock Supabase client
 vi.mock('./services/supabase', () => ({
     supabase: {
