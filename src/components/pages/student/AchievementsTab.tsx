@@ -12,6 +12,8 @@ import {
     TagIcon,
     GlobeIcon,
     ExternalLinkIcon,
+    FileSpreadsheetIcon,
+    DownloadIcon,
 } from 'lucide-react';
 import { StudentAchievement, AchievementCategory, AchievementLevel } from '../../../types/studentAchievement';
 import {
@@ -21,6 +23,10 @@ import {
     ACHIEVEMENT_CATEGORY_META,
     ACHIEVEMENT_LEVEL_META,
 } from '../../../lib/achievementMeta';
+import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../../ui/DropdownMenu';
+import { exportAchievementsToExcel } from '../../../services/achievementExport';
+import { useAuth } from '../../../hooks/useAuth';
+import { useToast } from '../../../hooks/useToast';
 
 interface AchievementsTabProps {
     achievements: StudentAchievement[];
@@ -30,6 +36,8 @@ interface AchievementsTabProps {
     onDelete: (id: string) => void;
     isOnline: boolean;
     currentUserId?: string;
+    studentName?: string;
+    className?: string;
     canAdd?: boolean;
 }
 
@@ -58,7 +66,7 @@ const AchievementsStats: React.FC<{ achievements: StudentAchievement[] }> = ({ a
                 <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{stats.total}</p>
                 <p className="text-xs text-slate-500">Total Prestasi</p>
             </div>
-            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
+            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-800/30">
                 <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.topPlacements}</p>
                 <p className="text-xs text-amber-500">🏆 Podium (Juara 1-3)</p>
             </div>
@@ -84,11 +92,15 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
     onDelete,
     isOnline,
     currentUserId,
+    studentName = 'Siswa',
+    className = '-',
     canAdd = true,
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<AchievementCategory | 'all'>('all');
     const [levelFilter, setLevelFilter] = useState<AchievementLevel | 'all'>('all');
+    const { user } = useAuth();
+    const toast = useToast();
 
     // Filter achievements
     const filteredAchievements = useMemo(() => {
@@ -129,16 +141,38 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                         Daftar kompetisi, perlombaan, dan penghargaan terstruktur yang dimenangkan siswa.
                     </CardDescription>
                 </div>
-                {canAdd && (
-                    <Button
-                        onClick={onAdd}
-                        disabled={!isOnline}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm flex items-center gap-2 self-start sm:self-auto"
-                    >
-                        <PlusIcon className="w-4 h-4" />
-                        Tambah Prestasi
-                    </Button>
-                )}
+                <div className="flex gap-2 self-start sm:self-auto">
+                    <DropdownMenu>
+                        <DropdownTrigger className="gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl px-4 py-2 border border-slate-200 font-medium">
+                            <DownloadIcon className="w-4 h-4" />
+                            Export
+                        </DropdownTrigger>
+                        <DropdownContent>
+                            <DropdownItem onClick={async () => {
+                                await exportAchievementsToExcel({
+                                    studentName: studentName || 'Siswa',
+                                    className: className || '-',
+                                    schoolName: user?.school_name || 'Sekolah',
+                                    achievements: filteredAchievements,
+                                    teacherName: user?.name
+                                });
+                                toast.success('Mengunduh Data Excel...');
+                            }} icon={<FileSpreadsheetIcon className="w-4 h-4 text-green-600" />}>
+                                Export Excel
+                            </DropdownItem>
+                        </DropdownContent>
+                    </DropdownMenu>
+                    {canAdd && (
+                        <Button
+                            onClick={onAdd}
+                            disabled={!isOnline}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm flex items-center gap-2"
+                        >
+                            <PlusIcon className="w-4 h-4" />
+                            Tambah Prestasi
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {achievements.length > 0 && <AchievementsStats achievements={achievements} />}

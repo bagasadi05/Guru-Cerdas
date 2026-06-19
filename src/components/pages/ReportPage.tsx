@@ -15,6 +15,7 @@ import FloatingActionButton from '../ui/FloatingActionButton';
 import { useSemester } from '../../contexts/SemesterContext';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../utils/academicRecordUtils';
 import { ReportPageSkeleton } from '../skeletons';
+import { StudentAchievement } from '../../types';
 
 type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
 
@@ -28,18 +29,20 @@ const fetchReportData = async (studentId: string): Promise<ReportData> => {
         .is('deleted_at', null)
         .single();
     if (studentRes.error) throw new Error(studentRes.error.message);
-    const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes] = await Promise.all([
+    const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes] = await Promise.all([
         supabase.from('reports').select('id, user_id, student_id, title, notes, date, category, attachment_url, tags, created_at').eq('student_id', studentId),
         supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null),
-        supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null)
+        supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null),
+        supabase.from('student_achievements').select('*').eq('student_id', studentId)
     ]);
-    const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes].map(r => r.error).filter(Boolean);
+    const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes].map(r => r.error).filter(Boolean);
     if (errors.length > 0) throw new Error(errors.map(e => e!.message).join(', '));
     return {
         student: studentRes.data as any, reports: reportsRes.data || [], attendanceRecords: attendanceRes.data || [],
-        academicRecords: academicRes.data || [], violations: violationsRes.data || [], quizPoints: quizPointsRes.data || []
+        academicRecords: academicRes.data || [], violations: violationsRes.data || [], quizPoints: quizPointsRes.data || [],
+        achievements: (achievementsRes.data || []) as StudentAchievement[]
     };
 };
 
@@ -250,7 +253,8 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                 academicRecords: filteredAcademicRecords,
                 attendanceRecords: filteredAttendance,
                 quizPoints: filteredQuizPoints,
-                violations: filteredViolations
+                violations: filteredViolations,
+                achievements: filteredAchievements
             }, customNote, reportDate, semesterName, academicYear, user);
             doc.save(`Rapor_${data.student.name}.pdf`);
             toast.success("Rapor berhasil diunduh sebagai PDF!");
@@ -302,6 +306,12 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
         return deduped.filter((r: any) => r.semester_id === selectedSemesterId);
     }, [data, selectedSemesterId]);
     const summarizedViolations = useMemo(() => summarizeViolations(filteredViolations), [filteredViolations]);
+
+    const filteredAchievements = useMemo(() => {
+        if (!data) return [];
+        if (!selectedSemesterId) return data.achievements;
+        return data.achievements.filter(ach => ach.semester_id === selectedSemesterId);
+    }, [data, selectedSemesterId]);
 
     const attendanceSummary = useMemo(() => {
         return filteredAttendance.reduce((acc, record) => {
@@ -610,10 +620,54 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                             </div>
                         </section>
 
+                        {/* --- PORTFOLIO PRESTASI --- */}
+                        {filteredAchievements.length > 0 && (
+                            <section className="mb-8">
+                                <h3 className="text-base font-bold mb-3 border-b-2 border-emerald-500 dark:border-emerald-400 pb-1 uppercase tracking-wide text-emerald-700 dark:text-emerald-400">B. Portofolio Prestasi</h3>
+                                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <table className="w-full text-sm border-collapse min-w-[600px] md:min-w-0">
+                                        <thead>
+                                            <tr className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
+                                                <th className="p-3 text-center w-10 font-bold">No</th>
+                                                <th className="p-3 text-left font-bold">Nama Prestasi / Lomba</th>
+                                                <th className="p-3 text-left font-bold">Bidang</th>
+                                                <th className="p-3 text-left font-bold">Tingkat</th>
+                                                <th className="p-3 text-left font-bold">Peringkat</th>
+                                                <th className="p-3 text-center w-24 font-bold">Tanggal</th>
+                                                <th className="p-3 text-left font-bold">Penyelenggara</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filteredAchievements.map((ach, index) => {
+                                                const catLabel = ach.category.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+                                                const lvlLabel = ach.level.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+                                                const rnkLabel = ach.rank ? ach.rank.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) : '-';
+                                                return (
+                                                    <tr key={ach.id} className="hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-b border-slate-100 dark:border-slate-800">
+                                                        <td className="p-3 text-center text-slate-600 dark:text-slate-400">{index + 1}</td>
+                                                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{ach.title}</td>
+                                                        <td className="p-3 text-slate-700 dark:text-slate-300">{catLabel}</td>
+                                                        <td className="p-3 text-slate-700 dark:text-slate-300">{lvlLabel}</td>
+                                                        <td className="p-3 text-slate-700 dark:text-slate-300">{rnkLabel}</td>
+                                                        <td className="p-3 text-center text-slate-600 dark:text-slate-400">
+                                                            {new Date(ach.date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                        </td>
+                                                        <td className="p-3 text-slate-700 dark:text-slate-300">{ach.organizer || '-'}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                        )}
+
                         {/* --- BEHAVIOR & ATTENDANCE --- */}
                         <section className="mb-8 flex flex-col md:flex-row gap-8">
                             <div className="flex-1">
-                                <h3 className="text-base font-bold mb-3 border-b-2 border-emerald-500 dark:border-emerald-400 pb-1 uppercase tracking-wide text-emerald-700 dark:text-emerald-400">B. Ketidakhadiran</h3>
+                                <h3 className="text-base font-bold mb-3 border-b-2 border-emerald-500 dark:border-emerald-400 pb-1 uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                                    {filteredAchievements.length > 0 ? 'C. Ketidakhadiran' : 'B. Ketidakhadiran'}
+                                </h3>
                                 <table className="w-full text-sm border-collapse rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
                                     <tbody>
                                         <tr className="border-b border-slate-100 dark:border-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/10">
@@ -632,7 +686,9 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                 </table>
                             </div>
                             <div className="flex-[1.5]">
-                                <h3 className="text-base font-bold mb-3 border-b-2 border-emerald-500 dark:border-emerald-400 pb-1 uppercase tracking-wide text-emerald-700 dark:text-emerald-400">C. Catatan Perilaku</h3>
+                                <h3 className="text-base font-bold mb-3 border-b-2 border-emerald-500 dark:border-emerald-400 pb-1 uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                                    {filteredAchievements.length > 0 ? 'D. Catatan Perilaku' : 'C. Catatan Perilaku'}
+                                </h3>
                                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                                     <table className="w-full text-sm border-collapse min-w-[520px] md:min-w-0">
                                         <thead>
@@ -655,7 +711,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                                 <tr>
                                                     <td colSpan={4} className="p-4 text-center italic text-slate-600 dark:text-slate-400 bg-emerald-50/50 dark:bg-emerald-900/10">
                                                         Siswa menunjukkan sikap yang baik dan terpuji selama pembelajaran.
-                                                    </td>
+                                                     </td>
                                                 </tr>
                                             )}
                                         </tbody>
@@ -667,7 +723,9 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                         {/* --- QUIZ POINTS (NEW) --- */}
                         {filteredQuizPoints.length > 0 && (
                             <section className="mb-8">
-                                <h3 className="text-base font-bold mb-3 border-b-2 border-emerald-500 dark:border-emerald-400 pb-1 uppercase tracking-wide text-emerald-700 dark:text-emerald-400">D. Keaktifan & Prestasi</h3>
+                                <h3 className="text-base font-bold mb-3 border-b-2 border-emerald-500 dark:border-emerald-400 pb-1 uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                                    {filteredAchievements.length > 0 ? 'E. Keaktifan & Prestasi' : 'D. Keaktifan & Prestasi'}
+                                </h3>
                                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                                     <table className="w-full text-sm border-collapse min-w-[520px] md:min-w-0">
                                         <thead>
@@ -696,7 +754,15 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                         {/* --- TEACHER NOTE --- */}
                         <section className="mb-12">
                             <h3 className="text-base font-bold mb-3 border-b-2 border-emerald-500 dark:border-emerald-400 pb-1 uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-                                {filteredQuizPoints.length > 0 ? 'E. Catatan Wali Kelas' : 'D. Catatan Wali Kelas'}
+                                {(() => {
+                                    let letter = 'D';
+                                    if (filteredAchievements.length > 0 && filteredQuizPoints.length > 0) {
+                                        letter = 'F';
+                                    } else if (filteredAchievements.length > 0 || filteredQuizPoints.length > 0) {
+                                        letter = 'E';
+                                    }
+                                    return `${letter}. Catatan Wali Kelas`;
+                                })()}
                             </h3>
                             <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-6 min-h-[100px] text-sm italic bg-gradient-to-br from-emerald-50/30 to-emerald-100/10 dark:from-emerald-900/10 dark:to-emerald-950/10 font-serif leading-relaxed text-slate-700 dark:text-slate-300 shadow-sm text-justify">
                                 {customNote || "Tidak ada catatan khusus."}

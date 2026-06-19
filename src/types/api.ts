@@ -18,6 +18,7 @@ import type {
     WeeklyAttendance,
     DailyAttendanceSummary,
 } from './database';
+import type { StudentAchievement } from './studentAchievement';
 
 // =============================================================================
 // DASHBOARD API TYPES
@@ -44,6 +45,8 @@ export interface DashboardQueryData {
     academicRecords: AcademicRecordSummary[];
     /** Violation records for points calculation */
     violations: ViolationSummary[];
+    /** Student competition portfolio achievements */
+    achievements: StudentAchievement[];
     /** Recent tasks for activity feed */
     recentTasks: Pick<TaskRow, 'id' | 'title' | 'created_at' | 'status'>[];
     /** Recent attendance records for activity feed */

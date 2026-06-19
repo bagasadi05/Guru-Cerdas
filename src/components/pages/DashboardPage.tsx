@@ -34,7 +34,7 @@ import AttendanceStatsWidget from '../dashboard/AttendanceStatsWidget';
 import { ClassAnalyticsSection } from '../dashboard/ClassAnalyticsSection';
 import { LeaderboardCard } from '../gamification/LeaderboardCard';
 import TodayActionPanel from '../dashboard/TodayActionPanel';
-import { DashboardSummaryCards } from '../dashboard/DashboardSummaryCards';
+import { DashboardSummaryCards, WallOfFameWidget } from '../dashboard';
 import ActivityFeedWidget from '../dashboard/ActivityFeedWidget';
 import ParentMessagesWidget from '../dashboard/ParentMessagesWidget';
 import { transformToGameData } from '../../services/gamificationService';
@@ -329,6 +329,9 @@ const DashboardPage: React.FC = () => {
               </TabsContent>
             </Tabs>
           </div>
+
+          {/* Wall of Fame Widget */}
+          <WallOfFameWidget data={data} />
 
           {/* Parent Messages Widget */}
           <ParentMessagesWidget />

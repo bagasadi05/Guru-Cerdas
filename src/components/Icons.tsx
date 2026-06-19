@@ -85,9 +85,12 @@ import {
     Award,
     Target,
     Minus,
-    TrendingDown,
-    Star
+    Star,
+    Trophy,
+    TrendingDown
 } from 'lucide-react';
+
+export const TrophyIcon = Trophy;
 
 // Re-export Lucide icons with original names for backward compatibility
 export const HomeIcon = Home;
