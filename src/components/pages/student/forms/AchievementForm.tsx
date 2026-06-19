@@ -16,7 +16,7 @@ import { FileTextIcon, UploadIcon } from 'lucide-react';
 
 interface AchievementFormProps {
     defaultValues: StudentAchievement | null;
-    onSubmit: (data: AchievementFormValues & { evidence_file?: File | null }) => void;
+    onSubmit: (data: AchievementFormValues & { evidence_file?: File | null; certificate_removed?: boolean }) => void;
     onClose: () => void;
     isPending: boolean;
 }
@@ -34,6 +34,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     const [fileName, setFileName] = useState<string | null>(
         defaultValues?.certificate_name || null
     );
+    const [certificateRemoved, setCertificateRemoved] = useState(false);
 
     const {
         register,
@@ -58,6 +59,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
         if (file) {
             setEvidenceFile(file);
             setFileName(file.name);
+            setCertificateRemoved(false);
             if (file.type.startsWith('image/')) {
                 setEvidencePreview(URL.createObjectURL(file));
             } else {
@@ -69,6 +71,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     const handleRemoveEvidence = () => {
         setEvidenceFile(null);
         setFileName(null);
+        setCertificateRemoved(true);
         if (evidencePreview && !defaultValues?.certificate_url) {
             URL.revokeObjectURL(evidencePreview);
         }
@@ -79,6 +82,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
         onSubmit({
             ...data,
             evidence_file: evidenceFile,
+            certificate_removed: certificateRemoved,
         });
     };
 

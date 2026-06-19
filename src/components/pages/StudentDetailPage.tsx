@@ -216,7 +216,7 @@ const StudentDetailPage = () => {
         });
     };
 
-    const handleAchievementSubmit = async (data: AchievementFormValues & { evidence_file?: File | null }) => {
+    const handleAchievementSubmit = async (data: AchievementFormValues & { evidence_file?: File | null; certificate_removed?: boolean }) => {
         if (!studentId) return;
 
         let certificateUrl = modalState.type === 'achievement' && modalState.mode === 'edit' ? modalState.data?.certificate_url : null;
@@ -234,17 +234,17 @@ const StudentDetailPage = () => {
                 toast.error(`Gagal mengunggah file: ${error.message}`);
                 return;
             }
-        } else if (data.evidence_file === null) {
+        } else if (data.certificate_removed === true) {
             if (modalState.type === 'achievement' && modalState.mode === 'edit' && modalState.data?.certificate_url) {
                 try {
                     await achievementService.removeCertificate(modalState.data.certificate_url);
-                    certificateUrl = null;
-                    certificateName = null;
                 } catch (error: any) {
                     toast.error(`Gagal menghapus file lama: ${error.message}`);
                     return;
                 }
             }
+            certificateUrl = null;
+            certificateName = null;
         }
 
         const payload = {
