@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 
 // Mock Canvas getContext in JSDOM environment
 if (typeof window !== 'undefined') {
-    HTMLCanvasElement.prototype.getContext = function (type) {
+    (HTMLCanvasElement.prototype as any).getContext = function (type: string) {
         if (type === '2d') {
             return {
                 clearRect: () => {},
