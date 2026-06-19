@@ -3,6 +3,7 @@ import achievementService from '../services/achievementService';
 import { queryKeys } from '../lib/queryKeys';
 import { StudentAchievementInsert, StudentAchievementUpdate } from '../types/studentAchievement';
 import { useToast } from './useToast';
+import { isAchievementsBackendMissing } from '../utils/achievementBackend';
 
 /**
  * Hook to retrieve achievements for a student.
@@ -12,6 +13,7 @@ export const useStudentAchievements = (studentId: string) => {
         queryKey: queryKeys.achievements.byStudent(studentId),
         queryFn: () => achievementService.getByStudent(studentId),
         enabled: !!studentId,
+        retry: (count, error) => !isAchievementsBackendMissing(error) && count < 2,
     });
 };
 

@@ -1129,6 +1129,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          class_id: string | null
           completed: boolean
           created_at: string
           description: string | null
@@ -1140,6 +1141,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          class_id?: string | null
           completed?: boolean
           created_at?: string
           description?: string | null
@@ -1151,6 +1153,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          class_id?: string | null
           completed?: boolean
           created_at?: string
           description?: string | null
@@ -1161,7 +1164,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       teacher_class_assignments: {
         Row: {
