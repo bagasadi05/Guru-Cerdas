@@ -747,7 +747,7 @@ const SchedulePage: React.FC = () => {
     const currentDaySchedule = scheduleByDay[selectedDay] || [];
 
     return (
-        <div className="w-full min-h-full bg-slate-50 dark:bg-[#0B1120] text-slate-800 dark:text-white pb-24 animate-fade-in-up">
+        <div className="w-full min-h-full bg-slate-50 dark:bg-[#0B1120] text-slate-800 dark:text-white pb-24">
             <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>

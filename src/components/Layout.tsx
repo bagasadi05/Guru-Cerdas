@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { duration as motionDuration, easing } from '../styles/motion';
 import { useAuth } from '../hooks/useAuth';
-import { useReducedMotion } from '../hooks/useReducedMotion';
+import PageTransition from './ui/PageTransition';
 import { supabase } from '../services/supabase';
 import GreetingRobot from './GreetingRobot';
 import { MenuIcon } from './Icons';
@@ -31,7 +29,6 @@ import { ShellHeaderActions } from './layout/ShellHeaderActions';
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const { showTour, endTour } = useOnboarding();
-  const { shouldReduceMotion } = useReducedMotion();
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
@@ -184,15 +181,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             className="h-full mobile-content-safe lg:pb-6 px-4 lg:px-8 pt-4 lg:pt-6"
           >
             <div className="max-w-7xl mx-auto h-full">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: motionDuration.base, ease: easing.easeOut }}
-                className="h-full"
-              >
+              <PageTransition transitionKey={location.pathname}>
                 {children}
-              </motion.div>
+              </PageTransition>
             </div>
           </PullToRefresh>
         </main>
