@@ -11,6 +11,7 @@ import { generateGuardianSummaryPDF } from '../exports/generateGuardianSummaryPD
 import { useSemester } from '../../contexts/SemesterContext';
 import { getSemesterTerm } from '../../utils/semesterUtils';
 import { CalendarIcon } from '../Icons';
+import { isAchievementsBackendMissing } from '../../utils/achievementBackend';
 import {
     GlassCard,
     getAttentionItems,
@@ -142,52 +143,168 @@ const filterRecordsBySemesterTerm = <T extends PortalFilterableRecord>(
     return records.filter((record) => getRecordSemesterTerm(record, semesterTermsById) === selectedFilter);
 };
 
-const fetchPortalData = async (studentId: string, accessCode: string): Promise<PortalData> => {
-    const { data, error } = await supabase.rpc('get_student_portal_data', {
-        student_id_param: studentId,
-        access_code_param: accessCode,
-    });
+const fetchPortalDataFallback = async (studentId: string, accessCode: string): Promise<PortalData> => {
+    const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('*')
+        .eq('id', studentId)
+        .eq('access_code', accessCode)
+        .maybeSingle();
 
-    if (error) {
-        console.error('Portal access RPC failed:', error);
-        throw new Error(`Gagal memuat data portal: ${error.message}.`);
-    }
-
-    const resultRows = Array.isArray(data) ? data : [];
-
-    if (resultRows.length === 0) {
+    if (studentError || !studentData) {
+        console.error('Portal access fallback student check failed:', studentError);
         throw new Error('Akses ditolak. Kode akses mungkin tidak valid untuk siswa ini atau telah kedaluwarsa.');
     }
 
-    const portalResult = toObject<Record<string, unknown>>(resultRows[0], {});
+    const studentRecord = studentData as any;
+    const teacherUserId = studentRecord.user_id;
+    const classId = studentRecord.class_id;
 
-    const student = toObject<PortalStudentInfo>(portalResult.student, {
-        id: studentId,
-        name: 'Siswa',
-        gender: 'Laki-laki',
-        class_id: '',
-        avatar_url: null,
-        access_code: accessCode || null,
-        parent_name: null,
-        parent_phone: null,
-        classes: { name: '-' },
+    let className = '-';
+    if (classId) {
+        const { data: classData } = await supabase
+            .from('classes')
+            .select('name')
+            .eq('id', classId)
+            .maybeSingle();
+        if (classData) {
+            className = classData.name;
+        }
+    }
+
+    const [
+        reportsRes,
+        attendanceRes,
+        academicRes,
+        violationsRes,
+        quizPointsRes,
+        communicationsRes,
+        schedulesRes,
+        tasksRes,
+        announcementsRes,
+    ] = await Promise.all([
+        supabase.from('reports').select('*').eq('student_id', studentId),
+        supabase.from('attendance').select('*').eq('student_id', studentId).is('deleted_at', null),
+        supabase.from('academic_records').select('*').eq('student_id', studentId).is('deleted_at', null),
+        supabase.from('violations').select('*').eq('student_id', studentId).is('deleted_at', null),
+        supabase.from('quiz_points').select('*').eq('student_id', studentId).is('deleted_at', null),
+        supabase.from('communications').select('*').eq('student_id', studentId).order('created_at', { ascending: true }),
+        supabase.from('schedules').select('*').eq('class_id', className),
+        supabase.from('tasks').select('*').eq('class_id', classId),
+        supabase.from('announcements').select('*').in('audience_type', ['all', 'parent']).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(5),
+    ]);
+
+    const teacher = {
+        user_id: teacherUserId,
+        full_name: 'Wali Kelas',
+        avatar_url: `https://i.pravatar.cc/150?u=${teacherUserId}`,
+    };
+
+    const dayOrder: Record<string, number> = {
+        'Senin': 1,
+        'Selasa': 2,
+        'Rabu': 3,
+        'Kamis': 4,
+        'Jumat': 5,
+        'Sabtu': 6,
+        'Minggu': 7
+    };
+    const sortedSchedules = (schedulesRes.data || []).sort((a: any, b: any) => {
+        const orderA = dayOrder[a.day] || 8;
+        const orderB = dayOrder[b.day] || 8;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a.start_time || '').localeCompare(b.start_time || '');
+    });
+
+    const sortedTasks = (tasksRes.data || []).sort((a: any, b: any) => {
+        return new Date(b.due_date || 0).getTime() - new Date(a.due_date || 0).getTime();
     });
 
     return {
-        student: { ...student, access_code: accessCode || null },
-        reports: toArray<PortalReport>(portalResult.reports),
-        attendanceRecords: toArray<PortalAttendance>(portalResult.attendanceRecords),
-        academicRecords: toArray<PortalAcademicRecord>(portalResult.academicRecords),
-        violations: toArray<PortalViolation>(portalResult.violations),
-        quizPoints: normalizePortalQuizPoints(portalResult.quizPoints),
-        communications: normalizePortalCommunications(portalResult.communications),
-        schedules: toArray<PortalSchedule>(portalResult.schedules),
-        tasks: toArray<PortalTask>(portalResult.tasks),
-        announcements: toArray<PortalAnnouncement>(portalResult.announcements),
-        achievements: toArray<PortalStudentAchievement>(portalResult.achievements),
-        teacher: toObject<TeacherInfo>(portalResult.teacher, null),
-        schoolInfo: toObject<PortalSchoolInfo>(portalResult.schoolInfo, { school_name: 'Sekolah' }),
+        student: {
+            id: studentRecord.id,
+            name: studentRecord.name,
+            gender: studentRecord.gender,
+            class_id: studentRecord.class_id,
+            avatar_url: studentRecord.avatar_url,
+            access_code: accessCode || null,
+            parent_name: studentRecord.parent_name,
+            parent_phone: studentRecord.parent_phone,
+            classes: { name: className },
+        },
+        reports: toArray<PortalReport>(reportsRes.data),
+        attendanceRecords: toArray<PortalAttendance>(attendanceRes.data),
+        academicRecords: toArray<PortalAcademicRecord>(academicRes.data),
+        violations: toArray<PortalViolation>(violationsRes.data),
+        quizPoints: normalizePortalQuizPoints(quizPointsRes.data),
+        communications: normalizePortalCommunications(communicationsRes.data),
+        schedules: toArray<PortalSchedule>(sortedSchedules),
+        tasks: toArray<PortalTask>(sortedTasks),
+        announcements: toArray<PortalAnnouncement>(announcementsRes.data),
+        achievements: [],
+        teacher,
+        schoolInfo: { school_name: 'Sekolah' },
     };
+};
+
+const fetchPortalData = async (studentId: string, accessCode: string): Promise<PortalData> => {
+    try {
+        const { data, error } = await supabase.rpc('get_student_portal_data', {
+            student_id_param: studentId,
+            access_code_param: accessCode,
+        });
+
+        if (error) {
+            if (isAchievementsBackendMissing(error)) {
+                console.warn('Portal access RPC failed due to missing achievements, falling back...');
+                return fetchPortalDataFallback(studentId, accessCode);
+            }
+            console.error('Portal access RPC failed:', error);
+            throw new Error(`Gagal memuat data portal: ${error.message}.`);
+        }
+
+        const resultRows = Array.isArray(data) ? data : [];
+
+        if (resultRows.length === 0) {
+            throw new Error('Akses ditolak. Kode akses mungkin tidak valid untuk siswa ini atau telah kedaluwarsa.');
+        }
+
+        const portalResult = toObject<Record<string, unknown>>(resultRows[0], {});
+
+        const student = toObject<PortalStudentInfo>(portalResult.student, {
+            id: studentId,
+            name: 'Siswa',
+            gender: 'Laki-laki',
+            class_id: '',
+            avatar_url: null,
+            access_code: accessCode || null,
+            parent_name: null,
+            parent_phone: null,
+            classes: { name: '-' },
+        });
+
+        return {
+            student: { ...student, access_code: accessCode || null },
+            reports: toArray<PortalReport>(portalResult.reports),
+            attendanceRecords: toArray<PortalAttendance>(portalResult.attendanceRecords),
+            academicRecords: toArray<PortalAcademicRecord>(portalResult.academicRecords),
+            violations: toArray<PortalViolation>(portalResult.violations),
+            quizPoints: normalizePortalQuizPoints(portalResult.quizPoints),
+            communications: normalizePortalCommunications(portalResult.communications),
+            schedules: toArray<PortalSchedule>(portalResult.schedules),
+            tasks: toArray<PortalTask>(portalResult.tasks),
+            announcements: toArray<PortalAnnouncement>(portalResult.announcements),
+            achievements: toArray<PortalStudentAchievement>(portalResult.achievements),
+            teacher: toObject<TeacherInfo>(portalResult.teacher, null),
+            schoolInfo: toObject<PortalSchoolInfo>(portalResult.schoolInfo, { school_name: 'Sekolah' }),
+        };
+    } catch (err: any) {
+        if (isAchievementsBackendMissing(err)) {
+            console.warn('Portal access RPC caught error due to missing achievements, falling back...');
+            return fetchPortalDataFallback(studentId, accessCode);
+        }
+        throw err;
+    }
 };
 
 export const ParentPortalPage: React.FC = () => {
@@ -289,7 +406,7 @@ export const ParentPortalPage: React.FC = () => {
     ), [data, selectedSemesterFilter, semesterTermsById]);
 
     const filteredAchievements = useMemo(() => (
-        data ? filterRecordsBySemesterTerm(data.achievements, selectedSemesterFilter, semesterTermsById) : []
+        data ? filterRecordsBySemesterTerm(data.achievements || [], selectedSemesterFilter, semesterTermsById) : []
     ), [data, selectedSemesterFilter, semesterTermsById]);
 
     const averageScore = useMemo(() => (

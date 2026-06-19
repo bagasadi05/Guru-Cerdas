@@ -15,10 +15,10 @@ import {
 } from '../../../lib/achievementMeta';
 
 interface PortalAchievementsPanelProps {
-    achievements: PortalStudentAchievement[];
+    achievements?: PortalStudentAchievement[];
 }
 
-export const PortalAchievementsPanel: React.FC<PortalAchievementsPanelProps> = ({ achievements }) => {
+export const PortalAchievementsPanel: React.FC<PortalAchievementsPanelProps> = ({ achievements = [] }) => {
     const sortedAchievements = useMemo(() => {
         return [...achievements].sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()

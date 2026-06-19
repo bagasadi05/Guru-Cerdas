@@ -14,7 +14,9 @@ import {
     ExternalLinkIcon,
     FileSpreadsheetIcon,
     DownloadIcon,
+    AlertCircle,
 } from 'lucide-react';
+import { isAchievementsBackendMissing } from '../../../utils/achievementBackend';
 import { StudentAchievement, AchievementCategory, AchievementLevel } from '../../../types/studentAchievement';
 import {
     getCategoryMeta,
@@ -31,6 +33,7 @@ import { useToast } from '../../../hooks/useToast';
 interface AchievementsTabProps {
     achievements: StudentAchievement[];
     isLoading: boolean;
+    error?: any;
     onAdd: () => void;
     onEdit: (achievement: StudentAchievement) => void;
     onDelete: (id: string) => void;
@@ -87,6 +90,7 @@ const AchievementsStats: React.FC<{ achievements: StudentAchievement[] }> = ({ a
 export const AchievementsTab: React.FC<AchievementsTabProps> = ({
     achievements,
     isLoading,
+    error,
     onAdd,
     onEdit,
     onDelete,
@@ -117,6 +121,8 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
         });
     }, [achievements, searchQuery, categoryFilter, levelFilter]);
 
+    const isBackendMissing = isAchievementsBackendMissing(error);
+
     if (isLoading) {
         return (
             <div className="space-y-4 animate-pulse">
@@ -142,27 +148,29 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                     </CardDescription>
                 </div>
                 <div className="flex gap-2 self-start sm:self-auto">
-                    <DropdownMenu>
-                        <DropdownTrigger className="gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl px-4 py-2 border border-slate-200 font-medium">
-                            <DownloadIcon className="w-4 h-4" />
-                            Export
-                        </DropdownTrigger>
-                        <DropdownContent>
-                            <DropdownItem onClick={async () => {
-                                await exportAchievementsToExcel({
-                                    studentName: studentName || 'Siswa',
-                                    className: className || '-',
-                                    schoolName: user?.school_name || 'Sekolah',
-                                    achievements: filteredAchievements,
-                                    teacherName: user?.name
-                                });
-                                toast.success('Mengunduh Data Excel...');
-                            }} icon={<FileSpreadsheetIcon className="w-4 h-4 text-green-600" />}>
-                                Export Excel
-                            </DropdownItem>
-                        </DropdownContent>
-                    </DropdownMenu>
-                    {canAdd && (
+                    {!isBackendMissing && (
+                        <DropdownMenu>
+                            <DropdownTrigger className="gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl px-4 py-2 border border-slate-200 font-medium">
+                                <DownloadIcon className="w-4 h-4" />
+                                Export
+                            </DropdownTrigger>
+                            <DropdownContent>
+                                <DropdownItem onClick={async () => {
+                                    await exportAchievementsToExcel({
+                                        studentName: studentName || 'Siswa',
+                                        className: className || '-',
+                                        schoolName: user?.school_name || 'Sekolah',
+                                        achievements: filteredAchievements,
+                                        teacherName: user?.name
+                                    });
+                                    toast.success('Mengunduh Data Excel...');
+                                }} icon={<FileSpreadsheetIcon className="w-4 h-4 text-green-600" />}>
+                                    Export Excel
+                                </DropdownItem>
+                            </DropdownContent>
+                        </DropdownMenu>
+                    )}
+                    {canAdd && !isBackendMissing && (
                         <Button
                             onClick={onAdd}
                             disabled={!isOnline}
@@ -175,7 +183,29 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                 </div>
             </div>
 
-            {achievements.length > 0 && <AchievementsStats achievements={achievements} />}
+            {error && !isBackendMissing && (
+                <div className="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-455 text-sm">
+                    Gagal memuat data prestasi: {error instanceof Error ? error.message : String(error)}
+                </div>
+            )}
+
+            {isBackendMissing ? (
+                <div className="mb-6 p-6 rounded-2xl bg-amber-50/80 dark:bg-indigo-950/20 border border-amber-200 dark:border-indigo-800/30 flex items-start gap-4 animate-fade-in">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
+                        <AlertCircle className="w-5 h-5 text-amber-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-base">
+                            Fitur Prestasi Belum Aktif
+                        </h4>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                            Fitur Prestasi belum aktif. Jalankan migrasi database (student_achievements) di Supabase untuk mengaktifkannya.
+                        </p>
+                    </div>
+                </div>
+            ) : (
+                <>
+                    {achievements.length > 0 && <AchievementsStats achievements={achievements} />}
 
             {/* Filter controls */}
             <div className="flex flex-col md:flex-row gap-3 mb-6">
@@ -347,6 +377,8 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                         );
                     })}
                 </div>
+            )}
+            </>
             )}
         </div>
     );
