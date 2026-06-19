@@ -483,6 +483,8 @@ const StudentDetailPage = () => {
                                         onDelete={handleDeleteAchievement}
                                         isOnline={isOnline}
                                         currentUserId={user?.id}
+                                        studentName={student.name}
+                                        className={student.classes?.name || '-'}
                                         canAdd={canManageStudentProfile}
                                     />
                                 </Suspense>

@@ -228,7 +228,12 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             .eq('sender', 'parent')
             .eq('is_read', false)
             .order('created_at', { ascending: false })
-            .limit(10)
+            .limit(10),
+
+        // Fetch student achievements for dashboard
+        supabase
+            .from('student_achievements')
+            .select('*')
     ]);
 
     // Collect any errors from the queries
@@ -243,7 +248,8 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         violationsRes,
         recentTasksRes,
         todayAttendanceRecordsRes,
-        unreadParentMessagesRes
+        unreadParentMessagesRes,
+        achievementsRes
     ]
         .map(res => res.error)
         .filter((e): e is NonNullable<typeof e> => e !== null);
@@ -291,6 +297,7 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         weeklyAttendance,
         academicRecords: (academicRecordsRes.data || []).filter(r => activeStudents.some(s => s.id === r.student_id)),
         violations: (violationsRes.data || []).filter(v => activeStudents.some(s => s.id === v.student_id)),
+        achievements: ((achievementsRes.data || []) as any[]).filter(ach => activeStudents.some(s => s.id === ach.student_id)),
         recentTasks: recentTasksRes.data || [],
         todayAttendanceRecords: todayAttendanceRecordsRes.data?.reduce((acc: { created_at: string; status: string; count: number }[], record) => {
             const existing = acc.find(a => a.created_at === record.created_at && a.status === record.status);

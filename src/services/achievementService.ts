@@ -24,8 +24,8 @@ const extractStoragePathFromPublicUrl = (publicUrl: string | null | undefined, b
  * Fetch achievements for a specific student.
  */
 export const getByStudent = async (studentId: string): Promise<StudentAchievement[]> => {
-    const { data, error } = await supabase
-        .from('student_achievements')
+    const { data, error } = await (supabase
+        .from('student_achievements' as any) as any)
         .select('*')
         .eq('student_id', studentId)
         .order('date', { ascending: false });
@@ -95,8 +95,8 @@ export const create = async (
         user_id: userData.user.id,
     };
 
-    const { data, error } = await supabase
-        .from('student_achievements')
+    const { data, error } = await (supabase
+        .from('student_achievements' as any) as any)
         .insert(fullPayload)
         .select('*')
         .single();
@@ -120,8 +120,8 @@ export const update = async (
         throw new Error('User session not found.');
     }
 
-    const { data, error } = await supabase
-        .from('student_achievements')
+    const { data, error } = await (supabase
+        .from('student_achievements' as any) as any)
         .update(payload)
         .eq('id', id)
         .eq('user_id', userData.user.id)
@@ -145,8 +145,8 @@ export const remove = async (id: string): Promise<void> => {
     }
 
     // 1. Fetch details to see if a certificate needs to be deleted
-    const { data: achievement, error: fetchError } = await supabase
-        .from('student_achievements')
+    const { data: achievement, error: fetchError } = await (supabase
+        .from('student_achievements' as any) as any)
         .select('certificate_url')
         .eq('id', id)
         .eq('user_id', userData.user.id)
@@ -166,8 +166,8 @@ export const remove = async (id: string): Promise<void> => {
     }
 
     // 3. Delete database record
-    const { error: deleteError } = await supabase
-        .from('student_achievements')
+    const { error: deleteError } = await (supabase
+        .from('student_achievements' as any) as any)
         .delete()
         .eq('id', id)
         .eq('user_id', userData.user.id);

@@ -12,6 +12,8 @@
 import type jsPDF from 'jspdf';
 import { getAutoTable } from '../utils/dynamicImports';
 import { Database } from './database.types';
+import { StudentAchievement } from '../types/studentAchievement';
+import { ACHIEVEMENT_LEVEL_META, ACHIEVEMENT_RANK_META, ACHIEVEMENT_CATEGORY_META } from '../lib/achievementMeta';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -42,6 +44,7 @@ type StudentWithClass = StudentRow & { classes: Pick<ClassRow, 'id' | 'name'> | 
  * @property {AcademicRecordRow[]} academicRecords - Academic performance records
  * @property {ViolationRow[]} violations - Behavioral violation records
  * @property {QuizPointRow[]} quizPoints - Quiz and activity points
+ * @property {StudentAchievement[]} achievements - Student competition portfolio achievements
  * 
  * @since 1.0.0
  */
@@ -52,6 +55,7 @@ export type ReportData = {
     academicRecords: AcademicRecordRow[],
     violations: ViolationRow[],
     quizPoints: QuizPointRow[],
+    achievements: StudentAchievement[],
 };
 
 /**
@@ -303,7 +307,7 @@ export const generateStudentReport = async (
 ): Promise<void> => {
     await preloadLogos();
     const { default: autoTable } = await getAutoTable();
-    const { student, academicRecords, quizPoints, violations, attendanceRecords } = reportData;
+    const { student, academicRecords, quizPoints, violations, attendanceRecords, achievements } = reportData;
 
     const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
     const PAGE_WIDTH = doc.internal.pageSize.getWidth();
@@ -554,7 +558,64 @@ export const generateStudentReport = async (
         currentY = (doc as any).lastAutoTable.finalY + 10;
     }
 
-    drawSectionTitle('B. Rekap Ketidakhadiran', true);
+    // B. Portofolio Prestasi (Student Achievements)
+    if (achievements.length > 0) {
+        drawSectionTitle('B. Portofolio Prestasi', true);
+
+        const achievementsBody = achievements.map((ach, index) => {
+            const levelLabel = ACHIEVEMENT_LEVEL_META[ach.level]?.label || ach.level;
+            const rankLabel = ach.rank ? (ACHIEVEMENT_RANK_META[ach.rank]?.label || ach.rank) : '-';
+            const catLabel = ACHIEVEMENT_CATEGORY_META[ach.category]?.label || ach.category;
+            const dateStr = new Date(ach.date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            return [
+                index + 1,
+                ach.title,
+                catLabel,
+                levelLabel,
+                rankLabel,
+                dateStr,
+                ach.organizer || '-'
+            ];
+        });
+
+        autoTable(doc, {
+            startY: currentY,
+            head: [['No', 'Nama Prestasi / Lomba', 'Bidang', 'Tingkat', 'Peringkat', 'Tanggal', 'Penyelenggara']],
+            body: achievementsBody,
+            theme: 'grid',
+            headStyles: {
+                fillColor: [...PRIMARY_DARK],
+                textColor: [255, 255, 255],
+                fontSize: 9,
+                fontStyle: 'bold',
+                halign: 'center',
+                valign: 'middle'
+            },
+            styles: {
+                fontSize: 9,
+                cellPadding: 3,
+                lineColor: [...BORDER],
+                lineWidth: 0.15,
+                font: 'helvetica',
+                valign: 'middle'
+            },
+            columnStyles: {
+                0: { cellWidth: 10, halign: 'center' },
+                1: { cellWidth: 45, fontStyle: 'bold' },
+                2: { cellWidth: 20 },
+                3: { cellWidth: 20 },
+                4: { cellWidth: 20 },
+                5: { cellWidth: 22, halign: 'center' },
+                6: { cellWidth: 'auto' }
+            },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            margin: { left: MARGIN, right: MARGIN }
+        });
+
+        currentY = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    drawSectionTitle(achievements.length > 0 ? 'C. Rekap Ketidakhadiran' : 'B. Rekap Ketidakhadiran', true);
 
     const attendanceSummary = attendanceRecords.reduce((acc, record) => {
         if (record.status !== 'Hadir') {
@@ -595,7 +656,8 @@ export const generateStudentReport = async (
 
     currentY = (doc as any).lastAutoTable.finalY + 10;
 
-    drawSectionTitle('C. Catatan Perilaku', true);
+    const violationSectionLetter = achievements.length > 0 ? 'D' : 'C';
+    drawSectionTitle(`${violationSectionLetter}. Catatan Perilaku`, true);
     const summarizedViolations = summarizeViolations(violations);
     const violationBody = summarizedViolations.length > 0
         ? summarizedViolations.map((v, index) => [index + 1, v.note, `${v.count}x`, `${v.totalPoints} poin`])
@@ -633,7 +695,8 @@ export const generateStudentReport = async (
 
     // C. Activities & Achievements
     if (quizPoints.length > 0) {
-        drawSectionTitle('D. Keaktifan & Prestasi', true);
+        const quizSectionLetter = achievements.length > 0 ? 'E' : 'D';
+        drawSectionTitle(`${quizSectionLetter}. Keaktifan & Prestasi`, true);
         const summarizedQuizPoints = summarizeQuizPoints(quizPoints);
 
         const quizBody = summarizedQuizPoints.map((q, index) => [
@@ -674,7 +737,13 @@ export const generateStudentReport = async (
     }
 
     // D. Teacher's Note
-    drawSectionTitle(quizPoints.length > 0 ? 'E. Catatan Wali Kelas' : 'D. Catatan Wali Kelas', true);
+    let noteLetter = 'D';
+    if (achievements.length > 0 && quizPoints.length > 0) {
+        noteLetter = 'F';
+    } else if (achievements.length > 0 || quizPoints.length > 0) {
+        noteLetter = 'E';
+    }
+    drawSectionTitle(`${noteLetter}. Catatan Wali Kelas`, true);
 
     const noteText = teacherNote || 'Tidak ada catatan khusus untuk semester ini.';
     const noteWidth = PAGE_WIDTH - MARGIN * 2 - 10;
@@ -709,8 +778,13 @@ export const generateStudentReport = async (
 
     currentY += noteHeight + 12;
 
-    const signatureSectionTitle = quizPoints.length > 0 ? 'F. Pengesahan' : 'E. Pengesahan';
-    drawSectionTitle(signatureSectionTitle, true);
+    let signatureSectionLetter = 'E';
+    if (achievements.length > 0 && quizPoints.length > 0) {
+        signatureSectionLetter = 'G';
+    } else if (achievements.length > 0 || quizPoints.length > 0) {
+        signatureSectionLetter = 'F';
+    }
+    drawSectionTitle(`${signatureSectionLetter}. Pengesahan`, true);
 
     const signatureHeight = 49;
     checkPageBreak(signatureHeight + 2);
