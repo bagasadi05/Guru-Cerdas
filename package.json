@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test --config=playwright.functional.config.ts",
     "test:docs": "vitest run tests/docs-validation.test.ts tests/search-validation.test.ts tests/content-validation.test.ts tests/ci-docs-check.test.ts",
     "test:docs:watch": "vitest tests/docs-validation.test.ts tests/search-validation.test.ts tests/content-validation.test.ts tests/ci-docs-check.test.ts",
     "analyze": "cross-env ANALYZE=true vite build",
