@@ -1404,6 +1404,78 @@ export type Database = {
           }
         ]
       }
+      student_achievements: {
+        Row: {
+          id: string
+          user_id: string
+          student_id: string
+          semester_id: string | null
+          title: string
+          category: string
+          level: string
+          rank: string | null
+          organizer: string | null
+          date: string
+          description: string | null
+          certificate_url: string | null
+          certificate_name: string | null
+          points: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          student_id: string
+          semester_id?: string | null
+          title: string
+          category?: string
+          level?: string
+          rank?: string | null
+          organizer?: string | null
+          date: string
+          description?: string | null
+          certificate_url?: string | null
+          certificate_name?: string | null
+          points?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          student_id?: string
+          semester_id?: string | null
+          title?: string
+          category?: string
+          level?: string
+          rank?: string | null
+          organizer?: string | null
+          date?: string
+          description?: string | null
+          certificate_url?: string | null
+          certificate_name?: string | null
+          points?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_achievements_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_achievements_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: false
+            referencedRelation: "semesters"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
