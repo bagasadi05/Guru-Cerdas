@@ -288,15 +288,16 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     const fetchReportDataForStudent = async (studentId: string, semesterId: string): Promise<ReportDataType> => {
         const studentRes = await supabase.from('students').select('*, classes(id, name)').eq('id', studentId).is('deleted_at', null).single();
         if (studentRes.error) throw new Error(studentRes.error.message);
-        const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes] = await Promise.all([
+        const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes] = await Promise.all([
             supabase.from('reports').select('*').eq('student_id', studentId),
             supabase.from('attendance').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
             supabase.from('academic_records').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
             supabase.from('violations').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
             supabase.from('quiz_points').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('student_achievements').select('*').eq('student_id', studentId),
         ]) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes].map((r: any) => r.error).filter((e: any) => e !== null);
+        const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes].map((r: any) => r.error).filter((e: any) => e !== null);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (errors.length > 0) throw new Error(errors.map((e: any) => e!.message).join(', '));
          
@@ -306,7 +307,8 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             attendanceRecords: attendanceRes.data || [], 
             academicRecords: dedupeAcademicRecords((academicRes.data || []) as any) as any, 
             violations: dedupeViolations((violationsRes.data || []) as any) as any, 
-            quizPoints: dedupeQuizPoints((quizPointsRes.data || []) as any) as any 
+            quizPoints: dedupeQuizPoints((quizPointsRes.data || []) as any) as any,
+            achievements: achievementsRes.data || []
         };
     };
 

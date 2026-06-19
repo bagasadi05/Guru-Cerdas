@@ -15,6 +15,7 @@ import FloatingActionButton from '../ui/FloatingActionButton';
 import { useSemester } from '../../contexts/SemesterContext';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../utils/academicRecordUtils';
 import { ReportPageSkeleton } from '../skeletons';
+import { StudentAchievement } from '../../types';
 
 type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
 
@@ -41,7 +42,7 @@ const fetchReportData = async (studentId: string): Promise<ReportData> => {
     return {
         student: studentRes.data as any, reports: reportsRes.data || [], attendanceRecords: attendanceRes.data || [],
         academicRecords: academicRes.data || [], violations: violationsRes.data || [], quizPoints: quizPointsRes.data || [],
-        achievements: achievementsRes.data || []
+        achievements: (achievementsRes.data || []) as StudentAchievement[]
     };
 };
 
