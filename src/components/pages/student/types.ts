@@ -128,6 +128,8 @@ export type StudentDetailsData = {
     extracurricularGrades: Database['public']['Tables']['extracurricular_grades']['Row'][];
 };
 
+import { StudentAchievement } from '../../../types/studentAchievement';
+
 export type ModalState =
     | { type: 'closed' }
     | { type: 'editStudent', data: StudentWithClass }
@@ -135,6 +137,7 @@ export type ModalState =
     | { type: 'academic', data: AcademicRecordRow | null }
     | { type: 'quiz', data: QuizPointRow | null }
     | { type: 'violation', mode: 'add' | 'edit', data: ViolationRow | null }
+    | { type: 'achievement', mode: 'add' | 'edit', data: StudentAchievement | null }
     | { type: 'confirmDelete', title: string; message: string; onConfirm: () => void; isPending: boolean }
     | { type: 'applyPoints' }
     | { type: 'editCommunication', data: CommunicationRow }
