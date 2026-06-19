@@ -7,7 +7,6 @@ import {
     TrashIcon,
     Trophy,
     SearchIcon,
-    DownloadIcon,
     FileTextIcon,
     CalendarIcon,
     TagIcon,

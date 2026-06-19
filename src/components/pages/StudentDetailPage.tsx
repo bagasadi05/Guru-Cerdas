@@ -142,6 +142,11 @@ const StudentDetailPage = () => {
         unreadMessagesCount,
     } = useStudentDetailPage();
 
+    const { data: achievements = [], isLoading: isAchievementsLoading } = useStudentAchievements(studentId || '');
+    const deleteAchievementMutation = useDeleteAchievement(studentId || '', () => {
+        setModalState({ type: 'closed' });
+    });
+
     if (isLoading) return <StudentDetailPageSkeleton />;
 
     if (isError) {
@@ -183,11 +188,6 @@ const StudentDetailPage = () => {
     const student = studentProfile.student;
     const classes = studentProfile.classes;
     const canManageStudentProfile = student.user_id === user?.id;
-
-    const { data: achievements = [], isLoading: isAchievementsLoading } = useStudentAchievements(studentId || '');
-    const deleteAchievementMutation = useDeleteAchievement(studentId || '', () => {
-        setModalState({ type: 'closed' });
-    });
 
     const handleDeleteAchievement = (id: string) => {
         setModalState({
