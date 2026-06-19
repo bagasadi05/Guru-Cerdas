@@ -129,6 +129,11 @@ class NetworkResilienceService {
   private networkStatus: NetworkStatus = { isOnline: navigator.onLine };
   private statusListeners: ((status: NetworkStatus) => void)[] = [];
   private isProcessingQueue = false;
+  // Retained handle so the periodic processor can be stopped via destroy().
+  private queueProcessorInterval: ReturnType<typeof setInterval> | null = null;
+  // Stable bound references so the listeners can actually be removed later.
+  private readonly boundHandleOnline = this.handleOnline.bind(this);
+  private readonly boundHandleOffline = this.handleOffline.bind(this);
 
   constructor() {
     this.initializeNetworkMonitoring();
@@ -141,8 +146,8 @@ class NetworkResilienceService {
 
   private initializeNetworkMonitoring(): void {
     // Basic online/offline detection
-    window.addEventListener('online', this.handleOnline.bind(this));
-    window.addEventListener('offline', this.handleOffline.bind(this));
+    window.addEventListener('online', this.boundHandleOnline);
+    window.addEventListener('offline', this.boundHandleOffline);
 
     // Enhanced network information (if available)
     if ('connection' in navigator) {
@@ -488,8 +493,10 @@ class NetworkResilienceService {
    * Start the queue processor that runs periodically
    */
   private startQueueProcessor(): void {
-    // Process queue every 30 seconds when online
-    setInterval(() => {
+    // Process queue every 30 seconds when online.
+    // The handle is retained so destroy() can stop it, preventing interval
+    // leaks under HMR or repeated instantiation in tests.
+    this.queueProcessorInterval = setInterval(() => {
       if (this.networkStatus.isOnline) {
         this.processQueue();
       }
@@ -523,6 +530,23 @@ class NetworkResilienceService {
 
     this.requestQueue = [];
     logger.info('Request queue cleared', 'NetworkResilience');
+  }
+
+  /**
+   * Tear down the service: stop the periodic queue processor and detach the
+   * global online/offline listeners. Primarily useful for tests and HMR to
+   * avoid leaking intervals/listeners across re-instantiations. In normal
+   * app runtime the singleton lives for the whole session, so this is a no-op
+   * in practice there.
+   */
+  public destroy(): void {
+    if (this.queueProcessorInterval) {
+      clearInterval(this.queueProcessorInterval);
+      this.queueProcessorInterval = null;
+    }
+    window.removeEventListener('online', this.boundHandleOnline);
+    window.removeEventListener('offline', this.boundHandleOffline);
+    this.statusListeners = [];
   }
 
   /**
