@@ -197,3 +197,22 @@ export type AttendanceRecord = {
     status: import('./enums').AttendanceStatus;
     note: string;
 };
+
+// =============================================================================
+// ACHIEVEMENT TYPES
+// =============================================================================
+
+export type {
+    StudentAchievement,
+    StudentAchievementInsert,
+    StudentAchievementUpdate,
+    AchievementCategory,
+    AchievementLevel,
+    AchievementRank,
+} from './studentAchievement';
+export {
+    ACHIEVEMENT_CATEGORIES,
+    ACHIEVEMENT_LEVELS,
+    ACHIEVEMENT_RANKS,
+} from './studentAchievement';
+
