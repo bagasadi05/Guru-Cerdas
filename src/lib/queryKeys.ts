@@ -74,6 +74,18 @@ export interface TaskFilters {
     includeCompleted?: boolean;
 }
 
+/**
+ * Filter parameters for achievement queries.
+ */
+export interface AchievementFilters {
+    /** Filter by student ID */
+    studentId?: string;
+    /** Filter by category */
+    category?: string;
+    /** Filter by level */
+    level?: string;
+}
+
 // =============================================================================
 // QUERY KEY FACTORY
 // =============================================================================
@@ -261,6 +273,29 @@ export const queryKeys = {
         /** Key for reports by student */
         byStudent: (studentId: string) =>
             [...queryKeys.reports.all, 'student', studentId] as const,
+    },
+
+    // =========================================================================
+    // ACHIEVEMENTS (Portofolio Prestasi)
+    // =========================================================================
+    achievements: {
+        /** Root key for all achievement queries */
+        all: ['achievements'] as const,
+
+        /** Key for achievement list queries */
+        lists: () => [...queryKeys.achievements.all, 'list'] as const,
+
+        /** Key for filtered achievement list */
+        list: (filters: AchievementFilters) =>
+            [...queryKeys.achievements.lists(), filters] as const,
+
+        /** Key for achievements by student */
+        byStudent: (studentId: string) =>
+            [...queryKeys.achievements.all, 'student', studentId] as const,
+
+        /** Key for specific achievement detail */
+        detail: (id: string) =>
+            [...queryKeys.achievements.all, 'detail', id] as const,
     },
 
     // =========================================================================
