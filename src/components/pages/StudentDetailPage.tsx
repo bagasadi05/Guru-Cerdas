@@ -53,7 +53,15 @@ const ExtracurricularTab = lazy(() => import('./student/ExtracurricularTab').the
 const ChildDevelopmentAnalysisTab = lazy(() => import('./student-detail/child-development').then((module) => ({ default: module.ChildDevelopmentAnalysisTab })));
 const AchievementsTab = lazy(() => import('./student/AchievementsTab').then((module) => ({ default: module.AchievementsTab })));
 
-import { useStudentAchievements, useDeleteAchievement } from '../../hooks/useAchievements';
+import {
+    useStudentAchievements,
+    useDeleteAchievement,
+    useCreateAchievement,
+    useUpdateAchievement,
+} from '../../hooks/useAchievements';
+import { AchievementForm } from './student/forms/AchievementForm';
+import achievementService from '../../services/achievementService';
+import { AchievementFormValues } from './student/schemas';
 
 const StudentDetailTabFallback = () => (
     <div className="space-y-4 p-4 sm:p-6">
@@ -146,6 +154,12 @@ const StudentDetailPage = () => {
     const deleteAchievementMutation = useDeleteAchievement(studentId || '', () => {
         setModalState({ type: 'closed' });
     });
+    const createAchievementMutation = useCreateAchievement(studentId || '', () => {
+        setModalState({ type: 'closed' });
+    });
+    const updateAchievementMutation = useUpdateAchievement(studentId || '', () => {
+        setModalState({ type: 'closed' });
+    });
 
     if (isLoading) return <StudentDetailPageSkeleton />;
 
@@ -200,6 +214,61 @@ const StudentDetailPage = () => {
             },
             isPending: false
         });
+    };
+
+    const handleAchievementSubmit = async (data: AchievementFormValues & { evidence_file?: File | null }) => {
+        if (!studentId) return;
+
+        let certificateUrl = modalState.type === 'achievement' && modalState.mode === 'edit' ? modalState.data?.certificate_url : null;
+        let certificateName = modalState.type === 'achievement' && modalState.mode === 'edit' ? modalState.data?.certificate_name : null;
+
+        if (data.evidence_file) {
+            try {
+                const uploadResult = await achievementService.uploadCertificate(studentId, data.evidence_file);
+                if (modalState.type === 'achievement' && modalState.mode === 'edit' && modalState.data?.certificate_url) {
+                    await achievementService.removeCertificate(modalState.data.certificate_url);
+                }
+                certificateUrl = uploadResult.publicUrl;
+                certificateName = data.evidence_file.name;
+            } catch (error: any) {
+                toast.error(`Gagal mengunggah file: ${error.message}`);
+                return;
+            }
+        } else if (data.evidence_file === null) {
+            if (modalState.type === 'achievement' && modalState.mode === 'edit' && modalState.data?.certificate_url) {
+                try {
+                    await achievementService.removeCertificate(modalState.data.certificate_url);
+                    certificateUrl = null;
+                    certificateName = null;
+                } catch (error: any) {
+                    toast.error(`Gagal menghapus file lama: ${error.message}`);
+                    return;
+                }
+            }
+        }
+
+        const payload = {
+            title: data.title,
+            category: data.category,
+            level: data.level,
+            rank: data.rank || null,
+            organizer: data.organizer || null,
+            date: data.date,
+            description: data.description || null,
+            points: data.points || null,
+            certificate_url: certificateUrl,
+            certificate_name: certificateName,
+            semester_id: selectedSemesterId || null,
+        };
+
+        if (modalState.type === 'achievement' && modalState.mode === 'edit' && modalState.data?.id) {
+            updateAchievementMutation.mutate({
+                id: modalState.data.id,
+                payload,
+            });
+        } else {
+            createAchievementMutation.mutate(payload);
+        }
     };
 
     return (
@@ -609,7 +678,8 @@ const StudentDetailPage = () => {
                                     modalState.type === 'quiz' ? (modalState.data ? 'Edit Poin' : 'Tambah Poin Keaktifan') :
                                         modalState.type === 'editCommunication' ? 'Edit Pesan' :
                                             modalState.type === 'portalAccess' ? 'Akses Portal Orang Tua' :
-                                                'Tambah Pelanggaran'
+                                                modalState.type === 'achievement' ? (modalState.mode === 'edit' ? 'Edit Prestasi' : 'Tambah Prestasi Baru') :
+                                                    'Tambah Pelanggaran'
                     }>
                         {modalState.type === 'editStudent' && (
                             <EditStudentForm
@@ -650,6 +720,14 @@ const StudentDetailPage = () => {
                                 onSubmit={handleViolationSubmit}
                                 onClose={() => setModalState({ type: 'closed' })}
                                 isPending={violationMutation.isPending}
+                            />
+                        )}
+                        {modalState.type === 'achievement' && (
+                            <AchievementForm
+                                defaultValues={modalState.data}
+                                onSubmit={handleAchievementSubmit}
+                                onClose={() => setModalState({ type: 'closed' })}
+                                isPending={createAchievementMutation.isPending || updateAchievementMutation.isPending}
                             />
                         )}
                         {modalState.type === 'editCommunication' && (

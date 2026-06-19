@@ -81,10 +81,30 @@ export const communicationRules: ValidationRules = {
     message: [ValidationService.validators.required("Pesan tidak boleh kosong")],
 };
 
+export const achievementSchema = z.object({
+    title: z.string().min(1, "Nama/Judul prestasi harus diisi"),
+    category: z.enum(['akademik', 'non_akademik', 'seni', 'olahraga', 'keagamaan', 'lainnya']),
+    level: z.enum(['sekolah', 'kecamatan', 'kabupaten_kota', 'provinsi', 'nasional', 'internasional']),
+    rank: z.enum(['juara_1', 'juara_2', 'juara_3', 'harapan', 'finalis', 'partisipan']).optional().nullable(),
+    organizer: z.string().optional().nullable(),
+    date: z.string().min(1, "Tanggal prestasi harus diisi"),
+    description: z.string().optional().nullable(),
+    points: z.number().min(0, "Poin tidak boleh negatif").optional().nullable(),
+    evidence_file: z.any().optional().nullable(),
+});
+
+export const achievementRules: ValidationRules = {
+    title: [ValidationService.validators.required("Nama/Judul prestasi harus diisi")],
+    category: [ValidationService.validators.required("Kategori harus dipilih")],
+    level: [ValidationService.validators.required("Tingkat kompetisi harus dipilih")],
+    date: [ValidationService.validators.required("Tanggal prestasi harus diisi")],
+};
+
 export type EditStudentFormValues = z.infer<typeof editStudentSchema>;
 export type ReportFormValues = z.infer<typeof reportSchema>;
 export type AcademicFormValues = z.infer<typeof academicSchema>;
 export type QuizFormValues = z.infer<typeof quizSchema>;
 export type ViolationFormValues = z.infer<typeof violationSchema>;
 export type CommunicationFormValues = z.infer<typeof communicationSchema>;
+export type AchievementFormValues = z.infer<typeof achievementSchema>;
 
