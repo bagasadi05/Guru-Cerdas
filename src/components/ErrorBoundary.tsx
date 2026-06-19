@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { logger } from '../services/logger';
 import { errorReporter } from '../services/errorHandling';
 import { AlertTriangleIcon, RefreshCwIcon, HomeIcon } from './Icons';
@@ -19,6 +20,14 @@ interface Props {
   children: ReactNode;
   fallback?: ReactNode;
   context?: string;
+  /**
+   * When this value changes while the boundary is in an error state, the
+   * boundary automatically resets and attempts to render its children again.
+   * Typically wired to the current route (location.pathname) so that navigating
+   * away from a crashed screen recovers the UI instead of leaving the user
+   * stuck on the fallback.
+   */
+  resetKey?: string | number;
   onError?: (error: Error, errorInfo: ErrorInfo, context: ErrorContext) => void;
 }
 
@@ -47,6 +56,16 @@ class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    // Auto-recover when the consumer signals a context change (e.g. route
+    // navigation) while we are showing the fallback. Without this, a boundary
+    // instance that is reused across navigations (such as a parametrized route)
+    // would stay stuck on the error UI even after the user moves on.
+    if (this.state.hasError && this.props.resetKey !== prevProps.resetKey) {
+      this.resetErrorState('navigation/resetKey change');
+    }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -197,6 +216,19 @@ class ErrorBoundary extends Component<Props, State> {
     return this.getLanguage() === 'en' ? enTranslations : idTranslations;
   }
 
+  private resetErrorState = (reason: string) => {
+    logger.info(
+      `Error boundary auto-reset after ${reason}`,
+      this.props.context || 'ErrorBoundary'
+    );
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorContext: null
+    });
+  };
+
   handleReload = () => {
     logger.info('User clicked reload after error', 'ErrorBoundary');
     window.location.reload();
@@ -323,14 +355,19 @@ export function withErrorBoundary<P extends object>(
 }
 
 /**
- * Async error boundary wrapper for Suspense fallbacks
+ * Async error boundary wrapper for Suspense fallbacks.
+ *
+ * Binds the boundary's resetKey to the current route so that navigating away
+ * from a crashed screen automatically clears the error state and renders the
+ * destination, instead of leaving the user stuck on the fallback UI.
  */
 export const AsyncErrorBoundary: React.FC<{
   children: ReactNode;
   context?: string;
 }> = ({ children, context }) => {
+  const location = useLocation();
   return (
-    <ErrorBoundary context={context}>
+    <ErrorBoundary context={context} resetKey={location.pathname}>
       <React.Suspense
         fallback={
           <div className="flex items-center justify-center min-h-[200px]">
