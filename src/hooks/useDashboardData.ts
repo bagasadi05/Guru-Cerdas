@@ -143,7 +143,8 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         violationsRes,
         recentTasksRes,
         todayAttendanceRecordsRes,
-        unreadParentMessagesRes
+        unreadParentMessagesRes,
+        achievementsRes
     ] = await Promise.all([
         // Fetch students with minimal fields needed for dashboard
         supabase

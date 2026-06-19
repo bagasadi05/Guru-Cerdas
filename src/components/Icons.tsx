@@ -86,7 +86,8 @@ import {
     Target,
     Minus,
     Star,
-    Trophy
+    Trophy,
+    TrendingDown
 } from 'lucide-react';
 
 export const TrophyIcon = Trophy;
