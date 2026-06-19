@@ -140,6 +140,7 @@ function AppContent() {
       <SkipToMainContent />
       <GlobalSearchProvider onSearch={handleSearch}>
         <TourProvider>
+          <div id="main-content" tabIndex={-1} className="outline-none" />
           <Routes>
             <Route path="/" element={<AsyncErrorBoundary context="RoleSelectionPage"><RoleSelectionPage /></AsyncErrorBoundary>} />
             <Route path="/guru-login" element={<AsyncErrorBoundary context="LoginPage"><LoginPage /></AsyncErrorBoundary>} />

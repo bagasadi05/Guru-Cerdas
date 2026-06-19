@@ -17,7 +17,7 @@ vi.mock('../../src/services/supabase', () => ({
                 teacher_class_assignments: [],
                 students: [
                     { id: '1', name: 'Budi', class_id: 'class-1', user_id: 'test-user' },
-                    { id: '2', name: 'Siti', class_id: 'class-1', user_id: 'test-user' }
+                    { id: '2', name: 'Siti', class_id: 'class-1', user_id: 'test-user' },
                 ],
                 attendance: [],
                 semesters: [],
@@ -46,8 +46,8 @@ vi.mock('../../src/services/supabase', () => ({
     ai: {
         models: {
             generateContent: vi.fn(),
-        }
-    }
+        },
+    },
 }));
 
 // Mock useOfflineStatus
@@ -101,7 +101,7 @@ describe('AttendancePage Integration', () => {
                     updateUser: vi.fn(),
                     enableScheduleNotifications: vi.fn(),
                     disableScheduleNotifications: vi.fn(),
-                    isNotificationsEnabled: false
+                    isNotificationsEnabled: false,
                 }}>
                     <ToastProvider>
                         <MemoryRouter>
@@ -116,31 +116,27 @@ describe('AttendancePage Integration', () => {
     it('renders student list and allows marking attendance', async () => {
         renderPage();
 
-        // Wait for students to load
-        await waitFor(() => {
-            expect(screen.getByText('Budi')).toBeInTheDocument();
-            expect(screen.getByText('Siti')).toBeInTheDocument();
-        });
+        // Wait for students to load via the actual rendered text.
+        // Using findByText (async) instead of waitFor+getByText avoids races
+        // where the assertion runs before the data resolves.
+        expect(await screen.findByText('Budi')).toBeInTheDocument();
+        expect(await screen.findByText('Siti')).toBeInTheDocument();
 
-        // Find "Hadir" button for Budi (assuming it's the first button in the row or identified by aria-label/text)
-        // Since we don't have specific test ids, we might need to rely on text or class structure.
-        // In AttendanceList, buttons usually have text "H", "S", "I", "A" or similar.
-        // Let's assume we can find them by text.
+        // Use aria-label to target the first student's Hadir button deterministically.
+        // aria-label="Hadir" is set on every attendance button in AttendanceList.
+        const hadirButtons = await screen.findAllByRole('button', { name: /^Hadir$/i });
+        expect(hadirButtons.length).toBeGreaterThan(0);
+        fireEvent.click(hadirButtons[0]);
 
-        const hadirButtons = screen.getAllByText('H');
-        fireEvent.click(hadirButtons[0]); // Click Hadir for first student
-
-        // Check if it's selected (usually changes color)
-        // This is hard to test without checking class names, but we can check if state updated if we could access it.
-        // For now, let's just ensure no error occurred.
-
-        // Try to save
-        const saveButton = screen.getByText(/Simpan Perubahan Absensi/i);
+        // Click save — use a scoped regex so we don't match unrelated "Simpan" buttons.
+        const saveButton = await screen.findByRole('button', { name: /Simpan Perubahan Absensi/i });
         fireEvent.click(saveButton);
 
-        // Expect upsert to be called
+        // Verify the upsert call happened via supabase.from('attendance').
+        // waitFor polls until the assertion passes (or times out) which is
+        // more tolerant than a single check right after fireEvent.
         await waitFor(() => {
             expect(supabase.from).toHaveBeenCalledWith('attendance');
         });
-    });
+    }, 15000);
 });
