@@ -5,6 +5,11 @@
 --              achievement_certificates prefix/folder in the student_assets bucket.
 -- ============================================
 
+-- Ensure the student_assets bucket exists in the storage.buckets table
+insert into storage.buckets (id, name, public)
+values ('student_assets', 'student_assets', true)
+on conflict (id) do nothing;
+
 -- Drop existing policies if they exist to prevent errors on rerun
 drop policy if exists "achievement_certificates_insert" on storage.objects;
 create policy "achievement_certificates_insert"
