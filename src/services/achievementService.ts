@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { r2StorageService } from './r2StorageService';
 import {
     StudentAchievement,
     StudentAchievementInsert,
@@ -41,42 +42,21 @@ export const getByStudent = async (studentId: string): Promise<StudentAchievemen
  * Upload a certificate file to student_assets bucket.
  */
 export const uploadCertificate = async (
-    studentId: string,
+    _studentId: string,
     file: File
 ): Promise<{ publicUrl: string; storagePath: string }> => {
-    const fileExt = file.name.split('.').pop() || 'pdf';
-    const storagePath = `achievement_certificates/${studentId}-${Date.now()}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-        .from('student_assets')
-        .upload(storagePath, file, { upsert: true });
-
-    if (uploadError) {
-        throw uploadError;
-    }
-
-    const { data } = supabase.storage.from('student_assets').getPublicUrl(storagePath);
-    if (!data?.publicUrl) {
-        throw new Error('Failed to retrieve public URL for uploaded certificate.');
-    }
-
+    const result = await r2StorageService.uploadFile(file, 'achievement_certificates');
     return {
-        publicUrl: data.publicUrl,
-        storagePath,
+        publicUrl: result.publicUrl,
+        storagePath: result.key,
     };
 };
 
 /**
- * Remove a certificate file from student_assets bucket by its URL.
+ * Remove a certificate file from Cloudflare R2 by its URL.
  */
 export const removeCertificate = async (url: string): Promise<void> => {
-    const storagePath = extractStoragePathFromPublicUrl(url, 'student_assets');
-    if (!storagePath) return;
-
-    const { error } = await supabase.storage.from('student_assets').remove([storagePath]);
-    if (error) {
-        throw error;
-    }
+    await r2StorageService.deleteFile({ publicUrl: url });
 };
 
 /**

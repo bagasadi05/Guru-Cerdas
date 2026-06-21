@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../../../hooks/useToast';
 import { supabase } from '../../../../services/supabase';
+import { r2StorageService } from '../../../../services/r2StorageService';
 import { useAuth } from '../../../../hooks/useAuth';
 import { Database } from '../../../../services/database.types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -411,16 +412,11 @@ export const useStudentDetailPage = () => {
 
         if (data.evidence_file) {
             try {
-                const fileExt = data.evidence_file.name.split('.').pop() || 'jpg';
-                const filePath = `violation_evidence/${studentId}-${Date.now()}.${fileExt}`;
-                const { error: uploadError } = await supabase.storage.from('student_assets').upload(filePath, data.evidence_file, { upsert: true });
-                if (uploadError) throw uploadError;
-                const oldEvidencePath = extractStoragePathFromPublicUrl(existingViolation?.evidence_url, 'student_assets');
-                if (oldEvidencePath) {
-                    await supabase.storage.from('student_assets').remove([oldEvidencePath]);
+                const result = await r2StorageService.uploadFile(data.evidence_file, 'violations');
+                if (existingViolation?.evidence_url) {
+                    await r2StorageService.deleteFile({ publicUrl: existingViolation.evidence_url });
                 }
-                const { data: publicUrlData } = supabase.storage.from('student_assets').getPublicUrl(filePath);
-                evidenceUrl = publicUrlData.publicUrl;
+                evidenceUrl = result.publicUrl;
             } catch (error: unknown) {
                 toast.error(`Gagal unggah bukti: ${error instanceof Error ? error.message : String(error)}`);
                 return;
@@ -628,12 +624,20 @@ export const useStudentDetailPage = () => {
         const file = e.target.files[0];
         try {
             const optimizedBlob = await optimizeImage(file, { maxWidth: 300, quality: 0.8 });
-            const filePath = `student_avatars/${studentId}-${new Date().getTime()}.jpg`;
-            const { error: uploadError } = await supabase.storage.from('student_assets').upload(filePath, optimizedBlob, { upsert: true });
-            if (uploadError) throw uploadError;
+            const fileToUpload = new File([optimizedBlob], file.name || 'avatar.jpg', { type: 'image/jpeg' });
+            const result = await r2StorageService.uploadFile(fileToUpload, 'student_avatars');
 
-            const { data: publicUrlData } = supabase.storage.from('student_assets').getPublicUrl(filePath);
-            studentMutation.mutate({ avatar_url: publicUrlData.publicUrl });
+            // Delete old avatar if it exists
+            const oldAvatarUrl = studentDetails?.student?.avatar_url;
+            if (oldAvatarUrl) {
+                try {
+                    await r2StorageService.deleteFile({ publicUrl: oldAvatarUrl });
+                } catch (delErr) {
+                    console.error('Failed to delete old student avatar:', delErr);
+                }
+            }
+
+            studentMutation.mutate({ avatar_url: result.publicUrl });
         } catch (error: unknown) {
             toast.error(`Gagal unggah foto: ${error instanceof Error ? error.message : String(error)}`);
         } finally {

@@ -7,6 +7,7 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { ImageUploader } from '../ui/ImageUploader';
 import { supabase } from '../../services/supabase';
+import { r2StorageService } from '../../services/r2StorageService';
 import { SettingsCard } from './SettingsCard';
 
 const getStoragePath = (url: string | undefined | null) => {
@@ -41,48 +42,29 @@ const ProfileSection: React.FC = () => {
     const handleAvatarUpload = async (file: File) => {
         if (!user) return;
 
-        const filePath = `${user.id}/avatar-${new Date().getTime()}.jpg`;
+        const result = await r2StorageService.uploadFile(file, 'teacher_avatars');
+        const oldAvatarUrl = user.avatarUrl;
 
-        const { error: uploadError } = await supabase.storage
-            .from('teacher_assets')
-            .upload(filePath, file, {
-                cacheControl: '3600',
-                upsert: true,
-            });
-
-        if (uploadError) {
-            throw uploadError;
+        const { error: updateUserError } = await updateUser({ avatar_url: result.publicUrl });
+        if (updateUserError) {
+            try {
+                await r2StorageService.deleteFile({ publicUrl: result.publicUrl });
+            } catch (delErr) {
+                console.error('Failed to delete failed avatar upload:', delErr);
+            }
+            throw updateUserError;
         }
 
-        const { data: publicUrlData } = supabase.storage
-            .from('teacher_assets')
-            .getPublicUrl(filePath);
-
-        if (publicUrlData.publicUrl) {
-            const oldAvatarUrl = user.avatarUrl;
-
-            const { error: updateUserError } = await updateUser({ avatar_url: publicUrlData.publicUrl });
-            if (updateUserError) {
-                // Determine if we should delete the new file since update failed? 
-                // For now, focus on the user request: "potensi file orphan" refers to old files. 
-                // But cleaning up the new file if update fails is also good hygiene.
-                const newPath = getStoragePath(publicUrlData.publicUrl);
-                if (newPath) await supabase.storage.from('teacher_assets').remove([newPath]);
-                throw updateUserError;
+        // Delete old file if exists
+        if (oldAvatarUrl) {
+            try {
+                await r2StorageService.deleteFile({ publicUrl: oldAvatarUrl });
+            } catch (delErr) {
+                console.error('Failed to delete old avatar:', delErr);
             }
-
-            // Delete old file if exists
-            if (oldAvatarUrl) {
-                const oldPath = getStoragePath(oldAvatarUrl);
-                if (oldPath) {
-                    await supabase.storage.from('teacher_assets').remove([oldPath]);
-                }
-            }
-
-            toast.success("Foto profil berhasil diperbarui!");
-        } else {
-            throw new Error("Tidak bisa mendapatkan URL publik untuk foto.");
         }
+
+        toast.success("Foto profil berhasil diperbarui!");
     };
 
     const handleAvatarDelete = async () => {
@@ -98,13 +80,10 @@ const ProfileSection: React.FC = () => {
 
         // Delete file from storage
         if (oldAvatarUrl) {
-            const oldPath = getStoragePath(oldAvatarUrl);
-            if (oldPath) {
-                const { error: storageError } = await supabase.storage.from('teacher_assets').remove([oldPath]);
-                if (storageError) {
-                    console.error('Failed to remove file from storage:', storageError);
-                    // Just log, don't throw, since user profile is already updated logic-wise
-                }
+            try {
+                await r2StorageService.deleteFile({ publicUrl: oldAvatarUrl });
+            } catch (storageError) {
+                console.error('Failed to remove file from storage:', storageError);
             }
         }
 

@@ -61,6 +61,9 @@ vi.mock('../../src/services/supabase', () => {
           getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'https://supabase.test/student_assets/teaching_journals/teacher-456-12345.pdf' } }),
           remove: vi.fn().mockResolvedValue({ error: null })
         }))
+      },
+      functions: {
+        invoke: vi.fn().mockResolvedValue({ data: { success: true }, error: null })
       }
     }
   };

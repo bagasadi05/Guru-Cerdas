@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { r2StorageService } from './r2StorageService';
 import type {
     TeachingJournal,
     TeachingJournalInsert,
@@ -181,29 +182,16 @@ const remove = async (id: string): Promise<void> => {
 // ---------------------------------------------------------------------------
 
 /**
- * Upload an attachment file to the teaching_journals folder in student_assets bucket.
+ * Upload an attachment file to the teaching_journals folder in Cloudflare R2.
  */
 const uploadAttachment = async (
-    userId: string,
+    _userId: string,
     file: File
 ): Promise<{ publicUrl: string; storagePath: string }> => {
-    const fileExt = file.name.split('.').pop() || 'pdf';
-    const storagePath = `teaching_journals/${userId}-${Date.now()}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-        .from('student_assets')
-        .upload(storagePath, file, { upsert: true });
-
-    if (uploadError) throw uploadError;
-
-    const { data } = supabase.storage.from('student_assets').getPublicUrl(storagePath);
-    if (!data?.publicUrl) {
-        throw new Error('Failed to retrieve public URL for uploaded attachment.');
-    }
-
+    const result = await r2StorageService.uploadFile(file, 'teaching_journals');
     return {
-        publicUrl: data.publicUrl,
-        storagePath,
+        publicUrl: result.publicUrl,
+        storagePath: result.key,
     };
 };
 
@@ -211,11 +199,7 @@ const uploadAttachment = async (
  * Remove an attachment file from storage by its public URL.
  */
 const removeAttachment = async (url: string): Promise<void> => {
-    const storagePath = extractStoragePathFromPublicUrl(url, 'student_assets');
-    if (!storagePath) return;
-
-    const { error } = await supabase.storage.from('student_assets').remove([storagePath]);
-    if (error) throw error;
+    await r2StorageService.deleteFile({ publicUrl: url });
 };
 
 // ---------------------------------------------------------------------------
