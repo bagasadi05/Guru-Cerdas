@@ -7,6 +7,7 @@ import {
   SettingsIcon,
   CheckSquareIcon,
   ClipboardPenIcon,
+  BookOpenIcon,
 } from '../Icons';
 import { Trash2, History, BarChart3, ShieldCheck, Trophy, Archive } from 'lucide-react';
 
@@ -34,6 +35,7 @@ const baseNavSections: DashboardMenuSection[] = [
       { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
       { href: '/brankas', label: 'Brankas Kelas', icon: Archive },
       { href: '/jadwal', label: 'Jadwal Mengajar', icon: CalendarIcon },
+      { href: '/jurnal', label: 'Jurnal Mengajar', icon: BookOpenIcon },
       { href: '/tugas', label: 'Manajemen Tugas', icon: CheckSquareIcon },
       { href: '/input-massal', label: 'Manajemen Nilai', icon: ClipboardPenIcon },
     ],
@@ -60,6 +62,7 @@ const baseNavSections: DashboardMenuSection[] = [
 const baseMoreMenuItems: DashboardMenuItem[] = [
   { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
   { href: '/brankas', label: 'Brankas Kelas', icon: Archive },
+  { href: '/jurnal', label: 'Jurnal Mengajar', icon: BookOpenIcon },
   { href: '/input-massal', label: 'Manajemen Nilai', icon: ClipboardPenIcon },
   { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
