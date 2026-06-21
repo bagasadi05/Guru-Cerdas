@@ -42,11 +42,12 @@ const JurnalMengajarPage: React.FC = () => {
 
   // Subjects derived from a small free-text input (case-insensitive contains).
   const [subjectInput, setSubjectInput] = useState<string>('');
-  // Use date-range mode (default) or a specific single date.
-  const [dateMode, setDateMode] = useState<'range' | 'single'>('range');
+  // Use date-range mode (default), a specific single date, or a specific month.
+  const [dateMode, setDateMode] = useState<'range' | 'single' | 'month'>('range');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [singleDate, setSingleDate] = useState<string>('');
+  const [monthInput, setMonthInput] = useState<string>(''); // YYYY-MM
 
   // 1) Active classes (for filter dropdown).
   const { data: classes = [], isLoading: loadingClasses } = useQuery<ClassOption[]>({
@@ -74,12 +75,22 @@ const JurnalMengajarPage: React.FC = () => {
 
     if (dateMode === 'single' && singleDate) {
       next.date = singleDate;
+    } else if (dateMode === 'month' && monthInput) {
+      // monthInput is YYYY-MM. Convert to first/last day of that month.
+      const [yStr, mStr] = monthInput.split('-');
+      const y = Number(yStr);
+      const m = Number(mStr);
+      if (Number.isFinite(y) && Number.isFinite(m) && m >= 1 && m <= 12) {
+        const lastDay = new Date(y, m, 0).getDate();
+        next.startDate = `${monthInput}-01`;
+        next.endDate = `${monthInput}-${String(lastDay).padStart(2, '0')}`;
+      }
     } else if (dateMode === 'range') {
       if (startDate) next.startDate = startDate;
       if (endDate) next.endDate = endDate;
     }
     return next;
-  }, [filters.classId, subjectInput, dateMode, singleDate, startDate, endDate]);
+  }, [filters.classId, subjectInput, dateMode, singleDate, monthInput, startDate, endDate]);
 
   const {
     data: journals = [],
@@ -105,6 +116,7 @@ const JurnalMengajarPage: React.FC = () => {
     setStartDate('');
     setEndDate('');
     setSingleDate('');
+    setMonthInput('');
     setDateMode('range');
   };
 
@@ -202,11 +214,12 @@ const JurnalMengajarPage: React.FC = () => {
               </label>
               <Select
                 value={dateMode}
-                onChange={(e) => setDateMode(e.target.value as 'range' | 'single')}
+                onChange={(e) => setDateMode(e.target.value as 'range' | 'single' | 'month')}
                 aria-label="Mode filter tanggal"
               >
                 <option value="range">Rentang tanggal</option>
                 <option value="single">Tanggal tunggal</option>
+                <option value="month">Pilih bulan</option>
               </Select>
             </div>
 
@@ -235,7 +248,7 @@ const JurnalMengajarPage: React.FC = () => {
                   />
                 </div>
               </>
-            ) : (
+            ) : dateMode === 'single' ? (
               <div className="md:col-span-6">
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
                   Tanggal
@@ -245,6 +258,18 @@ const JurnalMengajarPage: React.FC = () => {
                   value={singleDate}
                   onChange={(e) => setSingleDate(e.target.value)}
                   aria-label="Tanggal tunggal"
+                />
+              </div>
+            ) : (
+              <div className="md:col-span-6">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+                  Bulan
+                </label>
+                <Input
+                  type="month"
+                  value={monthInput}
+                  onChange={(e) => setMonthInput(e.target.value)}
+                  aria-label="Filter bulan"
                 />
               </div>
             )}
