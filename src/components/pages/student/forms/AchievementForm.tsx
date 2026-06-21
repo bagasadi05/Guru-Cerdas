@@ -19,6 +19,7 @@ interface AchievementFormProps {
     onSubmit: (data: AchievementFormValues & { evidence_file?: File | null; certificate_removed?: boolean }) => void;
     onClose: () => void;
     isPending: boolean;
+    fileActionStatus?: 'idle' | 'uploading' | 'deleting';
 }
 
 export const AchievementForm: React.FC<AchievementFormProps> = ({
@@ -26,6 +27,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     onSubmit,
     onClose,
     isPending,
+    fileActionStatus = 'idle',
 }) => {
     const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
     const [evidencePreview, setEvidencePreview] = useState<string | null>(
@@ -201,55 +203,73 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
                 <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
                     File Sertifikat/Piagam (Opsional)
                 </label>
-                {!evidencePreview && !fileName ? (
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors bg-slate-50 dark:bg-slate-900/50">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <UploadIcon className="w-8 h-8 mb-2 text-slate-400" />
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Klik untuk upload file sertifikat
-                            </p>
-                            <p className="text-xs text-slate-400">PDF, PNG, JPG (maks. 5MB)</p>
-                        </div>
-                        <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*,application/pdf"
-                            onChange={handleEvidenceChange}
-                        />
-                    </label>
-                ) : (
-                    <div className="relative border border-slate-200 dark:border-slate-800 rounded-2xl p-4 bg-slate-50 dark:bg-slate-900/50">
-                        {evidencePreview ? (
-                            <img
-                                src={evidencePreview}
-                                alt="Pratinjau sertifikat"
-                                className="w-full h-32 object-contain rounded-lg"
-                            />
-                        ) : (
-                            <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900">
-                                <FileTextIcon className="w-8 h-8 text-emerald-500" />
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                                        {fileName}
-                                    </p>
-                                    <p className="text-xs text-slate-400">Dokumen PDF/Sertifikat</p>
-                                </div>
+                <div className="relative">
+                    {!evidencePreview && !fileName ? (
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors bg-slate-50 dark:bg-slate-900/50">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <UploadIcon className="w-8 h-8 mb-2 text-slate-400" />
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    Klik untuk upload file sertifikat
+                                </p>
+                                <p className="text-xs text-slate-400">PDF, PNG, JPG (maks. 5MB)</p>
                             </div>
-                        )}
-                        <button
-                            type="button"
-                            onClick={handleRemoveEvidence}
-                            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md transition-colors w-6 h-6 flex items-center justify-center font-bold text-xs"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                )}
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*,application/pdf"
+                                onChange={handleEvidenceChange}
+                                disabled={isPending}
+                            />
+                        </label>
+                    ) : (
+                        <div className="relative border border-slate-200 dark:border-slate-800 rounded-2xl p-4 bg-slate-50 dark:bg-slate-900/50">
+                            {evidencePreview ? (
+                                <img
+                                    src={evidencePreview}
+                                    alt="Pratinjau sertifikat"
+                                    className="w-full h-32 object-contain rounded-lg"
+                                />
+                            ) : (
+                                <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900">
+                                    <FileTextIcon className="w-8 h-8 text-emerald-500" />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                            {fileName}
+                                        </p>
+                                        <p className="text-xs text-slate-400">Dokumen PDF/Sertifikat</p>
+                                    </div>
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                onClick={handleRemoveEvidence}
+                                disabled={isPending}
+                                className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md transition-colors w-6 h-6 flex items-center justify-center font-bold text-xs disabled:opacity-50"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    )}
+
+                    {fileActionStatus && fileActionStatus !== 'idle' && (
+                        <div className="absolute inset-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center rounded-2xl animate-fade-in z-10 border border-slate-200 dark:border-slate-800">
+                            <div className="relative w-10 h-10 mb-2">
+                                <div className="absolute inset-0 rounded-full border-2 border-emerald-200 dark:border-emerald-950 animate-ping"></div>
+                                <div className="relative w-10 h-10 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>
+                            </div>
+                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 animate-pulse">
+                                {fileActionStatus === 'uploading'
+                                    ? 'Mengunggah berkas ke Cloudflare R2...'
+                                    : 'Menghapus berkas dari Cloudflare R2...'}
+                            </p>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Actions */}
             <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="ghost" onClick={onClose}>
+                <Button type="button" variant="ghost" onClick={onClose} disabled={isPending}>
                     Batal
                 </Button>
                 <Button
@@ -257,7 +277,11 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
                     disabled={isPending}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
                 >
-                    {isPending ? 'Menyimpan...' : 'Simpan Prestasi'}
+                    {isPending ? (
+                        fileActionStatus === 'uploading' ? 'Mengunggah berkas...' :
+                        fileActionStatus === 'deleting' ? 'Menghapus berkas...' :
+                        'Menyimpan...'
+                    ) : 'Simpan Prestasi'}
                 </Button>
             </div>
         </form>

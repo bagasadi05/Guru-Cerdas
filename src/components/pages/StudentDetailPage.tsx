@@ -150,6 +150,8 @@ const StudentDetailPage = () => {
         unreadMessagesCount,
     } = useStudentDetailPage();
 
+    const [fileActionStatus, setFileActionStatus] = React.useState<'idle' | 'uploading' | 'deleting'>('idle');
+
     const { data: achievements = [], isLoading: isAchievementsLoading, error: achievementsError } = useStudentAchievements(studentId || '');
     const deleteAchievementMutation = useDeleteAchievement(studentId || '', () => {
         setModalState({ type: 'closed' });
@@ -223,6 +225,7 @@ const StudentDetailPage = () => {
         let certificateName = modalState.type === 'achievement' && modalState.mode === 'edit' ? modalState.data?.certificate_name : null;
 
         if (data.evidence_file) {
+            setFileActionStatus('uploading');
             try {
                 const uploadResult = await achievementService.uploadCertificate(studentId, data.evidence_file);
                 if (modalState.type === 'achievement' && modalState.mode === 'edit' && modalState.data?.certificate_url) {
@@ -232,14 +235,17 @@ const StudentDetailPage = () => {
                 certificateName = data.evidence_file.name;
             } catch (error: any) {
                 toast.error(`Gagal mengunggah file: ${error.message}`);
+                setFileActionStatus('idle');
                 return;
             }
         } else if (data.certificate_removed === true) {
             if (modalState.type === 'achievement' && modalState.mode === 'edit' && modalState.data?.certificate_url) {
+                setFileActionStatus('deleting');
                 try {
                     await achievementService.removeCertificate(modalState.data.certificate_url);
                 } catch (error: any) {
                     toast.error(`Gagal menghapus file lama: ${error.message}`);
+                    setFileActionStatus('idle');
                     return;
                 }
             }
@@ -261,13 +267,19 @@ const StudentDetailPage = () => {
             semester_id: selectedSemesterId || null,
         };
 
+        const mutationOptions = {
+            onSettled: () => {
+                setFileActionStatus('idle');
+            }
+        };
+
         if (modalState.type === 'achievement' && modalState.mode === 'edit' && modalState.data?.id) {
             updateAchievementMutation.mutate({
                 id: modalState.data.id,
                 payload,
-            });
+            }, mutationOptions);
         } else {
-            createAchievementMutation.mutate(payload);
+            createAchievementMutation.mutate(payload, mutationOptions);
         }
     };
 
@@ -730,7 +742,8 @@ const StudentDetailPage = () => {
                                 defaultValues={modalState.data}
                                 onSubmit={handleAchievementSubmit}
                                 onClose={() => setModalState({ type: 'closed' })}
-                                isPending={createAchievementMutation.isPending || updateAchievementMutation.isPending}
+                                isPending={createAchievementMutation.isPending || updateAchievementMutation.isPending || fileActionStatus !== 'idle'}
+                                fileActionStatus={fileActionStatus}
                             />
                         )}
                         {modalState.type === 'editCommunication' && (
@@ -785,9 +798,9 @@ const StudentDetailPage = () => {
                     <Modal isOpen={true} onClose={() => setModalState({ type: 'closed' })} title={modalState.title}>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{modalState.message}</p>
                         <div className="flex justify-end gap-2 pt-4">
-                            <Button type="button" variant="ghost" onClick={() => setModalState({ type: 'closed' })} disabled={deleteMutation.isPending}>Batal</Button>
-                            <Button type="button" variant="destructive" onClick={modalState.onConfirm} disabled={deleteMutation.isPending}>
-                                {deleteMutation.isPending ? 'Menghapus...' : 'Ya, Hapus'}
+                            <Button type="button" variant="ghost" onClick={() => setModalState({ type: 'closed' })} disabled={deleteMutation.isPending || deleteAchievementMutation.isPending}>Batal</Button>
+                            <Button type="button" variant="destructive" onClick={modalState.onConfirm} disabled={deleteMutation.isPending || deleteAchievementMutation.isPending}>
+                                {deleteMutation.isPending || deleteAchievementMutation.isPending ? 'Menghapus...' : 'Ya, Hapus'}
                             </Button>
                         </div>
                     </Modal>
