@@ -218,7 +218,7 @@ export const JournalRekapPanel: React.FC<JournalRekapPanelProps> = ({ filters })
                                     <tr key={`${item.classId}-${item.subject}`} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                                         <td className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">{index + 1}</td>
                                         <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{item.className}</td>
-                                        <td className="px-6 py-4 text-slate-755 dark:text-slate-300">{item.subject}</td>
+                                        <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{item.subject}</td>
                                         <td className="px-6 py-4 text-center font-semibold text-emerald-600 dark:text-emerald-400">
                                             {item.journalsFilled}
                                         </td>
