@@ -6,6 +6,7 @@ import { useDashboardData } from '../../hooks/useDashboardData';
 import { useClock } from '../../hooks/useClock';
 import { useGradeAudit } from '../../hooks/useGradeAudit';
 import { useDashboardActivities } from '../../hooks/useDashboardActivities';
+import { useTodayJournalStatus } from '../../hooks/useTodayJournalStatus';
 import { isTaskOverdue, formatTaskDueDate } from '../../utils/dateHelpers';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -47,6 +48,8 @@ import { useGlobalSearch } from '../SearchSystem';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const todayStr = new Date().toLocaleDateString('sv-SE');
+  const { data: journalStatus } = useTodayJournalStatus(todayStr);
   const navigate = useNavigate();
   const currentTime = useClock();
   const [isFabOpen, setIsFabOpen] = useState(false);
@@ -170,6 +173,31 @@ const DashboardPage: React.FC = () => {
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
+
+      {journalStatus && journalStatus.unfilled > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+              <BookOpenIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h4 className="font-bold text-amber-800 dark:text-amber-400 text-sm">
+                Jurnal Hari Ini Belum Diisi
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                Ada {journalStatus.unfilled} agenda KBM hari ini yang belum dicatat ke jurnal mengajar.
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => navigate('/jurnal')}
+            size="sm"
+            className="w-full sm:w-auto shrink-0 bg-amber-600 hover:bg-amber-700 text-white rounded-xl"
+          >
+            Isi Sekarang
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
         {/* Left Column Part 1 */}

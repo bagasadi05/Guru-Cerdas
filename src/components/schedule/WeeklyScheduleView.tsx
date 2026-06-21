@@ -8,6 +8,7 @@ type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
 interface WeeklyScheduleViewProps {
     schedule: ScheduleRow[];
     onEdit: (item: ScheduleRow) => void;
+    onIsiJurnal?: (item: ScheduleRow) => void;
 }
 
 const daysOfWeek = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -31,7 +32,7 @@ const getColorForSubject = (subject: string): string => {
     return colors[Math.abs(hash) % colors.length];
 };
 
-export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule, onEdit }) => {
+export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule, onEdit, onIsiJurnal }) => {
     const scheduleByDay = useMemo(() => {
         const map = new Map<string, ScheduleRow[]>();
         daysOfWeek.forEach(day => map.set(day, []));
@@ -81,9 +82,23 @@ export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule
                                         <h4 className="font-bold text-slate-800 dark:text-gray-100 text-sm leading-tight mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                             {item.subject}
                                         </h4>
-                                        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-500">
-                                            <UsersIcon className="w-3 h-3" />
-                                            <span className="text-xxs font-medium">{item.class_id}</span>
+                                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/50">
+                                            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-500">
+                                                <UsersIcon className="w-3 h-3" />
+                                                <span className="text-xxs font-medium">{item.class_id}</span>
+                                            </div>
+                                            {onIsiJurnal && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onIsiJurnal(item);
+                                                    }}
+                                                    className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5"
+                                                >
+                                                    Isi Jurnal
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

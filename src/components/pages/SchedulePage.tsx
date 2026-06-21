@@ -12,6 +12,7 @@ import { MarkdownText } from '../ui/MarkdownText';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
 import { generateOpenRouterJson } from '../../services/openRouterService';
 import { supabase } from '../../services/supabase';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { Database } from '../../services/database.types';
@@ -101,6 +102,7 @@ interface ScheduleCardProps {
     onDuplicate: (item: ScheduleRow) => void;
     onDelete: (item: ScheduleRow) => void;
     getDuration: (start: string, end: string) => number;
+    onIsiJurnal?: (item: ScheduleRow) => void;
 }
 
 
@@ -133,7 +135,7 @@ const formatTimeRange = (start: string, end: string): string => (
     `${formatTime(start)} - ${formatTime(end)}`
 );
 
-const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, isOngoing, isPast, onEdit, onDuplicate, onDelete, getDuration }) => {
+const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, isOngoing, isPast, onEdit, onDuplicate, onDelete, getDuration, onIsiJurnal }) => {
     const colorClass = useMemo(() => getColorForSubject(item.subject), [item.subject]);
 
     return (
@@ -179,16 +181,30 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, isOngoing, isPast, on
                 </div>
 
                 {/* Bottom Row: Status & Duration */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/50 flex items-center justify-between">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/50 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                         <div className={`w-1.5 h-1.5 rounded-full ${isOngoing ? 'bg-green-500 animate-pulse' : isPast ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-500'}`}></div>
                         <span className={`text-xxs font-medium ${isOngoing ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`}>
                             {isOngoing ? 'Berlangsung' : isPast ? 'Selesai' : 'Nanti'}
                         </span>
                     </div>
-                    <span className="text-xxs font-mono text-slate-400 dark:text-slate-600">
-                        {getDuration(item.start_time, item.end_time)}m
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xxs font-mono text-slate-400 dark:text-slate-600">
+                            {getDuration(item.start_time, item.end_time)}m
+                        </span>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onIsiJurnal?.(item);
+                            }}
+                            className="text-xxs px-2 py-0.5 h-6 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg flex items-center gap-1 shrink-0"
+                        >
+                            <BookOpenIcon className="w-2.5 h-2.5 text-emerald-500" />
+                            Isi Jurnal
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -197,6 +213,32 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, isOngoing, isPast, on
 
 const SchedulePage: React.FC = () => {
     const { user, isNotificationsEnabled, enableScheduleNotifications } = useAuth();
+    const navigate = useNavigate();
+
+    const getLocalDateStringForDay = (dayName: string): string => {
+        const today = new Date();
+        const currentDayIndex = today.getDay();
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const targetDayIndex = days.indexOf(dayName);
+        
+        if (targetDayIndex === -1) return today.toLocaleDateString('sv-SE');
+        
+        const diff = targetDayIndex - currentDayIndex;
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + diff);
+        return targetDate.toLocaleDateString('sv-SE');
+    };
+
+    const handleIsiJurnal = (item: ScheduleRow) => {
+        const dateStr = getLocalDateStringForDay(item.day);
+        const params = new URLSearchParams({
+            classId: item.class_id || '',
+            subject: item.subject,
+            date: dateStr,
+            scheduleId: item.id
+        });
+        navigate(`/jurnal?${params.toString()}`);
+    };
     const toast = useToast();
     const queryClient = useQueryClient();
     const isOnline = useOfflineStatus();
@@ -828,7 +870,7 @@ const SchedulePage: React.FC = () => {
                     />
 
                     {viewMode === 'weekly' ? (
-                        <WeeklyScheduleView schedule={schedule} onEdit={handleOpenEditModal} />
+                        <WeeklyScheduleView schedule={schedule} onEdit={handleOpenEditModal} onIsiJurnal={handleIsiJurnal} />
                     ) : (
                         <>
                             {currentDaySchedule.length === 0 ? (
@@ -876,6 +918,7 @@ const SchedulePage: React.FC = () => {
                                                     }}
                                                     onDelete={handleDeleteClick}
                                                     getDuration={getDuration}
+                                                    onIsiJurnal={handleIsiJurnal}
                                                 />
                                             </motion.div>
                                         );
