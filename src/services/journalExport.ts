@@ -103,7 +103,7 @@ export const exportJournalsToExcel = async (options: JournalExcelExportOptions):
             ['Filter Mapel', subject || 'Semua Mapel'],
             ['Tanggal Unduh', formatExportDate()],
             [],
-            ['No', 'Kelas', 'Mata Pelajaran', 'Total Pertemuan', 'Jurnal Terisi', 'Tanggal Jurnal Terakhir']
+            ['No', 'Kelas', 'Mata Pelajaran', 'Pertemuan Terisi', 'Tanggal Jurnal Terakhir']
         ];
 
         rekap.forEach((item, index) => {
@@ -111,26 +111,24 @@ export const exportJournalsToExcel = async (options: JournalExcelExportOptions):
                 index + 1,
                 item.className,
                 item.subject,
-                item.totalMeetings,
                 item.journalsFilled,
                 item.lastJournalDate ? formatDateString(item.lastJournalDate) : '-'
             ]);
         });
 
         ws_rekap_data.push([]);
-        ws_rekap_data.push(['', 'Mengetahui,', '', '', '', 'Mengetahui,']);
-        ws_rekap_data.push(['', 'Orang Tua/Wali', '', '', '', 'Wali Kelas / Guru']);
+        ws_rekap_data.push(['', 'Mengetahui,', '', '', 'Mengetahui,']);
+        ws_rekap_data.push(['', 'Orang Tua/Wali', '', '', 'Wali Kelas / Guru']);
         ws_rekap_data.push([]);
         ws_rekap_data.push([]);
-        ws_rekap_data.push(['', '(___________________)', '', '', '', getTeacherSignatureText(teacherName)]);
+        ws_rekap_data.push(['', '(___________________)', '', '', getTeacherSignatureText(teacherName)]);
 
         const ws_rekap = XLSX.utils.aoa_to_sheet(ws_rekap_data);
         ws_rekap['!cols'] = [
             { wch: 5 },  // No
             { wch: 20 }, // Kelas
             { wch: 25 }, // Mapel
-            { wch: 18 }, // Total Pertemuan
-            { wch: 18 }, // Jurnal Terisi
+            { wch: 18 }, // Pertemuan Terisi
             { wch: 24 }  // Jurnal Terakhir
         ];
         XLSX.utils.book_append_sheet(wb, ws_rekap, 'Rekap Jurnal');
