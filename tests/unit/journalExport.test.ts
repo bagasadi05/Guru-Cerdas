@@ -8,6 +8,7 @@ const mockJournals: TeachingJournal[] = [
     id: 'j-1',
     user_id: 'user-1',
     class_id: 'class-1',
+    schedule_id: null,
     subject: 'Fisika',
     date: '2026-06-21',
     meeting_number: 2,
