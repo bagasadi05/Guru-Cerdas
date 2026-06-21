@@ -76,12 +76,28 @@ export async function subscribeToPush(vapidPublicKey: string): Promise<PushSubsc
   }
 
   const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
-  const subscription = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: applicationServerKey as BufferSource,
-  });
-
-  return subscription;
+  try {
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: applicationServerKey as BufferSource,
+    });
+    return subscription;
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    if (errMsg.toLowerCase().includes("push service error")) {
+      const isBrave = typeof (navigator as any).brave !== "undefined";
+      if (isBrave) {
+        throw new Error(
+          "Gagal mendaftar push service. Browser Brave memblokir notifikasi push secara default. Silakan buka brave://settings/privacy dan aktifkan 'Use Google services for push messaging', lalu restart browser dan coba lagi."
+        );
+      } else {
+        throw new Error(
+          "Gagal mendaftar push service. Koneksi ke Google FCM diblokir. Jika Anda menggunakan VPN, ad blocker (uBlock, dll.), NextDNS, atau Pi-hole, silakan nonaktifkan sementara atau whitelist fcm.googleapis.com lalu coba lagi."
+        );
+      }
+    }
+    throw err;
+  }
 }
 
 export async function unsubscribeFromPush(): Promise<boolean> {

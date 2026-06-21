@@ -86,6 +86,22 @@ export interface AchievementFilters {
     level?: string;
 }
 
+/**
+ * Filter parameters for teaching journal queries.
+ */
+export interface TeachingJournalFilters {
+    /** Filter by class ID */
+    classId?: string;
+    /** Filter by subject name */
+    subject?: string;
+    /** Filter by specific date (YYYY-MM-DD) */
+    date?: string;
+    /** Filter by start of date range (inclusive, YYYY-MM-DD) */
+    startDate?: string;
+    /** Filter by end of date range (inclusive, YYYY-MM-DD) */
+    endDate?: string;
+}
+
 // =============================================================================
 // QUERY KEY FACTORY
 // =============================================================================
@@ -296,6 +312,37 @@ export const queryKeys = {
         /** Key for specific achievement detail */
         detail: (id: string) =>
             [...queryKeys.achievements.all, 'detail', id] as const,
+    },
+
+    // =========================================================================
+    // TEACHING JOURNALS (Jurnal Mengajar)
+    // =========================================================================
+    teachingJournals: {
+        /** Root key for all teaching journal queries */
+        all: ['teachingJournals'] as const,
+
+        /** Key for teaching journal list queries */
+        lists: () => [...queryKeys.teachingJournals.all, 'list'] as const,
+
+        /** Key for filtered teaching journal list */
+        list: (filters: TeachingJournalFilters) =>
+            [...queryKeys.teachingJournals.lists(), filters] as const,
+
+        /** Key for journals by class */
+        byClass: (classId: string) =>
+            [...queryKeys.teachingJournals.all, 'class', classId] as const,
+
+        /** Key for journals by date */
+        byDate: (date: string) =>
+            [...queryKeys.teachingJournals.all, 'date', date] as const,
+
+        /** Key for specific journal detail */
+        detail: (id: string) =>
+            [...queryKeys.teachingJournals.all, 'detail', id] as const,
+
+        /** Key for rekap (recap) queries */
+        rekap: (filters?: TeachingJournalFilters) =>
+            [...queryKeys.teachingJournals.all, 'rekap', filters ?? {}] as const,
     },
 
     // =========================================================================

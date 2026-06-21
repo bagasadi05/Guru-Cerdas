@@ -357,8 +357,8 @@ describe('Property 10: Template configuration preservation', () => {
                     columns: fc.array(fc.string(), { minLength: 1, maxLength: 10 }),
                     format: fc.constantFrom('pdf', 'excel', 'csv'),
                     dateRange: fc.option(fc.record({
-                        start: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01') }).map(d => d.toISOString().slice(0, 10)),
-                        end: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01') }).map(d => d.toISOString().slice(0, 10)),
+                        start: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01') }).filter((date) => !Number.isNaN(date.getTime())).map(d => d.toISOString().slice(0, 10)),
+                        end: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-01-01') }).filter((date) => !Number.isNaN(date.getTime())).map(d => d.toISOString().slice(0, 10)),
                     })),
                 }),
                 async (template) => {

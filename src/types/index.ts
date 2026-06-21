@@ -216,3 +216,15 @@ export {
     ACHIEVEMENT_RANKS,
 } from './studentAchievement';
 
+// =============================================================================
+// TEACHING JOURNAL TYPES
+// =============================================================================
+
+export type {
+    TeachingJournal,
+    TeachingJournalInsert,
+    TeachingJournalUpdate,
+    TeachingJournalFilters,
+    TeachingJournalRekap,
+} from './teachingJournal';
+

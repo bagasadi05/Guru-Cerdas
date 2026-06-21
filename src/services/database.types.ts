@@ -1487,6 +1487,72 @@ export type Database = {
           }
         ]
       }
+      teaching_journals: {
+        Row: {
+          id: string
+          user_id: string
+          class_id: string | null
+          schedule_id: string | null
+          subject: string
+          date: string
+          meeting_number: number | null
+          topic: string
+          objectives: string | null
+          activities: string | null
+          notes: string | null
+          attachment_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          class_id?: string | null
+          schedule_id?: string | null
+          subject: string
+          date: string
+          meeting_number?: number | null
+          topic: string
+          objectives?: string | null
+          activities?: string | null
+          notes?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          class_id?: string | null
+          schedule_id?: string | null
+          subject?: string
+          date?: string
+          meeting_number?: number | null
+          topic?: string
+          objectives?: string | null
+          activities?: string | null
+          notes?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teaching_journals_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teaching_journals_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "schedules"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
