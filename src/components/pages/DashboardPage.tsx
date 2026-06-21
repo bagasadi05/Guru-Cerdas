@@ -426,7 +426,7 @@ const DashboardPage: React.FC = () => {
           }
           className={`pointer-events-auto transition-all duration-300 ${isFabOpen ? 'bg-red-500 hover:bg-red-600 dark:bg-red-600 shadow-red-500/30 rotate-90' : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30'}`}
           position="bottom-right"
-          offset={{ bottom: 0, right: 0 }}
+          offset={{ bottom: 0, right: 0 }} // Fix build offset syntax
           size={64}
         />
       </div>
