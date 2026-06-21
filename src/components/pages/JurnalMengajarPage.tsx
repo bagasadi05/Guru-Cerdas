@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Calendar, FileText, Plus, RefreshCw } from 'lucide-react';
+import { BookOpen, Calendar, FileText, Plus, RefreshCw, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { useTeachingJournals } from '../../hooks/useTeachingJournals';
+import { useTeachingJournals, useDeleteJournal } from '../../hooks/useTeachingJournals';
 import { isTeachingJournalsBackendMissing } from '../../utils/journalBackend';
 import { supabase } from '../../services/supabase';
 import { Card, CardContent, CardHeader } from '../ui/Card';
@@ -12,7 +12,8 @@ import { Select } from '../ui/Select';
 import { Skeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { useToast } from '../../hooks/useToast';
-import type { TeachingJournalFilters } from '../../types/teachingJournal';
+import type { TeachingJournal, TeachingJournalFilters } from '../../types/teachingJournal';
+import { JournalForm } from './journal/JournalForm';
 
 interface ClassOption {
   id: string;
@@ -48,6 +49,11 @@ const JurnalMengajarPage: React.FC = () => {
   const [endDate, setEndDate] = useState<string>('');
   const [singleDate, setSingleDate] = useState<string>('');
   const [monthInput, setMonthInput] = useState<string>(''); // YYYY-MM
+
+  // Modal States
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedJournal, setSelectedJournal] = useState<TeachingJournal | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // 1) Active classes (for filter dropdown).
   const { data: classes = [], isLoading: loadingClasses } = useQuery<ClassOption[]>({
@@ -101,6 +107,10 @@ const JurnalMengajarPage: React.FC = () => {
     isFetching,
   } = useTeachingJournals(queryFilters);
 
+  const deleteJournal = useDeleteJournal(() => {
+    setDeletingId(null);
+  });
+
   const backendMissing = isTeachingJournalsBackendMissing(error);
 
   // Build a class-id -> name map locally (no extra query, just from classes list).
@@ -121,8 +131,24 @@ const JurnalMengajarPage: React.FC = () => {
   };
 
   const handleOpenAdd = () => {
-    // Placeholder for F12-4. The form modal will replace this no-op.
-    toast.info('Form tambah jurnal akan tersedia di pembaruan berikutnya (F12-4).');
+    setSelectedJournal(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEdit = (journal: TeachingJournal) => {
+    setSelectedJournal(journal);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus jurnal mengajar ini?')) {
+      setDeletingId(id);
+      deleteJournal.mutate(id, {
+        onError: () => {
+          setDeletingId(null);
+        },
+      });
+    }
   };
 
   return (
@@ -337,7 +363,7 @@ const JurnalMengajarPage: React.FC = () => {
                 <Card key={j.id} className="rounded-2xl">
                   <CardContent className="p-4 sm:p-5">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                           <span className="inline-flex items-center gap-1.5">
                             <Calendar className="w-3.5 h-3.5" />
@@ -367,13 +393,16 @@ const JurnalMengajarPage: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {j.attachment_url ? (
-                          <span
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20"
-                            aria-label="Memiliki lampiran"
-                            title="Memiliki lampiran"
+                          <a
+                            href={j.attachment_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20 dark:hover:bg-emerald-500/20 transition-colors"
+                            aria-label="Buka lampiran"
+                            title="Buka lampiran"
                           >
                             <FileText className="w-3.5 h-3.5" /> Lampiran
-                          </span>
+                          </a>
                         ) : (
                           <span
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-50 text-slate-500 border border-slate-200 dark:bg-slate-800/50 dark:text-slate-400 dark:border-slate-700/60"
@@ -383,6 +412,31 @@ const JurnalMengajarPage: React.FC = () => {
                             <FileText className="w-3.5 h-3.5" /> Tanpa lampiran
                           </span>
                         )}
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg"
+                          onClick={() => handleOpenEdit(j)}
+                          aria-label="Edit Jurnal"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg"
+                          onClick={() => handleDelete(j.id)}
+                          disabled={deleteJournal.isPending && deletingId === j.id}
+                          aria-label="Hapus Jurnal"
+                        >
+                          {deleteJournal.isPending && deletingId === j.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -392,6 +446,13 @@ const JurnalMengajarPage: React.FC = () => {
           </div>
         )}
       </section>
+
+      <JournalForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        journal={selectedJournal}
+        classes={classes}
+      />
     </div>
   );
 };
