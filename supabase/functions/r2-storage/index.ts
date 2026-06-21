@@ -3,8 +3,8 @@
 // and handles file deletions.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "https://esm.sh/@aws-sdk/client-s3@3.515.0";
-import { getSignedUrl } from "https://esm.sh/@aws-sdk/s3-request-presigner@3.515.0";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "npm:@aws-sdk/client-s3@3.515.0";
+import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner@3.515.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,69 +28,69 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed. Use POST." }, 405);
-  }
+  try {
+    if (req.method !== "POST") {
+      return jsonResponse({ error: "Method not allowed. Use POST." }, 405);
+    }
 
-  // 1. Authenticate user using the incoming JWT
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
-    return jsonResponse({ error: "Missing Authorization header" }, 401);
-  }
+    // 1. Authenticate user using the incoming JWT
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return jsonResponse({ error: "Missing Authorization header" }, 401);
+    }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: authHeader } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    return jsonResponse({ error: "Unauthorized user session" }, 401);
-  }
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return jsonResponse({ error: "Unauthorized user session" }, 401);
+    }
 
-  // 2. Load R2 configuration
-  const accountId = Deno.env.get("R2_ACCOUNT_ID");
-  const accessKeyId = Deno.env.get("R2_ACCESS_KEY_ID");
-  const secretAccessKey = Deno.env.get("R2_SECRET_ACCESS_KEY");
-  const bucketName = Deno.env.get("R2_BUCKET_NAME");
-  const publicUrlBase = Deno.env.get("R2_PUBLIC_URL");
+    // 2. Load R2 configuration
+    const accountId = Deno.env.get("R2_ACCOUNT_ID");
+    const accessKeyId = Deno.env.get("R2_ACCESS_KEY_ID");
+    const secretAccessKey = Deno.env.get("R2_SECRET_ACCESS_KEY");
+    const bucketName = Deno.env.get("R2_BUCKET_NAME");
+    const publicUrlBase = Deno.env.get("R2_PUBLIC_URL");
 
-  if (!accountId || !accessKeyId || !secretAccessKey || !bucketName || !publicUrlBase) {
-    return jsonResponse(
-      {
-        error: "Cloudflare R2 environment variables are not fully configured in Supabase. " +
-          "Required variables: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL"
+    if (!accountId || !accessKeyId || !secretAccessKey || !bucketName || !publicUrlBase) {
+      return jsonResponse(
+        {
+          error: "Cloudflare R2 environment variables are not fully configured in Supabase. " +
+            "Required variables: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL"
+        },
+        500
+      );
+    }
+
+    // 3. Initialize S3 client for Cloudflare R2
+    const s3 = new S3Client({
+      region: "auto",
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
       },
-      500
-    );
-  }
+    });
 
-  // 3. Initialize S3 client for Cloudflare R2
-  const s3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
-    },
-  });
+    // 4. Parse request body
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return jsonResponse({ error: "Invalid JSON body" }, 400);
+    }
 
-  // 4. Parse request body
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
-  }
+    const { action } = body;
+    if (!action) {
+      return jsonResponse({ error: "Missing 'action' parameter in request body." }, 400);
+    }
 
-  const { action } = body;
-  if (!action) {
-    return jsonResponse({ error: "Missing 'action' parameter in request body." }, 400);
-  }
-
-  try {
     if (action === "presign") {
       const { filename, contentType, folder } = body;
       if (!filename || !contentType || !folder) {
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ error: `Unsupported action: ${action}` }, 400);
   } catch (err: any) {
-    console.error("R2 operation error:", err);
-    return jsonResponse({ error: err.message || "Failed to process R2 storage request" }, 500);
+    console.error("Global Edge Function error:", err);
+    return jsonResponse({ error: err.message || "Failed to process storage request" }, 500);
   }
 });
