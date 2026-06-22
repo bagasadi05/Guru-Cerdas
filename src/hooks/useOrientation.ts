@@ -21,18 +21,28 @@ export const useOrientation = (): UseOrientationReturn => {
     const getOrientation = (): Orientation => {
         if (typeof window === 'undefined') return 'portrait';
 
-        // Use screen.orientation if available (more reliable)
-        if (window.screen?.orientation?.type) {
-            return window.screen.orientation.type.includes('landscape') ? 'landscape' : 'portrait';
+        // Use the CSS/layout VIEWPORT orientation as the source of truth.
+        // This is what actually drives the responsive layout (Tailwind
+        // breakpoints, flex columns, etc.).
+        //
+        // NOTE: window.screen.orientation.type describes the PHYSICAL device
+        // screen, not the rendered viewport. On devices whose natural
+        // orientation is landscape (some tablets/foldables) or in DevTools
+        // device emulation it can report 'landscape' even while the app is
+        // rendered in a portrait-shaped viewport. Because the mobile bottom
+        // navigation is only mounted when isPortrait is true, relying on
+        // screen.orientation made the bottom navbar disappear in those cases.
+        if (typeof window.matchMedia === 'function') {
+            if (window.matchMedia('(orientation: portrait)').matches) {
+                return 'portrait';
+            }
+            if (window.matchMedia('(orientation: landscape)').matches) {
+                return 'landscape';
+            }
         }
 
-        // Fallback to matchMedia
-        if (window.matchMedia('(orientation: landscape)').matches) {
-            return 'landscape';
-        }
-
-        // Fallback to window dimensions
-        return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+        // Fallback to viewport dimensions (portrait wins on a square viewport).
+        return window.innerHeight >= window.innerWidth ? 'portrait' : 'landscape';
     };
 
     const [orientation, setOrientation] = useState<Orientation>(getOrientation);
