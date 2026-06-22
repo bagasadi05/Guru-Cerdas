@@ -10,6 +10,7 @@ import {
     AlertTriangle,
     RefreshCw,
     Loader2,
+    FileText,
 } from 'lucide-react';
 import {
     entityConfig,
@@ -152,8 +153,8 @@ export const TrashModals: React.FC<TrashModalsProps> = ({
             >
                 <div className="space-y-4">
                     <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${viewDetailItem ? entityConfig[viewDetailItem.entity].bgColor : ''} ${viewDetailItem ? entityConfig[viewDetailItem.entity].color : ''}`}>
-                            {viewDetailItem && entityConfig[viewDetailItem.entity].icon}
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${viewDetailItem ? (entityConfig[viewDetailItem.entity]?.bgColor || 'bg-slate-500/10') : ''} ${viewDetailItem ? (entityConfig[viewDetailItem.entity]?.color || 'text-slate-500') : ''}`}>
+                            {viewDetailItem && (entityConfig[viewDetailItem.entity]?.icon || <FileText className="w-4 h-4" />)}
                         </div>
                         <div>
                             <h3 className="font-bold text-lg text-slate-900 dark:text-white">
@@ -345,7 +346,7 @@ export const TrashModals: React.FC<TrashModalsProps> = ({
                         </strong>{' '}
                         dari kategori{' '}
                         <strong className="text-slate-900 dark:text-white">
-                            {confirmRestoreEntity ? entityConfig[confirmRestoreEntity].labelPlural : ''}
+                            {confirmRestoreEntity ? (entityConfig[confirmRestoreEntity]?.labelPlural || confirmRestoreEntity) : ''}
                         </strong>
                         ?
                     </p>

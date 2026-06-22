@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../../../ui/Button';
-import { Trash2, RotateCcw, Clock, Eye } from 'lucide-react';
+import { Trash2, RotateCcw, Clock, Eye, FileText } from 'lucide-react';
 import {
     entityConfig,
     getItemDisplayName,
@@ -76,7 +76,15 @@ export const TrashList: React.FC<TrashListProps> = ({
             {Object.entries(groupedItems).map(([entity, items]) => {
                 if (items.length === 0) return null;
 
-                const config = entityConfig[entity as SoftDeleteEntity];
+                const rawConfig = entityConfig[entity as SoftDeleteEntity];
+                const config = rawConfig || {
+                    label: entity,
+                    labelPlural: entity,
+                    icon: <FileText className="w-4 h-4" />,
+                    color: 'text-slate-500',
+                    bgColor: 'bg-slate-500/10',
+                    borderColor: 'border-slate-500/20',
+                };
 
                 return (
                     <div key={entity} className="animate-fade-in">

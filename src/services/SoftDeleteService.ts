@@ -8,7 +8,11 @@
 import { supabase } from './supabase';
 import { logger } from './logger';
 
-export type SoftDeleteEntity = 'students' | 'classes' | 'attendance' | 'violations' | 'quiz_points' | 'academic_records' | 'tasks';
+export type SoftDeleteEntity = 'students' | 'classes' | 'attendance' | 'violations' | 'quiz_points' | 'academic_records' | 'tasks'
+    | 'reports' | 'schedules' | 'communications' | 'homework' | 'extracurriculars'
+    | 'student_extracurriculars' | 'extracurricular_attendance' | 'extracurricular_grades'
+    | 'extracurricular_students' | 'student_achievements' | 'student_development_analyses'
+    | 'school_info' | 'announcements' | 'academic_years' | 'semesters' | 'user_settings';
 
 export interface SoftDeleteResult {
     success: boolean;
@@ -39,8 +43,8 @@ export async function softDelete(
     try {
         const deletedAt = new Date().toISOString();
 
-        const { error } = await supabase
-            .from(entity)
+        const { error } = await (supabase
+            .from(entity as any) as any)
             .update({ deleted_at: deletedAt } as never)
             .eq('id', id);
 
@@ -65,8 +69,8 @@ export async function softDeleteBulk(
     try {
         const deletedAt = new Date().toISOString();
 
-        const { error } = await supabase
-            .from(entity)
+        const { error } = await (supabase
+            .from(entity as any) as any)
             .update({ deleted_at: deletedAt } as never)
             .in('id', ids);
 
@@ -89,8 +93,8 @@ export async function restore(
     id: string
 ): Promise<RestoreResult> {
     try {
-        const { error } = await supabase
-            .from(entity)
+        const { error } = await (supabase
+            .from(entity as any) as any)
             .update({ deleted_at: null } as never)
             .eq('id', id);
 
@@ -113,8 +117,8 @@ export async function restoreBulk(
     ids: string[]
 ): Promise<RestoreResult> {
     try {
-        const { error } = await supabase
-            .from(entity)
+        const { error } = await (supabase
+            .from(entity as any) as any)
             .update({ deleted_at: null } as never)
             .in('id', ids);
 
@@ -137,8 +141,8 @@ export async function permanentDelete(
     id: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        const { error } = await supabase
-            .from(entity)
+        const { error } = await (supabase
+            .from(entity as any) as any)
             .delete()
             .eq('id', id);
 
@@ -161,8 +165,8 @@ export async function getDeletedItems(
     userId: string
 ): Promise<DeletedItem[]> {
     try {
-        const { data, error } = await supabase
-            .from(entity)
+        const { data, error } = await (supabase
+            .from(entity as any) as any)
             .select('*')
             .eq('user_id', userId)
             .not('deleted_at', 'is', null)
@@ -174,14 +178,14 @@ export async function getDeletedItems(
         const RETENTION_DAYS = 30;
 
         return (data || [])
-            .filter(item => (item as any).deleted_at !== null)
-            .map(item => {
+            .filter((item: any) => (item as any).deleted_at !== null)
+            .map((item: any) => {
                 const deletedAt = new Date((item as any).deleted_at!);
                 const daysSinceDelete = Math.floor((now.getTime() - deletedAt.getTime()) / (1000 * 60 * 60 * 24));
                 const daysRemaining = Math.max(0, RETENTION_DAYS - daysSinceDelete);
 
                 return {
-                    id: item.id,
+                    id: (item as any).id,
                     entity,
                     deletedAt: (item as any).deleted_at as string,
                     daysRemaining,
@@ -197,16 +201,19 @@ export async function getDeletedItems(
 /**
  * Get all deleted items across all entities
  */
+export const ALL_SOFT_DELETE_ENTITIES: SoftDeleteEntity[] = [
+    'students', 'classes', 'attendance', 'tasks',
+    'violations', 'quiz_points', 'academic_records',
+    'reports', 'schedules', 'communications', 'homework',
+    'extracurriculars', 'student_extracurriculars',
+    'extracurricular_attendance', 'extracurricular_grades',
+    'extracurricular_students', 'student_achievements',
+    'student_development_analyses', 'school_info',
+    'announcements', 'academic_years', 'semesters', 'user_settings',
+];
+
 export async function getAllDeletedItems(userId: string): Promise<DeletedItem[]> {
-    const entities: SoftDeleteEntity[] = [
-        'students',
-        'classes',
-        'attendance',
-        'tasks',
-        'violations',
-        'quiz_points',
-        'academic_records',
-    ];
+    const entities: SoftDeleteEntity[] = ALL_SOFT_DELETE_ENTITIES;
 
     const results = await Promise.all(
         entities.map(entity => getDeletedItems(entity, userId))
@@ -222,39 +229,25 @@ export async function getAllDeletedItems(userId: string): Promise<DeletedItem[]>
  */
 export async function cleanupExpired(): Promise<{
     success: boolean;
-    deletedCounts: Record<SoftDeleteEntity, number>;
+    deletedCounts: Record<string, number>;
     error?: string;
 }> {
-    const entities: SoftDeleteEntity[] = [
-        'students',
-        'classes',
-        'attendance',
-        'tasks',
-        'violations',
-        'quiz_points',
-        'academic_records',
-    ];
+    const entities: SoftDeleteEntity[] = ALL_SOFT_DELETE_ENTITIES;
     const RETENTION_DAYS = 30;
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DAYS);
     const cutoffISO = cutoffDate.toISOString();
 
-    const deletedCounts: Record<SoftDeleteEntity, number> = {
-        students: 0,
-        classes: 0,
-        attendance: 0,
-        tasks: 0,
-        violations: 0,
-        quiz_points: 0,
-        academic_records: 0,
-    };
+    const deletedCounts: Record<string, number> = Object.fromEntries(
+        ALL_SOFT_DELETE_ENTITIES.map(e => [e, 0])
+    );
 
     try {
         for (const entity of entities) {
             // First get items to delete (deleted_at < cutoff means they were deleted more than 30 days ago)
             // lt() filter on a date column automatically excludes null values
-            const { data: itemsToDelete, error: selectError } = await supabase
-                .from(entity)
+            const { data: itemsToDelete, error: selectError } = await (supabase
+                .from(entity as any) as any)
                 .select('id')
                 .lt('deleted_at', cutoffISO);
 
@@ -268,9 +261,9 @@ export async function cleanupExpired(): Promise<{
             }
 
             // Delete them by ID
-            const ids = itemsToDelete.map(item => item.id);
-            const { error: deleteError } = await supabase
-                .from(entity)
+            const ids = itemsToDelete.map((item: any) => (item as any).id);
+            const { error: deleteError } = await (supabase
+                .from(entity as any) as any)
                 .delete()
                 .in('id', ids);
 

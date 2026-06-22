@@ -41,7 +41,8 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
             // Fetch all semesters with academic year info
             const semestersQuery = supabase
                 .from('semesters')
-                .select('*, academic_years(*)');
+                .select('*, academic_years(*)')
+                .is('deleted_at', null);
             const { data: allSemesters, error: allSemestersError } =
                 typeof (semestersQuery as { order?: unknown }).order === 'function'
                     ? await (semestersQuery as unknown as { order: (column: string, options: { ascending: boolean }) => Promise<{ data: SemesterWithYear[] | null; error: { code?: string; message: string } | null }> })
@@ -59,6 +60,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                 .from('semesters')
                 .select('*')
                 .eq('is_active', true)
+                .is('deleted_at', null)
                 .maybeSingle();
 
             if (semesterError) {
@@ -79,6 +81,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                     .from('academic_years')
                     .select('*')
                     .eq('id', semesterData.academic_year_id)
+                    .is('deleted_at', null)
                     .maybeSingle();
 
                 if (yearError) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
+import { softDelete } from '../../services/SoftDeleteService';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
@@ -48,6 +49,7 @@ export const SemesterManagement: React.FC = () => {
             const { data: yearsData, error: yearsError } = await supabase
                 .from('academic_years')
                 .select('*')
+                .is('deleted_at', null)
                 .order('start_date', { ascending: false });
 
             if (yearsError) throw yearsError;
@@ -55,6 +57,7 @@ export const SemesterManagement: React.FC = () => {
             const { data: semestersData, error: semestersError } = await supabase
                 .from('semesters')
                 .select('*')
+                .is('deleted_at', null)
                 .order('semester_number', { ascending: true });
 
             if (semestersError) throw semestersError;
@@ -227,12 +230,8 @@ export const SemesterManagement: React.FC = () => {
         if (!confirm('Apakah Anda yakin ingin menghapus tahun ajaran ini beserta semua semesternya?')) return;
 
         try {
-            const { error } = await supabase
-                .from('academic_years')
-                .delete()
-                .eq('id', yearId);
-
-            if (error) throw error;
+            const result = await softDelete('academic_years', yearId);
+            if (!result.success) throw new Error(result.error);
             toast.success('Tahun ajaran dihapus.');
             fetchData();
         } catch (error) {

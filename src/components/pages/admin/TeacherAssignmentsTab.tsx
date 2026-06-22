@@ -102,6 +102,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                 supabase
                     .from('semesters')
                     .select('id, name, semester_number, start_date, academic_years(name)')
+                    .is('deleted_at', null)
                     .order('start_date', { ascending: false }),
                 supabase
                     .from('teacher_class_assignments')

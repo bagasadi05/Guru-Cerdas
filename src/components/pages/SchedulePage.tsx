@@ -12,6 +12,7 @@ import { MarkdownText } from '../ui/MarkdownText';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
 import { generateOpenRouterJson } from '../../services/openRouterService';
 import { supabase } from '../../services/supabase';
+import { softDelete } from '../../services/SoftDeleteService';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -398,8 +399,8 @@ const SchedulePage: React.FC = () => {
 
     const deleteScheduleMutation = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await supabase.from('schedules').delete().eq('id', id);
-            if (error) throw error;
+            const result = await softDelete('schedules', id);
+            if (!result.success) throw new Error(result.error || 'Gagal menghapus jadwal');
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['schedule', user?.id] });

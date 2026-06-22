@@ -4,6 +4,7 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../services/supabase';
+import { softDelete } from '../../../services/SoftDeleteService';
 import { useAuth } from '../../../hooks/useAuth';
 import { useSemester } from '../../../contexts/SemesterContext';
 import { useToast } from '../../../hooks/useToast';
@@ -70,11 +71,8 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
     // Delete extracurricular
     const deleteExtracurricularMutation = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await supabase
-                .from('extracurriculars')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
+            const result = await softDelete('extracurriculars', id);
+            if (!result.success) throw new Error(result.error || 'Gagal menghapus ekskul');
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['extracurriculars'] });
@@ -108,9 +106,10 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
                     });
                 if (error) throw error;
             } else {
+                const now = new Date().toISOString();
                 const deleteQuery = supabase
                     .from('student_extracurriculars')
-                    .delete()
+                    .update({ deleted_at: now } as never)
                     .eq('extracurricular_id', selectedExtracurricular)
                     .eq('semester_id', activeSemester!.id);
 
@@ -373,11 +372,8 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
     // Delete extracurricular student
     const deleteExtraStudentMutation = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await supabase
-                .from('extracurricular_students')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
+            const result = await softDelete('extracurricular_students', id);
+            if (!result.success) throw new Error(result.error || 'Gagal menghapus siswa ekskul');
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['extracurricular_students'] });

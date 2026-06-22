@@ -57,6 +57,7 @@ const ExtracurricularPage = lazy(() => import('@/components/pages/Extracurricula
 const NotFoundPage = lazy(() => import('@/components/pages/NotFoundPage'));
 const BrankasPage = lazy(() => import('@/components/pages/BrankasPage'));
 const JurnalMengajarPage = lazy(() => import('@/components/pages/JurnalMengajarPage'));
+const PemulihanPage = lazy(() => import('@/components/pages/PemulihanPage'));
 
 const SimpleHelpCenter = lazy(() => import('./components/SimpleHelpCenter').then(m => ({ default: m.SimpleHelpCenter })));
 const GlobalSearchModal = lazy(() => import('./components/SearchSystem').then(m => ({ default: m.GlobalSearchModal })));
@@ -165,6 +166,7 @@ function AppContent() {
               <Route path="/analytics" element={<AsyncErrorBoundary context="AnalyticsPage"><AnalyticsPage /></AsyncErrorBoundary>} />
               <Route path="/ekstrakurikuler" element={<AsyncErrorBoundary context="ExtracurricularPage"><ExtracurricularPage /></AsyncErrorBoundary>} />
               <Route path="/jurnal" element={<AsyncErrorBoundary context="JurnalMengajarPage"><JurnalMengajarPage /></AsyncErrorBoundary>} />
+              <Route path="/pemulihan" element={<AsyncErrorBoundary context="PemulihanPage"><PemulihanPage /></AsyncErrorBoundary>} />
               <Route path="/admin" element={<AsyncErrorBoundary context="AdminPage"><AdminPage /></AsyncErrorBoundary>} />
             </Route>
 

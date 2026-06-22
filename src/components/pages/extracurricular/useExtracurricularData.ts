@@ -41,6 +41,7 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
                 .from('extracurriculars')
                 .select('*')
                 .eq('user_id', user!.id)
+                .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
             return (data || []) as Extracurricular[];
@@ -108,6 +109,7 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
                 .from('extracurricular_students')
                 .select('*')
                 .eq('user_id', user!.id)
+                .is('deleted_at', null)
                 .order('name');
 
             if (normalizedClassName) {
@@ -129,6 +131,7 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
                 .from('extracurricular_students')
                 .select('*')
                 .eq('user_id', user!.id)
+                .is('deleted_at', null)
                 .order('name');
             if (error) throw error;
             return (data || []) as ExtracurricularStudent[];
@@ -146,12 +149,14 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
                     .select('id, student_id, extracurricular_id, semester_id, students(id, name, class_id, classes(name))')
                     .eq('extracurricular_id', selectedExtracurricular)
                     .eq('semester_id', activeSemester!.id)
+                    .is('deleted_at', null)
                     .not('student_id', 'is', null),
                 supabase
                     .from('student_extracurriculars')
                     .select('id, extracurricular_student_id, extracurricular_id, semester_id, extracurricular_students(id, name, class_name)')
                     .eq('extracurricular_id', selectedExtracurricular)
                     .eq('semester_id', activeSemester!.id)
+                    .is('deleted_at', null)
                     .not('extracurricular_student_id', 'is', null),
             ]);
 

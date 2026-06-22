@@ -7,6 +7,7 @@ import { supabase } from './supabase';
 import { logger } from './logger';
 import { auditLog } from './securityEnhanced';
 import { storageGet, storageSet } from '../utils/storage';
+import { softDeleteBulk } from './SoftDeleteService';
 
 // ============================================
 // TYPES
@@ -480,16 +481,12 @@ export async function archiveOldRecords(
 
     let deletedCount = 0;
 
-    // Optionally delete original records
+    // Optionally soft delete original records
     if (deleteAfterArchive) {
         const ids = records.map(r => r.id);
-        const { error: deleteError } = await supabase
-            .from(entity)
-            .delete()
-            .eq('user_id', userId)
-            .in('id', ids);
+        const result = await softDeleteBulk(entity as any, ids);
 
-        if (!deleteError) {
+        if (result.success) {
             deletedCount = ids.length;
         }
     }

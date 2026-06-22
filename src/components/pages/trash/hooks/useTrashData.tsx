@@ -14,17 +14,27 @@ import {
     ShieldAlert,
     Star,
     BarChart3,
+    CalendarDays,
+    MessageSquare,
+    GraduationCap,
+    Trophy,
+    School,
+    Megaphone,
+    FolderKanban,
+    Calendar,
+    Settings,
+    BookMarked,
 } from 'lucide-react';
 
 // Entity configuration
-export const entityConfig: Record<SoftDeleteEntity, {
+export const entityConfig: Partial<Record<SoftDeleteEntity, {
     label: string;
     labelPlural: string;
     icon: React.ReactNode;
     color: string;
     bgColor: string;
     borderColor: string;
-}> = {
+}>> = {
     students: {
         label: 'Siswa',
         labelPlural: 'Siswa',
@@ -81,6 +91,94 @@ export const entityConfig: Record<SoftDeleteEntity, {
         bgColor: 'bg-indigo-500/10',
         borderColor: 'border-indigo-500/20',
     },
+    reports: {
+        label: 'Laporan',
+        labelPlural: 'Laporan',
+        icon: <FileText className="w-4 h-4" />,
+        color: 'text-cyan-500',
+        bgColor: 'bg-cyan-500/10',
+        borderColor: 'border-cyan-500/20',
+    },
+    schedules: {
+        label: 'Jadwal',
+        labelPlural: 'Jadwal',
+        icon: <CalendarDays className="w-4 h-4" />,
+        color: 'text-orange-500',
+        bgColor: 'bg-orange-500/10',
+        borderColor: 'border-orange-500/20',
+    },
+    communications: {
+        label: 'Komunikasi',
+        labelPlural: 'Komunikasi',
+        icon: <MessageSquare className="w-4 h-4" />,
+        color: 'text-teal-500',
+        bgColor: 'bg-teal-500/10',
+        borderColor: 'border-teal-500/20',
+    },
+    homework: {
+        label: 'PR',
+        labelPlural: 'PR',
+        icon: <BookMarked className="w-4 h-4" />,
+        color: 'text-violet-500',
+        bgColor: 'bg-violet-500/10',
+        borderColor: 'border-violet-500/20',
+    },
+    extracurriculars: {
+        label: 'Ekskul',
+        labelPlural: 'Ekskul',
+        icon: <GraduationCap className="w-4 h-4" />,
+        color: 'text-pink-500',
+        bgColor: 'bg-pink-500/10',
+        borderColor: 'border-pink-500/20',
+    },
+    student_achievements: {
+        label: 'Prestasi',
+        labelPlural: 'Prestasi',
+        icon: <Trophy className="w-4 h-4" />,
+        color: 'text-yellow-500',
+        bgColor: 'bg-yellow-500/10',
+        borderColor: 'border-yellow-500/20',
+    },
+    school_info: {
+        label: 'Info Sekolah',
+        labelPlural: 'Info Sekolah',
+        icon: <School className="w-4 h-4" />,
+        color: 'text-sky-500',
+        bgColor: 'bg-sky-500/10',
+        borderColor: 'border-sky-500/20',
+    },
+    announcements: {
+        label: 'Pengumuman',
+        labelPlural: 'Pengumuman',
+        icon: <Megaphone className="w-4 h-4" />,
+        color: 'text-rose-500',
+        bgColor: 'bg-rose-500/10',
+        borderColor: 'border-rose-500/20',
+    },
+    academic_years: {
+        label: 'Tahun Ajaran',
+        labelPlural: 'Tahun Ajaran',
+        icon: <Calendar className="w-4 h-4" />,
+        color: 'text-lime-500',
+        bgColor: 'bg-lime-500/10',
+        borderColor: 'border-lime-500/20',
+    },
+    semesters: {
+        label: 'Semester',
+        labelPlural: 'Semester',
+        icon: <FolderKanban className="w-4 h-4" />,
+        color: 'text-emerald-500',
+        bgColor: 'bg-emerald-500/10',
+        borderColor: 'border-emerald-500/20',
+    },
+    user_settings: {
+        label: 'Pengaturan',
+        labelPlural: 'Pengaturan',
+        icon: <Settings className="w-4 h-4" />,
+        color: 'text-slate-500',
+        bgColor: 'bg-slate-500/10',
+        borderColor: 'border-slate-500/20',
+    },
 };
 
 // Sorting options
@@ -113,6 +211,38 @@ export function getItemDisplayName(item: DeletedItem): string {
             return data.activity || data.keterangan || 'Poin';
         case 'academic_records':
             return data.subject || data.mapel || 'Nilai';
+        case 'reports':
+            return data.title || data.judul || 'Laporan';
+        case 'schedules':
+            return `${data.subject || ''} ${data.day || ''}`;
+        case 'communications':
+            return data.message?.substring(0, 50) || 'Komunikasi';
+        case 'homework':
+            return data.title || data.judul || 'PR';
+        case 'extracurriculars':
+            return data.name || data.nama || 'Ekskul';
+        case 'student_extracurriculars':
+            return 'Anggota Ekskul';
+        case 'extracurricular_attendance':
+            return `Absensi ${data.date || ''}`;
+        case 'extracurricular_grades':
+            return `${data.grade || ''} - ${data.student_name || ''}`;
+        case 'extracurricular_students':
+            return data.name || 'Siswa Ekskul';
+        case 'student_achievements':
+            return data.title || data.judul || 'Prestasi';
+        case 'student_development_analyses':
+            return 'Analisis Perkembangan';
+        case 'school_info':
+            return data.school_name || 'Info Sekolah';
+        case 'announcements':
+            return data.title || data.judul || 'Pengumuman';
+        case 'academic_years':
+            return data.name || 'Tahun Ajaran';
+        case 'semesters':
+            return data.name || 'Semester';
+        case 'user_settings':
+            return 'Pengaturan User';
         default:
             return 'Item';
     }
@@ -136,6 +266,26 @@ export function getItemSubtitle(item: DeletedItem): string {
             return `${data.points || 0} poin`;
         case 'academic_records':
             return data.assessment_name || data.keterangan || '';
+        case 'reports':
+            return data.category || '';
+        case 'schedules':
+            return `${data.start_time || ''}-${data.end_time || ''}`;
+        case 'communications':
+            return data.sender || '';
+        case 'homework':
+            return data.subject || '';
+        case 'extracurriculars':
+            return data.category || '';
+        case 'student_achievements':
+            return `${data.category || ''} - ${data.level || ''}`;
+        case 'school_info':
+            return data.school_address || '';
+        case 'announcements':
+            return data.date || '';
+        case 'academic_years':
+            return `${data.start_date || ''} - ${data.end_date || ''}`;
+        case 'semesters':
+            return `${data.semester_number || ''}`;
         default:
             return '';
     }
@@ -207,7 +357,7 @@ export const useTrashData = () => {
             if (searchQuery) {
                 const displayName = getItemDisplayName(item).toLowerCase();
                 const subtitle = getItemSubtitle(item).toLowerCase();
-                const entityLabel = entityConfig[item.entity].label.toLowerCase();
+                const entityLabel = (entityConfig[item.entity]?.label || item.entity).toLowerCase();
                 const searchTarget = `${displayName} ${subtitle} ${entityLabel}`;
                 if (!searchTarget.includes(searchQuery.toLowerCase())) {
                     return false;
@@ -240,17 +390,12 @@ export const useTrashData = () => {
 
     // Group items by entity
     const groupedItems = useMemo(() => {
-        const groups: Record<SoftDeleteEntity, DeletedItem[]> = {
-            students: [],
-            classes: [],
-            attendance: [],
-            tasks: [],
-            violations: [],
-            quiz_points: [],
-            academic_records: [],
-        };
+        const groups: Record<string, DeletedItem[]> = {};
 
         filteredItems.forEach(item => {
+            if (!groups[item.entity]) {
+                groups[item.entity] = [];
+            }
             groups[item.entity].push(item);
         });
 
@@ -259,22 +404,13 @@ export const useTrashData = () => {
 
     // Single-pass stats compilation
     const stats = useMemo(() => {
-        const base = {
+        const base: Record<string, number> = {
             total: allDeletedItems.length,
-            students: 0,
-            classes: 0,
-            attendance: 0,
-            tasks: 0,
-            violations: 0,
-            quiz_points: 0,
-            academic_records: 0,
             expiringToday: 0,
             expiringThisWeek: 0,
         };
         for (const item of allDeletedItems) {
-            if (item.entity in base) {
-                (base as Record<string, number>)[item.entity]++;
-            }
+            base[item.entity] = (base[item.entity] || 0) + 1;
             if (item.daysRemaining <= 1) base.expiringToday++;
             if (item.daysRemaining <= 7) base.expiringThisWeek++;
         }

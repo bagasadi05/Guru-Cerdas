@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { r2StorageService } from './r2StorageService';
+import { softDelete } from './SoftDeleteService';
 import {
     StudentAchievement,
     StudentAchievementInsert,
@@ -145,15 +146,10 @@ export const remove = async (id: string): Promise<void> => {
         }
     }
 
-    // 3. Delete database record
-    const { error: deleteError } = await (supabase
-        .from('student_achievements' as any) as any)
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userData.user.id);
-
-    if (deleteError) {
-        throw deleteError;
+    // 3. Soft delete database record
+    const result = await softDelete('student_achievements', id);
+    if (!result.success) {
+        throw new Error(result.error || 'Gagal menghapus pencapaian siswa');
     }
 };
 

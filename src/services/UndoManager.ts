@@ -16,6 +16,12 @@ export type StateRecord = Record<string, unknown>;
 const ALLOWED_ENTITIES: readonly SoftDeleteEntity[] = [
     'students', 'classes', 'attendance', 'tasks',
     'violations', 'quiz_points', 'academic_records',
+    'reports', 'schedules', 'communications', 'homework',
+    'extracurriculars', 'student_extracurriculars',
+    'extracurricular_attendance', 'extracurricular_grades',
+    'extracurricular_students', 'student_achievements',
+    'student_development_analyses', 'school_info',
+    'announcements', 'academic_years', 'semesters', 'user_settings',
 ] as const;
 
 export interface UndoableAction {
@@ -142,7 +148,7 @@ export async function recordAction(
  * Generate human-readable description for action
  */
 function generateDescription(actionType: ActionType, entity: SoftDeleteEntity, count: number): string {
-    const entityNames: Record<SoftDeleteEntity, { singular: string; plural: string }> = {
+    const entityNames: Partial<Record<SoftDeleteEntity, { singular: string; plural: string }>> = {
         students: { singular: 'siswa', plural: 'siswa' },
         classes: { singular: 'kelas', plural: 'kelas' },
         attendance: { singular: 'absensi', plural: 'absensi' },
@@ -150,6 +156,22 @@ function generateDescription(actionType: ActionType, entity: SoftDeleteEntity, c
         violations: { singular: 'pelanggaran', plural: 'pelanggaran' },
         quiz_points: { singular: 'poin keaktifan', plural: 'poin keaktifan' },
         academic_records: { singular: 'nilai', plural: 'nilai' },
+        reports: { singular: 'laporan', plural: 'laporan' },
+        schedules: { singular: 'jadwal', plural: 'jadwal' },
+        communications: { singular: 'komunikasi', plural: 'komunikasi' },
+        homework: { singular: 'PR', plural: 'PR' },
+        extracurriculars: { singular: 'ekskul', plural: 'ekskul' },
+        student_extracurriculars: { singular: 'anggota ekskul', plural: 'anggota ekskul' },
+        extracurricular_attendance: { singular: 'absensi ekskul', plural: 'absensi ekskul' },
+        extracurricular_grades: { singular: 'nilai ekskul', plural: 'nilai ekskul' },
+        extracurricular_students: { singular: 'siswa ekskul', plural: 'siswa ekskul' },
+        student_achievements: { singular: 'prestasi', plural: 'prestasi' },
+        student_development_analyses: { singular: 'analisis perkembangan', plural: 'analisis perkembangan' },
+        school_info: { singular: 'info sekolah', plural: 'info sekolah' },
+        announcements: { singular: 'pengumuman', plural: 'pengumuman' },
+        academic_years: { singular: 'tahun ajaran', plural: 'tahun ajaran' },
+        semesters: { singular: 'semester', plural: 'semester' },
+        user_settings: { singular: 'pengaturan', plural: 'pengaturan' },
     };
 
     const entityName = entityNames[entity]
@@ -262,8 +284,8 @@ export async function undo(actionId: string, currentUserId?: string): Promise<{ 
                         const id = action.entityIds[i];
                         const prevState = action.previousState[i];
                         if (prevState) {
-                            await supabase
-                                .from(action.entity)
+                            await (supabase
+                                .from(action.entity as any) as any)
                                 .update(prevState as never)
                                 .eq('id', id);
                         }
@@ -274,8 +296,8 @@ export async function undo(actionId: string, currentUserId?: string): Promise<{ 
             case 'create':
                 // Delete created items (soft delete)
                 for (const id of action.entityIds) {
-                    await supabase
-                        .from(action.entity)
+                    await (supabase
+                        .from(action.entity as any) as any)
                         .update({ deleted_at: new Date().toISOString() } as never)
                         .eq('id', id);
                 }
@@ -365,7 +387,17 @@ export async function getActionHistory(
                 tugas: 'tasks', task: 'tasks',
                 pelanggaran: 'violations', violation: 'violations',
                 poin: 'quiz_points', keaktifan: 'quiz_points', quiz: 'quiz_points',
-                nilai: 'academic_records', academic: 'academic_records'
+                nilai: 'academic_records', academic: 'academic_records',
+                laporan: 'reports', report: 'reports',
+                jadwal: 'schedules', schedule: 'schedules',
+                komunikasi: 'communications', communication: 'communications',
+                pr: 'homework', homework: 'homework',
+                ekskul: 'extracurriculars', extracurricular: 'extracurriculars',
+                prestasi: 'student_achievements', achievement: 'student_achievements',
+                'analisis perkembangan': 'student_development_analyses',
+                pengumuman: 'announcements', announcement: 'announcements',
+                'tahun ajaran': 'academic_years', semester: 'semesters',
+                pengaturan: 'user_settings',
             };
             
             // Map common Indonesian terms to database action types

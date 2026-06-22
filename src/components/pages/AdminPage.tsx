@@ -18,6 +18,7 @@ import {
     GraduationCap,
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
+import { softDelete } from '../../services/SoftDeleteService';
 import { useAuth } from '../../hooks/useAuth';
 
 // Import from admin module
@@ -553,10 +554,9 @@ const AdminPage: React.FC = () => {
         if (!confirm('Hapus pengumuman ini?')) return;
         try {
             const announcement = announcements.find(a => a.id === id) || null;
-            const { error } = await supabase.from('announcements').delete().eq('id', id);
-            if (error) {
-                console.error('Delete announcement error:', error);
-                alert('Gagal menghapus pengumuman: ' + error.message);
+            const result = await softDelete('announcements', id);
+            if (!result.success) {
+                alert('Gagal menghapus pengumuman: ' + result.error);
                 return;
             }
             await logAdminAction('announcements', 'DELETE', id, announcement, null);

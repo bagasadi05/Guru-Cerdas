@@ -183,15 +183,15 @@ const fetchPortalDataFallback = async (studentId: string, accessCode: string): P
         tasksRes,
         announcementsRes,
     ] = await Promise.all([
-        supabase.from('reports').select('*').eq('student_id', studentId),
+        supabase.from('reports').select('*').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('attendance').select('*').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('academic_records').select('*').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('violations').select('*').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('quiz_points').select('*').eq('student_id', studentId).is('deleted_at', null),
-        supabase.from('communications').select('*').eq('student_id', studentId).order('created_at', { ascending: true }),
-        supabase.from('schedules').select('*').eq('class_id', className),
+        supabase.from('communications').select('*').eq('student_id', studentId).is('deleted_at', null).order('created_at', { ascending: true }),
+        supabase.from('schedules').select('*').eq('class_id', className).is('deleted_at', null),
         supabase.from('tasks').select('*').eq('class_id', classId),
-        supabase.from('announcements').select('*').in('audience_type', ['all', 'parent']).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(5),
+        supabase.from('announcements').select('*').in('audience_type', ['all', 'parent']).is('deleted_at', null).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(5),
     ]);
 
     const teacher = {

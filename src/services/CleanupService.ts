@@ -5,13 +5,14 @@
  * Should be run periodically (daily) via scheduled job or on app startup.
  */
 
-import { cleanupExpired as cleanupSoftDeleted, SoftDeleteEntity } from './SoftDeleteService';
+import { cleanupExpired as cleanupSoftDeleted } from './SoftDeleteService';
+import { ALL_SOFT_DELETE_ENTITIES } from './SoftDeleteService';
 import { cleanupExpiredActions } from './UndoManager';
 import { logger } from './logger';
 
 export interface CleanupResult {
     success: boolean;
-    deletedRecords: Record<SoftDeleteEntity, number>;
+    deletedRecords: Record<string, number>;
     deletedActions: number;
     timestamp: Date;
     error?: string;
@@ -78,15 +79,9 @@ export async function runCleanup(): Promise<CleanupResult> {
         logger.error('Cleanup failed', error instanceof Error ? error : 'Cleanup', error);
         return {
             success: false,
-            deletedRecords: {
-                students: 0,
-                classes: 0,
-                attendance: 0,
-                tasks: 0,
-                violations: 0,
-                quiz_points: 0,
-                academic_records: 0,
-            },
+            deletedRecords: Object.fromEntries(
+                ALL_SOFT_DELETE_ENTITIES.map(e => [e, 0])
+            ),
             deletedActions: 0,
             timestamp,
             error: error instanceof Error ? error.message : 'Unknown error',

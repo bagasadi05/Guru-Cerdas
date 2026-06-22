@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../../../hooks/useToast';
 import {
@@ -8,6 +8,7 @@ import {
     cleanupExpired,
     SoftDeleteEntity,
     DeletedItem,
+    ALL_SOFT_DELETE_ENTITIES,
 } from '../../../../services/SoftDeleteService';
 
 interface UseTrashMutationsProps {
@@ -16,6 +17,13 @@ interface UseTrashMutationsProps {
     setConfirmBulkDelete: (confirm: boolean) => void;
     setConfirmEmptyTrash: (confirm: boolean) => void;
     setConfirmRestoreAll: (confirm: boolean) => void;
+}
+
+// Helper to invalidate all entity queries
+function invalidateAllEntityQueries(queryClient: ReturnType<typeof useQueryClient>) {
+    for (const entity of ALL_SOFT_DELETE_ENTITIES) {
+        queryClient.invalidateQueries({ queryKey: [entity] });
+    }
 }
 
 export const useTrashMutations = ({
@@ -36,9 +44,7 @@ export const useTrashMutations = ({
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
-            queryClient.invalidateQueries({ queryKey: ['students'] });
-            queryClient.invalidateQueries({ queryKey: ['classes'] });
-            queryClient.invalidateQueries({ queryKey: ['attendance'] });
+            invalidateAllEntityQueries(queryClient);
             toast.success('Item berhasil dipulihkan');
         },
         onError: (error) => {
@@ -62,9 +68,7 @@ export const useTrashMutations = ({
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
-            queryClient.invalidateQueries({ queryKey: ['students'] });
-            queryClient.invalidateQueries({ queryKey: ['classes'] });
-            queryClient.invalidateQueries({ queryKey: ['attendance'] });
+            invalidateAllEntityQueries(queryClient);
             setSelectedItems(new Set());
             setConfirmRestoreAll(false);
             toast.success(`${variables.length} item berhasil dipulihkan`);

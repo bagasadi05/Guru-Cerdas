@@ -289,12 +289,12 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         const studentRes = await supabase.from('students').select('*, classes(id, name)').eq('id', studentId).is('deleted_at', null).single();
         if (studentRes.error) throw new Error(studentRes.error.message);
         const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes] = await Promise.all([
-            supabase.from('reports').select('*').eq('student_id', studentId),
+            supabase.from('reports').select('*').eq('student_id', studentId).is('deleted_at', null),
             supabase.from('attendance').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
             supabase.from('academic_records').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
             supabase.from('violations').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
             supabase.from('quiz_points').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('student_achievements').select('*').eq('student_id', studentId),
+            supabase.from('student_achievements').select('*').eq('student_id', studentId).is('deleted_at', null),
         ]) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes].map((r: any) => r.error).filter((e: any) => e !== null);
