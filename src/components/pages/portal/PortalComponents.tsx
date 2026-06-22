@@ -4,13 +4,14 @@
  * Reusable UI components for the Parent Portal
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { BellIcon, GraduationCapIcon, LogoutIcon, SettingsIcon, UsersIcon } from '../../Icons';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Modal } from '../../ui/Modal';
 import { getStudentAvatar } from '../../../utils/avatarUtils';
 import type { PortalStudentInfo, PortalAnnouncement, PortalData } from './types';
+import { pushNotificationService } from '../../../services/PushNotificationService';
 
 // ============================================
 // GLASS CARD
@@ -77,19 +78,54 @@ interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
     student: PortalData['student'];
+    accessCode: string;
     onSave: (name: string, phone: string) => Promise<void>;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, student, onSave }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, student, accessCode, onSave }) => {
     const [name, setName] = useState(student.parent_name || '');
     const [phone, setPhone] = useState(student.parent_phone || '');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Push notification state
+    const [pushSupported, setPushSupported] = useState(false);
+    const [pushSubscribed, setPushSubscribed] = useState(false);
+    const [pushLoading, setPushLoading] = useState(false);
+    const [pushError, setPushError] = useState<string | null>(null);
+
+    const refreshPushStatus = useCallback(async () => {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+        const status = await pushNotificationService.getParentStatus(accessCode, student.id);
+        setPushSubscribed(status.isSubscribed);
+        if (status.error) setPushError(status.error);
+    }, [accessCode, student.id]);
 
     useEffect(() => {
         if (!isOpen) return;
         setName(student.parent_name || '');
         setPhone(student.parent_phone || '');
-    }, [isOpen, student.parent_name, student.parent_phone]);
+        setPushError(null);
+        const supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+        setPushSupported(supported);
+        if (supported) refreshPushStatus();
+    }, [isOpen, student.parent_name, student.parent_phone, refreshPushStatus]);
+
+    const handleTogglePush = async () => {
+        setPushError(null);
+        setPushLoading(true);
+        try {
+            if (pushSubscribed) {
+                const result = await pushNotificationService.disableForParent(accessCode, student.id);
+                if (!result.ok) setPushError(result.error ?? 'Gagal menonaktifkan notifikasi.');
+            } else {
+                const result = await pushNotificationService.enableForParent(accessCode, student.id);
+                if (!result.ok) setPushError(result.error ?? 'Gagal mengaktifkan notifikasi.');
+            }
+            await refreshPushStatus();
+        } finally {
+            setPushLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -134,6 +170,48 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                         Pastikan nomor aktif untuk menerima notifikasi kehadiran siswa.
                     </p>
                 </div>
+
+                {/* Push Notification Toggle */}
+                {pushSupported && (
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                    <BellIcon className="h-4 w-4 text-emerald-500" />
+                                    Notifikasi Push
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    {pushSubscribed
+                                        ? 'Aktif di perangkat ini — nilai, absensi, dan pengumuman.'
+                                        : 'Aktifkan untuk menerima info nilai & absensi secara real-time.'}
+                                </p>
+                            </div>
+                            {/* Toggle Switch */}
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={pushSubscribed}
+                                disabled={pushLoading}
+                                onClick={handleTogglePush}
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 ${
+                                    pushSubscribed
+                                        ? 'bg-emerald-500'
+                                        : 'bg-slate-300 dark:bg-slate-600'
+                                }`}
+                            >
+                                <span
+                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                                        pushSubscribed ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                />
+                            </button>
+                        </div>
+                        {pushError && (
+                            <p className="text-xs text-red-500">{pushError}</p>
+                        )}
+                    </div>
+                )}
+
                 <div className="flex justify-end gap-2 mt-6">
                     <Button type="button" variant="ghost" onClick={onClose} disabled={isSaving}>
                         Batal
