@@ -33,7 +33,7 @@ export function useSoftDelete(options: UseSoftDeleteOptions) {
     const queryClient = useQueryClient();
     const { showUndoToast } = useUndoToastContext();
 
-    const entityLabels: Record<SoftDeleteEntity, string> = {
+    const entityLabels: Partial<Record<SoftDeleteEntity, string>> = {
         students: 'siswa',
         classes: 'kelas',
         attendance: 'absensi',

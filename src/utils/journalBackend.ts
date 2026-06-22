@@ -18,7 +18,7 @@ export function isTeachingJournalsBackendMissing(error: unknown): boolean {
     const message = (error as any).message || '';
 
     // PostgreSQL & PostgREST codes for missing tables or functions
-    if (code === '42P01' || code === '42883' || code === 'PGRST202') {
+    if (code === '42P01' || code === '42883' || code === 'PGRST202' || code === 'PGRST205') {
         return true;
     }
 

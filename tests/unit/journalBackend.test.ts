@@ -14,6 +14,8 @@ describe('isTeachingJournalsBackendMissing', () => {
         expect(isTeachingJournalsBackendMissing({ code: '42883', message: 'function get_journal_rekap does not exist' })).toBe(true);
         // PostgREST function not found
         expect(isTeachingJournalsBackendMissing({ code: 'PGRST202', message: 'Could not find function in schema' })).toBe(true);
+        // PostgREST resource not found
+        expect(isTeachingJournalsBackendMissing({ code: 'PGRST205', message: 'Resource not found' })).toBe(true);
     });
 
     it('returns true for error messages containing does not exist or schema cache with relevant identifiers', () => {

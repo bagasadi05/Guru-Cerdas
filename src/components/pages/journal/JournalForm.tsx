@@ -139,8 +139,9 @@ export const JournalForm: React.FC<JournalFormProps> = ({
       setValue('attachment_url', res.publicUrl, { shouldValidate: true });
       setUploadedFileName(file.name);
       toast.success('Lampiran berhasil diunggah!');
-    } catch (err: any) {
-      toast.error(`Gagal mengunggah lampiran: ${err.message}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Gagal mengunggah lampiran';
+      toast.error(message);
     } finally {
       setIsUploading(false);
     }
@@ -156,8 +157,9 @@ export const JournalForm: React.FC<JournalFormProps> = ({
       setValue('attachment_url', '', { shouldValidate: true });
       setUploadedFileName('');
       toast.success('Lampiran berhasil dihapus');
-    } catch (err: any) {
-      toast.error(`Gagal menghapus lampiran: ${err.message}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Gagal menghapus lampiran';
+      toast.error(message);
     } finally {
       setIsRemoving(false);
     }

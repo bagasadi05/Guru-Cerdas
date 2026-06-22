@@ -41,6 +41,37 @@ export function useKeyboardAwareness(options: UseKeyboardAwarenessOptions = {}):
   const isKeyboardVisibleRef = useRef(false);
   const animationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Monitor focus/blur globally to detect unmounted or blurred inputs
+  useEffect(() => {
+    const handleFocusChange = () => {
+      // Delay slightly to allow activeElement to resolve correctly
+      setTimeout(() => {
+        const activeEl = document.activeElement;
+        const isInputFocused = activeEl && (
+          ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName) ||
+          (activeEl as HTMLElement).contentEditable === 'true'
+        );
+
+        if (!isInputFocused && isKeyboardVisibleRef.current) {
+          isKeyboardVisibleRef.current = false;
+          setState({
+            isVisible: false,
+            height: 0,
+            animating: false,
+          });
+        }
+      }, 50);
+    };
+
+    document.addEventListener('focus', handleFocusChange, true);
+    document.addEventListener('blur', handleFocusChange, true);
+
+    return () => {
+      document.removeEventListener('focus', handleFocusChange, true);
+      document.removeEventListener('blur', handleFocusChange, true);
+    };
+  }, []);
+
   // Apply/remove body classes for bottom nav and FAB visibility
   useEffect(() => {
     if (state.isVisible) {

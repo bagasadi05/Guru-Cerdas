@@ -61,8 +61,8 @@ const fetchClassMap = async (classIds: string[]): Promise<Record<string, string>
     if (uniqueIds.length === 0) return {};
 
     try {
-        const { data: classes } = await (supabase
-            .from('classes' as any) as any)
+        const { data: classes } = await supabase
+            .from('classes')
             .select('id, name')
             .in('id', uniqueIds);
 
@@ -71,8 +71,8 @@ const fetchClassMap = async (classIds: string[]): Promise<Record<string, string>
             acc[c.id] = c.name;
             return acc;
         }, {} as Record<string, string>);
-    } catch (err) {
-        console.error('Failed to fetch class names for export:', err);
+    } catch {
+        // Return empty map on failure — export will proceed with fallback class names
         return {};
     }
 };

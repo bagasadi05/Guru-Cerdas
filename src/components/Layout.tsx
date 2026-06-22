@@ -93,6 +93,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const location = useLocation();
 
+  useEffect(() => {
+    // Blur any active element on navigation to dismiss visual keyboard
+    if (document.activeElement && 'blur' in document.activeElement) {
+      (document.activeElement as HTMLElement).blur();
+    }
+    // Force cleanup keyboard classes on navigation
+    document.body.classList.remove('keyboard-visible');
+    document.body.classList.remove('keyboard-hide-fab');
+  }, [location.pathname]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950/50">
       {/* Accessibility: Skip Links */}

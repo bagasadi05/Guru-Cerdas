@@ -16,16 +16,15 @@ import { useToast } from '../../hooks/useToast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import type { TeachingJournal, TeachingJournalFilters } from '../../types/teachingJournal';
 import { JournalForm } from './journal/JournalForm';
+import { ConfirmationDialog } from '../ui/ConfirmationDialog';
 
 const JournalRekapPanel = React.lazy(() =>
-  // @ts-ignore: missing before PR #40
   import('./journal/JournalRekapPanel')
-    // @ts-ignore
-    .then((m) => ({ default: m.JournalRekapPanel || m.default }))
+    .then((m) => ({ default: m.JournalRekapPanel }))
     .catch(() => ({
       default: (props: { filters: TeachingJournalFilters }) => (
         <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
-          Panel rekapitulasi belum tersedia (menunggu PR #40).
+          Panel rekapitulasi belum tersedia.
         </div>
       ),
     }))
@@ -71,6 +70,7 @@ const JurnalMengajarPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedJournal, setSelectedJournal] = useState<TeachingJournal | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [prefillValues, setPrefillValues] = useState<{
     class_id?: string;
     subject?: string;
@@ -186,14 +186,16 @@ const JurnalMengajarPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus jurnal mengajar ini?')) {
-      setDeletingId(id);
-      deleteJournal.mutate(id, {
-        onError: () => {
-          setDeletingId(null);
-        },
-      });
-    }
+    setConfirmDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    if (!confirmDeleteId) return;
+    setDeletingId(confirmDeleteId);
+    deleteJournal.mutate(confirmDeleteId, {
+      onError: () => setDeletingId(null),
+      onSettled: () => setConfirmDeleteId(null),
+    });
   };
 
   return (
@@ -207,35 +209,32 @@ const JurnalMengajarPage: React.FC = () => {
             Catat dan tinjau agenda KBM harian per kelas dan mata pelajaran.
           </p>
         </div>
-        <Button
-          onClick={handleOpenAdd}
-          className="rounded-xl shadow-lg shadow-emerald-500/20"
-        >
-          <Plus className="w-4 h-4 mr-2" /> Tambah Jurnal
-        </Button>
+        {!backendMissing && (
+          <Button
+            onClick={handleOpenAdd}
+            className="rounded-xl shadow-lg shadow-emerald-500/20"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Tambah Jurnal
+          </Button>
+        )}
       </header>
 
-      {backendMissing && (
+      {backendMissing ? (
         <div className="p-6 rounded-2xl bg-amber-50/80 dark:bg-indigo-950/20 border border-amber-200 dark:border-indigo-800/30 flex items-start gap-4 animate-fade-in">
           <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
             <FileText className="w-5 h-5 text-amber-600 dark:text-indigo-400" />
           </div>
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white text-base">
-              Fitur Belum Aktif
+              Fitur Jurnal Mengajar Belum Aktif
             </h4>
             <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-              Fitur Jurnal Mengajar belum aktif. Jalankan migrasi database
-              <code className="mx-1 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-indigo-900/30 text-amber-800 dark:text-indigo-200 text-xs">
-                teaching_journals
-              </code>
-              di Supabase untuk mengaktifkannya.
+              Fitur Jurnal Mengajar belum aktif. Silakan jalankan migrasi database di Supabase (`20260621100000_create_teaching_journals.sql`) untuk mengaktifkannya.
             </p>
           </div>
         </div>
-      )}
-
-      <Tabs defaultValue="jurnal-harian" className="w-full">
+      ) : (
+        <Tabs defaultValue="jurnal-harian" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="jurnal-harian">Jurnal Harian</TabsTrigger>
           <TabsTrigger value="rekap">Rekapitulasi</TabsTrigger>
@@ -398,13 +397,9 @@ const JurnalMengajarPage: React.FC = () => {
                 className="rounded-2xl"
                 icon={<BookOpen className="w-8 h-8" />}
                 title="Belum Ada Jurnal"
-                description={
-                  backendMissing
-                    ? 'Aktifkan backend Jurnal Mengajar untuk mulai mencatat agenda KBM.'
-                    : 'Tidak ada jurnal yang cocok dengan filter saat ini. Coba ubah filter atau tambah jurnal baru.'
-                }
-                actionLabel={backendMissing ? undefined : 'Tambah Jurnal'}
-                onAction={backendMissing ? undefined : handleOpenAdd}
+                description="Tidak ada jurnal yang cocok dengan filter saat ini. Coba ubah filter atau tambah jurnal baru."
+                actionLabel="Tambah Jurnal"
+                onAction={handleOpenAdd}
               />
             ) : (
               <div className="space-y-3" aria-busy={isFetching}>
@@ -512,6 +507,7 @@ const JurnalMengajarPage: React.FC = () => {
           </React.Suspense>
         </TabsContent>
       </Tabs>
+      )}
 
       <JournalForm
         isOpen={isFormOpen}
@@ -522,6 +518,18 @@ const JurnalMengajarPage: React.FC = () => {
         journal={selectedJournal}
         classes={classes}
         prefillValues={prefillValues}
+      />
+
+      <ConfirmationDialog
+        isOpen={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={confirmDelete}
+        title="Hapus Jurnal Mengajar"
+        message="Apakah Anda yakin ingin menghapus jurnal mengajar ini? Tindakan ini tidak dapat dibatalkan."
+        confirmText="Hapus"
+        cancelText="Batal"
+        variant="danger"
+        isPending={deleteJournal.isPending}
       />
     </div>
   );

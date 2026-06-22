@@ -52,13 +52,13 @@ const BackupHistorySection: React.FC = () => {
     const { data: backupRuns, isLoading } = useQuery({
         queryKey: ['backup-runs'],
         queryFn: async () => {
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
                 .from('backup_runs')
                 .select('*')
                 .order('started_at', { ascending: false })
                 .limit(10);
             if (error) return [];
-            return data ?? [];
+            return (data as any[]) ?? [];
         },
         staleTime: 60000,
     });

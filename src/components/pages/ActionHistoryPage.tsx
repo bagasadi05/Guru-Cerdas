@@ -85,12 +85,12 @@ const actionTypeConfig: Record<ActionType, {
 };
 
 // Entity configuration
-const entityConfig: Record<SoftDeleteEntity, {
+const entityConfig: Partial<Record<SoftDeleteEntity, {
     label: string;
     icon: React.ReactNode;
     color: string;
     bgColor: string;
-}> = {
+}>> = {
     students: {
         label: 'Siswa',
         icon: <Users className="w-4 h-4" />,
@@ -136,7 +136,7 @@ const entityConfig: Record<SoftDeleteEntity, {
 };
 
 // Entity labels (for backward compatibility)
-const entityLabels: Record<SoftDeleteEntity, string> = {
+const entityLabels: Partial<Record<SoftDeleteEntity, string>> = {
     students: 'Siswa',
     classes: 'Kelas',
     attendance: 'Absensi',

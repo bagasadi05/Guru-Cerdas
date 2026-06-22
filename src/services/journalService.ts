@@ -41,7 +41,8 @@ const getByPeriod = async (filters: TeachingJournalFilters = {}): Promise<Teachi
         throw new Error('User session not found.');
     }
 
-    let query = (supabase.from('teaching_journals' as any) as any)
+    let query = supabase
+        .from('teaching_journals')
         .select('*')
         .eq('user_id', userData.user.id);
 
@@ -103,8 +104,8 @@ const create = async (
         user_id: userData.user.id,
     };
 
-    const { data, error } = await (supabase
-        .from('teaching_journals' as any) as any)
+    const { data, error } = await supabase
+        .from('teaching_journals')
         .insert(fullPayload)
         .select('*')
         .single();
@@ -126,8 +127,8 @@ const update = async (
         throw new Error('User session not found.');
     }
 
-    const { data, error } = await (supabase
-        .from('teaching_journals' as any) as any)
+    const { data, error } = await supabase
+        .from('teaching_journals')
         .update(payload)
         .eq('id', id)
         .eq('user_id', userData.user.id)
@@ -149,8 +150,8 @@ const remove = async (id: string): Promise<void> => {
     }
 
     // 1. Fetch attachment URL before deletion
-    const { data: journal, error: fetchError } = await (supabase
-        .from('teaching_journals' as any) as any)
+    const { data: journal, error: fetchError } = await supabase
+        .from('teaching_journals')
         .select('attachment_url')
         .eq('id', id)
         .eq('user_id', userData.user.id)
@@ -162,14 +163,14 @@ const remove = async (id: string): Promise<void> => {
     if (journal?.attachment_url) {
         try {
             await removeAttachment(journal.attachment_url);
-        } catch (storageError) {
-            console.error('Failed to delete attachment file from storage:', storageError);
+        } catch {
+            // Storage cleanup failed but the DB record will still be deleted
         }
     }
 
     // 3. Delete the database record
-    const { error: deleteError } = await (supabase
-        .from('teaching_journals' as any) as any)
+    const { error: deleteError } = await supabase
+        .from('teaching_journals')
         .delete()
         .eq('id', id)
         .eq('user_id', userData.user.id);
@@ -218,8 +219,8 @@ const getRekap = async (filters: TeachingJournalFilters = {}): Promise<TeachingJ
     let classMap: Record<string, string> = {};
 
     if (classIds.length > 0) {
-        const { data: classes } = await (supabase
-            .from('classes' as any) as any)
+        const { data: classes } = await supabase
+            .from('classes')
             .select('id, name')
             .in('id', classIds);
 

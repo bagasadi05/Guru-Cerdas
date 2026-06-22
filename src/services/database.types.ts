@@ -1553,6 +1553,42 @@ export type Database = {
           }
         ]
       }
+      deletion_audit: {
+        Row: {
+          id: string
+          table_name: string
+          record_id: string
+          deleted_at: string
+          restored_at: string | null
+          deleted_by: string | null
+          row_snapshot: Json | null
+          deletion_type: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          table_name: string
+          record_id: string
+          deleted_at?: string
+          restored_at?: string | null
+          deleted_by?: string | null
+          row_snapshot?: Json | null
+          deletion_type?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          table_name?: string
+          record_id?: string
+          deleted_at?: string
+          restored_at?: string | null
+          deleted_by?: string | null
+          row_snapshot?: Json | null
+          deletion_type?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
