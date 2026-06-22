@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { isNavigationInProgress } from '../utils/navigationState';
 
 interface KeyboardState {
   isVisible: boolean;
@@ -40,6 +41,8 @@ export function useKeyboardAwareness(options: UseKeyboardAwarenessOptions = {}):
   const previousHeight = useRef(0);
   const isKeyboardVisibleRef = useRef(false);
   const animationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isVisibleRef = useRef(false);
 
   // Monitor focus/blur globally to detect unmounted or blurred inputs
   useEffect(() => {
@@ -72,14 +75,33 @@ export function useKeyboardAwareness(options: UseKeyboardAwarenessOptions = {}):
     };
   }, []);
 
+  // Keep ref in sync with state
+  useEffect(() => {
+    isVisibleRef.current = state.isVisible;
+  }, [state.isVisible]);
+
   // Apply/remove body classes for bottom nav and FAB visibility
   useEffect(() => {
+    if (navRetryTimer.current) {
+      clearTimeout(navRetryTimer.current);
+      navRetryTimer.current = null;
+    }
+
     if (state.isVisible) {
-      if (hideBottomNav) {
+      const skipNavCheck = isNavigationInProgress();
+      if (hideBottomNav && !skipNavCheck) {
         document.body.classList.add('keyboard-visible');
       }
       if (hideFAB) {
         document.body.classList.add('keyboard-hide-fab');
+      }
+      // Retry after navigation cooldown if was blocked by navigation
+      if (skipNavCheck) {
+        navRetryTimer.current = setTimeout(() => {
+          if (isVisibleRef.current) {
+            document.body.classList.add('keyboard-visible');
+          }
+        }, 350);
       }
     } else {
       document.body.classList.remove('keyboard-visible');
@@ -87,6 +109,10 @@ export function useKeyboardAwareness(options: UseKeyboardAwarenessOptions = {}):
     }
 
     return () => {
+      if (navRetryTimer.current) {
+        clearTimeout(navRetryTimer.current);
+        navRetryTimer.current = null;
+      }
       document.body.classList.remove('keyboard-visible');
       document.body.classList.remove('keyboard-hide-fab');
     };
