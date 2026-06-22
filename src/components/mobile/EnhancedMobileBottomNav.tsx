@@ -1,5 +1,4 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { NavLink, useLocation } from 'react-router-dom';
 import { MoreHorizontalIcon } from '../Icons';
 import { useSound } from '../../hooks/useSound';
@@ -56,15 +55,11 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
     onMoreMenuToggle();
   };
 
-  if (typeof document === 'undefined') {
-    return null;
-  }
-
-  return createPortal(
+  return (
     <nav
-      className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-30
+      className="mobile-bottom-nav z-30
                 bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl
-                border-t border-slate-200/50 dark:border-slate-700/50
+                border-t border-slate-200/50 dark:border-slate-700/50 
                 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
       style={{
         minHeight: '64px',
@@ -184,8 +179,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
           </span>
         </button>
       </div>
-    </nav>,
-    document.body
+    </nav>
   );
 };
 
