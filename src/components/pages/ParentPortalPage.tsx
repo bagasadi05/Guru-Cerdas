@@ -573,6 +573,7 @@ export const ParentPortalPage: React.FC = () => {
                 isOpen={settingsOpen}
                 onClose={() => setSettingsOpen(false)}
                 student={student}
+                accessCode={accessCode ?? ''}
                 onSave={async (name, phone) => updateParentInfo({ name: name || '', phone: phone || '' })}
             />
 

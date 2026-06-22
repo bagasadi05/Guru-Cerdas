@@ -208,14 +208,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               items={dynamicMoreMenuItems}
             />
 
-            {/* Portrait Mode: Enhanced Bottom Navigation */}
-            {isPortrait && (
-              <EnhancedMobileBottomNav
-                moreMenuItems={dynamicMoreMenuItems}
-                isMoreMenuOpen={isMoreMenuOpen}
-                onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-              />
-            )}
+            {/* Bottom Navigation - always rendered on mobile, CSS hides in landscape */}
+            <EnhancedMobileBottomNav
+              moreMenuItems={dynamicMoreMenuItems}
+              isMoreMenuOpen={isMoreMenuOpen}
+              onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+            />
 
             {/* Landscape Mode: Side Rail Navigation */}
             {isLandscape && (

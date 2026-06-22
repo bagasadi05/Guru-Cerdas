@@ -24,7 +24,8 @@ interface TaskRow {
 
 interface SubscriptionRow {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  student_id: string | null;
   endpoint: string;
   p256dh: string;
   auth: string;
@@ -40,6 +41,12 @@ interface ScheduleRow {
   class_name: string | null;
   subject: string | null;
   reminded: boolean | null;
+}
+
+interface InstantPayload {
+  title: string;
+  body: string;
+  [key: string]: unknown;
 }
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -85,6 +92,7 @@ Deno.serve(async (req) => {
     tasksNotified: 0,
     schedulesFound: 0,
     schedulesNotified: 0,
+    instantNotified: 0,
     failedSends: 0,
     durationMs: 0,
   };
@@ -95,6 +103,28 @@ Deno.serve(async (req) => {
         { ok: false, error: "VAPID keys not configured" },
         500,
       );
+    }
+
+    // Handle instant trigger from DB triggers (parent notifications)
+    if (mode === "instant") {
+      const eventType = body.event as string;
+      const studentId = body.student_id as string | null;
+      const payload = body.payload as InstantPayload | undefined;
+
+      if (!payload) {
+        return jsonResponse({ ok: false, error: "Missing payload for instant mode" }, 400);
+      }
+
+      const instantStats = await processInstantParentNotification(
+        supabase,
+        eventType,
+        studentId ?? null,
+        payload,
+      );
+      stats.instantNotified = instantStats.notified;
+      stats.failedSends += instantStats.failed;
+      stats.durationMs = Date.now() - start;
+      return jsonResponse({ ok: true, stats });
     }
 
     // Process task-due reminders
@@ -279,6 +309,74 @@ async function processScheduleReminders(
   return { found, notified, failed };
 }
 
+/**
+ * Handle instant DB-trigger push notification for parents.
+ * If student_id is provided, sends only to subscriptions tied to that student.
+ * If student_id is null (announcements), sends to ALL active parent subscriptions.
+ */
+async function processInstantParentNotification(
+  supabase: SupabaseClient,
+  eventType: string,
+  studentId: string | null,
+  payload: InstantPayload,
+): Promise<{ notified: number; failed: number }> {
+  let query = supabase
+    .from("push_subscriptions")
+    .select("id, user_id, student_id, endpoint, p256dh, auth, is_active")
+    .eq("is_active", true)
+    .not("student_id", "is", null); // Only parent subscriptions
+
+  if (studentId) {
+    query = query.eq("student_id", studentId);
+  }
+
+  const { data: subs, error } = await query.limit(1000);
+  if (error) {
+    console.error(`instant push query error [${eventType}]:`, error);
+    return { notified: 0, failed: 0 };
+  }
+
+  const subscriptions = (subs ?? []) as SubscriptionRow[];
+  if (subscriptions.length === 0) return { notified: 0, failed: 0 };
+
+  const pushPayload: PushPayload = {
+    title: payload.title,
+    body: payload.body,
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/badge-72x72.png",
+    tag: `${eventType}-${studentId ?? "all"}-${Date.now()}`,
+    data: {
+      url: `${APP_BASE_URL}/portal`,
+      type: eventType,
+      studentId: studentId,
+    },
+    requireInteraction: false,
+    actions: [
+      { action: "open", title: "Buka Portal" },
+      { action: "dismiss", title: "Tutup" },
+    ],
+  };
+
+  let notified = 0;
+  let failed = 0;
+
+  for (const sub of subscriptions) {
+    const result = await sendToSubscription(supabase, sub, pushPayload);
+    if (result.ok) notified++;
+    else failed++;
+
+    if (result.reason === "subscription_gone") {
+      await supabase
+        .from("push_subscriptions")
+        .update({ is_active: false })
+        .eq("id", sub.id);
+    }
+  }
+
+  console.log(`instant push [${eventType}]: notified=${notified}, failed=${failed}, student=${studentId}`);
+  return { notified, failed };
+}
+
 async function fetchActiveSubscriptions(
   supabase: SupabaseClient,
   userIds: string[],
@@ -286,7 +384,7 @@ async function fetchActiveSubscriptions(
   if (userIds.length === 0) return [];
   const { data, error } = await supabase
     .from("push_subscriptions")
-    .select("id, user_id, endpoint, p256dh, auth, is_active")
+    .select("id, user_id, student_id, endpoint, p256dh, auth, is_active")
     .eq("is_active", true)
     .in("user_id", userIds);
 

@@ -187,6 +187,119 @@ export class PushNotificationService {
       this.setOptedInLocally(true);
     }
   }
+
+  // ─────────────────────────────────────────
+  // PARENT / WALI MURID METHODS
+  // ─────────────────────────────────────────
+
+  /**
+   * Subscribe the current browser for push notifications as a parent.
+   * Uses the `subscribe_parent` RPC which validates the access_code server-side.
+   */
+  async enableForParent(accessCode: string, studentId: string): Promise<{ ok: boolean; error?: string }> {
+    if (!VAPID_PUBLIC_KEY) {
+      return { ok: false, error: "VITE_VAPID_PUBLIC_KEY belum diset." };
+    }
+    if (!accessCode || !studentId) {
+      return { ok: false, error: "Kode akses atau ID siswa tidak valid." };
+    }
+
+    try {
+      const subscription = await subscribeToPush(VAPID_PUBLIC_KEY);
+      const serialized = serializeSubscription(subscription);
+
+      const { error } = await (db as any).rpc("subscribe_parent", {
+        p_access_code: accessCode,
+        p_student_id: studentId,
+        p_endpoint: serialized.endpoint,
+        p_p256dh: serialized.keys.p256dh,
+        p_auth: serialized.keys.auth,
+        p_user_agent: navigator.userAgent,
+      });
+
+      if (error) {
+        try { await subscription.unsubscribe(); } catch { /* rollback */ }
+        logger.warn("Parent push subscribe failed", "PushNotificationService", error);
+        return { ok: false, error: error.message };
+      }
+
+      localStorage.setItem(`parentPushEnabled_${studentId}`, "true");
+      logger.info("Parent push notification enabled", "PushNotificationService", { studentId });
+      return { ok: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.warn("Parent push subscribe exception", "PushNotificationService", err);
+      return { ok: false, error: msg };
+    }
+  }
+
+  /**
+   * Unsubscribe the current browser from parent push notifications.
+   * Uses `unsubscribe_parent` RPC.
+   */
+  async disableForParent(accessCode: string, studentId: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const state = await getPushSubscriptionState();
+      const endpoint = state.subscription?.endpoint ?? null;
+
+      if (endpoint) {
+        await unsubscribeFromPush();
+      }
+
+      const { error } = await (db as any).rpc("unsubscribe_parent", {
+        p_access_code: accessCode,
+        p_student_id: studentId,
+        p_endpoint: endpoint,
+      });
+
+      if (error) {
+        logger.warn("Parent push unsubscribe failed", "PushNotificationService", error);
+        return { ok: false, error: error.message };
+      }
+
+      localStorage.removeItem(`parentPushEnabled_${studentId}`);
+      logger.info("Parent push notification disabled", "PushNotificationService", { studentId });
+      return { ok: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { ok: false, error: msg };
+    }
+  }
+
+  /**
+   * Check if this browser has an active parent push subscription for a student.
+   */
+  async getParentStatus(accessCode: string, studentId: string): Promise<{
+    isSubscribed: boolean;
+    permissionState: NotificationPermission | null;
+    error?: string;
+  }> {
+    const permissionState = "Notification" in window ? Notification.permission : null;
+
+    try {
+      const state = await getPushSubscriptionState();
+      const endpoint = state.subscription?.endpoint ?? null;
+
+      if (!endpoint) {
+        return { isSubscribed: false, permissionState };
+      }
+
+      const { data, error } = await (db as any).rpc("get_parent_subscription_status", {
+        p_access_code: accessCode,
+        p_student_id: studentId,
+        p_endpoint: endpoint,
+      });
+
+      if (error) {
+        return { isSubscribed: false, permissionState, error: error.message };
+      }
+
+      return { isSubscribed: !!data, permissionState };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { isSubscribed: false, permissionState, error: msg };
+    }
+  }
 }
 
 export const pushNotificationService = PushNotificationService.getInstance();
