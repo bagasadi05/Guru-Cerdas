@@ -255,7 +255,12 @@ textarea:focus-visible {
 
 /* Mobile bottom nav enhancements */
 .mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     height: 68px;
+    z-index: 9999 !important;
     -webkit-user-select: none;
     user-select: none;
     touch-action: manipulation;
@@ -316,9 +321,9 @@ textarea:focus-visible {
         padding: 16px;
     }
 
-    /* Prevent horizontal scroll */
+    /* Prevent body scroll */
     body {
-        overflow-x: hidden;
+        overflow: hidden !important;
     }
 }
 
