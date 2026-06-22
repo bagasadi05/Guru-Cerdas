@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from './ui/PageTransition';
@@ -13,6 +14,7 @@ import { UploadProgressIndicator } from './ui/PerformanceIndicators';
 import { useParentMessageNotifications } from '../hooks/useParentMessageNotifications';
 import PullToRefresh from './ui/PullToRefresh';
 import { useQueryClient } from '@tanstack/react-query';
+import { setNavigationInProgress } from '../utils/navigationState';
 
 // Enhanced Mobile Navigation Components
 import { useOrientation } from '../hooks/useOrientation';
@@ -65,7 +67,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isPortrait, isLandscape } = useOrientation();
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(max-width: 1023px)').matches;
+    }
+    return false;
+  });
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [showGreeting, setShowGreeting] = useState(() => {
     if (typeof sessionStorage !== 'undefined') {
@@ -74,15 +81,31 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return false;
   });
 
-  // Track screen size for mobile navbar visibility
+  // Track screen size for mobile navbar visibility using matchMedia (perfect sync with CSS)
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
+    const mediaQuery = window.matchMedia('(max-width: 1023px)');
+    const checkMobile = (e: MediaQueryListEvent | MediaQueryList) => {
+      console.log("[Layout] checkMobile called. matches:", e.matches, "innerWidth:", window.innerWidth);
+      setIsMobile(e.matches);
     };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    
+    // Initial check
+    checkMobile(mediaQuery);
+    
+    // Event listener
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', checkMobile);
+      return () => mediaQuery.removeEventListener('change', checkMobile);
+    } else {
+      // Fallback for older browsers
+      mediaQuery.addListener(checkMobile);
+      return () => mediaQuery.removeListener(checkMobile);
+    }
   }, []);
+
+  useEffect(() => {
+    console.log("[Layout] isMobile state value:", isMobile);
+  }, [isMobile]);
 
   const handleGreetingEnd = () => {
     setShowGreeting(false);
@@ -94,6 +117,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
 
   useEffect(() => {
+    setNavigationInProgress(300);
     // Blur any active element on navigation to dismiss visual keyboard
     if (document.activeElement && 'blur' in document.activeElement) {
       (document.activeElement as HTMLElement).blur();
@@ -104,7 +128,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [location.pathname]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950/50">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950/50" style={{ height: '100dvh' }}>
       {/* Accessibility: Skip Links */}
       <SkipLinks />
 
@@ -198,24 +222,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </PullToRefresh>
         </main>
 
-        {/* Enhanced Mobile Navigation */}
-        {isMobile && (
+        {/* Enhanced Mobile Navigation — rendered via portal to escape overflow/transform stacking contexts */}
+        {isMobile && createPortal(
           <>
-            {/* Bottom Sheet for More Menu */}
             <MoreMenuBottomSheet
               isOpen={isMoreMenuOpen}
               onClose={() => setIsMoreMenuOpen(false)}
               items={dynamicMoreMenuItems}
             />
 
-            {/* Bottom Navigation - always rendered on mobile, CSS hides in landscape */}
             <EnhancedMobileBottomNav
               moreMenuItems={dynamicMoreMenuItems}
               isMoreMenuOpen={isMoreMenuOpen}
               onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
             />
 
-            {/* Landscape Mode: Side Rail Navigation */}
             {isLandscape && (
               <LandscapeSideRail
                 navItems={mobileNavItems}
@@ -224,7 +245,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
               />
             )}
-          </>
+          </>,
+          document.body
         )}
       </div>
 

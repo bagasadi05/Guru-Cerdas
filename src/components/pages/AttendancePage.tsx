@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { AttendancePageSkeleton } from '../skeletons/PageSkeletons';
 import { SemesterSelector } from '../ui/SemesterSelector';
 import {
@@ -97,6 +98,8 @@ const AttendancePage: React.FC = () => {
         handleAnalyzeAttendance,
         isOnline,
     } = useAttendance();
+
+    console.log("[AttendancePage] Render start. isLoadingClasses:", isLoadingClasses, "isLoadingStudents:", isLoadingStudents, "classesError:", classesError, "studentsError:", studentsError, "attendanceClassesCount:", attendanceClasses.length, "studentsCount:", students.length, "bodyClasses:", document.body.className);
 
     if (isLoadingClasses || isLoadingStudents) return <AttendancePageSkeleton />;
 
@@ -286,8 +289,8 @@ const AttendancePage: React.FC = () => {
                 </div>
 
                 {/* Fixed Save Button */}
-                {students && students.length > 0 && (
-                    <div className="fixed bottom-[68px] lg:bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-30 flex justify-center animate-fade-in-up">
+                {students && students.length > 0 && createPortal(
+                    <div className="fixed bottom-[68px] lg:bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-[9998] flex justify-center animate-fade-in-up">
                         <div className="w-full max-w-7xl">
                             <Button
                                 onClick={handleSave}
@@ -298,7 +301,8 @@ const AttendancePage: React.FC = () => {
                                 {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
                             </Button>
                         </div>
-                    </div>
+                    </div>,
+                    document.body
                 )}
             </main>
 
