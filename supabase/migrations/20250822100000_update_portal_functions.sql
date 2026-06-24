@@ -1,1 +1,8 @@
-�����*m��Z��-�
+-- This migration originally updated portal functions, but was corrupted.
+-- The functions it defined (specifically public.get_student_portal_data)
+-- have been completely rewritten/replaced by subsequent migrations:
+-- 1. 20251222130000_add_tasks_class_id_and_update_rpc.sql
+-- 2. 20251222133000_parent_portal_enhancements.sql
+-- 3. 20260619000100_add_achievements_to_portal_rpc.sql
+-- 4. 20260619000200_harden_achievements_idempotent.sql
+-- Therefore, this file is left as a safe no-op placeholder.
