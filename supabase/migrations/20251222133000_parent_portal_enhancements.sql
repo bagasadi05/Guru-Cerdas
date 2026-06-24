@@ -15,6 +15,7 @@ ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
 -- Allow read access to authenticated users and anonymouse (since portal is public-ish access via code)
 -- But effectively we control access via RPC mostly.
 -- For safety, allow public read
+DROP POLICY IF EXISTS "Allow public read announcements" ON public.announcements;
 CREATE POLICY "Allow public read announcements" ON public.announcements FOR SELECT USING (true);
 
 

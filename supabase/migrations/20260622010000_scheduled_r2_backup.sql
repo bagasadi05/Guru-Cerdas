@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS backup_runs (
 ALTER TABLE backup_runs ENABLE ROW LEVEL SECURITY;
 
 -- Admin can see all backup runs
+DROP POLICY IF EXISTS "Admin can view backup runs" ON backup_runs;
 CREATE POLICY "Admin can view backup runs" ON backup_runs
     FOR SELECT USING (
         EXISTS (
@@ -33,8 +34,10 @@ CREATE POLICY "Admin can view backup runs" ON backup_runs
     );
 
 -- Only service role can insert/update backup runs
+DROP POLICY IF EXISTS "Service role manages backup runs" ON backup_runs;
 CREATE POLICY "Service role manages backup runs" ON backup_runs
     FOR ALL USING (auth.role() = 'service_role');
+
 
 -- 3. Create function to call the scheduled-backup Edge Function
 CREATE OR REPLACE FUNCTION invoke_scheduled_backup()

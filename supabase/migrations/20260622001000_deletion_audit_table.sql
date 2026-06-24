@@ -31,16 +31,19 @@ CREATE INDEX IF NOT EXISTS idx_deletion_audit_deleted_by ON deletion_audit(delet
 ALTER TABLE deletion_audit ENABLE ROW LEVEL SECURITY;
 
 -- 4. RLS: users can see only their own deletion audit records
+DROP POLICY IF EXISTS "Users can view their own deletion audit" ON deletion_audit;
 CREATE POLICY "Users can view their own deletion audit"
     ON deletion_audit
     FOR SELECT
     USING (deleted_by = auth.uid());
 
 -- 5. RLS: allow trigger inserts (trigger runs as security definer)
+DROP POLICY IF EXISTS "Allow trigger inserts" ON deletion_audit;
 CREATE POLICY "Allow trigger inserts"
     ON deletion_audit
     FOR INSERT
     WITH CHECK (true);
+
 
 -- 6. Comment
 COMMENT ON TABLE deletion_audit IS 'Menyimpan snapshot data yang dihapus untuk pemulihan';
@@ -80,128 +83,154 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 8. Create triggers on all tables with deleted_at column
 -- Original soft-delete tables
+DROP TRIGGER IF EXISTS trg_soft_delete_students ON students;
 CREATE TRIGGER trg_soft_delete_students
     BEFORE UPDATE OF deleted_at ON students
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_classes ON classes;
 CREATE TRIGGER trg_soft_delete_classes
     BEFORE UPDATE OF deleted_at ON classes
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_attendance ON attendance;
 CREATE TRIGGER trg_soft_delete_attendance
     BEFORE UPDATE OF deleted_at ON attendance
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_tasks ON tasks;
 CREATE TRIGGER trg_soft_delete_tasks
     BEFORE UPDATE OF deleted_at ON tasks
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_violations ON violations;
 CREATE TRIGGER trg_soft_delete_violations
     BEFORE UPDATE OF deleted_at ON violations
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_quiz_points ON quiz_points;
 CREATE TRIGGER trg_soft_delete_quiz_points
     BEFORE UPDATE OF deleted_at ON quiz_points
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_academic_records ON academic_records;
 CREATE TRIGGER trg_soft_delete_academic_records
     BEFORE UPDATE OF deleted_at ON academic_records
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_teacher_class_assignments ON teacher_class_assignments;
 CREATE TRIGGER trg_soft_delete_teacher_class_assignments
     BEFORE UPDATE OF deleted_at ON teacher_class_assignments
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_user_roles ON user_roles;
 CREATE TRIGGER trg_soft_delete_user_roles
     BEFORE UPDATE OF deleted_at ON user_roles
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
 -- New soft-delete tables
+DROP TRIGGER IF EXISTS trg_soft_delete_reports ON reports;
 CREATE TRIGGER trg_soft_delete_reports
     BEFORE UPDATE OF deleted_at ON reports
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_schedules ON schedules;
 CREATE TRIGGER trg_soft_delete_schedules
     BEFORE UPDATE OF deleted_at ON schedules
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_communications ON communications;
 CREATE TRIGGER trg_soft_delete_communications
     BEFORE UPDATE OF deleted_at ON communications
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_homework ON homework;
 CREATE TRIGGER trg_soft_delete_homework
     BEFORE UPDATE OF deleted_at ON homework
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_extracurriculars ON extracurriculars;
 CREATE TRIGGER trg_soft_delete_extracurriculars
     BEFORE UPDATE OF deleted_at ON extracurriculars
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_student_extracurriculars ON student_extracurriculars;
 CREATE TRIGGER trg_soft_delete_student_extracurriculars
     BEFORE UPDATE OF deleted_at ON student_extracurriculars
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_extracurricular_attendance ON extracurricular_attendance;
 CREATE TRIGGER trg_soft_delete_extracurricular_attendance
     BEFORE UPDATE OF deleted_at ON extracurricular_attendance
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_extracurricular_grades ON extracurricular_grades;
 CREATE TRIGGER trg_soft_delete_extracurricular_grades
     BEFORE UPDATE OF deleted_at ON extracurricular_grades
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_extracurricular_students ON extracurricular_students;
 CREATE TRIGGER trg_soft_delete_extracurricular_students
     BEFORE UPDATE OF deleted_at ON extracurricular_students
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_student_achievements ON student_achievements;
 CREATE TRIGGER trg_soft_delete_student_achievements
     BEFORE UPDATE OF deleted_at ON student_achievements
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_student_development_analyses ON student_development_analyses;
 CREATE TRIGGER trg_soft_delete_student_development_analyses
     BEFORE UPDATE OF deleted_at ON student_development_analyses
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_school_info ON school_info;
 CREATE TRIGGER trg_soft_delete_school_info
     BEFORE UPDATE OF deleted_at ON school_info
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_announcements ON announcements;
 CREATE TRIGGER trg_soft_delete_announcements
     BEFORE UPDATE OF deleted_at ON announcements
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_academic_years ON academic_years;
 CREATE TRIGGER trg_soft_delete_academic_years
     BEFORE UPDATE OF deleted_at ON academic_years
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_semesters ON semesters;
 CREATE TRIGGER trg_soft_delete_semesters
     BEFORE UPDATE OF deleted_at ON semesters
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
 
+DROP TRIGGER IF EXISTS trg_soft_delete_user_settings ON user_settings;
 CREATE TRIGGER trg_soft_delete_user_settings
     BEFORE UPDATE OF deleted_at ON user_settings
     FOR EACH ROW WHEN (OLD.deleted_at IS DISTINCT FROM NEW.deleted_at)
     EXECUTE FUNCTION capture_soft_delete();
+

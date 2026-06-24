@@ -32,16 +32,18 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 
 -- Index for querying by table and record
-CREATE INDEX idx_audit_logs_table_record ON audit_logs(table_name, record_id);
-CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
-CREATE INDEX idx_audit_logs_created ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_table_record ON audit_logs(table_name, record_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(created_at DESC);
 
 -- Enable RLS
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Only users can see their own audit logs
+DROP POLICY IF EXISTS "Users can view own audit logs" ON audit_logs;
 CREATE POLICY "Users can view own audit logs" ON audit_logs
     FOR SELECT USING (auth.uid() = user_id);
+
 
 
 -- =====================================================
@@ -110,7 +112,7 @@ CREATE TABLE IF NOT EXISTS rate_limits (
     UNIQUE(user_id, action_type, window_start)
 );
 
-CREATE INDEX idx_rate_limits_user_action ON rate_limits(user_id, action_type, window_start);
+CREATE INDEX IF NOT EXISTS idx_rate_limits_user_action ON rate_limits(user_id, action_type, window_start);
 
 -- Function to check rate limit
 CREATE OR REPLACE FUNCTION check_rate_limit(

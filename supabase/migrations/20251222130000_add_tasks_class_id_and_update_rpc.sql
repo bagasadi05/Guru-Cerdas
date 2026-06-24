@@ -1,5 +1,5 @@
 -- Add class_id to tasks table
-ALTER TABLE tasks ADD COLUMN class_id UUID REFERENCES classes(id) ON DELETE CASCADE;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS class_id UUID REFERENCES classes(id) ON DELETE CASCADE;
 
 -- Update get_student_portal_data RPC
 -- Drop first because return type is changing

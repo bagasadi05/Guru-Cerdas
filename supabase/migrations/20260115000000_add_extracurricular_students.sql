@@ -72,6 +72,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_extracurricular_grades_extracurricular_stu
 
 -- 5. Ensure only one of student_id or extracurricular_student_id is set
 ALTER TABLE student_extracurriculars
+  DROP CONSTRAINT IF EXISTS student_extracurriculars_participant_xor;
+ALTER TABLE student_extracurriculars
   ADD CONSTRAINT student_extracurriculars_participant_xor
   CHECK (
     (student_id IS NOT NULL AND extracurricular_student_id IS NULL) OR
@@ -79,12 +81,16 @@ ALTER TABLE student_extracurriculars
   );
 
 ALTER TABLE extracurricular_attendance
+  DROP CONSTRAINT IF EXISTS extracurricular_attendance_participant_xor;
+ALTER TABLE extracurricular_attendance
   ADD CONSTRAINT extracurricular_attendance_participant_xor
   CHECK (
     (student_id IS NOT NULL AND extracurricular_student_id IS NULL) OR
     (student_id IS NULL AND extracurricular_student_id IS NOT NULL)
   );
 
+ALTER TABLE extracurricular_grades
+  DROP CONSTRAINT IF EXISTS extracurricular_grades_participant_xor;
 ALTER TABLE extracurricular_grades
   ADD CONSTRAINT extracurricular_grades_participant_xor
   CHECK (
@@ -95,18 +101,22 @@ ALTER TABLE extracurricular_grades
 -- 6. RLS for extracurricular_students
 ALTER TABLE extracurricular_students ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their own extracurricular_students" ON extracurricular_students;
 CREATE POLICY "Users can view their own extracurricular_students"
   ON extracurricular_students FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own extracurricular_students" ON extracurricular_students;
 CREATE POLICY "Users can insert their own extracurricular_students"
   ON extracurricular_students FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own extracurricular_students" ON extracurricular_students;
 CREATE POLICY "Users can update their own extracurricular_students"
   ON extracurricular_students FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own extracurricular_students" ON extracurricular_students;
 CREATE POLICY "Users can delete their own extracurricular_students"
   ON extracurricular_students FOR DELETE
   USING (auth.uid() = user_id);

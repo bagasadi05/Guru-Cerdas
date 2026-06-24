@@ -4,15 +4,19 @@ DROP POLICY IF EXISTS "Enable insert for authenticated users" ON academic_years;
 DROP POLICY IF EXISTS "Enable update for users based on user_id" ON academic_years;
 
 -- Re-create policies ensuring user_id check
+DROP POLICY IF EXISTS "Users can view own academic years" ON academic_years;
 CREATE POLICY "Users can view own academic years" ON academic_years
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own academic years" ON academic_years;
 CREATE POLICY "Users can insert own academic years" ON academic_years
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own academic years" ON academic_years;
 CREATE POLICY "Users can update own academic years" ON academic_years
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own academic years" ON academic_years;
 CREATE POLICY "Users can delete own academic years" ON academic_years
     FOR DELETE USING (auth.uid() = user_id);
 
@@ -21,15 +25,19 @@ DROP POLICY IF EXISTS "Enable read access for all users" ON semesters;
 DROP POLICY IF EXISTS "Enable insert for authenticated users" ON semesters;
 DROP POLICY IF EXISTS "Enable update for users based on user_id" ON semesters;
 
+DROP POLICY IF EXISTS "Users can view own semesters" ON semesters;
 CREATE POLICY "Users can view own semesters" ON semesters
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own semesters" ON semesters;
 CREATE POLICY "Users can insert own semesters" ON semesters
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own semesters" ON semesters;
 CREATE POLICY "Users can update own semesters" ON semesters
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own semesters" ON semesters;
 CREATE POLICY "Users can delete own semesters" ON semesters
     FOR DELETE USING (auth.uid() = user_id);
 

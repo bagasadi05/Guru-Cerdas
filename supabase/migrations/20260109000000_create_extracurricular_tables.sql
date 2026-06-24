@@ -86,69 +86,85 @@ ALTER TABLE extracurricular_attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE extracurricular_grades ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for extracurriculars
+DROP POLICY IF EXISTS "Users can view their own extracurriculars" ON extracurriculars;
 CREATE POLICY "Users can view their own extracurriculars"
   ON extracurriculars FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own extracurriculars" ON extracurriculars;
 CREATE POLICY "Users can insert their own extracurriculars"
   ON extracurriculars FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own extracurriculars" ON extracurriculars;
 CREATE POLICY "Users can update their own extracurriculars"
   ON extracurriculars FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own extracurriculars" ON extracurriculars;
 CREATE POLICY "Users can delete their own extracurriculars"
   ON extracurriculars FOR DELETE
   USING (auth.uid() = user_id);
 
 -- RLS Policies for student_extracurriculars
+DROP POLICY IF EXISTS "Users can view their own student_extracurriculars" ON student_extracurriculars;
 CREATE POLICY "Users can view their own student_extracurriculars"
   ON student_extracurriculars FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own student_extracurriculars" ON student_extracurriculars;
 CREATE POLICY "Users can insert their own student_extracurriculars"
   ON student_extracurriculars FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own student_extracurriculars" ON student_extracurriculars;
 CREATE POLICY "Users can update their own student_extracurriculars"
   ON student_extracurriculars FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own student_extracurriculars" ON student_extracurriculars;
 CREATE POLICY "Users can delete their own student_extracurriculars"
   ON student_extracurriculars FOR DELETE
   USING (auth.uid() = user_id);
 
 -- RLS Policies for extracurricular_attendance
+DROP POLICY IF EXISTS "Users can view their own extracurricular_attendance" ON extracurricular_attendance;
 CREATE POLICY "Users can view their own extracurricular_attendance"
   ON extracurricular_attendance FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own extracurricular_attendance" ON extracurricular_attendance;
 CREATE POLICY "Users can insert their own extracurricular_attendance"
   ON extracurricular_attendance FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own extracurricular_attendance" ON extracurricular_attendance;
 CREATE POLICY "Users can update their own extracurricular_attendance"
   ON extracurricular_attendance FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own extracurricular_attendance" ON extracurricular_attendance;
 CREATE POLICY "Users can delete their own extracurricular_attendance"
   ON extracurricular_attendance FOR DELETE
   USING (auth.uid() = user_id);
 
 -- RLS Policies for extracurricular_grades
+DROP POLICY IF EXISTS "Users can view their own extracurricular_grades" ON extracurricular_grades;
 CREATE POLICY "Users can view their own extracurricular_grades"
   ON extracurricular_grades FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own extracurricular_grades" ON extracurricular_grades;
 CREATE POLICY "Users can insert their own extracurricular_grades"
   ON extracurricular_grades FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own extracurricular_grades" ON extracurricular_grades;
 CREATE POLICY "Users can update their own extracurricular_grades"
   ON extracurricular_grades FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own extracurricular_grades" ON extracurricular_grades;
 CREATE POLICY "Users can delete their own extracurricular_grades"
   ON extracurricular_grades FOR DELETE
   USING (auth.uid() = user_id);
