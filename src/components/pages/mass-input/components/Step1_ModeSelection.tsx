@@ -18,7 +18,7 @@ export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode)
                 </div>
                 <div className="flex-1 space-y-3">
                     <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight font-serif drop-shadow-sm">
-                        Pusat Input Cerdas
+                        Manajemen Siswa
                     </h1>
                     <p className="text-lg md:text-xl text-green-100 leading-relaxed max-w-3xl mx-auto md:mx-0 font-light tracking-wide">
                         Efisiensi tingkat lanjut untuk pengelolaan data akademik. Pilih modul aksi untuk memulai proses massal.

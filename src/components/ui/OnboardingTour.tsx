@@ -81,7 +81,7 @@ const tourSteps: TourStep[] = [
     },
     {
         target: '[href="/input-massal"]',
-        title: 'Manajemen Nilai',
+        title: 'Manajemen Siswa',
         description: 'Input nilai banyak siswa sekaligus dalam satu halaman. Pilih kelas dan mata pelajaran, lalu isi nilai secara massal.',
         icon: <ClipboardPenIcon className="w-5 h-5" />,
         position: 'right',

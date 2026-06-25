@@ -26,7 +26,7 @@ const routeLabels: Record<string, string> = {
     'riwayat': 'Riwayat Aksi',
     'ekstrakurikuler': 'Ekstrakurikuler',
     'brankas': 'Brankas Kelas',
-    'input-massal': 'Manajemen Nilai',
+    'input-massal': 'Manajemen Siswa',
     'input-nilai-cepat': 'Input Nilai Cepat',
     'katrol-nilai': 'Katrol Nilai',
     'admin': 'Panel Admin',
