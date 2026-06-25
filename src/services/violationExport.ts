@@ -132,12 +132,13 @@ export const exportViolationsToPDF = async (options: ViolationExportOptions) => 
         v.points,
         v.severity ? (v.severity.charAt(0).toUpperCase() + v.severity.slice(1)) : '-',
         v.follow_up_status === 'resolved' ? 'Selesai' :
-            v.follow_up_status === 'in_progress' ? 'Proses' : 'Belum'
+            v.follow_up_status === 'in_progress' ? 'Proses' : 'Belum',
+        v.context_notes || '-'
     ]);
 
     autoTable(doc, {
         startY: tableStartY,
-        head: [['No', 'Tanggal', 'Pelanggaran', 'Poin', 'Kategori', 'Status']],
+        head: [['No', 'Tanggal', 'Pelanggaran', 'Poin', 'Kategori', 'Status', 'Keterangan']],
         body: tableBody,
         theme: 'grid',
         headStyles: { 
@@ -160,6 +161,7 @@ export const exportViolationsToPDF = async (options: ViolationExportOptions) => 
             3: { cellWidth: 13, halign: 'center' }, // Poin
             4: { cellWidth: 20, halign: 'center' }, // Category
             5: { cellWidth: 18, halign: 'center' }, // Status
+            6: { cellWidth: 'auto', halign: 'left' }, // Keterangan
         }
     });
 
@@ -194,7 +196,7 @@ export const exportViolationsToExcel = async (options: ViolationExportOptions): 
         ['Total Poin', `${totalPoints} poin`],
         ['Total Pelanggaran', violations.length],
         [],
-        ['No', 'Tanggal', 'Deskripsi Pelanggaran', 'Poin', 'Kategori', 'Status Tindak Lanjut', 'Catatan']
+        ['No', 'Tanggal', 'Deskripsi Pelanggaran', 'Poin', 'Kategori', 'Status Tindak Lanjut', 'Catatan', 'Keterangan']
     ];
 
     // 2. Data Rows
@@ -206,7 +208,8 @@ export const exportViolationsToExcel = async (options: ViolationExportOptions): 
             v.points,
             v.severity || '-',
             v.follow_up_status || 'pending',
-            v.follow_up_notes || ''
+            v.follow_up_notes || '',
+            v.context_notes || ''
         ]);
     });
 
@@ -366,12 +369,13 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
             v.points,
             v.severity ? (v.severity.charAt(0).toUpperCase() + v.severity.slice(1)) : '-',
             v.follow_up_status === 'resolved' ? 'Selesai' :
-                v.follow_up_status === 'in_progress' ? 'Proses' : 'Belum'
+                v.follow_up_status === 'in_progress' ? 'Proses' : 'Belum',
+                v.context_notes || '-'
         ]);
 
         autoTable(doc, {
             startY: currentY + 10,
-            head: [['No', 'Tanggal', 'Pelanggaran', 'Poin', 'Kategori', 'Status']],
+            head: [['No', 'Tanggal', 'Pelanggaran', 'Poin', 'Kategori', 'Status', 'Keterangan']],
             body: tableBody,
             theme: 'grid',
             headStyles: { 
@@ -394,6 +398,7 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
                 3: { cellWidth: 13, halign: 'center' }, // Poin
                 4: { cellWidth: 20, halign: 'center' },   // Kategori
                 5: { cellWidth: 18, halign: 'center' },   // Status
+                6: { cellWidth: 'auto', halign: 'left' }, // Keterangan
             }
         });
 
@@ -457,7 +462,7 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
             ['Tanggal:', dateStr],
             ['Total Pelanggaran:', `${studentViolations.length} (${totalPoints} poin)`],
             [],
-            ['No', 'Tanggal', 'Deskripsi Pelanggaran', 'Poin', 'Kategori', 'Status', 'Catatan'],
+            ['No', 'Tanggal', 'Deskripsi Pelanggaran', 'Poin', 'Kategori', 'Status', 'Catatan', 'Keterangan'],
         ];
 
         studentViolations.forEach((v, idx) => {
@@ -469,7 +474,8 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
                 v.severity ? (v.severity.charAt(0).toUpperCase() + v.severity.slice(1)) : '-',
                 v.follow_up_status === 'resolved' ? 'Selesai' :
                     v.follow_up_status === 'in_progress' ? 'Proses' : 'Belum',
-                v.follow_up_notes || ''
+                v.follow_up_notes || '',
+                v.context_notes || ''
             ]);
         });
 
@@ -500,4 +506,3 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
 
     await XLSX.writeFile(workbook, `Laporan_Pelanggaran_${className.replace(/\s+/g, '_')}.xlsx`);
 };
-

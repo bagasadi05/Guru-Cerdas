@@ -429,6 +429,7 @@ export const useStudentDetailPage = () => {
         const violationPayload = {
             date: data.date,
             description: data.description,
+            context_notes: data.context_notes || null,
             points: selectedViolation?.points ?? existingViolation?.points ?? 0,
             type: existingViolation?.type || 'general',
             severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || existingViolation?.severity || null,

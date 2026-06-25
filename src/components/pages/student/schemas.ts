@@ -63,6 +63,7 @@ export const quizRules: ValidationRules = {
 export const violationSchema = z.object({
     date: z.string().min(1, "Tanggal harus diisi"),
     description: z.string().min(1, "Jenis pelanggaran harus dipilih"),
+    context_notes: z.string().optional().nullable(),
     severity: z.enum(['ringan', 'sedang', 'berat']).optional().nullable(),
     follow_up_notes: z.string().optional().nullable(),
 });
@@ -107,4 +108,3 @@ export type QuizFormValues = z.infer<typeof quizSchema>;
 export type ViolationFormValues = z.infer<typeof violationSchema>;
 export type CommunicationFormValues = z.infer<typeof communicationSchema>;
 export type AchievementFormValues = z.infer<typeof achievementSchema>;
-

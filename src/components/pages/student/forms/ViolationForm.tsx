@@ -41,6 +41,7 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
             description: defaultValues?.description || '',
             severity: normalizedSeverity,
             follow_up_notes: defaultValues?.follow_up_notes || '',
+            context_notes: defaultValues?.context_notes || '',
         }
     });
 
@@ -202,6 +203,16 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
                         </button>
                     </div>
                 )}
+            </div>
+
+            {/* Keterangan / Konteks */}
+            <div>
+                <label className="block text-sm font-medium mb-1">Keterangan (Opsional)</label>
+                <Textarea
+                    {...register('context_notes')}
+                    placeholder="Keterangan atau konteks tambahan terkait pelanggaran ini..."
+                    rows={3}
+                />
             </div>
 
             {/* Follow-up Notes */}

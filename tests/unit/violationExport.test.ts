@@ -69,7 +69,8 @@ describe('violationExport Service', () => {
             follow_up_notes: null,
             parent_notified: false,
             parent_notified_at: null,
-            user_id: 'u1'
+            user_id: 'u1',
+            context_notes: 'Terlambat karena ban bocor'
         }
     ];
 
@@ -90,6 +91,14 @@ describe('violationExport Service', () => {
         expect(pdfCalls.setFontSize).toHaveBeenCalled();
         expect(pdfCalls.setFont).toHaveBeenCalled();
         expect(pdfCalls.text).toHaveBeenCalled();
+    });
+
+    it('should include Keterangan column in PDF export', async () => {
+        await exportViolationsToPDF(mockOptions);
+        expect(mockAutoTable).toHaveBeenCalled();
+        const tableConfig = mockAutoTable.mock.calls[0][1];
+        expect(tableConfig.head[0]).toContain('Keterangan');
+        expect(tableConfig.body[0]).toContain('Terlambat karena ban bocor');
     });
 
     it('should call xlsx to export Excel', async () => {
