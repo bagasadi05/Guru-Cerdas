@@ -216,6 +216,11 @@ const ViolationCard: React.FC<{
                     <span>{new Date(violation.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
                     <span className={`font-bold ${severity.textClass}`}>+{violation.points} poin</span>
                 </div>
+                {violation.recorded_by_name && (
+                    <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                        Dicatat oleh: {violation.recorded_by_name}
+                    </p>
+                )}
             </div>
 
             {/* Evidence */}

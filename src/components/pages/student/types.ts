@@ -75,6 +75,8 @@ export type ViolationRow = Partial<ViolationRowBase> & Pick<ViolationRowBase, Vi
     evidence_url?: string | null;
     /** Whether parent has been notified */
     parent_notified?: boolean | null;
+    /** F17-2: nama guru yang mencatat pelanggaran (untuk akuntabilitas akses kolaboratif) */
+    recorded_by_name?: string | null;
 };
 
 /**

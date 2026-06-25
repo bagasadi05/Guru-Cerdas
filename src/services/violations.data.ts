@@ -1,3 +1,4 @@
+import { supabase } from './supabase';
 
 export type ViolationItem = {
     code: string;
@@ -69,3 +70,28 @@ export const violationList: ViolationItem[] = [
     { code: '55', description: 'Merokok / membawa rokok', points: 20, category: 'Berat' },
     { code: '56', description: 'Mengintimidasi /Meneror teman', points: 20, category: 'Berat' },
 ];
+
+
+
+/**
+ * Entri direktori siswa minimal untuk UI pemilihan siswa saat mencatat
+ * pelanggaran kolaboratif (F17-2). Hanya berisi id, nama, dan nama kelas —
+ * tidak ada nilai/profil/data sensitif lain.
+ */
+export type StudentDirectoryEntry = {
+    id: string;
+    name: string;
+    class_name: string | null;
+};
+
+/**
+ * Mengambil direktori siswa aktif (id, nama, nama kelas) via RPC
+ * SECURITY DEFINER get_student_directory(). Dipakai agar SEMUA guru dapat
+ * memilih siswa mana pun ketika mencatat pelanggaran, tanpa mengekspos data
+ * sensitif siswa milik guru lain.
+ */
+export const getStudentDirectory = async (): Promise<StudentDirectoryEntry[]> => {
+    const { data, error } = await supabase.rpc('get_student_directory');
+    if (error) throw error;
+    return (data || []) as StudentDirectoryEntry[];
+};

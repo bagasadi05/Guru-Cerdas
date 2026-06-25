@@ -1663,6 +1663,14 @@ export type Database = {
         }
         Returns: Json[]
       }
+      get_student_directory: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          class_name: string
+        }[]
+      }
       handle_updated_at: {
         Args: Record<PropertyKey, never>
         Returns: unknown

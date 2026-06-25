@@ -172,9 +172,28 @@ export const useStudentDetailPage = () => {
                 supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null),
                 supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null)
             ]);
+            // F17-2: enrich tiap pelanggaran dengan nama guru pencatat (akuntabilitas).
+            // Karena akses kini kolaboratif, daftar bisa berisi catatan dari guru lain.
+            const rawViolations = (violationsRes.data || []) as ViolationRow[];
+            const recorderIds = Array.from(new Set(rawViolations.map(v => v.user_id).filter(Boolean)));
+            let recorderNames: Record<string, string> = {};
+            if (recorderIds.length > 0) {
+                const { data: roleRows } = await supabase
+                    .from('user_roles')
+                    .select('user_id, full_name')
+                    .in('user_id', recorderIds);
+                recorderNames = (roleRows || []).reduce((acc, r) => {
+                    if (r.user_id) acc[r.user_id] = r.full_name || '';
+                    return acc;
+                }, {} as Record<string, string>);
+            }
+            const violations = rawViolations.map(v => ({
+                ...v,
+                recorded_by_name: recorderNames[v.user_id] || null,
+            }));
             return {
                 attendanceRecords: (attendanceRes.data || []) as AttendanceRow[],
-                violations: (violationsRes.data || []) as ViolationRow[]
+                violations
             };
         },
         enabled: !!studentId && !!user
