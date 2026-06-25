@@ -25,7 +25,8 @@
     "docs:preview": "vitepress preview docs",
     "docs:all": "npm run docs:validate && npm run docs:api && npm run build-storybook",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "import:teachers": "node --env-file=.env scripts/import-teachers.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
