@@ -13,9 +13,9 @@ interface DashboardSidebarProps {
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClick }) => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, userRole } = useAuth();
   const { playClick } = useSound();
-  const navSections = getDashboardNavSections(isAdmin);
+  const navSections = getDashboardNavSections(isAdmin, userRole);
 
   const handleLogout = async () => {
     if (onLinkClick) {
@@ -23,6 +23,17 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
     }
     await logout();
     navigate('/', { replace: true });
+  };
+
+  const getRoleLabel = (role: string | null) => {
+    switch (role) {
+      case 'admin': return 'Administrator';
+      case 'kepala_madrasah': return 'Kepala Madrasah';
+      case 'waka_kesiswaan': return 'Waka Kesiswaan';
+      case 'student': return 'Siswa';
+      case 'parent': return 'Orang Tua';
+      default: return 'Guru';
+    }
   };
 
   return (
@@ -41,10 +52,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-wide text-slate-800 dark:text-white uppercase font-serif">
-                Portal Guru
+                MI Al Irsyad
               </h1>
               <p className="text-xxs font-medium text-emerald-600 dark:text-emerald-400 tracking-[0.2em] uppercase opacity-80">
-                Ecosystem
+                KOTA MADIUN
               </p>
             </div>
           </div>
@@ -62,10 +73,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
               </div>
               <div className="overflow-hidden">
                 <p className="font-semibold text-sm text-slate-800 dark:text-white truncate">
-                  {user?.name}
+                  {user?.name === 'Guru' ? getRoleLabel(userRole) : user?.name}
                 </p>
                 <p className="text-xxs text-slate-500 dark:text-slate-400 truncate">
-                  {user?.email}
+                  {getRoleLabel(userRole)} • {user?.email}
                 </p>
               </div>
             </div>

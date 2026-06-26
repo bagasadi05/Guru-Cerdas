@@ -44,10 +44,10 @@ const RoleSelectionPage: React.FC = () => {
                         </div>
                     </div>
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 text-shadow-md animate-fade-in">
-                        Selamat Datang di Guru Cerdas
+                        Portal MI Al Irsyad
                     </h1>
                     <p className="text-lg text-gray-600 dark:text-emerald-200 mb-8 md:mb-12 max-w-2xl mx-auto animate-fade-in animation-delay-200">
-                        Platform digital untuk manajemen kelas yang efisien dan portal informasi siswa.
+                        Sistem informasi akademik dan manajemen kelas MI Al Irsyad Kota Madiun.
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 animate-fade-in-up animation-delay-400">

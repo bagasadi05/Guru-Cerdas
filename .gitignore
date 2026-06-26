@@ -149,3 +149,8 @@ storybook-static
 .lighthouseci/
 test-results/
 build_before.txt
+
+# agent/tooling scratch
+.omo/
+.opencode/
+supabase/.temp/

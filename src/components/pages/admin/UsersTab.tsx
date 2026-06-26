@@ -44,6 +44,8 @@ interface UsersTabProps {
 const roleLabelMap: Record<string, string> = {
     admin: 'Admin',
     teacher: 'Guru',
+    waka_kesiswaan: 'Waka Kesiswaan',
+    kepala_madrasah: 'Kepala Madrasah',
     student: 'Siswa',
     parent: 'Orang Tua',
     user: 'Pengguna',
@@ -118,6 +120,8 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                     <option value="all">Semua Peran</option>
                     <option value="admin">Admin</option>
                     <option value="teacher">Guru</option>
+                    <option value="waka_kesiswaan">Waka Kesiswaan</option>
+                    <option value="kepala_madrasah">Kepala Madrasah</option>
                     <option value="student">Siswa</option>
                     <option value="parent">Orang Tua</option>
                 </select>
@@ -170,6 +174,8 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                             >
                                                 <option value="admin">Admin</option>
                                                 <option value="teacher">Guru</option>
+                                                <option value="waka_kesiswaan">Waka Kesiswaan</option>
+                                                <option value="kepala_madrasah">Kepala Madrasah</option>
                                                 <option value="student">Siswa</option>
                                                 <option value="parent">Orang Tua</option>
                                             </select>

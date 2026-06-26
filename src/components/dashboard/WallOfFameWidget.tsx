@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { TrophyIcon, AwardIcon, StarIcon } from '../Icons';
+import { TrophyIcon, StarIcon } from '../Icons';
 import type { DashboardQueryData } from '../../types';
 import { getCategoryMeta } from '../../lib/achievementMeta';
 

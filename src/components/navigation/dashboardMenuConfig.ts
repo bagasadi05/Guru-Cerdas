@@ -71,11 +71,23 @@ const baseMoreMenuItems: DashboardMenuItem[] = [
   { href: '/pengaturan', label: 'Pengaturan', icon: SettingsIcon },
 ];
 
-export const getDashboardNavSections = (isAdmin: boolean): DashboardMenuSection[] => {
-  const sections = baseNavSections.map((section) => ({
+export const getDashboardNavSections = (isAdmin: boolean, role?: string | null): DashboardMenuSection[] => {
+  let sections = baseNavSections.map((section) => ({
     ...section,
     items: [...section.items],
   }));
+
+  if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
+    // Waka Kesiswaan fokus kesiswaan: tetap akses Input Pelanggaran (/input-massal);
+    // Kepala Madrasah read-only: tanpa modul input.
+    const excludedHrefs = role === 'waka_kesiswaan'
+      ? ['/jadwal', '/jurnal', '/tugas', '/brankas']
+      : ['/jadwal', '/jurnal', '/tugas', '/brankas', '/input-massal'];
+    sections = sections.map(section => ({
+      ...section,
+      items: section.items.filter(item => !excludedHrefs.includes(item.href))
+    })).filter(section => section.items.length > 0);
+  }
 
   if (!isAdmin) {
     return sections;
@@ -95,9 +107,20 @@ export const getDashboardNavSections = (isAdmin: boolean): DashboardMenuSection[
   return sections;
 };
 
-export const getDashboardMoreMenuItems = (isAdmin: boolean): DashboardMenuItem[] => {
-  if (!isAdmin) {
-    return [...baseMoreMenuItems];
+export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null): DashboardMenuItem[] => {
+  let items = [...baseMoreMenuItems];
+  
+  if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
+    // Waka Kesiswaan fokus kesiswaan: tetap akses Input Pelanggaran (/input-massal);
+    // Kepala Madrasah read-only: tanpa modul input.
+    const excludedHrefs = role === 'waka_kesiswaan'
+      ? ['/jadwal', '/jurnal', '/tugas', '/brankas']
+      : ['/jadwal', '/jurnal', '/tugas', '/brankas', '/input-massal'];
+    items = items.filter(item => !excludedHrefs.includes(item.href));
   }
-  return [...baseMoreMenuItems, adminMenuItem];
+
+  if (!isAdmin) {
+    return items;
+  }
+  return [...items, adminMenuItem];
 };

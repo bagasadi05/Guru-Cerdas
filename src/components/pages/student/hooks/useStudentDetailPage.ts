@@ -14,7 +14,6 @@ import { useSemester } from '../../../../contexts/SemesterContext';
 import { getSemesterDisplayName } from '../../../../utils/semesterUtils';
 import {
     buildStudentCommunicationSignals,
-    extractStoragePathFromPublicUrl,
     getAvailableQuizPoints,
     getLatestRecordForSubject,
     resolveSubmitSemesterId,
@@ -134,7 +133,7 @@ export const useStudentDetailPage = () => {
 
             if (studentRes.error) throw studentRes.error;
 
-            const [classInfoRes, classesRes] = await Promise.all([
+            const [classInfoRes, assignmentsRes, classesRes] = await Promise.all([
                 studentRes.data.class_id
                     ? supabase
                         .from('classes')
@@ -144,6 +143,12 @@ export const useStudentDetailPage = () => {
                         .single()
                     : Promise.resolve({ data: null, error: null }),
                 supabase
+                    .from('teacher_class_assignments')
+                    .select('class_id, assignment_role')
+                    .eq('teacher_user_id', user.id)
+                    .in('assignment_role', ['homeroom', 'assistant'])
+                    .is('deleted_at', null),
+                supabase
                     .from('classes')
                     .select('id, name, user_id, created_at, deleted_at')
                     .eq('user_id', user.id)
@@ -151,14 +156,16 @@ export const useStudentDetailPage = () => {
             ]);
 
             if (classInfoRes.error) throw classInfoRes.error;
+            if (assignmentsRes.error) throw assignmentsRes.error;
             if (classesRes.error) throw classesRes.error;
 
             const studentData = studentRes.data as unknown as StudentWithClass;
+            const assignments = (assignmentsRes.data || []) as { class_id: string, assignment_role: string }[];
             const classRows = (classesRes.data || []) as unknown as Database['public']['Tables']['classes']['Row'][];
             const classInfo = classInfoRes.data as Database['public']['Tables']['classes']['Row'];
             const studentWithClass = { ...studentData, classes: classInfo ? { id: classInfo.id, name: classInfo.name } : null };
 
-            return { student: studentWithClass, classes: classRows };
+            return { student: studentWithClass, assignments, classes: classRows };
         },
         enabled: !!studentId && !!user,
     });
@@ -327,6 +334,7 @@ export const useStudentDetailPage = () => {
         if (!studentProfile) return null;
         return {
             student: studentProfile.student,
+            assignments: studentProfile.assignments,
             classes: studentProfile.classes,
             attendanceRecords: statsData?.attendanceRecords || [],
             violations: statsData?.violations || [],
@@ -428,6 +436,21 @@ export const useStudentDetailPage = () => {
 
     const handleViolationSubmit = async (data: ViolationFormValues & { evidence_file?: File }) => {
         if (!user || !studentId) return;
+        
+        // Pengecekan Duplikat Harian (Soft Warning)
+        if (modalState.type === 'violation' && !modalState.data?.id) {
+            const isDuplicate = filteredViolations.some(
+                v => v.date === data.date && v.description === data.description
+            );
+            
+            if (isDuplicate) {
+                const confirmed = window.confirm(
+                    `Siswa sudah memiliki catatan pelanggaran "${data.description}" pada tanggal ini.\n\nApakah Anda yakin ini adalah kejadian yang berbeda?`
+                );
+                if (!confirmed) return;
+            }
+        }
+
         const selectedViolation = violationList.find(v => v.description === data.description);
         const existingViolation = modalState.type === 'violation' ? modalState.data : null;
         let evidenceUrl = existingViolation?.evidence_url || null;

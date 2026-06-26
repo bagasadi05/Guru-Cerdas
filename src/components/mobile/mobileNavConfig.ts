@@ -8,7 +8,9 @@ import {
   ClipboardIcon,
   CalendarIcon,
   CheckSquareIcon,
+  UsersIcon,
 } from '../Icons';
+import { BarChart3 } from 'lucide-react';
 
 export interface MobileNavItem {
   href: string;
@@ -17,9 +19,19 @@ export interface MobileNavItem {
 }
 
 // Main 4 items for mobile bottom nav
-export const mobileNavItems: MobileNavItem[] = [
-  { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
-  { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
-  { href: '/jadwal', label: 'Jadwal', icon: CalendarIcon },
-  { href: '/tugas', label: 'Tugas', icon: CheckSquareIcon },
-];
+export const getMobileNavItems = (role?: string | null): MobileNavItem[] => {
+  if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
+    return [
+      { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
+      { href: '/siswa', label: 'Siswa', icon: UsersIcon },
+      { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
+      { href: '/analytics', label: 'Analitik', icon: BarChart3 as any },
+    ];
+  }
+  return [
+    { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
+    { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
+    { href: '/jadwal', label: 'Jadwal', icon: CalendarIcon },
+    { href: '/tugas', label: 'Tugas', icon: CheckSquareIcon },
+  ];
+};

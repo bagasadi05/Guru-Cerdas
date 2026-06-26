@@ -25,7 +25,7 @@ type SemesterOption = {
     academic_years?: { name: string } | null;
 };
 
-type AssignmentRole = 'homeroom' | 'subject_teacher';
+type AssignmentRole = 'homeroom' | 'subject_teacher' | 'assistant';
 
 const DEFAULT_SUBJECT_OPTIONS = [
     'Matematika',
@@ -41,7 +41,11 @@ const DEFAULT_SUBJECT_OPTIONS = [
     'Agama',
 ];
 
-const getRoleLabel = (role: AssignmentRole) => role === 'homeroom' ? 'Wali Kelas' : 'Guru Mapel';
+const getRoleLabel = (role: AssignmentRole) => {
+    if (role === 'homeroom') return 'Wali Kelas';
+    if (role === 'assistant') return 'Asisten Walas';
+    return 'Guru Mapel';
+};
 
 const getSemesterLabel = (semester: SemesterOption | undefined) => {
     if (!semester) return 'Semester tidak ditemukan';
@@ -166,6 +170,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
     const stats = useMemo(() => ({
         totalAssignments: assignments.length,
         homeroomCount: assignments.filter((assignment) => assignment.assignment_role === 'homeroom').length,
+        assistantCount: assignments.filter((assignment) => assignment.assignment_role === 'assistant').length,
         subjectTeacherCount: assignments.filter((assignment) => assignment.assignment_role === 'subject_teacher').length,
         totalTeachers: new Set(assignments.map((assignment) => assignment.teacher_user_id)).size,
         unassignedTeacherCount: unassignedTeachers.length,
@@ -221,7 +226,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
             if (assignment.class_id !== targetClassId) return false;
             if (assignment.semester_id !== semesterId) return false;
             if (assignment.assignment_role !== role) return false;
-            if (role === 'homeroom') return true;
+            if (role === 'homeroom' || role === 'assistant') return true;
             return normalizeSubjectName(assignment.subject_name) === normalizedSubject;
         });
     };
@@ -251,16 +256,16 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
             return;
         }
 
-        const payloads = assignmentRole === 'homeroom'
-            ? [{
+        const payloads = (assignmentRole === 'homeroom' || assignmentRole === 'assistant')
+            ? targetClassIds.map((classId) => ({
                 teacher_user_id: teacherUserId,
-                class_id: targetClassIds[0],
+                class_id: classId,
                 semester_id: semesterId,
                 assignment_role: assignmentRole,
                 subject_name: null,
                 notes: notes.trim() || null,
                 created_by: currentUserId || null,
-            }]
+            }))
             : targetClassIds.flatMap((targetClassId) => subjectNames.map((subject) => ({
                     teacher_user_id: teacherUserId,
                     class_id: targetClassId,
@@ -344,12 +349,12 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                     <p className="mt-2 text-3xl font-bold text-emerald-600">{stats.homeroomCount}</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Guru Mapel</p>
-                    <p className="mt-2 text-3xl font-bold text-indigo-600">{stats.subjectTeacherCount}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Asisten Walas</p>
+                    <p className="mt-2 text-3xl font-bold text-blue-600">{stats.assistantCount}</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Belum Ditugaskan</p>
-                    <p className="mt-2 text-3xl font-bold text-amber-600">{stats.unassignedTeacherCount}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Guru Mapel</p>
+                    <p className="mt-2 text-3xl font-bold text-indigo-600">{stats.subjectTeacherCount}</p>
                 </div>
             </div>
 
@@ -436,11 +441,12 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                                 className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm"
                             >
                                 <option value="homeroom">Wali Kelas</option>
+                                <option value="assistant">Asisten Walas</option>
                                 <option value="subject_teacher">Guru Mapel</option>
                             </select>
                         </div>
 
-                        {assignmentRole === 'homeroom' ? (
+                        {(assignmentRole === 'homeroom' || assignmentRole === 'assistant') ? (
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Kelas</label>
                                 <select
@@ -594,10 +600,12 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                                         <div className="space-y-1">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${assignment.assignment_role === 'homeroom'
-                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-                                                    : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400'
+                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                    : assignment.assignment_role === 'assistant'
+                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                                        : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400'
                                                     }`}>
-                                                    {assignment.assignment_role === 'homeroom' ? <UserCheck className="w-3.5 h-3.5" /> : <BookOpen className="w-3.5 h-3.5" />}
+                                                    {assignment.assignment_role === 'homeroom' ? <UserCheck className="w-3.5 h-3.5" /> : assignment.assignment_role === 'assistant' ? <UserPlus className="w-3.5 h-3.5" /> : <BookOpen className="w-3.5 h-3.5" />}
                                                     {roleLabel}
                                                 </span>
                                                 <span className="text-sm font-semibold text-gray-900 dark:text-white">{classItem?.name || 'Kelas tidak ditemukan'}</span>

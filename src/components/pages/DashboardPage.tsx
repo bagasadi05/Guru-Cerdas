@@ -28,6 +28,7 @@ import { QuickActionCards } from '../dashboard/QuickActionCards';
 import DashboardPageSkeleton from '../skeletons/DashboardPageSkeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import DashboardGreeting from '../dashboard/DashboardGreeting';
+import SemesterTransitionBanner from '../dashboard/SemesterTransitionBanner';
 import GradeAuditWidget from '../dashboard/GradeAuditWidget';
 import ScheduleTimeline from '../dashboard/ScheduleTimeline';
 import FloatingActionButton from '../ui/FloatingActionButton';
@@ -38,6 +39,8 @@ import TodayActionPanel from '../dashboard/TodayActionPanel';
 import { DashboardSummaryCards, WallOfFameWidget } from '../dashboard';
 import ActivityFeedWidget from '../dashboard/ActivityFeedWidget';
 import ParentMessagesWidget from '../dashboard/ParentMessagesWidget';
+import { SchoolViolationsWidget } from '../dashboard/SchoolViolationsWidget';
+import { SchoolAttendanceWidget } from '../dashboard/SchoolAttendanceWidget';
 import { transformToGameData } from '../../services/gamificationService';
 import { ErrorState } from '../ui/ErrorState';
 import { useGlobalSearch } from '../SearchSystem';
@@ -47,7 +50,8 @@ import { useGlobalSearch } from '../SearchSystem';
 // ==========================================
 
 const DashboardPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
+  const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'kepala_madrasah';
   const todayStr = new Date().toLocaleDateString('sv-SE');
   const { data: journalStatus } = useTodayJournalStatus(todayStr);
   const navigate = useNavigate();
@@ -166,6 +170,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       )}
+      <SemesterTransitionBanner />
       <DashboardGreeting
         userName={user?.name}
         isOnline={isOnline}
@@ -204,6 +209,17 @@ const DashboardPage: React.FC = () => {
         <div className={`space-y-6 order-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9 lg:col-start-1' : 'lg:col-span-12'}`}>
           {/* Stats Section */}
           <section data-tutorial="dashboard-stats">{data && <StatsGrid data={data} currentTime={currentTime} />}</section>
+
+          {isGlobalRole && (
+            <section className="space-y-6 mt-6">
+              <SectionHeading>Analitik Tingkat Sekolah</SectionHeading>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SchoolAttendanceWidget />
+                <SchoolViolationsWidget />
+              </div>
+            </section>
+          )}
+
           {data && <TodayActionPanel data={data} />}
           {/* Operational Section */}
           <section className="space-y-4">

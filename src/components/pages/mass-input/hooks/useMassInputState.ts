@@ -18,6 +18,7 @@ export function useMassInputState() {
     const [pasteData, setPasteData] = useState('');
     const [selectedViolationCode, setSelectedViolationCode] = useState('');
     const [violationDate, setViolationDate] = useState(new Date().toISOString().slice(0, 10));
+    const [violationNotes, setViolationNotes] = useState('');
     const [selectedStudentIds, setSelectedStudentIds] = useState(new Set<string>());
     const [searchTerm, setSearchTerm] = useState('');
     const [studentFilter, setStudentFilter] = useState<StudentFilter>('all');
@@ -153,8 +154,12 @@ export function useMassInputState() {
         subjectGradeInfo, setSubjectGradeInfo,
         scores, setScores,
         pasteData, setPasteData,
-        selectedViolationCode, setSelectedViolationCode,
-        violationDate, setViolationDate,
+        selectedViolationCode,
+        setSelectedViolationCode,
+        violationDate,
+        setViolationDate,
+        violationNotes,
+        setViolationNotes,
         selectedStudentIds, setSelectedStudentIds,
         searchTerm, setSearchTerm,
         studentFilter, setStudentFilter,

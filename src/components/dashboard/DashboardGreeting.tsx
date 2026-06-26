@@ -11,6 +11,7 @@
 import React from 'react';
 import { useClock } from '../../hooks/useClock';
 import { useI18n } from '../../utils/i18n';
+import { useAuth } from '../../hooks/useAuth';
 
 interface DashboardGreetingProps {
   userName?: string;
@@ -42,10 +43,18 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
 }) => {
   const currentTime = useClock();
   const { t, language } = useI18n();
+  const { userRole } = useAuth();
   const hour = currentTime.getHours();
   const { greetingKey, icon } = getGreetingConfig(hour);
   const greeting = t.dashboard[greetingKey];
-  const firstName = userName?.split(' ')[0] || 'Guru';
+  
+  let roleLabel = 'Guru';
+  if (userRole === 'kepala_madrasah') roleLabel = 'Kepala Madrasah';
+  else if (userRole === 'waka_kesiswaan') roleLabel = 'Waka Kesiswaan';
+  else if (userRole === 'admin') roleLabel = 'Admin';
+  else if (userRole === 'student') roleLabel = 'Siswa';
+
+  const firstName = (userName && userName !== 'Guru') ? userName.split(' ')[0] : roleLabel;
   const locale = language === 'id' ? 'id-ID' : 'en-US';
 
   return (

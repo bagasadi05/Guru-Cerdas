@@ -40,6 +40,8 @@ export interface MassInputPageViewProps {
     setSelectedViolationCode: (v: string) => void;
     violationDate: string;
     setViolationDate: (v: string) => void;
+    violationNotes: string;
+    setViolationNotes: (v: string) => void;
     noteMethod: 'ai' | 'template';
     setNoteMethod: (v: 'ai' | 'template') => void;
     templateNote: string;
@@ -111,7 +113,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         quizInfo, setQuizInfo, subjectGradeInfo, setSubjectGradeInfo,
         isCustomSubject, setIsCustomSubject, uniqueSubjects,
         selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
-        noteMethod, setNoteMethod, templateNote, setTemplateNote,
+        violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,
         assessmentNames, pasteData, setPasteData, isParsing, handleAiParse, isOnline,
         showImportModal, setShowImportModal,
         searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
@@ -211,6 +213,8 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     setSelectedViolationCode={setSelectedViolationCode}
                                     violationDate={violationDate}
                                     setViolationDate={setViolationDate}
+                                    violationNotes={violationNotes}
+                                    setViolationNotes={setViolationNotes}
                                     noteMethod={noteMethod}
                                     setNoteMethod={setNoteMethod}
                                     templateNote={templateNote}

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RotateCcw, AlertCircle, CheckCircle, Trash2, X } from 'lucide-react';
 
 /**

@@ -26,7 +26,7 @@ import { useSemester } from '../../../../../contexts/SemesterContext';
 import { useMemo } from 'react';
 import { getJsPDF, getAutoTable } from '../../../../../utils/dynamicImports';
 import { motion, AnimatePresence } from 'framer-motion';
-import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { duration as motionDuration } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { addPdfHeader, ensureLogosLoaded } from '../../../../../utils/pdfHeaderUtils';
 import { calculateRadarPoints, calculateAxisEndpoints, calculateLabelPositions } from '../utils/radarChartUtils';

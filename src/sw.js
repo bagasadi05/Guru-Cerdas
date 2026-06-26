@@ -109,7 +109,7 @@ registerRoute(
 
 self.addEventListener('push', (event) => {
     let payload = {
-        title: 'Guru Cerdas',
+        title: 'MI Al Irsyad Kota Madiun',
         body: 'Anda memiliki notifikasi baru.',
         icon: '/icons/icon-192x192.png',
         badge: '/icons/badge-72x72.png',

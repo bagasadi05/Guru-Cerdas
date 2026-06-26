@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as achievementService from '../../src/services/achievementService';
-import { StudentAchievementInsert, StudentAchievementUpdate } from '../../src/types/studentAchievement';
+import { StudentAchievementInsert } from '../../src/types/studentAchievement';
 
 const mockAchievement = {
   id: 'ach-1',

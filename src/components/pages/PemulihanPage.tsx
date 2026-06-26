@@ -43,7 +43,7 @@ import {
     FolderKanban,
     BookMarked,
 } from 'lucide-react';
-import { getDeletionAuditStats, DeletionAuditStats } from '../../services/DeletionAuditService';
+import { getDeletionAuditStats } from '../../services/DeletionAuditService';
 import { exportBackup, importBackup, downloadBackup } from '../../services/backupService';
 import { supabase } from '../../services/supabase';
 

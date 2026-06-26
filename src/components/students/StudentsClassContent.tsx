@@ -1,6 +1,5 @@
 import React from 'react';
-import { Button } from '../ui/Button';
-import { PlusIcon, UsersIcon } from '../Icons';
+import { UsersIcon } from '../Icons';
 import { StudentGrid } from './StudentGrid';
 import { StudentTable } from './StudentTable';
 import { StudentsSummaryToolbar } from './StudentsSummaryToolbar';

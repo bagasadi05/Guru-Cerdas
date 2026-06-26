@@ -226,13 +226,13 @@ function derToJoseSignature(der: Uint8Array, targetLength: number): Uint8Array {
     for (let i = 0; i < n; i++) seqLen = (seqLen << 8) | der[offset++];
   }
   if (der[offset++] !== 0x02) throw new Error("Invalid DER: expected INTEGER r");
-  let rLen = der[offset++];
+  const rLen = der[offset++];
   let r = der.subarray(offset, offset + rLen);
   offset += rLen;
   // strip leading zero
   if (r.length > targetLength && r[0] === 0) r = r.subarray(1);
   if (der[offset++] !== 0x02) throw new Error("Invalid DER: expected INTEGER s");
-  let sLen = der[offset++];
+  const sLen = der[offset++];
   let s = der.subarray(offset, offset + sLen);
   if (s.length > targetLength && s[0] === 0) s = s.subarray(1);
 

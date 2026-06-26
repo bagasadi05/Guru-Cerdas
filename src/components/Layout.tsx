@@ -22,14 +22,14 @@ import {
   EnhancedMobileBottomNav,
   MoreMenuBottomSheet,
   LandscapeSideRail,
-  mobileNavItems,
+  getMobileNavItems,
 } from './mobile';
 import DashboardSidebar from './navigation/DashboardSidebar';
 import { getDashboardMoreMenuItems } from './navigation/dashboardMenuConfig';
 import { ShellHeaderActions } from './layout/ShellHeaderActions';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const { showTour, endTour } = useOnboarding();
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -51,8 +51,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [user]);
 
   const dynamicMoreMenuItems = useMemo(() => {
-    return getDashboardMoreMenuItems(isAdmin);
-  }, [isAdmin]);
+    return getDashboardMoreMenuItems(isAdmin, userRole);
+  }, [isAdmin, userRole]);
+
+  const dynamicMobileNavItems = useMemo(() => {
+    return getMobileNavItems(userRole);
+  }, [userRole]);
 
   // Listen for real-time parent messages and show notifications
   useParentMessageNotifications();
@@ -233,13 +237,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <EnhancedMobileBottomNav
               moreMenuItems={dynamicMoreMenuItems}
+              navItems={dynamicMobileNavItems}
               isMoreMenuOpen={isMoreMenuOpen}
               onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
             />
 
             {isLandscape && (
               <LandscapeSideRail
-                navItems={mobileNavItems}
+                navItems={dynamicMobileNavItems}
                 moreMenuItems={dynamicMoreMenuItems}
                 isMoreMenuOpen={isMoreMenuOpen}
                 onMoreMenuToggle={() => setIsMoreMenuOpen(!isMoreMenuOpen)}

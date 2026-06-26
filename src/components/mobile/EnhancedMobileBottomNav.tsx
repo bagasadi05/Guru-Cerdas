@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { MoreHorizontalIcon } from '../Icons';
 import { useSound } from '../../hooks/useSound';
 import { useHaptic } from '../../hooks/useHaptic';
-import { mobileNavItems } from './mobileNavConfig';
+import { MobileNavItem } from './mobileNavConfig';
 
 interface MoreMenuItem {
   href: string;
@@ -12,6 +12,7 @@ interface MoreMenuItem {
 }
 
 interface EnhancedMobileBottomNavProps {
+  navItems: MobileNavItem[];
   moreMenuItems: MoreMenuItem[];
   isMoreMenuOpen: boolean;
   onMoreMenuToggle: () => void;
@@ -27,6 +28,7 @@ interface EnhancedMobileBottomNavProps {
  * - Safe area insets support
  */
 const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
+  navItems,
   moreMenuItems,
   isMoreMenuOpen,
   onMoreMenuToggle,
@@ -70,7 +72,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
     >
       <div className="flex items-center justify-around px-3 pt-1.5">
         {/* Primary Navigation Items */}
-        {mobileNavItems.map((item) => (
+        {navItems.map((item) => (
           <NavLink
             key={item.href}
             to={item.href}

@@ -202,8 +202,12 @@ const StudentDetailPage = () => {
     }
 
     const student = studentProfile.student;
-    const classes = studentProfile.classes;
+    const assignments = studentProfile.assignments || [];
+    const classes = studentProfile.classes || [];
     const canManageStudentProfile = student.user_id === user?.id;
+    const isHomeroomTeacher = assignments.some((a: any) => a.class_id === student.class_id && a.assignment_role === 'homeroom');
+    const isAssistant = assignments.some((a: any) => a.class_id === student.class_id && a.assignment_role === 'assistant');
+    const canAdd = !isAssistant;
 
     const handleDeleteAchievement = (id: string) => {
         setModalState({
@@ -443,14 +447,14 @@ const StudentDetailPage = () => {
                         <TabsContent value="grades" className="p-0">
                             {activeTab === 'grades' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} currentUserId={user?.id} kkm={kkm} semesterLabel={selectedSemesterLabel} />
+                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} currentUserId={user?.id} kkm={kkm} semesterLabel={selectedSemesterLabel} canAdd={canAdd} />
                                 </Suspense>
                             )}
                         </TabsContent>
                         <TabsContent value="activity" className="p-0">
                             {activeTab === 'activity' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} currentUserId={user?.id} semesterLabel={selectedSemesterLabel} />
+                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} currentUserId={user?.id} semesterLabel={selectedSemesterLabel} canAdd={canAdd} />
                                 </Suspense>
                             )}
                         </TabsContent>
@@ -469,6 +473,8 @@ const StudentDetailPage = () => {
                                         isOnline={isOnline}
                                         currentUserId={user?.id}
                                         semesterLabel={selectedSemesterLabel}
+                                        isHomeroomTeacher={isHomeroomTeacher}
+                                        canAdd={canAdd}
                                     />
                                 </Suspense>
                             )}
@@ -498,7 +504,7 @@ const StudentDetailPage = () => {
                                         currentUserId={user?.id}
                                         studentName={student.name}
                                         className={student.classes?.name || '-'}
-                                        canAdd={canManageStudentProfile}
+                                        canAdd={canManageStudentProfile && !isAssistant}
                                     />
                                 </Suspense>
                             )}
@@ -506,7 +512,7 @@ const StudentDetailPage = () => {
                         <TabsContent value="reports" className="p-0">
                             {activeTab === 'reports' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <ReportsTab reports={reports} onAdd={() => setModalState({ type: 'report', data: null })} onEdit={(r) => setModalState({ type: 'report', data: r })} onDelete={(id) => handleDelete('reports', id)} isOnline={isOnline} currentUserId={user?.id} canAdd={canManageStudentProfile} />
+                                    <ReportsTab reports={reports} onAdd={() => setModalState({ type: 'report', data: null })} onEdit={(r) => setModalState({ type: 'report', data: r })} onDelete={(id) => handleDelete('reports', id)} isOnline={isOnline} currentUserId={user?.id} canAdd={canManageStudentProfile && !isAssistant} />
                                 </Suspense>
                             )}
                         </TabsContent>
