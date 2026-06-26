@@ -15,16 +15,29 @@ const EMPTY_CLASSES: AnalyticsClass[] = [];
 const _EMPTY_STUDENTS: Student[] = [];
 
 export const useAnalyticsData = () => {
-    const { user } = useAuth();
+    const { user, userRole } = useAuth();
+    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'admin';
     const { activeSemester } = useSemester();
     const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
     const [selectedClassId, setSelectedClassId] = useState<string>('all');
 
     // Fetch Security: Get classes the teacher is allowed to see
     const { data: allowedClasses = EMPTY_CLASSES, isLoading: isLoadingAllowedClasses } = useQuery({
-        queryKey: ['analytics_allowed_classes', user?.id],
+        queryKey: ['analytics_allowed_classes', user?.id, userRole],
         queryFn: async () => {
             if (!user) return EMPTY_CLASSES;
+
+            // Pimpinan (kepala madrasah / waka / admin) melihat SELURUH kelas madrasah,
+            // bukan hanya kelas miliknya. RLS leadership-read sudah mengizinkan.
+            if (isLeadership) {
+                const { data: allClasses, error: allErr } = await supabase
+                    .from('classes')
+                    .select('id, name')
+                    .is('deleted_at', null)
+                    .eq('is_archived', false);
+                if (allErr) throw allErr;
+                return (allClasses || []) as AnalyticsClass[];
+            }
             
             // 1. Get assignments
             const { data: assignments } = await supabase
