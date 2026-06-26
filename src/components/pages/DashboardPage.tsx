@@ -380,12 +380,14 @@ const DashboardPage: React.FC = () => {
           {/* Parent Messages Widget */}
           <ParentMessagesWidget />
 
-          {/* Activity Feed (Reminders + Timeline) */}
-          <ActivityFeedWidget
-            reminders={activeReminders}
-            activities={recentActivities}
-            onDismissReminder={handleDismissReminder}
-          />
+          {/* Activity Feed (Reminders + Timeline) — personal/teacher-centric, hidden for leadership */}
+          {!isGlobalRole && (
+            <ActivityFeedWidget
+              reminders={activeReminders}
+              activities={recentActivities}
+              onDismissReminder={handleDismissReminder}
+            />
+          )}
         </div>
       </div>
 
