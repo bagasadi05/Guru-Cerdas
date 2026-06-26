@@ -672,7 +672,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                         <AlertTriangleIcon className="w-12 h-12 text-amber-500 mb-4" />
                         <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">Nilai Tidak Ditemukan</h3>
                         <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mt-1">
-                            Belum ada nilai yang disimpan untuk penilaian <strong>"{activeAssessmentName}"</strong>. Silakan isi nilai terlebih dahulu di menu <strong>Manajemen Nilai</strong>.
+                            Belum ada nilai yang disimpan untuk penilaian <strong>"{activeAssessmentName}"</strong>. Silakan isi nilai terlebih dahulu di menu <strong>Manajemen Siswa</strong>.
                         </p>
                     </div>
                 ) : (
