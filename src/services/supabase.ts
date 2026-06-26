@@ -1,4 +1,3 @@
-
 /**
  * Supabase Client Configuration
  * 
@@ -256,7 +255,11 @@ const devApiKey = import.meta.env.DEV ? (import.meta.env.VITE_OPENROUTER_API_KEY
  * 
  * @since 1.0.0
  */
-export const isAiEnabled = !import.meta.env.DEV || !!openRouterProxyUrl || !!devApiKey;
+// Explicit kill-switch: VITE_ENABLE_AI_FEATURES=false force-disables ALL AI features.
+// When unset or any other value, AI availability is auto-derived from the proxy/dev key.
+const aiFeatureFlag = String(import.meta.env.VITE_ENABLE_AI_FEATURES ?? '').toLowerCase();
+const aiExplicitlyDisabled = aiFeatureFlag === 'false';
+export const isAiEnabled = !aiExplicitlyDisabled && (!import.meta.env.DEV || !!openRouterProxyUrl || !!devApiKey);
 
 if (!isAiEnabled) {
     logger.warn("AI API Keys are not set. AI features will not work.", "Supabase");

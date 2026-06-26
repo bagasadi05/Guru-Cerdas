@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../services/supabase';
 import { generateOpenRouterJson } from '../../../../services/openRouterService';
+import { generateTeacherNotesBatched } from '../../../../utils/aiBatch';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useToast } from '../../../../hooks/useToast';
 import { useSemester } from '../../../../contexts/SemesterContext';
@@ -356,19 +357,11 @@ Format JSON yang diharapkan:
     { "studentId": "ID_SISWA", "teacherNote": "Catatan singkat 2-3 kalimat..." }
   ]
 }`;
-                const prompt = `Buat catatan wali kelas SINGKAT (2-3 kalimat saja per siswa) untuk:
-${JSON.stringify(studentDataForPrompt.map(s => ({ id: s.studentId, nama: s.studentName, ringkasan: s.academicSummary.split('.')[0] })))}
-
-Contoh output yang benar:
-"Ananda menunjukkan kemajuan baik dalam belajar. Terus tingkatkan semangat dan keaktifan di kelas."`;
-                const parsedResponse = await generateOpenRouterJson<{ notes: { studentId: string; teacherNote: string }[] }>(prompt, systemInstruction);
-                const parsedNotes = parsedResponse.notes;
-                teacherNotesMap = new Map(parsedNotes.map(item => {
-                    let note = item.teacherNote.replace(/\\n/g, ' ').trim();
-                    const sentences = note.split(/[.!?]+/).filter(s => s.trim().length > 0);
-                    if (sentences.length > 3) note = sentences.slice(0, 3).join('. ').trim() + '.';
-                    return [item.studentId, note];
-                }));
+                teacherNotesMap = await generateTeacherNotesBatched(
+                    studentDataForPrompt,
+                    systemInstruction,
+                    (done, total) => setExportProgress(Math.round(40 + (done / total) * 25) + '%')
+                );
             }
             setExportProgress('70%');
             const { default: jsPDF } = await getJsPDF();
