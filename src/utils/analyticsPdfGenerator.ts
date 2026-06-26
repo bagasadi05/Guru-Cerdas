@@ -1,6 +1,7 @@
 import type jsPDF from 'jspdf';
 import { getAutoTable, getJsPDF } from './dynamicImports';
 import { ExportOptions } from '../components/pages/analytics/AnalyticsExportModal';
+import { addPdfHeader, ensureLogosLoaded } from './pdfHeaderUtils';
 
 // Extend jsPDF type to include autoTable
 interface jsPDFWithAutoTable extends jsPDF {
@@ -61,226 +62,265 @@ interface AnalyticsData {
 export const generateAnalyticsPdf = async (data: AnalyticsData, options: ExportOptions) => {
     const { default: jsPDF } = await getJsPDF();
     const { default: autoTable } = await getAutoTable();
-    const doc = new jsPDF() as jsPDFWithAutoTable;
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' }) as jsPDFWithAutoTable;
     const pageWidth = doc.internal.pageSize.width;
-    const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const pageHeight = doc.internal.pageSize.height;
+    const MARGIN = 14;
+    const contentW = pageWidth - MARGIN * 2;
 
-    // --- Header ---
-    doc.setFillColor(79, 70, 229); // Indigo 600
-    doc.rect(0, 0, pageWidth, 40, 'F');
+    // --- Formal palette ---
+    const PRIMARY = [7, 54, 66] as const;          // dark teal
+    const ACCENT = [12, 74, 110] as const;         // deep blue (table heads)
+    const ROW_ALT = [244, 248, 250] as const;
+    const BORDER = [205, 214, 222] as const;
+    const TEXT = [30, 41, 59] as const;
+    const MUTED = [100, 116, 139] as const;
 
+    const now = new Date();
+    const today = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const timestamp = now.toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
+
+    await ensureLogosLoaded();
+    let y = addPdfHeader(doc, { orientation: 'portrait' });
+
+    // --- Title band ---
+    y += 2;
+    doc.setFillColor(...PRIMARY);
+    doc.roundedRect(MARGIN, y, contentW, 14, 1.5, 1.5, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('Laporan Analitik Kelas', 15, 20);
-
-    doc.setFontSize(10);
+    doc.setFontSize(13);
+    doc.text('LAPORAN ANALITIK AKADEMIK', pageWidth / 2, y + 6, { align: 'center' });
     doc.setFont('helvetica', 'normal');
-    doc.text(`Portal Guru - Generated on ${today}`, 15, 30);
+    doc.setFontSize(8.5);
+    doc.text(data.selectedClassLabel.toUpperCase(), pageWidth / 2, y + 11, { align: 'center' });
+    y += 14 + 5;
 
-    // Right side header info
-    doc.setFontSize(10);
-    doc.text(`Kelas: ${data.selectedClassLabel}`, pageWidth - 15, 20, { align: 'right' });
-    doc.text(`Rentang Waktu: ${data.dateRangeLabel}`, pageWidth - 15, 25, { align: 'right' });
+    // --- Metadata info box (2 columns) ---
+    const boxH = 21;
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.3);
+    doc.setFillColor(250, 251, 252);
+    doc.roundedRect(MARGIN, y, contentW, boxH, 1.5, 1.5, 'FD');
+    const colX1 = MARGIN + 5;
+    const colX2 = pageWidth / 2 + 3;
+    const labelVal = (lx: number, ty: number, label: string, val: string) => {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...MUTED);
+        doc.text(label.toUpperCase(), lx, ty);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...TEXT);
+        doc.text(val, lx, ty + 5);
+    };
+    labelVal(colX1, y + 6, 'Kelas / Cakupan', data.selectedClassLabel);
+    labelVal(colX2, y + 6, 'Rentang Waktu', data.dateRangeLabel);
+    labelVal(colX1, y + 14.5, 'Tanggal Cetak', today);
+    labelVal(colX2, y + 14.5, 'Jumlah Siswa', `${data.students.length} siswa`);
+    y += boxH + 7;
 
-    let finalY = 45;
-
-    // --- 1. Ringkasan (Summary) ---
-    if (options.summary) {
-        doc.setTextColor(51, 65, 85); // Slate 700
-        doc.setFontSize(14);
+    // --- helpers ---
+    let sectionNo = 0;
+    const ensureSpace = (need: number) => {
+        if (y + need > pageHeight - 22) { doc.addPage(); y = 22; }
+    };
+    const heading = (title: string) => {
+        sectionNo++;
+        ensureSpace(16);
+        doc.setFillColor(...PRIMARY);
+        doc.rect(MARGIN, y - 3.4, 1.8, 5.8, 'F');
+        doc.setTextColor(...PRIMARY);
         doc.setFont('helvetica', 'bold');
-        doc.text('1. Ringkasan Dashboard', 15, finalY);
-        finalY += 3;
-
-        const summaryData = [
-            ['Total Siswa', `${data.students.length} Siswa`],
-            ['Kehadiran Rata-rata', `${data.attendanceStats.hadirRate}%`],
-            ['Rata-rata Nilai', data.gradeStats.overallAverage],
-            ['Tugas Selesai', `${data.taskStats.done} / ${data.taskStats.total}`],
-            ['Total Pelanggaran', data.violationsStats.total],
-            ['Siswa Berisiko', `${data.atRiskStudents.length} Siswa`]
-        ];
-
-        autoTable(doc, {
-            startY: finalY + 2,
-            head: [['Metrik', 'Nilai']],
-            body: summaryData,
-            theme: 'grid',
-            headStyles: { fillColor: [79, 70, 229], textColor: 255 }, // Indigo 600
-            styles: { fontSize: 10, cellPadding: 3 },
-            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 80 } },
-            margin: { left: 15, right: 15 }
+        doc.setFontSize(11);
+        doc.text(`${sectionNo}.  ${title}`, MARGIN + 4.5, y + 1);
+        doc.setDrawColor(...BORDER);
+        doc.setLineWidth(0.3);
+        doc.line(MARGIN, y + 3.6, pageWidth - MARGIN, y + 3.6);
+        y += 9;
+    };
+    const tableBase = (extra: Record<string, unknown>): any => ({
+        startY: y,
+        margin: { left: MARGIN, right: MARGIN },
+        theme: 'grid',
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5, textColor: [30, 41, 59], lineColor: [222, 228, 235], lineWidth: 0.2 },
+        headStyles: { fillColor: [12, 74, 110], textColor: 255, fontStyle: 'bold', fontSize: 9, cellPadding: 2.8 },
+        alternateRowStyles: { fillColor: [244, 248, 250] },
+        ...extra,
+    });
+    const afterTable = () => { y = doc.lastAutoTable.finalY + 8; };
+    const kpiCards = (cards: { label: string; value: string | number; color: readonly [number, number, number] }[]) => {
+        ensureSpace(26);
+        const gap = 4;
+        const cw = (contentW - gap * (cards.length - 1)) / cards.length;
+        const ch = 21;
+        cards.forEach((c, i) => {
+            const cx = MARGIN + i * (cw + gap);
+            doc.setFillColor(c.color[0], c.color[1], c.color[2]);
+            doc.roundedRect(cx, y, cw, ch, 1.5, 1.5, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+            doc.text(String(c.value), cx + 5, y + 11);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+            doc.text(c.label.toUpperCase(), cx + 5, y + 16.5);
         });
-        finalY = doc.lastAutoTable.finalY + 10;
+        y += ch + 8;
+    };
+
+    // ===== 1. Ringkasan Eksekutif =====
+    if (options.summary) {
+        heading('Ringkasan Eksekutif');
+        kpiCards([
+            { label: 'Total Siswa', value: data.students.length, color: [37, 99, 235] },
+            { label: 'Rata-rata Nilai', value: (data.gradeStats.overallAverage ?? 0).toFixed(1), color: [5, 150, 105] },
+            { label: 'Kehadiran', value: `${(data.attendanceStats.hadirRate ?? 0).toFixed(0)}%`, color: [217, 119, 6] },
+            { label: 'Pelanggaran', value: data.violationsStats.total, color: [220, 38, 38] },
+        ]);
+        autoTable(doc, tableBase({
+            head: [['Indikator', 'Nilai']],
+            body: [
+                ['Total Siswa', `${data.students.length} siswa`],
+                ['Komposisi Gender', `Laki-laki ${data.genderStats.male} - Perempuan ${data.genderStats.female}`],
+                ['Rata-rata Nilai', `${(data.gradeStats.overallAverage ?? 0).toFixed(1)} (dari ${data.gradeStats.totalStudentsWithGrades} siswa bernilai)`],
+                ['Tingkat Kehadiran', `${(data.attendanceStats.hadirRate ?? 0).toFixed(1)}%`],
+                ['Total Pelanggaran', `${data.violationsStats.total} kasus - ${data.violationsStats.totalPoints} poin`],
+                ['Penyelesaian Tugas', `${data.taskStats.done} dari ${data.taskStats.total} tugas selesai`],
+                ['Siswa Perlu Perhatian', `${data.atRiskStudents.length} siswa`],
+            ],
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 65, fillColor: [248, 250, 252] }, 1: { halign: 'left' } },
+        }));
+        afterTable();
     }
 
-    // --- 2. Data Siswa ---
+    // ===== 2. Profil & Siswa Perlu Perhatian =====
     if (options.students) {
-        // Check for page break
-        if (finalY > 250) { doc.addPage(); finalY = 20; }
-
-        doc.setTextColor(51, 65, 85);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('2. Data Siswa', 15, finalY);
-        finalY += 3;
-
-        // Gender & Risk Summary
-        const riskText = data.atRiskStudents.length > 0
-            ? `Perlu Perhatian: ${data.atRiskStudents.map((i) => i.student?.name).join(', ')}`
-            : 'Tidak ada siswa berisiko tinggi.';
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Laki-laki: ${data.genderStats.male} | Perempuan: ${data.genderStats.female}`, 15, finalY + 5);
-
-        const splitRisk = doc.splitTextToSize(riskText, pageWidth - 30);
-        doc.text(splitRisk, 15, finalY + 10);
-        finalY += 10 + (splitRisk.length * 4);
-
+        heading('Profil Siswa');
+        autoTable(doc, tableBase({
+            head: [['Komposisi', 'Jumlah']],
+            body: [
+                ['Laki-laki', `${data.genderStats.male} siswa`],
+                ['Perempuan', `${data.genderStats.female} siswa`],
+                ['Total', `${data.students.length} siswa`],
+            ],
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 65, fillColor: [248, 250, 252] }, 1: { halign: 'right', cellWidth: 40 } },
+        }));
+        afterTable();
+        ensureSpace(20);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...TEXT);
+        doc.text('Siswa Perlu Perhatian', MARGIN, y);
+        y += 2;
         if (data.atRiskStudents.length > 0) {
-            autoTable(doc, {
-                startY: finalY + 2,
-                head: [['Nama Siswa', 'Kategori Risiko', 'Detail']],
-                body: data.atRiskStudents.map((item) => [
-                    item.student?.name || 'Unknown',
-                    item.reason === 'attendance' ? 'Kehadiran Buruk' : item.reason === 'academic' ? 'Nilai Rendah' : 'Kombinasi',
-                    item.details || '-'
-                ]),
-                theme: 'striped',
-                headStyles: { fillColor: [239, 68, 68] }, // Red 500
-                styles: { fontSize: 9 },
-                margin: { left: 15, right: 15 }
-            });
-            finalY = doc.lastAutoTable.finalY + 10;
+            autoTable(doc, tableBase({
+                startY: y + 2,
+                head: [['No', 'Nama Siswa', 'Alasan', 'Detail']],
+                body: data.atRiskStudents.map((s, i) => [`${i + 1}`, s.student?.name ?? '-', s.reason ?? '-', s.details ?? '-']),
+                headStyles: { fillColor: [180, 83, 9], textColor: 255, fontStyle: 'bold', fontSize: 9, cellPadding: 2.8 },
+                columnStyles: { 0: { cellWidth: 10, halign: 'center' }, 1: { cellWidth: 45, fontStyle: 'bold' }, 2: { cellWidth: 40 } },
+            }));
+            afterTable();
+        } else {
+            y += 4;
+            doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor(...MUTED);
+            doc.text('Tidak ada siswa yang memerlukan perhatian khusus pada periode ini.', MARGIN, y);
+            y += 8;
         }
     }
 
-    // --- 3. Kehadiran ---
+    // ===== 3. Rekapitulasi Kehadiran =====
     if (options.attendance) {
-        if (finalY > 240) { doc.addPage(); finalY = 20; }
-
-        doc.setTextColor(51, 65, 85);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('3. Laporan Kehadiran', 15, finalY);
-        finalY += 5;
-
-        const attendData = [
-            ['Hadir', data.attendanceStats.hadir, `${data.attendanceStats.hadirRate}%`],
-            ['Izin', data.attendanceStats.izin, '-'],
-            ['Sakit', data.attendanceStats.sakit, '-'],
-            ['Alpha', data.attendanceStats.alpha, '-'],
-            ['Total Pertemuan/Catatan', data.attendanceStats.total, '100%']
-        ];
-
-        autoTable(doc, {
-            startY: finalY,
+        heading('Rekapitulasi Kehadiran');
+        const at = data.attendanceStats;
+        const pct = (n: number) => at.total > 0 ? `${((n / at.total) * 100).toFixed(1)}%` : '0%';
+        autoTable(doc, tableBase({
             head: [['Status', 'Jumlah', 'Persentase']],
-            body: attendData,
-            theme: 'grid',
-            headStyles: { fillColor: [34, 197, 94] }, // Green 500
-            styles: { fontSize: 10, halign: 'center' },
-            columnStyles: { 0: { halign: 'left' } },
-            margin: { left: 15, right: 15 }
-        });
-        finalY = doc.lastAutoTable.finalY + 10;
+            body: [
+                ['Hadir', `${at.hadir}`, pct(at.hadir)],
+                ['Izin', `${at.izin}`, pct(at.izin)],
+                ['Sakit', `${at.sakit}`, pct(at.sakit)],
+                ['Alpha', `${at.alpha}`, pct(at.alpha)],
+                ['Total', `${at.total}`, '100%'],
+            ],
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 }, 1: { halign: 'right', cellWidth: 40 }, 2: { halign: 'right', cellWidth: 40 } },
+            didParseCell: (d: any) => { if (d.row.index === 4) { d.cell.styles.fillColor = [232, 240, 244]; d.cell.styles.fontStyle = 'bold'; } },
+        }));
+        afterTable();
     }
 
-    // --- 4. Nilai Akademik ---
+    // ===== 4. Distribusi Nilai Akademik =====
     if (options.grades) {
-        if (finalY > 240) { doc.addPage(); finalY = 20; }
-
-        doc.setTextColor(51, 65, 85);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('4. Analisis Nilai Akademik', 15, finalY);
-        finalY += 5;
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Rata-rata Kelas: ${data.gradeStats.overallAverage} (dari ${data.gradeStats.totalStudentsWithGrades} siswa)`, 15, finalY);
-        finalY += 5;
-
-        const gradeDist = data.gradeStats.distribution.map((d) => [
-            d.label, d.range, d.count, `${d.percentage}%`
-        ]);
-
-        autoTable(doc, {
-            startY: finalY,
-            head: [['Unsur Penilaian', 'Rentang Nilai', 'Jumlah Siswa', 'Persentase']],
-            body: gradeDist,
-            theme: 'grid',
-            headStyles: { fillColor: [234, 179, 8] }, // Yellow 500
-            styles: { fontSize: 10, halign: 'center' },
-            columnStyles: { 0: { halign: 'left' } },
-            margin: { left: 15, right: 15 }
-        });
-        finalY = doc.lastAutoTable.finalY + 10;
+        heading('Distribusi Nilai Akademik');
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...MUTED);
+        doc.text(`Rata-rata nilai: ${(data.gradeStats.overallAverage ?? 0).toFixed(1)} - ${data.gradeStats.totalStudentsWithGrades} siswa memiliki nilai`, MARGIN, y);
+        y += 4;
+        autoTable(doc, tableBase({
+            startY: y,
+            head: [['Kategori', 'Rentang', 'Jumlah Siswa', 'Persentase']],
+            body: data.gradeStats.distribution.map((d) => [d.label, d.range, `${d.count}`, `${d.percentage.toFixed(1)}%`]),
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55 }, 1: { cellWidth: 45 }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+        }));
+        afterTable();
     }
 
-    // --- 5. Pelanggaran ---
+    // ===== 5. Catatan Pelanggaran =====
     if (options.violations && data.violationsStats.total > 0) {
-        if (finalY > 240) { doc.addPage(); finalY = 20; }
-
-        doc.setTextColor(51, 65, 85);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('5. Laporan Pelanggaran', 15, finalY);
-        finalY += 5;
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Total Pelanggaran: ${data.violationsStats.total} Kasus (${data.violationsStats.totalPoints} Poin)`, 15, finalY);
-        finalY += 5;
-
-        const violData = data.violationsStats.byType.map((v) => [v.type, v.count]);
-
-        autoTable(doc, {
-            startY: finalY,
-            head: [['Jenis Pelanggaran', 'Frekuensi']],
-            body: violData,
-            theme: 'striped',
-            headStyles: { fillColor: [239, 68, 68] }, // Red 500
-            styles: { fontSize: 10 },
-            margin: { left: 15, right: 15 }
-        });
-        finalY = doc.lastAutoTable.finalY + 10;
+        heading('Catatan Pelanggaran');
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...MUTED);
+        doc.text(`Total ${data.violationsStats.total} kasus dengan akumulasi ${data.violationsStats.totalPoints} poin.`, MARGIN, y);
+        y += 4;
+        autoTable(doc, tableBase({
+            startY: y,
+            head: [['Jenis Pelanggaran', 'Jumlah Kasus']],
+            body: data.violationsStats.byType.map((v) => [v.type, `${v.count}`]),
+            headStyles: { fillColor: [153, 27, 27], textColor: 255, fontStyle: 'bold', fontSize: 9, cellPadding: 2.8 },
+            columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right', cellWidth: 45 } },
+        }));
+        afterTable();
     }
 
-    // --- 6. Keaktifan (Activities) ---
+    // ===== 6. Poin Kuis & Aktivitas =====
     if (options.activities && data.quizPointsStats.total > 0) {
-        if (finalY > 240) { doc.addPage(); finalY = 20; }
-
-        doc.setTextColor(51, 65, 85);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('6. Keaktifan & Poin', 15, finalY);
-        finalY += 5;
-
-        const actData = data.quizPointsStats.byCategory.map((c) => [c.category, c.count, c.points]);
-
-        autoTable(doc, {
-            startY: finalY,
-            head: [['Kategori', 'Jumlah Aktivitas', 'Total Poin Diperoleh']],
-            body: actData,
-            theme: 'striped',
-            headStyles: { fillColor: [6, 182, 212] }, // Cyan 500
-            styles: { fontSize: 10, halign: 'center' },
-            columnStyles: { 0: { halign: 'left' } },
-            margin: { left: 15, right: 15 }
-        });
-        finalY = doc.lastAutoTable.finalY + 10;
+        heading('Poin Kuis & Aktivitas');
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...MUTED);
+        doc.text(`Total poin kuis terkumpul: ${data.quizPointsStats.total}.`, MARGIN, y);
+        y += 4;
+        autoTable(doc, tableBase({
+            startY: y,
+            head: [['Kategori', 'Jumlah', 'Poin']],
+            body: data.quizPointsStats.byCategory.map((q) => [q.category, `${q.count}`, `${q.points}`]),
+            columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right', cellWidth: 35 }, 2: { halign: 'right', cellWidth: 35 } },
+        }));
+        afterTable();
     }
 
-    // --- Footer ---
+    // ===== Signature block =====
+    ensureSpace(45);
+    y += 4;
+    const sigRightX = pageWidth - MARGIN - 60;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...TEXT);
+    doc.text(`Madiun, ${today}`, sigRightX, y, { align: 'left' });
+    y += 7;
+    const sigLeftX = MARGIN + 4;
+    doc.text('Mengetahui,', sigLeftX, y);
+    doc.text('Penyusun Laporan,', sigRightX, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Kepala Madrasah', sigLeftX, y + 5);
+    doc.setFont('helvetica', 'normal');
+    y += 28;
+    doc.setDrawColor(...TEXT); doc.setLineWidth(0.3);
+    doc.line(sigLeftX, y, sigLeftX + 55, y);
+    doc.line(sigRightX, y, sigRightX + 55, y);
+    doc.setFontSize(8.5); doc.setTextColor(...MUTED);
+    doc.text('NIP. ........................', sigLeftX, y + 5);
+    doc.text('NIP. ........................', sigRightX, y + 5);
+
+    // ===== Footer on every page =====
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(`Page ${i} of ${pageCount}`, pageWidth - 20, doc.internal.pageSize.height - 10, { align: 'right' });
+        const fy = pageHeight - 12;
+        doc.setDrawColor(...BORDER); doc.setLineWidth(0.3);
+        doc.line(MARGIN, fy - 3, pageWidth - MARGIN, fy - 3);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...MUTED);
+        doc.text('Portal Guru - Sistem Informasi Madrasah', MARGIN, fy);
+        doc.text(`Dibuat otomatis: ${timestamp}`, pageWidth / 2, fy, { align: 'center' });
+        doc.text(`Halaman ${i} dari ${pageCount}`, pageWidth - MARGIN, fy, { align: 'right' });
     }
 
     doc.save(`Laporan_Analitik_${data.selectedClassLabel.replace(/\s/g, '_')}_${today}.pdf`);
