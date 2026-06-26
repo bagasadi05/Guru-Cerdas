@@ -3,6 +3,9 @@
 --         UPDATE/DELETE tetap dibatasi ke pencatat (auth.uid() = user_id) ATAU Admin.
 -- Data lain (nilai/profil lengkap) TIDAK terpengaruh — hanya tabel violations yang dibuka.
 -- Idempotent: aman dijalankan ulang.
+-- Rekonsiliasi (2026-06-26): get_student_directory di DB live sudah berupa
+--   superset 4 kolom (id, name, class_name, class_id). Migrasi ini DROP dulu lalu
+--   recreate 4 kolom (pakai c.name; kolom 's.class' TIDAK ada di skema).
 --
 -- CATATAN REKONSILIASI (urutan merge):
 --   Migrasi ini SENGAJA MEMBUKA RLS `violations`, berlawanan dengan hardening.
@@ -66,11 +69,13 @@ CREATE POLICY "Violations: creator or admin can delete"
 -- 5) RPC SECURITY DEFINER: direktori siswa minimal (id, nama, nama kelas)
 --    HANYA mengembalikan data minimal untuk UI pemilihan siswa pada pencatatan
 --    pelanggaran. TIDAK mengekspos nilai/profil/data sensitif lain.
+DROP FUNCTION IF EXISTS public.get_student_directory();
 CREATE OR REPLACE FUNCTION public.get_student_directory()
 RETURNS TABLE (
     id uuid,
     name text,
-    class_name text
+    class_name text,
+    class_id uuid
 )
 LANGUAGE sql
 SECURITY DEFINER
@@ -80,11 +85,12 @@ AS $$
     SELECT
         s.id,
         s.name,
-        COALESCE(c.name, s.class) AS class_name
+        c.name AS class_name,
+        s.class_id
     FROM public.students s
     LEFT JOIN public.classes c ON c.id = s.class_id
     WHERE s.deleted_at IS NULL
-    ORDER BY class_name NULLS LAST, s.name;
+    ORDER BY c.name NULLS LAST, s.name;
 $$;
 
 -- Hanya user terautentikasi yang boleh memanggil
