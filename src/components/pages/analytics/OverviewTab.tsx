@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '../../../hooks/useAuth';
+import SmartInsightsPanel from './SmartInsightsPanel';
 
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { Button } from '../../ui/Button';
@@ -84,6 +85,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
     return (
         <div className="space-y-6 animate-fade-in">
+            {isLeadership && <SmartInsightsPanel />}
             {/* AI Summary Banner */}
             <div className={`p-5 rounded-2xl border-l-4 shadow-sm flex gap-4 items-start
                 ${summary.mood === 'good' ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 
