@@ -14,19 +14,20 @@ import { useAnalyticsData } from './analytics/useAnalyticsData';
 const OverviewTab = lazy(() => import('./analytics/OverviewTab').then(m => ({ default: m.OverviewTab })));
 const AcademicTab = lazy(() => import('./analytics/AcademicTab').then(m => ({ default: m.AcademicTab })));
 const AttendanceTab = lazy(() => import('./analytics/AttendanceTab').then(m => ({ default: m.AttendanceTab })));
+const ClassComparisonTab = lazy(() => import('./analytics/ClassComparisonTab'));
 const CharacterTab = lazy(() => import('./analytics/CharacterTab').then(m => ({ default: m.CharacterTab })));
 
 // UI Components
 import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
-import { Download, RefreshCwIcon, UsersIcon, CalendarIcon, LayoutDashboard, GraduationCap, Clock, ShieldAlert } from 'lucide-react';
+import { Download, RefreshCwIcon, UsersIcon, CalendarIcon, LayoutDashboard, GraduationCap, Clock, ShieldAlert, BarChart3 } from 'lucide-react';
 
 const AnalyticsPage: React.FC = () => {
     const { start } = useTour();
     const { userRole } = useAuth();
     const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'admin';
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'attendance' | 'character'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'attendance' | 'character' | 'comparison'>('overview');
 
     const {
         dateRange, setDateRange,
@@ -95,6 +96,7 @@ const AnalyticsPage: React.FC = () => {
         { id: 'academic', label: 'Akademik', icon: GraduationCap },
         { id: 'attendance', label: 'Kehadiran', icon: Clock },
         { id: 'character', label: 'Karakter', icon: ShieldAlert },
+        { id: 'comparison', label: 'Perbandingan Kelas', icon: BarChart3 },
     ] as const;
 
     return (
@@ -154,7 +156,7 @@ const AnalyticsPage: React.FC = () => {
 
             {/* Smart Navigation Tabs */}
             <div id="tour-tabs" className="flex overflow-x-auto scrollbar-hide gap-2 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-2xl">
-                {tabs.map(tab => (
+                {tabs.filter(tab => tab.id !== 'comparison' || isLeadership).map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
@@ -202,6 +204,9 @@ const AnalyticsPage: React.FC = () => {
                         <CharacterTab 
                             violationsStats={violationsStats} quizPointsStats={quizPointsStats} 
                         />
+                    )}
+                    {activeTab === 'comparison' && isLeadership && (
+                        <ClassComparisonTab />
                     )}
                 </Suspense>
             </div>
