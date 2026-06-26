@@ -78,11 +78,10 @@ export const getDashboardNavSections = (isAdmin: boolean, role?: string | null):
   }));
 
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
-    // Waka Kesiswaan fokus kesiswaan: tetap akses Input Pelanggaran (/input-massal);
-    // Kepala Madrasah read-only: tanpa modul input.
-    const excludedHrefs = role === 'waka_kesiswaan'
-      ? ['/jadwal', '/jurnal', '/tugas', '/brankas']
-      : ['/jadwal', '/jurnal', '/tugas', '/brankas', '/input-massal'];
+    // Kepala Madrasah & Waka Kesiswaan juga seorang guru: keduanya boleh
+    // mengakses Input Pelanggaran (/input-massal). Modul personal guru
+    // (jadwal/jurnal/tugas/brankas) tetap disembunyikan untuk pimpinan.
+    const excludedHrefs = ['/jadwal', '/jurnal', '/tugas', '/brankas'];
     sections = sections.map(section => ({
       ...section,
       items: section.items.filter(item => !excludedHrefs.includes(item.href))
@@ -111,11 +110,10 @@ export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null
   let items = [...baseMoreMenuItems];
   
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
-    // Waka Kesiswaan fokus kesiswaan: tetap akses Input Pelanggaran (/input-massal);
-    // Kepala Madrasah read-only: tanpa modul input.
-    const excludedHrefs = role === 'waka_kesiswaan'
-      ? ['/jadwal', '/jurnal', '/tugas', '/brankas']
-      : ['/jadwal', '/jurnal', '/tugas', '/brankas', '/input-massal'];
+    // Kepala Madrasah & Waka Kesiswaan juga seorang guru: keduanya boleh
+    // mengakses Input Pelanggaran (/input-massal). Modul personal guru
+    // (jadwal/jurnal/tugas/brankas) tetap disembunyikan untuk pimpinan.
+    const excludedHrefs = ['/jadwal', '/jurnal', '/tugas', '/brankas'];
     items = items.filter(item => !excludedHrefs.includes(item.href));
   }
 

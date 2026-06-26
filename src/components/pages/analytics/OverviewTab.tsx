@@ -1,4 +1,8 @@
+
 import React from 'react';
+import { useAuth } from '../../../hooks/useAuth';
+import SmartInsightsPanel from './SmartInsightsPanel';
+
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { UsersIcon, CalendarIcon, BarChart3Icon, TrendingUpIcon, AlertCircleIcon, Sparkles } from 'lucide-react';
@@ -46,9 +50,11 @@ const StatCard = ({ title, value, subtitle, icon: Icon, color, trend }: any) => 
 export const OverviewTab: React.FC<OverviewTabProps> = ({ 
     students, classes, attendanceStats, taskStats, genderStats, atRiskStudents, topPerformingStudents 
 }) => {
+    const { userRole } = useAuth();
+    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'admin';
     // Generate AI Summary string
     const generateSummary = () => {
-        if (students.length === 0) return { text: "Belum ada siswa di kelas Anda. Silakan tambahkan siswa terlebih dahulu.", mood: 'neutral' };
+        if (students.length === 0) return { text: isLeadership ? "Belum ada data siswa di madrasah." : "Belum ada siswa di kelas Anda. Silakan tambahkan siswa terlebih dahulu.", mood: 'neutral' };
         
         let mood = 'neutral';
         let summaryText = `Saat ini terdapat ${students.length} siswa dalam ${classes.length} kelas aktif. `;
@@ -79,6 +85,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
     return (
         <div className="space-y-6 animate-fade-in">
+            {isLeadership && <SmartInsightsPanel />}
             {/* AI Summary Banner */}
             <div className={`p-5 rounded-2xl border-l-4 shadow-sm flex gap-4 items-start
                 ${summary.mood === 'good' ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 
@@ -116,7 +123,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <StatCard 
                     title="Kelas Aktif" 
                     value={classes.length} 
-                    subtitle="Dikelola oleh Anda"
+                    subtitle={isLeadership ? "Seluruh madrasah" : "Dikelola oleh Anda"}
                     icon={BarChart3Icon} color="blue" 
                 />
                 <StatCard 
