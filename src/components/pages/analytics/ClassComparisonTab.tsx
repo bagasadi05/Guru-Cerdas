@@ -25,15 +25,16 @@ const ClassComparisonTab: React.FC = () => {
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['class_comparison', semesterId],
-        enabled: !!semesterId,
+        enabled: true,
         queryFn: async () => {
+            const applySem = (q: any) => semesterId ? q.eq('semester_id', semesterId) : q;
             const [clsRes, stuRes, rolesRes, vioRes, attRes, acaRes] = await Promise.all([
                 supabase.from('classes').select('id, name, user_id').is('deleted_at', null).eq('is_archived', false),
                 supabase.from('students').select('id, name, class_id').is('deleted_at', null),
                 supabase.from('user_roles').select('user_id, full_name'),
-                supabase.from('violations').select('student_id, points').is('deleted_at', null).eq('semester_id', semesterId as string),
-                supabase.from('attendance').select('student_id, status').is('deleted_at', null).eq('semester_id', semesterId as string),
-                supabase.from('academic_records').select('student_id, score').is('deleted_at', null).eq('semester_id', semesterId as string),
+                applySem(supabase.from('violations').select('student_id, points').is('deleted_at', null)),
+                applySem(supabase.from('attendance').select('student_id, status').is('deleted_at', null)),
+                applySem(supabase.from('academic_records').select('student_id, score').is('deleted_at', null)),
             ]);
             const err = clsRes.error || stuRes.error || rolesRes.error || vioRes.error || attRes.error || acaRes.error;
             if (err) throw err;
@@ -121,15 +122,6 @@ const ClassComparisonTab: React.FC = () => {
         </th>
     );
 
-    if (!semesterId) {
-        return (
-            <Card>
-                <CardContent className="py-10 text-center text-gray-500 dark:text-gray-400">
-                    Pilih semester aktif untuk melihat perbandingan kelas.
-                </CardContent>
-            </Card>
-        );
-    }
 
     if (isLoading) {
         return (
@@ -159,7 +151,7 @@ const ClassComparisonTab: React.FC = () => {
                 <div className="px-4 pt-4 pb-2">
                     <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">Perbandingan Kelas</h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Ranking seluruh kelas madrasah untuk semester aktif. Klik judul kolom untuk mengurutkan, klik baris untuk rincian.
+                        Ranking seluruh kelas madrasah {semesterId ? 'untuk semester aktif' : '(semua waktu)'}. Klik judul kolom untuk mengurutkan, klik baris untuk rincian.
                     </p>
                 </div>
                 <table className="w-full text-sm">
