@@ -49,6 +49,7 @@ interface ViolationsTabProps {
     studentName?: string;
     className?: string;
     semesterLabel?: string;
+    isHomeroomTeacher?: boolean;
     canAdd?: boolean;
 }
 
@@ -164,12 +165,14 @@ const ViolationCard: React.FC<{
     isOnline: boolean;
     isLocked?: boolean;
     currentUserId?: string;
-}> = ({ violation, onEdit, onDelete, onNotifyParent, onUpdateFollowUp, isOnline, isLocked = false, currentUserId }) => {
+    isHomeroomTeacher?: boolean;
+}> = ({ violation, onEdit, onDelete, onNotifyParent, onUpdateFollowUp, isOnline, isLocked = false, currentUserId, isHomeroomTeacher = false }) => {
     const [showFollowUp, setShowFollowUp] = useState(false);
     const severity = isSeverityLevel(violation.severity) ? SEVERITY_LEVELS[violation.severity] : SEVERITY_LEVELS.ringan;
     const followUp = isFollowUpStatus(violation.follow_up_status) ? FOLLOW_UP_STATUS[violation.follow_up_status] : FOLLOW_UP_STATUS.pending;
     const FollowUpIcon = followUp.icon;
-    const canModify = violation.user_id === currentUserId && !isLocked;
+    const isCreator = violation.user_id === currentUserId;
+    const canModify = (isCreator || isHomeroomTeacher) && !isLocked;
 
     return (
         <div className={`group relative p-4 rounded-xl border-2 ${severity.borderClass} ${severity.bgClass} transition-all hover:shadow-md`}>
@@ -310,6 +313,7 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     currentUserId,
     studentName,
     className,
+    isHomeroomTeacher,
     semesterLabel,
     canAdd = true,
 }) => {
@@ -441,6 +445,7 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                                     isOnline={isOnline}
                                     isLocked={isViolationLocked}
                                     currentUserId={currentUserId}
+                                    isHomeroomTeacher={isHomeroomTeacher}
                                 />
                             );
                         })}

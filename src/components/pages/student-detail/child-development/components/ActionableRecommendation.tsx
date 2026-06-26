@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowRightIcon } from '../../../../Icons';
 import { MarkdownText } from '../../../../ui/MarkdownText';
 import { motion, AnimatePresence } from 'framer-motion';
-import { duration as motionDuration, easing } from '../../../../../styles/motion';
+import { duration as motionDuration } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
 const categoryEmojis: Record<string, string> = {

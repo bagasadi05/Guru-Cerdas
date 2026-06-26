@@ -6,7 +6,6 @@ import { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card'
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { ImageUploader } from '../ui/ImageUploader';
-import { supabase } from '../../services/supabase';
 import { r2StorageService } from '../../services/r2StorageService';
 import { SettingsCard } from './SettingsCard';
 

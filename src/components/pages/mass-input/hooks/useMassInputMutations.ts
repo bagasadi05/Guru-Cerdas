@@ -33,6 +33,7 @@ export interface UseMassInputMutationsParams {
     selectedStudentIds: Set<string>;
     selectedViolationCode: string;
     violationDate: string;
+    violationNotes: string;
     studentsData: StudentRow[] | undefined;
     noteMethod: 'ai' | 'template';
     templateNote: string;
@@ -59,7 +60,7 @@ export const findStudentMatch = (targetName: string, students: StudentRow[]): St
 export function useMassInputMutations(params: UseMassInputMutationsParams) {
     const {
         mode, selectedClass, quizInfo, subjectGradeInfo, scores, validationErrors,
-        existingGrades, selectedStudentIds, selectedViolationCode, violationDate,
+        existingGrades, selectedStudentIds, selectedViolationCode, violationDate, violationNotes,
         studentsData, noteMethod, templateNote, pasteData,
         gradedCount, filteredExistingGrades, classes,
         setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirty,
@@ -194,15 +195,21 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     }
                     const records: Database['public']['Tables']['violations']['Insert'][] = studentIds
                         .filter((student_id) => !duplicateStudentIds.has(student_id))
-                        .map((student_id: string) => ({
-                            date: violationDate,
-                            description: selectedViolation.description,
-                            points: selectedViolation.points,
-                            type: selectedViolation.code,
-                            student_id,
-                            user_id: user.id,
-                            semester_id: activeSemester?.id || null,
-                        }));
+                        .map((student_id: string) => {
+                            const finalDescription = violationNotes
+                                ? `${selectedViolation.description} - ${violationNotes}`
+                                : selectedViolation.description;
+
+                            return {
+                                date: violationDate,
+                                description: finalDescription,
+                                points: selectedViolation.points,
+                                type: selectedViolation.code,
+                                student_id,
+                                user_id: user.id,
+                                semester_id: activeSemester?.id || null,
+                            };
+                        });
 
                     if (records.length === 0) {
                         return 'Tidak ada pelanggaran baru yang disimpan. Sistem mendeteksi input yang sama sudah tersimpan beberapa menit terakhir.';

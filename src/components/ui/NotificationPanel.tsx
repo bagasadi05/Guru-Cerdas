@@ -1,17 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BellIcon, CheckIcon, TrashIcon, XIcon, AlertTriangleIcon, ClockIcon, MessageSquareIcon, SettingsIcon, TrendingDownIcon } from 'lucide-react';
-import {
-    getNotifications,
-    markAsRead,
-    markAllAsRead,
-    clearNotifications,
-    getUnreadCount,
-    checkAndNotify,
-    formatTimeAgo,
-    Notification,
-    NotificationType
-} from '../../services/NotificationService';
+import { InternalNotification, useInternalNotifications } from '../../hooks/useInternalNotifications';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from './Button';
 
@@ -19,60 +9,73 @@ interface NotificationPanelProps {
     className?: string;
 }
 
-const NotificationIcon: React.FC<{ type: NotificationType }> = ({ type }) => {
+const NotificationIcon: React.FC<{ type: InternalNotification['type'] }> = ({ type }) => {
     switch (type) {
-        case 'task_overdue':
+        case 'danger':
             return <AlertTriangleIcon className="w-4 h-4 text-red-500" />;
-        case 'task_due':
-            return <ClockIcon className="w-4 h-4 text-amber-500" />;
-        case 'message':
+        case 'warning':
+            return <AlertTriangleIcon className="w-4 h-4 text-amber-500" />;
+        case 'info':
             return <MessageSquareIcon className="w-4 h-4 text-blue-500" />;
-        case 'grade_trend':
-            return <TrendingDownIcon className="w-4 h-4 text-orange-500" />;
+        case 'success':
+            return <CheckIcon className="w-4 h-4 text-emerald-500" />;
         default:
             return <BellIcon className="w-4 h-4 text-gray-500" />;
     }
 };
 
+const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Baru saja';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} menit yang lalu`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} jam yang lalu`;
+    return `${Math.floor(diffInSeconds / 86400)} hari yang lalu`;
+};
+
 const NotificationItem: React.FC<{
-    notification: Notification;
+    notification: InternalNotification;
     onRead: (id: string) => void;
-    onNavigate: (link?: string) => void;
+    onNavigate: (link?: string | null) => void;
 }> = ({ notification, onRead, onNavigate }) => {
     const handleClick = () => {
-        if (!notification.read) {
+        if (!notification.is_read) {
             onRead(notification.id);
         }
-        onNavigate(notification.link);
+        if (notification.action_url) {
+            onNavigate(notification.action_url);
+        }
     };
 
     return (
         <button
             onClick={handleClick}
-            className={`w-full text-left p-3 rounded-xl transition-colors flex items-start gap-3 ${notification.read
+            className={`w-full text-left p-3 rounded-xl transition-colors flex items-start gap-3 ${notification.is_read
                     ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800'
                     : 'bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30'
                 }`}
         >
-            <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${notification.type === 'task_overdue'
+            <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${notification.type === 'danger'
                     ? 'bg-red-100 dark:bg-red-900/30'
-                    : notification.type === 'task_due'
+                    : notification.type === 'warning'
                         ? 'bg-amber-100 dark:bg-amber-900/30'
-                        : notification.type === 'grade_trend'
-                            ? 'bg-orange-100 dark:bg-orange-900/30'
-                            : 'bg-gray-100 dark:bg-gray-800'
+                        : notification.type === 'success'
+                            ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                            : 'bg-blue-100 dark:bg-blue-900/30'
                 }`}>
                 <NotificationIcon type={notification.type} />
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
-                    <p className={`text-sm font-medium ${notification.read
+                    <p className={`text-sm font-medium ${notification.is_read
                             ? 'text-gray-700 dark:text-gray-300'
                             : 'text-gray-900 dark:text-white'
                         }`}>
                         {notification.title}
                     </p>
-                    {!notification.read && (
+                    {!notification.is_read && (
                         <span className="flex-shrink-0 w-2 h-2 rounded-full bg-indigo-500 mt-1.5" />
                     )}
                 </div>
@@ -80,7 +83,7 @@ const NotificationItem: React.FC<{
                     {notification.message}
                 </p>
                 <p className="text-xxs text-gray-400 dark:text-gray-500 mt-1">
-                    {formatTimeAgo(notification.timestamp)}
+                    {formatTimeAgo(notification.created_at)}
                 </p>
             </div>
         </button>
@@ -91,48 +94,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
     const { user } = useAuth();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
-    const [notifications, setNotifications] = useState<Notification[]>(() => getNotifications());
-    const [unreadCount, setUnreadCount] = useState(() => getUnreadCount());
+    const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } = useInternalNotifications();
     const panelRef = useRef<HTMLDivElement>(null);
-
-    // Load notifications and check for new ones
-    const refreshNotifications = useCallback(async () => {
-        if (!user) return;
-
-        await checkAndNotify(user.id);
-        setNotifications(getNotifications());
-        setUnreadCount(getUnreadCount());
-    }, [user]);
-
-    useEffect(() => {
-        const initialTimer = setTimeout(() => {
-            refreshNotifications();
-        }, 0);
-
-        // Check every 5 minutes
-        const interval = setInterval(refreshNotifications, 5 * 60 * 1000);
-        return () => {
-            clearInterval(interval);
-            clearTimeout(initialTimer);
-        };
-    }, [refreshNotifications]);
-
-    useEffect(() => {
-        const syncNotifications = () => {
-            setNotifications(getNotifications());
-            setUnreadCount(getUnreadCount());
-        };
-
-        window.addEventListener('portal-guru-notifications-updated', syncNotifications);
-        window.addEventListener('storage', syncNotifications);
-        window.addEventListener('focus', syncNotifications);
-
-        return () => {
-            window.removeEventListener('portal-guru-notifications-updated', syncNotifications);
-            window.removeEventListener('storage', syncNotifications);
-            window.removeEventListener('focus', syncNotifications);
-        };
-    }, []);
 
     // Close panel when clicking outside
     useEffect(() => {
@@ -150,27 +113,21 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
 
     const handleRead = (id: string) => {
         markAsRead(id);
-        setNotifications(getNotifications());
-        setUnreadCount(getUnreadCount());
     };
 
-    const handleMarkAllRead = () => {
-        markAllAsRead();
-        setNotifications(getNotifications());
-        setUnreadCount(0);
+    const handleMarkAllAsRead = async () => {
+        await markAllAsRead();
     };
 
     const handleClear = () => {
-        clearNotifications();
-        setNotifications([]);
-        setUnreadCount(0);
+        clearAllNotifications();
     };
 
-    const handleNavigate = (link?: string) => {
-        setIsOpen(false);
+    const handleNavigate = (link?: string | null) => {
         if (link) {
             navigate(link);
         }
+        setIsOpen(false);
     };
 
     return (
@@ -198,7 +155,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
                         <div className="flex items-center gap-1">
                             {unreadCount > 0 && (
                                 <button
-                                    onClick={handleMarkAllRead}
+                                    onClick={handleMarkAllAsRead}
                                     className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
                                     title="Tandai semua sudah dibaca"
                                 >
@@ -250,14 +207,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
                     {/* Footer */}
                     {notifications.length > 0 && (
                         <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => { setIsOpen(false); navigate('/pengaturan'); }}
-                                className="w-full text-gray-500 hover:text-indigo-600"
-                            >
-                                <SettingsIcon className="w-4 h-4 mr-2" />
-                                Pengaturan Notifikasi
+                            <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} className="text-xs">
+                                Tandai Semua Dibaca
                             </Button>
                         </div>
                     )}

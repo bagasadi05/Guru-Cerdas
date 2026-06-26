@@ -36,6 +36,8 @@ interface Step2_ConfigurationProps {
     setSelectedViolationCode: (code: string) => void;
     violationDate: string;
     setViolationDate: (date: string) => void;
+    violationNotes: string;
+    setViolationNotes: (notes: string) => void;
     noteMethod: 'ai' | 'template';
     setNoteMethod: (method: 'ai' | 'template') => void;
     templateNote: string;
@@ -55,7 +57,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     mode, isConfigOpen, setIsConfigOpen, selectedClass, setSelectedClass, classes, isLoadingClasses,
     quizInfo, setQuizInfo, subjectGradeInfo, setSubjectGradeInfo, isCustomSubject, setIsCustomSubject,
     uniqueSubjects, selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
-    noteMethod, setNoteMethod, templateNote, setTemplateNote, assessmentNames,
+    violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote, assessmentNames,
     pasteData, setPasteData, isParsing, handleAiParse, isOnline, onOpenImport,
     bypassDuplicateGuard, setBypassDuplicateGuard
 }) => {
@@ -335,6 +337,16 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 <div className="space-y-2">
                                     <label htmlFor="violation-date" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Tanggal</label>
                                     <Input id="violation-date" type="date" value={violationDate} onChange={e => setViolationDate(e.target.value)} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="violation-notes" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Keterangan (Opsional)</label>
+                                    <textarea
+                                        id="violation-notes"
+                                        placeholder="Contoh: Terlambat 15 menit karena macet..."
+                                        value={violationNotes}
+                                        onChange={(e) => setViolationNotes(e.target.value)}
+                                        className="w-full h-24 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-indigo-500/50 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-all"
+                                    />
                                 </div>
 
                                 {/* Violation Selection Modal */}

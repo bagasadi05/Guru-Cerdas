@@ -173,7 +173,7 @@ const NotificationsSection: React.FC = () => {
         try {
             // Show a local notification via the SW to confirm the chain works.
             const reg = await navigator.serviceWorker.ready;
-            await reg.showNotification('Tes Notifikasi - Guru Cerdas', {
+            await reg.showNotification('Tes Notifikasi - MI Al Irsyad', {
                 body: 'Kalau kamu melihat ini, notifikasi push berfungsi di device ini. Pesan sebenarnya akan dikirim dari server.',
                 icon: '/icons/icon-192x192.png',
                 badge: '/icons/badge-72x72.png',

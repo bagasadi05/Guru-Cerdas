@@ -39,19 +39,42 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
     });
 
     const { data: classes, isLoading: isLoadingClasses } = useQuery({
-        queryKey: ['classes', user?.id],
+        queryKey: ['classes', user?.id, mode],
         queryFn: async (): Promise<ClassRow[]> => {
             if (!user) return [];
-            const { data, error } = await supabase.from('classes').select('id, name, user_id').is('deleted_at', null).order('name');
+            
+            // Kolaboratif: Mode pelanggaran bisa diakses semua guru,
+            // jadi kita pakai RPC khusus yang membypass RLS assignments.
+            if (mode === 'violation') {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore - RPC not yet in generated types
+                const { data, error } = await supabase.rpc('get_active_classes');
+                if (error) throw error; 
+                return (data || []) as unknown as ClassRow[];
+            }
+            
+            const { data, error } = await supabase.from('classes').select('id, name, user_id').is('deleted_at', null).eq('is_archived', false).order('name');
             if (error) throw error; return (data || []) as unknown as ClassRow[];
         },
         enabled: !!user,
     });
 
     const { data: studentsData, isLoading: isLoadingStudents } = useQuery({
-        queryKey: ['studentsForMassInput', selectedClass],
+        queryKey: ['studentsForMassInput', selectedClass, mode],
         queryFn: async (): Promise<StudentRow[]> => {
             if (!selectedClass) return [];
+            
+            // Kolaboratif: Mode pelanggaran bisa diakses semua guru
+            if (mode === 'violation') {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore - RPC not yet in generated types
+                const { data, error } = await supabase.rpc('get_student_directory');
+                if (error) throw error;
+                // get_student_directory returns all students, filter by selectedClass
+                const filteredData = (data || []).filter((s: any) => s.class_id === selectedClass);
+                return filteredData as unknown as StudentRow[];
+            }
+            
             const { data, error } = await supabase.from('students').select('id, name, class_id, user_id, gender, avatar_url, access_code, parent_name, parent_phone').eq('class_id', selectedClass).is('deleted_at', null).order('name');
             if (error) throw error; return (data || []) as unknown as StudentRow[];
         },
