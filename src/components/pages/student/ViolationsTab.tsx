@@ -278,6 +278,13 @@ const ViolationCard: React.FC<{
                 )}
             </div>
 
+            {/* Keterangan / Konteks */}
+            {violation.context_notes && (
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                    📄 {violation.context_notes}
+                </p>
+            )}
+
             {/* Follow-up Notes */}
             {violation.follow_up_notes && (
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 italic">

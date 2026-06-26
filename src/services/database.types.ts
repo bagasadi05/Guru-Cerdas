@@ -1290,6 +1290,7 @@ export type Database = {
           created_at: string
           date: string
           deleted_at: string | null
+          context_notes: string | null
           description: string
           evidence_url: string | null
           follow_up_notes: string | null
@@ -1308,6 +1309,7 @@ export type Database = {
           created_at?: string
           date: string
           deleted_at?: string | null
+          context_notes?: string | null
           description: string
           evidence_url?: string | null
           follow_up_notes?: string | null
@@ -1326,6 +1328,7 @@ export type Database = {
           created_at?: string
           date?: string
           deleted_at?: string | null
+          context_notes?: string | null
           description?: string
           evidence_url?: string | null
           follow_up_notes?: string | null
