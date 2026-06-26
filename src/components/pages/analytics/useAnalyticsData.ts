@@ -18,7 +18,7 @@ export const useAnalyticsData = () => {
     const { user, userRole } = useAuth();
     const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'admin';
     const { activeSemester } = useSemester();
-    const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+    const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>(isLeadership ? 'all' : '30d');
     const [selectedClassId, setSelectedClassId] = useState<string>('all');
 
     // Fetch Security: Get classes the teacher is allowed to see
