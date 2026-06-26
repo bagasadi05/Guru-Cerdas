@@ -34,13 +34,12 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
         return user;
     };
 
-    const getAuditRecord = async (table: keyof Database['public']['Tables'], id: string | number, userId: string) => {
+    const getAuditRecord = async (table: keyof Database['public']['Tables'], id: string | number, _userId: string) => {
         try {
             const { data } = await (supabase.from as any)(table)
                 .select('*')
                 .eq('id', String(id))
-                .eq('user_id', userId)
-                .single();
+                .maybeSingle();
             return data as Record<string, unknown> | null;
         } catch {
             return null;
@@ -354,9 +353,18 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             }
 
             const fromTable = (supabase.from as any)(table);
-            const query = SOFT_DELETE_TABLES.has(table)
-                ? fromTable.update({ deleted_at: new Date().toISOString() }).eq('id', id).eq('user_id', userId)
-                : fromTable.delete().eq('id', id).eq('user_id', userId);
+            // Collaborative tables are governed by RLS, not owner-scoping. Forcing
+            // .eq('user_id', userId) made leadership/admin deletes of OTHER teachers'
+            // records silently affect 0 rows (UI showed success but data persisted).
+            // For these tables we omit the owner filter and rely on RLS to decide who
+            // may modify/delete; .select('id') lets the caller detect a 0-row no-op.
+            const COLLAB_TABLES = new Set<keyof Database['public']['Tables']>(['violations']);
+            const ownerScoped = !COLLAB_TABLES.has(table);
+            const base = SOFT_DELETE_TABLES.has(table)
+                ? fromTable.update({ deleted_at: new Date().toISOString() }).eq('id', id)
+                : fromTable.delete().eq('id', id);
+            const scoped = ownerScoped ? base.eq('user_id', userId) : base;
+            const query = scoped.select('id');
             const { error } = await query;
             if (error) throw error;
             await writeAuditLog({
