@@ -122,11 +122,19 @@ const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({ schedule, currentTi
                     </div>
                   </div>
                 )}
-                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-500 border-t border-slate-100 dark:border-white/5 pt-3">
-                  <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-3 mt-1">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-500">
                     <ClockIcon className="w-3.5 h-3.5" />
                     <span>{Math.round((endTime.getTime() - startTime.getTime()) / 60000)} {t.dashboard.minutesUnit}</span>
                   </div>
+                  {(isCurrent || isPast) && item.class_id && (
+                    <a
+                      href={`/jurnal?classId=${item.class_id}&subject=${encodeURIComponent(item.subject)}&scheduleId=${item.id}&action=add`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/30 transition-colors"
+                    >
+                      Isi Jurnal
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

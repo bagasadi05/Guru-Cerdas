@@ -17,10 +17,11 @@ interface UseStudentsPageViewModelOptions {
   userId?: string;
   toast: ToastApi;
   isAdmin?: boolean;
+  canViewAll?: boolean;
 }
 
-export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false }: UseStudentsPageViewModelOptions) => {
-  const data = useStudentsPageData({ userId, toast });
+export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false, canViewAll = false }: UseStudentsPageViewModelOptions) => {
+  const data = useStudentsPageData({ userId, toast, isAdmin: isAdmin || canViewAll });
 
   const ui = useStudentsPageUiState({ classes: data.classes, toast });
 
@@ -150,7 +151,9 @@ export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false }: Use
     },
     bulkBar: {
       selectedCount,
-      bulkActions: interactions.bulkActions,
+      bulkActions: data.canManageActiveClass 
+        ? interactions.bulkActions 
+        : interactions.bulkActions.filter(a => a.id === 'export' || a.id === 'print_ids'),
       onClearSelection: clearSelection,
     },
     modalStack: {

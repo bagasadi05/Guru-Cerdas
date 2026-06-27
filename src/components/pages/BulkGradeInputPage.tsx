@@ -16,6 +16,7 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useGridNavigation } from '../../hooks/useGridNavigation';
 import { useAutosave } from '../../hooks/useAutosave';
 import { validateGrades, getGradeColorClass, calculateGradeStats, GradeEntry } from '../../utils/gradeValidator';
+import { useWarnUnsavedChanges } from '../../hooks/useWarnUnsavedChanges';
 import { KeyboardShortcutsHelp } from '../ui/KeyboardShortcutsHelp';
 import { EmptyGradesConfirmation, SaveSuccessModal, ClearAllConfirmation } from '../ui/GradeConfirmationModals';
 import { useSemester } from '../../contexts/SemesterContext';
@@ -118,6 +119,8 @@ const BulkGradeInputPage: React.FC = () => {
         interval: 30000,
         enabled: grades.some(g => g.score !== '') && !!selectedClass && !!selectedSemester,
     });
+
+    useWarnUnsavedChanges(hasDraft, 'Ada nilai yang belum disimpan ke database. Yakin ingin keluar?');
 
     // Check for draft on mount
     useEffect(() => {

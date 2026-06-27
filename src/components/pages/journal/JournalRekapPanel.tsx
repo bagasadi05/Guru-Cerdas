@@ -24,6 +24,7 @@ export const JournalRekapPanel: React.FC<JournalRekapPanelProps> = ({ filters })
     const toast = useToast();
     const [isExportingExcel, setIsExportingExcel] = useState(false);
     const [isExportingPdf, setIsExportingPdf] = useState(false);
+    const showTeacherColumn = filters.allTeachers === true;
 
     // Fetch summary rekap data
     const { 
@@ -206,6 +207,7 @@ export const JournalRekapPanel: React.FC<JournalRekapPanelProps> = ({ filters })
                             <thead className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
                                 <tr>
                                     <th className="px-6 py-4 font-semibold text-slate-900 dark:text-white w-12 text-center">No</th>
+                                    {showTeacherColumn && <th className="px-6 py-4 font-semibold text-slate-900 dark:text-white">Guru</th>}
                                     <th className="px-6 py-4 font-semibold text-slate-900 dark:text-white">Kelas</th>
                                     <th className="px-6 py-4 font-semibold text-slate-900 dark:text-white">Mata Pelajaran</th>
                                     <th className="px-6 py-4 font-semibold text-slate-900 dark:text-white text-center">Pertemuan Terisi</th>
@@ -214,8 +216,9 @@ export const JournalRekapPanel: React.FC<JournalRekapPanelProps> = ({ filters })
                             </thead>
                             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                                 {rekap.map((item, index) => (
-                                    <tr key={`${item.classId}-${item.subject}`} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                    <tr key={`${item.classId}-${item.subject}-${item.userId || 'me'}`} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                                         <td className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">{index + 1}</td>
+                                        {showTeacherColumn && <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{item.teacherName}</td>}
                                         <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{item.className}</td>
                                         <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{item.subject}</td>
                                         <td className="px-6 py-4 text-center font-semibold text-emerald-600 dark:text-emerald-400">

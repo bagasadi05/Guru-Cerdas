@@ -44,6 +44,8 @@ export interface TeachingJournalFilters {
     startDate?: string;
     /** Filter by end of date range (inclusive, YYYY-MM-DD) */
     endDate?: string;
+    /** Flag to fetch all teachers' journals (requires leadership role) */
+    allTeachers?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -55,6 +57,8 @@ export interface TeachingJournalRekap {
     classId: string;
     className: string;
     subject: string;
+    userId: string;
+    teacherName: string;
     totalMeetings: number;
     journalsFilled: number;
     lastJournalDate: string | null;

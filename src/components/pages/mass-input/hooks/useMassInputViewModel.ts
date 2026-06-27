@@ -5,6 +5,7 @@ import { useMassInputState } from './useMassInputState';
 import { useMassInputMutations } from './useMassInputMutations';
 import { AcademicRecordRow, StudentFilter, StudentRow } from '../types';
 import { actionCards } from '../constants';
+import { useWarnUnsavedChanges } from '../../../../hooks/useWarnUnsavedChanges';
 
 export function useMassInputViewModel() {
     const toast = useToast();
@@ -25,6 +26,12 @@ export function useMassInputViewModel() {
             state.setSelectedClass(data.classes[0].id);
         }
     }, [data.classes, state.selectedClass]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Warn before unload if there are unsaved score changes
+    useWarnUnsavedChanges(
+        state.mode === 'subject_grade' && state.isScoresDirty.current,
+        'Ada nilai yang belum disimpan. Yakin ingin keluar?'
+    );
 
     // Sync scores from existing grades (only when not dirty)
     useEffect(() => {

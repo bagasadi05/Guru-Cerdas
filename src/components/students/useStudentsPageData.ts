@@ -11,13 +11,14 @@ interface ToastApi {
 interface UseStudentsPageDataOptions {
   userId?: string;
   toast: ToastApi;
+  isAdmin?: boolean;
 }
 
 const EMPTY_CLASSES: ClassRow[] = [];
 const EMPTY_STUDENTS: StudentRow[] = [];
 const EMPTY_ASSIGNMENTS: TeacherClassAssignmentRow[] = [];
 
-export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOptions) => {
+export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStudentsPageDataOptions) => {
   const [searchTerm, setSearchTerm] = useState('');
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -52,7 +53,7 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
     isError: isClassesError,
     error: classesError,
   } = useQuery({
-    queryKey: ['classes', userId, userAssignments],
+    queryKey: ['classes', userId, userAssignments, isAdmin],
     queryFn: async () => {
       if (!userId) return EMPTY_CLASSES;
 
@@ -66,10 +67,12 @@ export const useStudentsPageData = ({ userId, toast }: UseStudentsPageDataOption
         .is('deleted_at', null)
         .eq('is_archived', false);
 
-      if (assignedClassIds.length > 0) {
-        query = query.or(`user_id.eq.${userId},id.in.(${assignedClassIds.map((id) => `"${id}"`).join(',')})`);
-      } else {
-        query = query.eq('user_id', userId);
+      if (!isAdmin) {
+        if (assignedClassIds.length > 0) {
+          query = query.or(`user_id.eq.${userId},id.in.(${assignedClassIds.map((id) => `"${id}"`).join(',')})`);
+        } else {
+          query = query.eq('user_id', userId);
+        }
       }
 
       const { data, error } = await query.order('name');

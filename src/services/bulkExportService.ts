@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { getAutoTable, getJsPDF } from '../utils/dynamicImports';
+import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 
 /**
  * Export all student reports for a class as a single PDF with multiple pages.
@@ -40,6 +41,8 @@ export const exportAllClassReports = async (
     const pageWidth = doc.internal.pageSize.getWidth();
     const totalStudents = students.length;
 
+    await ensureLogosLoaded();
+
     for (let i = 0; i < totalStudents; i++) {
         const student = students[i];
         onProgress?.(i + 1, totalStudents);
@@ -70,17 +73,18 @@ export const exportAllClassReports = async (
             doc.addPage();
         }
 
-        let y = 20;
+        const headerY = addPdfHeader(doc, { orientation: 'portrait' });
+        let y = headerY + 5;
 
         // Header
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
         doc.text('LAPORAN HASIL BELAJAR', pageWidth / 2, y, { align: 'center' });
-        y += 10;
+        y += 8;
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
         doc.text(`Semester ${semester} - Tahun Ajaran ${academicYear}`, pageWidth / 2, y, { align: 'center' });
-        y += 15;
+        y += 12;
 
         // Student Info
         doc.setFontSize(11);

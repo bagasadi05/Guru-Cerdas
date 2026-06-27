@@ -127,11 +127,29 @@ export function addPdfHeader(
 
     const pageWidth = orientation === 'portrait' ? 210 : 297;
     const margin = 14;
-    let y = 18;
-    const schoolLogoBounds = { x: margin - 1, y: y - 8, width: 36, height: 30 };
-    const kemenagLogoBounds = { x: pageWidth - margin - 24, y: y - 6, width: 24, height: 24 };
+    
+    // Colors to match report card style
+    const PRIMARY_DARK = [7, 54, 66] as const;
+    const BORDER = [203, 213, 225] as const;
+    const MUTED = [71, 85, 105] as const;
 
-    // Add logo sekolah (left) - larger box to match visual weight with Kemenag logo
+    // Draw background and border
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, pageWidth, 46, 'F');
+
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.2);
+    // Draw rounded rectangle for the header
+    doc.roundedRect(margin - 3, 8, pageWidth - ((margin - 3) * 2), 28, 2, 2, 'S');
+
+    const schoolLogoSize = 22;
+    const kemenagLogoWidth = 18;
+    const kemenagLogoHeight = 18 * (323 / 360);
+
+    const schoolLogoBounds = { x: margin - 1, y: 10, width: schoolLogoSize, height: schoolLogoSize };
+    const kemenagLogoBounds = { x: pageWidth - margin - kemenagLogoWidth, y: 11 + ((18 - kemenagLogoHeight) / 2), width: kemenagLogoWidth, height: kemenagLogoHeight };
+
+    // Add logo sekolah (left)
     if (logoSekolah) {
         try {
             addContainedLogo(doc, logoSekolah, 'PNG', schoolLogoBounds);
@@ -152,45 +170,34 @@ export function addPdfHeader(
     // Add school identity (center)
     const centerX = pageWidth / 2;
 
-    // Ministry header
+    doc.setTextColor(...PRIMARY_DARK);
     doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('KEMENTERIAN AGAMA REPUBLIK INDONESIA', centerX, y, { align: 'center' });
-    y += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('KEMENTERIAN AGAMA REPUBLIK INDONESIA', centerX, 14, { align: 'center' });
 
-    // School name - main title
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...MUTED);
+    doc.text('MADRASAH IBTIDAIYAH', centerX, 18.5, { align: 'center' });
+
+    doc.setTextColor(...PRIMARY_DARK);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(schoolName.toUpperCase(), centerX, y, { align: 'center' });
-    y += 6;
+    doc.text(schoolName.toUpperCase(), centerX, 24.5, { align: 'center' });
 
-    // School address
     if (showSubtitle) {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        
-        // Split address if too long
-        const maxWidth = pageWidth - (2 * margin) - 64; // Account for larger logo boxes
-        const addressLines = doc.splitTextToSize(schoolAddress, maxWidth);
-        
-        addressLines.forEach((line: string) => {
-            doc.text(line, centerX, y, { align: 'center' });
-            y += 3.5;
-        });
-        
-        y += 1;
+        doc.setTextColor(...MUTED);
+        doc.text(schoolAddress, centerX, 30.5, { align: 'center' });
     }
 
-    // Add double horizontal line (professional look)
-    y += 2;
-    doc.setLineWidth(0.8);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 1;
-    doc.setLineWidth(0.3);
-    doc.line(margin, y, pageWidth - margin, y);
+    // Reset colors for subsequent content
+    doc.setTextColor(0, 0, 0);
+    doc.setDrawColor(0, 0, 0);
 
     // Return Y position for content to start
-    return y + 6;
+    return 46;
 }
 
 /**

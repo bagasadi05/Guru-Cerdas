@@ -78,14 +78,12 @@ export const getDashboardNavSections = (isAdmin: boolean, role?: string | null):
   }));
 
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
-    // Kepala Madrasah & Waka Kesiswaan juga seorang guru: keduanya boleh
-    // mengakses Input Pelanggaran (/input-massal). Modul personal guru
-    // (jadwal/jurnal/tugas/brankas) tetap disembunyikan untuk pimpinan.
-    const excludedHrefs = ['/jadwal', '/jurnal', '/tugas', '/brankas'];
-    sections = sections.map(section => ({
-      ...section,
-      items: section.items.filter(item => !excludedHrefs.includes(item.href))
-    })).filter(section => section.items.length > 0);
+    // Pimpinan tetap membutuhkan menu guru karena mereka bisa memiliki jam mengajar.
+    // Tambahkan menu khusus Tindak Lanjut Pelanggaran untuk Pimpinan.
+    const insightsSection = sections.find(s => s.id === 'insights');
+    if (insightsSection) {
+      insightsSection.items.push({ href: '/tindak-lanjut', label: 'Tindak Lanjut', icon: ShieldCheck });
+    }
   }
 
   if (!isAdmin) {
@@ -110,11 +108,7 @@ export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null
   let items = [...baseMoreMenuItems];
   
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
-    // Kepala Madrasah & Waka Kesiswaan juga seorang guru: keduanya boleh
-    // mengakses Input Pelanggaran (/input-massal). Modul personal guru
-    // (jadwal/jurnal/tugas/brankas) tetap disembunyikan untuk pimpinan.
-    const excludedHrefs = ['/jadwal', '/jurnal', '/tugas', '/brankas'];
-    items = items.filter(item => !excludedHrefs.includes(item.href));
+    items.push({ href: '/tindak-lanjut', label: 'Tindak Lanjut', icon: ShieldCheck });
   }
 
   if (!isAdmin) {

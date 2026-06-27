@@ -23,6 +23,7 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Textarea } from '../ui/Textarea';
 import { Checkbox } from '../ui/Checkbox';
+import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 
 const ExtracurricularPage: React.FC = () => {
     const { user: _user } = useAuth();
@@ -215,10 +216,13 @@ const ExtracurricularPage: React.FC = () => {
             const { default: autoTable } = await getAutoTable();
             const doc = new jsPDF('l', 'mm', 'a4');
 
+            await ensureLogosLoaded();
+            const headerY = addPdfHeader(doc, { orientation: 'landscape' });
+
             doc.setFontSize(14);
-            doc.text(`Rekap Presensi Bulanan - ${selectedExtracurricularData.name}`, 14, 15);
+            doc.text(`Rekap Presensi Bulanan - ${selectedExtracurricularData.name}`, 14, headerY + 4);
             doc.setFontSize(10);
-            doc.text(`Periode: ${monthName} | Total Siswa: ${enrollments.length}`, 14, 22);
+            doc.text(`Periode: ${monthName} | Total Siswa: ${enrollments.length}`, 14, headerY + 11);
 
             const daysColumns = Array.from({ length: daysInMonth }, (_, i) => String(i + 1));
             const tableColumn = ["No", "Nama", "Kelas", ...daysColumns, "H", "S", "I", "A"];
@@ -239,7 +243,7 @@ const ExtracurricularPage: React.FC = () => {
             });
 
             autoTable(doc, {
-                head: [tableColumn], body: tableRows, startY: 28, theme: 'grid',
+                head: [tableColumn], body: tableRows, startY: headerY + 17, theme: 'grid',
                 headStyles: { fillColor: [245, 158, 11], fontSize: 7, halign: 'center' },
                 styles: { fontSize: 6, cellPadding: 1 },
                 columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 35 }, 2: { cellWidth: 18 } }
@@ -320,12 +324,16 @@ const ExtracurricularPage: React.FC = () => {
         const { default: jsPDF } = await getJsPDF();
         const { default: autoTable } = await getAutoTable();
         const doc = new jsPDF();
+        
+        await ensureLogosLoaded();
+        const headerY = addPdfHeader(doc, { orientation: 'portrait' });
+
         const semesterName = activeSemester ? `${activeSemester.name} (Semester ${activeSemester.semester_number})` : '-';
         doc.setFontSize(18);
-        doc.text(`Nilai Ekstrakurikuler: ${selectedExtracurricularData.name}`, 14, 22);
+        doc.text(`Nilai Ekstrakurikuler: ${selectedExtracurricularData.name}`, 14, headerY + 10);
         doc.setFontSize(11);
-        doc.text(`Semester: ${semesterName}`, 14, 32);
-        if (selectedExtracurricularData.coach_name) doc.text(`Pembina: ${selectedExtracurricularData.coach_name}`, 14, 38);
+        doc.text(`Semester: ${semesterName}`, 14, headerY + 20);
+        if (selectedExtracurricularData.coach_name) doc.text(`Pembina: ${selectedExtracurricularData.coach_name}`, 14, headerY + 26);
 
         const tableBody = enrollments.map((enrollment, index) => {
             const grade = gradesMap[`${enrollment.participantType}:${enrollment.participantId}`];
@@ -334,7 +342,7 @@ const ExtracurricularPage: React.FC = () => {
 
         autoTable(doc, {
             head: [['No', 'Nama Siswa', 'Kelas', 'Predikat', 'Nilai', 'Deskripsi']],
-            body: tableBody, startY: 45, styles: { fontSize: 9 },
+            body: tableBody, startY: headerY + 35, styles: { fontSize: 9 },
             headStyles: { fillColor: [245, 158, 11] },
         });
         doc.save(`Nilai_Ekskul_${selectedExtracurricularData.name}_${new Date().toISOString().split('T')[0]}.pdf`);

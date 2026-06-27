@@ -43,8 +43,11 @@ const getByPeriod = async (filters: TeachingJournalFilters = {}): Promise<Teachi
 
     let query = supabase
         .from('teaching_journals')
-        .select('*')
-        .eq('user_id', userData.user.id);
+        .select('*');
+
+    if (!filters.allTeachers) {
+        query = query.eq('user_id', userData.user.id);
+    }
 
     if (filters.classId) {
         query = query.eq('class_id', filters.classId);
@@ -235,21 +238,44 @@ const getRekap = async (filters: TeachingJournalFilters = {}): Promise<TeachingJ
         }
     }
 
-    // Group by classId + subject
+    // Fetch teacher names
+    const userIds = [...new Set(journals.map((j) => j.user_id).filter(Boolean))] as string[];
+    let userMap: Record<string, string> = {};
+
+    if (userIds.length > 0) {
+        const { data: users } = await supabase
+            .from('users')
+            .select('id, name')
+            .in('id', userIds);
+
+        if (users) {
+            userMap = users.reduce(
+                (acc: Record<string, string>, u: { id: string; name: string }) => {
+                    acc[u.id] = u.name;
+                    return acc;
+                },
+                {} as Record<string, string>
+            );
+        }
+    }
+
+    // Group by classId + subject + userId
     const grouped: Record<string, TeachingJournal[]> = {};
     for (const j of journals) {
-        const key = `${j.class_id ?? 'no-class'}::${j.subject}`;
+        const key = `${j.class_id ?? 'no-class'}::${j.subject}::${j.user_id ?? 'no-user'}`;
         if (!grouped[key]) grouped[key] = [];
         grouped[key].push(j);
     }
 
     return Object.entries(grouped).map(([key, entries]) => {
-        const [classId, subject] = key.split('::');
+        const [classId, subject, userId] = key.split('::');
         const dates = entries.map((e) => e.date).sort();
         return {
             classId,
             className: classMap[classId] ?? 'Unknown Class',
             subject,
+            userId,
+            teacherName: userMap[userId] ?? 'Guru',
             totalMeetings: entries.length,
             journalsFilled: entries.length,
             lastJournalDate: dates.length > 0 ? dates[dates.length - 1] : null,

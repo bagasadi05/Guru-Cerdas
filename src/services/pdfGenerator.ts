@@ -230,10 +230,7 @@ const summarizeViolations = (items: ViolationRow[]) => {
  * 
  * @since 1.0.0
  */
-// Preload logos as base64 (loaded once when module imports)
-let cachedLogoDataUrl: string | null = null;
-let cachedKemenagLogoUrl: string | null = null;
-let logoLoadAttempted = false;
+import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 
 const loadImageAsBase64 = async (url: string): Promise<string | null> => {
     try {
@@ -256,17 +253,7 @@ const loadImageAsBase64 = async (url: string): Promise<string | null> => {
 };
 
 const preloadLogos = async (): Promise<void> => {
-    if (logoLoadAttempted) return;
-    logoLoadAttempted = true;
-
-    // Load both logos in parallel
-    const [schoolLogo, kemenagLogo] = await Promise.all([
-        loadImageAsBase64(SCHOOL_CONFIG.logoUrl),
-        loadImageAsBase64(SCHOOL_CONFIG.kemenagLogoUrl)
-    ]);
-
-    cachedLogoDataUrl = schoolLogo;
-    cachedKemenagLogoUrl = kemenagLogo;
+    await ensureLogosLoaded();
 };
 
 /**
@@ -319,71 +306,21 @@ export const generateStudentReport = async (
     let currentY = 0;
 
     const addHeader = (isFirstPage = false) => {
-        doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, PAGE_WIDTH, 46, 'F');
+        const headerY = addPdfHeader(doc, {
+            schoolName: SCHOOL_CONFIG.name,
+            schoolAddress: `${SCHOOL_CONFIG.address} | Telp. ${SCHOOL_CONFIG.phone}`,
+            orientation: 'portrait'
+        });
 
-        doc.setDrawColor(...BORDER);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(MARGIN - 3, 8, PAGE_WIDTH - ((MARGIN - 3) * 2), 28, 2, 2, 'S');
-
-        const schoolLogoSize = 22;
-        const kemenagLogoWidth = 18;
-        const kemenagLogoHeight = 18 * (323 / 360);
-
-        if (cachedLogoDataUrl) {
-            try {
-                doc.addImage(cachedLogoDataUrl, 'PNG', MARGIN - 1, 10, schoolLogoSize, schoolLogoSize);
-            } catch (e) {
-                console.warn('Could not add school logo to PDF', e);
-            }
+        if (isFirstPage) {
+            doc.setTextColor(...PRIMARY_DARK);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text("LAPORAN HASIL BELAJAR SISWA", PAGE_WIDTH / 2, headerY + 4, { align: 'center' });
+            return headerY + 12;
         }
 
-        if (cachedKemenagLogoUrl) {
-            try {
-                doc.addImage(
-                    cachedKemenagLogoUrl,
-                    'PNG',
-                    PAGE_WIDTH - MARGIN - kemenagLogoWidth,
-                    11 + ((18 - kemenagLogoHeight) / 2),
-                    kemenagLogoWidth,
-                    kemenagLogoHeight
-                );
-            } catch (e) {
-                console.warn('Could not add Kemenag logo to PDF', e);
-            }
-        }
-
-        doc.setTextColor(...PRIMARY_DARK);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text('KEMENTERIAN AGAMA REPUBLIK INDONESIA', PAGE_WIDTH / 2, 14, { align: 'center' });
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...MUTED);
-        doc.text('MADRASAH IBTIDAIYAH', PAGE_WIDTH / 2, 18.5, { align: 'center' });
-
-        doc.setTextColor(...PRIMARY_DARK);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text("LAPORAN HASIL BELAJAR SISWA", PAGE_WIDTH / 2, 24.5, { align: 'center' });
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(SCHOOL_CONFIG.name, PAGE_WIDTH / 2, 29.5, { align: 'center' });
-
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...MUTED);
-        doc.text(`${SCHOOL_CONFIG.address} | Telp. ${SCHOOL_CONFIG.phone}`, PAGE_WIDTH / 2, 34.5, { align: 'center' });
-
-        doc.setDrawColor(...PRIMARY_DARK);
-        doc.setLineWidth(0.9);
-        doc.line(MARGIN - 3, 39, PAGE_WIDTH - (MARGIN - 3), 39);
-        doc.setLineWidth(0.25);
-        doc.line(MARGIN - 3, 40.4, PAGE_WIDTH - (MARGIN - 3), 40.4);
-
-        currentY = isFirstPage ? 49 : 46;
+        return headerY + 4;
     };
 
     const addFooter = () => {
@@ -409,7 +346,7 @@ export const generateStudentReport = async (
     const checkPageBreak = (requiredSpace: number) => {
         if (currentY + requiredSpace > PAGE_HEIGHT - 20) {
             doc.addPage();
-            addHeader(false);
+            currentY = addHeader(false);
         }
     };
 

@@ -1,5 +1,6 @@
 import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
 import type { PortalData, PortalGuardianSummary, PortalWeeklySummary } from '../pages/portal/types';
+import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 
 interface GuardianSummaryPdfOptions {
     guardianSummary: PortalGuardianSummary | null;
@@ -22,22 +23,25 @@ export const generateGuardianSummaryPDF = async (
     const margin = 15;
 
     const schoolName = data.schoolInfo?.school_name || 'Sekolah';
+    const schoolAddress = data.schoolInfo?.school_address || '';
     const academicYear = data.schoolInfo?.academic_year || '-';
     const guardianSummary = options.guardianSummary;
     const weeklySummary = options.weeklySummary;
 
+    await ensureLogosLoaded();
+    const headerY = addPdfHeader(doc, { schoolName, schoolAddress, orientation: 'portrait' });
+
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text('RINGKASAN PERKEMBANGAN SISWA', pageWidth / 2, 16, { align: 'center' });
-    doc.setFontSize(11);
-    doc.text(schoolName.toUpperCase(), pageWidth / 2, 23, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text('RINGKASAN PERKEMBANGAN SISWA', pageWidth / 2, headerY + 4, { align: 'center' });
+    
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(`Tahun Ajaran: ${academicYear} | ${options.semesterLabel}`, pageWidth / 2, 29, { align: 'center' });
-    doc.line(margin, 34, pageWidth - margin, 34);
+    doc.text(`Tahun Ajaran: ${academicYear} | ${options.semesterLabel}`, pageWidth / 2, headerY + 10, { align: 'center' });
+    doc.line(margin, headerY + 14, pageWidth - margin, headerY + 14);
 
     autoTable(doc, {
-        startY: 40,
+        startY: headerY + 20,
         body: [
             ['Nama Siswa', data.student.name],
             ['Kelas', data.student.classes.name],

@@ -1,32 +1,8 @@
 import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
 import type { PortalData } from '../pages/portal/types';
+import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 
-// Helper to load image as base64
-const loadImage = (url: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        // Use full URL from window.location.origin for relative paths
-        const fullUrl = url.startsWith('/') ? `${window.location.origin}${url}` : url;
-        img.src = fullUrl;
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                ctx.drawImage(img, 0, 0);
-                resolve(canvas.toDataURL('image/png'));
-            } else {
-                reject(new Error('Could not get canvas context'));
-            }
-        };
-        img.onerror = (error) => {
-            console.warn('Failed to load image:', fullUrl, error);
-            reject(error);
-        };
-    });
-};
+
 
 export const generateReportCardPDF = async (data: PortalData, semesterId?: string): Promise<void> => {
     const { default: jsPDF } = await getJsPDF();
@@ -40,51 +16,17 @@ export const generateReportCardPDF = async (data: PortalData, semesterId?: strin
         ? data.attendanceRecords.filter(r => (r as any).semester_id === semesterId)
         : data.attendanceRecords;
 
-    // Get school info from data
     const schoolName = data.schoolInfo?.school_name || 'Sekolah';
     const schoolAddress = data.schoolInfo?.school_address || '';
     const semester = data.schoolInfo?.semester || 'Ganjil';
     const academicYear = data.schoolInfo?.academic_year || '2024/2025';
 
-    // Load Logo
-    let hasLogo = false;
-    try {
-        const logoData = await loadImage('/logo_sekolah.png');
-        if (logoData) {
-            doc.addImage(logoData, 'PNG', 15, 8, 22, 22);
-            hasLogo = true;
-        }
-    } catch (e) {
-        console.warn('Logo could not be loaded', e);
-    }
-
-    // Header Text - Position based on whether logo exists
-    const textStartX = hasLogo ? 42 : pageWidth / 2;
-    const textAlign = hasLogo ? 'left' : 'center';
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('LAPORAN HASIL BELAJAR SISWA', textStartX, 14, { align: textAlign as any });
-
-    doc.setFontSize(12);
-    doc.text(schoolName.toUpperCase(), textStartX, 21, { align: textAlign as any });
-
-    if (schoolAddress) {
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(schoolAddress, textStartX, 27, { align: textAlign as any });
-    }
-
-    // Double Line Border
-    const lineY = 32;
-    doc.setLineWidth(1);
-    doc.line(15, lineY, pageWidth - 15, lineY);
-    doc.setLineWidth(0.3);
-    doc.line(15, lineY + 1.5, pageWidth - 15, lineY + 1.5);
+    await ensureLogosLoaded();
+    const headerY = addPdfHeader(doc, { schoolName, schoolAddress, orientation: 'portrait' });
 
     // Student Info
     doc.setFontSize(11);
-    const startY = lineY + 10;
+    const startY = headerY + 4;
     const leftCol = 15;
     const rightCol = pageWidth / 2 + 10;
 

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Calendar, FileText, Plus, RefreshCw, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -17,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import type { TeachingJournal, TeachingJournalFilters } from '../../types/teachingJournal';
 import { JournalForm } from './journal/JournalForm';
 import { ConfirmationDialog } from '../ui/ConfirmationDialog';
+import { MarkdownText } from '../ui/MarkdownText';
 
 const JournalRekapPanel = React.lazy(() =>
   import('./journal/JournalRekapPanel')
@@ -52,10 +54,13 @@ const stripWhitespace = (value: string | null | undefined): string =>
   (value ?? '').replace(/\s+/g, ' ').trim();
 
 const JurnalMengajarPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const toast = useToast();
   const [filters, setFilters] = useState<TeachingJournalFilters>({});
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const isGlobalRole = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'admin';
+  const [showAllTeachers, setShowAllTeachers] = useState(false);
 
   // Subjects derived from a small free-text input (case-insensitive contains).
   const [subjectInput, setSubjectInput] = useState<string>('');
@@ -241,6 +246,7 @@ const JurnalMengajarPage: React.FC = () => {
         </TabsList>
 
         <TabsContent value="jurnal-harian" className="space-y-4">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <Card className="rounded-2xl">
             <CardHeader className="flex flex-col gap-1">
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">Filter</h2>
@@ -405,7 +411,7 @@ const JurnalMengajarPage: React.FC = () => {
               <div className="space-y-3" aria-busy={isFetching}>
                 {journals.map((j) => {
                   const className = j.class_id ? classMap.get(j.class_id) ?? 'Kelas tidak diketahui' : 'Tanpa kelas';
-                  const activities = stripWhitespace(j.activities);
+                  const activities = j.activities;
                   return (
                     <Card key={j.id} className="rounded-2xl">
                       <CardContent className="p-4 sm:p-5">
@@ -433,9 +439,9 @@ const JurnalMengajarPage: React.FC = () => {
                               {j.topic}
                             </h3>
                             {activities && (
-                              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 line-clamp-3">
-                                {activities}
-                              </p>
+                              <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                                <MarkdownText text={activities} />
+                              </div>
                             )}
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
@@ -493,9 +499,24 @@ const JurnalMengajarPage: React.FC = () => {
               </div>
             )}
           </section>
+          </motion.div>
         </TabsContent>
 
         <TabsContent value="rekap">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          {isGlobalRole && (
+            <div className="flex items-center gap-2 mb-4 bg-indigo-50 dark:bg-indigo-900/20 px-4 py-3 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
+              <label className="text-sm font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer flex items-center gap-2 w-full">
+                <input 
+                  type="checkbox" 
+                  checked={showAllTeachers} 
+                  onChange={(e) => setShowAllTeachers(e.target.checked)}
+                  className="rounded border-indigo-300 text-indigo-600 focus:ring-indigo-600 w-4 h-4"
+                />
+                Tampilkan Rekap Jurnal Seluruh Guru (Mode Supervisi)
+              </label>
+            </div>
+          )}
           <React.Suspense
             fallback={
               <div className="flex justify-center items-center py-12">
@@ -503,8 +524,9 @@ const JurnalMengajarPage: React.FC = () => {
               </div>
             }
           >
-            <JournalRekapPanel filters={queryFilters} />
+            <JournalRekapPanel filters={{ ...queryFilters, allTeachers: showAllTeachers }} />
           </React.Suspense>
+          </motion.div>
         </TabsContent>
       </Tabs>
       )}

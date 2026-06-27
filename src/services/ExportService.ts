@@ -6,6 +6,7 @@
  */
 
 import { getJsPDF, getAutoTable, getXLSX } from '../utils/dynamicImports';
+import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 
 export type ExportFormat = 'pdf' | 'excel' | 'csv';
 
@@ -90,22 +91,31 @@ export async function exportToPDF(options: ExportOptions): Promise<ExportResult>
         onProgress?.(20);
 
         // Add header
-        if (includeHeader && title) {
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, 14, 20);
+        let startY = 14;
+        if (includeHeader) {
+            await ensureLogosLoaded();
+            const headerY = addPdfHeader(doc, { orientation: data.length > 100 ? 'landscape' : 'portrait' });
+            
+            if (title) {
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text(title, 14, headerY + 4);
 
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(100);
-            doc.text(`Diekspor pada: ${new Date().toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-            })}`, 14, 28);
-            doc.text(`Total: ${data.length} data`, 14, 34);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100);
+                doc.text(`Diekspor pada: ${new Date().toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                })}`, 14, headerY + 10);
+                doc.text(`Total: ${data.length} data`, 14, headerY + 15);
+                startY = headerY + 20;
+            } else {
+                startY = headerY + 5;
+            }
         }
 
         onProgress?.(40);
@@ -122,7 +132,7 @@ export async function exportToPDF(options: ExportOptions): Promise<ExportResult>
         autoTable(doc, {
             head: [headers],
             body: rows,
-            startY: includeHeader && title ? 40 : 14,
+            startY: startY,
             styles: {
                 fontSize: 9,
                 cellPadding: 3,

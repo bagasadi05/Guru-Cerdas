@@ -13,6 +13,7 @@ import { journalSchema, JournalFormValues } from './schemas';
 import { useCreateJournal, useUpdateJournal } from '../../../hooks/useTeachingJournals';
 import journalService from '../../../services/journalService';
 import type { TeachingJournal } from '../../../types/teachingJournal';
+import { MarkdownToolbar } from '../../ui/MarkdownToolbar';
 
 interface ClassOption {
   id: string;
@@ -114,6 +115,12 @@ export const JournalForm: React.FC<JournalFormProps> = ({
       }
     }
   }, [isOpen, journal, prefillValues, reset]);
+
+  const activitiesRef = React.useRef<HTMLTextAreaElement>(null);
+  const notesRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const { ref: activitiesRegisterRef, ...activitiesRegisterProps } = register('activities');
+  const { ref: notesRegisterRef, ...notesRegisterProps } = register('notes');
 
   const handleClose = () => {
     reset();
@@ -275,11 +282,23 @@ export const JournalForm: React.FC<JournalFormProps> = ({
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
             Aktivitas Kegiatan Pembelajaran (Opsional)
           </label>
-          <Textarea
-            rows={3}
-            placeholder="Menjelaskan konsep, diskusi kelompok, latihan soal..."
-            {...register('activities')}
-          />
+          <div className="flex flex-col">
+            <MarkdownToolbar 
+              textareaRef={activitiesRef}
+              onChange={(val) => setValue('activities', val, { shouldValidate: true })}
+            />
+            <Textarea
+              rows={3}
+              placeholder="Menjelaskan konsep, diskusi kelompok, latihan soal..."
+              {...activitiesRegisterProps}
+              ref={(e) => {
+                activitiesRegisterRef(e);
+                // @ts-ignore
+                activitiesRef.current = e;
+              }}
+              className="rounded-t-none focus:ring-0 focus:border-t-0 border-t-0"
+            />
+          </div>
           {errors.activities?.message && (
             <p className="text-rose-500 text-xs mt-1">{errors.activities.message}</p>
           )}
@@ -289,11 +308,23 @@ export const JournalForm: React.FC<JournalFormProps> = ({
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
             Catatan Kejadian Khusus (Opsional)
           </label>
-          <Textarea
-            rows={2}
-            placeholder="cth. Siswa A terlambat masuk kelas, listrik padam 10 menit..."
-            {...register('notes')}
-          />
+          <div className="flex flex-col">
+            <MarkdownToolbar 
+              textareaRef={notesRef}
+              onChange={(val) => setValue('notes', val, { shouldValidate: true })}
+            />
+            <Textarea
+              rows={2}
+              placeholder="cth. Siswa A terlambat masuk kelas, listrik padam 10 menit..."
+              {...notesRegisterProps}
+              ref={(e) => {
+                notesRegisterRef(e);
+                // @ts-ignore
+                notesRef.current = e;
+              }}
+              className="rounded-t-none focus:ring-0 focus:border-t-0 border-t-0"
+            />
+          </div>
           {errors.notes?.message && (
             <p className="text-rose-500 text-xs mt-1">{errors.notes.message}</p>
           )}
