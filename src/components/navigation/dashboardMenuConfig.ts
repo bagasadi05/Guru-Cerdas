@@ -44,7 +44,7 @@ const baseNavSections: DashboardMenuSection[] = [
     id: 'insights',
     label: 'Analitik & Kegiatan',
     items: [
-      { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+      { href: '/analytics', label: 'Performa Siswa', icon: BarChart3 },
       { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
     ],
   },
@@ -65,7 +65,7 @@ const baseMoreMenuItems: DashboardMenuItem[] = [
   { href: '/jurnal', label: 'Jurnal Mengajar', icon: BookOpenIcon },
   { href: '/input-massal', label: 'Manajemen Siswa', icon: ClipboardPenIcon },
   { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/analytics', label: 'Performa Siswa', icon: BarChart3 },
   { href: '/riwayat', label: 'Riwayat Aksi', icon: History },
   { href: '/sampah', label: 'Sampah', icon: Trash2 },
   { href: '/pengaturan', label: 'Pengaturan', icon: SettingsIcon },

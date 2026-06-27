@@ -89,8 +89,8 @@ const tourSteps: TourStep[] = [
     },
     {
         target: '[href="/analytics"]',
-        title: 'Analytics',
-        description: 'Lihat grafik dan statistik performa kelas: tren nilai, kehadiran, perbandingan antar periode, dan insight AI.',
+        title: 'Performa Siswa',
+        description: 'Lihat statistik dan grafik perkembangan siswa secara keseluruhan. Ini membantu Anda memantau tren akademik, kehadiran, dan kedisiplinan.',
         icon: <BarChart3Icon className="w-5 h-5" />,
         position: 'right',
         tips: ['Pilih rentang waktu untuk analisis spesifik', 'Export laporan analitik ke PDF'],

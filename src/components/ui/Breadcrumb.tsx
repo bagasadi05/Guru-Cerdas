@@ -30,7 +30,7 @@ const routeLabels: Record<string, string> = {
     'input-nilai-cepat': 'Input Nilai Cepat',
     'katrol-nilai': 'Katrol Nilai',
     'admin': 'Panel Admin',
-    'analytics': 'Analytics',
+    'analytics': 'Performa Siswa',
 };
 
 export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className = '' }) => {

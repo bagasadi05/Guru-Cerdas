@@ -26,7 +26,9 @@ import { Checkbox } from '../ui/Checkbox';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 
 const ExtracurricularPage: React.FC = () => {
-    const { user: _user } = useAuth();
+    const { user: _user, userRole } = useAuth();
+    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan';
+    const canAdd = !isLeadership;
     const toast = useToast();
 
     // ==================== STATE ====================
@@ -382,16 +384,18 @@ const ExtracurricularPage: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setIsExternalStudentsView(!isExternalStudentsView)}
-                            className={`px-4 py-2 text-sm font-medium rounded-xl border transition-colors ${
-                                isExternalStudentsView 
-                                    ? 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50' 
-                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                            }`}
-                        >
-                            Menu Siswa Eksternal
-                        </button>
+                        {canAdd && (
+                            <button
+                                onClick={() => setIsExternalStudentsView(!isExternalStudentsView)}
+                                className={`px-4 py-2 text-sm font-medium rounded-xl border transition-colors ${
+                                    isExternalStudentsView 
+                                        ? 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50' 
+                                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                }`}
+                            >
+                                Menu Siswa Eksternal
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -483,6 +487,7 @@ const ExtracurricularPage: React.FC = () => {
                         setIsModalOpen(true);
                     }}
                     onDeleteExtracurricular={setConfirmDeleteExtracurricular}
+                    canAdd={canAdd}
                 />
             )}
 

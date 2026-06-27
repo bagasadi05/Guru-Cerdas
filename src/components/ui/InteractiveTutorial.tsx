@@ -374,7 +374,7 @@ export const tutorialFlows: TutorialFlow[] = [
                 target: '[href="/analytics"]',
                 route: '/analytics',
                 title: 'Buka Analytics',
-                instruction: 'Klik menu "Analytics" di sidebar untuk melihat statistik dan grafik performa.',
+                instruction: 'Klik menu "Performa Siswa" di sidebar untuk melihat statistik dan grafik performa.',
                 action: 'click',
                 advanceOnTargetClick: true,
                 position: 'right',

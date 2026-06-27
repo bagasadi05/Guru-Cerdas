@@ -8,6 +8,7 @@ interface ExtracurricularMasterViewProps {
     onSelectExtracurricular: (id: string) => void;
     onOpenModal: (extracurricular?: Extracurricular) => void;
     onDeleteExtracurricular: (extracurricular: Extracurricular) => void;
+    canAdd?: boolean;
 }
 
 export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps> = ({
@@ -16,6 +17,7 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
     onSelectExtracurricular,
     onOpenModal,
     onDeleteExtracurricular,
+    canAdd = true,
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
@@ -123,13 +125,15 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
                         <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
                             Anda belum menambahkan data ekstrakurikuler atau tidak ada data yang cocok dengan pencarian Anda.
                         </p>
-                        <button
-                            onClick={() => onOpenModal()}
-                            className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Tambah Ekskul
-                        </button>
+                        {canAdd && (
+                            <button
+                                onClick={() => onOpenModal()}
+                                className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Tambah Ekskul
+                            </button>
+                        )}
                     </div>
                 ) : (
                     filteredExtracurriculars.map((extracurricular) => (

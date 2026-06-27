@@ -106,7 +106,7 @@ const AnalyticsPage: React.FC = () => {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h1 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white">
-                            {isLeadership ? 'Analisis Madrasah' : 'Analisis Kelas'}
+                            Performa Siswa
                         </h1>
                         <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-1">
                             {isLeadership ? 'Pantau performa seluruh madrasah secara menyeluruh' : 'Asisten pintar untuk memantau perkembangan siswa Anda'}
