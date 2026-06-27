@@ -77,6 +77,7 @@ const StudentDetailPage = () => {
         studentId,
         navigate,
         user,
+        userRole,
         isOnline,
         toast,
         modalState,
@@ -207,7 +208,8 @@ const StudentDetailPage = () => {
     const canManageStudentProfile = student.user_id === user?.id;
     const isHomeroomTeacher = assignments.some((a: any) => a.class_id === student.class_id && a.assignment_role === 'homeroom');
     const isAssistant = assignments.some((a: any) => a.class_id === student.class_id && a.assignment_role === 'assistant');
-    const canAdd = !isAssistant;
+    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan';
+    const canAdd = !isAssistant && !isLeadership;
 
     const handleDeleteAchievement = (id: string) => {
         setModalState({

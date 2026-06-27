@@ -58,7 +58,7 @@ export const useStudentDetailPage = () => {
     const { studentId } = useParams<{ studentId: string }>();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth();
+    const { user, userRole } = useAuth();
     const isOnline = useOfflineStatus();
     const toast = useToast();
     const queryClient = useQueryClient();
@@ -917,5 +917,6 @@ Tulis laporan yang menyentuh hati, memotivasi, dan komprehensif agar orang tua m
         reports,
         communications,
         unreadMessagesCount,
+        userRole,
     };
 };
