@@ -19,7 +19,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   },
 });
 
-const filePath = process.argv[2] || 'data-guru.csv';
+const filePath = process.argv[2] || 'scripts/data-guru.csv';
 
 async function importTeachers() {
   console.log(`Membaca file data dari: ${filePath}`);
