@@ -30,7 +30,8 @@ import {
     ExternalLink,
     Smartphone,
     Settings,
-    Activity
+    Activity,
+    GraduationCap
 } from 'lucide-react';
 
 // ============================================
@@ -679,6 +680,29 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                     </button>
                                 ))}
                             </div>
+
+                            {/* Tutorial Interactive Banner */}
+                            {!searchQuery && activeCategory === 'semua' && (
+                                <button 
+                                    onClick={() => {
+                                        onClose();
+                                        document.dispatchEvent(new CustomEvent('open-tutorial-picker'));
+                                    }}
+                                    className="w-full flex items-center gap-4 p-5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left group border border-indigo-400/20"
+                                >
+                                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:bg-white/30 transition-colors shadow-inner">
+                                        <GraduationCap className="w-8 h-8 text-white" />
+                                    </div>
+                                    <div className="flex-1 text-white">
+                                        <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
+                                            Tutorial Praktik Interaktif
+                                            <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold">Baru</span>
+                                        </h3>
+                                        <p className="text-white/80 text-sm">Belajar langsung dengan simulasi step-by-step di halaman asli.</p>
+                                    </div>
+                                    <ChevronRight className="w-6 h-6 text-white/50 group-hover:text-white transition-colors" />
+                                </button>
+                            )}
 
                             {/* Welcome Message (only when no search and on 'semua') */}
                             {!searchQuery && activeCategory === 'semua' && (

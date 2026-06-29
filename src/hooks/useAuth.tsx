@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, clearStaleAuthTokens } from '../services/supabase';
 import type { User, Session, AuthResponse, UserResponse } from '@supabase/supabase-js';
@@ -198,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let active = true;
     const fetchUserRole = async (userId: string) => {
-      console.log(`[Auth] fetchUserRole started for: ${userId}`);
+      logger.debug(`fetchUserRole started for: ${userId}`, 'Auth');
       setRoleLoaded(false);
       try {
         const { data, error } = await supabase
@@ -207,7 +208,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .eq('user_id', userId)
           .single();
         
-        console.log(`[Auth] fetchUserRole fetched: role=${data?.role}, error=${error?.message || 'none'}`);
+        logger.debug(`fetchUserRole fetched: role=${data?.role}, error=${error?.message || 'none'}`, 'Auth');
         if (active) {
           if (!error && data) {
             setUserRole(data.role);
@@ -240,12 +241,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 2. Initialize session and listen for auth state changes
   useEffect(() => {
-    console.log('[Auth] initializing session listener');
+    logger.debug('initializing session listener', 'Auth');
     const fetchSession = async () => {
       try {
-        console.log('[Auth] calling supabase.auth.getSession()');
+        logger.debug('calling supabase.auth.getSession()', 'Auth');
         const { data, error } = await supabase.auth.getSession();
-        console.log('[Auth] getSession finished, session:', !!data?.session, 'error:', error?.message || 'none');
+        logger.debug(`getSession finished, session: ${!!data?.session}, error: ${error?.message || 'none'}`, 'Auth');
         if (error) {
           logger.error('Error fetching session', error as unknown as Error, undefined, 'Auth');
           // A failed/expired refresh token leaves the client in a broken state.
@@ -277,9 +278,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     fetchSession();
 
-    console.log('[Auth] Registering onAuthStateChange listener');
+    logger.debug('Registering onAuthStateChange listener', 'Auth');
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log(`[Auth] onAuthStateChange callback: event=${event}, session=${!!session}`);
+      logger.debug(`onAuthStateChange callback: event=${event}, session=${!!session}`, 'Auth');
       // When a token refresh fails, Supabase emits SIGNED_OUT with a null session.
       // Clean up any leftover stale tokens so the next load starts fresh.
       if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
@@ -292,7 +293,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
-      console.log('[Auth] unsubscribing from auth state changes');
+      logger.debug('unsubscribing from auth state changes', 'Auth');
       subscription?.unsubscribe();
     };
   }, []);

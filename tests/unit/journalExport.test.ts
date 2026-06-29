@@ -27,6 +27,8 @@ const mockRekap: TeachingJournalRekap[] = [
     classId: 'class-1',
     className: 'Kelas 4A',
     subject: 'Fisika',
+    userId: 'user-1',
+    teacherName: 'Guru Budi',
     totalMeetings: 2,
     journalsFilled: 2,
     lastJournalDate: '2026-06-21'

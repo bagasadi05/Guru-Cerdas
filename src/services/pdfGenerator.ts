@@ -232,25 +232,7 @@ const summarizeViolations = (items: ViolationRow[]) => {
  */
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 
-const loadImageAsBase64 = async (url: string): Promise<string | null> => {
-    try {
-        const fullUrl = `${window.location.origin}${url}`;
-        const response = await fetch(fullUrl);
-        const blob = await response.blob();
 
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                resolve(reader.result as string);
-            };
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(blob);
-        });
-    } catch (e) {
-        console.warn('Image could not be loaded:', url, e);
-        return null;
-    }
-};
 
 const preloadLogos = async (): Promise<void> => {
     await ensureLogosLoaded();

@@ -26,6 +26,50 @@ vi.mock('../services/supabase', () => ({
     },
 }));
 
+// Mock dynamic imports to avoid loading heavy packages in test environment
+vi.mock('../utils/dynamicImports', () => {
+    const mockXLSX = {
+        utils: {
+            book_new: vi.fn(() => ({ SheetNames: [], Sheets: {} })),
+            book_append_sheet: vi.fn(),
+            aoa_to_sheet: vi.fn(() => ({})),
+        },
+        writeFile: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const mockJsPDFInstance = {
+        internal: {
+            pageSize: {
+                getWidth: vi.fn(() => 210),
+                getHeight: vi.fn(() => 297),
+                width: 210,
+                height: 297,
+            },
+        },
+        setFontSize: vi.fn(),
+        setFont: vi.fn(),
+        text: vi.fn(),
+        line: vi.fn(),
+        setLineWidth: vi.fn(),
+        setTextColor: vi.fn(),
+        addPage: vi.fn(),
+        getNumberOfPages: vi.fn(() => 1),
+        save: vi.fn(),
+    };
+    const mockJsPDF = { default: vi.fn(function () { return mockJsPDFInstance; }) };
+    const mockAutoTable = { default: vi.fn() };
+    return {
+        getXLSX: vi.fn().mockResolvedValue(mockXLSX),
+        getJsPDF: vi.fn().mockResolvedValue(mockJsPDF),
+        getAutoTable: vi.fn().mockResolvedValue(mockAutoTable),
+    };
+});
+
+vi.mock('../utils/pdfHeaderUtils', () => ({
+    addPdfHeader: vi.fn(() => 50),
+    ensureLogosLoaded: vi.fn().mockResolvedValue(true),
+}));
+
 // Import services after mocking
 import { softDelete, restore, permanentDelete, softDeleteBulk, restoreBulk } from '../services/SoftDeleteService';
 import { recordAction, undo, canUndo, getUndoTimeRemaining } from '../services/UndoManager';

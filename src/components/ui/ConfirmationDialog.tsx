@@ -7,7 +7,7 @@ interface ConfirmationDialogProps {
     onClose: () => void;
     onConfirm: () => void | Promise<void>;
     title: string;
-    message: string;
+    message: string | React.ReactNode;
     confirmText?: string;
     cancelText?: string;
     variant?: 'danger' | 'warning' | 'info';
@@ -98,9 +98,15 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                                 {title}
                             </h3>
-                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                {message}
-                            </p>
+                            {typeof message === 'string' ? (
+                                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                    {message}
+                                </p>
+                            ) : (
+                                <div className="mt-1">
+                                    {message}
+                                </div>
+                            )}
                         </div>
                         <button
                             onClick={handleClose}

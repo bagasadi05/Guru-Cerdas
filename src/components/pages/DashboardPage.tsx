@@ -141,7 +141,7 @@ const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full min-h-full p-4 md:p-6 lg:p-8 flex flex-col space-y-6 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8">
+    <div className="w-full min-h-full p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8">
       {isError && (
         <div className="rounded-xl border border-red-200/60 dark:border-red-500/30 bg-red-50/60 dark:bg-red-500/10 px-4 py-3 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -204,9 +204,9 @@ const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
+      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6">
         {/* Left Column Part 1 */}
-        <div className={`space-y-6 order-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9 lg:col-start-1' : 'lg:col-span-12'}`}>
+        <div className={`space-y-4 sm:space-y-6 order-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9 lg:col-start-1' : 'lg:col-span-12'}`}>
           {/* Stats Section */}
           <section data-tutorial="dashboard-stats">{data && <StatsGrid data={data} currentTime={currentTime} />}</section>
 
@@ -248,7 +248,7 @@ const DashboardPage: React.FC = () => {
         </div>
 
         {/* Left Column Part 2 */}
-        <div className={`space-y-6 order-3 lg:col-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'}`}>
+        <div className={`space-y-4 sm:space-y-6 order-3 lg:col-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'}`}>
           {/* Analytics Section */}
           <section className="space-y-6">
             <SectionHeading>Analisis Penilaian & Kehadiran</SectionHeading>

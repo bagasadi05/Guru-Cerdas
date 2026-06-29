@@ -63,7 +63,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
   // Determine initial values
   const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD local
 
-  const getInitialValues = (): JournalFormValues => {
+  const getInitialValues = React.useCallback((): JournalFormValues => {
     if (journal) {
       return {
         class_id: journal.class_id || '',
@@ -89,7 +89,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
       notes: '',
       attachment_url: '',
     };
-  };
+  }, [journal, prefillValues, todayStr]);
 
   const {
     register,
@@ -114,7 +114,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
         setUploadedFileName('');
       }
     }
-  }, [isOpen, journal, prefillValues, reset]);
+  }, [isOpen, getInitialValues, reset]);
 
   const activitiesRef = React.useRef<HTMLTextAreaElement>(null);
   const notesRef = React.useRef<HTMLTextAreaElement>(null);
@@ -293,7 +293,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
               {...activitiesRegisterProps}
               ref={(e) => {
                 activitiesRegisterRef(e);
-                // @ts-ignore
+                // @ts-expect-error Type mismatch with textarea ref
                 activitiesRef.current = e;
               }}
               className="rounded-t-none focus:ring-0 focus:border-t-0 border-t-0"
@@ -319,7 +319,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
               {...notesRegisterProps}
               ref={(e) => {
                 notesRegisterRef(e);
-                // @ts-ignore
+                // @ts-expect-error Type mismatch with textarea ref
                 notesRef.current = e;
               }}
               className="rounded-t-none focus:ring-0 focus:border-t-0 border-t-0"

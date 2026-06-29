@@ -214,8 +214,8 @@ const ViolationCard: React.FC<{
 
             {/* Content */}
             <div className="mb-3">
-                <p className="font-semibold text-gray-900 dark:text-white text-lg">{violation.description}</p>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                <p className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg leading-snug">{violation.description}</p>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                     <span>{new Date(violation.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
                     <span className={`font-bold ${severity.textClass}`}>+{violation.points} poin</span>
                 </div>

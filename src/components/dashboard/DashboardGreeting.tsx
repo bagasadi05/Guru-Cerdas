@@ -58,7 +58,7 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
   const locale = language === 'id' ? 'id-ID' : 'en-US';
 
   return (
-    <header className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/5 dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-pink-950/10 backdrop-blur-xl border border-white/20 dark:border-slate-800/40 p-6 rounded-3xl shadow-xl shadow-indigo-500/5 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-scale-in">
+    <header className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/5 dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-pink-950/10 backdrop-blur-xl border border-white/20 dark:border-slate-800/40 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl shadow-indigo-500/5 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-scale-in">
       <div className="flex items-start gap-4">
         <span className="text-4xl filter drop-shadow-md animate-bounce select-none">{icon}</span>
         <div>
@@ -71,9 +71,9 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 self-start md:self-auto">
         {/* Online / Offline badge */}
-        <div className={`flex items-center gap-1.5 font-extrabold text-xs px-3.5 py-1.5 rounded-2xl border shadow-sm transition-all duration-300 ${
+        <div className={`flex items-center gap-1.5 font-extrabold text-xs px-2 py-1 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-2xl border shadow-sm transition-all duration-300 ${
           isOnline
             ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/20 shadow-emerald-500/5'
             : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200/20 shadow-amber-500/5 animate-pulse'
@@ -93,12 +93,13 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
         </button>
 
         {/* Date */}
-        <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs px-3.5 py-1.5 rounded-2xl border border-emerald-200/20 shadow-sm">
-          📅 {currentTime.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}
+        <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs px-2 py-1 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-2xl border border-emerald-200/20 shadow-sm">
+          📅 <span className="hidden sm:inline">{currentTime.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+             <span className="inline sm:hidden">{currentTime.toLocaleDateString(locale, { day: 'numeric', month: 'short' })}</span>
         </div>
 
         {/* Live clock */}
-        <div className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-mono font-black text-sm px-3.5 py-1.5 rounded-2xl border border-indigo-200/20 shadow-sm tracking-widest">
+        <div className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-mono font-black text-sm px-2 py-1 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-2xl border border-indigo-200/20 shadow-sm tracking-widest">
           ⏰ {currentTime.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':')}
         </div>
       </div>

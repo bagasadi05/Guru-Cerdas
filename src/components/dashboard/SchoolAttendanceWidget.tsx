@@ -1,6 +1,6 @@
 import React from 'react';
 import { DashboardPanel, DashboardPanelHeader, DashboardPanelContent } from './DashboardPanel';
-import { CalendarIcon, UserCheckIcon, UsersIcon } from '../Icons';
+import { CalendarIcon, UserCheckIcon } from '../Icons';
 import { useGlobalAnalytics } from '../../hooks/useGlobalAnalytics';
 
 export const SchoolAttendanceWidget: React.FC = () => {

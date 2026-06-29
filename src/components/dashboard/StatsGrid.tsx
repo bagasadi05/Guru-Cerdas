@@ -177,7 +177,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
 
     return (
         <motion.div
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4"
             variants={staggerContainerVariants}
             initial="initial"
             animate="animate"
@@ -195,9 +195,9 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                             <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                             {/* Icon container */}
-                            <div className="relative z-10 mb-5 flex items-start justify-between gap-3">
-                                <div className={`w-11 h-11 rounded-lg flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-sm text-white transform group-hover:scale-105 transition-transform duration-300`}>
-                                    <stat.icon className="w-6 h-6" />
+                            <div className="relative z-10 mb-3 sm:mb-5 flex items-start justify-between gap-2 sm:gap-3">
+                                <div className={`w-9 h-9 sm:w-11 sm:h-11 shrink-0 rounded-lg flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-sm text-white transform group-hover:scale-105 transition-transform duration-300`}>
+                                    <stat.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                                 </div>
                                 <span className={`max-w-[108px] truncate rounded-full px-2.5 py-1 text-xxs font-bold uppercase tracking-[0.12em] ${getToneBadgeClass(stat.tone)}`}>
                                     {stat.statusLabel}
@@ -206,12 +206,12 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
 
                             {/* Content */}
                             <div className="relative z-10">
-                                <div className="text-3xl font-bold text-slate-800 dark:text-white leading-none mb-2 tracking-tight">
+                                <div className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white leading-none mb-1 sm:mb-2 tracking-tight">
                                     {typeof stat.value === 'number' ? (
                                         <AnimatedCounter
                                             value={stat.value}
                                             duration={1500}
-                                            className="text-3xl font-bold"
+                                            className="text-2xl sm:text-3xl font-bold"
                                         />
                                     ) : (
                                         stat.value
@@ -225,12 +225,12 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                                         {stat.subValue}
                                     </p>
                                 )}
-                                <div className="mt-3 flex min-h-[34px] items-start gap-2 rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-2 text-xs font-semibold leading-5 text-slate-600 dark:border-slate-700/60 dark:bg-white/[0.03] dark:text-slate-300">
+                                <div className="mt-2 sm:mt-3 hidden sm:flex min-h-[34px] items-start gap-2 rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-2 text-xs font-semibold leading-5 text-slate-600 dark:border-slate-700/60 dark:bg-white/[0.03] dark:text-slate-300">
                                     <span className={`mt-1.5 h-1.5 w-1.5 flex-none rounded-full ${getToneDotClass(stat.tone)}`} />
                                     <span className="line-clamp-2">{stat.statusDetail}</span>
                                 </div>
                                 {typeof stat.progress === 'number' && (
-                                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+                                    <div className="mt-2 sm:mt-3 h-1.5 sm:h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                                         <div
                                             className={`h-full rounded-full bg-gradient-to-r ${stat.color}`}
                                             style={{ width: `${Math.min(Math.max(stat.progress, 0), 100)}%` }}

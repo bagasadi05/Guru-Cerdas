@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BellIcon, CheckIcon, TrashIcon, XIcon, AlertTriangleIcon, ClockIcon, MessageSquareIcon, SettingsIcon, TrendingDownIcon } from 'lucide-react';
+import { BellIcon, CheckIcon, TrashIcon, XIcon, AlertTriangleIcon, MessageSquareIcon } from 'lucide-react';
 import { InternalNotification, useInternalNotifications } from '../../hooks/useInternalNotifications';
-import { useAuth } from '../../hooks/useAuth';
+
 import { Button } from './Button';
 
 interface NotificationPanelProps {
@@ -91,10 +91,9 @@ const NotificationItem: React.FC<{
 };
 
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className = '' }) => {
-    const { user } = useAuth();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
-    const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } = useInternalNotifications();
+    const { notifications, unreadCount, markAsRead, markAllAsRead, clearAllNotifications } = useInternalNotifications();
     const panelRef = useRef<HTMLDivElement>(null);
 
     // Close panel when clicking outside

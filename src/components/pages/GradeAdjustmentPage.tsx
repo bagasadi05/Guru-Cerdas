@@ -330,7 +330,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                 aiAvg
             };
         });
-    }, [students, existingRecords, weight, constant, aiAdjustments, activeAssessmentsList, activeAssessmentName]);
+    }, [students, existingRecords, weight, constant, aiAdjustments, activeAssessmentsList, activeAssessmentName, targetAverageRange.min, targetAverageRange.max]);
 
     // Reset local state when configuration changes
     useEffect(() => {
@@ -343,35 +343,37 @@ export const GradeAdjustmentPage: React.FC = () => {
 
     // Synchronize finalScores on state/scenario change
     useEffect(() => {
-        const newScores: Record<string, string> = {};
-        listData.forEach(item => {
-            activeAssessmentsList.forEach(assessName => {
-                const key = activeAssessmentsList.length > 1 ? `${item.id}_${assessName}` : item.id;
-                
-                const assessData = item.assessments[assessName];
-                if (!assessData) return;
+        setFinalScores(prevScores => {
+            const newScores: Record<string, string> = {};
+            listData.forEach(item => {
+                activeAssessmentsList.forEach(assessName => {
+                    const key = activeAssessmentsList.length > 1 ? `${item.id}_${assessName}` : item.id;
+                    
+                    const assessData = item.assessments[assessName];
+                    if (!assessData) return;
 
-                if (manualOverrides.has(key)) {
-                    newScores[key] = finalScores[key] || (assessData.original !== null ? String(assessData.original) : '');
-                    return;
-                }
+                    if (manualOverrides.has(key)) {
+                        newScores[key] = prevScores[key] || (assessData.original !== null ? String(assessData.original) : '');
+                        return;
+                    }
 
-                if (assessData.original === null) {
-                    newScores[key] = '';
-                    return;
-                }
+                    if (assessData.original === null) {
+                        newScores[key] = '';
+                        return;
+                    }
 
-                if (activeScenario === 'original') {
-                    newScores[key] = String(assessData.original);
-                } else if (activeScenario === 'formula') {
-                    newScores[key] = String(assessData.formula);
-                } else if (activeScenario === 'ai') {
-                    newScores[key] = String(assessData.ai);
-                }
+                    if (activeScenario === 'original') {
+                        newScores[key] = String(assessData.original);
+                    } else if (activeScenario === 'formula') {
+                        newScores[key] = String(assessData.formula);
+                    } else if (activeScenario === 'ai') {
+                        newScores[key] = String(assessData.ai);
+                    }
+                });
             });
+            return newScores;
         });
-        setFinalScores(newScores);
-    }, [activeScenario, listData, activeAssessmentsList]);
+    }, [activeScenario, listData, activeAssessmentsList, manualOverrides]);
 
     const stats = useMemo(() => {
         if (activeAssessmentsList.length > 1) {

@@ -21,7 +21,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
     });
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-2 lg:space-y-3">
             {students.map((student, index) => {
                 const record = attendanceRecords[student.id];
 
@@ -30,7 +30,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         key={student.id}
                         id={`student-${student.id}`}
                         className={`
-                            group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm 
+                            group flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4 p-3 lg:p-4 rounded-xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm 
                             hover:shadow-lg hover:scale-[1.01] hover:border-emerald-200 dark:hover:border-emerald-500/30 
                             focus-within:bg-indigo-50/50 focus-within:dark:bg-indigo-950/20 focus-within:border-indigo-300 focus-within:shadow-md
                             transition-all duration-300 card-interactive animate-list-item
@@ -38,8 +38,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
                     >
                         {/* Student Info */}
-                        <div className="flex items-center gap-4 flex-grow min-w-0">
-                            <span className="text-slate-300 dark:text-slate-600 font-bold font-mono w-8 text-right flex-shrink-0 text-sm">{index + 1}</span>
+                        <div className="flex items-center gap-3 lg:gap-4 flex-grow min-w-0">
+                            <span className="hidden lg:block text-slate-300 dark:text-slate-600 font-bold font-mono w-8 text-right flex-shrink-0 text-sm">{index + 1}</span>
                             <div className="relative">
                                 <img
                                     src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name)}
@@ -85,8 +85,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
-                            <div className="grid grid-cols-5 sm:flex sm:flex-nowrap sm:items-center gap-2 bg-slate-100/80 dark:bg-slate-800/60 p-2 rounded-2xl w-full sm:w-auto" data-tutorial="attendance-status-group">
+                        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 w-full lg:w-auto mt-2 lg:mt-0">
+                            <div className="flex w-full lg:w-auto justify-between lg:justify-start lg:gap-2 bg-slate-100/80 dark:bg-slate-800/60 p-1.5 lg:p-2 rounded-xl lg:rounded-2xl" data-tutorial="attendance-status-group">
                                 {statusOptions.map((opt) => {
                                     const isActive = record?.status === opt.value;
 
@@ -106,7 +106,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                             key={opt.value}
                                             onClick={() => onStatusChange(student.id, opt.value)}
                                             className={`
-                                                flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200
+                                                flex items-center justify-center flex-1 lg:flex-none lg:w-11 h-11 lg:rounded-full rounded-lg transition-all duration-200
                                                 ${activeClass}
                                             `}
                                             title={opt.label}
@@ -114,13 +114,13 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                             aria-pressed={isActive}
                                         >
                                             <opt.icon className="w-5 h-5" aria-hidden="true" />
-                                            <span className="sr-only">{opt.label}</span>
+                                            <span className="sr-only lg:not-sr-only text-xs font-medium ml-1 hidden">{opt.label}</span>
                                         </button>
                                     );
                                 })}
                             </div>
 
-                            <div className="flex items-center justify-end sm:justify-start gap-2">
+                            <div className="flex items-center justify-end lg:justify-start gap-2">
                                 <button
                                     onClick={() => onNoteClick(student.id, record?.note || '')}
                                     className={`

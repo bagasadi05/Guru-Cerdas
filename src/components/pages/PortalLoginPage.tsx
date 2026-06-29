@@ -15,19 +15,19 @@ const PortalLoginPage: React.FC = () => {
     const [lockedOut, setLockedOut] = useState(false);
     const [lockoutTimeLeft, setLockoutTimeLeft] = useState(0);
 
-    const checkLockoutStatus = async () => {
-        const status = await authSecurity.isAccountLocked('parent_portal_client');
-        if (status.locked) {
-            setLockedOut(true);
-            setLockoutTimeLeft(status.remainingTime);
-            setError(`Terlalu banyak percobaan masuk yang gagal. Portal dikunci sementara selama ${authSecurity.formatLockoutTime(status.remainingTime)}.`);
-        } else {
-            setLockedOut(false);
-            setLockoutTimeLeft(0);
-        }
-    };
-
     useEffect(() => {
+        const checkLockoutStatus = async () => {
+            const status = await authSecurity.isAccountLocked('parent_portal_client');
+            if (status.locked) {
+                setLockedOut(true);
+                setLockoutTimeLeft(status.remainingTime);
+                setError(`Terlalu banyak percobaan masuk yang gagal. Portal dikunci sementara selama ${authSecurity.formatLockoutTime(status.remainingTime)}.`);
+            } else {
+                setLockedOut(false);
+                setLockoutTimeLeft(0);
+            }
+        };
+
         checkLockoutStatus();
     }, []);
 

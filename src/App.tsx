@@ -15,7 +15,7 @@ import { queryClient } from './services/queryClient';
 import { AppProviders } from './components/AppProviders';
 import { OfflineBanner } from './components/StatusIndicators';
 import { GlobalSearchProvider } from './components/SearchSystem';
-import { TourProvider, HelpButton } from './components/OnboardingHelp';
+import { TourProvider } from './components/OnboardingHelp';
 import { useKeyboardShortcuts } from './components/advanced-features/useKeyboardShortcuts';
 import { startCleanupScheduler } from './services/CleanupService';
 import { useSessionTimeout } from './hooks/useSessionTimeout';
@@ -125,6 +125,12 @@ function AppContent() {
     });
   }, [registerShortcut]);
 
+  React.useEffect(() => {
+    const handleOpenHelp = () => setShowHelp(true);
+    document.addEventListener('open-help-center', handleOpenHelp);
+    return () => document.removeEventListener('open-help-center', handleOpenHelp);
+  }, []);
+
   // Session timeout - only for authenticated users
   const { session, logout } = useAuth();
   const { isWarningVisible, remainingSeconds, extendSession } = useSessionTimeout({
@@ -188,7 +194,6 @@ function AppContent() {
             />
             <KeyboardShortcutsPanel isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
           </Suspense>
-          <HelpButton onClick={() => setShowHelp(true)} />
 
           {/* Session Timeout Warning */}
           {session && (

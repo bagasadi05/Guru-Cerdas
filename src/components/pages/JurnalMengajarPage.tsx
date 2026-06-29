@@ -24,7 +24,7 @@ const JournalRekapPanel = React.lazy(() =>
   import('./journal/JournalRekapPanel')
     .then((m) => ({ default: m.JournalRekapPanel }))
     .catch(() => ({
-      default: (props: { filters: TeachingJournalFilters }) => (
+      default: () => (
         <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
           Panel rekapitulasi belum tersedia.
         </div>
@@ -50,12 +50,8 @@ const formatIdDate = (dateStr: string): string => {
   }
 };
 
-const stripWhitespace = (value: string | null | undefined): string =>
-  (value ?? '').replace(/\s+/g, ' ').trim();
-
 const JurnalMengajarPage: React.FC = () => {
   const { user, userRole } = useAuth();
-  const toast = useToast();
   const [filters, setFilters] = useState<TeachingJournalFilters>({});
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -76,6 +72,7 @@ const JurnalMengajarPage: React.FC = () => {
   const [selectedJournal, setSelectedJournal] = useState<TeachingJournal | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const [prefillValues, setPrefillValues] = useState<{
     class_id?: string;
     subject?: string;
@@ -84,7 +81,7 @@ const JurnalMengajarPage: React.FC = () => {
   } | undefined>(undefined);
 
   // 1) Active classes (for filter dropdown).
-  const { data: classes = [], isLoading: loadingClasses } = useQuery<ClassOption[]>({
+  const { data: classes = [] } = useQuery<ClassOption[]>({
     queryKey: ['classes', 'active_for_journal_filter', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -155,16 +152,18 @@ const JurnalMengajarPage: React.FC = () => {
     const scheduleId = searchParams.get('scheduleId');
 
     if (classId || subject || date || scheduleId) {
-      setPrefillValues({
-        class_id: classId || undefined,
-        subject: subject || undefined,
-        date: date || undefined,
-        schedule_id: scheduleId || undefined,
-      });
-      // Clear query params so reloading doesn't pop it open again
-      setSearchParams({}, { replace: true });
-      setSelectedJournal(null);
-      setIsFormOpen(true);
+      setTimeout(() => {
+        setPrefillValues({
+          class_id: classId || undefined,
+          subject: subject || undefined,
+          date: date || undefined,
+          schedule_id: scheduleId || undefined,
+        });
+        // Clear query params so reloading doesn't pop it open again
+        setSearchParams({}, { replace: true });
+        setSelectedJournal(null);
+        setIsFormOpen(true);
+      }, 0);
     }
   }, [searchParams, setSearchParams]);
 
@@ -248,13 +247,24 @@ const JurnalMengajarPage: React.FC = () => {
         <TabsContent value="jurnal-harian" className="space-y-4">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <Card className="rounded-2xl">
-            <CardHeader className="flex flex-col gap-1">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">Filter</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Saring daftar jurnal berdasarkan kelas, mata pelajaran, dan rentang tanggal.
-              </p>
+            <CardHeader 
+              className="flex flex-row items-center justify-between gap-2 cursor-pointer md:cursor-default"
+              onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+            >
+              <div className="flex flex-col gap-1">
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white">Filter</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 hidden md:block">
+                  Saring daftar jurnal berdasarkan kelas, mata pelajaran, dan rentang tanggal.
+                </p>
+              </div>
+              <button 
+                className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                aria-label={isFilterExpanded ? 'Tutup filter' : 'Buka filter'}
+              >
+                <svg className={`w-5 h-5 transition-transform duration-200 ${isFilterExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
             </CardHeader>
-            <CardContent>
+            <CardContent className={`${isFilterExpanded ? 'block' : 'hidden'} md:block`}>
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                 <div className="md:col-span-4">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">

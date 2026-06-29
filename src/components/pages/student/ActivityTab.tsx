@@ -46,11 +46,11 @@ const CategoryFilter: React.FC<{
     onSelect: (category: PointCategory | 'all') => void;
 }> = ({ selectedCategory, onSelect }) => {
     return (
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
             <button
                 onClick={() => onSelect('all')}
-                className={`px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-full transition-all ${selectedCategory === 'all'
-                    ? 'bg-indigo-600 text-white'
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 min-h-[36px] sm:min-h-[40px] text-xs sm:text-sm font-medium rounded-full transition-all ${selectedCategory === 'all'
+                    ? 'bg-indigo-600 text-white shadow-sm'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
             >
@@ -60,12 +60,12 @@ const CategoryFilter: React.FC<{
                 <button
                     key={key}
                     onClick={() => onSelect(key as PointCategory)}
-                    className={`px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-full transition-all flex items-center gap-1 ${selectedCategory === key
-                        ? 'bg-indigo-600 text-white'
+                    className={`px-3 py-1.5 sm:px-4 sm:py-2 min-h-[36px] sm:min-h-[40px] text-xs sm:text-sm font-medium rounded-full transition-all flex items-center gap-1.5 ${selectedCategory === key
+                        ? 'bg-indigo-600 text-white shadow-sm'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                 >
-                    <span>{icon}</span>
+                    <span className="text-sm">{icon}</span>
                     {label}
                 </button>
             ))}
@@ -273,23 +273,25 @@ const ActivityPointsHistory: React.FC<{
                 const categoryInfo = record.category ? POINT_CATEGORIES[record.category] : null;
 
                 return (
-                    <div key={record.id} className="group flex items-center gap-4 p-3 rounded-lg bg-gray-50 dark:bg-black/20 hover:bg-gray-100 dark:hover:bg-black/30 transition-all">
-                        <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-200">
-                            +1
-                        </div>
-                        <div className="flex-grow min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-semibold text-gray-900 dark:text-white">{record.quiz_name}</p>
-                                {categoryInfo && (
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${POINT_CATEGORY_BADGE_CLASSES[record.category!]} flex items-center gap-1`}>
-                                        <span>{categoryInfo.icon}</span>
-                                        {categoryInfo.label}
-                                    </span>
-                                )}
+                    <div key={record.id} className="group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all border border-transparent dark:border-slate-700/50">
+                        <div className="flex items-center gap-3 flex-grow min-w-0">
+                            <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-lg sm:text-2xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 shadow-inner">
+                                +1
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                {record.subject || 'N/A'} &middot; {new Date(record.quiz_date || record.created_at).toLocaleDateString('id-ID')}
-                            </p>
+                            <div className="flex-grow min-w-0">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                                    <p className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white leading-tight break-words">{record.quiz_name}</p>
+                                    {categoryInfo && (
+                                        <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full ${POINT_CATEGORY_BADGE_CLASSES[record.category!]} flex items-center gap-1 w-fit mt-1 sm:mt-0`}>
+                                            <span>{categoryInfo.icon}</span>
+                                            {categoryInfo.label}
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    {record.subject || 'N/A'} &middot; {new Date(record.quiz_date || record.created_at).toLocaleDateString('id-ID')}
+                                </p>
+                            </div>
                         </div>
                         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(record)} aria-label="Edit Poin" disabled={!isOnline || record.user_id !== currentUserId}><PencilIcon className="h-4 w-4" /></Button>

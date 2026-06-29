@@ -284,11 +284,13 @@ const BulkGradeInputPage: React.FC = () => {
         if (activeClassRecord?.user_id === user.id) return true;
         return hasHomeroomAssignment(teacherAssignments, selectedClass || null, selectedSemester || null);
     }, [activeClassRecord?.user_id, selectedClass, selectedSemester, teacherAssignments, user]);
-    const availableSubjects = assignedSubjects.length > 0
-        ? assignedSubjects
-        : canUseDefaultSubjects
-            ? SUBJECTS
-            : [];
+    const availableSubjects = useMemo(() => {
+        return assignedSubjects.length > 0
+            ? assignedSubjects
+            : canUseDefaultSubjects
+                ? SUBJECTS
+                : [];
+    }, [assignedSubjects, canUseDefaultSubjects]);
 
     useEffect(() => {
         if (availableSubjects.length === 0) return;

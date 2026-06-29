@@ -136,43 +136,47 @@ const AttendancePage: React.FC = () => {
                 />
             )}
 
-            {/* Semester Selector */}
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Semester:</span>
-                <SemesterSelector
-                    value={selectedSemesterId || 'all'}
-                    onChange={(semId) => setSelectedSemesterId(semId === 'all' ? null : semId)}
-                    size="sm"
-                    includeAllOption={false}
-                    className="w-full sm:w-[240px]"
-                />
-            </div>
+            {/* Control Bar: Semester & Date Picker */}
+            <div className="flex flex-col lg:flex-row gap-4 lg:items-center mb-6">
+                {/* Semester Selector */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 lg:w-1/3">
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Semester:</span>
+                    <SemesterSelector
+                        value={selectedSemesterId || 'all'}
+                        onChange={(semId) => setSelectedSemesterId(semId === 'all' ? null : semId)}
+                        size="sm"
+                        includeAllOption={false}
+                        className="w-full"
+                    />
+                </div>
 
-            <div className="relative z-10 glass-card p-4 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none mb-6 transition-all rounded-xl overflow-hidden">
-                <div
-                    className="group relative overflow-hidden w-full rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30 cursor-pointer"
-                    onClick={() => setDatePickerOpen(true)}
-                >
-                    <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E')] opacity-[0.15] mix-blend-overlay"></div>
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                {/* Date Picker Banner */}
+                <div className="relative z-10 glass-card p-3 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none transition-all rounded-xl overflow-hidden flex-1">
+                    <div
+                        className="group relative overflow-hidden w-full rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30 cursor-pointer"
+                        onClick={() => setDatePickerOpen(true)}
+                    >
+                        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E')] opacity-[0.15] mix-blend-overlay"></div>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
-                    <div className="relative p-4 sm:p-6 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
-                            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner border border-white/20 group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
-                                <CalendarIcon className="w-5 h-5 sm:w-7 sm:h-7" />
+                        <div className="relative p-3 sm:p-4 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner border border-white/20 group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
+                                    <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </div>
+                                <div className="text-left flex-1 min-w-0">
+                                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-green-100 mb-0.5">Tanggal Absensi</p>
+                                    <h2 className="text-sm sm:text-xl font-bold text-white leading-tight truncate">
+                                        {new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                    </h2>
+                                </div>
                             </div>
-                            <div className="text-left flex-1 min-w-0">
-                                <p className="text-xxs sm:text-xs font-bold uppercase tracking-wider text-green-100 mb-0.5 sm:mb-1">Tanggal Absensi</p>
-                                <h2 className="text-base sm:text-2xl font-bold text-white leading-tight">
-                                    {new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                                </h2>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                            {selectedDate === today && <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
-                            {selectedDate === today && <span className="sm:hidden inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-bold bg-white/20 text-white border border-white/20">HARI INI</span>}
-                            <div className="w-11 h-11 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-colors">
-                                <ChevronDownIcon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                {selectedDate === today && <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
+                                {selectedDate === today && <span className="sm:hidden inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-bold bg-white/20 text-white border border-white/20">HARI INI</span>}
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-colors">
+                                    <ChevronDownIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -205,7 +209,7 @@ const AttendancePage: React.FC = () => {
                 </div>
             )}
 
-            <main className="bg-transparent flex flex-col pb-32">
+            <main className="bg-transparent flex flex-col pb-40 lg:pb-32">
                 {students && students.length > 0 && (
                     <AttendanceQuickActionsBar
                         hasAttendanceRecords={Object.keys(attendanceRecords).length > 0}

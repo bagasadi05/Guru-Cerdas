@@ -50,6 +50,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     checkAdmin();
   }, [user]);
 
+  useEffect(() => {
+    const handleOpenTutorial = () => setIsTutorialOpen(true);
+    document.addEventListener('open-tutorial-picker', handleOpenTutorial);
+    return () => document.removeEventListener('open-tutorial-picker', handleOpenTutorial);
+  }, []);
+
   const dynamicMoreMenuItems = useMemo(() => {
     return getDashboardMoreMenuItems(isAdmin, userRole);
   }, [isAdmin, userRole]);
@@ -68,7 +74,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [queryClient]);
 
   // Enhanced Mobile Navigation Hooks
-  const { isPortrait, isLandscape } = useOrientation();
+  const { isLandscape } = useOrientation();
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => {
@@ -89,7 +95,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 1023px)');
     const checkMobile = (e: MediaQueryListEvent | MediaQueryList) => {
-      console.log("[Layout] checkMobile called. matches:", e.matches, "innerWidth:", window.innerWidth);
       setIsMobile(e.matches);
     };
     
@@ -108,7 +113,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    console.log("[Layout] isMobile state value:", isMobile);
+    // Mobile state updated
   }, [isMobile]);
 
   const handleGreetingEnd = () => {

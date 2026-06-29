@@ -253,7 +253,7 @@ export const TindakLanjutPage: React.FC = () => {
         }
         confirmText={resolveMutation.isPending ? "Menyimpan..." : "Tandai Selesai"}
         cancelText="Batal"
-        isDestructive={false}
+        variant="info"
       />
     </div>
   );

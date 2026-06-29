@@ -13,10 +13,7 @@ import {
     BrainCircuitIcon,
     CameraIcon,
     ShieldAlertIcon,
-    PlusIcon,
-    BookOpenIcon,
     SparklesIcon,
-    MessageSquareIcon,
     KeyRoundIcon,
     CopyIcon,
     CopyCheckIcon,
@@ -26,7 +23,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Modal } from '../ui/Modal';
 import { Trophy } from 'lucide-react';
-import FloatingActionButton from '../ui/FloatingActionButton';
 import { Breadcrumb } from '../ui/Breadcrumb';
 import { StatCard } from './student/StatCard';
 import { EditStudentForm } from './student/forms/EditStudentForm';
@@ -303,12 +299,12 @@ const StudentDetailPage = () => {
                 />
 
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div className="flex items-center gap-4">
-                        <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Kembali" className="h-10 w-10 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white">
+                    <div className="flex items-center gap-3 sm:gap-4 w-full md:w-auto">
+                        <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Kembali" className="flex-shrink-0 h-10 w-10 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-transform hover:-translate-x-1">
                             <ArrowLeftIcon className="w-5 h-5" />
                         </Button>
-                        <div className="relative">
-                            <img src={getStudentAvatar(student.avatar_url, student.gender, student.id)} alt={student.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg dark:border-white/10" />
+                        <div className="relative group flex-shrink-0">
+                            <img src={getStudentAvatar(student.avatar_url, student.gender, student.id)} alt={student.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md group-hover:shadow-lg transition-all duration-300 dark:border-white/10 group-hover:scale-105" />
                             <input type="file" ref={photoInputRef} onChange={handlePhotoChange} accept="image/png, image/jpeg" className="hidden" disabled={isUploadingPhoto || !isOnline} />
                             {canManageStudentProfile ? (
                                 <button onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} aria-label="Unggah foto profil siswa" className="absolute -bottom-1 -right-1 p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-md hover:scale-110 transition-transform">
@@ -316,68 +312,36 @@ const StudentDetailPage = () => {
                                 </button>
                             ) : null}
                         </div>
-                        <div>
-                            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{student.name}</h1>
-                            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Kelas {student.classes?.name || 'N/A'}</p>
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white truncate">{student.name}</h1>
+                            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 truncate">Kelas {student.classes?.name || 'N/A'}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 self-start md:self-center flex-wrap">
+                    <div className="flex items-center gap-2 w-full md:w-auto self-start md:self-center flex-wrap">
                         {canManageStudentProfile ? (
-                            <>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={() => setModalState({ type: 'editStudent', data: student })}
-                                    disabled={!isOnline}
-                                    className="h-10 w-10 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white sm:hidden"
-                                    aria-label="Edit Profil"
-                                >
-                                    <UserCircleIcon className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setModalState({ type: 'editStudent', data: student })}
-                                    disabled={!isOnline}
-                                    className="hidden sm:inline-flex h-10 px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white"
-                                >
-                                    <UserCircleIcon className="w-4 h-4 mr-2" />Edit Profil
-                                </Button>
-                            </>
-                        ) : null}
-
-                        <Link to={`/cetak-rapot/${studentId}`} className="sm:hidden">
                             <Button
                                 variant="outline"
-                                size="icon"
-                                className="h-10 w-10 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white"
-                                aria-label="Cetak Rapor"
+                                onClick={() => setModalState({ type: 'editStudent', data: student })}
+                                disabled={!isOnline}
+                                className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-all hover:-translate-y-0.5"
                             >
-                                <FileTextIcon className="w-4 h-4" />
+                                <UserCircleIcon className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Edit Profil</span>
                             </Button>
-                        </Link>
-                        <Link to={`/cetak-rapot/${studentId}`} className="hidden sm:inline-flex">
-                            <Button variant="outline" className="h-10 px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white">
-                                <FileTextIcon className="w-4 h-4 mr-2" />Cetak Rapor
+                        ) : null}
+
+                        <Link to={`/cetak-rapot/${studentId}`} className="flex-1 sm:flex-none flex">
+                            <Button variant="outline" className="w-full h-10 px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-all hover:-translate-y-0.5">
+                                <FileTextIcon className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Cetak Rapor</span>
                             </Button>
                         </Link>
 
                         {canManageStudentProfile ? (
-                            <>
-                                <Button
-                                    onClick={() => setModalState({ type: 'portalAccess' })}
-                                    size="icon"
-                                    className="h-10 w-10 sm:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-                                    aria-label="Akses Portal"
-                                >
-                                    <KeyRoundIcon className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                    onClick={() => setModalState({ type: 'portalAccess' })}
-                                    className="hidden sm:inline-flex h-10 px-3 sm:px-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-                                >
-                                    <KeyRoundIcon className="w-4 h-4 mr-2" />Akses Portal
-                                </Button>
-                            </>
+                            <Button
+                                onClick={() => setModalState({ type: 'portalAccess' })}
+                                className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
+                            >
+                                <KeyRoundIcon className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Akses Portal</span>
+                            </Button>
                         ) : null}
                     </div>
                 </header>
@@ -397,7 +361,7 @@ const StudentDetailPage = () => {
                     </div>
                 </div>
 
-                <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
+                <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mt-6">
                     <StatCard icon={CheckCircleIcon} label="Hadir" value={`${attendanceSummary.Hadir} hari`} color="from-green-500 to-emerald-400" />
                     <StatCard icon={AlertCircleIcon} label="Izin" value={`${attendanceSummary.Izin} hari`} color="from-blue-500 to-cyan-400" />
                     <StatCard icon={AlertCircleIcon} label="Sakit" value={`${attendanceSummary.Sakit} hari`} color="from-yellow-500 to-amber-400" />
@@ -410,12 +374,12 @@ const StudentDetailPage = () => {
                 <Card>
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                         {/* Sticky Tab Navigation */}
-                        <div className="border-b border-gray-200 dark:border-white/10 sticky top-0 z-20 bg-white dark:bg-gray-900">
+                        <div className="border-b border-gray-200 dark:border-white/10 sticky top-0 z-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl">
                             <div className="relative">
-                                <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-gray-900 to-transparent pointer-events-none z-10 transition-opacity ${tabScrollState.left ? 'opacity-100' : 'opacity-0'}`} />
-                                <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10 transition-opacity ${tabScrollState.right ? 'opacity-100' : 'opacity-0'}`} />
-                                <div ref={tabsScrollRef} className="flex justify-start sm:justify-center px-4 sm:px-6 py-2 overflow-x-auto scrollbar-hide">
-                                    <TabsList className="bg-gray-100 dark:bg-black/20">
+                                <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-gray-900 to-transparent pointer-events-none z-10 transition-opacity duration-300 ${tabScrollState.left ? 'opacity-100' : 'opacity-0'}`} />
+                                <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10 transition-opacity duration-300 ${tabScrollState.right ? 'opacity-100' : 'opacity-0'}`} />
+                                <div ref={tabsScrollRef} className="flex justify-start sm:justify-center px-2 sm:px-6 py-2 overflow-x-auto scrollbar-hide">
+                                    <TabsList className="bg-gray-100/70 dark:bg-black/30 p-1 rounded-xl">
                                         <TabsTrigger value="grades" className="h-11">Nilai</TabsTrigger>
                                         <TabsTrigger value="activity" className="h-11">Keaktifan</TabsTrigger>
                                         <TabsTrigger value="violations" className="h-11">Pelanggaran</TabsTrigger>
@@ -604,66 +568,7 @@ const StudentDetailPage = () => {
                 </div>
             </div>
 
-            {/* Floating Action Button with Quick Actions - Hidden on Communication Tab */}
-            {activeTab !== 'communication' && (
-                <>
-                    <FloatingActionButton
-                        icon={<BrainCircuitIcon className="w-6 h-6 animate-pulse text-white" />}
-                        label="Asisten AI Wali Kelas"
-                        offset={{ bottom: 80, right: 80 }}
-                        size={56}
-                        className="shadow-xl bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 text-white border-none focus:ring-fuchsia-500 shadow-fuchsia-500/20 animate-fade-in"
-                        onClick={() => setModalState({ type: 'aiAssistant' })}
-                        aria-label="Asisten AI Wali Kelas"
-                    />
-                    <FloatingActionButton
-                        icon={<PlusIcon className="w-6 h-6" />}
-                        label="Menu Cepat"
-                        offset={{ bottom: 80, right: 16 }}
-                        size={56}
-                        className="shadow-xl"
-                        quickActions={[
-                            {
-                                icon: <BrainCircuitIcon className="w-4 h-4 text-fuchsia-500" />,
-                                label: 'Asisten AI Wali Kelas',
-                                onClick: () => setModalState({ type: 'aiAssistant' }),
-                                color: 'bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-600 dark:text-fuchsia-400 font-semibold'
-                            },
-                            {
-                                icon: <BookOpenIcon className="w-4 h-4" />,
-                                label: 'Tambah Nilai',
-                                onClick: () => setModalState({ type: 'academic', data: null }),
-                                color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                            },
-                            {
-                                icon: <SparklesIcon className="w-4 h-4" />,
-                                label: 'Tambah Keaktifan',
-                                onClick: () => setModalState({ type: 'quiz', data: null }),
-                                color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                            },
-                            {
-                                icon: <ShieldAlertIcon className="w-4 h-4" />,
-                                label: 'Catat Pelanggaran',
-                                onClick: () => setModalState({ type: 'violation', mode: 'add', data: null }),
-                                color: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                            },
-                            {
-                                icon: <FileTextIcon className="w-4 h-4" />,
-                                label: 'Catatan Guru',
-                                onClick: () => setModalState({ type: 'report', data: null }),
-                                color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                            },
-                            {
-                                icon: <MessageSquareIcon className="w-4 h-4" />,
-                                label: 'Kirim Pesan',
-                                onClick: () => setActiveTab('communication'),
-                                color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                            }
-                        ]}
-                        aria-label="Menu Cepat"
-                    />
-                </>
-            )}
+
 
             {
                 modalState.type === 'applyPoints' ? (

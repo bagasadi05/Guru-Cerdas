@@ -79,7 +79,6 @@ export const WallOfFameWidget: React.FC<WallOfFameWidgetProps> = ({ data }) => {
                   'bg-slate-100 dark:bg-slate-800 text-slate-600 border-slate-200 dark:border-slate-700',
                   'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-200 dark:border-amber-900'
                 ];
-                const trophyColors = ['text-yellow-500', 'text-slate-400', 'text-amber-600'];
                 return (
                   <div
                     key={item.studentId}

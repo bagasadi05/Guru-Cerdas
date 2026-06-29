@@ -71,8 +71,6 @@ export const generateAnalyticsPdf = async (data: AnalyticsData, options: ExportO
 
     // --- Formal palette ---
     const PRIMARY = [7, 54, 66] as const;          // dark teal
-    const ACCENT = [12, 74, 110] as const;         // deep blue (table heads)
-    const ROW_ALT = [244, 248, 250] as const;
     const BORDER = [205, 214, 222] as const;
     const TEXT = [30, 41, 59] as const;
     const MUTED = [100, 116, 139] as const;

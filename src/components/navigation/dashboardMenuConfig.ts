@@ -72,7 +72,7 @@ const baseMoreMenuItems: DashboardMenuItem[] = [
 ];
 
 export const getDashboardNavSections = (isAdmin: boolean, role?: string | null): DashboardMenuSection[] => {
-  let sections = baseNavSections.map((section) => ({
+  const sections = baseNavSections.map((section) => ({
     ...section,
     items: [...section.items],
   }));
@@ -105,7 +105,7 @@ export const getDashboardNavSections = (isAdmin: boolean, role?: string | null):
 };
 
 export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null): DashboardMenuItem[] => {
-  let items = [...baseMoreMenuItems];
+  const items = [...baseMoreMenuItems];
   
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
     items.push({ href: '/tindak-lanjut', label: 'Tindak Lanjut', icon: ShieldCheck });

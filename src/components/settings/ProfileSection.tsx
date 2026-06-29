@@ -9,18 +9,7 @@ import { ImageUploader } from '../ui/ImageUploader';
 import { r2StorageService } from '../../services/r2StorageService';
 import { SettingsCard } from './SettingsCard';
 
-const getStoragePath = (url: string | undefined | null) => {
-    if (!url) return null;
-    if (url.includes('pravatar.cc')) return null;
-    try {
-        const parts = url.split('/teacher_assets/');
-        if (parts.length < 2) return null;
-        return parts[1];
-    } catch (e) {
-        console.error('Error parsing storage URL', e);
-        return null;
-    }
-};
+
 
 const ProfileSection: React.FC = () => {
     const { user, updateUser } = useAuth();

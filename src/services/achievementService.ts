@@ -7,20 +7,7 @@ import {
     StudentAchievementUpdate,
 } from '../types/studentAchievement';
 
-/**
- * Helper to extract file path from Supabase storage public URL.
- */
-const extractStoragePathFromPublicUrl = (publicUrl: string | null | undefined, bucket: string) => {
-    if (!publicUrl) return null;
-    try {
-        const url = new URL(publicUrl);
-        const marker = `/${bucket}/`;
-        const [, path] = url.pathname.split(marker);
-        return path ? decodeURIComponent(path) : null;
-    } catch {
-        return null;
-    }
-};
+
 
 /**
  * Fetch achievements for a specific student.

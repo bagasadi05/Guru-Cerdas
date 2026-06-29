@@ -29,7 +29,6 @@ import {
 import { SettingsCard } from './SettingsCard';
 
 type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
-type ScheduleWithClassName = ScheduleRow & { className?: string };
 
 const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
 

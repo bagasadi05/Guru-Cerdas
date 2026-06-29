@@ -8,24 +8,6 @@ import type {
     TeachingJournalRekap,
 } from '../types/teachingJournal';
 
-// ---------------------------------------------------------------------------
-// Storage helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Extract the relative storage path from a Supabase public URL.
- */
-const extractStoragePathFromPublicUrl = (publicUrl: string | null | undefined, bucket: string) => {
-    if (!publicUrl) return null;
-    try {
-        const url = new URL(publicUrl);
-        const marker = `/${bucket}/`;
-        const [, path] = url.pathname.split(marker);
-        return path ? decodeURIComponent(path) : null;
-    } catch {
-        return null;
-    }
-};
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -243,13 +225,14 @@ const getRekap = async (filters: TeachingJournalFilters = {}): Promise<TeachingJ
     let userMap: Record<string, string> = {};
 
     if (userIds.length > 0) {
-        const { data: users } = await supabase
+        // `users` table exists in the public schema but may not be in generated types
+        const { data: users } = await (supabase as any)
             .from('users')
             .select('id, name')
             .in('id', userIds);
 
         if (users) {
-            userMap = users.reduce(
+            userMap = (users as { id: string; name: string }[]).reduce(
                 (acc: Record<string, string>, u: { id: string; name: string }) => {
                     acc[u.id] = u.name;
                     return acc;
