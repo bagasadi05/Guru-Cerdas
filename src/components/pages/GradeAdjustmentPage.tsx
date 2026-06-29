@@ -32,8 +32,23 @@ type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
 
 const SUBJECTS = [
-    'Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'IPA', 'IPS',
-    'Pancasila', 'PKN', 'Seni Budaya', 'PJOK', 'Informatika', 'Agama'
+    'TQA',
+    'Bahasa Indonesia',
+    'Matematika',
+    'IPAS',
+    'Pancasila',
+    'Akidah',
+    'Fikih',
+    'Bahasa Arab',
+    'Bahasa Jawa',
+    'Bahasa Inggris',
+    "Qur'an Hadits",
+    'SKI',
+    'PJOK',
+    'TIK',
+    'Seni Budaya',
+    'Pramuka',
+    'Ekstra'
 ];
 
 const DEFAULT_KKM = 75;
@@ -593,6 +608,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Mata Pelajaran</label>
                             <Select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)}>
+                                <option value="">-- Pilih Mapel --</option>
                                 {SUBJECTS.map(s => (
                                     <option key={s} value={s}>{s}</option>
                                 ))}
@@ -1065,9 +1081,9 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                                 </span>
                                                                                 <div className="relative flex items-center justify-center">
                                                                                     <input
-                                                                                        type="number"
-                                                                                        min="0"
-                                                                                        max={targetAverageRange.max}
+                                                                                        type="text"
+                                                                                        inputMode="numeric"
+                                                                                        pattern="[0-9]*"
                                                                                         value={scoreValue}
                                                                                         onChange={(e) => handleManualScoreChange(key, e.target.value)}
                                                                                         className={`no-print w-14 text-center text-xs font-bold border rounded p-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
@@ -1124,9 +1140,9 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                 <td className="border border-slate-350 p-1 text-center font-bold">
                                                                     <div className="relative flex items-center justify-center">
                                                                         <input
-                                                                            type="number"
-                                                                            min="0"
-                                                                            max={targetAverageRange.max}
+                                                                            type="text"
+                                                                            inputMode="numeric"
+                                                                            pattern="[0-9]*"
                                                                             value={scoreValue}
                                                                             onChange={(e) => handleManualScoreChange(item.id, e.target.value)}
                                                                             className={`no-print w-16 text-center text-xs font-bold border rounded p-1 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${

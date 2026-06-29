@@ -86,7 +86,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
 
                         {/* Action Buttons */}
                         <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 w-full lg:w-auto mt-2 lg:mt-0">
-                            <div className="flex w-full lg:w-auto justify-between lg:justify-start lg:gap-2 bg-slate-100/80 dark:bg-slate-800/60 p-1.5 lg:p-2 rounded-xl lg:rounded-2xl" data-tutorial="attendance-status-group">
+                            <div className="grid grid-cols-5 gap-1 lg:flex lg:gap-2 w-full lg:w-auto bg-slate-100/80 dark:bg-slate-800/60 p-1.5 lg:p-2 rounded-xl lg:rounded-2xl" data-tutorial="attendance-status-group">
                                 {statusOptions.map((opt) => {
                                     const isActive = record?.status === opt.value;
 
@@ -106,15 +106,15 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                             key={opt.value}
                                             onClick={() => onStatusChange(student.id, opt.value)}
                                             className={`
-                                                flex items-center justify-center flex-1 lg:flex-none lg:w-11 h-11 lg:rounded-full rounded-lg transition-all duration-200
+                                                flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-0 min-h-[44px] lg:w-11 lg:h-11 lg:rounded-full rounded-lg transition-all duration-200
                                                 ${activeClass}
                                             `}
                                             title={opt.label}
                                             aria-label={opt.label}
                                             aria-pressed={isActive}
                                         >
-                                            <opt.icon className="w-5 h-5" aria-hidden="true" />
-                                            <span className="sr-only lg:not-sr-only text-xs font-medium ml-1 hidden">{opt.label}</span>
+                                            <opt.icon className="w-4 h-4 lg:w-5 lg:h-5" aria-hidden="true" />
+                                            <span className="text-[10px] lg:text-xs font-semibold leading-none truncate">{opt.label.slice(0, 3)}</span>
                                         </button>
                                     );
                                 })}

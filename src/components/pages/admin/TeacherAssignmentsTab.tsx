@@ -28,17 +28,23 @@ type SemesterOption = {
 type AssignmentRole = 'homeroom' | 'subject_teacher' | 'assistant';
 
 const DEFAULT_SUBJECT_OPTIONS = [
-    'Matematika',
+    'TQA',
     'Bahasa Indonesia',
-    'Bahasa Inggris',
-    'IPA',
-    'IPS',
+    'Matematika',
+    'IPAS',
     'Pancasila',
-    'PKN',
-    'Seni Budaya',
+    'Akidah',
+    'Fikih',
+    'Bahasa Arab',
+    'Bahasa Jawa',
+    'Bahasa Inggris',
+    "Qur'an Hadits",
+    'SKI',
     'PJOK',
-    'Informatika',
-    'Agama',
+    'TIK',
+    'Seni Budaya',
+    'Pramuka',
+    'Ekstra'
 ];
 
 const getRoleLabel = (role: AssignmentRole) => {

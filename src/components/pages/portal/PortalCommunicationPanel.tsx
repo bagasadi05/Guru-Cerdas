@@ -225,7 +225,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                                 <button 
                                                     type="button"
                                                     title="Ubah pesan"
-                                                    className="h-7 w-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm hover:shadow active:scale-95 transition-all"
+                                                    className="h-10 w-10 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm hover:shadow active:scale-95 transition-all"
                                                     onClick={() => setModalState({ type: 'edit', data: msg })}
                                                 >
                                                     <PencilIcon className="w-3.5 h-3.5" />
@@ -233,7 +233,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                                 <button 
                                                     type="button"
                                                     title="Hapus pesan"
-                                                    className="h-7 w-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm hover:shadow active:scale-95 transition-all"
+                                                    className="h-10 w-10 rounded-xl bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm hover:shadow active:scale-95 transition-all"
                                                     onClick={() => setModalState({ type: 'delete', data: msg })}
                                                 >
                                                     <TrashIcon className="w-3.5 h-3.5" />

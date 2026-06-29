@@ -230,7 +230,12 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                                     <span className="line-clamp-2">{stat.statusDetail}</span>
                                 </div>
                                 {typeof stat.progress === 'number' && (
-                                    <div className="mt-2 sm:mt-3 h-1.5 sm:h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+                                    <div className="mt-2 sm:mt-3 h-1.5 sm:h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"
+                                         role="progressbar"
+                                         aria-valuenow={stat.progress}
+                                         aria-valuemin={0}
+                                         aria-valuemax={100}
+                                         aria-label={`${stat.label}: ${stat.progress}%`}>
                                         <div
                                             className={`h-full rounded-full bg-gradient-to-r ${stat.color}`}
                                             style={{ width: `${Math.min(Math.max(stat.progress, 0), 100)}%` }}

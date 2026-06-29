@@ -9,8 +9,8 @@ import {
   CalendarIcon,
   CheckSquareIcon,
   UsersIcon,
+  BarChart3Icon,
 } from '../Icons';
-import { BarChart3 } from 'lucide-react';
 
 export interface MobileNavItem {
   href: string;
@@ -25,7 +25,7 @@ export const getMobileNavItems = (role?: string | null): MobileNavItem[] => {
       { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
       { href: '/siswa', label: 'Siswa', icon: UsersIcon },
       { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
-      { href: '/analytics', label: 'Analitik', icon: BarChart3 as any },
+      { href: '/analytics', label: 'Analitik', icon: BarChart3Icon },
     ];
   }
   return [

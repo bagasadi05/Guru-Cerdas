@@ -6,17 +6,23 @@ import { getAssignedSubjects, TeacherClassAssignmentRow } from '../../../../serv
 import { dedupeAcademicRecords } from '../../../../utils/academicRecordUtils';
 
 const DEFAULT_SUBJECT_OPTIONS = [
-    'Matematika',
+    'TQA',
     'Bahasa Indonesia',
-    'Bahasa Inggris',
-    'IPA',
-    'IPS',
+    'Matematika',
+    'IPAS',
     'Pancasila',
-    'PKN',
-    'Seni Budaya',
+    'Akidah',
+    'Fikih',
+    'Bahasa Arab',
+    'Bahasa Jawa',
+    'Bahasa Inggris',
+    "Qur'an Hadits",
+    'SKI',
     'PJOK',
-    'Informatika',
-    'Agama',
+    'TIK',
+    'Seni Budaya',
+    'Pramuka',
+    'Ekstra'
 ];
 
 export const useMassInputData = (selectedClass: string, subject?: string, assessmentName?: string, mode?: string, semesterId?: string) => {
@@ -82,12 +88,16 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
     });
 
     const { data: uniqueSubjects } = useQuery({
-        queryKey: ['distinctSubjects', user?.id, selectedClass, semesterId, teacherAssignments.length],
+        queryKey: ['distinctSubjects', 'v2', user?.id, selectedClass, semesterId, teacherAssignments.length],
         queryFn: async (): Promise<string[]> => {
             if (!user) return [];
             const assignedSubjects = getAssignedSubjects(teacherAssignments, selectedClass || null, semesterId || null);
-            if (assignedSubjects.length > 0) {
-                return assignedSubjects;
+            
+            // Always include the default subjects, but put assigned subjects first, and remove duplicates
+            const combinedSubjects = Array.from(new Set([...assignedSubjects, ...DEFAULT_SUBJECT_OPTIONS]));
+            
+            if (combinedSubjects.length > 0) {
+                return combinedSubjects;
             }
 
             let query = supabase

@@ -114,7 +114,14 @@ const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({ schedule, currentTi
                       <span>{t.dashboard.inProgress} ({progressPercent}%)</span>
                       <span>{minutesRemaining} {t.dashboard.minutesRemaining}</span>
                     </div>
-                    <div className="w-full bg-emerald-100 dark:bg-emerald-950/40 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="w-full bg-emerald-100 dark:bg-emerald-950/40 rounded-full h-1.5 overflow-hidden"
+                      role="progressbar"
+                      aria-valuenow={progressPercent}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`Kemajuan: ${progressPercent}%`}
+                    >
                       <div
                         className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
                         style={{ width: `${progressPercent}%` }}

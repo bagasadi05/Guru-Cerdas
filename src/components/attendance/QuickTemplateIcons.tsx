@@ -10,7 +10,6 @@ import {
     XCircle,
     Clock,
     CalendarOff,
-    Zap
 } from 'lucide-react';
 import { AttendanceStatus } from '../../types/enums';
 
@@ -77,18 +76,6 @@ const templates: Template[] = [
         color: 'text-orange-500',
         iconBg: 'bg-orange-500/10 dark:bg-orange-900/30',
         hoverColor: 'hover:bg-orange-50 dark:hover:bg-orange-900/30 hover:text-orange-600',
-        defaultStatus: AttendanceStatus.Hadir,
-        applyToAll: false,
-    },
-    {
-        id: 'quick-check',
-        name: 'Cek Cepat',
-        shortName: 'Cek',
-        description: 'Tandai yang belum diisi sebagai hadir',
-        icon: <Zap className="w-5 h-5" />,
-        color: 'text-emerald-500',
-        iconBg: 'bg-emerald-500/10 dark:bg-emerald-900/30',
-        hoverColor: 'hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600',
         defaultStatus: AttendanceStatus.Hadir,
         applyToAll: false,
     },

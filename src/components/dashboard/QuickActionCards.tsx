@@ -6,7 +6,12 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ClipboardCheck, TrendingUp, Clock, CheckSquare } from 'lucide-react';
+import {
+  ClipboardCheckIcon,
+  TrendingUpIcon,
+  ClockIcon,
+  CheckSquareIcon,
+} from '../Icons';
 
 interface QuickAction {
   id: string;
@@ -34,7 +39,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
       id: 'attendance',
       title: 'Isi Absensi',
       description: 'Catat kehadiran siswa hari ini',
-      icon: <ClipboardCheck className="w-5 h-5" />,
+      icon: <ClipboardCheckIcon className="w-5 h-5" />,
       link: '/absensi',
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
@@ -44,7 +49,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
       id: 'input-nilai',
       title: 'Input Nilai',
       description: 'Masukkan nilai siswa dengan cepat',
-      icon: <TrendingUp className="w-5 h-5" />,
+      icon: <TrendingUpIcon className="w-5 h-5" />,
       link: '/input-massal', // Updated to point to mass input which is more useful
       color: 'text-blue-600',
       bgColor: 'bg-blue-50 dark:bg-blue-900/20',
@@ -55,7 +60,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
       id: 'tasks',
       title: 'Tugas & To-Do',
       description: 'Pantau tugas siswa dan reminder',
-      icon: <CheckSquare className="w-5 h-5" />,
+      icon: <CheckSquareIcon className="w-5 h-5" />,
       link: '/tugas',
       color: 'text-orange-600',
       bgColor: 'bg-orange-50 dark:bg-orange-900/20',
@@ -67,7 +72,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Aksi Cepat</h2>
-        <Clock className="w-5 h-5 text-gray-400" />
+        <ClockIcon className="w-5 h-5 text-gray-400" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">

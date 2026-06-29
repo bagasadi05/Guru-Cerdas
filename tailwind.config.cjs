@@ -124,7 +124,7 @@ module.exports = {
         '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
       },
       fontSize: {
-        xxs: '0.625rem', // 10px
+        xxs: '0.6875rem', // 11px — WCAG recommends ≥11px for small text
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

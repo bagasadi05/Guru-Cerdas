@@ -147,8 +147,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
                 className={`
                     flex items-center justify-center
                     rounded-full shadow-lg
-                    bg-sky-600 hover:bg-sky-700 active:bg-sky-800
-                    dark:bg-purple-600 dark:hover:bg-purple-700 dark:active:bg-purple-800
+                    bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800
+                    dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:active:bg-emerald-800
                     text-white transition-all duration-200
                     hover:scale-110 active:scale-95
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400
@@ -188,9 +188,3 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 };
 
 export default FloatingActionButton;
-
-// Add these animations to your global CSS:
-// @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-// @keyframes slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-// .animate-fade-in { animation: fade-in 0.2s ease-out; }
-// .animate-slide-up { animation: slide-up 0.2s ease-out both; }

@@ -224,7 +224,6 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                         >
                                             <option value="" className="text-slate-900">-- Pilih Mapel --</option>
                                             {uniqueSubjects?.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
-                                            <option value="__NEW__" className="font-bold text-indigo-600 bg-indigo-50">+ Tambah Mapel Baru</option>
                                         </Select>
                                     )}
                                 </div>
@@ -276,7 +275,6 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                         >
                                             <option value="" className="text-slate-900">-- Pilih Mapel --</option>
                                             {uniqueSubjects?.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
-                                            <option value="__NEW__" className="font-bold text-indigo-600 bg-indigo-50">+ Tambah Mapel Baru</option>
                                         </Select>
                                     )}
                                 </div>

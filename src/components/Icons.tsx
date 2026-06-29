@@ -43,6 +43,7 @@ import {
     Search,
     CheckSquare,
     Printer,
+    ClipboardCheck,
     ClipboardPen,
     ClipboardPaste,
     Mail,
@@ -102,6 +103,7 @@ export const SunIcon = Sun;
 export const MoonIcon = Moon;
 export const ArrowLeftIcon = ArrowLeft;
 export const CheckCircleIcon = CheckCircle;
+export const CheckCircle2Icon = CheckCircle;
 export const XCircleIcon = XCircle;
 export const EditIcon = Edit;
 export const AlertCircleIcon = AlertCircle;
@@ -117,6 +119,7 @@ export const UserCheckIcon = UserCheck;
 export const UserPlusIcon = UserPlus;
 export const UserMinusIcon = UserMinus;
 export const BarChartIcon = BarChart;
+export const BarChart3Icon = BarChart;
 export const BookOpenIcon = BookOpen;
 export const ClockIcon = Clock;
 export const PaletteIcon = Palette;
@@ -135,6 +138,7 @@ export const ListIcon = List;
 export const SearchIcon = Search;
 export const CheckSquareIcon = CheckSquare;
 export const PrinterIcon = Printer;
+export const ClipboardCheckIcon = ClipboardCheck;
 export const ClipboardPenIcon = ClipboardPen;
 export const ClipboardPasteIcon = ClipboardPaste;
 export const MailIcon = Mail;
@@ -167,6 +171,7 @@ export const MoreHorizontalIcon = MoreHorizontal;
 export const InboxIcon = Inbox;
 export const ArrowRightIcon = ArrowRight;
 export const PlayCircleIcon = PlayCircle;
+export const CircleIcon = CheckCircle; // Circle not in lucide-react
 export const DownloadIcon = Download;
 export const XIcon = X;
 export const UploadIcon = Upload;

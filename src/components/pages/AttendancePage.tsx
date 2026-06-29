@@ -1,5 +1,4 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { AttendancePageSkeleton } from '../skeletons/PageSkeletons';
 import { SemesterSelector } from '../ui/SemesterSelector';
 import {
@@ -30,6 +29,8 @@ import { AttendanceQuickActionsBar } from '../attendance/AttendanceQuickActionsB
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
 import { AttendanceStreakIndicator } from '../attendance/AttendanceStreakIndicator';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { BarChart3, Flame } from 'lucide-react';
 
 const AttendancePage: React.FC = () => {
     const {
@@ -94,6 +95,9 @@ const AttendancePage: React.FC = () => {
         handleResetAttendance,
         confirmResetAttendance,
         handleSave,
+        performSave,
+        isSaveConfirmOpen,
+        setIsSaveConfirmOpen,
         handleExport,
         handleAnalyzeAttendance,
         isOnline,
@@ -121,7 +125,7 @@ const AttendancePage: React.FC = () => {
     }
 
     return (
-        <div className="w-full min-h-full p-4 sm:p-6 lg:p-8 flex flex-col">
+        <div className="w-full min-h-full p-4 sm:p-6 lg:p-8 flex flex-col max-w-5xl mx-auto">
             <AttendanceHeader
                 onAnalyze={handleAnalyzeAttendance}
                 onExport={() => setIsExportModalOpen(true)}
@@ -183,33 +187,7 @@ const AttendancePage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Real-time Dynamic SVG Attendance Summary Widget */}
-            <AttendanceSummaryWidget
-                summary={attendanceSummary}
-                total={students?.length || 0}
-                unmarked={unmarkedStudents.length}
-            />
-
-            {/* Attendance Streak Indicator */}
-            {attendanceStreaks.length > 0 && (
-                <div className="mb-6">
-                    <AttendanceStreakIndicator
-                        streaks={attendanceStreaks}
-                        onStudentClick={(studentId) => {
-                            const element = document.getElementById(`student-${studentId}`);
-                            if (element) {
-                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                element.classList.add('ring-2', 'ring-green-500');
-                                setTimeout(() => {
-                                    element.classList.remove('ring-2', 'ring-green-500');
-                                }, 2000);
-                            }
-                        }}
-                    />
-                </div>
-            )}
-
-            <main className="bg-transparent flex flex-col pb-40 lg:pb-32">
+            <main className="bg-transparent flex flex-col">
                 {students && students.length > 0 && (
                     <AttendanceQuickActionsBar
                         hasAttendanceRecords={Object.keys(attendanceRecords).length > 0}
@@ -292,21 +270,50 @@ const AttendancePage: React.FC = () => {
                     )}
                 </div>
 
-                {/* Fixed Save Button */}
-                {students && students.length > 0 && createPortal(
-                    <div className="fixed bottom-[68px] lg:bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-[9998] flex justify-center animate-fade-in-up">
-                        <div className="w-full max-w-7xl">
-                            <Button
-                                onClick={handleSave}
-                                disabled={isSaving}
-                                data-tutorial="attendance-save"
-                                className="w-full h-[52px] text-base sm:text-lg font-bold shadow-xl shadow-emerald-500/30 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-none rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
-                            >
-                                {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
-                            </Button>
-                        </div>
-                    </div>,
-                    document.body
+                {/* Save Button — sticky bottom, inside content flow */}
+                {students && students.length > 0 && (
+                    <div className="sticky bottom-0 mt-6 pt-4 pb-4 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 dark:to-transparent -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+                        <Button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            data-tutorial="attendance-save"
+                            className="w-full h-12 sm:h-[52px] text-base sm:text-lg font-bold shadow-xl shadow-emerald-500/30 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-none rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
+                        </Button>
+                    </div>
+                )}
+
+                {/* Stats & Streaks — below the list, collapsed by default */}
+                {students && students.length > 0 && (
+                    <div className="mt-6 space-y-4">
+                        <CollapsibleSection
+                            title="Ringkasan & Streak Kehadiran"
+                            icon={<BarChart3 className="w-4 h-4 text-indigo-500" />}
+                            defaultOpen={false}
+                        >
+                            <AttendanceSummaryWidget
+                                summary={attendanceSummary}
+                                total={students?.length || 0}
+                                unmarked={unmarkedStudents.length}
+                            />
+                            {attendanceStreaks.length > 0 && (
+                                <AttendanceStreakIndicator
+                                    streaks={attendanceStreaks}
+                                    onStudentClick={(studentId) => {
+                                        const element = document.getElementById(`student-${studentId}`);
+                                        if (element) {
+                                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            element.classList.add('ring-2', 'ring-green-500');
+                                            setTimeout(() => {
+                                                element.classList.remove('ring-2', 'ring-green-500');
+                                            }, 2000);
+                                        }
+                                    }}
+                                />
+                            )}
+                        </CollapsibleSection>
+                    </div>
                 )}
             </main>
 
@@ -416,6 +423,47 @@ const AttendancePage: React.FC = () => {
                 </div>
             </BottomSheet>
 
+
+            {/* Save Confirmation Modal — replaces window.confirm */}
+            <Modal
+                isOpen={isSaveConfirmOpen}
+                onClose={() => setIsSaveConfirmOpen(false)}
+                title="Konfirmasi Simpan"
+            >
+                <div className="space-y-4">
+                    <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                        <AlertTriangle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="font-bold text-amber-700 dark:text-amber-300">Siswa Belum Diabsen</h4>
+                            <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                                Masih ada <strong>{unmarkedStudents.length} siswa</strong> yang belum diabsen.
+                            </p>
+                            <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
+                                Mereka akan otomatis ditandai <strong>"Hadir"</strong> saat disimpan.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                        <Button
+                            onClick={() => setIsSaveConfirmOpen(false)}
+                            variant="outline"
+                            className="flex-1"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setIsSaveConfirmOpen(false);
+                                performSave();
+                            }}
+                            className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
+                        >
+                            {isSaving ? 'Menyimpan...' : 'Simpan & Tandai Hadir'}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
 
             {/* Reset Attendance Confirmation Modal */}
             <Modal

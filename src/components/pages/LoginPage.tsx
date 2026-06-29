@@ -122,6 +122,9 @@ const LoginPage: React.FC = () => {
                                     <MailIcon className="icon h-5 w-5" />
                                     <Input
                                         type="email"
+                                        inputMode="email"
+                                        autoCapitalize="none"
+                                        autoCorrect="off"
                                         placeholder="Email"
                                         {...registerLogin('email')}
                                         error={errorsLogin.email?.message}
@@ -167,6 +170,9 @@ const LoginPage: React.FC = () => {
                                     <MailIcon className="icon h-5 w-5" />
                                     <Input
                                         type="email"
+                                        inputMode="email"
+                                        autoCapitalize="none"
+                                        autoCorrect="off"
                                         placeholder="Email"
                                         {...registerSignup('email')}
                                         error={errorsSignup.email?.message}
@@ -227,7 +233,7 @@ const LoginPage: React.FC = () => {
             <Modal title="Lupa Password" isOpen={isForgotModalOpen} onClose={() => setIsForgotModalOpen(false)}>
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">Masukkan alamat email Anda. Kami akan mengirimkan tautan untuk mengatur ulang password Anda.</p>
-                    <div><label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label><Input type="email" id="forgot-email" placeholder="Email terdaftar Anda" required value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} /></div>
+                    <div><label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label><Input type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" id="forgot-email" placeholder="Email terdaftar Anda" required value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} /></div>
                     <div className="flex justify-end gap-2 pt-4"><Button type="button" variant="ghost" onClick={() => setIsForgotModalOpen(false)} disabled={forgotLoading}>Batal</Button><Button type="submit" disabled={forgotLoading}>{forgotLoading ? 'Mengirim...' : 'Kirim Tautan'}</Button></div>
                 </form>
             </Modal>

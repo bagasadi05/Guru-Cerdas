@@ -220,7 +220,7 @@ const DashboardPage: React.FC = () => {
             </section>
           )}
 
-          {data && <TodayActionPanel data={data} />}
+          <TodayActionPanel data={data} isLoading={isLoading} />
           {/* Operational Section */}
           <section className="space-y-4">
             <SectionHeading>Aksi Cepat & Wawasan</SectionHeading>
@@ -392,62 +392,68 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {/* Speed Dial FAB */}
-      <div className="fixed bottom-24 right-4 lg:bottom-10 lg:right-10 z-50 flex flex-col items-end gap-4 pointer-events-none">
+      <nav className="fixed bottom-24 right-4 lg:bottom-10 lg:right-10 z-50 flex flex-col items-end gap-4 pointer-events-none" aria-label="Aksi cepat">
         <div
+          role="menu"
+          aria-hidden={!isFabOpen}
           className={`flex flex-col gap-3 transition-all duration-300 ${isFabOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-10 pointer-events-none'}`}
         >
-          <Link to="/jadwal" className="flex items-center gap-3 pr-1 group">
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
+          <Link to="/jadwal" role="menuitem" aria-label="Buka jadwal" className="flex items-center gap-3 pr-1 group">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0" aria-hidden="true">
               Jadwal
             </span>
             <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-emerald-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
-              <CalendarIcon className="w-6 h-6" />
+              <CalendarIcon className="w-6 h-6" aria-hidden="true" />
             </div>
           </Link>
-          <button onClick={openSearch} className="flex items-center gap-3 pr-1 group">
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
+          <button onClick={openSearch} role="menuitem" aria-label="Cari" className="flex items-center gap-3 pr-1 group">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0" aria-hidden="true">
               Cari
             </span>
             <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
-              <SearchIcon className="w-6 h-6" />
+              <SearchIcon className="w-6 h-6" aria-hidden="true" />
             </div>
           </button>
           <button
             onClick={() => document.dispatchEvent(new CustomEvent('open-ai-chat'))}
+            role="menuitem"
+            aria-label="Buka AI Chat"
             className="flex items-center gap-3 pr-1 group"
           >
-            {' '}
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0" aria-hidden="true">
               AI Chat
             </span>
             <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-emerald-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
-              <BrainCircuitIcon className="w-6 h-6" />
+              <BrainCircuitIcon className="w-6 h-6" aria-hidden="true" />
             </div>
           </button>
-          <Link to="/pengaturan" className="flex items-center gap-3 pr-1 group">
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
+          <Link to="/pengaturan" role="menuitem" aria-label="Buka pengaturan" className="flex items-center gap-3 pr-1 group">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0" aria-hidden="true">
               Pengaturan
             </span>
             <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-400 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
-              <SettingsIcon className="w-6 h-6" />
+              <SettingsIcon className="w-6 h-6" aria-hidden="true" />
             </div>
           </Link>
         </div>
         <FloatingActionButton
           onClick={() => setIsFabOpen(!isFabOpen)}
+          aria-expanded={isFabOpen}
+          aria-haspopup="menu"
+          aria-label={isFabOpen ? 'Tutup menu aksi cepat' : 'Buka menu aksi cepat'}
           icon={
             isFabOpen ? (
-              <PlusIcon className="w-7 h-7 rotate-45 transition-transform duration-300" />
+              <PlusIcon className="w-7 h-7 rotate-45 transition-transform duration-300" aria-hidden="true" />
             ) : (
-              <PlusIcon className="w-7 h-7 transition-transform duration-300" />
+              <PlusIcon className="w-7 h-7 transition-transform duration-300" aria-hidden="true" />
             )
           }
           className={`pointer-events-auto transition-all duration-300 ${isFabOpen ? 'bg-red-500 hover:bg-red-600 dark:bg-red-600 shadow-red-500/30 rotate-90' : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30'}`}
           position="bottom-right"
-          offset={{ bottom: 0, right: 0 }} // Fix build offset syntax
+          offset={{ bottom: 0, right: 0 }}
           size={64}
         />
-      </div>
+      </nav>
     </div>
   );
 };

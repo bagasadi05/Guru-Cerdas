@@ -207,30 +207,6 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
           </button>
         </div>
       </div>
-
-      {/* CSS Animations */}
-      <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slide-up {
-          from { 
-            transform: translateY(100%); 
-            opacity: 0;
-          }
-          to { 
-            transform: translateY(0); 
-            opacity: 1;
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.2s ease-out forwards;
-        }
-        .animate-slide-up {
-          animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-        }
-      `}</style>
     </div>
   );
 };

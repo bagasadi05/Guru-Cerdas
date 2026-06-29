@@ -48,6 +48,22 @@ export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule
         return map;
     }, [schedule]);
 
+    const hasSchedule = useMemo(() => Array.from(scheduleByDay.values()).some(list => list.length > 0), [scheduleByDay]);
+
+    if (!hasSchedule) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12 sm:py-16 px-4 text-center bg-white dark:bg-[#0F172A] rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 shadow-sm animate-fade-in-up">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center mb-4">
+                    <ClockIcon className="w-7 h-7 text-slate-400 dark:text-slate-600" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">Belum Ada Jadwal Mingguan</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[240px] mx-auto">
+                    Tambahkan jadwal untuk melihat tampilan mingguan.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 animate-fade-in-up">
             {daysOfWeek.map(day => {

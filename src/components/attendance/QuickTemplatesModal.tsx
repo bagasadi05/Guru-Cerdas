@@ -13,7 +13,6 @@ import {
     Clock,
     Users,
     CalendarOff,
-    Zap
 } from 'lucide-react';
 import { AttendanceStatus } from '../../types/enums';
 
@@ -80,17 +79,6 @@ const templates: Template[] = [
         borderColor: 'border-orange-200 dark:border-orange-700/50',
         defaultStatus: AttendanceStatus.Hadir,
         applyToAll: false, // Only unmarked students
-    },
-    {
-        id: 'quick-check',
-        name: 'Cek Cepat',
-        description: 'Tandai yang belum diisi sebagai hadir',
-        icon: <Zap className="w-5 h-5" />,
-        color: 'text-indigo-600',
-        bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
-        borderColor: 'border-indigo-200 dark:border-indigo-700/50',
-        defaultStatus: AttendanceStatus.Hadir,
-        applyToAll: false,
     },
 ];
 

@@ -17,7 +17,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Database } from '../../services/database.types';
 import { useToast } from '../../hooks/useToast';
 import { TasksPageSkeleton } from '../skeletons/PageSkeletons';
-import { MoreVertical, Loader2, PlayCircle, Circle, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
+import { MoreVerticalIcon, Loader2Icon, PlayCircleIcon, CircleIcon, CheckCircle2Icon, AlertTriangleIcon, ArrowRightIcon } from '../Icons';
 import { ValidationService } from '../../services/ValidationService';
 import { ValidationRules } from '../../types';
 import { EmptyError } from '../EmptyStates';
@@ -109,21 +109,21 @@ const fetchTasks = async (userId: string): Promise<TaskRow[]> => {
 const statusConfig: Record<TaskStatus, { title: string; icon: React.ReactNode; color: string; bgColor: string; textColor: string }> = {
     todo: {
         title: 'To Do',
-        icon: <Circle className="w-4 h-4" />,
+        icon: <CircleIcon className="w-4 h-4" />,
         color: 'text-slate-400',
         bgColor: 'bg-slate-500/20',
         textColor: 'text-slate-600 dark:text-slate-400'
     },
     in_progress: {
         title: 'In Progress',
-        icon: <PlayCircle className="w-4 h-4" />,
+        icon: <PlayCircleIcon className="w-4 h-4" />,
         color: 'text-blue-400',
         bgColor: 'bg-blue-500/20',
         textColor: 'text-blue-600 dark:text-blue-400'
     },
     done: {
         title: 'Selesai',
-        icon: <CheckCircle2 className="w-4 h-4" />,
+        icon: <CheckCircle2Icon className="w-4 h-4" />,
         color: 'text-emerald-400',
         bgColor: 'bg-emerald-500/20',
         textColor: 'text-emerald-600 dark:text-emerald-400'
@@ -199,7 +199,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                                 aria-expanded={showMenu}
                                 aria-haspopup="menu"
                             >
-                                <MoreVertical className="w-5 h-5 sm:w-4 sm:h-4" />
+                                <MoreVerticalIcon className="w-5 h-5 sm:w-4 sm:h-4" />
                             </button>
 
                             {showMenu && (
@@ -240,7 +240,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                                 ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
                                 : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400'
                                 }`}>
-                                {overdue ? <AlertTriangle className="w-3 h-3" /> : <CalendarIcon className="w-3 h-3" />}
+                                {overdue ? <AlertTriangleIcon className="w-3 h-3" /> : <CalendarIcon className="w-3 h-3" />}
                                 {formatDateDisplay(task.due_date)}
                             </div>
                         )}
@@ -250,18 +250,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                             {prevStatus && (
                                 <button
                                     onClick={() => onStatusChange(task.id, prevStatus)}
-                                    className="px-3 py-2 sm:px-2.5 sm:py-1.5 text-[11px] sm:text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600/50 hover:text-slate-800 dark:hover:text-white transition-all flex items-center gap-1.5 sm:gap-1"
+                                    className="px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600/50 hover:text-slate-800 dark:hover:text-white transition-all flex items-center gap-1.5 sm:gap-1"
                                     title={`Pindah ke ${statusConfig[prevStatus].title}`}
                                     disabled={isUpdating}
                                 >
-                                    <ArrowRight className="w-3.5 h-3.5 sm:w-3 sm:h-3 rotate-180" />
+                                    <ArrowRightIcon className="w-3.5 h-3.5 sm:w-3 sm:h-3 rotate-180" />
                                     {statusConfig[prevStatus].title}
                                 </button>
                             )}
                             {nextStatus && (
                                 <button
                                     onClick={() => onStatusChange(task.id, nextStatus)}
-                                    className={`px-3 py-2 sm:px-2.5 sm:py-1.5 text-[11px] sm:text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 sm:gap-1 ${nextStatus === 'done'
+                                    className={`px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 sm:gap-1 ${nextStatus === 'done'
                                         ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30'
                                         : 'bg-blue-500/20 text-blue-500 hover:bg-blue-500/30'
                                         }`}
@@ -269,7 +269,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                                     disabled={isUpdating}
                                 >
                                     {statusConfig[nextStatus].title}
-                                    <ArrowRight className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                                    <ArrowRightIcon className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                                 </button>
                             )}
                         </div>
@@ -614,7 +614,7 @@ const TasksPage: React.FC = () => {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-start gap-3">
                             <div className="p-2 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
-                                <AlertTriangle className="w-4 h-4" />
+                                <AlertTriangleIcon className="w-4 h-4" />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-red-700 dark:text-red-300">Gagal memuat tugas</p>
@@ -626,7 +626,7 @@ const TasksPage: React.FC = () => {
                             disabled={isFetching}
                             className="self-start sm:self-auto bg-red-600 hover:bg-red-700 text-white rounded-xl"
                         >
-                            {isFetching && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            {isFetching && <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />}
                             Coba Lagi
                         </Button>
                     </div>
@@ -683,19 +683,19 @@ const TasksPage: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
                     <div className="text-xl sm:text-4xl font-bold text-slate-800 dark:text-white mb-0.5 sm:mb-1">{stats.total}</div>
-                    <div className="text-[10px] sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</div>
+                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</div>
                 </div>
                 <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
                     <div className="text-xl sm:text-4xl font-bold text-slate-400 mb-0.5 sm:mb-1">{stats.todo}</div>
-                    <div className="text-[10px] sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">To Do</div>
+                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">To Do</div>
                 </div>
                 <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
                     <div className="text-xl sm:text-4xl font-bold text-blue-500 mb-0.5 sm:mb-1">{stats.inProgress}</div>
-                    <div className="text-[10px] sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress</div>
+                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress</div>
                 </div>
                 <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
                     <div className="text-xl sm:text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 sm:mb-1">{stats.done}</div>
-                    <div className="text-[10px] sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Selesai</div>
+                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Selesai</div>
                 </div>
             </div>
 
@@ -717,10 +717,10 @@ const TasksPage: React.FC = () => {
                                 <span className="flex items-center justify-center">
                                     {React.cloneElement(config.icon as React.ReactElement, { className: 'w-5 h-5 sm:w-4 sm:h-4' })}
                                 </span>
-                                <span className={`text-[10px] sm:text-xs leading-none text-center ${mobileActiveTab === statusKey ? 'font-bold' : ''}`}>
+                                <span className={`text-xxs sm:text-xs leading-none text-center ${mobileActiveTab === statusKey ? 'font-bold' : ''}`}>
                                     {config.title}
                                 </span>
-                                <span className={`text-[9px] sm:text-[10px] mt-0.5 ${mobileActiveTab === statusKey ? config.color : 'text-slate-400 dark:text-slate-500'}`}>
+                                <span className={`text-xxs mt-0.5 ${mobileActiveTab === statusKey ? config.color : 'text-slate-400 dark:text-slate-500'}`}>
                                     {count} tugas
                                 </span>
                             </button>
@@ -838,7 +838,7 @@ const TasksPage: React.FC = () => {
                             />
                             {isPastDate && (
                                 <div className="mt-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/30">
-                                    <AlertTriangle className="w-3.5 h-3.5" />
+                                    <AlertTriangleIcon className="w-3.5 h-3.5" />
                                     Tenggat waktu berada di masa lalu.
                                 </div>
                             )}
@@ -872,7 +872,7 @@ const TasksPage: React.FC = () => {
                             className="bg-indigo-600 hover:bg-indigo-700"
                         >
                             {(createTaskMutation.isPending || updateTaskMutation.isPending) && (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
                             )}
                             {editingTask ? 'Simpan Perubahan' : 'Tambah Tugas'}
                         </Button>
@@ -885,7 +885,7 @@ const TasksPage: React.FC = () => {
                 isOpen={!!taskToDeleteId}
                 onClose={() => setTaskToDeleteId(null)}
                 title="Konfirmasi Hapus Tugas"
-                icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
+                icon={<AlertTriangleIcon className="w-5 h-5 text-red-500" />}
             >
                 <div className="space-y-4">
                     <p className="text-slate-600 dark:text-slate-300 text-sm">
@@ -918,7 +918,7 @@ const TasksPage: React.FC = () => {
                 isOpen={isConfirmingClearAll}
                 onClose={() => setIsConfirmingClearAll(false)}
                 title="Bersihkan Tugas Selesai"
-                icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
+                icon={<AlertTriangleIcon className="w-5 h-5 text-red-500" />}
             >
                 <div className="space-y-4">
                     <p className="text-slate-600 dark:text-slate-300 text-sm">
@@ -940,7 +940,7 @@ const TasksPage: React.FC = () => {
                             disabled={clearCompletedTasksMutation.isPending}
                         >
                             {clearCompletedTasksMutation.isPending && (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
                             )}
                             Ya, Bersihkan
                         </Button>

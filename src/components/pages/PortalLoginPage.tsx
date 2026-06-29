@@ -152,6 +152,8 @@ const PortalLoginPage: React.FC = () => {
                         <div className="form-group-icon">
                             <Input
                                 type="text"
+                                autoCapitalize="characters"
+                                autoCorrect="off"
                                 placeholder="KODE AKSES"
                                 required
                                 value={accessCode}

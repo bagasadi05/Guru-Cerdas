@@ -11,9 +11,11 @@ import {
 import type { DashboardQueryData } from '../../types';
 import { isTaskOverdue, isTaskDueSoon } from '../../utils/dateHelpers';
 import { useI18n } from '../../utils/i18n';
+import { Skeleton } from '../ui/Skeleton';
 
 interface TodayActionPanelProps {
-    data: DashboardQueryData;
+    data: DashboardQueryData | null | undefined;
+    isLoading?: boolean;
 }
 
 type ActionTone = 'danger' | 'warning' | 'info' | 'success';
@@ -63,9 +65,32 @@ const getLatestGradeDrops = (data: DashboardQueryData) => {
         .sort((a, b) => b.drop - a.drop);
 };
 
-export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data }) => {
+export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoading }) => {
     const navigate = useNavigate();
     const { t } = useI18n();
+
+    if (isLoading) {
+        return (
+            <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+                <div className="p-5 border-b border-slate-200/70 dark:border-slate-700/60">
+                    <Skeleton className="h-4 w-24 mb-3" />
+                    <Skeleton className="h-6 w-48 mb-1" />
+                    <Skeleton className="h-4 w-64" />
+                </div>
+                <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="rounded-2xl border border-slate-200/70 dark:border-slate-700/60 p-4">
+                            <Skeleton className="h-10 w-10 rounded-2xl mb-4" />
+                            <Skeleton className="h-4 w-24 mb-2" />
+                            <Skeleton className="h-3 w-full" />
+                        </div>
+                    ))}
+                </div>
+            </section>
+        );
+    }
+
+    if (!data) return null;
 
     const actions = useMemo<TodayActionItem[]>(() => {
         const items: TodayActionItem[] = [];

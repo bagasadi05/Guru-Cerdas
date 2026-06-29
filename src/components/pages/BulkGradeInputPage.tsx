@@ -33,8 +33,23 @@ type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
 
 const SUBJECTS = [
-    'Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'IPA', 'IPS',
-    'Pancasila', 'PKN', 'Seni Budaya', 'PJOK', 'Informatika', 'Agama'
+    'TQA',
+    'Bahasa Indonesia',
+    'Matematika',
+    'IPAS',
+    'Pancasila',
+    'Akidah',
+    'Fikih',
+    'Bahasa Arab',
+    'Bahasa Jawa',
+    'Bahasa Inggris',
+    "Qur'an Hadits",
+    'SKI',
+    'PJOK',
+    'TIK',
+    'Seni Budaya',
+    'Pramuka',
+    'Ekstra'
 ];
 
 const DEFAULT_KKM = 75;
@@ -285,11 +300,8 @@ const BulkGradeInputPage: React.FC = () => {
         return hasHomeroomAssignment(teacherAssignments, selectedClass || null, selectedSemester || null);
     }, [activeClassRecord?.user_id, selectedClass, selectedSemester, teacherAssignments, user]);
     const availableSubjects = useMemo(() => {
-        return assignedSubjects.length > 0
-            ? assignedSubjects
-            : canUseDefaultSubjects
-                ? SUBJECTS
-                : [];
+        const defaultSubjectsToUse = canUseDefaultSubjects ? SUBJECTS : [];
+        return Array.from(new Set([...assignedSubjects, ...defaultSubjectsToUse]));
     }, [assignedSubjects, canUseDefaultSubjects]);
 
     useEffect(() => {
@@ -569,10 +581,9 @@ const BulkGradeInputPage: React.FC = () => {
                             if (el) inputRefs.current.set(g.studentId, el);
                             registerRef(index, el);
                         }}
-                        type="number"
-                        min={0}
-                        max={100}
-                        step="any"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={g.score}
                         onChange={(e) => handleScoreChange(g.studentId, e.target.value)}
                         onKeyDown={(e) => handleGridKeyDown(e, index)}

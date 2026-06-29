@@ -114,6 +114,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                 <div>
                     <label className="block text-sm font-medium mb-1">Mata Pelajaran</label>
                     <Select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)} disabled={availableSubjects.length === 0}>
+                        <option value="">-- Pilih Mapel --</option>
                         {availableSubjects.map(s => (
                             <option key={s} value={s}>{s}</option>
                         ))}

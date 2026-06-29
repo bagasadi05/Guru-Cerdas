@@ -87,6 +87,7 @@ export const useAttendance = () => {
     const [aiAnalysisResult, setAiAnalysisResult] = useState<AiAnalysis | null>(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+    const [isSaveConfirmOpen, setIsSaveConfirmOpen] = useState(false);
 
     const { data: classes = [], isLoading: isLoadingClasses, error: classesError, refetch: refetchClasses } = useQuery({
         queryKey: ['classes', user?.id],
@@ -553,13 +554,8 @@ export const useAttendance = () => {
         resetAttendance();
     };
 
-    const handleSave = () => {
+    const performSave = () => {
         if (!user || !students) return;
-        if (unmarkedStudents.length > 0) {
-            if (!window.confirm(`Masih ada ${unmarkedStudents.length} siswa yang belum diabsen. Apakah Anda ingin menandai mereka semua sebagai "Hadir" dan menyimpan?`)) {
-                return;
-            }
-        }
 
         const recordsToSave = { ...attendanceRecords };
         unmarkedStudents.forEach(student => {
@@ -579,6 +575,15 @@ export const useAttendance = () => {
         }));
 
         saveAttendance(recordsToUpsert);
+    };
+
+    const handleSave = () => {
+        if (!user || !students) return;
+        if (unmarkedStudents.length > 0) {
+            setIsSaveConfirmOpen(true);
+            return;
+        }
+        performSave();
     };
 
     const fetchAttendanceDataForExport = async () => {
@@ -969,6 +974,9 @@ Berikan analisis dalam format JSON murni yang sesuai dengan schema TypeScript:
         handleResetAttendance,
         confirmResetAttendance,
         handleSave,
+        performSave,
+        isSaveConfirmOpen,
+        setIsSaveConfirmOpen,
         handleExport,
         handleAnalyzeAttendance,
         isOnline,
