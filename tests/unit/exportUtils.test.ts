@@ -59,8 +59,7 @@ describe('exportToExcel', () => {
     it('should warn and not export if data is null/undefined', async () => {
         const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
-        // @ts-expect-error - Testing invalid input
-        await exportToExcel(null, 'test');
+        await exportToExcel(null as unknown as never[], 'test');
 
         expect(consoleSpy).toHaveBeenCalledWith('No data to export');
         expect(mockXLSX.utils.book_new).not.toHaveBeenCalled();

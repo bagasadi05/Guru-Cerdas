@@ -166,7 +166,7 @@ const BrankasPage: React.FC = () => {
     mutationFn: async (classId: string) => {
       const { error } = await supabase
         .from('classes')
-        .update({ is_archived: true } as any)
+        .update({ is_archived: true })
         .eq('id', classId);
       if (error) throw error;
     },
@@ -192,7 +192,7 @@ const BrankasPage: React.FC = () => {
     mutationFn: async (classId: string) => {
       const { error } = await supabase
         .from('classes')
-        .update({ is_archived: false } as any)
+        .update({ is_archived: false })
         .eq('id', classId);
       if (error) throw error;
     },
@@ -231,16 +231,16 @@ const BrankasPage: React.FC = () => {
     const { academics, attendance, violations, quizPoints } = studentHistory;
 
     const avgScore = academics.length > 0
-      ? Math.round(academics.reduce((sum: number, r: any) => sum + r.score, 0) / academics.length)
+      ? Math.round(academics.reduce((sum: number, r) => sum + r.score, 0) / academics.length)
       : 0;
 
-    const hadirCount = attendance.filter((a: any) => a.status === 'Hadir').length;
+    const hadirCount = attendance.filter((a) => a.status === 'Hadir').length;
     const attendanceRate = attendance.length > 0
       ? Math.round((hadirCount / attendance.length) * 100)
       : 100;
 
-    const totalViolations = violations.reduce((sum: number, v: any) => sum + (v.points || 0), 0);
-    const totalQuizPoints = quizPoints.reduce((sum: number, q: any) => sum + (q.points || 0), 0);
+    const totalViolations = violations.reduce((sum: number, v) => sum + (v.points || 0), 0);
+    const totalQuizPoints = quizPoints.reduce((sum: number, q) => sum + (q.points || 0), 0);
 
     return {
       avgScore,
@@ -249,9 +249,9 @@ const BrankasPage: React.FC = () => {
       totalQuizPoints,
       present: hadirCount,
       totalAttendance: attendance.length,
-      sakit: attendance.filter((a: any) => a.status === 'Sakit').length,
-      izin: attendance.filter((a: any) => a.status === 'Izin').length,
-      alpha: attendance.filter((a: any) => a.status === 'Alpha').length,
+      sakit: attendance.filter((a) => a.status === 'Sakit').length,
+      izin: attendance.filter((a) => a.status === 'Izin').length,
+      alpha: attendance.filter((a) => a.status === 'Alpha').length,
     };
   }, [studentHistory]);
 
@@ -494,7 +494,7 @@ const BrankasPage: React.FC = () => {
                             <p className="text-xs italic text-slate-400 p-3 bg-slate-50 dark:bg-white/5 rounded-xl text-center">Tidak ada data nilai.</p>
                           ) : (
                             <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1 scrollbar-hide">
-                              {studentHistory?.academics.map((record: any) => (
+                              {studentHistory?.academics.map((record) => (
                                 <div key={record.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm">
                                   <div className="overflow-hidden">
                                     <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{record.subject}</p>

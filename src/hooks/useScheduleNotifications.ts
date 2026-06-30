@@ -27,6 +27,20 @@ export const usePushSubscriptionSync = (userId: string | null | undefined) => {
     void pushNotificationService.sync(userId).catch((err) => {
       logger.warn('Push subscription sync on login failed', 'PushSubscriptionSync', err);
     });
+
+    // Otomatis meminta izin notifikasi segera setelah PWA diinstal
+    const handleAppInstalled = () => {
+      logger.info('PWA installed, automatically requesting push permission...', 'PushSubscriptionSync');
+      void pushNotificationService.enable(userId).catch(err => {
+        logger.warn('Auto push subscription after install failed', 'PushSubscriptionSync', err);
+      });
+    };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
   }, [userId]);
 
   useEffect(() => {

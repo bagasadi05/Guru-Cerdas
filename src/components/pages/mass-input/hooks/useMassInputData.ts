@@ -52,8 +52,7 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             // Kolaboratif: Mode pelanggaran bisa diakses semua guru,
             // jadi kita pakai RPC khusus yang membypass RLS assignments.
             if (mode === 'violation') {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error - RPC not yet in generated types
+                // @ts-expect-error - TODO: add get_active_classes RPC to generated types
                 const { data, error } = await supabase.rpc('get_active_classes');
                 if (error) throw error; 
                 return (data || []) as unknown as ClassRow[];
@@ -72,8 +71,6 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             
             // Kolaboratif: Mode pelanggaran bisa diakses semua guru
             if (mode === 'violation') {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error - RPC not yet in generated types
                 const { data, error } = await supabase.rpc('get_student_directory');
                 if (error) throw error;
                 // get_student_directory returns all students, filter by selectedClass

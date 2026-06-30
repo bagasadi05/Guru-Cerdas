@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Input } from '../../../ui/Input';
 import { Select } from '../../../ui/Select';
+import { CustomDropdown } from '../../../ui/CustomDropdown';
 import { Button } from '../../../ui/Button';
 import { Modal } from '../../../ui/Modal';
 import { XCircleIcon, ChevronDownIcon, SparklesIcon, ClipboardPasteIcon, SearchIcon, CheckIcon, UploadIcon } from '../../../Icons';
@@ -63,6 +64,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
 }) => {
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
     const [violationSearchTerm, setViolationSearchTerm] = useState('');
+    const [isCustomAssessment, setIsCustomAssessment] = useState(false);
 
     // Find selected violation
     const selectedViolation = violationList.find(v => v.code === selectedViolationCode);
@@ -80,9 +82,9 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     };
     return (
         <div className="lg:col-span-1 space-y-6 animate-fade-in-left">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xl shadow-indigo-500/10">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl shadow-indigo-500/10">
                 <div
-                    className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer bg-slate-50 dark:bg-slate-800/50 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="p-5 sm:p-6 rounded-t-3xl border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer bg-slate-50 dark:bg-slate-800/50 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     onClick={() => setIsConfigOpen(!isConfigOpen)}
                 >
                     <div className="flex items-center gap-3">
@@ -103,15 +105,15 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                     <div className="space-y-5">
                         <div className="space-y-2">
                             <label htmlFor="class-select" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Kelas</label>
-                            <Select
+                            <CustomDropdown
                                 id="class-select"
                                 value={selectedClass}
-                                onChange={e => setSelectedClass(e.target.value)}
+                                onChange={setSelectedClass}
                                 disabled={isLoadingClasses}
-                                className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 rounded-xl"
-                            >
-                                {classes?.map(c => <option key={c.id} value={c.id} className="text-slate-900">{c.name}</option>)}
-                            </Select>
+                                placeholder="-- Pilih Kelas --"
+                                options={classes?.map(c => ({ value: c.id, label: c.name })) || []}
+                                className="border-slate-200 dark:border-white/10 focus:ring-indigo-500"
+                            />
                         </div>
 
                         {(mode === 'quiz' || mode === 'violation') && (
@@ -208,23 +210,23 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                             </Button>
                                         </div>
                                     ) : (
-                                        <Select
+                                        <CustomDropdown
                                             id="quiz-subject"
                                             value={quizInfo.subject}
-                                            onChange={e => {
-                                                if (e.target.value === '__NEW__') {
+                                            onChange={val => {
+                                                if (val === '__NEW__') {
                                                     setIsCustomSubject(true);
                                                     setQuizInfo(p => ({ ...p, subject: '' }));
                                                 } else {
-                                                    setQuizInfo(p => ({ ...p, subject: e.target.value }));
+                                                    setQuizInfo(p => ({ ...p, subject: val }));
                                                 }
                                             }}
-                                            required
-                                            className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 rounded-xl"
-                                        >
-                                            <option value="" className="text-slate-900">-- Pilih Mapel --</option>
-                                            {uniqueSubjects?.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
-                                        </Select>
+                                            placeholder="-- Pilih Mapel --"
+                                            options={[
+                                                ...(uniqueSubjects?.map(s => ({ value: s, label: s })) || []),
+                                                { value: '__NEW__', label: '+ Ketik Mapel Baru' }
+                                            ]}
+                                        />
                                     )}
                                 </div>
                                 <div className="space-y-2">
@@ -259,28 +261,66 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                             </Button>
                                         </div>
                                     ) : (
-                                        <Select
+                                        <CustomDropdown
                                             id="grade-subject"
                                             value={subjectGradeInfo.subject}
-                                            onChange={e => {
-                                                if (e.target.value === '__NEW__') {
+                                            onChange={val => {
+                                                if (val === '__NEW__') {
                                                     setIsCustomSubject(true);
                                                     setSubjectGradeInfo(p => ({ ...p, subject: '' }));
                                                 } else {
-                                                    setSubjectGradeInfo(p => ({ ...p, subject: e.target.value }));
+                                                    setSubjectGradeInfo(p => ({ ...p, subject: val }));
                                                 }
                                             }}
-                                            required
-                                            className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 rounded-xl"
-                                        >
-                                            <option value="" className="text-slate-900">-- Pilih Mapel --</option>
-                                            {uniqueSubjects?.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
-                                        </Select>
+                                            placeholder="-- Pilih Mapel --"
+                                            options={[
+                                                ...(uniqueSubjects?.map(s => ({ value: s, label: s })) || []),
+                                                { value: '__NEW__', label: '+ Ketik Mapel Baru' }
+                                            ]}
+                                        />
                                     )}
                                 </div>
                                 <div className="space-y-2">
                                     <label htmlFor="assessment-name" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Nama Penilaian</label>
-                                    <Input id="assessment-name" value={subjectGradeInfo.assessment_name} onChange={e => setSubjectGradeInfo(p => ({ ...p, assessment_name: e.target.value }))} placeholder="cth. PH 1, UTS" required className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30" />
+                                    {isCustomAssessment ? (
+                                        <div className="flex gap-2">
+                                            <Input
+                                                id="assessment-name"
+                                                value={subjectGradeInfo.assessment_name}
+                                                onChange={e => setSubjectGradeInfo(p => ({ ...p, assessment_name: e.target.value }))}
+                                                placeholder="Ketik nama penilaian baru..."
+                                                autoFocus
+                                                required
+                                                className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30"
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => { setIsCustomAssessment(false); setSubjectGradeInfo(p => ({ ...p, assessment_name: '' })); }}
+                                                title="Kembali ke daftar"
+                                                className="px-3 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white"
+                                            >
+                                                <XCircleIcon className="w-5 h-5" />
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <CustomDropdown
+                                            id="assessment-name"
+                                            value={subjectGradeInfo.assessment_name}
+                                            onChange={val => {
+                                                if (val === '__NEW__') {
+                                                    setIsCustomAssessment(true);
+                                                    setSubjectGradeInfo(p => ({ ...p, assessment_name: '' }));
+                                                } else {
+                                                    setSubjectGradeInfo(p => ({ ...p, assessment_name: val }));
+                                                }
+                                            }}
+                                            placeholder="-- Pilih Penilaian --"
+                                            options={[
+                                                ...['PH 1', 'PH 2', 'PH 3', 'PH 4', 'PH 5', 'PH 6', 'PH 7', 'PH 8', 'SAS', 'SAT'].map(s => ({ value: s, label: s })),
+                                                { value: '__NEW__', label: '+ Ketik Penilaian Baru' }
+                                            ]}
+                                        />
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label htmlFor="semester-select" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Semester</label>
@@ -458,10 +498,16 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                             <>
                                 <div className="space-y-2">
                                     <label htmlFor="note-method" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Metode Catatan Guru</label>
-                                    <Select id="note-method" value={noteMethod} onChange={e => setNoteMethod(e.target.value as 'ai' | 'template')} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 rounded-xl">
-                                        <option value="ai" className="text-slate-900">Generate dengan AI</option>
-                                        <option value="template" className="text-slate-900">Gunakan Template</option>
-                                    </Select>
+                                    <CustomDropdown
+                                        id="note-method"
+                                        value={noteMethod}
+                                        onChange={val => setNoteMethod(val as 'ai' | 'template')}
+                                        placeholder="-- Pilih Metode --"
+                                        options={[
+                                            { value: 'ai', label: 'Generate dengan AI' },
+                                            { value: 'template', label: 'Gunakan Template' }
+                                        ]}
+                                    />
                                 </div>
                                 {noteMethod === 'template' && (
                                     <div className="space-y-2">
@@ -476,8 +522,45 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                         {mode === 'academic_print' && (
                             <div className="space-y-2">
                                 <label htmlFor="print-subject" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Mata Pelajaran</label>
-                                <Input id="print-subject" list="subjects-datalist" value={subjectGradeInfo.subject} onChange={e => setSubjectGradeInfo(p => ({ ...p, subject: e.target.value }))} placeholder="Pilih atau ketik mapel" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30" />
-                                <datalist id="subjects-datalist">{uniqueSubjects?.map(s => <option key={s} value={s} />)}</datalist>
+                                {isCustomSubject ? (
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="print-subject"
+                                            value={subjectGradeInfo.subject}
+                                            onChange={e => setSubjectGradeInfo(p => ({ ...p, subject: e.target.value }))}
+                                            placeholder="Ketik nama mapel baru..."
+                                            autoFocus
+                                            required
+                                            className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30"
+                                        />
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => { setIsCustomSubject(false); setSubjectGradeInfo(p => ({ ...p, subject: '' })); }}
+                                            title="Kembali ke daftar"
+                                            className="px-3 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white"
+                                        >
+                                            <XCircleIcon className="w-5 h-5" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <CustomDropdown
+                                        id="print-subject"
+                                        value={subjectGradeInfo.subject}
+                                        onChange={val => {
+                                            if (val === '__NEW__') {
+                                                setIsCustomSubject(true);
+                                                setSubjectGradeInfo(p => ({ ...p, subject: '' }));
+                                            } else {
+                                                setSubjectGradeInfo(p => ({ ...p, subject: val }));
+                                            }
+                                        }}
+                                        placeholder="-- Pilih Mapel --"
+                                        options={[
+                                            ...(uniqueSubjects?.map(s => ({ value: s, label: s })) || []),
+                                            { value: '__NEW__', label: '+ Ketik Mapel Baru' }
+                                        ]}
+                                    />
+                                )}
                             </div>
                         )}
 
@@ -485,16 +568,13 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                             <>
                                 <div className="space-y-2">
                                     <label htmlFor="delete-subject" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Mata Pelajaran</label>
-                                    <Select
+                                    <CustomDropdown
                                         id="delete-subject"
                                         value={subjectGradeInfo.subject}
-                                        onChange={e => setSubjectGradeInfo(p => ({ ...p, subject: e.target.value, assessment_name: '' }))}
-                                        required
-                                        className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 rounded-xl"
-                                    >
-                                        <option value="" className="text-slate-900">-- Pilih Mapel --</option>
-                                        {uniqueSubjects?.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
-                                    </Select>
+                                        onChange={val => setSubjectGradeInfo(p => ({ ...p, subject: val, assessment_name: '' }))}
+                                        placeholder="-- Pilih Mapel --"
+                                        options={uniqueSubjects?.map(s => ({ value: s, label: s })) || []}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label htmlFor="delete-semester" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Semester</label>
@@ -508,10 +588,14 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 </div>
                                 <div className="space-y-2">
                                     <label htmlFor="delete-assessment" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Nama Penilaian</label>
-                                    <Select id="delete-assessment" value={subjectGradeInfo.assessment_name} onChange={e => setSubjectGradeInfo(p => ({ ...p, assessment_name: e.target.value }))} disabled={!subjectGradeInfo.subject || !assessmentNames} required className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 rounded-xl">
-                                        <option value="" className="text-slate-900">-- Pilih Penilaian --</option>
-                                        {assessmentNames?.map(name => <option key={name} value={name} className="text-slate-900">{name}</option>)}
-                                    </Select>
+                                    <CustomDropdown
+                                        id="delete-assessment"
+                                        value={subjectGradeInfo.assessment_name}
+                                        onChange={val => setSubjectGradeInfo(p => ({ ...p, assessment_name: val }))}
+                                        disabled={!subjectGradeInfo.subject || !assessmentNames}
+                                        placeholder="-- Pilih Penilaian --"
+                                        options={assessmentNames?.map(name => ({ value: name, label: name })) || []}
+                                    />
                                 </div>
                             </>
                         )}

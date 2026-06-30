@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 
+interface RecentViolation {
+    studentName: string;
+    className: string;
+    points: number;
+    date: string;
+}
+
 export interface GlobalAnalyticsData {
     totalStudentsWithViolations: number;
     criticalStudentsCount: number;
-    recentViolations: any[];
+    recentViolations: RecentViolation[];
     violationsByClass: { className: string; totalPoints: number }[];
     todayAttendance: {
         present: number;
@@ -39,22 +46,26 @@ export const useGlobalAnalytics = () => {
                 let totalWithViolations = 0;
                 let criticalCount = 0;
                 const classPointsMap: Record<string, number> = {};
-                let allRecentViolations: any[] = [];
+                let allRecentViolations: RecentViolation[] = [];
 
-                studentsData.forEach(student => {
-                    const activeViolations = (student.violations || []).filter((v: any) => v.deleted_at === null);
+                studentsData.forEach((student: {
+                    name: string;
+                    classes: { name: string } | null;
+                    violations: { points: number; created_at: string; deleted_at: string | null }[];
+                }) => {
+                    const activeViolations = (student.violations || []).filter((v) => v.deleted_at === null);
                     if (activeViolations.length > 0) {
-                        const totalPoints = activeViolations.reduce((sum: number, v: any) => sum + v.points, 0);
+                        const totalPoints = activeViolations.reduce((sum: number, v: { points: number }) => sum + v.points, 0);
                         if (totalPoints > 0) totalWithViolations++;
                         if (totalPoints >= 50) criticalCount++;
 
-                        const className = (student.classes as any)?.name || 'Unknown Class';
+                        const className = (student.classes as { name?: string })?.name || 'Unknown Class';
                         if (!classPointsMap[className]) {
                             classPointsMap[className] = 0;
                         }
                         classPointsMap[className] += totalPoints;
 
-                        activeViolations.forEach((v: any) => {
+                        activeViolations.forEach((v: { points: number; created_at: string }) => {
                             allRecentViolations.push({
                                 studentName: student.name,
                                 className,
@@ -83,14 +94,12 @@ export const useGlobalAnalytics = () => {
                 let permCount = 0;
                 let absentCount = 0;
 
-                if (attendanceData) {
-                    attendanceData.forEach(a => {
+                attendanceData?.forEach((a: { status: string }) => {
                         if (a.status === 'Hadir') presentCount++;
                         else if (a.status === 'Sakit') sickCount++;
                         else if (a.status === 'Izin') permCount++;
                         else if (a.status === 'Alpha') absentCount++;
                     });
-                }
 
                 setData({
                     totalStudentsWithViolations: totalWithViolations,

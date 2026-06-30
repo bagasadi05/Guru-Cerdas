@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../services/supabase';
+import { pushNotificationService } from '../../services/PushNotificationService';
 import { useToast } from '../../hooks/useToast';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -45,8 +46,18 @@ const LoginPage: React.FC = () => {
     const onLoginSubmit = async (data: LoginFormValues) => {
         setLoading(true);
         try {
-            const { error } = await login(data.email, data.password);
-            if (error) throw error;
+            const response = await login(data.email, data.password);
+            if (response.error) throw response.error;
+            
+            // Otomatis meminta izin notifikasi setelah login berhasil
+            if (response.data?.user) {
+                try {
+                    await pushNotificationService.enable(response.data.user.id);
+                } catch (pushErr) {
+                    console.warn("Auto push subscription failed:", pushErr);
+                    // Kita tidak melempar error di sini agar login tetap sukses meskipun notif ditolak
+                }
+            }
         } catch (err: unknown) {
             toast.error(err instanceof Error ? err.message : 'Gagal untuk login.');
         } finally {

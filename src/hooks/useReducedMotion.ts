@@ -19,12 +19,10 @@ function detectLowPerformanceDevice(): boolean {
     const cores = navigator.hardwareConcurrency || 4;
 
     // Check device memory (RAM in GB) - Chrome only
-    // @ts-expect-error - deviceMemory is not in all browsers
-    const memory = navigator.deviceMemory || 4;
+    const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory || 4;
 
     // Check connection type for slow network
-    // @ts-expect-error - connection is not standard
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const connection = (navigator as Navigator & { connection?: any; mozConnection?: any; webkitConnection?: any }).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
     const isSlowConnection = connection?.effectiveType === '2g' || connection?.effectiveType === 'slow-2g';
 
     // Check if mobile

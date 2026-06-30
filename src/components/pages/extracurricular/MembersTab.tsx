@@ -95,16 +95,16 @@ export const MembersTab: React.FC<MembersTabProps> = ({
             {/* Table */}
             <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-slate-50 dark:bg-slate-900/50 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
+                    <table className="w-full block lg:table">
+                        <thead className="bg-slate-50 dark:bg-slate-900/50 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700 hidden lg:table-header-group">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nama Siswa</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kelas / Asal</th>
-                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Aksi</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px] whitespace-nowrap">Nama Siswa</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[120px] whitespace-nowrap">Kelas / Asal</th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px] whitespace-nowrap">Status</th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px] whitespace-nowrap">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50 block lg:table-row-group">
                             {filteredParticipants.length === 0 ? (
                                 <tr>
                                     <td colSpan={4} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
@@ -118,21 +118,36 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                                     
                                     return (
                                         <tr key={key} className={`
+                                            block lg:table-row p-4 lg:p-0
                                             transition-colors
                                             ${isEnrolled ? 'bg-amber-50/30 dark:bg-amber-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'}
                                         `}>
-                                            <td className="px-6 py-4">
-                                                <div className="font-medium text-slate-800 dark:text-white">{student.name}</div>
-                                                {student.type === 'extracurricular_student' && (
-                                                    <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xxs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                                                        Siswa Eksternal/Ekskul
-                                                    </span>
-                                                )}
+                                            <td className="block lg:table-cell lg:px-6 lg:py-4 pb-2 lg:pb-4 border-b border-dashed border-slate-200 lg:border-none dark:border-slate-700 mb-3 lg:mb-0">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <div className="font-medium text-slate-800 dark:text-white">{student.name}</div>
+                                                        <div className="lg:hidden text-sm text-slate-500 dark:text-slate-400 mt-0.5">{student.className || '-'}</div>
+                                                        {student.type === 'extracurricular_student' && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xxs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                                                                Siswa Eksternal/Ekskul
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="lg:hidden mt-1">
+                                                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                            isEnrolled 
+                                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50' 
+                                                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                                                        }`}>
+                                                            {isEnrolled ? 'Terdaftar' : 'Belum'}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                                            <td className="hidden lg:table-cell px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
                                                 {student.className || '-'}
                                             </td>
-                                            <td className="px-6 py-4 text-center">
+                                            <td className="hidden lg:table-cell px-6 py-4 text-center">
                                                 <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
                                                     isEnrolled 
                                                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50' 
@@ -141,11 +156,11 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                                                     {isEnrolled ? 'Terdaftar' : 'Belum'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-2">
+                                            <td className="block lg:table-cell lg:px-6 lg:py-4">
+                                                <div className="flex items-center justify-end lg:justify-center gap-2">
                                                     <button
                                                         onClick={() => onEnrollmentChange(student.id, student.type, isEnrolled ? 'unenroll' : 'enroll')}
-                                                        className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                                                        className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all w-full lg:w-auto ${
                                                             isEnrolled
                                                                 ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
                                                                 : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm shadow-emerald-500/20'
@@ -157,7 +172,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                                                     {student.type === 'extracurricular_student' && (
                                                         <button
                                                             onClick={() => onEditExternalStudent(student.id)}
-                                                            className="px-3 py-1.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-600"
+                                                            className="px-3 py-1.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-600 w-full lg:w-auto"
                                                         >
                                                             Edit
                                                         </button>

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '../../../ui/Button';
 import { Select } from '../../../ui/Select';
+import { CustomDropdown } from '../../../ui/CustomDropdown';
 import { DownloadIcon, FileTextIcon, FileSpreadsheetIcon, ShieldAlertIcon, SearchIcon, SparklesIcon } from '../../../Icons';
 import { ClassRow, ViolationRow, StudentRow, StudentFilter } from '../types';
 import { exportBulkViolationsToExcel } from '../../../../services/violationExport';
@@ -192,14 +193,15 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Kelas</label>
-                                <Select
+                                <CustomDropdown
+                                    id="class-select"
                                     value={selectedClass}
-                                    onChange={e => setSelectedClass(e.target.value)}
+                                    onChange={setSelectedClass}
                                     disabled={isLoadingClasses}
-                                    className="h-11 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
-                                >
-                                    {classes?.map(c => <option key={c.id} value={c.id} className="text-slate-900">{c.name}</option>)}
-                                </Select>
+                                    placeholder="-- Pilih Kelas --"
+                                    options={classes?.map(c => ({ value: c.id, label: c.name })) || []}
+                                    className="border-slate-200 dark:border-white/10 focus:ring-indigo-500"
+                                />
                             </div>
 
                             <div>

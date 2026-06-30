@@ -1,6 +1,6 @@
 import React from 'react';
-import { Select } from './Select';
-import { CalendarIcon, LockIcon, ChevronDownIcon } from 'lucide-react';
+import { CustomDropdown } from './CustomDropdown';
+import { CalendarIcon, LockIcon } from 'lucide-react';
 import { useSemester } from '../../contexts/SemesterContext';
 import { getSemesterDisplayName } from '../../utils/semesterUtils';
 
@@ -33,41 +33,35 @@ export const SemesterSelector: React.FC<SemesterSelectorProps> = ({
 
     const activeSemester = semesters.find(s => s.is_active);
 
+    const options = [];
+    if (includeAllOption) {
+        options.push({ value: 'all', label: 'Semua Semester' });
+    }
+
+    semesters.forEach(sem => {
+        const yearName = sem.academic_years?.name || 'Tahun Ajaran ?';
+        const semName = getSemesterDisplayName(sem.name, sem.start_date, 'full');
+        const label = `${yearName} - ${semName}${sem.is_active ? ' (Aktif)' : ''}`;
+        options.push({ value: sem.id, label });
+    });
+
     return (
-        <div className={`relative inline-flex items-center gap-2 ${className}`}>
-            {showIcon && (
-                <CalendarIcon
-                    className={`absolute left-3 z-10 text-emerald-500 pointer-events-none ${size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'}`}
-                />
-            )}
-            <Select
+        <div className={`relative w-full ${className}`}>
+            <CustomDropdown
                 value={value || ''}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={onChange}
                 disabled={disabled || isLoading}
-                className={`${sizeClasses} ${showIcon ? '' : 'pl-3'} pr-9 rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white cursor-pointer appearance-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900`}
-            >
-                {includeAllOption && <option value="all">Semua Semester</option>}
-
-                {semesters.map(sem => {
-                    const yearName = sem.academic_years?.name || 'Tahun Ajaran ?';
-                    const semName = getSemesterDisplayName(sem.name, sem.start_date, 'full');
-                    const label = `${yearName} - ${semName}${sem.is_active ? ' (Aktif)' : ''}`;
-
-                    return (
-                        <option key={sem.id} value={sem.id} className="text-slate-900">
-                            {label}
-                        </option>
-                    );
-                })}
-
-                {/* Legacy Fallback if needed, but better to migrate */}
-            </Select>
-
+                placeholder="-- Pilih Semester --"
+                icon={showIcon ? (
+                    <CalendarIcon className={`text-emerald-500 ${size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                ) : undefined}
+                options={options}
+                className={`${size === 'sm' ? 'h-9 text-sm' : 'h-10 text-sm'} rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus-visible:ring-emerald-500`}
+            />
             {/* Current semester indicator dot if selected value is active */}
             {value && activeSemester && value === activeSemester.id && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-slate-800" title="Semester Aktif" />
+                <span className="absolute -top-1 -right-1 z-10 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-slate-800" title="Semester Aktif" />
             )}
-            <ChevronDownIcon className={`absolute right-3 text-slate-400 pointer-events-none ${size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'}`} />
         </div>
     );
 };

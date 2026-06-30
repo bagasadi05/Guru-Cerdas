@@ -116,8 +116,8 @@ export const JournalForm: React.FC<JournalFormProps> = ({
     }
   }, [isOpen, getInitialValues, reset]);
 
-  const activitiesRef = React.useRef<HTMLTextAreaElement>(null);
-  const notesRef = React.useRef<HTMLTextAreaElement>(null);
+  const activitiesRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const notesRef = React.useRef<HTMLTextAreaElement | null>(null);
 
   const { ref: activitiesRegisterRef, ...activitiesRegisterProps } = register('activities');
   const { ref: notesRegisterRef, ...notesRegisterProps } = register('notes');
@@ -293,8 +293,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
               {...activitiesRegisterProps}
               ref={(e) => {
                 activitiesRegisterRef(e);
-                // @ts-expect-error Type mismatch with textarea ref
-                activitiesRef.current = e;
+                activitiesRef.current = e as unknown as HTMLTextAreaElement;
               }}
               className="rounded-t-none focus:ring-0 focus:border-t-0 border-t-0"
             />
@@ -319,8 +318,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
               {...notesRegisterProps}
               ref={(e) => {
                 notesRegisterRef(e);
-                // @ts-expect-error Type mismatch with textarea ref
-                notesRef.current = e;
+                notesRef.current = e as unknown as HTMLTextAreaElement;
               }}
               className="rounded-t-none focus:ring-0 focus:border-t-0 border-t-0"
             />

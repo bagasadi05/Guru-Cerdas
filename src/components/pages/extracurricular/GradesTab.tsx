@@ -73,16 +73,16 @@ export const GradesTab: React.FC<GradesTabProps> = ({
             {/* Table */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
+                    <table className="w-full block lg:table">
+                        <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 hidden lg:table-header-group">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[25%]">Nama Siswa</th>
-                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[20%]">Predikat</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[15%]">Nilai (0-100)</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[40%]">Deskripsi / Catatan</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px] whitespace-nowrap">Nama Siswa</th>
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[180px] whitespace-nowrap">Predikat</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[120px] whitespace-nowrap">Nilai (0-100)</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[250px] whitespace-nowrap">Deskripsi / Catatan</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50 block lg:table-row-group">
                             {enrollments.length === 0 ? (
                                 <tr>
                                     <td colSpan={4} className="px-6 py-16 text-center text-slate-500 dark:text-slate-400">
@@ -101,20 +101,20 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                                     const currentDescription = gradeDraft?.description ?? gradeData?.description ?? '';
 
                                     return (
-                                        <tr key={key} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
-                                            <td className="px-6 py-4 align-top">
+                                        <tr key={key} className="block lg:table-row p-4 lg:p-0 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group border-b border-dashed border-slate-200 lg:border-none dark:border-slate-700">
+                                            <td className="block lg:table-cell lg:px-6 lg:py-4 align-top mb-3 lg:mb-0">
                                                 <div className="font-semibold text-slate-800 dark:text-white">{enrollment.name}</div>
-                                                <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                                <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                                                     {enrollment.className || 'Tidak ada kelas'}
                                                 </div>
                                                 {enrollment.participantType === 'extracurricular_student' && (
-                                                    <span className="inline-block mt-2 px-2 py-0.5 rounded text-xxs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                                                    <span className="inline-block mt-1 px-2 py-0.5 rounded text-xxs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                                                         Siswa Ekskul
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 align-top">
-                                                <div className="flex justify-center gap-1.5 flex-wrap">
+                                            <td className="block lg:table-cell lg:px-6 lg:py-4 align-top mb-2 lg:mb-0">
+                                                <div className="grid grid-cols-4 lg:flex lg:justify-center gap-1.5 lg:gap-2">
                                                     {GRADE_OPTIONS.map((grade) => {
                                                         const isSelected = currentGrade === grade;
                                                         return (
@@ -125,7 +125,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                                                                     onUpdateDraft(key, { grade });
                                                                     onSaveGrade(enrollment, { grade });
                                                                 }}
-                                                                className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
+                                                                className={`w-full py-2.5 lg:w-9 lg:h-9 lg:py-0 rounded-xl text-sm font-bold transition-all ${
                                                                     isSelected
                                                                         ? grade === 'A' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-800' :
                                                                           grade === 'B' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-800' :
@@ -140,7 +140,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                                                     })}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 align-top">
+                                            <td className="block lg:table-cell lg:px-6 lg:py-4 align-top mb-2 lg:mb-0">
                                                 <input
                                                     type="number"
                                                     min="0"
@@ -154,7 +154,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                                                     className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all shadow-sm"
                                                 />
                                             </td>
-                                            <td className="px-6 py-4 align-top">
+                                            <td className="block lg:table-cell lg:px-6 lg:py-4 align-top">
                                                 <textarea
                                                     placeholder="Tulis deskripsi / evaluasi kemampuan siswa di sini..."
                                                     value={currentDescription}

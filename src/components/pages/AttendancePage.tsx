@@ -103,8 +103,6 @@ const AttendancePage: React.FC = () => {
         isOnline,
     } = useAttendance();
 
-    console.log("[AttendancePage] Render start. isLoadingClasses:", isLoadingClasses, "isLoadingStudents:", isLoadingStudents, "classesError:", classesError, "studentsError:", studentsError, "attendanceClassesCount:", attendanceClasses.length, "studentsCount:", students.length, "bodyClasses:", document.body.className);
-
     if (isLoadingClasses || isLoadingStudents) return <AttendancePageSkeleton />;
 
     if (classesError || studentsError) {
@@ -125,7 +123,7 @@ const AttendancePage: React.FC = () => {
     }
 
     return (
-        <div className="w-full min-h-full p-4 sm:p-6 lg:p-8 flex flex-col max-w-5xl mx-auto">
+        <div className="w-full min-h-full p-4 sm:p-6 lg:p-8 flex flex-col max-w-7xl mx-auto">
             <AttendanceHeader
                 onAnalyze={handleAnalyzeAttendance}
                 onExport={() => setIsExportModalOpen(true)}

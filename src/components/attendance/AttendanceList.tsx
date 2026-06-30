@@ -30,15 +30,14 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         key={student.id}
                         id={`student-${student.id}`}
                         className={`
-                            group flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4 p-3 lg:p-4 rounded-xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm 
-                            hover:shadow-lg hover:scale-[1.01] hover:border-emerald-200 dark:hover:border-emerald-500/30 
-                            focus-within:bg-indigo-50/50 focus-within:dark:bg-indigo-950/20 focus-within:border-indigo-300 focus-within:shadow-md
+                            group flex flex-col p-4 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm 
+                            hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-500/30 
                             transition-all duration-300 card-interactive animate-list-item
                         `}
                         style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
                     >
-                        {/* Student Info */}
-                        <div className="flex items-center gap-3 lg:gap-4 flex-grow min-w-0">
+                        {/* 1. Student Info (Top Row) */}
+                        <div className="flex items-center gap-4 min-w-0">
                             <span className="hidden lg:block text-slate-300 dark:text-slate-600 font-bold font-mono w-8 text-right flex-shrink-0 text-sm">{index + 1}</span>
                             <div className="relative">
                                 <img
@@ -62,8 +61,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                     );
                                 })()}
                             </div>
-                            <div className="min-w-0">
-                                <h4 className="font-semibold text-sm leading-snug text-slate-800 dark:text-white line-clamp-2">
+                            <div className="min-w-0 flex-1">
+                                <h4 className="font-bold text-sm lg:text-base leading-snug text-slate-800 dark:text-white truncate uppercase tracking-wide">
                                     {student.name}
                                 </h4>
                                 {record?.note ? (
@@ -72,11 +71,11 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                     </p>
                                 ) : (
                                     record?.status ? (
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
-                                            Status: <span className="font-medium text-slate-700 dark:text-slate-200">{record.status}</span>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                            Status: <span className="font-semibold text-slate-700 dark:text-slate-200">{record.status}</span>
                                         </p>
                                     ) : (
-                                        <p className="text-sm font-medium text-amber-500 dark:text-amber-400 truncate">
+                                        <p className="text-sm font-semibold text-amber-500 dark:text-amber-400 truncate mt-0.5">
                                             Belum diabsen
                                         </p>
                                     )
@@ -84,83 +83,96 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                             </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 w-full lg:w-auto mt-2 lg:mt-0">
-                            <div className="grid grid-cols-5 gap-1 lg:flex lg:gap-2 w-full lg:w-auto bg-slate-100/80 dark:bg-slate-800/60 p-1.5 lg:p-2 rounded-xl lg:rounded-2xl" data-tutorial="attendance-status-group">
+                        {/* 2. Attendance Buttons (Middle Row) */}
+                        <div className="mt-5 mb-4 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                            <div className="grid grid-cols-5 gap-1 lg:gap-2 w-full" data-tutorial="attendance-status-group">
                                 {statusOptions.map((opt) => {
                                     const isActive = record?.status === opt.value;
+                                    const initial = opt.value.charAt(0).toUpperCase();
 
-                                    let activeClass = "";
+                                    let circleClass = "";
+                                    let textClass = "";
+
                                     if (isActive) {
-                                        if (opt.value === AttendanceStatus.Hadir) activeClass = "bg-emerald-500 text-white shadow-md shadow-emerald-500/30";
-                                        else if (opt.value === AttendanceStatus.Sakit) activeClass = "bg-sky-500 text-white shadow-md shadow-sky-500/30";
-                                        else if (opt.value === AttendanceStatus.Izin) activeClass = "bg-amber-500 text-white shadow-md shadow-amber-500/30";
-                                        else if (opt.value === AttendanceStatus.Alpha) activeClass = "bg-rose-500 text-white shadow-md shadow-rose-500/30";
-                                        else if (opt.value === AttendanceStatus.Libur) activeClass = "bg-purple-500 text-white shadow-md shadow-purple-500/30";
+                                        if (opt.value === AttendanceStatus.Hadir) {
+                                            circleClass = "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-800";
+                                        } else if (opt.value === AttendanceStatus.Sakit) {
+                                            circleClass = "bg-sky-500 border-sky-500 text-white shadow-md shadow-sky-500/30 ring-2 ring-sky-500 ring-offset-2 dark:ring-offset-slate-800";
+                                        } else if (opt.value === AttendanceStatus.Izin) {
+                                            circleClass = "bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/30 ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-800";
+                                        } else if (opt.value === AttendanceStatus.Alpha) {
+                                            circleClass = "bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-slate-800";
+                                        } else if (opt.value === AttendanceStatus.Libur) {
+                                            circleClass = "bg-purple-500 border-purple-500 text-white shadow-md shadow-purple-500/30 ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-slate-800";
+                                        }
+                                        textClass = "text-slate-800 dark:text-white font-bold";
                                     } else {
-                                        activeClass = "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-white/70 dark:hover:bg-white/5";
+                                        circleClass = "bg-transparent border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 group-hover/btn:border-slate-400 dark:group-hover/btn:border-slate-400";
+                                        textClass = "text-slate-500 dark:text-slate-400 font-medium group-hover/btn:text-slate-700 dark:group-hover/btn:text-slate-300";
                                     }
 
                                     return (
                                         <button
                                             key={opt.value}
                                             onClick={() => onStatusChange(student.id, opt.value)}
-                                            className={`
-                                                flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-0 min-h-[44px] lg:w-11 lg:h-11 lg:rounded-full rounded-lg transition-all duration-200
-                                                ${activeClass}
-                                            `}
+                                            className="group/btn flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl outline-none"
                                             title={opt.label}
                                             aria-label={opt.label}
                                             aria-pressed={isActive}
                                         >
-                                            <opt.icon className="w-4 h-4 lg:w-5 lg:h-5" aria-hidden="true" />
-                                            <span className="text-[10px] lg:text-xs font-semibold leading-none truncate">{opt.label.slice(0, 3)}</span>
+                                            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full border flex items-center justify-center transition-all duration-200 ${circleClass}`}>
+                                                <span className="text-xs lg:text-sm font-bold">{initial}</span>
+                                            </div>
+                                            <span className={`text-[10px] lg:text-xs transition-colors ${textClass}`}>
+                                                {opt.label}
+                                            </span>
                                         </button>
                                     );
                                 })}
                             </div>
+                        </div>
 
-                            <div className="flex items-center justify-end lg:justify-start gap-2">
-                                <button
-                                    onClick={() => onNoteClick(student.id, record?.note || '')}
-                                    className={`
-                                        w-11 h-11 flex items-center justify-center rounded-lg transition-all border border-transparent
-                                        ${record?.note
-                                            ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                                            : 'text-slate-400 hover:text-green-600 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                        }
-                                    `}
-                                    title={record?.note ? 'Edit catatan' : 'Tambah catatan'}
-                                    aria-label={record?.note ? 'Edit catatan siswa' : 'Tambah catatan siswa'}
-                                >
-                                    <PencilIcon className="w-5 h-5" aria-hidden="true" />
-                                    <span className="sr-only">{record?.note ? 'Edit catatan' : 'Tambah catatan'}</span>
-                                </button>
-                                {(() => {
-                                    const hasValidPhone = !!(student.parent_phone && student.parent_phone.trim().replace(/\D/g, '').length >= 8);
-                                    return hasValidPhone ? (
-                                        <a
-                                            href={createWhatsAppLink(student.parent_phone!, generateAttendanceMessage(student.name, record?.status || 'Belum Diabsen', formattedDate))}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="w-11 h-11 flex items-center justify-center rounded-lg transition-all border border-transparent text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
-                                            title="Kirim notifikasi via WhatsApp"
-                                            aria-label={`Kirim notifikasi kehadiran ${student.name} via WhatsApp`}
-                                        >
-                                            <Share2Icon className="w-5 h-5" aria-hidden="true" />
-                                        </a>
-                                    ) : (
-                                        <button
-                                            disabled
-                                            className="w-11 h-11 flex items-center justify-center rounded-lg border border-transparent text-slate-300 dark:text-slate-600 cursor-not-allowed opacity-50"
-                                            title="Nomor WhatsApp orang tua belum diisi"
-                                            aria-label="Kirim via WhatsApp (nomor orang tua tidak tersedia)"
-                                        >
-                                            <Share2Icon className="w-5 h-5" aria-hidden="true" />
-                                        </button>
-                                    );
-                                })()}
-                            </div>
+                        {/* 3. Action Buttons (Bottom Row) */}
+                        <div className="flex items-center justify-end gap-2">
+                            <button
+                                onClick={() => onNoteClick(student.id, record?.note || '')}
+                                className={`
+                                    w-10 h-10 flex items-center justify-center rounded-xl transition-all
+                                    ${record?.note
+                                        ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                                        : 'text-slate-400 hover:text-green-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    }
+                                `}
+                                title={record?.note ? 'Edit catatan' : 'Tambah catatan'}
+                                aria-label={record?.note ? 'Edit catatan siswa' : 'Tambah catatan siswa'}
+                            >
+                                <PencilIcon className="w-4 h-4" aria-hidden="true" />
+                                <span className="sr-only">{record?.note ? 'Edit catatan' : 'Tambah catatan'}</span>
+                            </button>
+                            {(() => {
+                                const hasValidPhone = !!(student.parent_phone && student.parent_phone.trim().replace(/\D/g, '').length >= 8);
+                                return hasValidPhone ? (
+                                    <a
+                                        href={createWhatsAppLink(student.parent_phone!, generateAttendanceMessage(student.name, record?.status || 'Belum Diabsen', formattedDate))}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl transition-all text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                        title="Kirim notifikasi via WhatsApp"
+                                        aria-label={`Kirim notifikasi kehadiran ${student.name} via WhatsApp`}
+                                    >
+                                        <Share2Icon className="w-4 h-4" aria-hidden="true" />
+                                    </a>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-300 dark:text-slate-600 cursor-not-allowed opacity-50"
+                                        title="Nomor WhatsApp orang tua belum diisi"
+                                        aria-label="Kirim via WhatsApp (nomor orang tua tidak tersedia)"
+                                    >
+                                        <Share2Icon className="w-4 h-4" aria-hidden="true" />
+                                    </button>
+                                );
+                            })()}
                         </div>
                     </div>
                 );

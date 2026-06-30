@@ -161,9 +161,7 @@ const PortalLoginPage: React.FC = () => {
                                 onFocus={handleFocus}
                                 onBlur={handleBlur}
                                 aria-label="Kode Akses"
-                                autoCapitalize="characters"
                                 autoComplete="off"
-                                autoCorrect="off"
                                 spellCheck="false"
                                 disabled={lockedOut}
                                 maxLength={6}
