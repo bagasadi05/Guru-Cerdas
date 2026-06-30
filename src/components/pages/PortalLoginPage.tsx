@@ -133,7 +133,7 @@ const PortalLoginPage: React.FC = () => {
             className="h-screen w-full overflow-y-auto bg-gray-50 dark:bg-gray-900"
         >
             <div className="flex items-center justify-center min-h-full p-4 animate-page-transition">
-                <div className="login-card">
+                <div className="login-card !m-0 w-full max-w-md">
                     <div className="holographic-orb-container">
                         <div className="holographic-orb">
                             <div className="orb-glow"></div>

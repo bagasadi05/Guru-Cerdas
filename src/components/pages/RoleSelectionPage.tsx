@@ -33,16 +33,20 @@ const RoleSelectionPage: React.FC = () => {
             exit="exit"
             className="h-screen w-full overflow-y-auto bg-white dark:bg-gray-900"
         >
-            <div className="min-h-full flex items-center justify-center p-4">
-                <div className="w-full max-w-4xl text-center">
-                    <div className="holographic-orb-container mx-auto" style={{ position: 'relative', top: 0, marginBottom: '-40px' }}>
-                        <div className="holographic-orb">
-                            <div className="orb-glow"></div>
-                            <div className="orb-core"></div>
-                            <div className="orb-ring orb-ring-1"></div>
-                            <div className="orb-ring orb-ring-2"></div>
-                        </div>
+            {/* Background Orb */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
+                <div className="holographic-orb-container">
+                    <div className="holographic-orb">
+                        <div className="orb-glow"></div>
+                        <div className="orb-core"></div>
+                        <div className="orb-ring orb-ring-1"></div>
+                        <div className="orb-ring orb-ring-2"></div>
                     </div>
+                </div>
+            </div>
+
+            <div className="min-h-full flex items-center justify-center p-4 relative z-10">
+                <div className="w-full max-w-4xl text-center">
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 text-shadow-md animate-fade-in">
                         Portal MI Al Irsyad
                     </h1>
@@ -50,10 +54,10 @@ const RoleSelectionPage: React.FC = () => {
                         Sistem informasi akademik dan manajemen kelas MI Al Irsyad Kota Madiun.
                     </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 animate-fade-in-up animation-delay-400">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 animate-fade-in-up animation-delay-400 max-w-3xl mx-auto">
                         {/* Teacher Card */}
                         <div className="group">
-                            <div className="login-card mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-emerald-500 dark:group-hover:border-emerald-400 dark:group-hover:shadow-emerald-500/30">
+                            <div className="login-card !m-0 mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-emerald-500 dark:group-hover:border-emerald-400 dark:group-hover:shadow-emerald-500/30">
                                 <div className="flex justify-center mb-6">
                                     <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-500/20 dark:to-emerald-600/20 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 transition-transform group-hover:scale-110">
                                         <GraduationCapIcon className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600 dark:text-emerald-400" />
@@ -69,7 +73,7 @@ const RoleSelectionPage: React.FC = () => {
 
                         {/* Parent/Student Card */}
                         <div className="group">
-                            <div className="login-card mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-indigo-500 dark:group-hover:border-indigo-400 dark:group-hover:shadow-indigo-500/30">
+                            <div className="login-card !m-0 mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-indigo-500 dark:group-hover:border-indigo-400 dark:group-hover:shadow-indigo-500/30">
                                 <div className="flex justify-center mb-6">
                                     <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-500/20 dark:to-indigo-600/20 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 transition-transform group-hover:scale-110">
                                         <UsersIcon className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-600 dark:text-indigo-400" />
