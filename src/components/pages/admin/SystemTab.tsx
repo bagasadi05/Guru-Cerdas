@@ -42,12 +42,12 @@ export const SystemTab: React.FC<SystemTabProps> = ({
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                systemHealth.database === 'healthy' ? 'bg-green-100 dark:bg-green-900/30' :
+                                systemHealth.database === 'healthy' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
                                 systemHealth.database === 'degraded' ? 'bg-amber-100 dark:bg-amber-900/30' :
                                 'bg-red-100 dark:bg-red-900/30'
                             }`}>
                                 <Database size={24} className={`${
-                                    systemHealth.database === 'healthy' ? 'text-green-600' :
+                                    systemHealth.database === 'healthy' ? 'text-emerald-600' :
                                     systemHealth.database === 'degraded' ? 'text-amber-600' :
                                     'text-red-600'
                                 }`} />
@@ -61,12 +61,12 @@ export const SystemTab: React.FC<SystemTabProps> = ({
                             </div>
                         </div>
                         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                            systemHealth.database === 'healthy' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                            systemHealth.database === 'healthy' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                             systemHealth.database === 'degraded' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
                             'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                         }`}>
                             <span className={`w-2 h-2 rounded-full ${
-                                systemHealth.database === 'healthy' ? 'bg-green-500' :
+                                systemHealth.database === 'healthy' ? 'bg-emerald-500' :
                                 systemHealth.database === 'degraded' ? 'bg-amber-500' :
                                 'bg-red-500'
                             }`} />
@@ -79,12 +79,12 @@ export const SystemTab: React.FC<SystemTabProps> = ({
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                systemHealth.api === 'healthy' ? 'bg-green-100 dark:bg-green-900/30' :
+                                systemHealth.api === 'healthy' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
                                 systemHealth.api === 'degraded' ? 'bg-amber-100 dark:bg-amber-900/30' :
                                 'bg-red-100 dark:bg-red-900/30'
                             }`}>
                                 <Server size={24} className={`${
-                                    systemHealth.api === 'healthy' ? 'text-green-600' :
+                                    systemHealth.api === 'healthy' ? 'text-emerald-600' :
                                     systemHealth.api === 'degraded' ? 'text-amber-600' :
                                     'text-red-600'
                                 }`} />
@@ -98,12 +98,12 @@ export const SystemTab: React.FC<SystemTabProps> = ({
                             </div>
                         </div>
                         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                            systemHealth.api === 'healthy' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                            systemHealth.api === 'healthy' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                             systemHealth.api === 'degraded' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
                             'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                         }`}>
                             <span className={`w-2 h-2 rounded-full ${
-                                systemHealth.api === 'healthy' ? 'bg-green-500' :
+                                systemHealth.api === 'healthy' ? 'bg-emerald-500' :
                                 systemHealth.api === 'degraded' ? 'bg-amber-500' :
                                 'bg-red-500'
                             }`} />
@@ -123,7 +123,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({
                                 <p className="text-xs text-gray-500">RLS Aktif</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                             <CheckCircle2 size={14} />
                             Terlindungi
                         </div>
@@ -209,7 +209,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({
                 <div className="space-y-4">
                     {[
                         { label: 'Siswa', value: stats.totalStudents, max: distributionMax, color: 'bg-blue-500' },
-                        { label: 'Absensi', value: stats.totalAttendance, max: distributionMax, color: 'bg-green-500' },
+                        { label: 'Absensi', value: stats.totalAttendance, max: distributionMax, color: 'bg-emerald-500' },
                         { label: 'Nilai', value: stats.totalGrades, max: distributionMax, color: 'bg-purple-500' },
                         { label: 'Tugas', value: stats.totalTasks, max: distributionMax, color: 'bg-orange-500' },
                     ].map(item => (

@@ -34,7 +34,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ dailyAttendance, a
                 
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:absolute sm:top-0 sm:right-0 mb-2 sm:mb-0">
                     <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-green-400 to-green-500" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500" />
                         <span className="text-slate-500 dark:text-slate-400">Hadir</span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -67,7 +67,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ dailyAttendance, a
                                     <div key={i} className="flex flex-col items-center group relative" style={{ minWidth: `${barWidth}px` }}>
                                         <div className="relative flex flex-col-reverse overflow-hidden transition-all duration-700 ease-out"
                                             style={{ width: `${barWidth}px`, height: animated ? `${totalHeight}px` : '0px', borderRadius: '6px 6px 2px 2px' }}>
-                                            <div className="w-full bg-green-500 transition-all duration-300" style={{ height: `${hadirHeight}px` }} />
+                                            <div className="w-full bg-emerald-500 transition-all duration-300" style={{ height: `${hadirHeight}px` }} />
                                             {tidakHadirHeight > 0 && (
                                                 <div className="w-full bg-gradient-to-t from-orange-500 to-rose-400 transition-all duration-300" style={{ height: `${tidakHadirHeight}px` }} />
                                             )}
@@ -146,7 +146,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ dailyAttendance, a
         return (
             <div className="flex flex-col sm:flex-row items-center gap-8 justify-center">
                 <div className="relative w-44 h-44 rounded-full flex items-center justify-center" style={{ background: conicGradient }}>
-                    <div className="w-28 h-28 rounded-full bg-white dark:bg-slate-900 flex flex-col items-center justify-center shadow-inner">
+                    <div className="w-28 h-28 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl flex flex-col items-center justify-center shadow-inner">
                         <span className="text-3xl font-bold text-slate-900 dark:text-white">{total}</span>
                         <span className="text-xxs text-slate-500">Total Absen</span>
                     </div>

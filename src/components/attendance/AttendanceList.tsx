@@ -30,8 +30,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         key={student.id}
                         id={`student-${student.id}`}
                         className={`
-                            group flex flex-col p-4 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 shadow-sm 
-                            hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-500/30 
+                            group flex flex-col p-5 rounded-3xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] 
+                            hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-emerald-500/20 dark:hover:border-emerald-500/30 hover:-translate-y-0.5
                             transition-all duration-300 card-interactive animate-list-item
                         `}
                         style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
@@ -66,7 +66,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                     {student.name}
                                 </h4>
                                 {record?.note ? (
-                                    <p className="text-xs text-green-600 font-medium truncate flex items-center gap-1 mt-0.5 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-md w-fit">
+                                    <p className="text-xs text-emerald-600 font-medium truncate flex items-center gap-1 mt-0.5 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-md w-fit">
                                         <InfoIcon className="w-3 h-3" /> {record.note}
                                     </p>
                                 ) : (
@@ -84,7 +84,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         </div>
 
                         {/* 2. Attendance Buttons (Middle Row) */}
-                        <div className="mt-5 mb-4 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                        <div className="mt-5 mb-4 bg-slate-100/50 dark:bg-slate-800/40 backdrop-blur-sm p-3 rounded-2xl border border-white/60 dark:border-slate-700/50 shadow-inner">
                             <div className="grid grid-cols-5 gap-1 lg:gap-2 w-full" data-tutorial="attendance-status-group">
                                 {statusOptions.map((opt) => {
                                     const isActive = record?.status === opt.value;
@@ -107,8 +107,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                         }
                                         textClass = "text-slate-800 dark:text-white font-bold";
                                     } else {
-                                        circleClass = "bg-transparent border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 group-hover/btn:border-slate-400 dark:group-hover/btn:border-slate-400";
-                                        textClass = "text-slate-500 dark:text-slate-400 font-medium group-hover/btn:text-slate-700 dark:group-hover/btn:text-slate-300";
+                                        circleClass = "bg-white/50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-500 group-hover/btn:border-indigo-300 dark:group-hover/btn:border-indigo-500 shadow-sm transition-all";
+                                        textClass = "text-slate-500 dark:text-slate-400 font-medium group-hover/btn:text-indigo-600 dark:group-hover/btn:text-indigo-400";
                                     }
 
                                     return (
@@ -139,8 +139,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                 className={`
                                     w-10 h-10 flex items-center justify-center rounded-xl transition-all
                                     ${record?.note
-                                        ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                                        : 'text-slate-400 hover:text-green-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                        ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
+                                        : 'text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }
                                 `}
                                 title={record?.note ? 'Edit catatan' : 'Tambah catatan'}
@@ -156,7 +156,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                         href={createWhatsAppLink(student.parent_phone!, generateAttendanceMessage(student.name, record?.status || 'Belum Diabsen', formattedDate))}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-10 h-10 flex items-center justify-center rounded-xl transition-all text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl transition-all text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                                         title="Kirim notifikasi via WhatsApp"
                                         aria-label={`Kirim notifikasi kehadiran ${student.name} via WhatsApp`}
                                     >

@@ -116,7 +116,7 @@ export const StudentAnalyticsTab: React.FC<StudentAnalyticsTabProps> = ({
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Radar Chart Card */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+                <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
                     <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Spider Chart: Performa per Mapel</h4>
                     <div className="flex justify-center">
                         <svg width={chartSize} height={chartSize} className="overflow-visible">
@@ -200,7 +200,7 @@ export const StudentAnalyticsTab: React.FC<StudentAnalyticsTabProps> = ({
                 </div>
 
                 {/* Bar Chart Card */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+                <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
                     <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Nilai per Mata Pelajaran</h4>
                     <div className="space-y-3">
                         {subjectAverages.map((item, index) => (

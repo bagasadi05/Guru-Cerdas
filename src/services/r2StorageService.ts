@@ -1,8 +1,5 @@
 import { supabase } from './supabase';
 
-/**
- * Folder types corresponding to whitelisted folders in r2-storage Edge Function.
- */
 export type R2StorageFolder =
   | 'teaching_journals'
   | 'achievement_certificates'
@@ -18,27 +15,73 @@ interface PresignResponse {
   error?: string;
 }
 
-/**
- * Service to handle secure direct uploads to Cloudflare R2 via Supabase Edge Function.
- */
+const MAX_SIZES: Record<R2StorageFolder, number> = {
+  student_avatars: 2 * 1024 * 1024,
+  teacher_avatars: 2 * 1024 * 1024,
+  violations: 5 * 1024 * 1024,
+  achievement_certificates: 5 * 1024 * 1024,
+  teaching_journals: 5 * 1024 * 1024,
+};
+
+const ALLOWED_TYPES: Record<R2StorageFolder, string[]> = {
+  student_avatars: ['image/jpeg', 'image/png', 'image/webp'],
+  teacher_avatars: ['image/jpeg', 'image/png', 'image/webp'],
+  violations: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+  achievement_certificates: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+  teaching_journals: [
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ],
+};
+
 class R2StorageService {
-  /**
-   * Upload a file to Cloudflare R2 using a secure presigned PUT URL.
-   * 
-   * @param file The File object to upload.
-   * @param folder The folder namespace.
-   * @returns Object containing publicUrl and key.
-   */
   async uploadFile(
     file: File,
     folder: R2StorageFolder
   ): Promise<{ publicUrl: string; key: string }> {
-    // 1. Invoke r2-storage Edge Function to get the presigned PUT URL
+    // --- Size validation ---
+    if (file.size > MAX_SIZES[folder]) {
+      throw new Error(
+        `File terlalu besar untuk ${folder}. Maksimal ${MAX_SIZES[folder] / 1024 / 1024}MB`
+      );
+    }
+
+    // --- Type validation ---
+    const allowed = ALLOWED_TYPES[folder];
+    if (!allowed.includes(file.type)) {
+      throw new Error(
+        `Tipe file ${file.type} tidak diizinkan untuk ${folder}. Hanya: ${allowed.join(', ')}`
+      );
+    }
+
+    // --- Client-side image compression for image uploads ---
+    let fileToUpload = file;
+    if (file.type.startsWith('image/') && folder !== 'teaching_journals') {
+      try {
+        const { default: imageCompression } = await import('browser-image-compression');
+        const maxWidth = folder === 'violations' || folder === 'achievement_certificates' ? 1200 : 800;
+        const compressed = await imageCompression(file, {
+          maxSizeMB: folder === 'violations' ? 2 : 1,
+          maxWidthOrHeight: maxWidth,
+          useWebWorker: true,
+          initialQuality: 0.8,
+        });
+        fileToUpload = compressed;
+      } catch (e) {
+        console.warn('Image compression failed, uploading original:', e);
+      }
+    }
+
+    // 1. Get presigned PUT URL
     const { data, error } = await supabase.functions.invoke<PresignResponse>('r2-storage', {
       body: {
         action: 'presign',
-        filename: file.name,
-        contentType: file.type || 'application/octet-stream',
+        filename: fileToUpload.name,
+        contentType: fileToUpload.type || 'application/octet-stream',
         folder,
       },
     });
@@ -51,12 +94,12 @@ class R2StorageService {
       throw new Error(data?.error || 'Failed to retrieve presigned URL from storage service.');
     }
 
-    // 2. Perform the direct HTTP PUT upload to Cloudflare R2
+    // 2. Upload
     const uploadResponse = await fetch(data.uploadUrl, {
       method: 'PUT',
-      body: file,
+      body: fileToUpload,
       headers: {
-        'Content-Type': file.type || 'application/octet-stream',
+        'Content-Type': fileToUpload.type || 'application/octet-stream',
       },
     });
 
@@ -70,11 +113,6 @@ class R2StorageService {
     };
   }
 
-  /**
-   * Delete a file from Cloudflare R2 by its path key or public URL.
-   * 
-   * @param params Object containing key or publicUrl.
-   */
   async deleteFile(params: { key?: string; publicUrl?: string }): Promise<void> {
     const { data, error } = await supabase.functions.invoke<{ success: boolean; error?: string }>('r2-storage', {
       body: {

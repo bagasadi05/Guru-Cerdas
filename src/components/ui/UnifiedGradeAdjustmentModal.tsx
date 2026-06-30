@@ -434,16 +434,24 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
 
                         <div>
                             {/* Kop Surat Sekolah */}
-                            <div className="flex flex-col items-center justify-center text-center pb-4 border-b-2 border-slate-900 mb-6">
-                                <h1 className="text-xl font-bold uppercase tracking-wider leading-snug">
-                                    {user?.school_name || 'MI AL IRSYAD KOTA MADIUN'}
-                                </h1>
-                                <p className="text-xs text-slate-500 font-medium">
-                                    Kementerian Agama Republik Indonesia – Kantor Kota Madiun
-                                </p>
-                                <h2 className="text-sm font-extrabold uppercase mt-4 tracking-widest text-slate-800 bg-slate-100 px-3 py-1 rounded">
-                                    LEMBAR NILAI HASIL KATROL & PRATINJAU EVALUASI
-                                </h2>
+                            <div className="flex items-center justify-between pb-4 border-b-2 border-slate-900 mb-6">
+                                <div className="w-16">
+                                    <img src="/logo_sekolah.png" alt="Logo Sekolah" className="w-full h-auto object-contain" />
+                                </div>
+                                <div className="flex-1 flex flex-col items-center justify-center text-center">
+                                    <h1 className="text-xl font-bold uppercase tracking-wider leading-snug">
+                                        {user?.school_name || 'MI AL IRSYAD KOTA MADIUN'}
+                                    </h1>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        Kementerian Agama Republik Indonesia – Kantor Kota Madiun
+                                    </p>
+                                    <h2 className="text-sm font-extrabold uppercase mt-4 tracking-widest text-slate-800 bg-slate-100 px-3 py-1 rounded">
+                                        LEMBAR NILAI HASIL KATROL & PRATINJAU EVALUASI
+                                    </h2>
+                                </div>
+                                <div className="w-16">
+                                    <img src="/logo_kemenag.png" alt="Logo Kemenag" className="w-full h-auto object-contain" />
+                                </div>
                             </div>
 
                             {/* Meta Info Grid */}

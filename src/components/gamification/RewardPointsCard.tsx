@@ -25,8 +25,8 @@ export const RewardPointsCard: React.FC<RewardPointsCardProps> = ({
         {
             label: 'Kehadiran',
             points: Math.round((studentData.attendanceRate / 100) * 30),
-            color: 'text-green-500',
-            bgColor: 'bg-green-50 dark:bg-green-900/20',
+            color: 'text-emerald-500',
+            bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
         },
         {
             label: 'Quiz',

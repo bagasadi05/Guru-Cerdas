@@ -82,7 +82,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     };
     return (
         <div className="lg:col-span-1 space-y-6 animate-fade-in-left">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl shadow-indigo-500/10">
+            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl shadow-indigo-500/10">
                 <div
                     className="p-5 sm:p-6 rounded-t-3xl border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer bg-slate-50 dark:bg-slate-800/50 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     onClick={() => setIsConfigOpen(!isConfigOpen)}
@@ -604,7 +604,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
             </div>
 
             {mode === 'subject_grade' && isOnline && (
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl shadow-indigo-500/10">
+                <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl shadow-indigo-500/10">
                     <h3 className="font-bold text-lg mb-4 border-b border-slate-200 dark:border-slate-700 pb-3 flex items-center gap-2 text-slate-900 dark:text-white">
                         <ClipboardPasteIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-300" />
                         Tempel Data Nilai

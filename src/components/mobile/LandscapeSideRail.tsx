@@ -70,9 +70,9 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
             className={`w-12 h-12 rounded-xl flex items-center justify-center
                       transition-all duration-300 relative group
                       focus-visible:outline-none focus-visible:ring-2 
-                      focus-visible:ring-green-500/60 ${
+                      focus-visible:ring-emerald-500/60 ${
                         isActive
-                          ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/20'
+                          ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/20'
                           : 'hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
             aria-label={item.label}
@@ -85,7 +85,7 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
                 animate={{ scaleY: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                 className="absolute left-0 top-1/2 -translate-y-1/2 
-                          w-1 h-8 bg-white dark:bg-green-400 rounded-r-full"
+                          w-1 h-8 bg-white dark:bg-emerald-400 rounded-r-full"
               />
             )}
 
@@ -121,9 +121,9 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
         className={`w-12 h-12 rounded-xl flex items-center justify-center
                   transition-all duration-300 relative group
                   focus-visible:outline-none focus-visible:ring-2 
-                  focus-visible:ring-green-500/60 ${
+                  focus-visible:ring-emerald-500/60 ${
                     isMoreMenuHighlighted
-                      ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/20'
+                      ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/20'
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
         aria-label="More options"
@@ -137,7 +137,7 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
             animate={{ scaleY: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className="absolute left-0 top-1/2 -translate-y-1/2 
-                      w-1 h-8 bg-white dark:bg-green-400 rounded-r-full"
+                      w-1 h-8 bg-white dark:bg-emerald-400 rounded-r-full"
           />
         )}
 

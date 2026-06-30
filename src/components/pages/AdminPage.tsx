@@ -616,7 +616,7 @@ const AdminPage: React.FC = () => {
                                     Dasbor Admin
                                 </h1>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                                     Portal Manajemen Sistem
                                 </p>
                             </div>
@@ -807,8 +807,8 @@ const AdminPage: React.FC = () => {
                 {undoToast.show && undoToast.user && (
                     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 z-50 animate-in slide-in-from-bottom duration-300">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                                <Trash2 size={16} className="text-green-400" />
+                            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                                <Trash2 size={16} className="text-emerald-400" />
                             </div>
                             <div>
                                 <p className="font-medium">Pengguna dipindahkan ke Tempat Sampah</p>

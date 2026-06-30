@@ -58,8 +58,11 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
   const locale = language === 'id' ? 'id-ID' : 'en-US';
 
   return (
-    <header className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/5 dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-pink-950/10 backdrop-blur-xl border border-white/20 dark:border-slate-800/40 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl shadow-indigo-500/5 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-scale-in">
-      <div className="flex items-start gap-4">
+    <header className="bg-gradient-to-br from-indigo-100/90 via-purple-100/60 to-pink-100/60 dark:from-indigo-950/40 dark:via-purple-950/20 dark:to-pink-950/20 backdrop-blur-xl border border-indigo-200/50 dark:border-slate-800/60 p-5 sm:p-7 rounded-3xl shadow-[0_8px_30px_rgb(79,70,229,0.08)] dark:shadow-indigo-500/5 flex flex-col md:flex-row md:items-center justify-between gap-5 animate-scale-in relative overflow-hidden">
+      {/* Decorative background blur element */}
+      <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-400/20 dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div className="flex items-start gap-5 relative z-10">
         <span className="text-4xl filter drop-shadow-md animate-bounce select-none">{icon}</span>
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">

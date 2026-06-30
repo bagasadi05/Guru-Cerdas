@@ -129,7 +129,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
             subValue: `${dailyAttendanceSummary?.present || 0}/${students.length} hadir`,
             icon: CheckSquareIcon,
             link: '/absensi',
-            color: attendanceMissing > 0 ? 'from-amber-500 to-orange-600' : 'from-emerald-500 to-green-600',
+            color: attendanceMissing > 0 ? 'from-amber-500 to-orange-600' : 'from-emerald-500 to-emerald-600',
             statusLabel: students.length === 0
                 ? 'Kosong'
                 : attendanceMissing > 0
@@ -190,9 +190,9 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                     custom={index}
                 >
                     <Link to={stat.link} className="group block h-full">
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 h-full flex flex-col justify-between relative overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm transition-all duration-200 group-hover:shadow-md group-hover:-translate-y-0.5">
+                        <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl p-5 h-full flex flex-col justify-between relative overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group-hover:border-indigo-500/20 group-hover:-translate-y-1">
                             {/* Hover overlay effect */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                             {/* Icon container */}
                             <div className="relative z-10 mb-3 sm:mb-5 flex items-start justify-between gap-2 sm:gap-3">

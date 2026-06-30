@@ -282,9 +282,9 @@ export const colorClasses = {
         text: 'text-yellow-600 dark:text-yellow-400',
     },
     error: {
-        bg: 'bg-red-600',
-        bgLight: 'bg-red-50 dark:bg-red-900/20',
-        text: 'text-red-600 dark:text-red-400',
+        bg: 'bg-rose-600',
+        bgLight: 'bg-rose-50 dark:bg-rose-900/20',
+        text: 'text-rose-600 dark:text-rose-400',
     },
     info: {
         bg: 'bg-blue-600',
@@ -311,7 +311,7 @@ export const typography = {
 
     // Font sizes
     fontSize: {
-        xxs: '0.625rem',     // 10px
+        xxs: '0.6875rem',    // 11px — align with tailwind.config.cjs
         xs: '0.75rem',      // 12px
         sm: '0.875rem',     // 14px
         base: '1rem',       // 16px
@@ -521,7 +521,7 @@ export const statusColors = {
         bgSolid: 'bg-emerald-500',
         text: 'text-emerald-600 dark:text-emerald-400',
         border: 'border-emerald-500',
-        gradient: 'from-emerald-500 to-green-600',
+        gradient: 'from-emerald-500 to-emerald-600',
     },
     /** Sakit - Blue */
     sakit: {

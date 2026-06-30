@@ -153,13 +153,13 @@ const AttendancePage: React.FC = () => {
                 </div>
 
                 {/* Date Picker Banner */}
-                <div className="relative z-10 glass-card p-3 border border-white/20 shadow-lg shadow-black/5 -mx-4 px-4 sm:mx-0 sm:p-0 sm:static sm:border-none sm:shadow-none transition-all rounded-xl overflow-hidden flex-1">
+                <div className="relative z-10 p-3 sm:p-0 -mx-4 px-4 sm:mx-0 transition-all rounded-3xl overflow-hidden flex-1 shadow-[0_8px_30px_rgb(16,185,129,0.15)] mb-2">
                     <div
-                        className="group relative overflow-hidden w-full rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30 cursor-pointer"
+                        className="group relative overflow-hidden w-full rounded-3xl bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 dark:from-emerald-600 dark:via-teal-700 dark:to-emerald-800 cursor-pointer"
                         onClick={() => setDatePickerOpen(true)}
                     >
-                        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E')] opacity-[0.15] mix-blend-overlay"></div>
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E')] opacity-[0.1] mix-blend-overlay"></div>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
                         <div className="relative p-3 sm:p-4 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
@@ -208,7 +208,7 @@ const AttendancePage: React.FC = () => {
                                 placeholder="Cari nama siswa..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 h-12 text-base bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:ring-green-500"
+                                className="pl-10 h-12 text-base bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus:ring-green-500 rounded-2xl"
                                 aria-label="Cari siswa berdasarkan nama"
                             />
                         </div>
@@ -268,14 +268,14 @@ const AttendancePage: React.FC = () => {
                     )}
                 </div>
 
-                {/* Save Button — sticky bottom, inside content flow */}
+                {/* Save Button */}
                 {students && students.length > 0 && (
-                    <div className="sticky bottom-0 mt-6 pt-4 pb-4 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 dark:to-transparent -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+                    <div className="mt-8 mb-4">
                         <Button
                             onClick={handleSave}
                             disabled={isSaving}
                             data-tutorial="attendance-save"
-                            className="w-full h-12 sm:h-[52px] text-base sm:text-lg font-bold shadow-xl shadow-emerald-500/30 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-none rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            className="w-full h-14 text-lg font-bold shadow-[0_8px_30px_rgb(16,185,129,0.25)] bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 border border-white/20 rounded-2xl transition-all hover:-translate-y-1 active:scale-[0.98] text-white"
                         >
                             {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
                         </Button>
@@ -317,7 +317,7 @@ const AttendancePage: React.FC = () => {
 
             {isSaving && (
                 <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex items-center justify-center">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-xl border border-slate-200 dark:border-slate-800 text-center">
+                    <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all p-6 shadow-xl border border-slate-200 dark:border-slate-800 text-center">
                         <div className="w-12 h-12 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                         <h3 className="text-base font-semibold text-slate-900 dark:text-white">Menyimpan Absensi</h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Mohon tunggu sebentar...</p>

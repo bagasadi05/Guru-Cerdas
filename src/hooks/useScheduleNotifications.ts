@@ -11,6 +11,7 @@ import { supabase } from '../services/supabase';
  *      persisted in the `push_subscriptions` table.
  *   2. If the SW reports a subscription change event, the client re-syncs
  *      its subscription with the server.
+ *   3. On mount, cleans up stale subscriptions older than 90 days.
  *
  * Note: scheduling of notifications is now server-side. The Supabase
  * `dispatch-push` Edge Function (triggered by pg_cron) is responsible for
@@ -18,6 +19,21 @@ import { supabase } from '../services/supabase';
  */
 export const usePushSubscriptionSync = (userId: string | null | undefined) => {
   const lastUserIdRef = useRef<string | null>(null);
+
+  // Cleanup stale subscriptions on mount
+  useEffect(() => {
+    const cleanup = async () => {
+      try {
+        await supabase
+          .from('push_subscriptions')
+          .delete()
+          .lt('last_seen_at', new Date(Date.now() - 90 * 86400000).toISOString());
+      } catch (e) {
+        logger.warn('Push subscription cleanup failed', 'PushSubscriptionSync', e);
+      }
+    };
+    cleanup();
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -49,7 +65,6 @@ export const usePushSubscriptionSync = (userId: string | null | undefined) => {
     const handleMessage = (event: MessageEvent) => {
       if (!event.data || typeof event.data !== 'object') return;
       if (event.data.type === 'PUSH_SUBSCRIPTION_EXPIRED') {
-        // Defer to allow Supabase auth state to settle
         setTimeout(async () => {
           const {
             data: { user },
@@ -70,5 +85,5 @@ export const usePushSubscriptionSync = (userId: string | null | undefined) => {
   }, []);
 };
 
-// Backward-compatible alias - older code imported useScheduleNotifications.
+// Backward-compatible alias
 export const useScheduleNotifications = usePushSubscriptionSync;

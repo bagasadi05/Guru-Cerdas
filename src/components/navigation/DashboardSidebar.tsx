@@ -45,10 +45,12 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
         <div className="relative z-10 flex flex-col h-full p-5">
           <div className="flex items-center gap-4 px-2 mb-8 mt-2">
             <div className="relative group">
-              <div className="absolute inset-0 bg-emerald-600 blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
-              <div className="relative w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-transform duration-300">
-                <GraduationCapIcon className="w-7 h-7 text-white drop-shadow-md" />
-              </div>
+              <div className="absolute inset-0 bg-emerald-600 blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full"></div>
+              <img 
+                src="/logo_sekolah.png" 
+                alt="Logo MI Al Irsyad" 
+                className="relative w-12 h-12 object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-md"
+              />
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-wide text-slate-800 dark:text-white uppercase font-serif">

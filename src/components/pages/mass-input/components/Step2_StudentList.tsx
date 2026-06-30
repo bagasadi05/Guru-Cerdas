@@ -77,7 +77,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     }, [mode, flatStudentList.length, focusItem]);
 
     return (
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden shadow-xl shadow-indigo-500/10 animate-fade-in-right">
+        <div className="lg:col-span-2 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden shadow-xl shadow-indigo-500/10 animate-fade-in-right">
             {/* Header with Search and Filters */}
             <div className="p-4 sm:p-5 lg:p-6 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 space-y-3 sm:space-y-4 bg-slate-50 dark:bg-slate-800/50 backdrop-blur-md">
                 {/* Search */}

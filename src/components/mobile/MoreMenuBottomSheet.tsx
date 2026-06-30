@@ -147,10 +147,10 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
                             transition-all duration-200 
                             active:scale-95
                             focus-visible:outline-none 
-                            focus-visible:ring-2 focus-visible:ring-green-500/60 
+                            focus-visible:ring-2 focus-visible:ring-emerald-500/60 
                             focus-visible:ring-offset-2 ${
                               isActive
-                                ? 'bg-green-50 dark:bg-green-500/20 ring-2 ring-green-500/50'
+                                ? 'bg-emerald-50 dark:bg-emerald-500/20 ring-2 ring-emerald-500/50'
                                 : 'bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700'
                             }`}
                   style={{ minHeight: '96px' }}
@@ -160,7 +160,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform ${
                       isActive
-                        ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30 scale-105'
+                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/30 scale-105'
                         : 'bg-white dark:bg-slate-700'
                     }`}
                   >
@@ -175,7 +175,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
                   <span
                     className={`text-sm text-center leading-tight ${
                       isActive
-                        ? 'font-bold text-green-700 dark:text-green-200'
+                        ? 'font-bold text-emerald-700 dark:text-emerald-200'
                         : 'font-semibold text-slate-700 dark:text-slate-300'
                     }`}
                   >
@@ -200,7 +200,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
                       font-semibold text-sm
                       transition-colors duration-150
                       focus-visible:outline-none focus-visible:ring-2 
-                      focus-visible:ring-green-500/60
+                      focus-visible:ring-emerald-500/60
                       select-none"
           >
             Tutup

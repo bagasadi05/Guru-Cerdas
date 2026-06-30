@@ -124,7 +124,7 @@ const AnalyticsPage: React.FC = () => {
                 </div>
 
                 {/* Filter Bar */}
-                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/70 dark:border-slate-700/60 shadow-sm">
+                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200/70 dark:border-slate-700/60 shadow-sm">
                     <div className="flex items-center gap-3 px-2 sm:px-4 py-1 sm:border-r border-slate-100 dark:border-slate-800">
                         <UsersIcon className="w-4 h-4 text-slate-400 hidden sm:block" />
                         <Select
@@ -168,7 +168,7 @@ const AnalyticsPage: React.FC = () => {
                         {activeTab === tab.id && (
                             <motion.div
                                 layoutId="activeAnalyticsTab"
-                                className="absolute inset-0 bg-white dark:bg-slate-900 rounded-xl shadow-sm z-0"
+                                className="absolute inset-0 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all shadow-sm z-0"
                                 transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                             />
                         )}

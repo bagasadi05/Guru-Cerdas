@@ -106,8 +106,8 @@ const entityConfig: Partial<Record<SoftDeleteEntity, {
     attendance: {
         label: 'Absensi',
         icon: <ClipboardCheck className="w-4 h-4" />,
-        color: 'text-green-500',
-        bgColor: 'bg-green-500/10',
+        color: 'text-emerald-500',
+        bgColor: 'bg-emerald-500/10',
     },
     tasks: {
         label: 'Tugas',

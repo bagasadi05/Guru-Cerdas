@@ -7,6 +7,7 @@ import { logger } from './services/logger';
 
 // Import local fonts for offline support
 import './styles/fonts.css';
+import './i18n';
 
 import * as Sentry from "@sentry/react";
 

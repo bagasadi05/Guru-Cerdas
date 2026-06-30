@@ -184,7 +184,7 @@ export const StudentDetailPageSkeleton: React.FC = () => (
         </div>
 
         {/* Profile Card */}
-        <div className="glass-card rounded-3xl p-6 space-y-4">
+        <div className="glass-card rounded-2xl p-6 space-y-4">
             <div className="flex flex-col md:flex-row gap-6">
                 <Skeleton className="w-32 h-32 rounded-full mx-auto md:mx-0" />
                 <div className="flex-1 space-y-3">
@@ -404,7 +404,7 @@ export const ParentPortalPageSkeleton: React.FC = () => (
             </div>
 
             {/* Announcement / Welcome Card */}
-            <div className="bg-gradient-to-br from-emerald-50/50 to-slate-50 dark:from-emerald-950/10 dark:to-slate-900/50 border border-emerald-100/50 dark:border-emerald-900/20 rounded-3xl p-5 md:p-6 space-y-3">
+            <div className="bg-gradient-to-br from-emerald-50/50 to-slate-50 dark:from-emerald-950/10 dark:to-slate-900/50 border border-emerald-100/50 dark:border-emerald-900/20 rounded-2xl p-5 md:p-6 space-y-3">
                 <Skeleton className="h-6 w-48" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4" />

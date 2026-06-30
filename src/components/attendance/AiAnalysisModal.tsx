@@ -12,7 +12,7 @@ interface AiAnalysisModalProps {
 
 export const AiAnalysisModal: React.FC<AiAnalysisModalProps> = ({ isOpen, onClose, isLoading, result }) => {
     return (
-        <Modal title="Analisis Kehadiran AI" isOpen={isOpen} onClose={onClose} icon={<BrainCircuitIcon className="h-5 w-5 text-green-500" />}>
+        <Modal title="Analisis Kehadiran AI" isOpen={isOpen} onClose={onClose} icon={<BrainCircuitIcon className="h-5 w-5 text-emerald-500" />}>
             {isLoading ? (
                 <div className="text-center py-12">
                     <div className="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-4"></div>

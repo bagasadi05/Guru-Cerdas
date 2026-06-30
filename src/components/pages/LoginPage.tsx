@@ -119,7 +119,7 @@ const LoginPage: React.FC = () => {
             >
                 <div className="flex items-center justify-center min-h-full p-4 animate-page-transition">
                     <div className="login-card !m-0 w-full max-w-md">
-
+                        <img src="/logo_sekolah.png" alt="Logo MI Al Irsyad" className="w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-6 object-contain drop-shadow-md" />
                         <h1 className="form-title">
                             {isLoginMode ? 'Selamat Datang Kembali' : 'Buat Akun Guru'}
                         </h1>

@@ -45,7 +45,7 @@ const ICONS: Record<ToastType, React.FC<React.SVGProps<SVGSVGElement>>> = {
 };
 
 const COLORS: Record<ToastType, string> = {
-  success: 'bg-green-500',
+  success: 'bg-emerald-500',
   error: 'bg-red-500',
   warning: 'bg-yellow-500',
   info: 'bg-blue-500',

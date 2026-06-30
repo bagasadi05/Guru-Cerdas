@@ -184,7 +184,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Column: Configuration */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-lg">
+                    <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-lg">
                         <h3 className="font-bold text-lg mb-4 text-slate-900 dark:text-white flex items-center gap-2">
                             <SparklesIcon className="w-5 h-5 text-indigo-500" />
                             Konfigurasi
@@ -212,7 +212,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                     </div>
 
                     {/* Stats Card */}
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-lg">
+                    <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-lg">
                         <h3 className="font-bold text-lg mb-4 text-slate-900 dark:text-white flex items-center gap-2">
                             <ShieldAlertIcon className="w-5 h-5 text-orange-500" />
                             Statistik
@@ -257,7 +257,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                 </div>
 
                 {/* Right Column: Student List */}
-                <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg flex flex-col overflow-hidden">
+                <div className="lg:col-span-2 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 shadow-lg flex flex-col overflow-hidden">
                     {/* Search & Filter Tabs */}
                     <div className="p-4 border-b border-slate-200 dark:border-slate-800">
                         <div className="relative mb-3">

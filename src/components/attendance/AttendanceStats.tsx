@@ -12,7 +12,7 @@ export const AttendanceStats: React.FC<AttendanceStatsProps> = ({ summary }) => 
             {statusOptions.map((opt) => (
                 <div
                     key={opt.value}
-                    className={`glass-card p-3 rounded-xl border border-white/40 dark:border-white/5 shadow-sm flex flex-col items-center justify-center min-h-[100px] relative overflow-hidden group hover:shadow-md transition-all duration-300 card-interactive`}
+                    className={`glass-card p-3 rounded-2xl border border-white/40 dark:border-white/5 shadow-sm flex flex-col items-center justify-center min-h-[100px] relative overflow-hidden group hover:shadow-md transition-all duration-300 card-interactive`}
                 >
                     <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity bg-gradient-to-br ${opt.gradient}`}></div>
                     <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${opt.gradient} flex items-center justify-center mb-2 shadow-lg`}>

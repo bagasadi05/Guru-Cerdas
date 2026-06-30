@@ -19,7 +19,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       primary: componentStyles.buttonPrimary,
       secondary: 'bg-slate-700 text-white hover:bg-slate-600 hover:shadow-md',
       success: componentStyles.buttonPrimary,
-      destructive: 'bg-rose-600 text-white shadow-sm shadow-rose-500/20 hover:bg-rose-700 hover:shadow-md hover:shadow-rose-500/25',
+      destructive: 'bg-red-600 text-white shadow-sm shadow-red-500/20 hover:bg-red-700 hover:shadow-md hover:shadow-red-500/25',
       outline: 'ripple-dark bg-transparent border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
       ghost: componentStyles.buttonGhost,
     };

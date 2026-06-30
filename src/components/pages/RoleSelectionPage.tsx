@@ -47,6 +47,7 @@ const RoleSelectionPage: React.FC = () => {
 
             <div className="min-h-full flex items-center justify-center p-4 relative z-10">
                 <div className="w-full max-w-4xl text-center">
+                    <img src="/logo_sekolah.png" alt="Logo MI Al Irsyad" className="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-6 object-contain animate-fade-in drop-shadow-lg" />
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 text-shadow-md animate-fade-in">
                         Portal MI Al Irsyad
                     </h1>

@@ -180,7 +180,7 @@ const DashboardPage: React.FC = () => {
       />
 
       {journalStatus && journalStatus.unfilled > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
+        <div className="p-5 rounded-3xl bg-amber-50/90 dark:bg-amber-950/20 backdrop-blur-xl border border-amber-200/80 dark:border-amber-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_8px_30px_rgb(245,158,11,0.06)] animate-fade-in transition-all hover:shadow-[0_8px_30px_rgb(245,158,11,0.12)]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
               <BookOpenIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
@@ -230,8 +230,8 @@ const DashboardPage: React.FC = () => {
             />
 
             {/* AI Insight Widget */}
-            <div data-tutorial="ai-insight" className="bg-white dark:bg-slate-900 rounded-2xl p-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
-              <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-emerald-500/10">
+            <div data-tutorial="ai-insight" className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl p-0 overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+              <div className="p-5 border-b border-slate-200/80 dark:border-slate-700/60 bg-gradient-to-r from-emerald-500/10 to-teal-500/5">
                 <h3 className="flex items-center gap-2 font-semibold text-xl text-slate-900 dark:text-white">
                   <BrainCircuitIcon className="w-5 h-5 text-emerald-500" />
                   Analisis Cerdas Harian
@@ -310,9 +310,9 @@ const DashboardPage: React.FC = () => {
 
         {/* Right Column */}
         <div className={`space-y-4 order-2 lg:row-span-4 lg:row-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-3 lg:col-start-10 block' : 'hidden lg:block lg:col-span-3 lg:col-start-10'}`}>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl h-full max-h-[800px] flex flex-col overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl h-full max-h-[800px] flex flex-col overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
             <Tabs defaultValue="schedule" className="w-full flex flex-col h-full">
-              <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-slate-50/60 dark:bg-slate-800/40 backdrop-blur-md">
+              <div className="p-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-100/50 dark:bg-slate-800/40 backdrop-blur-md">
                 <TabsList className="w-full grid grid-cols-2">
                   <TabsTrigger value="schedule">Jadwal</TabsTrigger>
                   <TabsTrigger value="tasks">Tugas</TabsTrigger>

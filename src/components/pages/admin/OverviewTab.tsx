@@ -96,9 +96,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         <p className="text-3xl font-bold text-blue-600">{stats.teachers}</p>
                         <p className="text-sm text-blue-600/70">Guru</p>
                     </div>
-                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                        <p className="text-3xl font-bold text-green-600">{stats.students}</p>
-                        <p className="text-sm text-green-600/70">Siswa</p>
+                    <div className="text-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+                        <p className="text-3xl font-bold text-emerald-600">{stats.students}</p>
+                        <p className="text-sm text-emerald-600/70">Siswa</p>
                     </div>
                 </div>
             </div>

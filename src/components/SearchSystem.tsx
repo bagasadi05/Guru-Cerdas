@@ -378,7 +378,7 @@ export const GlobalSearchModal: React.FC<{
                                             }`}
                                     >
                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${result.type === 'students' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600' :
-                                            result.type === 'attendance' ? 'bg-green-100 dark:bg-green-900/40 text-green-600' :
+                                            result.type === 'attendance' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600' :
                                                 result.type === 'tasks' ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600' :
                                                     'bg-amber-100 dark:bg-amber-900/40 text-amber-600'
                                             }`}>

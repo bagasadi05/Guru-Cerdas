@@ -179,7 +179,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                                 <option value="student">Siswa</option>
                                                 <option value="parent">Orang Tua</option>
                                             </select>
-                                            <button onClick={() => handleUpdateRole(u.user_id)} disabled={updating} className="p-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                                            <button onClick={() => handleUpdateRole(u.user_id)} disabled={updating} className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
                                                 {updating ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                             </button>
                                             <button
@@ -315,7 +315,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => restoreUser(u)}
-                                                        className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all border border-green-200 dark:border-green-800 px-3"
+                                                        className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all border border-emerald-200 dark:border-emerald-800 px-3"
                                                         title="Pulihkan Pengguna"
                                                     >
                                                         <Undo2 size={14} />

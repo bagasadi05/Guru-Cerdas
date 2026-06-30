@@ -511,7 +511,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
 
                 {/* Preview Content */}
                 <main className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center custom-scrollbar bg-gradient-to-br from-slate-100 to-emerald-50/30 dark:from-slate-900 dark:to-emerald-950/20">
-                    <div id="printable-area" className="w-full md:w-[210mm] md:min-h-[297mm] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xl md:shadow-2xl rounded-2xl p-6 md:p-[20mm] origin-top transform transition-transform animate-fade-in border border-slate-200 dark:border-slate-700">
+                    <div id="printable-area" className="w-full md:w-[210mm] md:min-h-[297mm] bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-slate-800 dark:text-slate-200 shadow-xl md:shadow-2xl rounded-2xl p-6 md:p-[20mm] origin-top transform transition-transform animate-fade-in border border-slate-200 dark:border-slate-700">
                         {/* --- HEADER --- */}
                         <header className="-mx-6 md:-mx-[20mm] -mt-6 md:-mt-[20mm] px-6 md:px-[20mm] pt-6 md:pt-[18mm] pb-5 mb-6 rounded-t-2xl bg-white dark:bg-slate-900 border-b-4 border-slate-800 dark:border-slate-100">
                             <div className="rounded-2xl border border-slate-300 dark:border-slate-700 px-4 py-4 md:px-6 md:py-5">

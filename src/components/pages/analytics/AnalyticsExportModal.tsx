@@ -71,7 +71,7 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <Card className="w-full max-w-md bg-white dark:bg-slate-900 shadow-2xl border-0 overflow-hidden animate-in zoom-in-95 duration-200">
+            <Card className="w-full max-w-md bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl shadow-2xl border-0 overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="relative p-6 bg-gradient-to-br from-indigo-600 to-violet-700">
                     <button
@@ -143,7 +143,7 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
                             checked={options.attendance}
                             onChange={() => handleToggle('attendance')}
                             icon={Calendar}
-                            color="text-green-500"
+                            color="text-emerald-500"
                         />
                         <OptionItem
                             label="Nilai Akademik"

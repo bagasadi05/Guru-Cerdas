@@ -142,6 +142,8 @@ const PortalLoginPage: React.FC = () => {
                             <div className="orb-ring orb-ring-2"></div>
                         </div>
                     </div>
+                    
+                    <img src="/logo_sekolah.png" alt="Logo MI Al Irsyad" className="w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-6 object-contain relative z-10 drop-shadow-md" />
 
                     <h1 className="form-title">Portal Orang Tua</h1>
                     <p className="form-subtitle">

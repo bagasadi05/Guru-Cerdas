@@ -835,7 +835,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                     )}
                                 </Button>
                                 {classAnalysis && (
-                                    <div className="mt-4 p-3 bg-white dark:bg-slate-900 rounded-xl border border-emerald-100 dark:border-emerald-950 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 max-h-36 overflow-y-auto">
+                                    <div className="mt-4 p-3 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-emerald-100 dark:border-emerald-950 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 max-h-36 overflow-y-auto">
                                         <strong className="text-emerald-600 dark:text-emerald-400">Analisis Kelas AI:</strong>
                                         <p className="mt-1">{classAnalysis}</p>
                                     </div>
@@ -856,7 +856,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         className={`text-left px-3 py-2.5 text-xs font-semibold rounded-lg border transition-all ${
                                             activeScenario === 'original'
                                                 ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white shadow'
-                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+                                                : 'bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50'
                                         }`}
                                     >
                                         Skenario A: Nilai Asli
@@ -866,7 +866,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         className={`text-left px-3 py-2.5 text-xs font-semibold rounded-lg border transition-all ${
                                             activeScenario === 'formula'
                                                 ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white shadow'
-                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+                                                : 'bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50'
                                         }`}
                                     >
                                         Skenario B: Rumus Excel
@@ -877,7 +877,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                         className={`text-left px-3 py-2.5 text-xs font-semibold rounded-lg border transition-all flex items-center justify-between ${
                                             activeScenario === 'ai'
                                                 ? 'bg-emerald-500 text-white border-emerald-500 dark:bg-emerald-400 dark:text-slate-950 dark:border-emerald-400 shadow'
-                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 disabled:opacity-40'
+                                                : 'bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 disabled:opacity-40'
                                         }`}
                                     >
                                         <span>Skenario C: Saran AI</span>
@@ -967,16 +967,24 @@ export const GradeAdjustmentPage: React.FC = () => {
 
                                 <div>
                                     {/* School Header */}
-                                    <div className="flex flex-col items-center justify-center text-center pb-4 border-b-2 border-slate-900 mb-6">
-                                        <h1 className="text-xl font-bold uppercase tracking-wider leading-snug">
-                                            {user?.school_name || 'MI AL IRSYAD KOTA MADIUN'}
-                                        </h1>
-                                        <p className="text-xxs text-slate-500 font-semibold tracking-wide">
-                                            Kementerian Agama Republik Indonesia – Kantor Kota Madiun
-                                        </p>
-                                        <h2 className="text-xs font-extrabold uppercase mt-4 tracking-widest text-slate-800 bg-slate-100 px-3 py-1 rounded">
-                                            LEMBAR NILAI HASIL KATROL & EVALUASI CERDAS
-                                        </h2>
+                                    <div className="flex items-center justify-between pb-4 border-b-2 border-slate-900 mb-6">
+                                        <div className="w-16">
+                                            <img src="/logo_sekolah.png" alt="Logo Sekolah" className="w-full h-auto object-contain" />
+                                        </div>
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center">
+                                            <h1 className="text-xl font-bold uppercase tracking-wider leading-snug">
+                                                {user?.school_name || 'MI AL IRSYAD KOTA MADIUN'}
+                                            </h1>
+                                            <p className="text-xxs text-slate-500 font-semibold tracking-wide">
+                                                Kementerian Agama Republik Indonesia – Kantor Kota Madiun
+                                            </p>
+                                            <h2 className="text-xs font-extrabold uppercase mt-4 tracking-widest text-slate-800 bg-slate-100 px-3 py-1 rounded">
+                                                LEMBAR NILAI HASIL KATROL & EVALUASI CERDAS
+                                            </h2>
+                                        </div>
+                                        <div className="w-16">
+                                            <img src="/logo_kemenag.png" alt="Logo Kemenag" className="w-full h-auto object-contain" />
+                                        </div>
                                     </div>
 
                                     {/* Metadata Box */}

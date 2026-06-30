@@ -38,7 +38,7 @@ export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode)
                     <div key={card.mode} onClick={() => handleModeSelect(card.mode)}
                         role="button" tabIndex={0} aria-label={card.title}
                         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleModeSelect(card.mode); } }}
-                        className="group relative overflow-hidden bg-white dark:bg-slate-900 backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-500/50 hover:shadow-xl hover:shadow-green-500/10 dark:hover:shadow-green-500/20 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                        className="group relative overflow-hidden bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-500/50 hover:shadow-xl hover:shadow-green-500/10 dark:hover:shadow-green-500/20 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                         style={{ animationDelay: `${index * 100}ms` }}>
 
                         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 dark:from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -68,7 +68,7 @@ export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode)
                     <div key={card.mode} onClick={() => handleModeSelect(card.mode)}
                         role="button" tabIndex={0} aria-label={card.title}
                         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleModeSelect(card.mode); } }}
-                        className="group relative overflow-hidden bg-white dark:bg-slate-900 backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/20 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                        className="group relative overflow-hidden bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/20 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                         style={{ animationDelay: `${(index + inputCards.length) * 100}ms` }}>
 
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 dark:from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>

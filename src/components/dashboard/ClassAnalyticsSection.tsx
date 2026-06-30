@@ -143,7 +143,7 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
                                     <span className="text-xs text-slate-500 w-16">Kehadiran</span>
                                     <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-gradient-to-r from-emerald-500 to-green-500 rounded-full transition-all duration-500"
+                                            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-500 rounded-full transition-all duration-500"
                                             style={{ width: `${cls.attendanceRate}%` }}
                                         />
                                     </div>
@@ -160,7 +160,7 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
                             <span className="text-xs text-slate-500">Rata-rata Nilai</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-green-500" />
+                            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-500" />
                             <span className="text-xs text-slate-500">Tingkat Kehadiran</span>
                         </div>
                     </div>

@@ -1767,7 +1767,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           onClick={() => setActiveTabMode('single')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
             activeTabMode === 'single'
-              ? 'bg-white dark:bg-slate-900 text-indigo-650 dark:text-indigo-400 shadow-sm transform scale-102 font-bold'
+              ? 'bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-indigo-650 dark:text-indigo-400 shadow-sm transform scale-102 font-bold'
               : 'text-slate-605 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-205'
           }`}
         >
@@ -1777,7 +1777,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           onClick={() => setActiveTabMode('comparative')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
             activeTabMode === 'comparative'
-              ? 'bg-white dark:bg-slate-900 text-indigo-650 dark:text-indigo-400 shadow-sm transform scale-102 font-bold'
+              ? 'bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-indigo-650 dark:text-indigo-400 shadow-sm transform scale-102 font-bold'
               : 'text-slate-605 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-205'
           }`}
         >
@@ -1870,7 +1870,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         {/* Side-by-Side Charts: Double Radar & Subject Bars */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Double Radar Chart */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm flex flex-col justify-between">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-6 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
                 <h4 className="font-bold text-slate-800 dark:text-slate-200 text-lg">Bagan Radar Ganda: Dimensi Holistik</h4>
@@ -2010,7 +2010,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           </div>
 
           {/* Side-by-Side Subject Comparison Chart */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm flex flex-col justify-between">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-6 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
                 <h4 className="font-bold text-slate-800 dark:text-slate-200 text-lg">Bagan Perbandingan Nilai Mapel</h4>
@@ -2082,7 +2082,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Attendance Comparison */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm relative overflow-hidden">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-sm relative overflow-hidden">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">📅</span>
               <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-wide uppercase">Persentase Kehadiran</h4>
@@ -2123,7 +2123,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           </div>
 
           {/* Violations Comparison */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm relative overflow-hidden">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-sm relative overflow-hidden">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">⚠️</span>
               <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-wide uppercase">Poin Pelanggaran</h4>
@@ -2158,7 +2158,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           </div>
 
           {/* Quizzes/Activity Comparison */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm relative overflow-hidden">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-sm relative overflow-hidden">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">🏆</span>
               <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-wide uppercase">Poin Keaktifan Kuis</h4>
@@ -2297,7 +2297,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             {/* Side-by-side Analysis */}
             <div className="grid grid-cols-1 gap-8">
               {/* Kognitif Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+              <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-6 pb-3 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-2xl">🧠</span>
                   <div>
@@ -2351,7 +2351,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               </div>
 
               {/* Afektif Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+              <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-6 pb-3 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-2xl">❤️</span>
                   <div>
@@ -2405,7 +2405,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               </div>
 
               {/* Psikomotor Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+              <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-6 pb-3 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-2xl">🏃‍♂️</span>
                   <div>
@@ -2562,7 +2562,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         {subjectAverages.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Radar Chart with Safety Check */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
               <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Spider Chart: Performa per Mapel</h4>
               {isRadarChartValid ? (
                 <div className="flex justify-center">
@@ -2719,7 +2719,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 previousAvg={periodStats.previousAvg}
                 label="Rata-rata Saat Ini"
               />
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+              <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all p-4 border border-slate-200 dark:border-slate-700">
                 <p className="text-xs text-slate-500 mb-1 font-medium">Kehadiran Kelas</p>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-green-605 dark:text-green-400">
@@ -2730,13 +2730,13 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                   </span>
                 </div>
               </div>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+              <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all p-4 border border-slate-200 dark:border-slate-700">
                 <p className="text-xs text-slate-500 mb-1 font-medium">Partisipasi Kuis</p>
                 <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {studentData.quizPoints.length}
                 </span>
               </div>
-              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+              <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all p-4 border border-slate-200 dark:border-slate-700">
                 <p className="text-xs text-slate-500 mb-1 font-medium">Pelanggaran</p>
                 <span className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {studentData.violations.reduce((a: any, b: any) => a + b.points, 0)} poin
@@ -2748,7 +2748,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             {subjectAverages.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Radar Chart with Safety Check */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+                <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
                   <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Peta Kekuatan Akademik</h4>
                   {isRadarChartValid ? (
                     <div className="flex justify-center">
@@ -2838,7 +2838,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       {/* Regenerate Confirmation Modal */}
       {showRegenerateConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowRegenerateConfirm(false)}>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all shadow-2xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-start gap-4 mb-4">
               <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
                 <AlertCircleIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
@@ -2859,7 +2859,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       {/* Comparative Regenerate Confirmation Modal */}
       {showCompRegenerateConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowCompRegenerateConfirm(false)}>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all shadow-2xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-start gap-4 mb-4">
               <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
                 <AlertCircleIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />

@@ -127,9 +127,9 @@ export const QuickTemplatesDropdown: React.FC<QuickTemplatesDropdownProps> = ({
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
                     inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg
-                    text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20
+                    text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20
                     font-medium text-sm transition-all duration-200
-                    ${isOpen ? 'bg-green-50 dark:bg-green-900/20' : ''}
+                    ${isOpen ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''}
                 `}
                 aria-label="Template Cepat"
                 aria-expanded={isOpen}
@@ -149,10 +149,10 @@ export const QuickTemplatesDropdown: React.FC<QuickTemplatesDropdownProps> = ({
                         animate-fade-in-up overflow-hidden"
                 >
                     {/* Header */}
-                    <div className="px-4 py-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b border-slate-200 dark:border-slate-700">
+                    <div className="px-4 py-3 bg-gradient-to-r from-emerald-50 to-emerald-50 dark:from-emerald-900/20 dark:to-emerald-900/20 border-b border-slate-200 dark:border-slate-700">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                <Sparkles className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                             </div>
                             <div>
                                 <h4 className="text-sm font-bold text-slate-900 dark:text-white">Template Cepat</h4>

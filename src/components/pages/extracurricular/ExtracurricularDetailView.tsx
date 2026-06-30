@@ -106,7 +106,7 @@ export const ExtracurricularDetailView: React.FC<ExtracurricularDetailViewProps>
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-6">
+            <div className="flex-1 min-h-0 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-6">
                 {children(activeTab)}
             </div>
         </div>

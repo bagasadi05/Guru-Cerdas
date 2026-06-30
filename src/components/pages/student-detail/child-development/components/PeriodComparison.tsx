@@ -28,7 +28,7 @@ export const PeriodComparison: React.FC<{
     : 'bg-slate-50 dark:bg-slate-800';
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow duration-300">
+    <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow duration-300">
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">{label}</p>
       <div className="flex items-end gap-2.5">
         <motion.span

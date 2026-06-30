@@ -12,7 +12,7 @@ interface StatCardProps {
 const colorClasses = {
     indigo: 'from-indigo-500 to-indigo-600 shadow-indigo-500/20',
     blue: 'from-blue-500 to-blue-600 shadow-blue-500/20',
-    green: 'from-green-500 to-green-600 shadow-green-500/20',
+    green: 'from-emerald-500 to-emerald-600 shadow-emerald-500/20',
     orange: 'from-orange-500 to-orange-600 shadow-orange-500/20',
     purple: 'from-purple-500 to-purple-600 shadow-purple-500/20',
     pink: 'from-pink-500 to-pink-600 shadow-pink-500/20',
@@ -39,7 +39,7 @@ export const getRoleBadgeClass = (role: string): string => {
     switch (role) {
         case 'admin': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
         case 'teacher': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-        case 'student': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+        case 'student': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
         case 'parent': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
         default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400';
     }

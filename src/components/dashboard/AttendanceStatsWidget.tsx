@@ -228,7 +228,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
             {/* Overall Stats */}
             <div className="grid grid-cols-4 gap-2 mb-6">
                 <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center mb-2 shadow-lg">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mb-2 shadow-lg">
                         <CheckCircleIcon className="w-5 h-5 text-white" />
                     </div>
                     <span className="text-3xl font-extrabold leading-none text-emerald-600 dark:text-emerald-400">{overallStats.hadir}</span>

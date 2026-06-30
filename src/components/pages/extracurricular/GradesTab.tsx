@@ -151,7 +151,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                                                     onChange={(e) => onUpdateDraft(key, { score: e.target.value })}
                                                     onBlur={() => onSaveGrade(enrollment)}
                                                     placeholder="0-100"
-                                                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all shadow-sm"
+                                                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all shadow-sm"
                                                 />
                                             </td>
                                             <td className="block lg:table-cell lg:px-6 lg:py-4 align-top">
@@ -161,7 +161,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                                                     onChange={(e) => onUpdateDraft(key, { description: e.target.value })}
                                                     onBlur={() => onSaveGrade(enrollment)}
                                                     rows={2}
-                                                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all shadow-sm resize-y min-h-[60px]"
+                                                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all shadow-sm resize-y min-h-[60px]"
                                                 />
                                             </td>
                                         </tr>
