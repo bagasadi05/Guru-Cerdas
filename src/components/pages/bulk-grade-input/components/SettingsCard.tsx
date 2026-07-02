@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../ui/Card';
 import { Button } from '../../../ui/Button';
-import { Select } from '../../../ui/Select';
+import { CustomDropdown } from '../../../ui/CustomDropdown';
 import { Input } from '../../../ui/Input';
 import { Skeleton } from '../../../ui/Skeleton';
 import { SemesterSelector } from '../../../ui/SemesterSelector';
@@ -93,12 +93,12 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                     {loadingClasses ? (
                         <Skeleton className="h-10 w-full" />
                     ) : (
-                        <Select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
-                            <option value="">-- Pilih Kelas --</option>
-                            {classes?.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </Select>
+                        <CustomDropdown 
+                            value={selectedClass} 
+                            onChange={setSelectedClass}
+                            placeholder="-- Pilih Kelas --"
+                            options={classes?.map(c => ({ value: c.id, label: c.name })) || []}
+                        />
                     )}
                 </div>
                 <div>
@@ -114,12 +114,13 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-1">Mata Pelajaran</label>
-                    <Select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)} disabled={availableSubjects.length === 0}>
-                        <option value="">-- Pilih Mapel --</option>
-                        {availableSubjects.map(s => (
-                            <option key={s} value={s}>{s}</option>
-                        ))}
-                    </Select>
+                    <CustomDropdown 
+                        value={selectedSubject} 
+                        onChange={setSelectedSubject} 
+                        disabled={availableSubjects.length === 0}
+                        placeholder="-- Pilih Mapel --"
+                        options={availableSubjects.map(s => ({ value: s, label: s }))}
+                    />
                     {availableSubjects.length === 0 ? (
                         <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                             Belum ada mapel yang ditugaskan untuk kelas dan semester ini.

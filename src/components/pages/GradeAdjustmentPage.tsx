@@ -7,6 +7,7 @@ import { useToast } from '../../hooks/useToast';
 import { useSemester } from '../../contexts/SemesterContext';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Select } from '../ui/Select';
+import { CustomDropdown } from '../ui/CustomDropdown';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { SemesterSelector } from '../ui/SemesterSelector';
@@ -581,21 +582,21 @@ export const GradeAdjustmentPage: React.FC = () => {
                     <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Pilih Kelas</label>
-                            <Select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
-                                <option value="">-- Pilih Kelas --</option>
-                                {accessibleClasses.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </Select>
+                            <CustomDropdown 
+                                value={selectedClass} 
+                                onChange={setSelectedClass}
+                                placeholder="-- Pilih Kelas --"
+                                options={accessibleClasses.map(c => ({ value: c.id, label: c.name }))}
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Mata Pelajaran</label>
-                            <Select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)}>
-                                <option value="">-- Pilih Mapel --</option>
-                                {SUBJECTS.map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                ))}
-                            </Select>
+                            <CustomDropdown 
+                                value={selectedSubject} 
+                                onChange={setSelectedSubject}
+                                placeholder="-- Pilih Mapel --"
+                                options={SUBJECTS.map(s => ({ value: s, label: s }))}
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Semester</label>
@@ -627,29 +628,23 @@ export const GradeAdjustmentPage: React.FC = () => {
                                     placeholder="Ketik nama penilaian..."
                                 />
                             ) : (
-                                <Select
+                                <CustomDropdown
                                     value={assessmentName}
-                                    onChange={(e) => setAssessmentName(e.target.value)}
+                                    onChange={setAssessmentName}
                                     disabled={loadingAssessments || savedAssessmentNames.length === 0}
-                                >
-                                    <option value="">
-                                        {loadingAssessments
+                                    placeholder={loadingAssessments
                                             ? 'Memuat data...'
                                             : savedAssessmentNames.length === 0
                                                 ? '-- Tidak Ada Nilai Tersimpan --'
                                                 : '-- Pilih Penilaian --'}
-                                    </option>
-                                    {savedAssessmentNames.length > 0 && (
-                                        <>
-                                            <option value="-- Semua PH --">-- Semua PH (Penilaian Harian) --</option>
-                                            <option value="-- Semua Penilaian --">-- Semua Penilaian --</option>
-                                            <option disabled>──────────</option>
-                                        </>
-                                    )}
-                                    {savedAssessmentNames.map(name => (
-                                        <option key={name} value={name}>{name}</option>
-                                    ))}
-                                </Select>
+                                    options={[
+                                        ...(savedAssessmentNames.length > 0 ? [
+                                            { value: '-- Semua PH --', label: '-- Semua PH (Penilaian Harian) --' },
+                                            { value: '-- Semua Penilaian --', label: '-- Semua Penilaian --' }
+                                        ] : []),
+                                        ...savedAssessmentNames.map(name => ({ value: name, label: name }))
+                                    ]}
+                                />
                             )}
                         </div>
                     </CardContent>
