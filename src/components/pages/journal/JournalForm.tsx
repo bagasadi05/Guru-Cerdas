@@ -14,6 +14,7 @@ import { useCreateJournal, useUpdateJournal } from '../../../hooks/useTeachingJo
 import journalService from '../../../services/journalService';
 import type { TeachingJournal } from '../../../types/teachingJournal';
 import { MarkdownToolbar } from '../../ui/MarkdownToolbar';
+import { SUBJECTS } from '../../../constants/subjects';
 
 interface ClassOption {
   id: string;
@@ -215,12 +216,12 @@ export const JournalForm: React.FC<JournalFormProps> = ({
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Mata Pelajaran <span className="text-rose-500">*</span>
             </label>
-            <Input
-              type="text"
-              placeholder="cth. Matematika, Bahasa Inggris"
-              {...register('subject')}
-              error={errors.subject?.message}
-            />
+            <Select {...register('subject')} error={errors.subject?.message}>
+              <option value="">Pilih Mata Pelajaran</option>
+              {SUBJECTS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </Select>
           </div>
         </div>
 

@@ -13,6 +13,7 @@ interface SemesterSelectorProps {
     disabled?: boolean;
     size?: 'sm' | 'md';
     includeAllOption?: boolean;
+    activeOnly?: boolean;
 }
 
 export const SemesterSelector: React.FC<SemesterSelectorProps> = ({
@@ -22,7 +23,8 @@ export const SemesterSelector: React.FC<SemesterSelectorProps> = ({
     className = '',
     disabled = false,
     size = 'md',
-    includeAllOption = true
+    includeAllOption = true,
+    activeOnly = false
 }) => {
     const { semesters, isLoading } = useSemester();
 
@@ -34,11 +36,13 @@ export const SemesterSelector: React.FC<SemesterSelectorProps> = ({
     const activeSemester = semesters.find(s => s.is_active);
 
     const options = [];
-    if (includeAllOption) {
+    if (includeAllOption && !activeOnly) {
         options.push({ value: 'all', label: 'Semua Semester' });
     }
 
-    semesters.forEach(sem => {
+    const filteredSemesters = activeOnly ? semesters.filter(s => s.is_active) : semesters;
+
+    filteredSemesters.forEach(sem => {
         const yearName = sem.academic_years?.name || 'Tahun Ajaran ?';
         const semName = getSemesterDisplayName(sem.name, sem.start_date, 'full');
         const label = `${yearName} - ${semName}${sem.is_active ? ' (Aktif)' : ''}`;

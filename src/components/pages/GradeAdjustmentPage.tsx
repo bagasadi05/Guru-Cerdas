@@ -9,6 +9,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Select } from '../ui/Select';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { SemesterSelector } from '../ui/SemesterSelector';
+import { SUBJECTS } from '../../constants/subjects';
 import {
     calculateFormulaScore,
     analyzeAndAdjustGradesWithAI,
@@ -30,26 +32,6 @@ import { Database } from '../../services/database.types';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
-
-const SUBJECTS = [
-    'TQA',
-    'Bahasa Indonesia',
-    'Matematika',
-    'IPAS',
-    'Pancasila',
-    'Akidah',
-    'Fikih',
-    'Bahasa Arab',
-    'Bahasa Jawa',
-    'Bahasa Inggris',
-    "Qur'an Hadits",
-    'SKI',
-    'PJOK',
-    'TIK',
-    'Seni Budaya',
-    'Pramuka',
-    'Ekstra'
-];
 
 const DEFAULT_KKM = 75;
 const EMPTY_ARRAY: any[] = [];
@@ -617,11 +599,12 @@ export const GradeAdjustmentPage: React.FC = () => {
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Semester</label>
-                            <Select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)}>
-                                {semesters.map(s => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                            </Select>
+                            <SemesterSelector 
+                                value={selectedSemester} 
+                                onChange={setSelectedSemester} 
+                                includeAllOption={false}
+                                activeOnly={true}
+                            />
                         </div>
                         <div>
                             <div className="flex justify-between items-center mb-1">

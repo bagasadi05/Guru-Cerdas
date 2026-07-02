@@ -22,6 +22,7 @@ import { EmptyGradesConfirmation, SaveSuccessModal, ClearAllConfirmation } from 
 import { useSemester } from '../../contexts/SemesterContext';
 import { SemesterLockedBanner } from '../ui/SemesterSelector';
 import { getAssignedSubjects, hasHomeroomAssignment, TeacherClassAssignmentRow } from '../../services/teacherAssignments';
+import { SUBJECTS } from '../../constants/subjects';
 import { AIPasteModal } from './bulk-grade-input/components/AIPasteModal';
 import { SettingsCard } from './bulk-grade-input/components/SettingsCard';
 import { StatsPanel } from './bulk-grade-input/components/StatsPanel';
@@ -32,27 +33,8 @@ import { ImportPreviewModal } from './bulk-grade-input/components/ImportPreviewM
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
 
-const SUBJECTS = [
-    'TQA',
-    'Bahasa Indonesia',
-    'Matematika',
-    'IPAS',
-    'Pancasila',
-    'Akidah',
-    'Fikih',
-    'Bahasa Arab',
-    'Bahasa Jawa',
-    'Bahasa Inggris',
-    "Qur'an Hadits",
-    'SKI',
-    'PJOK',
-    'TIK',
-    'Seni Budaya',
-    'Pramuka',
-    'Ekstra'
-];
-
 const DEFAULT_KKM = 75;
+const EMPTY_ARRAY: any[] = [];
 
 const BulkGradeInputPage: React.FC = () => {
     const { user } = useAuth();

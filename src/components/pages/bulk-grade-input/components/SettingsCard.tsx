@@ -107,6 +107,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                         value={selectedSemester}
                         onChange={(val) => setSelectedSemester(val)}
                         includeAllOption={false}
+                        activeOnly={true}
                         showIcon={true}
                         className="w-full"
                     />

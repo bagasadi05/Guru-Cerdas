@@ -1,0 +1,1 @@
+export const SUBJECTS = ['TQA', 'Bahasa Indonesia', 'Matematika', 'IPAS', 'Pancasila', 'Akidah', 'Fikih', 'Bahasa Arab', 'Bahasa Jawa', 'Bahasa Inggris', "Qur'an Hadits", 'SKI', 'PJOK', 'TIK', 'Seni Budaya', 'Pramuka', 'Ekstra'];

@@ -328,6 +328,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                         value={subjectGradeInfo.semester}
                                         onChange={(val) => setSubjectGradeInfo(p => ({ ...p, semester: val }))}
                                         includeAllOption={false}
+                                        activeOnly={true}
                                         showIcon={true}
                                         className="w-full"
                                     />
@@ -582,6 +583,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                         value={subjectGradeInfo.semester}
                                         onChange={(val) => setSubjectGradeInfo(p => ({ ...p, semester: val }))}
                                         includeAllOption={true}
+                                        activeOnly={true}
                                         showIcon={true}
                                         className="w-full"
                                     />
