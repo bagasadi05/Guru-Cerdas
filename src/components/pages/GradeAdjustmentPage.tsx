@@ -9,18 +9,18 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Select } from '../ui/Select';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
-import { 
-    calculateFormulaScore, 
-    analyzeAndAdjustGradesWithAI, 
-    AIStudentAdjustment 
+import {
+    calculateFormulaScore,
+    analyzeAndAdjustGradesWithAI,
+    AIStudentAdjustment
 } from '../../services/gradeAdjustmentService';
 import { exportGradesWithTemplate } from '../../utils/gradeExporter';
-import { 
-    SparklesIcon, 
-    PrinterIcon, 
-    FileSpreadsheetIcon, 
-    SaveIcon, 
-    RefreshCwIcon, 
+import {
+    SparklesIcon,
+    PrinterIcon,
+    FileSpreadsheetIcon,
+    SaveIcon,
+    RefreshCwIcon,
     PlayCircleIcon,
     AlertTriangleIcon,
     ArrowLeftIcon
@@ -54,9 +54,9 @@ const SUBJECTS = [
 const DEFAULT_KKM = 75;
 const EMPTY_ARRAY: any[] = [];
 
-const isSasAssessment = (name: string): boolean => 
-    name.toUpperCase().includes('SAS') || 
-    name.toUpperCase().includes('SAT') || 
+const isSasAssessment = (name: string): boolean =>
+    name.toUpperCase().includes('SAS') ||
+    name.toUpperCase().includes('SAT') ||
     name.toUpperCase().includes('AKHIR');
 
 const canAccessClass = (
@@ -135,6 +135,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                 .from('classes')
                 .select('id, name, user_id, grade_level')
                 .is('deleted_at', null)
+                .eq('is_archived', false)
                 .order('name');
             if (error) throw error;
             return data as Pick<ClassRow, 'id' | 'name' | 'user_id' | 'grade_level'>[];
@@ -153,7 +154,7 @@ export const GradeAdjustmentPage: React.FC = () => {
 
     const targetAverageRange = useMemo(() => {
         if (!activeClass) return { min: 81, max: 98 }; // default fallback
-        
+
         let level = activeClass.grade_level;
         if (level === null || level === undefined) {
             // Match standard numbers 1-6
@@ -201,7 +202,7 @@ export const GradeAdjustmentPage: React.FC = () => {
         queryFn: async () => {
             if (!selectedClass || !selectedSubject || !selectedSemester || !students || students.length === 0) return [];
             const studentIds = students.map(s => s.id);
-            
+
             const { data, error } = await supabase
                 .from('academic_records')
                 .select('assessment_name')
@@ -221,8 +222,8 @@ export const GradeAdjustmentPage: React.FC = () => {
 
     const activeAssessmentsList = useMemo(() => {
         if (activeAssessmentName === '-- Semua PH --') {
-            return savedAssessmentNames.filter(name => 
-                name.toLowerCase().includes('ph') || 
+            return savedAssessmentNames.filter(name =>
+                name.toLowerCase().includes('ph') ||
                 name.toLowerCase().includes('harian')
             );
         }
@@ -281,7 +282,7 @@ export const GradeAdjustmentPage: React.FC = () => {
         if (!students) return [];
         return students.map((s, index) => {
             const assessmentsMap: Record<string, { original: number | null; formula: number | null; ai: number | null; recordId?: string }> = {};
-            
+
             let originalSum = 0;
             let originalCount = 0;
             let formulaSum = 0;
@@ -293,7 +294,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                 const record = existingRecords.find(r => r.student_id === s.id && r.assessment_name === assessName);
                 const original = record ? record.score : null;
                 const formula = original !== null ? calculateFormulaScore(original, weight, constant, targetAverageRange.min, targetAverageRange.max) : null;
-                
+
                 const aiData = aiAdjustments.find(a => a.student_id === s.id && (a as any).assessment_name === assessName);
                 const aiVal = (aiData && original !== null) ? aiData.ai_score : formula;
 
@@ -363,7 +364,7 @@ export const GradeAdjustmentPage: React.FC = () => {
             listData.forEach(item => {
                 activeAssessmentsList.forEach(assessName => {
                     const key = activeAssessmentsList.length > 1 ? `${item.id}_${assessName}` : item.id;
-                    
+
                     const assessData = item.assessments[assessName];
                     if (!assessData) return;
 
@@ -409,7 +410,7 @@ export const GradeAdjustmentPage: React.FC = () => {
             .filter(v => v !== undefined && v !== '')
             .map(Number)
             .filter(n => !isNaN(n));
-        
+
         if (values.length === 0) return { avg: 0, passingCount: 0, passingPct: 0 };
         const sum = values.reduce((a, b) => a + b, 0);
         const avg = Math.round(sum / values.length);
@@ -427,7 +428,7 @@ export const GradeAdjustmentPage: React.FC = () => {
     const handleRunAiAudit = async () => {
         setIsAiLoading(true);
         toast.info('Menghubungi AI untuk menganalisis sebaran nilai...');
-        
+
         try {
             const allAdjustments: any[] = [];
             let combinedAnalysis = '';
@@ -461,7 +462,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                     assessment_name: assessName
                 }));
                 allAdjustments.push(...adjustmentsWithAssess);
-                
+
                 if (combinedAnalysis) combinedAnalysis += '\n\n';
                 combinedAnalysis += `[${assessName}] ${result.class_analysis}`;
             }
@@ -481,7 +482,7 @@ export const GradeAdjustmentPage: React.FC = () => {
     const handleManualScoreChange = (studentId: string, value: string) => {
         const val = value === '' ? '' : String(Math.min(targetAverageRange.max, Math.max(targetAverageRange.min, parseInt(value) || 0)));
         setFinalScores(prev => ({ ...prev, [studentId]: val }));
-        
+
         const nextOverrides = new Set(manualOverrides);
         nextOverrides.add(studentId);
         setManualOverrides(nextOverrides);
@@ -543,7 +544,7 @@ export const GradeAdjustmentPage: React.FC = () => {
     const handleExportExcel = async () => {
         try {
             const className = classes?.find(c => c.id === selectedClass)?.name || '';
-            
+
             await exportGradesWithTemplate(
                 listData,
                 finalScores,
@@ -555,7 +556,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                 kkmInput,
                 materiInputs
             );
-            
+
             toast.success('Daftar nilai berhasil diexport ke Excel menggunakan template sekolah!');
         } catch (error: any) {
             console.error(error);
@@ -568,13 +569,13 @@ export const GradeAdjustmentPage: React.FC = () => {
     return (
         <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 md:p-8 flex flex-col overflow-y-auto">
             <div className="max-w-7xl mx-auto w-full space-y-6">
-                
+
                 {/* Header */}
                 <div className="no-print flex items-center gap-4">
-                    <Button 
-                        variant="outline" 
-                        size="icon" 
-                        onClick={() => navigate('/input-massal')} 
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => navigate('/input-massal')}
                         className="bg-white dark:bg-white/10 border-slate-200 dark:border-white/20 hover:bg-slate-100 dark:hover:bg-white/20 flex-shrink-0"
                     >
                         <ArrowLeftIcon className="w-4 h-4" />
@@ -625,34 +626,34 @@ export const GradeAdjustmentPage: React.FC = () => {
                         <div>
                             <div className="flex justify-between items-center mb-1">
                                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Nama Penilaian</label>
-                                <button 
+                                <button
                                     onClick={() => {
                                         setIsCustomAssessment(!isCustomAssessment);
                                         setAssessmentName('');
                                         setCustomAssessmentName('');
-                                    }} 
+                                    }}
                                     className="text-xxs text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
                                 >
                                     {isCustomAssessment ? 'Pilih Tersimpan' : 'Ketik Manual'}
                                 </button>
                             </div>
                             {isCustomAssessment ? (
-                                <Input 
+                                <Input
                                     value={customAssessmentName}
                                     onChange={(e) => setCustomAssessmentName(e.target.value)}
                                     placeholder="Ketik nama penilaian..."
                                 />
                             ) : (
-                                <Select 
-                                    value={assessmentName} 
+                                <Select
+                                    value={assessmentName}
                                     onChange={(e) => setAssessmentName(e.target.value)}
                                     disabled={loadingAssessments || savedAssessmentNames.length === 0}
                                 >
                                     <option value="">
-                                        {loadingAssessments 
-                                            ? 'Memuat data...' 
-                                            : savedAssessmentNames.length === 0 
-                                                ? '-- Tidak Ada Nilai Tersimpan --' 
+                                        {loadingAssessments
+                                            ? 'Memuat data...'
+                                            : savedAssessmentNames.length === 0
+                                                ? '-- Tidak Ada Nilai Tersimpan --'
                                                 : '-- Pilih Penilaian --'}
                                     </option>
                                     {savedAssessmentNames.length > 0 && (
@@ -705,10 +706,10 @@ export const GradeAdjustmentPage: React.FC = () => {
                             </div>
                         )}
                         <div className="flex flex-col lg:flex-row gap-6 items-start">
-                        
+
                         {/* Control Column */}
                         <div className="no-print w-full lg:w-1/4 flex flex-col gap-4">
-                            
+
                             {/* Linear Formula Settings */}
                             <Card>
                                 <CardHeader>
@@ -886,7 +887,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                     {manualOverrides.size > 0 && (
                                         <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xxs">
                                             <span className="font-bold text-amber-600 dark:text-amber-400">{manualOverrides.size} Revisi Manual</span>
-                                            <button 
+                                            <button
                                                 onClick={() => setManualOverrides(new Set())}
                                                 className="text-slate-400 hover:text-red-500 font-bold"
                                             >
@@ -939,7 +940,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                         {/* Printable Area Paper Document */}
                         <div className="w-full lg:w-3/4 bg-slate-200/40 dark:bg-slate-900/40 p-4 sm:p-6 rounded-3xl flex justify-center border border-slate-200 dark:border-slate-800">
                             <div className="print-area w-full max-w-3xl bg-white text-slate-900 p-8 sm:p-12 rounded-lg shadow-md border border-slate-300/30 flex flex-col justify-between font-sans min-h-[75vh]">
-                                
+
                                 <style>{`
                                     @media print {
                                         body * {
@@ -1095,8 +1096,8 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                                         value={scoreValue}
                                                                                         onChange={(e) => handleManualScoreChange(key, e.target.value)}
                                                                                         className={`no-print w-14 text-center text-xs font-bold border rounded p-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
-                                                                                            isFailed 
-                                                                                                ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400' 
+                                                                                            isFailed
+                                                                                                ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400'
                                                                                                 : manualOverrides.has(key)
                                                                                                     ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400'
                                                                                                     : 'border-slate-200 text-slate-900 bg-white dark:border-slate-700 dark:text-white dark:bg-slate-800'
@@ -1154,8 +1155,8 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                             value={scoreValue}
                                                                             onChange={(e) => handleManualScoreChange(item.id, e.target.value)}
                                                                             className={`no-print w-16 text-center text-xs font-bold border rounded p-1 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
-                                                                                isFailed 
-                                                                                    ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400' 
+                                                                                isFailed
+                                                                                    ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400'
                                                                                     : manualOverrides.has(item.id)
                                                                                         ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400'
                                                                                         : 'border-slate-200 text-slate-900 bg-white dark:border-slate-700 dark:text-white dark:bg-slate-800'
@@ -1197,5 +1198,3 @@ export const GradeAdjustmentPage: React.FC = () => {
         </div>
     );
 };
-
-export default GradeAdjustmentPage;

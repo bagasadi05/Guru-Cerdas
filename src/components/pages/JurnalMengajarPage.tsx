@@ -204,19 +204,20 @@ const JurnalMengajarPage: React.FC = () => {
 
   return (
     <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white font-serif">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative z-10">
+        <div className="relative">
+          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-xl opacity-50 dark:opacity-20 rounded-full" />
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent font-serif relative">
             Jurnal Mengajar
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-gray-600 dark:text-gray-400 relative">
             Catat dan tinjau agenda KBM harian per kelas dan mata pelajaran.
           </p>
         </div>
         {!backendMissing && (
           <Button
             onClick={handleOpenAdd}
-            className="rounded-xl shadow-lg shadow-emerald-500/20"
+            className="rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all duration-300"
           >
             <Plus className="w-4 h-4 mr-2" /> Tambah Jurnal
           </Button>
@@ -244,32 +245,51 @@ const JurnalMengajarPage: React.FC = () => {
           <TabsTrigger value="rekap">Rekapitulasi</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="jurnal-harian" className="space-y-4">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <Card className="rounded-2xl">
-            <CardHeader 
-              className="flex flex-row items-center justify-between gap-2 cursor-pointer md:cursor-default"
-              onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-            >
-              <div className="flex flex-col gap-1">
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white">Filter</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 hidden md:block">
-                  Saring daftar jurnal berdasarkan kelas, mata pelajaran, dan rentang tanggal.
-                </p>
-              </div>
-              <button 
-                className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                aria-label={isFilterExpanded ? 'Tutup filter' : 'Buka filter'}
+        <TabsContent value="jurnal-harian" className="space-y-6">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-6">
+          
+          {/* Modern Filter Section */}
+          <div className="relative group rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300" />
+            <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-2xl overflow-hidden">
+              <div 
+                className="flex flex-row items-center justify-between p-5 cursor-pointer select-none"
+                onClick={() => setIsFilterExpanded(!isFilterExpanded)}
               >
-                <svg className={`w-5 h-5 transition-transform duration-200 ${isFilterExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-              </button>
-            </CardHeader>
-            <CardContent className={`${isFilterExpanded ? 'block' : 'hidden'} md:block`}>
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                <div className="md:col-span-4">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-                    Kelas
-                  </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100/50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Filter Jurnal</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block mt-0.5">
+                      Saring berdasarkan kelas, mapel, & tanggal
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(filters.classId || subjectInput || startDate || singleDate || monthInput) && (
+                    <span className="flex h-2 w-2 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  )}
+                  <button 
+                    className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    aria-label={isFilterExpanded ? 'Tutup filter' : 'Buka filter'}
+                  >
+                    <svg className={`w-5 h-5 transition-transform duration-300 ${isFilterExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className={`transition-all duration-500 ease-in-out ${isFilterExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800/50">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mt-4">
+                    <div className="md:col-span-4">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        Kelas
+                      </label>
                   <Select
                     value={filters.classId ?? ''}
                     onChange={(e) =>
@@ -289,10 +309,10 @@ const JurnalMengajarPage: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="md:col-span-4">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-                    Mata Pelajaran
-                  </label>
+                    <div className="md:col-span-4">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        Mata Pelajaran
+                      </label>
                   <Input
                     placeholder="cth: Matematika"
                     value={subjectInput}
@@ -301,10 +321,10 @@ const JurnalMengajarPage: React.FC = () => {
                   />
                 </div>
 
-                <div className="md:col-span-4">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-                    Mode Tanggal
-                  </label>
+                    <div className="md:col-span-4">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        Mode Tanggal
+                      </label>
                   <Select
                     value={dateMode}
                     onChange={(e) => setDateMode(e.target.value as 'range' | 'single' | 'month')}
@@ -316,12 +336,12 @@ const JurnalMengajarPage: React.FC = () => {
                   </Select>
                 </div>
 
-                {dateMode === 'range' ? (
-                  <>
-                    <div className="md:col-span-3">
-                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-                        Dari
-                      </label>
+                    {dateMode === 'range' ? (
+                      <>
+                        <div className="md:col-span-3">
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                            Dari
+                          </label>
                       <Input
                         type="date"
                         value={startDate}
@@ -329,10 +349,10 @@ const JurnalMengajarPage: React.FC = () => {
                         aria-label="Tanggal mulai"
                       />
                     </div>
-                    <div className="md:col-span-3">
-                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-                        Sampai
-                      </label>
+                        <div className="md:col-span-3">
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                            Sampai
+                          </label>
                       <Input
                         type="date"
                         value={endDate}
@@ -340,112 +360,125 @@ const JurnalMengajarPage: React.FC = () => {
                         aria-label="Tanggal akhir"
                       />
                     </div>
-                  </>
-                ) : dateMode === 'single' ? (
-                  <div className="md:col-span-6">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-                      Tanggal
-                    </label>
+                      </>
+                    ) : dateMode === 'single' ? (
+                      <div className="md:col-span-6">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                          Tanggal
+                        </label>
                     <Input
                       type="date"
                       value={singleDate}
                       onChange={(e) => setSingleDate(e.target.value)}
                       aria-label="Tanggal tunggal"
                     />
-                  </div>
-                ) : (
-                  <div className="md:col-span-6">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-                      Bulan
-                    </label>
+                      </div>
+                    ) : (
+                      <div className="md:col-span-6">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                          Bulan
+                        </label>
                     <Input
                       type="month"
                       value={monthInput}
                       onChange={(e) => setMonthInput(e.target.value)}
                       aria-label="Filter bulan"
                     />
-                  </div>
-                )}
+                      </div>
+                    )}
 
-                <div className="md:col-span-6 flex items-end justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleResetFilters}
-                    className="rounded-xl"
-                    aria-label="Reset filter"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" /> Reset
-                  </Button>
+                    <div className="md:col-span-12 flex items-end justify-end gap-2 mt-2 pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                      <Button
+                        variant="outline"
+                        onClick={handleResetFilters}
+                        className="rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        aria-label="Reset filter"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" /> Reset Filter
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           <section aria-label="Daftar jurnal mengajar">
             {loadingJournals ? (
-              <div className="space-y-3">
-                {[0, 1, 2, 3].map((i) => (
-                  <Card key={i} className="rounded-2xl">
-                    <CardContent className="space-y-2">
-                      <Skeleton className="h-4 w-1/3" />
-                      <Skeleton className="h-3 w-2/3" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </CardContent>
-                  </Card>
+              <div className="space-y-4">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-5">
+                    <div className="space-y-3">
+                      <Skeleton className="h-4 w-1/4 rounded-full" />
+                      <Skeleton className="h-5 w-2/3" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : isError && !backendMissing ? (
-              <Card className="rounded-2xl border-rose-200 dark:border-rose-900/40">
-                <CardContent className="p-6">
-                  <div className="text-rose-600 dark:text-rose-300 text-sm">
-                    Gagal memuat jurnal: {error instanceof Error ? error.message : String(error)}
-                  </div>
-                  <div className="mt-3">
-                    <Button variant="outline" onClick={() => refetch()} className="rounded-xl">
-                      <RefreshCw className="w-4 h-4 mr-2" /> Coba lagi
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-900/10 p-6 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center mb-3">
+                  <svg className="w-6 h-6 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h3 className="text-sm font-bold text-rose-900 dark:text-rose-200 mb-1">Gagal memuat jurnal</h3>
+                <p className="text-xs text-rose-600 dark:text-rose-400 mb-4">{error instanceof Error ? error.message : String(error)}</p>
+                <Button variant="outline" onClick={() => refetch()} className="rounded-xl border-rose-200 hover:bg-rose-100 text-rose-700 dark:border-rose-800 dark:hover:bg-rose-800 dark:text-rose-300">
+                  <RefreshCw className="w-4 h-4 mr-2" /> Coba lagi
+                </Button>
+              </div>
             ) : journals.length === 0 ? (
-              <EmptyState
-                variant="card"
-                className="rounded-2xl"
-                icon={<BookOpen className="w-8 h-8" />}
-                title="Belum Ada Jurnal"
-                description="Tidak ada jurnal yang cocok dengan filter saat ini. Coba ubah filter atau tambah jurnal baru."
-                actionLabel="Tambah Jurnal"
-                onAction={handleOpenAdd}
-              />
+              <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 p-10 flex flex-col items-center text-center max-w-2xl mx-auto">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 text-slate-400 dark:text-slate-500 shadow-inner">
+                  <BookOpen className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Belum Ada Jurnal</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm">
+                  Tidak ada jurnal yang cocok dengan filter saat ini. Coba ubah filter atau tambah jurnal baru.
+                </p>
+                <Button onClick={handleOpenAdd} className="rounded-xl shadow-lg shadow-emerald-500/20">
+                  <Plus className="w-4 h-4 mr-2" /> Tambah Jurnal
+                </Button>
+              </div>
             ) : (
-              <div className="space-y-3" aria-busy={isFetching}>
-                {journals.map((j) => {
+              <div className="space-y-4 relative" aria-busy={isFetching}>
+                {/* Timeline connector line for visual polish */}
+                <div className="absolute left-6 top-6 bottom-6 w-px bg-slate-200 dark:bg-slate-800 hidden md:block z-0" />
+                
+                {journals.map((j, idx) => {
                   const className = j.class_id ? classMap.get(j.class_id) ?? 'Kelas tidak diketahui' : 'Tanpa kelas';
                   const activities = j.activities;
                   return (
-                    <Card key={j.id} className="rounded-2xl">
-                      <CardContent className="p-4 sm:p-5">
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div key={j.id} className="relative z-10 flex flex-col md:flex-row gap-4 group">
+                      {/* Timeline dot */}
+                      <div className="hidden md:flex flex-col items-center mt-6">
+                        <div className="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-slate-950 shadow-sm" />
+                      </div>
+                      
+                      <div className="flex-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden relative">
+                        {/* Subtle decorative gradient */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-500/5 to-transparent rounded-bl-full pointer-events-none" />
+                        
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 relative z-10">
                           <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                              <span className="inline-flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5" />
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                                <Calendar className="w-3 h-3" />
                                 {formatIdDate(j.date)}
                               </span>
-                              <span aria-hidden="true">·</span>
-                              <span className="font-medium text-slate-700 dark:text-slate-200">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                                 {className}
                               </span>
-                              <span aria-hidden="true">·</span>
-                              <span>{j.subject}</span>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-[11px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                                {j.subject}
+                              </span>
                               {typeof j.meeting_number === 'number' && (
-                                <>
-                                  <span aria-hidden="true">·</span>
-                                  <span>Pertemuan ke-{j.meeting_number}</span>
-                                </>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                  Pertemuan ke-{j.meeting_number}
+                                </span>
                               )}
                             </div>
-                            <h3 className="mt-1.5 text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
+                            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
                               {j.topic}
                             </h3>
                             {activities && (
@@ -455,25 +488,17 @@ const JurnalMengajarPage: React.FC = () => {
                             )}
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            {j.attachment_url ? (
+                            {j.attachment_url && (
                               <a
                                 href={j.attachment_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20 dark:hover:bg-emerald-500/20 transition-colors"
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 transition-colors"
                                 aria-label="Buka lampiran"
                                 title="Buka lampiran"
                               >
-                                <FileText className="w-3.5 h-3.5" /> Lampiran
+                                <FileText className="w-4 h-4" />
                               </a>
-                            ) : (
-                              <span
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-50 text-slate-500 border border-slate-200 dark:bg-slate-800/50 dark:text-slate-400 dark:border-slate-700/60"
-                                aria-label="Tanpa lampiran"
-                                title="Tanpa lampiran"
-                              >
-                                <FileText className="w-3.5 h-3.5" /> Tanpa lampiran
-                              </span>
                             )}
 
                             <Button
@@ -502,8 +527,8 @@ const JurnalMengajarPage: React.FC = () => {
                             </Button>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
