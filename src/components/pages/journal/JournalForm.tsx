@@ -203,7 +203,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
               Kelas <span className="text-rose-500">*</span>
             </label>
             <Select {...register('class_id')} error={errors.class_id?.message}>
-              <option value="">Pilih Kelas</option>
+              <option value="">-- Pilih Kelas --</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -217,7 +217,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
               Mata Pelajaran <span className="text-rose-500">*</span>
             </label>
             <Select {...register('subject')} error={errors.subject?.message}>
-              <option value="">Pilih Mata Pelajaran</option>
+              <option value="">-- Pilih Mapel --</option>
               {SUBJECTS.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
