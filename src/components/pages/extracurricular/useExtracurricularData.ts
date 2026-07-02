@@ -1,8 +1,4 @@
-/**
- * Custom hook for managing extracurricular data
- * Encapsulates all queries and mutations for the extracurricular module
- */
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../services/supabase';
 import { useAuth } from '../../../hooks/useAuth';
@@ -62,6 +58,7 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
                 .select('*')
                 .eq('user_id', user!.id)
                 .is('deleted_at', null)
+                .eq('is_archived', false)
                 .order('name');
             if (error) throw error;
             return (data || []) as Class[];

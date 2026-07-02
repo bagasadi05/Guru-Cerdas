@@ -44,7 +44,7 @@ export const SemesterManagement: React.FC = () => {
         }, 10000);
 
         try {
-            // Remove explicit .eq('user_id') since RLS handles it. 
+            // Remove explicit .eq('user_id') since RLS handles it.
             // This simplifies the query and avoids potential redundant filtering issues.
             const { data: yearsData, error: yearsError } = await supabase
                 .from('academic_years')
@@ -312,7 +312,14 @@ export const SemesterManagement: React.FC = () => {
                 ) : (
                     years.map(year => (
                         <div key={year.id} className={`border rounded-xl transition-all ${year.is_active ? 'border-indigo-200 bg-indigo-50/30 dark:border-indigo-900/50 dark:bg-indigo-900/10' : 'border-slate-200 dark:border-slate-700'}`}>
-                            <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50" onClick={() => toggleYearExpand(year.id)}>
+                            <div
+                                className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                                onClick={() => toggleYearExpand(year.id)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleYearExpand(year.id); } }}
+                                aria-expanded={expandedYears.has(year.id)}
+                            >
                                 <div className="flex items-center gap-3">
                                     {expandedYears.has(year.id) ? <ChevronDownIcon className="w-5 h-5 text-gray-400" /> : <ChevronRightIcon className="w-5 h-5 text-gray-400" />}
                                     <div>

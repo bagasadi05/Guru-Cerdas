@@ -53,6 +53,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                 .select('id, name')
                 .eq('user_id', user!.id)
                 .is('deleted_at', null)
+                .eq('is_archived', false)
                 .order('name');
             if (error) throw error;
             return data || [];

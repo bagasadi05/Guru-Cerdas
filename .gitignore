@@ -131,6 +131,7 @@ dist-ssr
 *.sw?
 
 .env
+.env.bak
 *storybook.log
 
 # AI tool skill/config directories (auto-generated)
@@ -154,3 +155,7 @@ build_before.txt
 .omo/
 .opencode/
 supabase/.temp/
+
+# Coverage reports
+coverage/
+lcov-report/

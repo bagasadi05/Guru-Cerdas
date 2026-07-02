@@ -25,7 +25,7 @@ export const usePushSubscriptionSync = (userId: string | null | undefined) => {
     const cleanup = async () => {
       try {
         await supabase
-          .from('push_subscriptions')
+          .from('push_subscriptions' as any)
           .delete()
           .lt('last_seen_at', new Date(Date.now() - 90 * 86400000).toISOString());
       } catch (e) {

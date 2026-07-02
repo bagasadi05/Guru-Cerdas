@@ -149,7 +149,14 @@ export const StudentTable: React.FC<StudentTableProps> = ({
             {/* Mobile List View */}
             <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
                 {visibleStudents.map((student) => (
-                    <div key={student.id} className="p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" onClick={() => onAction(student, 'menu')}>
+                    <div key={student.id}
+                        className="p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+                        onClick={() => onAction(student, 'menu')}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAction(student, 'menu'); } }}
+                        aria-label={`Menu aksi ${student.name}`}
+                    >
                         <div className="relative flex-shrink-0">
                             <img
                                 src={getStudentAvatar(student.avatar_url, student.gender, student.id)}

@@ -163,14 +163,14 @@ export const useAttendance = () => {
             if (!user || !students || students.length === 0) return {};
             const { data: attendanceData, error: attendanceError } = await supabase
                 .from('attendance')
-                .select('id, student_id, status, notes')
-                .eq('user_id', user.id)
+                .select('id, student_id, status, notes, official_status, teacher_id')
+                .eq('teacher_id' as any, user.id)
                 .eq('date', selectedDate)
                 .in('student_id', students.map((student) => student.id))
                 .is('deleted_at', null);
 
             if (attendanceError) throw attendanceError;
-            return (attendanceData || []).reduce<Record<string, AttendanceRecord>>((acc, record) => {
+            return (attendanceData || []).reduce<Record<string, AttendanceRecord>>((acc, record: any) => {
                 acc[record.student_id] = { id: record.id, status: record.status as AttendanceStatus, note: record.notes || '' };
                 return acc;
             }, {});
@@ -282,6 +282,20 @@ export const useAttendance = () => {
         });
         return summary;
     }, [attendanceRecords]);
+
+    /** Official status summary — counted from get_attendance_status RPC or fallback */
+    const officialSummary = useMemo(() => {
+        const summary = statusOptions.reduce((acc, opt) => ({ ...acc, [opt.value]: 0 }), {} as Record<AttendanceStatus, number>);
+        if (!students || !existingAttendance) return summary;
+        // Count official_status where available, fallback to per-teacher status
+        const byStudent: Record<string, AttendanceStatus> = {};
+        Object.values(existingAttendance).forEach((rec: any) => {
+            const status = rec.official_status || rec.status;
+            byStudent[rec.student_id] = status;
+        });
+        Object.values(byStudent).forEach((s) => { summary[s]++ });
+        return summary;
+    }, [existingAttendance, students]);
 
     const unmarkedStudents = useMemo(() => {
         if (!students) return [];
@@ -569,6 +583,8 @@ export const useAttendance = () => {
             student_id,
             date: selectedDate,
             status: record.status,
+            teacher_status: record.status,
+            teacher_id: user.id,
             notes: record.note,
             user_id: user.id,
             semester_id: semesterIdForDate

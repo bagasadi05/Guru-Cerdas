@@ -90,9 +90,8 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
         );
     }
 
-    if (!data) return null;
-
     const actions = useMemo<TodayActionItem[]>(() => {
+        if (!data) return [];
         const items: TodayActionItem[] = [];
         const now = new Date();
         const totalStudents = data.students.length;

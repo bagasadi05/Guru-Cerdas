@@ -12,7 +12,7 @@
 
 **Aplikasi manajemen sekolah modern untuk guru Indonesia**
 
-[Demo](#demo) · [Fitur](#-fitur-utama) · [Instalasi](#-instalasi) · [Dokumentasi](#-dokumentasi) · [Kontribusi](#-kontribusi)
+[Demo](#-deskripsi) · [Fitur](#-fitur-utama) · [Instalasi](#-instalasi) · [Dokumentasi](#-dokumentasi) · [Kontribusi](#-kontribusi)
 
 </div>
 

@@ -108,6 +108,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                     .from('classes')
                     .select('id, name, user_id')
                     .is('deleted_at', null)
+                    .eq('is_archived', false)
                     .order('name'),
                 supabase
                     .from('semesters')
