@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Upload, FileText, Trash2, Loader2, Paperclip } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
@@ -8,6 +8,7 @@ import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
+import { CustomDropdown } from '../../ui/CustomDropdown';
 import { Textarea } from '../../ui/Textarea';
 import { journalSchema, JournalFormValues } from './schemas';
 import { useCreateJournal, useUpdateJournal } from '../../../hooks/useTeachingJournals';
@@ -94,6 +95,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     getValues,
@@ -202,26 +204,48 @@ export const JournalForm: React.FC<JournalFormProps> = ({
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Kelas <span className="text-rose-500">*</span>
             </label>
-            <Select {...register('class_id')} error={errors.class_id?.message}>
-              <option value="">-- Pilih Kelas --</option>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              name="class_id"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <CustomDropdown
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    placeholder="-- Pilih Kelas --"
+                    options={classes.map((c) => ({ value: c.id, label: c.name }))}
+                    className={errors.class_id ? 'border-rose-500 ring-1 ring-rose-500' : ''}
+                  />
+                  {errors.class_id && (
+                    <p className="mt-1 text-xs text-rose-500">{errors.class_id.message}</p>
+                  )}
+                </div>
+              )}
+            />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Mata Pelajaran <span className="text-rose-500">*</span>
             </label>
-            <Select {...register('subject')} error={errors.subject?.message}>
-              <option value="">-- Pilih Mapel --</option>
-              {SUBJECTS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </Select>
+            <Controller
+              name="subject"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <CustomDropdown
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    placeholder="-- Pilih Mapel --"
+                    options={SUBJECTS.map((s) => ({ value: s, label: s }))}
+                    className={errors.subject ? 'border-rose-500 ring-1 ring-rose-500' : ''}
+                  />
+                  {errors.subject && (
+                    <p className="mt-1 text-xs text-rose-500">{errors.subject.message}</p>
+                  )}
+                </div>
+              )}
+            />
           </div>
         </div>
 
