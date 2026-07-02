@@ -1198,3 +1198,4 @@ export const GradeAdjustmentPage: React.FC = () => {
         </div>
     );
 };
+export default GradeAdjustmentPage;
