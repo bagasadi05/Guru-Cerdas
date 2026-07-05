@@ -191,14 +191,28 @@ export const SemesterManagement: React.FC = () => {
     };
 
     const handleActivateSemester = async (semesterId: string, yearId: string) => {
+        if (!user) return;
         try {
-            // Use RPC for atomic update
+            // Try to use RPC for atomic update
             const { error } = await supabase.rpc('activate_semester', {
                 p_semester_id: semesterId,
                 p_year_id: yearId
             });
 
-            if (error) throw error;
+            if (error) {
+                console.warn('RPC activate_semester failed or not found, falling back to client-side updates', error);
+                // Fallback for when the RPC is not deployed yet
+                
+                // Deactivate all semesters for this user
+                await supabase.from('semesters').update({ is_active: false }).eq('user_id', user.id);
+                // Activate the target semester
+                await supabase.from('semesters').update({ is_active: true }).eq('id', semesterId);
+                
+                // Deactivate all years for this user
+                await supabase.from('academic_years').update({ is_active: false }).eq('user_id', user.id);
+                // Activate the target year
+                await supabase.from('academic_years').update({ is_active: true }).eq('id', yearId);
+            }
 
             toast.success('Semester aktif diperbarui.');
             fetchData();
@@ -343,51 +357,66 @@ export const SemesterManagement: React.FC = () => {
 
                             {expandedYears.has(year.id) && (
                                 <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 rounded-b-xl">
-                                    <div className="grid gap-3">
-                                        {year.semesters.map(sem => (
-                                            <div key={sem.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-                                                <div className="flex items-center gap-3">
-                                                    <CalendarIcon className={`w-5 h-5 ${sem.is_active ? 'text-green-500' : 'text-gray-400'}`} />
-                                                    <div>
-                                                        <p className="font-medium">Semester {sem.semester_number} ({sem.name})</p>
-                                                        <p className="text-xs text-gray-500">
-                                                            {new Date(sem.start_date).toLocaleDateString('id-ID')} - {new Date(sem.end_date).toLocaleDateString('id-ID')}
-                                                        </p>
+                                    {year.semesters && year.semesters.length > 0 ? (
+                                        <div className="grid gap-3">
+                                            {year.semesters.map(sem => (
+                                                <div key={sem.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                                                    <div className="flex items-center gap-3">
+                                                        <CalendarIcon className={`w-5 h-5 ${sem.is_active ? 'text-green-500' : 'text-gray-400'}`} />
+                                                        <div>
+                                                            <p className="font-medium">Semester {sem.semester_number} ({sem.name})</p>
+                                                            <p className="text-xs text-gray-500">
+                                                                {new Date(sem.start_date).toLocaleDateString('id-ID')} - {new Date(sem.end_date).toLocaleDateString('id-ID')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        {sem.is_locked ? (
+                                                            <div className="flex items-center gap-2 text-amber-600 text-sm mr-2 bg-amber-50 px-2 py-1 rounded">
+                                                                <LockIcon className="w-3 h-3" /> Terkunci
+                                                            </div>
+                                                        ) : null}
+
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleToggleLock(sem)}
+                                                            title={sem.is_locked ? "Buka Kunci" : "Kunci Semester"}
+                                                        >
+                                                            {sem.is_locked ? <LockIcon className="w-4 h-4 text-amber-500" /> : <LockIcon className="w-4 h-4 text-gray-300" />}
+                                                        </Button>
+
+                                                        {sem.is_active ? (
+                                                            <span className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium dark:bg-green-900/30 dark:text-green-400">
+                                                                <CheckCircleIcon className="w-4 h-4" /> Aktif
+                                                            </span>
+                                                        ) : (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleActivateSemester(sem.id, year.id)}
+                                                            >
+                                                                Aktifkan
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    {sem.is_locked ? (
-                                                        <div className="flex items-center gap-2 text-amber-600 text-sm mr-2 bg-amber-50 px-2 py-1 rounded">
-                                                            <LockIcon className="w-3 h-3" /> Terkunci
-                                                        </div>
-                                                    ) : null}
-
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleToggleLock(sem)}
-                                                        title={sem.is_locked ? "Buka Kunci" : "Kunci Semester"}
-                                                    >
-                                                        {sem.is_locked ? <LockIcon className="w-4 h-4 text-amber-500" /> : <LockIcon className="w-4 h-4 text-gray-300" />}
-                                                    </Button>
-
-                                                    {sem.is_active ? (
-                                                        <span className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium dark:bg-green-900/30 dark:text-green-400">
-                                                            <CheckCircleIcon className="w-4 h-4" /> Aktif
-                                                        </span>
-                                                    ) : (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleActivateSemester(sem.id, year.id)}
-                                                        >
-                                                            Aktifkan
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-4">
+                                            <p className="text-gray-500 mb-3 text-sm">Belum ada daftar semester untuk tahun ajaran ini.</p>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={() => {
+                                                    createDefaultSemesters(year.id, year.start_date).then(() => fetchData());
+                                                }}
+                                            >
+                                                Buat Semester Ganjil & Genap
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

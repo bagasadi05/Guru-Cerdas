@@ -89,6 +89,10 @@ export type SemesterRow = Database['public']['Tables']['semesters']['Row'];
  */
 export type StudentDevelopmentAnalysisRow = Database['public']['Tables']['student_development_analyses']['Row'];
 
+export type BintangMentoringRow = Database['public']['Tables']['bintang_mentoring_logs']['Row'];
+export type BintangDailyObservationRow = Database['public']['Tables']['bintang_daily_observations']['Row'];
+export type BintangEvaluationRow = Database['public']['Tables']['bintang_monthly_evaluations']['Row'];
+
 // =============================================================================
 // INSERT TYPES
 // =============================================================================
@@ -158,6 +162,10 @@ export type SemesterInsert = Database['public']['Tables']['semesters']['Insert']
  */
 export type StudentDevelopmentAnalysisInsert = Database['public']['Tables']['student_development_analyses']['Insert'];
 
+export type BintangMentoringInsert = Database['public']['Tables']['bintang_mentoring_logs']['Insert'];
+export type BintangDailyObservationInsert = Database['public']['Tables']['bintang_daily_observations']['Insert'];
+export type BintangEvaluationInsert = Database['public']['Tables']['bintang_monthly_evaluations']['Insert'];
+
 // =============================================================================
 // UPDATE TYPES
 // =============================================================================
@@ -226,6 +234,10 @@ export type SemesterUpdate = Database['public']['Tables']['semesters']['Update']
  * Type for updating an existing student development analysis record.
  */
 export type StudentDevelopmentAnalysisUpdate = Database['public']['Tables']['student_development_analyses']['Update'];
+
+export type BintangMentoringUpdate = Database['public']['Tables']['bintang_mentoring_logs']['Update'];
+export type BintangDailyObservationUpdate = Database['public']['Tables']['bintang_daily_observations']['Update'];
+export type BintangEvaluationUpdate = Database['public']['Tables']['bintang_monthly_evaluations']['Update'];
 
 // =============================================================================
 // COMPOSITE/DERIVED TYPES

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AttendancePageSkeleton } from '../skeletons/PageSkeletons';
 import { SemesterSelector } from '../ui/SemesterSelector';
 import {
@@ -102,6 +102,7 @@ const AttendancePage: React.FC = () => {
         handleAnalyzeAttendance,
         isOnline,
     } = useAttendance();
+    const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
 
     if (isLoadingClasses || isLoadingStudents) return <AttendancePageSkeleton />;
 
@@ -155,9 +156,11 @@ const AttendancePage: React.FC = () => {
 
                 {/* Date Picker Banner */}
                 <div className="relative z-10 p-3 sm:p-0 -mx-4 px-4 sm:mx-0 transition-all rounded-3xl overflow-hidden flex-1 shadow-[0_8px_30px_rgb(16,185,129,0.15)] mb-2">
-                    <div
-                        className="group relative overflow-hidden w-full rounded-3xl bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 dark:from-emerald-600 dark:via-teal-700 dark:to-emerald-800 cursor-pointer"
+                    <button
+                        type="button"
+                        className="group relative overflow-hidden w-full rounded-3xl bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 dark:from-emerald-600 dark:via-teal-700 dark:to-emerald-800 cursor-pointer text-left"
                         onClick={() => setDatePickerOpen(true)}
+                        aria-label="Pilih tanggal absensi"
                     >
                         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E')] opacity-[0.1] mix-blend-overlay"></div>
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
@@ -182,7 +185,7 @@ const AttendancePage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </button>
                 </div>
             </div>
 
@@ -260,6 +263,7 @@ const AttendancePage: React.FC = () => {
                             attendanceRecords={attendanceRecords}
                             selectedDate={selectedDate}
                             onStatusChange={handleStatusChange}
+                            highlightedStudentId={highlightedStudentId}
                             onNoteClick={(studentId, currentNote) => {
                                 setNoteText(currentNote);
                                 setSelectedStudents(new Set([studentId]));
@@ -300,14 +304,10 @@ const AttendancePage: React.FC = () => {
                                 <AttendanceStreakIndicator
                                     streaks={attendanceStreaks}
                                     onStudentClick={(studentId) => {
-                                        const element = document.getElementById(`student-${studentId}`);
-                                        if (element) {
-                                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                            element.classList.add('ring-2', 'ring-green-500');
-                                            setTimeout(() => {
-                                                element.classList.remove('ring-2', 'ring-green-500');
-                                            }, 2000);
-                                        }
+                                        setHighlightedStudentId(studentId);
+                                        const el = document.getElementById(`student-${studentId}`);
+                                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        setTimeout(() => setHighlightedStudentId(null), 2000);
                                     }}
                                 />
                             )}
@@ -383,8 +383,8 @@ const AttendancePage: React.FC = () => {
                                     setDatePickerOpen(false);
                                 }}
                                 className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate === today
-                                    ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-500/30'
-                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-green-400 dark:hover:border-green-500 text-slate-700 dark:text-slate-200'
+                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 text-slate-700 dark:text-slate-200'
                                     }`}
                             >
                                 <CalendarIcon className="w-5 h-5" />
@@ -396,8 +396,8 @@ const AttendancePage: React.FC = () => {
                                     setDatePickerOpen(false);
                                 }}
                                 className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate === yesterday
-                                    ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-500/30'
-                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-green-400 dark:hover:border-green-500 text-slate-700 dark:text-slate-200'
+                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 text-slate-700 dark:text-slate-200'
                                     }`}
                             >
                                 <span className="font-bold">Kemarin</span>

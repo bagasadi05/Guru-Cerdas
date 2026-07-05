@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { CheckCircleIcon, XCircleIcon, AlertCircleIcon, FileTextIcon } from '../components/Icons';
 
@@ -261,7 +261,7 @@ export const useToast = () => {
     throw new Error('useToast must be used within a ToastProvider');
   }
   
-  return {
+  return useMemo(() => ({
     success: (message: string, options?: { duration?: number }) => {
       if (typeof window !== 'undefined' && (window as any).__last_supabase_offline_queued) {
         const timeDiff = Date.now() - (window as any).__last_supabase_offline_queued;
@@ -274,5 +274,5 @@ export const useToast = () => {
     error: (message: string, options?: { duration?: number }) => context.addToast(message, { ...options, type: 'error' }),
     info: (message: string, options?: { duration?: number }) => context.addToast(message, { ...options, type: 'info' }),
     warning: (message: string, options?: { duration?: number }) => context.addToast(message, { ...options, type: 'warning' }),
-  };
+  }), [context]);
 };

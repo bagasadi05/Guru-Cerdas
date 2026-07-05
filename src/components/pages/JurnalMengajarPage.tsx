@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { CustomDropdown } from '../ui/CustomDropdown';
 import { Skeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { useToast } from '../../hooks/useToast';
@@ -151,20 +152,20 @@ const JurnalMengajarPage: React.FC = () => {
     const date = searchParams.get('date');
     const scheduleId = searchParams.get('scheduleId');
 
-    if (classId || subject || date || scheduleId) {
-      setTimeout(() => {
-        setPrefillValues({
-          class_id: classId || undefined,
-          subject: subject || undefined,
-          date: date || undefined,
-          schedule_id: scheduleId || undefined,
-        });
-        // Clear query params so reloading doesn't pop it open again
-        setSearchParams({}, { replace: true });
-        setSelectedJournal(null);
-        setIsFormOpen(true);
-      }, 0);
-    }
+    if (!classId && !subject && !date && !scheduleId) return;
+    const timer = setTimeout(() => {
+      setPrefillValues({
+        class_id: classId || undefined,
+        subject: subject || undefined,
+        date: date || undefined,
+        schedule_id: scheduleId || undefined,
+      });
+      // Clear query params so reloading doesn't pop it open again
+      setSearchParams({}, { replace: true });
+      setSelectedJournal(null);
+      setIsFormOpen(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [searchParams, setSearchParams]);
 
   const handleResetFilters = () => {
@@ -207,7 +208,7 @@ const JurnalMengajarPage: React.FC = () => {
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative z-10">
         <div className="relative">
           <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-xl opacity-50 dark:opacity-20 rounded-full" />
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent font-serif relative">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400 bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent font-serif relative">
             Jurnal Mengajar
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400 relative">
@@ -252,9 +253,12 @@ const JurnalMengajarPage: React.FC = () => {
           <div className="relative group rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300" />
             <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-2xl overflow-hidden">
-              <div 
-                className="flex flex-row items-center justify-between p-5 cursor-pointer select-none"
+              <button
+                type="button"
+                className="flex flex-row items-center justify-between p-5 cursor-pointer select-none w-full text-left"
                 onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                aria-expanded={isFilterExpanded}
+                aria-label={isFilterExpanded ? 'Tutup filter' : 'Buka filter'}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-emerald-100/50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -274,14 +278,14 @@ const JurnalMengajarPage: React.FC = () => {
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
                   )}
-                  <button 
+                  <span
                     className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    aria-label={isFilterExpanded ? 'Tutup filter' : 'Buka filter'}
+                    aria-hidden="true"
                   >
                     <svg className={`w-5 h-5 transition-transform duration-300 ${isFilterExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
+                  </span>
                 </div>
-              </div>
+              </button>
 
               <div className={`transition-all duration-500 ease-in-out ${isFilterExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
                 <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800/50">
@@ -290,23 +294,19 @@ const JurnalMengajarPage: React.FC = () => {
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                         Kelas
                       </label>
-                  <Select
+                  <CustomDropdown
                     value={filters.classId ?? ''}
-                    onChange={(e) =>
+                    onChange={(val) =>
                       setFilters((prev) => ({
                         ...prev,
-                        classId: e.target.value || undefined,
+                        classId: val || undefined,
                       }))
                     }
-                    aria-label="Filter kelas"
-                  >
-                    <option value="">Semua kelas</option>
-                    {classes.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </Select>
+                    options={[
+                      { value: '', label: 'Semua kelas' },
+                      ...classes.map((c) => ({ value: c.id, label: c.name })),
+                    ]}
+                  />
                 </div>
 
                     <div className="md:col-span-4">
@@ -325,15 +325,15 @@ const JurnalMengajarPage: React.FC = () => {
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                         Mode Tanggal
                       </label>
-                  <Select
+                  <CustomDropdown
                     value={dateMode}
-                    onChange={(e) => setDateMode(e.target.value as 'range' | 'single' | 'month')}
-                    aria-label="Mode filter tanggal"
-                  >
-                    <option value="range">Rentang tanggal</option>
-                    <option value="single">Tanggal tunggal</option>
-                    <option value="month">Pilih bulan</option>
-                  </Select>
+                    onChange={(val) => setDateMode(val as 'range' | 'single' | 'month')}
+                    options={[
+                      { value: 'range', label: 'Rentang tanggal' },
+                      { value: 'single', label: 'Tanggal tunggal' },
+                      { value: 'month', label: 'Pilih bulan' },
+                    ]}
+                  />
                 </div>
 
                     {dateMode === 'range' ? (

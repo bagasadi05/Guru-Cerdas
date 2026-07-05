@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { Select } from '../ui/Select';
+import { CustomDropdown } from '../ui/CustomDropdown';
 import {
     ArrowLeftIcon,
     CheckCircleIcon,
@@ -48,6 +48,7 @@ const CommunicationTab = lazy(() => import('./student/CommunicationTab').then((m
 const ExtracurricularTab = lazy(() => import('./student/ExtracurricularTab').then((module) => ({ default: module.ExtracurricularTab })));
 const ChildDevelopmentAnalysisTab = lazy(() => import('./student-detail/child-development').then((module) => ({ default: module.ChildDevelopmentAnalysisTab })));
 const AchievementsTab = lazy(() => import('./student/AchievementsTab').then((module) => ({ default: module.AchievementsTab })));
+const BintangTab = lazy(() => import('./student/BintangTab').then((module) => ({ default: module.BintangTab })));
 
 import {
     useStudentAchievements,
@@ -338,7 +339,7 @@ const StudentDetailPage = () => {
                         {canManageStudentProfile ? (
                             <Button
                                 onClick={() => setModalState({ type: 'portalAccess' })}
-                                className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
+                                className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
                             >
                                 <KeyRoundIcon className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Akses Portal</span>
                             </Button>
@@ -354,7 +355,7 @@ const StudentDetailPage = () => {
                         onChange={(semId) => setSelectedSemesterId(semId === 'all' ? null : semId)}
                         size="sm"
                         includeAllOption={true}
-                        className="min-w-[200px]"
+                        className="min-w-[200px] lg:min-w-[200px] w-full lg:w-auto"
                     />
                     <div className="w-full sm:w-auto text-xs text-slate-500 dark:text-slate-400">
                         Sedang melihat: <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedSemesterLabel}</span>
@@ -383,6 +384,10 @@ const StudentDetailPage = () => {
                                         <TabsTrigger value="grades" className="h-11">Nilai</TabsTrigger>
                                         <TabsTrigger value="activity" className="h-11">Keaktifan</TabsTrigger>
                                         <TabsTrigger value="violations" className="h-11">Pelanggaran</TabsTrigger>
+                                        <TabsTrigger value="bintang" className="h-11">
+                                            <ShieldAlertIcon className="w-4 h-4 mr-1.5 inline text-emerald-500" />
+                                            BINTANG
+                                        </TabsTrigger>
                                         <TabsTrigger value="extracurricular" className="h-11">
                                             <Trophy className="w-4 h-4 mr-1.5 inline" />
                                             Ekstrakurikuler
@@ -441,6 +446,17 @@ const StudentDetailPage = () => {
                                         semesterLabel={selectedSemesterLabel}
                                         isHomeroomTeacher={isHomeroomTeacher}
                                         canAdd={canAdd}
+                                    />
+                                </Suspense>
+                            )}
+                        </TabsContent>
+                        <TabsContent value="bintang" className="p-4 sm:p-6 bg-white dark:bg-slate-900 border-x border-b border-gray-200 dark:border-white/10 rounded-b-2xl">
+                            {activeTab === 'bintang' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <BintangTab 
+                                        studentId={studentId || ''} 
+                                        studentName={student.name}
+                                        violations={filteredViolations}
                                     />
                                 </Suspense>
                             )}
@@ -579,10 +595,13 @@ const StudentDetailPage = () => {
                             </p>
                             <div>
                                 <label htmlFor="subject-select" className="block text-sm font-medium mb-1">Pilih Mata Pelajaran</label>
-                                <Select id="subject-select" value={subjectToApply} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSubjectToApply(e.target.value)} required>
-                                    <option value="" disabled>-- Pilih --</option>
-                                    {uniqueSubjectsForGrades.map((s) => s && <option key={s} value={s}>{s}</option>)}
-                                </Select>
+                                <CustomDropdown
+                                    id="subject-select"
+                                    value={subjectToApply}
+                                    onChange={setSubjectToApply}
+                                    options={uniqueSubjectsForGrades.filter((s): s is string => !!s).map(s => ({ value: s, label: s }))}
+                                    placeholder="-- Pilih --"
+                                />
                             </div>
                             {currentRecordForSubject && (
                                 <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md text-sm">
@@ -784,7 +803,7 @@ const StudentDetailPage = () => {
                                                 href={createWhatsAppLink(student.parent_phone, aiReport)}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex-1 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20 rounded-lg text-sm font-semibold transition-all h-11"
+                                                className="flex-1 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 rounded-lg text-sm font-semibold transition-all h-11"
                                             >
                                                 <Share2Icon className="w-4 h-4 mr-2" />
                                                 Kirim via WhatsApp

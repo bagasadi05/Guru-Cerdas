@@ -11,9 +11,10 @@ interface AttendanceListProps {
     selectedDate: string;
     onStatusChange: (studentId: string, status: AttendanceStatus) => void;
     onNoteClick: (studentId: string, currentNote: string) => void;
+    highlightedStudentId?: string | null;
 }
 
-export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attendanceRecords, selectedDate, onStatusChange, onNoteClick }) => {
+export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attendanceRecords, selectedDate, onStatusChange, onNoteClick, highlightedStudentId }) => {
     const formattedDate = new Date(`${selectedDate}T00:00:00`).toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'long',
@@ -30,9 +31,10 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         key={student.id}
                         id={`student-${student.id}`}
                         className={`
-                            group flex flex-col p-5 rounded-3xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] 
+                            group flex flex-col p-5 rounded-3xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]
                             hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-emerald-500/20 dark:hover:border-emerald-500/30 hover:-translate-y-0.5
                             transition-all duration-300 card-interactive animate-list-item
+                            ${highlightedStudentId === student.id ? 'ring-2 ring-emerald-500' : ''}
                         `}
                         style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
                     >
@@ -115,7 +117,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                         <button
                                             key={opt.value}
                                             onClick={() => onStatusChange(student.id, opt.value)}
-                                            className="group/btn flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl outline-none"
+                                            className="group/btn flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl outline-none min-w-[44px] min-h-[44px]"
                                             title={opt.label}
                                             aria-label={opt.label}
                                             aria-pressed={isActive}

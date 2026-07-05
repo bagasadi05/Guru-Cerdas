@@ -191,6 +191,9 @@ textarea:focus-visible {
 .touch-target {
     min-width: 48px;
     min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Mobile UX - Touch Target Group Spacing */

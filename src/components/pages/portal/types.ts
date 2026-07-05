@@ -160,6 +160,7 @@ export interface PortalData {
     tasks: PortalTask[];
     announcements: PortalAnnouncement[];
     achievements: PortalStudentAchievement[];
+    bintangEvaluations?: any[];
     teacher: TeacherInfo;
     schoolInfo: PortalSchoolInfo;
 }
@@ -168,6 +169,7 @@ export type PortalPrimaryTab =
     | 'beranda'
     | 'perkembangan'
     | 'kehadiran'
+    | 'bintang'
     | 'komunikasi'
     | 'lainnya';
 

@@ -358,7 +358,7 @@ export const generateStudentReport = async (
         currentY += 10;
     };
 
-    addHeader(true);
+    currentY = addHeader(true);
 
     // Student Info Section
     doc.setDrawColor(...BORDER);

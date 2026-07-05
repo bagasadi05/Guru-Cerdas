@@ -13,6 +13,7 @@ const tabs: Array<{ value: PortalPrimaryTab; label: string; description: string;
     { value: 'beranda', label: 'Beranda', description: 'Ringkasan utama siswa', icon: SparklesIcon },
     { value: 'perkembangan', label: 'Perkembangan', description: 'Nilai dan capaian belajar', icon: BarChartIcon },
     { value: 'kehadiran', label: 'Kehadiran', description: 'Rekap presensi semester', icon: ClockIcon },
+    { value: 'bintang', label: 'Rapor BINTANG', description: 'Karakter & Kedisiplinan', icon: SparklesIcon },
     { value: 'komunikasi', label: 'Komunikasi', description: 'Pesan dengan guru', icon: SendIcon },
     { value: 'lainnya', label: 'Layanan Lain', description: 'Tugas, jadwal, dokumen', icon: BookOpenIcon },
 ];
@@ -36,7 +37,7 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ activeTab, u
 
             <TabsList className="bg-transparent p-0 w-full select-none block">
                 {/* Desktop Grid Layout (Tall Cards) */}
-                <div className="hidden md:grid md:grid-cols-5 gap-3">
+                <div className="hidden md:grid md:grid-cols-6 gap-3">
                     {tabs.map((tab) => {
                         const isActive = activeTab === tab.value;
 

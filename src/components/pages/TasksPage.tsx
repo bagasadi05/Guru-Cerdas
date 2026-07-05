@@ -21,6 +21,7 @@ import { MoreVerticalIcon, Loader2Icon, PlayCircleIcon, CircleIcon, CheckCircle2
 import { ValidationService } from '../../services/ValidationService';
 import { ValidationRules } from '../../types';
 import { EmptyError } from '../EmptyStates';
+import { CustomDropdown } from '../ui/CustomDropdown';
 
 // Native date helpers
 const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -204,7 +205,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
 
                             {showMenu && (
                                 <>
-                                    <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                                    <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} aria-hidden="true" />
                                     <div className="absolute right-0 top-full mt-1 w-40 sm:w-36 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1 z-20">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onEdit(task); setShowMenu(false); }}
@@ -457,7 +458,7 @@ const TasksPage: React.FC = () => {
         mutationFn: async (id: string) => {
             const { error } = await supabase
                 .from('tasks')
-                .update({ deleted_at: new Date().toISOString() } as never)
+                .update({ deleted_at: new Date().toISOString() } as Partial<TaskRow>)
                 .eq('id', id);
             if (error) throw error;
         },
@@ -635,7 +636,7 @@ const TasksPage: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight font-serif bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 mb-2">
+                    <h1 className="text-3xl font-bold tracking-tight font-serif mb-2 text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
                         Manajemen Tugas
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-2">
@@ -710,7 +711,7 @@ const TasksPage: React.FC = () => {
                                 key={statusKey}
                                 onClick={() => setMobileActiveTab(statusKey)}
                                 className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-sm font-medium transition-all ${mobileActiveTab === statusKey
-                                    ? `${config.bgColor} ${config.color} shadow-sm border border-${config.color.split('-')[1]}-200 dark:border-slate-600`
+                                    ? `${config.bgColor} ${config.color} shadow-sm border ${statusKey === 'todo' ? 'border-slate-200' : statusKey === 'in_progress' ? 'border-blue-200' : 'border-emerald-200'} dark:border-slate-600`
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}
                             >
@@ -847,14 +848,15 @@ const TasksPage: React.FC = () => {
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                                 Status
                             </label>
-                            <Select
+                            <CustomDropdown
                                 value={status}
-                                onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                            >
-                                <option value="todo">To Do</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="done">Selesai</option>
-                            </Select>
+                                onChange={(val) => setStatus(val as TaskStatus)}
+                                options={[
+                                    { value: 'todo', label: 'To Do' },
+                                    { value: 'in_progress', label: 'In Progress' },
+                                    { value: 'done', label: 'Selesai' },
+                                ]}
+                            />
                         </div>
                     </div>
 

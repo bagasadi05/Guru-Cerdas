@@ -8,14 +8,15 @@ import { getDashboardNavSections } from './dashboardMenuConfig';
 
 interface DashboardSidebarProps {
   isAdmin: boolean;
+  isHomeroomTeacher: boolean;
   onLinkClick?: () => void;
 }
 
-const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClick }) => {
+const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, isHomeroomTeacher, onLinkClick }) => {
   const navigate = useNavigate();
   const { user, logout, userRole } = useAuth();
   const { playClick } = useSound();
-  const navSections = getDashboardNavSections(isAdmin, userRole);
+  const navSections = getDashboardNavSections(isAdmin, userRole, isHomeroomTeacher);
 
   const handleLogout = async () => {
     if (onLinkClick) {

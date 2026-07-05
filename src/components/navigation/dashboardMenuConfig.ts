@@ -9,7 +9,7 @@ import {
   ClipboardPenIcon,
   BookOpenIcon,
 } from '../Icons';
-import { Trash2, History, BarChart3, ShieldCheck, Trophy, Archive } from 'lucide-react';
+import { Trash2, History, BarChart3, ShieldCheck, Trophy, Archive, Star, ClipboardCheck, Edit3 } from 'lucide-react';
 
 export interface DashboardMenuItem {
   href: string;
@@ -31,21 +31,34 @@ const baseNavSections: DashboardMenuSection[] = [
     label: 'Utama',
     items: [
       { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
-      { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
-      { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
-      { href: '/brankas', label: 'Brankas Kelas', icon: Archive },
-      { href: '/jadwal', label: 'Jadwal Mengajar', icon: CalendarIcon },
-      { href: '/jurnal', label: 'Jurnal Mengajar', icon: BookOpenIcon },
-      { href: '/tugas', label: 'Manajemen Tugas', icon: CheckSquareIcon },
-      { href: '/input-massal', label: 'Manajemen Siswa', icon: ClipboardPenIcon },
+      { href: '/absensi', label: 'Kehadiran Siswa', icon: ClipboardIcon },
+      { href: '/siswa', label: 'Direktori Siswa', icon: UsersIcon },
+      { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
+    ],
+  },
+  {
+    id: 'academic',
+    label: 'Akademik',
+    items: [
+      { href: '/jadwal', label: 'Jadwal Kelas', icon: CalendarIcon },
+      { href: '/jurnal', label: 'Jurnal Harian', icon: BookOpenIcon },
+      { href: '/tugas', label: 'Penugasan', icon: CheckSquareIcon },
+      { href: '/input-massal', label: 'Input Penilaian', icon: ClipboardPenIcon },
     ],
   },
   {
     id: 'insights',
     label: 'Analitik & Kegiatan',
     items: [
-      { href: '/analytics', label: 'Performa Siswa', icon: BarChart3 },
+      { href: '/analytics', label: 'Analitik Akademik', icon: BarChart3 },
       { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
+    ],
+  },
+  {
+    id: 'bintang',
+    label: 'Program BINTANG',
+    items: [
+      { href: '/bintang', label: 'Program Bintang', icon: Star },
     ],
   },
   {
@@ -60,22 +73,27 @@ const baseNavSections: DashboardMenuSection[] = [
 ];
 
 const baseMoreMenuItems: DashboardMenuItem[] = [
-  { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
-  { href: '/brankas', label: 'Brankas Kelas', icon: Archive },
-  { href: '/jurnal', label: 'Jurnal Mengajar', icon: BookOpenIcon },
-  { href: '/input-massal', label: 'Manajemen Siswa', icon: ClipboardPenIcon },
+  { href: '/siswa', label: 'Direktori Siswa', icon: UsersIcon },
+  { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
+  { href: '/jurnal', label: 'Jurnal Harian', icon: BookOpenIcon },
+  { href: '/input-massal', label: 'Input Penilaian', icon: ClipboardPenIcon },
   { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
-  { href: '/analytics', label: 'Performa Siswa', icon: BarChart3 },
+  { href: '/analytics', label: 'Analitik Akademik', icon: BarChart3 },
+  { href: '/bintang', label: 'Program Bintang', icon: Star },
   { href: '/riwayat', label: 'Riwayat Aksi', icon: History },
   { href: '/sampah', label: 'Sampah', icon: Trash2 },
-  { href: '/pengaturan', label: 'Pengaturan', icon: SettingsIcon },
+  { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
 ];
 
-export const getDashboardNavSections = (isAdmin: boolean, role?: string | null): DashboardMenuSection[] => {
-  const sections = baseNavSections.map((section) => ({
+export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false): DashboardMenuSection[] => {
+  let sections = baseNavSections.map((section) => ({
     ...section,
     items: [...section.items],
   }));
+
+  if (!isAdmin && !isHomeroomTeacher) {
+    sections = sections.filter(section => section.id !== 'bintang');
+  }
 
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
     // Pimpinan tetap membutuhkan menu guru karena mereka bisa memiliki jam mengajar.
@@ -104,8 +122,12 @@ export const getDashboardNavSections = (isAdmin: boolean, role?: string | null):
   return sections;
 };
 
-export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null): DashboardMenuItem[] => {
-  const items = [...baseMoreMenuItems];
+export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false): DashboardMenuItem[] => {
+  let items = [...baseMoreMenuItems];
+  
+  if (!isAdmin && !isHomeroomTeacher) {
+    items = items.filter(item => item.href !== '/bintang');
+  }
   
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
     items.push({ href: '/tindak-lanjut', label: 'Tindak Lanjut', icon: ShieldCheck });

@@ -3,24 +3,24 @@ import { InputMode } from '../types';
 import { inputCards, exportCards } from '../constants';
 
 export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode) => void }> = ({ handleModeSelect }) => (
-    <div className="w-full max-w-7xl mx-auto space-y-12 animate-fade-in-up pb-12">
-        <header className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-green-600 via-emerald-600 to-green-700 p-10 md:p-14 shadow-2xl shadow-green-500/20">
+    <div className="w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up pb-8">
+        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-600 via-emerald-600 to-green-700 p-6 md:p-8 shadow-xl shadow-green-500/20">
             {/* Decorative background elements */}
-            <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-emerald-500/30 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
-            <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-green-500/30 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
+            <div className="absolute top-0 right-0 -mt-20 -mr-20 w-72 h-72 bg-emerald-500/30 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
+            <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-72 h-72 bg-green-500/30 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
             <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}></div>
 
-            <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12 text-center md:text-left z-10">
+            <div className="relative flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 text-center md:text-left z-10">
                 <div className="flex-shrink-0 group">
-                    <div className="w-24 h-24 md:w-32 md:h-32 bg-white/20 rounded-3xl flex items-center justify-center border border-white/30 shadow-lg ring-1 ring-white/30 backdrop-blur-md group-hover:scale-105 transition-transform duration-500">
-                        <ClipboardPenIcon className="w-12 h-12 md:w-16 md:h-16 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
+                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center border border-white/30 shadow-lg ring-1 ring-white/30 backdrop-blur-md group-hover:scale-105 transition-transform duration-300">
+                        <ClipboardPenIcon className="w-8 h-8 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
                     </div>
                 </div>
-                <div className="flex-1 space-y-3">
-                    <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight font-serif drop-shadow-sm">
+                <div className="flex-1 space-y-1.5 mt-1">
+                    <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight font-serif drop-shadow-sm">
                         Manajemen Siswa
                     </h1>
-                    <p className="text-lg md:text-xl text-green-100 leading-relaxed max-w-3xl mx-auto md:mx-0 font-light tracking-wide">
+                    <p className="text-sm md:text-base text-green-100/90 leading-relaxed max-w-3xl mx-auto md:mx-0 font-light tracking-wide">
                         Efisiensi tingkat lanjut untuk pengelolaan data akademik. Pilih modul aksi untuk memulai proses massal.
                     </p>
                 </div>

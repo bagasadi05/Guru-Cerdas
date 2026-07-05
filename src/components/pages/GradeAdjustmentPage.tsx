@@ -6,7 +6,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { useSemester } from '../../contexts/SemesterContext';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
-import { Select } from '../ui/Select';
 import { CustomDropdown } from '../ui/CustomDropdown';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -550,7 +549,7 @@ export const GradeAdjustmentPage: React.FC = () => {
     const semesterLocked = selectedSemester ? isSemesterLocked(selectedSemester) : false;
 
     return (
-        <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 md:p-8 flex flex-col overflow-y-auto">
+        <div className="w-full space-y-6 pb-20 animate-fade-in relative z-10">
             <div className="max-w-7xl mx-auto w-full space-y-6">
 
                 {/* Header */}
@@ -575,11 +574,11 @@ export const GradeAdjustmentPage: React.FC = () => {
                 </div>
 
                 {/* Configuration Card */}
-                <Card className="no-print">
-                    <CardHeader>
-                        <CardTitle>Filter Nilai Tersimpan</CardTitle>
+                <Card className="no-print bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border-white/20 dark:border-slate-800 shadow-xl overflow-visible relative z-30">
+                    <CardHeader className="pb-3 border-b border-slate-200/50 dark:border-slate-800/50">
+                        <CardTitle className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400">Filter Nilai Tersimpan</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-5">
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Pilih Kelas</label>
                             <CustomDropdown 
@@ -683,10 +682,10 @@ export const GradeAdjustmentPage: React.FC = () => {
                                 </span>
                             </div>
                         )}
-                        <div className="flex flex-col lg:flex-row gap-6 items-start">
+                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start relative z-10">
 
                         {/* Control Column */}
-                        <div className="no-print w-full lg:w-1/4 flex flex-col gap-4">
+                        <div className="no-print w-full lg:w-80 flex-shrink-0 flex flex-col gap-4 lg:sticky lg:top-6 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto pb-6 scrollbar-hide">
 
                             {/* Linear Formula Settings */}
                             <Card>
@@ -916,8 +915,8 @@ export const GradeAdjustmentPage: React.FC = () => {
                         </div>
 
                         {/* Printable Area Paper Document */}
-                        <div className="w-full lg:w-3/4 bg-slate-200/40 dark:bg-slate-900/40 p-4 sm:p-6 rounded-3xl flex justify-center border border-slate-200 dark:border-slate-800">
-                            <div className="print-area w-full max-w-3xl bg-white text-slate-900 p-8 sm:p-12 rounded-lg shadow-md border border-slate-300/30 flex flex-col justify-between font-sans min-h-[75vh]">
+                        <div className="w-full flex-1 bg-white/30 dark:bg-slate-900/30 p-4 sm:p-6 lg:p-8 rounded-[2rem] flex justify-center border border-white/50 dark:border-slate-800/50 shadow-sm backdrop-blur-md">
+                            <div className="print-area w-full max-w-4xl bg-white text-slate-900 p-8 sm:p-12 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-none border border-slate-200/60 flex flex-col justify-between font-sans min-h-[75vh]">
 
                                 <style>{`
                                     @media print {

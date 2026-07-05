@@ -34,7 +34,7 @@ type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
 
 const DEFAULT_KKM = 75;
-const EMPTY_ARRAY: any[] = [];
+const EMPTY_ARRAY: never[] = [];
 
 const BulkGradeInputPage: React.FC = () => {
     const { user } = useAuth();
@@ -757,40 +757,6 @@ const BulkGradeInputPage: React.FC = () => {
                 students={students?.map(s => ({ id: s.id, name: s.name })) || []}
                 onConfirm={handlePreviewConfirm}
             />
-
-            {/* Keyboard Help Modal */}
-            <Modal
-                isOpen={showKeyboardHelp}
-                onClose={() => setShowKeyboardHelp(false)}
-                title="Keyboard Shortcuts"
-            >
-                <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                        <span className="text-gray-600 dark:text-gray-400">Simpan semua nilai</span>
-                        <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm">Ctrl + S</kbd>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                        <span className="text-gray-600 dark:text-gray-400">Import Excel</span>
-                        <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm">Ctrl + I</kbd>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                        <span className="text-gray-600 dark:text-gray-400">Clear semua nilai</span>
-                        <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm">Ctrl + Shift + C</kbd>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                        <span className="text-gray-600 dark:text-gray-400">Next field</span>
-                        <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm">Tab / Enter / ↓</kbd>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                        <span className="text-gray-600 dark:text-gray-400">Previous field</span>
-                        <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm">Shift + Tab / ↑</kbd>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                        <span className="text-gray-600 dark:text-gray-400">Bantuan shortcut</span>
-                        <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm">F1</kbd>
-                    </div>
-                </div>
-            </Modal>
 
             {/* Draft Restore Prompt */}
             <Modal

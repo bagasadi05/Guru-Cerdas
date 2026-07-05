@@ -52,7 +52,6 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             // Kolaboratif: Mode pelanggaran bisa diakses semua guru,
             // jadi kita pakai RPC khusus yang membypass RLS assignments.
             if (mode === 'violation') {
-                // @ts-expect-error - TODO: add get_active_classes RPC to generated types
                 const { data, error } = await supabase.rpc('get_active_classes');
                 if (error) throw error; 
                 return (data || []) as unknown as ClassRow[];

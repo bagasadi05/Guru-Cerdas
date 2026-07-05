@@ -74,12 +74,6 @@ module.exports = {
           500: '#ef4444',
           900: '#7f1d1d',
         },
-        error: {
-          50: '#fef2f2',
-          100: '#fee2e2',
-          500: '#ef4444',
-          900: '#7f1d1d',
-        },
         info: {
           50: '#eff6ff',
           100: '#dbeafe',

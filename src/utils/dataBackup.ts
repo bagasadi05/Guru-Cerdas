@@ -8,6 +8,7 @@ const BACKUP_PREFIX = 'backup_';
 const BACKUP_EXPIRY_HOURS = 24;
 
 import { storageGet, storageSet, storageRemove, storageKeys } from './storage';
+import { logger } from '../services/logger';
 
 interface BackupData<T> {
     data: T;
@@ -56,7 +57,7 @@ export const createBackup = async <T>(data: T, options: BackupOptions): Promise<
 
         return true;
     } catch (error) {
-        console.error('Failed to create backup:', error);
+        logger.error('Failed to create backup', error as Error);
         return false;
     }
 };
@@ -80,7 +81,7 @@ export const getBackup = async <T>(key: string): Promise<BackupData<T> | null> =
 
         return backup;
     } catch (error) {
-        console.error('Failed to get backup:', error);
+        logger.error('Failed to get backup', error as Error);
         return null;
     }
 };
@@ -92,7 +93,7 @@ export const removeBackup = async (key: string): Promise<void> => {
     try {
         await storageRemove(BACKUP_PREFIX + key);
     } catch (error) {
-        console.error('Failed to remove backup:', error);
+        logger.error('Failed to remove backup', error as Error);
     }
 };
 
@@ -117,9 +118,9 @@ export const getAllBackups = async (): Promise<{ key: string; backup: BackupData
             }
         }
     } catch (error) {
-        console.error('Failed to get all backups:', error);
+        logger.error('Failed to get all backups', error as Error);
+        return [];
     }
-
     return backups;
 };
 
@@ -160,7 +161,7 @@ export const cleanupExpiredBackups = async (): Promise<number> => {
             cleaned++;
         }
     } catch (error) {
-        console.error('Failed to cleanup backups:', error);
+        logger.error('Failed to cleanup backups', error as Error);
     }
 
     return cleaned;

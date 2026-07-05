@@ -219,13 +219,19 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
         return map;
     }, [classes]);
 
+    const enrolledParticipantIds = useMemo(() => {
+        return new Set(enrollments.map((e) => `${e.participantType}:${e.participantId}`));
+    }, [enrollments]);
+
     const participants = useMemo(() => {
-        const baseStudents = students.map((s) => ({
-            id: s.id,
-            type: 'student' as const,
-            name: s.name,
-            className: s.class_id ? classNameById.get(s.class_id) || null : null,
-        }));
+        const baseStudents = students
+            .filter((s) => (s.class_id && classNameById.has(s.class_id)) || enrolledParticipantIds.has(`student:${s.id}`))
+            .map((s) => ({
+                id: s.id,
+                type: 'student' as const,
+                name: s.name,
+                className: s.class_id ? classNameById.get(s.class_id) || null : null,
+            }));
 
         const extra = extracurricularStudents.map((s) => ({
             id: s.id,
@@ -235,11 +241,7 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
         }));
 
         return [...baseStudents, ...extra];
-    }, [students, extracurricularStudents, classNameById]);
-
-    const enrolledParticipantIds = useMemo(() => {
-        return new Set(enrollments.map((e) => `${e.participantType}:${e.participantId}`));
-    }, [enrollments]);
+    }, [students, extracurricularStudents, classNameById, enrolledParticipantIds]);
 
     const attendanceMap = useMemo(() => {
         const map: Record<string, string> = {};

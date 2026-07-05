@@ -14,6 +14,147 @@ export type Database = {
   }
   public: {
     Tables: {
+      bintang_mentoring_logs: {
+        Row: {
+          id: string
+          student_id: string
+          mentor_role: string
+          mentor_id: string
+          date: string
+          notes: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          mentor_role: string
+          mentor_id: string
+          date: string
+          notes: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          mentor_role?: string
+          mentor_id?: string
+          date?: string
+          notes?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bintang_mentoring_logs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      bintang_daily_observations: {
+        Row: {
+          id: string
+          student_id: string
+          teacher_id: string
+          date: string
+          aspect: string
+          is_positive: boolean
+          observation: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          teacher_id: string
+          date: string
+          aspect: string
+          is_positive?: boolean
+          observation: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          teacher_id?: string
+          date?: string
+          aspect?: string
+          is_positive?: boolean
+          observation?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bintang_daily_observations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      bintang_monthly_evaluations: {
+        Row: {
+          id: string
+          student_id: string
+          month: string
+          adab_score: string | null
+          adab_notes: string | null
+          kedisiplinan_score: string | null
+          kedisiplinan_notes: string | null
+          kerapian_score: string | null
+          kerapian_notes: string | null
+          evaluator_id: string
+          is_published: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          month: string
+          adab_score?: string | null
+          adab_notes?: string | null
+          kedisiplinan_score?: string | null
+          kedisiplinan_notes?: string | null
+          kerapian_score?: string | null
+          kerapian_notes?: string | null
+          evaluator_id: string
+          is_published?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          month?: string
+          adab_score?: string | null
+          adab_notes?: string | null
+          kedisiplinan_score?: string | null
+          kedisiplinan_notes?: string | null
+          kerapian_score?: string | null
+          kerapian_notes?: string | null
+          evaluator_id?: string
+          is_published?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bintang_monthly_evaluations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       academic_records: {
         Row: {
           assessment_name: string | null
@@ -1671,7 +1812,8 @@ export type Database = {
         Returns: {
           id: string
           name: string
-          class_name: string
+          class_name: string | null
+          class_id: string | null
         }[]
       }
       handle_updated_at: {
@@ -1775,7 +1917,17 @@ export type Database = {
           [key: string]: Json | undefined
         }[]
       }
+      get_active_classes: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          user_id: string
+        }[]
+      }
+
     }
+
     Enums: {
       attendance_status: "Hadir" | "Izin" | "Sakit" | "Alpha" | "Libur"
       day_of_week:

@@ -159,7 +159,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                                                 <p className="text-xs text-slate-500">{item.details}</p>
                                             </div>
                                         </div>
-                                        <Button size="sm" variant="outline" className="text-xs">Hubungi Wali</Button>
+                                        <Button size="sm" variant="outline" className="text-xs" onClick={() => window.location.href = `/siswa/${item.student.id}`}>Lihat Detail</Button>
                                     </div>
                                 ))}
                             </div>

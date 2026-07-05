@@ -1,17 +1,27 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useSound } from '../../hooks/useSound';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { componentStyles } from '../../styles/designTokens';
+
+interface Ripple {
+  x: number;
+  y: number;
+  size: number;
+  id: number;
+}
 
 interface ButtonProps extends HTMLMotionProps<"button"> {
   variant?: 'default' | 'primary' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'success';
   size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
+let rippleId = 0;
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'default', children, onClick, ...props }, ref) => {
     const { playClick } = useSound();
-    // Enhanced accessibility: improved focus ring, better contrast
+    const [ripples, setRipples] = useState<Ripple[]>([]);
+
     const baseClasses = "relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 ease-out min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed transform-gpu active:scale-[0.98]";
 
     const variantClasses = {
@@ -31,37 +41,26 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       icon: 'h-11 w-11 sm:h-10 sm:w-10 p-0',
     };
 
-    const handleRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const handleRipple = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
       playClick();
-      if (onClick) {
-        onClick(event);
-      }
+      onClick?.(event);
 
-      const button = event.currentTarget;
-      // Hapus ripple yang ada
-      const existingRipple = button.getElementsByClassName("ripple")[0];
-      if (existingRipple) {
-        existingRipple.remove();
-      }
+      const rect = event.currentTarget.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const id = ++rippleId;
+      const ripple: Ripple = {
+        x: event.clientX - rect.left - size / 2,
+        y: event.clientY - rect.top - size / 2,
+        size,
+        id,
+      };
 
-      const circle = document.createElement("span");
-      const diameter = Math.max(button.clientWidth, button.clientHeight);
-      const radius = diameter / 2;
+      setRipples(prev => [...prev, ripple]);
 
-      circle.style.width = circle.style.height = `${diameter}px`;
-      circle.style.left = `${event.clientX - button.getBoundingClientRect().left - radius}px`;
-      circle.style.top = `${event.clientY - button.getBoundingClientRect().top - radius}px`;
-      circle.classList.add("ripple");
-
-      button.appendChild(circle);
-
-      // Hapus ripple setelah animasi selesai
       setTimeout(() => {
-        if (circle.parentElement) {
-          circle.remove();
-        }
+        setRipples(prev => prev.filter(r => r.id !== id));
       }, 600);
-    };
+    }, [playClick, onClick]);
 
     return (
       <motion.button
@@ -72,7 +71,21 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         onClick={handleRipple}
         {...props}
       >
-        {children}
+        <>
+          {ripples.map(r => (
+            <span
+              key={r.id}
+              className="ripple"
+              style={{
+                width: r.size,
+                height: r.size,
+                left: r.x,
+                top: r.y,
+              }}
+            />
+          ))}
+          {children}
+        </>
       </motion.button>
     );
   }

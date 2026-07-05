@@ -233,7 +233,7 @@ export const colors = {
         main: '#f59e0b',
         dark: '#78350f',
     },
-    error: {
+    danger: {
         light: '#fee2e2',
         main: '#ef4444',
         dark: '#7f1d1d',
@@ -281,7 +281,7 @@ export const colorClasses = {
         bgLight: 'bg-yellow-50 dark:bg-yellow-900/20',
         text: 'text-yellow-600 dark:text-yellow-400',
     },
-    error: {
+    danger: {
         bg: 'bg-rose-600',
         bgLight: 'bg-rose-50 dark:bg-rose-900/20',
         text: 'text-rose-600 dark:text-rose-400',

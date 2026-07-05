@@ -1,100 +1,15 @@
 /**
- * Design System CSS Variables
+ * Design System Utilities
  *
- * CSS custom properties + utilities for Portal Guru design system.
  * Tailwind is the primary styling engine; this file provides:
- *   1. CSS custom properties (design tokens)
+ *   1. @keyframes NOT duplicated in tailwind.config
  *   2. Utility classes NOT covered by Tailwind
- *   3. @keyframes NOT duplicated in tailwind.config
- *   4. Accessible contrast overrides
+ *   3. Accessible contrast overrides
  */
 
-/* =========================================================================
-   TOKENS — all values align with tailwind.config.cjs
-   ========================================================================= */
-:root {
-  /* ----- Spacing (8px grid) ----- */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-
-  /* ----- Border Radius ----- */
-  --radius-button: 0.5rem;
-  --radius-input: 0.5rem;
-  --radius-card: 0.75rem;
-  --radius-modal: 1rem;
-  --radius-badge: 9999px;
-
-  /* ----- Shadows (dark-mode values override .dark) ----- */
-  --shadow-primary: 0 4px 14px rgba(22, 163, 74, 0.25);
-  --shadow-success: 0 4px 14px rgba(16, 185, 129, 0.25);
-  --shadow-warning: 0 4px 14px rgba(245, 158, 11, 0.25);
-  --shadow-error: 0 4px 14px rgba(239, 68, 68, 0.25);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.12);
-
-  /* ----- Colors — Primary (green) ----- */
-  --color-primary-50: #f0fdf4;
-  --color-primary-100: #dcfce7;
-  --color-primary-200: #bbf7d0;
-  --color-primary-500: #10b981;
-  --color-primary-600: #059669;
-  --color-primary-700: #047857;
-  --color-primary-800: #065f46;
-  --color-primary-900: #064e3b;
-
-  /* ----- Colors — Accent (indigo) ----- */
-  --color-accent-indigo: #6366f1;
-  --color-accent-blue: #3b82f6;
-  --color-accent-purple: #8b5cf6;
-  --color-accent-orange: #f59e0b;
-
-  /* ----- Semantic ----- */
-  --color-success: #22c55e;
-  --color-warning: #eab308;
-  --color-error: #ef4444;
-  --color-info: #3b82f6;
-
-  /* ----- Typography ----- */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-serif: 'Tinos', Georgia, serif;
-  --font-mono: 'JetBrains Mono', Consolas, monospace;
-
-  /* ----- Transitions ----- */
-  --duration-fast: 100ms;
-  --duration-normal: 200ms;
-  --duration-slow: 300ms;
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-  /* ----- Surfaces ----- */
-  --surface-bg: #f8fafc;
-  --surface-card: #ffffff;
-  --surface-hover: #f1f5f9;
-  --surface-border: #e2e8f0;
-  --surface-text: #0f172a;
-  --surface-text-secondary: #475569;
-}
-
-.dark {
-  --shadow-primary: 0 4px 14px rgba(22, 163, 74, 0.35);
-  --shadow-success: 0 4px 14px rgba(16, 185, 129, 0.35);
-  --shadow-warning: 0 4px 14px rgba(245, 158, 11, 0.35);
-  --shadow-error: 0 4px 14px rgba(239, 68, 68, 0.35);
-  --surface-bg: #0f172a;
-  --surface-card: #1e293b;
-  --surface-hover: #334155;
-  --surface-border: #475569;
-  --surface-text: #f1f5f9;
-  --surface-text-secondary: #cbd5e1;
-}
+/* Design tokens live in tailwind.config.cjs + designTokens.ts — this file
+   provides only what those CANNOT: custom keyframes, utility classes,
+   accessible contrast overrides, glassmorphism, etc. */
 
 /* =========================================================================
    KEYFRAMES — only those NOT in tailwind.config
@@ -136,13 +51,18 @@
   75% { transform: translateX(-3px) rotate(-5deg); }
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
 /* =========================================================================
    ANIMATION UTILITY CLASSES — maps to keyframes above
    ========================================================================= */
-.animate-fade-in-scale { animation: fade-in-scale 0.2s var(--ease-out) forwards; }
+.animate-fade-in-scale { animation: fade-in-scale 0.2s cubic-bezier(0,0,0.2,1) forwards; }
 .animate-bar-rise { animation: bar-rise 0.6s ease-out forwards; }
 .animate-shrink { animation: shrink 5s linear forwards; }
-.animate-icon-spin { animation: icon-spin-in 0.4s var(--ease-bounce) forwards; }
+.animate-icon-spin { animation: icon-spin-in 0.4s cubic-bezier(0.68,-0.55,0.265,1.55) forwards; }
 .icon-pulse { animation: icon-pulse 1.5s ease-in-out infinite; }
 .icon-bounce { animation: icon-bounce 0.6s ease-in-out; }
 .icon-shake { animation: icon-shake 0.5s ease-in-out; }
@@ -231,29 +151,6 @@
 }
 
 /* =========================================================================
-   TOUCH TARGETS (mobile a11y)
-   ========================================================================= */
-.touch-target {
-  min-width: 48px;
-  min-height: 48px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Global touch-action for iOS 300 ms delay */
-button, a, input, select, textarea,
-[role="button"], [role="link"], [role="tab"], [tabindex] {
-  touch-action: manipulation;
-}
-
-/* Safe area insets */
-.safe-area-inset-top { padding-top: env(safe-area-inset-top); }
-.safe-area-inset-bottom { padding-bottom: env(safe-area-inset-bottom); }
-.safe-area-inset-left { padding-left: env(safe-area-inset-left); }
-.safe-area-inset-right { padding-right: env(safe-area-inset-right); }
-
-/* =========================================================================
    FLUID TYPOGRAPHY (clamp-based)
    ========================================================================= */
 .fluid-h1 {
@@ -293,7 +190,7 @@ button, a, input, select, textarea,
    MICRO-INTERACTIONS (hover effects not in Tailwind)
    ========================================================================= */
 .hover-lift {
-  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+  transition: transform 0.2s cubic-bezier(0,0,0.2,1), box-shadow 0.2s cubic-bezier(0,0,0.2,1);
 }
 .hover-lift:hover {
   transform: translateY(-2px);

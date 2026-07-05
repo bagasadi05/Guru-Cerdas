@@ -5,7 +5,7 @@ import { staggerContainerVariants, staggerItemVariants } from '../../utils/anima
 import { triggerSubtleConfetti } from '../../utils/confetti';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { TrashIcon, PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon } from '../Icons';
+import { TrashIcon, PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, CheckCircleIcon } from '../Icons';
 import { Modal } from '../ui/Modal';
 import { MarkdownText } from '../ui/MarkdownText';
 import { generateOpenRouterJson } from '../../services/openRouterService';
@@ -19,6 +19,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { ValidationService } from '../../services/ValidationService';
 import { ValidationRules } from '../../types';
+import { componentStyles } from '../../styles/designTokens';
+import { CustomDropdown } from '../ui/CustomDropdown';
 import { SchedulePageSkeleton } from '../skeletons/PageSkeletons';
 import { WeeklyScheduleView } from '../schedule/WeeklyScheduleView';
 import { ScheduleDaySelector } from '../schedule/ScheduleDaySelector';
@@ -57,7 +59,7 @@ const toLiveSchedulePayload = (
     };
 };
 
-const inputStyles = "pl-10 min-h-[44px] bg-white border-slate-300 text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-white/10 dark:border-white/20 dark:placeholder:text-gray-400 dark:text-white dark:focus:bg-white/20 dark:focus:border-emerald-400 dark:focus:ring-emerald-400/30 rounded-xl";
+const inputStyles = `${componentStyles.input} pl-10 min-h-[44px]`;
 
 const SchedulePage: React.FC = () => {
     const { user, isNotificationsEnabled, enableScheduleNotifications } = useAuth();
@@ -66,17 +68,17 @@ const SchedulePage: React.FC = () => {
     const queryClient = useQueryClient();
     const isOnline = useOfflineStatus();
 
-    const getLocalDateStringForDay = (dayName: string): string => {
+    const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as const;
+    const getDateOffsetForDay = (dayName: string): Date => {
         const today = new Date();
-        const currentDayIndex = today.getDay();
-        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        const targetDayIndex = days.indexOf(dayName);
-        if (targetDayIndex === -1) return today.toLocaleDateString('sv-SE');
-        const diff = targetDayIndex - currentDayIndex;
-        const targetDate = new Date(today);
-        targetDate.setDate(today.getDate() + diff);
-        return targetDate.toLocaleDateString('sv-SE');
+        const targetIdx = DAY_NAMES.indexOf(dayName as typeof DAY_NAMES[number]);
+        if (targetIdx === -1) return today;
+        const diff = targetIdx - today.getDay();
+        const d = new Date(today);
+        d.setDate(today.getDate() + diff);
+        return d;
     };
+    const getLocalDateStringForDay = (dayName: string): string => getDateOffsetForDay(dayName).toLocaleDateString('sv-SE');
 
     const handleIsiJurnal = (item: ScheduleRow) => {
         const dateStr = getLocalDateStringForDay(item.day);
@@ -109,14 +111,8 @@ const SchedulePage: React.FC = () => {
     }, [selectedDay]);
 
     const getDayNumber = (dayName: string) => {
-        const today = new Date();
-        const currentDayIndex = today.getDay();
-        const targetDayIndex = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'].indexOf(dayName);
-        if (targetDayIndex === -1) return '';
-        const diff = targetDayIndex - currentDayIndex;
-        const targetDate = new Date(today);
-        targetDate.setDate(today.getDate() + diff);
-        return targetDate.getDate();
+        const d = getDateOffsetForDay(dayName);
+        return d.getDate();
     };
 
     const { data: rawSchedule = [], isLoading: pageLoading, isError, error: queryError } = useQuery({
@@ -342,7 +338,7 @@ const SchedulePage: React.FC = () => {
 
                 {!isNotificationsEnabled && <NotificationPrompt onEnable={handleEnableNotifications} isLoading={isEnablingNotifications} />}
 
-                {conflictWarnings.length > 0 && (
+                {conflictWarnings.length > 0 ? (
                     <div className="bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-200 dark:border-red-500/20 p-4 animate-fade-in">
                         <div className="flex items-start gap-3">
                             <AlertCircleIcon className="w-6 h-6 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
@@ -358,7 +354,14 @@ const SchedulePage: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                )}
+                ) : schedule.length > 0 ? (
+                    <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 p-4 animate-fade-in">
+                        <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
+                            <CheckCircleIcon className="w-5 h-5" />
+                            Tidak ada konflik jadwal.
+                        </div>
+                    </div>
+                ) : null}
 
                 <div className="space-y-6">
                     <ScheduleDaySelector days={daysOfWeek} selectedDay={selectedDay} onSelectDay={setSelectedDay} getDayNumber={getDayNumber} />
@@ -414,9 +417,11 @@ const SchedulePage: React.FC = () => {
             <Modal isOpen={modalState.isOpen} onClose={handleCloseModal} title={modalState.mode === 'add' ? 'Tambah Jadwal Baru' : 'Edit Jadwal'} icon={<CalendarIcon className="h-5 w-5" />}>
                 <form onSubmit={handleFormSubmit} className="space-y-4">
                     <FormInputWrapper label="Hari" icon={CalendarIcon}>
-                        <select value={formData.day} onChange={e => setFormData({ ...formData, day: e.target.value as ScheduleRow['day'] })} className={`w-full ${inputStyles}`}>
-                            {daysOfWeek.map(d => <option key={d} value={d} className="dark:bg-gray-800">{d}</option>)}
-                        </select>
+                        <CustomDropdown
+                            value={formData.day}
+                            onChange={(val) => setFormData({ ...formData, day: val as ScheduleRow['day'] })}
+                            options={daysOfWeek.map(d => ({ value: d, label: d }))}
+                        />
                     </FormInputWrapper>
                     <div className="grid grid-cols-2 gap-4">
                         <FormInputWrapper label="Waktu Mulai" icon={ClockIcon}><Input type="time" value={formData.start_time} onChange={e => setFormData({ ...formData, start_time: e.target.value })} className={inputStyles} error={errors.start_time} /></FormInputWrapper>
@@ -425,10 +430,12 @@ const SchedulePage: React.FC = () => {
                     <FormInputWrapper label="Mata Pelajaran" icon={BookOpenIcon}><Input value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })} className={inputStyles} placeholder="cth. Matematika" error={errors.subject} /></FormInputWrapper>
                     <FormInputWrapper label="Kelas" icon={GraduationCapIcon}>
                         {classes && classes.length > 0 ? (
-                            <select value={formData.class_id ?? ''} onChange={e => setFormData({ ...formData, class_id: e.target.value })} className={`w-full ${inputStyles}`}>
-                                <option value="" disabled>Pilih Kelas</option>
-                                {classes.map(c => <option key={c.id} value={c.id} className="dark:bg-gray-800">{c.name}</option>)}
-                            </select>
+                            <CustomDropdown
+                                value={formData.class_id ?? ''}
+                                onChange={(val) => setFormData({ ...formData, class_id: val })}
+                                options={classes.map(c => ({ value: c.id, label: c.name }))}
+                                placeholder="Pilih Kelas"
+                            />
                         ) : (
                             <Input value={formData.class_id ?? ''} onChange={e => setFormData({ ...formData, class_id: e.target.value })} className={inputStyles} placeholder="cth. 7A" error={errors.class_id} />
                         )}

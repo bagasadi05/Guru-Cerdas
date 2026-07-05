@@ -19,7 +19,7 @@ const CharacterTab = lazy(() => import('./analytics/CharacterTab').then(m => ({ 
 
 // UI Components
 import { Button } from '../ui/Button';
-import { Select } from '../ui/Select';
+import { CustomDropdown } from '../ui/CustomDropdown';
 import { Download, RefreshCwIcon, UsersIcon, CalendarIcon, LayoutDashboard, GraduationCap, Clock, ShieldAlert, BarChart3 } from 'lucide-react';
 
 const AnalyticsPage: React.FC = () => {
@@ -127,29 +127,27 @@ const AnalyticsPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-3 p-3 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200/70 dark:border-slate-700/60 shadow-sm">
                     <div className="flex items-center gap-3 px-2 sm:px-4 py-1 sm:border-r border-slate-100 dark:border-slate-800">
                         <UsersIcon className="w-4 h-4 text-slate-400 hidden sm:block" />
-                        <Select
+                        <CustomDropdown
                             value={selectedClassId}
-                            onChange={(e) => setSelectedClassId(e.target.value)}
-                            className="flex-1 bg-transparent border-0 ring-0 focus:ring-0 shadow-none p-0 text-sm font-semibold"
-                        >
-                            <option value="all">{isLeadership ? 'Semua Kelas' : 'Semua Kelas Anda'}</option>
-                            {classes.map(cls => (
-                                <option key={cls.id} value={cls.id}>{cls.name}</option>
-                            ))}
-                        </Select>
+                            onChange={setSelectedClassId}
+                            options={[
+                                { value: 'all', label: isLeadership ? 'Semua Kelas' : 'Semua Kelas Anda' },
+                                ...classes.map(cls => ({ value: cls.id, label: cls.name }))
+                            ]}
+                        />
                     </div>
                     <div className="flex items-center gap-3 px-2 sm:px-4 py-1">
                         <CalendarIcon className="w-4 h-4 text-slate-400 hidden sm:block" />
-                        <Select
+                        <CustomDropdown
                             value={dateRange}
-                            onChange={(e) => setDateRange(e.target.value as any)}
-                            className="flex-1 bg-transparent border-0 ring-0 focus:ring-0 shadow-none p-0 text-sm font-semibold"
-                        >
-                            <option value="7d">7 Hari Terakhir</option>
-                            <option value="30d">30 Hari Terakhir</option>
-                            <option value="90d">90 Hari Terakhir</option>
-                            <option value="all">Semua Waktu (Semester Ini)</option>
-                        </Select>
+                            onChange={(val) => setDateRange(val as any)}
+                            options={[
+                                { value: '7d', label: '7 Hari Terakhir' },
+                                { value: '30d', label: '30 Hari Terakhir' },
+                                { value: '90d', label: '90 Hari Terakhir' },
+                                { value: 'all', label: 'Semua Waktu (Semester Ini)' },
+                            ]}
+                        />
                     </div>
                 </div>
             </header>

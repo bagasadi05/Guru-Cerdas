@@ -10,7 +10,7 @@ import { generateReportCardPDF } from '../exports/generateReportCardPDF';
 import { generateGuardianSummaryPDF } from '../exports/generateGuardianSummaryPDF';
 import { useSemester } from '../../contexts/SemesterContext';
 import { getSemesterTerm } from '../../utils/semesterUtils';
-import { CalendarIcon } from '../Icons';
+import { CalendarIcon, SparklesIcon } from '../Icons';
 import { isAchievementsBackendMissing } from '../../utils/achievementBackend';
 import {
     GlassCard,
@@ -182,6 +182,7 @@ const fetchPortalDataFallback = async (studentId: string, accessCode: string): P
         schedulesRes,
         tasksRes,
         announcementsRes,
+        bintangEvaluationsRes,
     ] = await Promise.all([
         supabase.from('reports').select('*').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('attendance').select('*').eq('student_id', studentId).is('deleted_at', null),
@@ -192,6 +193,7 @@ const fetchPortalDataFallback = async (studentId: string, accessCode: string): P
         supabase.from('schedules').select('*').eq('class_id', className).is('deleted_at', null),
         supabase.from('tasks').select('*').eq('class_id', classId),
         supabase.from('announcements').select('*').in('audience_type', ['all', 'parent']).is('deleted_at', null).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(5),
+        supabase.from('bintang_monthly_evaluations').select('*').eq('student_id', studentId).eq('is_published', true).order('month', { ascending: false }),
     ]);
 
     const teacher = {
@@ -242,6 +244,7 @@ const fetchPortalDataFallback = async (studentId: string, accessCode: string): P
         tasks: toArray<PortalTask>(sortedTasks),
         announcements: toArray<PortalAnnouncement>(announcementsRes.data),
         achievements: [],
+        bintangEvaluations: toArray<any>(bintangEvaluationsRes.data),
         teacher,
         schoolInfo: { school_name: 'Sekolah' },
     };
@@ -283,6 +286,13 @@ const fetchPortalData = async (studentId: string, accessCode: string): Promise<P
             classes: { name: '-' },
         });
 
+        const { data: bintangData } = await supabase
+            .from('bintang_monthly_evaluations')
+            .select('*')
+            .eq('student_id', studentId)
+            .eq('is_published', true)
+            .order('month', { ascending: false });
+
         return {
             student: { ...student, access_code: accessCode || null },
             reports: toArray<PortalReport>(portalResult.reports),
@@ -295,6 +305,7 @@ const fetchPortalData = async (studentId: string, accessCode: string): Promise<P
             tasks: toArray<PortalTask>(portalResult.tasks),
             announcements: toArray<PortalAnnouncement>(portalResult.announcements),
             achievements: toArray<PortalStudentAchievement>(portalResult.achievements),
+            bintangEvaluations: toArray<any>(bintangData),
             teacher: toObject<TeacherInfo>(portalResult.teacher, null),
             schoolInfo: toObject<PortalSchoolInfo>(portalResult.schoolInfo, { school_name: 'Sekolah' }),
         };
@@ -653,6 +664,76 @@ export const ParentPortalPage: React.FC = () => {
                                 attendance={filteredAttendance}
                                 summary={attendanceSummary}
                             />
+                        </TabsContent>
+
+                        <TabsContent value="bintang">
+                            <div className="space-y-6">
+                                <div className="mb-6">
+                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                        <SparklesIcon className="text-amber-500" />
+                                        Rapor BINTANG
+                                    </h3>
+                                    <p className="text-slate-500 dark:text-slate-400 mt-1">
+                                        Laporan Adab, Kedisiplinan, dan Kerapian siswa.
+                                    </p>
+                                </div>
+                                {(!data?.bintangEvaluations || data.bintangEvaluations.length === 0) ? (
+                                    <GlassCard className="p-8 text-center border-dashed border-2 border-slate-200 dark:border-slate-700 bg-transparent">
+                                        <SparklesIcon className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
+                                        <h4 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">Belum Ada Rapor</h4>
+                                        <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                                            Rapor BINTANG untuk semester ini belum dipublikasikan oleh Wali Kelas.
+                                        </p>
+                                    </GlassCard>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {data.bintangEvaluations.map((evalItem: any) => (
+                                            <GlassCard key={evalItem.id} className="p-6">
+                                                <div className="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+                                                    <h4 className="text-lg font-bold text-slate-800 dark:text-white">
+                                                        Bulan: {new Date(evalItem.month + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                                    </h4>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-semibold text-slate-700 dark:text-slate-300">Adab</span>
+                                                            <span className="px-3 py-1 rounded-full text-sm font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                                                                Nilai: {evalItem.adab_score}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm text-slate-600 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                            "{evalItem.adab_notes || '-'}"
+                                                        </p>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-semibold text-slate-700 dark:text-slate-300">Kedisiplinan</span>
+                                                            <span className="px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                                Nilai: {evalItem.kedisiplinan_score}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm text-slate-600 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                            "{evalItem.kedisiplinan_notes || '-'}"
+                                                        </p>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-semibold text-slate-700 dark:text-slate-300">Kerapian</span>
+                                                            <span className="px-3 py-1 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                                                Nilai: {evalItem.kerapian_score}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm text-slate-600 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                            "{evalItem.kerapian_notes || '-'}"
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </GlassCard>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </TabsContent>
 
                         <TabsContent value="komunikasi">
