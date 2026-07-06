@@ -31,7 +31,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         key={student.id}
                         id={`student-${student.id}`}
                         className={`
-                            group flex flex-col p-5 rounded-3xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]
+                            group flex flex-col p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]
                             hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-emerald-500/20 dark:hover:border-emerald-500/30 hover:-translate-y-0.5
                             transition-all duration-300 card-interactive animate-list-item
                             ${highlightedStudentId === student.id ? 'ring-2 ring-emerald-500' : ''}
@@ -64,7 +64,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                 })()}
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h4 className="font-bold text-sm lg:text-base leading-snug text-slate-800 dark:text-white truncate uppercase tracking-wide">
+                                <h4 className="font-bold text-sm lg:text-base leading-snug text-slate-800 dark:text-white line-clamp-2 uppercase tracking-wide">
                                     {student.name}
                                 </h4>
                                 {record?.note ? (
@@ -86,8 +86,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         </div>
 
                         {/* 2. Attendance Buttons (Middle Row) */}
-                        <div className="mt-5 mb-4 bg-slate-100/50 dark:bg-slate-800/40 backdrop-blur-sm p-3 rounded-2xl border border-white/60 dark:border-slate-700/50 shadow-inner">
-                            <div className="grid grid-cols-5 gap-1 lg:gap-2 w-full" data-tutorial="attendance-status-group">
+                        <div className="mt-4 sm:mt-5 mb-4 bg-slate-100/50 dark:bg-slate-800/40 backdrop-blur-sm p-2 sm:p-3 rounded-2xl border border-white/60 dark:border-slate-700/50 shadow-inner overflow-x-auto hide-scrollbar">
+                            <div className="flex sm:grid sm:grid-cols-5 gap-1.5 lg:gap-2 min-w-max sm:min-w-0 w-full" data-tutorial="attendance-status-group">
                                 {statusOptions.map((opt) => {
                                     const isActive = record?.status === opt.value;
                                     const initial = opt.value.charAt(0).toUpperCase();
@@ -117,7 +117,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                         <button
                                             key={opt.value}
                                             onClick={() => onStatusChange(student.id, opt.value)}
-                                            className="group/btn flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl outline-none min-w-[44px] min-h-[44px]"
+                                            className="group/btn flex-1 sm:flex-none flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl outline-none min-w-[48px] min-h-[44px]"
                                             title={opt.label}
                                             aria-label={opt.label}
                                             aria-pressed={isActive}

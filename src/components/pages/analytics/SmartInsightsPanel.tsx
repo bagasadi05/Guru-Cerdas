@@ -195,7 +195,7 @@ const SmartInsightsPanel: React.FC = () => {
                                         <ul className="mt-2 space-y-1">
                                             {ins.items.map((it, i) => (
                                                 <li key={i} className={`flex items-center justify-between text-xs ${it.onClick ? 'cursor-pointer hover:underline' : ''}`} onClick={it.onClick}>
-                                                    <span className="text-gray-700 dark:text-gray-200 truncate">{it.label}</span>
+                                                    <span className="text-gray-700 dark:text-gray-200 truncate flex-1 min-w-0 pr-2">{it.label}</span>
                                                     <span className={`font-semibold ml-2 shrink-0 ${sev.iconText}`}>{it.meta}</span>
                                                 </li>
                                             ))}

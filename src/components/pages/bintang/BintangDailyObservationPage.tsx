@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Select } from '../../ui/Select';
+import { Button } from '../../ui/Button';
+import { Modal } from '../../ui/Modal';
+import { CustomDropdown } from '../../ui/CustomDropdown';
+import { useAuth } from '../../../hooks/useAuth';
+import { useToast } from '../../../hooks/useToast';
 import { bintangService, calculateAspectPoints, BINTANG_THRESHOLDS } from '../../../services/bintangService';
 import { supabase } from '../../../services/supabase';
-import { AlertTriangle, Shield, Sparkles, TrendingDown } from 'lucide-react';
+import { AlertTriangle, Shield, Sparkles, TrendingDown, PlusCircle } from 'lucide-react';
 
 /** Per-aspek badge color helpers */
 const gradeColors: Record<string, string> = {
@@ -25,6 +30,9 @@ const aspectLabels: Record<string, string> = {
 };
 
 export const BintangDailyObservationPage: React.FC = () => {
+    const { user } = useAuth();
+    const toast = useToast();
+    
     const [classes, setClasses] = useState<any[]>([]);
     const [selectedClass, setSelectedClass] = useState('');
     const currentMonth = new Date().toISOString().slice(0, 7);
@@ -32,6 +40,15 @@ export const BintangDailyObservationPage: React.FC = () => {
     
     const [violations, setViolations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    
+    // Modal states
+    const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
+    const [obsStudentId, setObsStudentId] = useState('');
+    const [obsAspect, setObsAspect] = useState('ADAB');
+    const [obsIsPositive, setObsIsPositive] = useState(true);
+    const [obsNotes, setObsNotes] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [studentsInClass, setStudentsInClass] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchClasses = async () => {
@@ -42,6 +59,21 @@ export const BintangDailyObservationPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        if (selectedClass) {
+            const fetchStudents = async () => {
+                const { data } = await supabase
+                    .from('students')
+                    .select('id, name')
+                    .eq('class_id', selectedClass)
+                    .eq('status', 'active')
+                    .order('name');
+                setStudentsInClass(data || []);
+            };
+            fetchStudents();
+        } else {
+            setStudentsInClass([]);
+        }
+
         if (selectedClass && selectedMonth) {
             fetchViolations();
         } else {
@@ -58,6 +90,31 @@ export const BintangDailyObservationPage: React.FC = () => {
             console.error('Failed to fetch violations', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleObservationSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!obsStudentId || !obsNotes) return;
+        
+        setIsSubmitting(true);
+        try {
+            await bintangService.insertDailyObservation({
+                student_id: obsStudentId,
+                teacher_id: user?.id || '',
+                date: new Date().toISOString().split('T')[0],
+                aspect: obsAspect,
+                is_positive: obsIsPositive,
+                observation: obsNotes
+            });
+            toast.success('Observasi harian berhasil disimpan');
+            setIsObservationModalOpen(false);
+            setObsNotes('');
+        } catch (error) {
+            console.error(error);
+            toast.error('Gagal menyimpan observasi harian');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -89,32 +146,40 @@ export const BintangDailyObservationPage: React.FC = () => {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800">
-                <div className="flex-1 max-w-xs">
-                    <Select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
-                        <option value="">Pilih Kelas</option>
-                        {classes.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </Select>
+                <div className="flex flex-1 gap-3 max-w-xl w-full">
+                    <div className="flex-1 max-w-xs">
+                        <Select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
+                            <option value="">Pilih Kelas</option>
+                            {classes.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </Select>
+                    </div>
+                    <div className="flex-1 max-w-xs">
+                        <Select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+                            {Array.from({length: 6}).map((_, i) => {
+                                const d = new Date();
+                                d.setMonth(d.getMonth() - i);
+                                const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                                const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                                return <option key={val} value={val}>{label}</option>
+                            })}
+                        </Select>
+                    </div>
                 </div>
-                <div className="flex-1 max-w-xs">
-                    <Select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
-                        {Array.from({length: 6}).map((_, i) => {
-                            const d = new Date();
-                            d.setMonth(d.getMonth() - i);
-                            const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                            const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-                            return <option key={val} value={val}>{label}</option>
-                        })}
-                    </Select>
-                </div>
+                {selectedClass && (
+                    <Button onClick={() => setIsObservationModalOpen(true)} className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+                        <PlusCircle size={20} />
+                        <span className="hidden sm:inline">Observasi Harian</span>
+                    </Button>
+                )}
             </div>
 
             {!selectedClass ? (
                 <div className="text-center py-16 text-slate-500 dark:text-slate-400">
                     <TrendingDown size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
-                    <p className="text-lg font-medium">Pilih kelas untuk melihat rekap pelanggaran</p>
-                    <p className="text-sm mt-1">Data pelanggaran akan dikelompokkan per aspek BINTANG</p>
+                    <p className="text-lg font-medium">Pilih kelas untuk melihat rekap poin</p>
+                    <p className="text-sm mt-1">Data dikelompokkan berdasarkan aspek BINTANG</p>
                 </div>
             ) : isLoading ? (
                 <div className="text-center py-10 text-slate-500">Memuat data pelanggaran...</div>
@@ -220,6 +285,83 @@ export const BintangDailyObservationPage: React.FC = () => {
                     </div>
                 </>
             )}
+
+            {/* Modal Observasi Harian */}
+            <Modal
+                isOpen={isObservationModalOpen}
+                onClose={() => setIsObservationModalOpen(false)}
+                title="Input Observasi Harian"
+            >
+                <form onSubmit={handleObservationSubmit} className="space-y-4 pt-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Siswa</label>
+                        <CustomDropdown
+                            value={obsStudentId}
+                            onChange={setObsStudentId}
+                            placeholder="Pilih Siswa"
+                            options={studentsInClass.map(s => ({ value: s.id, label: s.name }))}
+                        />
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Aspek BINTANG</label>
+                        <CustomDropdown
+                            value={obsAspect}
+                            onChange={setObsAspect}
+                            options={[
+                                { value: 'ADAB', label: 'Adab' },
+                                { value: 'KEDISIPLINAN', label: 'Kedisiplinan' },
+                                { value: 'KERAPIAN', label: 'Kerapian' },
+                            ]}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tipe Observasi</label>
+                        <div className="flex gap-4 mt-2 mb-2">
+                            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    name="obsIsPositive" 
+                                    checked={obsIsPositive === true} 
+                                    onChange={() => setObsIsPositive(true)} 
+                                    className="text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <span className="text-emerald-600 font-medium">Positif (Pujian)</span>
+                            </label>
+                            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    name="obsIsPositive" 
+                                    checked={obsIsPositive === false} 
+                                    onChange={() => setObsIsPositive(false)} 
+                                    className="text-rose-600 focus:ring-rose-500"
+                                />
+                                <span className="text-rose-600 font-medium">Netral / Negatif</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Catatan Observasi</label>
+                        <textarea 
+                            className="w-full p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                            rows={3}
+                            value={obsNotes}
+                            onChange={(e) => setObsNotes(e.target.value)}
+                            placeholder="Tuliskan catatan observasi harian..."
+                            required
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <Button type="button" variant="outline" onClick={() => setIsObservationModalOpen(false)}>Batal</Button>
+                        <Button type="submit" disabled={isSubmitting || !obsStudentId || !obsNotes}>
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 };

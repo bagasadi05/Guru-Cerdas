@@ -233,11 +233,11 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                                 key={action.id}
                                                 type="button"
                                                 onClick={() => handleGuardianAction(action.target)}
-                                                className={`rounded-2xl border p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${actionTone}`}
+                                                className={`min-h-[44px] rounded-2xl border p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${actionTone}`}
                                             >
-                                                <p className="text-xs font-bold tracking-wide uppercase opacity-75">Saran Tindakan</p>
+                                                <p className="text-xs font-bold tracking-wide uppercase text-current/80">Saran Tindakan</p>
                                                 <p className="mt-1 font-semibold text-sm leading-relaxed">{action.label}</p>
-                                                <p className="mt-0.5 text-xs opacity-85">{action.description}</p>
+                                                <p className="mt-0.5 text-xs text-current/90">{action.description}</p>
                                             </button>
                                         );
                                     })}
@@ -292,7 +292,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                     key={item.label}
                                     type="button"
                                     onClick={item.action}
-                                    className="group rounded-3xl border border-slate-100 bg-slate-50/50 p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-slate-200 hover:bg-white hover:shadow-sm dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                                    className="group min-h-[44px] rounded-3xl border border-slate-100 bg-slate-50/50 p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-slate-200 hover:bg-white hover:shadow-sm dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-slate-700 dark:hover:bg-slate-800"
                                 >
                                     <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600 text-white dark:bg-amber-400 dark:text-slate-950 shadow-sm transition-transform duration-300 group-hover:scale-105">
                                         <item.icon className="h-4.5 w-4.5" />
@@ -338,13 +338,13 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                             key={item.id}
                                             type="button"
                                             onClick={() => item.href?.startsWith('lainnya:') ? onOpenMoreSection(item.href.split(':')[1] as PortalMoreSection) : onOpenTab((item.href as PortalPrimaryTab) || 'beranda')}
-                                            className={`w-full rounded-2xl border p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm flex items-start gap-2.5 ${toneClass}`}
+                                            className={`w-full min-h-[44px] rounded-2xl border p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm flex items-start gap-2.5 ${toneClass}`}
                                         >
                                             <span className="text-base select-none mt-0.5">⚠️</span>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-xs uppercase tracking-wider opacity-75">{item.severity === 'critical' ? 'Penting Sekali' : 'Pemberitahuan'}</p>
+                                                <p className="font-bold text-xs uppercase tracking-wider text-current/80">{item.severity === 'critical' ? 'Penting Sekali' : 'Pemberitahuan'}</p>
                                                 <p className="font-semibold text-sm leading-relaxed mt-0.5">{item.title}</p>
-                                                <p className="text-xs opacity-90 leading-relaxed mt-0.5">{item.description}</p>
+                                                <p className="text-xs text-current/90 leading-relaxed mt-0.5">{item.description}</p>
                                             </div>
                                             {item.badge && (
                                                 <span className="rounded-full bg-white/80 px-2 py-0.5 text-xxs font-bold dark:bg-black/20 self-center">

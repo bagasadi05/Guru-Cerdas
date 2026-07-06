@@ -40,7 +40,7 @@ const scheduleRules: ValidationRules = {
     end_time: [ValidationService.validators.required("Waktu selesai harus diisi")]
 };
 
-type ScheduleWithClassName = ScheduleRow & { className?: string };
+// ScheduleWithClassName is no longer needed here; push subscription is handled by PushNotificationService
 type ScheduleMutationVars =
     | { mode: 'add'; data: Database['public']['Tables']['schedules']['Insert'] }
     | { mode: 'edit'; data: Database['public']['Tables']['schedules']['Update']; id: string };
@@ -62,7 +62,7 @@ const toLiveSchedulePayload = (
 const inputStyles = `${componentStyles.input} pl-10 min-h-[44px]`;
 
 const SchedulePage: React.FC = () => {
-    const { user, isNotificationsEnabled, enableScheduleNotifications } = useAuth();
+    const { user, isNotificationsEnabled } = useAuth();
     const navigate = useNavigate();
     const toast = useToast();
     const queryClient = useQueryClient();
@@ -268,23 +268,39 @@ const SchedulePage: React.FC = () => {
 
     const handleEnableNotifications = async () => {
         setIsEnablingNotifications(true);
+        if (!user) {
+            toast.warning("Anda harus login terlebih dahulu.");
+            setIsEnablingNotifications(false);
+            return;
+        }
         if (!schedule || schedule.length === 0) {
             toast.warning("Tidak ada data jadwal untuk notifikasi.");
             setIsEnablingNotifications(false);
             return;
         }
-        const { data: classes, error } = await supabase
-            .from('classes')
-            .select('id, name')
-            .is('deleted_at', null);
-        if (error) { toast.error("Gagal mengambil data kelas untuk notifikasi."); setIsEnablingNotifications(false); return; }
-        const classMap = new Map<string, string>((classes || []).map(c => [c.id, c.name]));
-        const scheduleWithClassNames: ScheduleWithClassName[] = schedule.map(item => ({
-            ...item, className: item.class_id ? (classMap.get(item.class_id) ?? item.class_id) : undefined
-        }));
-        const success = await enableScheduleNotifications(scheduleWithClassNames);
-        if (success) toast.success("Notifikasi jadwal berhasil diaktifkan!");
-        setIsEnablingNotifications(false);
+        try {
+            // Use PushNotificationService to properly subscribe via PushManager
+            // and persist the subscription in the push_subscriptions table.
+            // The old enableScheduleNotifications() path only posted a message to
+            // the SW which has been deprecated (SW no longer listens for SCHEDULE_UPDATED).
+            const { pushNotificationService } = await import('../../services/PushNotificationService');
+            const result = await pushNotificationService.enable(user.id);
+            if (result.enabled && result.serverRegistered) {
+                // Also sync the legacy flag so isNotificationsEnabled stays in sync
+                localStorage.setItem('scheduleNotificationsEnabled', 'true');
+                toast.success("Notifikasi jadwal berhasil diaktifkan! Anda akan diingatkan sebelum jam mengajar.");
+            } else if (result.permission === 'denied') {
+                toast.error("Izin notifikasi ditolak oleh browser. Buka pengaturan browser untuk mengizinkan notifikasi.");
+            } else {
+                toast.warning("Notifikasi belum bisa diaktifkan. Pastikan browser mendukung Web Push.");
+            }
+        } catch (error) {
+            console.error('Enable notifications error:', error);
+            const msg = error instanceof Error ? error.message : 'Gagal mengaktifkan notifikasi.';
+            toast.error(msg);
+        } finally {
+            setIsEnablingNotifications(false);
+        }
     };
 
     const getScheduleStatus = (item: ScheduleRow, now: Date) => {

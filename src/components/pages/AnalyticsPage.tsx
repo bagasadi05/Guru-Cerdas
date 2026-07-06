@@ -113,11 +113,11 @@ const AnalyticsPage: React.FC = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setIsExportModalOpen(true)} className="px-4 gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setIsExportModalOpen(true)} className="px-4 gap-2 min-h-[44px] sm:min-h-0">
                             <Download className="w-4 h-4" />
                             <span className="hidden sm:inline">Export PDF</span>
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => refetch()} className="px-4 gap-2">
+                        <Button variant="outline" size="sm" onClick={() => refetch()} className="px-4 gap-2 min-h-[44px] sm:min-h-0">
                             <RefreshCwIcon className="w-4 h-4" />
                         </Button>
                     </div>
@@ -153,12 +153,12 @@ const AnalyticsPage: React.FC = () => {
             </header>
 
             {/* Smart Navigation Tabs */}
-            <div id="tour-tabs" className="flex overflow-x-auto scrollbar-hide gap-2 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-2xl">
+            <div id="tour-tabs" className="flex overflow-x-auto scrollbar-hide gap-2 p-1 sm:p-1.5 bg-slate-100 dark:bg-slate-800/50 rounded-2xl snap-x">
                 {tabs.filter(tab => tab.id !== 'comparison' || isLeadership).map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`relative flex-shrink-0 sm:flex-1 min-w-[110px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 focus:outline-none
+                        className={`snap-start relative flex-shrink-0 sm:flex-1 min-w-[110px] min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 focus:outline-none
                             ${activeTab === tab.id 
                                 ? 'text-indigo-600 dark:text-indigo-400 scale-100' 
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 scale-95 hover:scale-100'}`}

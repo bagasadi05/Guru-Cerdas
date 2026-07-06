@@ -21,10 +21,9 @@ export const useOrientation = (): UseOrientationReturn => {
     const getOrientation = (): Orientation => {
         if (typeof window === 'undefined') return 'portrait';
 
-        // Use screen.orientation if available (more reliable)
-        if (window.screen?.orientation?.type) {
-            return window.screen.orientation.type.includes('landscape') ? 'landscape' : 'portrait';
-        }
+        // Do NOT use window.screen.orientation because it returns the physical monitor's
+        // orientation (always landscape on desktop) regardless of the browser window size.
+        // We only care about the viewport dimensions.
 
         // Fallback to matchMedia
         if (window.matchMedia('(orientation: landscape)').matches) {

@@ -35,11 +35,12 @@ interface SubscriptionRow {
 interface ScheduleRow {
   id: string;
   user_id: string;
-  title: string;
-  description: string | null;
-  scheduled_at: string;
-  class_name: string | null;
-  subject: string | null;
+  day: string;
+  start_time: string;
+  end_time: string;
+  subject: string;
+  class_id: string | null;
+  room: string | null;
   reminded: boolean | null;
 }
 
@@ -232,15 +233,25 @@ async function processTaskReminders(
 async function processScheduleReminders(
   supabase: SupabaseClient,
 ): Promise<{ found: number; notified: number; failed: number }> {
-  // Find schedules in the next 60 minutes that haven't been reminded
+  // Get current time in WIB (Asia/Jakarta, UTC+7)
   const now = new Date();
-  const horizon = new Date(now.getTime() + 60 * 60 * 1000);
+  const wibOffset = 7 * 60; // minutes
+  const wibNow = new Date(now.getTime() + (wibOffset + now.getTimezoneOffset()) * 60000);
 
+  // Map day index to Indonesian day name
+  const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const todayName = DAY_NAMES[wibNow.getDay()];
+
+  const currentHour = wibNow.getHours();
+  const currentMinute = wibNow.getMinutes();
+  const currentMinutes = currentHour * 60 + currentMinute;
+  const horizonMinutes = currentMinutes + 60; // Look ahead 60 minutes
+
+  // Query schedules for today that haven't been reminded
   const { data: schedules, error } = await supabase
     .from("schedules")
-    .select("id, user_id, title, description, scheduled_at, class_name, subject, reminded")
-    .lte("scheduled_at", horizon.toISOString())
-    .gte("scheduled_at", now.toISOString())
+    .select("id, user_id, day, start_time, end_time, subject, class_id, room, reminded")
+    .eq("day", todayName)
     .or("reminded.is.null,reminded.eq.false")
     .limit(500);
 
@@ -249,34 +260,54 @@ async function processScheduleReminders(
     return { found: 0, notified: 0, failed: 0 };
   }
 
-  const found = (schedules ?? []).length;
+  // Filter: only schedules starting within the next 60 minutes
+  const upcoming = ((schedules ?? []) as ScheduleRow[]).filter((s) => {
+    const [h, m] = s.start_time.split(":").map(Number);
+    const startMinutes = h * 60 + m;
+    return startMinutes >= currentMinutes && startMinutes <= horizonMinutes;
+  });
+
+  const found = upcoming.length;
   if (found === 0) return { found: 0, notified: 0, failed: 0 };
 
-  const userIds = Array.from(new Set((schedules as ScheduleRow[]).map((s) => s.user_id)));
+  const userIds = Array.from(new Set(upcoming.map((s) => s.user_id)));
   const subs = await fetchActiveSubscriptions(supabase, userIds);
   const byUser = groupBy(subs, (s) => s.user_id);
+
+  // Fetch class names for display
+  const classIds = Array.from(new Set(upcoming.map((s) => s.class_id).filter(Boolean))) as string[];
+  let classNameMap = new Map<string, string>();
+  if (classIds.length > 0) {
+    const { data: classData } = await supabase
+      .from("classes")
+      .select("id, name")
+      .in("id", classIds);
+    if (classData) {
+      classNameMap = new Map(classData.map((c: any) => [c.id, c.name]));
+    }
+  }
 
   let notified = 0;
   let failed = 0;
   const remindedIds: string[] = [];
 
-  for (const schedule of schedules as ScheduleRow[]) {
+  for (const schedule of upcoming) {
     const userSubs = byUser.get(schedule.user_id) ?? [];
     if (userSubs.length === 0) continue;
 
-    const minutesUntil = Math.max(
-      0,
-      Math.round((new Date(schedule.scheduled_at).getTime() - now.getTime()) / 60000),
-    );
+    const [h, m] = schedule.start_time.split(":").map(Number);
+    const startMinutes = h * 60 + m;
+    const minutesUntil = Math.max(0, startMinutes - currentMinutes);
+    const className = schedule.class_id ? classNameMap.get(schedule.class_id) : null;
 
     const payload: PushPayload = {
-      title: `🔔 Mengajar ${minutesUntil} menit lagi`,
-      body: formatScheduleBody(schedule, minutesUntil),
+      title: `🔔 Mengajar ${minutesUntil <= 1 ? 'segera' : `${minutesUntil} menit lagi`}`,
+      body: formatScheduleBody(schedule, minutesUntil, className),
       icon: "/icons/icon-192x192.png",
       badge: "/icons/badge-72x72.png",
       tag: `schedule-${schedule.id}`,
       data: {
-        url: `${APP_BASE_URL}/schedules/${schedule.id}`,
+        url: `${APP_BASE_URL}/jadwal`,
         scheduleId: schedule.id,
         type: "schedule-reminder",
       },
@@ -421,11 +452,12 @@ function formatTaskBody(task: TaskRow, overdue: boolean, hoursUntilDue: number):
   return parts.join(" • ");
 }
 
-function formatScheduleBody(schedule: ScheduleRow, minutesUntil: number): string {
+function formatScheduleBody(schedule: ScheduleRow, minutesUntil: number, className?: string | null): string {
   const parts: string[] = [];
   if (schedule.subject) parts.push(schedule.subject);
-  if (schedule.class_name) parts.push(schedule.class_name);
-  if (schedule.description) parts.push(schedule.description);
+  if (className) parts.push(className);
+  if (schedule.room) parts.push(`Ruang: ${schedule.room}`);
+  parts.push(`${schedule.start_time} – ${schedule.end_time}`);
   const timeText = minutesUntil <= 1 ? "Segera" : `${minutesUntil} menit lagi`;
   return parts.length > 0 ? `${timeText} — ${parts.join(" • ")}` : timeText;
 }

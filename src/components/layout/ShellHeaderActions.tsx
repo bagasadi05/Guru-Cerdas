@@ -13,7 +13,7 @@ interface ShellHeaderActionsProps {
 }
 
 const ShellIconButton: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800">
+    <div className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800">
         {children}
     </div>
 );
@@ -26,7 +26,7 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
             {/* Unified Help & Tutorial Button */}
             <button
                 onClick={() => document.dispatchEvent(new CustomEvent('open-help-center'))}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
                 aria-label="Pusat Bantuan & Tutorial"
                 title="Bantuan & Tutorial"
             >
@@ -49,11 +49,11 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
 
             <Link
                 to="/pengaturan"
-                className="ml-1 flex h-10 w-10 items-center justify-center rounded-full ring-2 ring-white shadow-md transition-transform hover:scale-105 active:scale-95 dark:ring-slate-800"
+                className="ml-1 flex h-11 w-11 items-center justify-center rounded-full ring-2 ring-white shadow-md transition-transform hover:scale-105 active:scale-95 dark:ring-slate-800 overflow-hidden shrink-0"
                 aria-label="Settings"
             >
                 <img
-                    className="h-full w-full rounded-full object-cover"
+                    className="h-full w-full object-cover"
                     src={user?.avatarUrl || undefined}
                     alt="User avatar"
                 />

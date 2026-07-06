@@ -155,7 +155,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [roleLoaded, setRoleLoaded] = useState(false);
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('scheduleNotificationsEnabled') === 'true';
+      // Check both flags for backward compatibility: the legacy key used by
+      // enableScheduleNotifications() and the newer key from PushNotificationService.
+      return localStorage.getItem('scheduleNotificationsEnabled') === 'true'
+          || localStorage.getItem('pushNotificationsEnabled') === 'true';
     }
     return false;
   });

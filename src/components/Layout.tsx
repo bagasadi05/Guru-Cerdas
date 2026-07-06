@@ -201,12 +201,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm"></div>
 
           <div className="relative z-10 flex items-center gap-3 w-full">
-            {/* Mobile hamburger: opens the main sidebar */}
-            {isMobile && (
+            {/* Mobile hamburger: Disembunyikan karena sudah menggunakan EnhancedMobileBottomNav */}
+            {isMobile && false && (
               <button
                 type="button"
                 onClick={() => setIsMobileSidebarOpen(true)}
-                className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+                className="lg:hidden flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
                 aria-label="Buka menu navigasi"
                 aria-expanded={isMobileSidebarOpen}
                 aria-controls="main-navigation"

@@ -53,7 +53,9 @@ export const BintangEvaluationPage: React.FC = () => {
         adab_score: 'A' as BintangGrade,
         kedisiplinan_score: 'A' as BintangGrade,
         kerapian_score: 'A' as BintangGrade,
-        general_notes: ''
+        adab_notes: '',
+        kedisiplinan_notes: '',
+        kerapian_notes: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
@@ -180,25 +182,27 @@ export const BintangEvaluationPage: React.FC = () => {
         };
     };
 
-    const generateAutoNote = (adab: BintangGrade, kedis: BintangGrade, kerapian: BintangGrade): string => {
-        const parts = [];
+    const generateAutoNote = (adab: BintangGrade, kedis: BintangGrade, kerapian: BintangGrade) => {
+        let adabNote = '';
+        let kedisNote = '';
+        let kerapianNote = '';
 
-        if (adab === 'A') parts.push("Ananda menunjukkan akhlak mulia dan sopan santun yang sangat baik.");
-        else if (adab === 'B') parts.push("Secara umum adab Ananda sudah baik, namun bisa lebih ramah dan santun lagi.");
-        else if (adab === 'C') parts.push("Adab dan perilaku Ananda perlu lebih diperhatikan, terutama dalam berinteraksi dengan orang lain.");
-        else parts.push("Sangat perlu bimbingan orang tua di rumah terkait tata krama dan sopan santun Ananda.");
+        if (adab === 'A') adabNote = "Ananda menunjukkan akhlak mulia dan sopan santun yang sangat baik.";
+        else if (adab === 'B') adabNote = "Secara umum adab Ananda sudah baik, namun bisa lebih ramah dan santun lagi.";
+        else if (adab === 'C') adabNote = "Adab dan perilaku Ananda perlu lebih diperhatikan, terutama dalam berinteraksi dengan orang lain.";
+        else adabNote = "Sangat perlu bimbingan orang tua di rumah terkait tata krama dan sopan santun Ananda.";
 
-        if (kedis === 'A') parts.push("Kedisiplinannya di sekolah sangat tinggi dan selalu menaati aturan.");
-        else if (kedis === 'B') parts.push("Kedisiplinan cukup memadai meski sesekali masih perlu diingatkan.");
-        else if (kedis === 'C') parts.push("Ananda masih sering kurang disiplin, mohon dorongan agar lebih tepat waktu dan fokus.");
-        else parts.push("Tingkat kedisiplinan sangat kurang dan butuh pengawasan ekstra ketat dari rumah.");
+        if (kedis === 'A') kedisNote = "Kedisiplinannya di sekolah sangat tinggi dan selalu menaati aturan.";
+        else if (kedis === 'B') kedisNote = "Kedisiplinan cukup memadai meski sesekali masih perlu diingatkan.";
+        else if (kedis === 'C') kedisNote = "Ananda masih sering kurang disiplin, mohon dorongan agar lebih tepat waktu dan fokus.";
+        else kedisNote = "Tingkat kedisiplinan sangat kurang dan butuh pengawasan ekstra ketat dari rumah.";
 
-        if (kerapian === 'A') parts.push("Serta senantiasa menjaga kebersihan dan kerapian seragam dengan sangat konsisten.");
-        else if (kerapian === 'B') parts.push("Penampilan sudah cukup rapi, mohon pertahankan kelengkapan atribut sekolah.");
-        else if (kerapian === 'C') parts.push("Sering terlihat kurang rapi, mohon dicek kembali penampilannya sebelum berangkat sekolah.");
-        else parts.push("Kerapian sangat kurang diperhatikan, mohon kerja samanya untuk selalu mengingatkan Ananda.");
+        if (kerapian === 'A') kerapianNote = "Serta senantiasa menjaga kebersihan dan kerapian seragam dengan sangat konsisten.";
+        else if (kerapian === 'B') kerapianNote = "Penampilan sudah cukup rapi, mohon pertahankan kelengkapan atribut sekolah.";
+        else if (kerapian === 'C') kerapianNote = "Sering terlihat kurang rapi, mohon dicek kembali penampilannya sebelum berangkat sekolah.";
+        else kerapianNote = "Kerapian sangat kurang diperhatikan, mohon kerja samanya untuk selalu mengingatkan Ananda.";
 
-        return parts.join(' ');
+        return { adabNote, kedisNote, kerapianNote };
     };
 
     const handleOpenEditModal = (student: any) => {
@@ -211,18 +215,19 @@ export const BintangEvaluationPage: React.FC = () => {
                 adab_score: existingEval.adab_score || aspect.ADAB.grade,
                 kedisiplinan_score: existingEval.kedisiplinan_score || aspect.KEDISIPLINAN.grade,
                 kerapian_score: existingEval.kerapian_score || aspect.KERAPIAN.grade,
-                general_notes: existingEval.adab_notes || generateAutoNote(
-                    existingEval.adab_score || aspect.ADAB.grade,
-                    existingEval.kedisiplinan_score || aspect.KEDISIPLINAN.grade,
-                    existingEval.kerapian_score || aspect.KERAPIAN.grade
-                )
+                adab_notes: existingEval.adab_notes || '',
+                kedisiplinan_notes: existingEval.kedisiplinan_notes || '',
+                kerapian_notes: existingEval.kerapian_notes || ''
             });
         } else {
+            const autoNotes = generateAutoNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade);
             setFormData({
                 adab_score: aspect.ADAB.grade,
                 kedisiplinan_score: aspect.KEDISIPLINAN.grade,
                 kerapian_score: aspect.KERAPIAN.grade,
-                general_notes: generateAutoNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade)
+                adab_notes: autoNotes.adabNote,
+                kedisiplinan_notes: autoNotes.kedisNote,
+                kerapian_notes: autoNotes.kerapianNote
             });
         }
         setIsEditModalOpen(true);
@@ -239,9 +244,9 @@ export const BintangEvaluationPage: React.FC = () => {
                 adab_score: formData.adab_score,
                 kedisiplinan_score: formData.kedisiplinan_score,
                 kerapian_score: formData.kerapian_score,
-                adab_notes: formData.general_notes,
-                kedisiplinan_notes: '',
-                kerapian_notes: ''
+                adab_notes: formData.adab_notes,
+                kedisiplinan_notes: formData.kedisiplinan_notes,
+                kerapian_notes: formData.kerapian_notes
             });
             toast.success('Rapor BINTANG berhasil disimpan');
             setIsEditModalOpen(false);
@@ -259,16 +264,17 @@ export const BintangEvaluationPage: React.FC = () => {
         try {
             const evalInserts = students.map(student => {
                 const aspect = getAspectSummary(student.id);
+                const autoNotes = generateAutoNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade);
                 return {
                     student_id: student.id,
                     month: selectedMonth,
                     evaluator_id: user?.id || '',
                     adab_score: aspect.ADAB.grade,
-                    adab_notes: generateAutoNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade),
+                    adab_notes: autoNotes.adabNote,
                     kedisiplinan_score: aspect.KEDISIPLINAN.grade,
-                    kedisiplinan_notes: '',
+                    kedisiplinan_notes: autoNotes.kedisNote,
                     kerapian_score: aspect.KERAPIAN.grade,
-                    kerapian_notes: '',
+                    kerapian_notes: autoNotes.kerapianNote,
                 };
             });
             
@@ -343,6 +349,20 @@ export const BintangEvaluationPage: React.FC = () => {
                         ]}
                     />
                 </div>
+                <div className="w-full mt-3">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Catatan {meta.label}</label>
+                    <textarea
+                        className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                        rows={2}
+                        value={aspectKey === 'ADAB' ? formData.adab_notes : aspectKey === 'KEDISIPLINAN' ? formData.kedisiplinan_notes : formData.kerapian_notes}
+                        onChange={(e) => {
+                            if (aspectKey === 'ADAB') setFormData({...formData, adab_notes: e.target.value});
+                            else if (aspectKey === 'KEDISIPLINAN') setFormData({...formData, kedisiplinan_notes: e.target.value});
+                            else setFormData({...formData, kerapian_notes: e.target.value});
+                        }}
+                        placeholder={`Tuliskan catatan khusus untuk ${meta.label.toLowerCase()}...`}
+                    />
+                </div>
             </div>
         );
     };
@@ -373,7 +393,7 @@ export const BintangEvaluationPage: React.FC = () => {
                             onClick={handleGenerateAll} 
                             disabled={isGenerating || students.length === 0}
                             variant="outline"
-                            className="flex items-center justify-center gap-2 col-span-2 sm:col-span-1"
+                            className="flex items-center justify-center gap-2 col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-0"
                         >
                             <Zap size={16} />
                             {isGenerating ? 'Generating...' : 'Generate Semua'}
@@ -381,7 +401,7 @@ export const BintangEvaluationPage: React.FC = () => {
                         <Button 
                             onClick={handleDownloadClassPdf}
                             disabled={isDownloadingClass || !selectedClass}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 min-h-[44px] sm:min-h-0"
                         >
                             {isDownloadingClass ? (
                                 <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
@@ -393,7 +413,7 @@ export const BintangEvaluationPage: React.FC = () => {
                         <Button 
                             onClick={handlePublish} 
                             disabled={evaluations.length === 0 || isPublishing}
-                            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700"
+                            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 min-h-[44px] sm:min-h-0"
                         >
                             <Send size={16} />
                             Publikasi
@@ -505,7 +525,7 @@ export const BintangEvaluationPage: React.FC = () => {
                                                             <Button 
                                                                 variant="outline" 
                                                                 size="sm"
-                                                                className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto"
+                                                                className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                                                                 onClick={() => handleOpenEditModal(student)}
                                                                 disabled={isPublished}
                                                                 title={isCompleted ? 'Edit' : 'Isi Rapor'}
@@ -516,7 +536,7 @@ export const BintangEvaluationPage: React.FC = () => {
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto"
+                                                                className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                                                                 onClick={() => handleDownloadSinglePdf(student.id)}
                                                                 disabled={downloadingStudentId === student.id}
                                                                 title="Cetak Rapor Bintang"
@@ -561,31 +581,7 @@ export const BintangEvaluationPage: React.FC = () => {
                     {renderAspectSection('KEDISIPLINAN', 'kedisiplinan_score')}
                     {renderAspectSection('KERAPIAN', 'kerapian_score')}
 
-                    <div className="mt-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                            <FileText className="w-5 h-5 text-indigo-500" />
-                            <h4 className="text-slate-800 dark:text-slate-200 font-medium">Catatan Wali Kelas</h4>
-                        </div>
-                        <textarea
-                            className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                            rows={3}
-                            value={formData.general_notes}
-                            onChange={(e) => setFormData({...formData, general_notes: e.target.value})}
-                            placeholder="Tuliskan catatan wali kelas secara umum untuk rapor Bintang (opsional)..."
-                        />
-                        <div className="flex flex-wrap gap-2 mt-3">
-                            {CATATAN_WALAS_TEMPLATES.map((template, idx) => (
-                                <button
-                                    key={idx}
-                                    type="button"
-                                    onClick={() => setFormData({...formData, general_notes: formData.general_notes ? formData.general_notes + ' ' + template : template})}
-                                    className="text-[11px] px-3 py-2 sm:py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-slate-600 dark:text-slate-400 rounded-lg sm:rounded-full border border-slate-200 dark:border-slate-700 transition-colors text-left w-full sm:w-auto"
-                                >
-                                    + {template}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                         <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>Batal</Button>

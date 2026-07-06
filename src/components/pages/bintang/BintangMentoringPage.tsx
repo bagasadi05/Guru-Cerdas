@@ -21,6 +21,9 @@ export const BintangMentoringPage: React.FC = () => {
     // Form state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedClass, setSelectedClass] = useState('');
+    const [targetType, setTargetType] = useState<'all' | 'specific'>('all');
+    const [studentsInClass, setStudentsInClass] = useState<any[]>([]);
+    const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [mentorRole, setMentorRole] = useState('WALAS');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [notes, setNotes] = useState('');
@@ -34,6 +37,25 @@ export const BintangMentoringPage: React.FC = () => {
         fetchClasses();
         fetchLogs();
     }, []);
+
+    useEffect(() => {
+        if (selectedClass) {
+            const fetchStudents = async () => {
+                const { data } = await supabase
+                    .from('students')
+                    .select('id, name')
+                    .eq('class_id', selectedClass)
+                    .eq('status', 'active')
+                    .order('name');
+                setStudentsInClass(data || []);
+                setSelectedStudents([]); // reset selection
+            };
+            fetchStudents();
+        } else {
+            setStudentsInClass([]);
+            setSelectedStudents([]);
+        }
+    }, [selectedClass]);
 
     const fetchLogs = async () => {
         setIsLoading(true);
@@ -50,25 +72,28 @@ export const BintangMentoringPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedClass || !notes) return;
+        if (targetType === 'specific' && selectedStudents.length === 0) {
+            toast.error('Pilih minimal satu siswa untuk pembinaan');
+            return;
+        }
         
         setIsSubmitting(true);
         try {
-            // Get all students in the selected class
-            const { data: students } = await supabase
-                .from('students')
-                .select('id')
-                .eq('class_id', selectedClass)
-                .eq('status', 'active');
+            let targetStudentIds = selectedStudents;
+            
+            if (targetType === 'all') {
+                targetStudentIds = studentsInClass.map(s => s.id);
+            }
                 
-            if (!students || students.length === 0) {
+            if (targetStudentIds.length === 0) {
                 toast.error('Tidak ada siswa aktif di kelas ini');
                 setIsSubmitting(false);
                 return;
             }
 
-            // Create log entries for all students
-            const newLogs = students.map(s => ({
-                student_id: s.id,
+            // Create log entries for selected students
+            const newLogs = targetStudentIds.map(id => ({
+                student_id: id,
                 mentor_role: mentorRole,
                 mentor_id: user?.id || '',
                 date: date,
@@ -100,7 +125,7 @@ export const BintangMentoringPage: React.FC = () => {
                         />
                     </div>
                 </div>
-                <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
+                <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
                     <PlusCircle size={20} />
                     Catat Pembinaan
                 </Button>
@@ -184,8 +209,69 @@ export const BintangMentoringPage: React.FC = () => {
                             placeholder="Pilih Kelas"
                             options={classes.map(c => ({ value: c.id, label: c.name }))}
                         />
-                        <p className="text-xs text-slate-500 mt-1">Pembinaan akan dicatat untuk seluruh siswa di kelas ini.</p>
                     </div>
+
+                    {selectedClass && (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tipe Sasaran</label>
+                            <div className="flex gap-4 mt-2 mb-3">
+                                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input 
+                                        type="radio" 
+                                        name="targetType" 
+                                        value="all" 
+                                        checked={targetType === 'all'} 
+                                        onChange={() => setTargetType('all')} 
+                                        className="text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    Seluruh Siswa di Kelas
+                                </label>
+                                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input 
+                                        type="radio" 
+                                        name="targetType" 
+                                        value="specific" 
+                                        checked={targetType === 'specific'} 
+                                        onChange={() => setTargetType('specific')} 
+                                        className="text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    Siswa Tertentu
+                                </label>
+                            </div>
+                            
+                            {targetType === 'all' && (
+                                <p className="text-xs text-slate-500">Pembinaan akan dicatat untuk seluruh {studentsInClass.length} siswa di kelas ini.</p>
+                            )}
+                            
+                            {targetType === 'specific' && (
+                                <div className="mt-2 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg p-2 bg-slate-50 dark:bg-slate-800/50">
+                                    {studentsInClass.length === 0 ? (
+                                        <p className="text-sm text-slate-500 p-2">Tidak ada siswa.</p>
+                                    ) : (
+                                        <div className="space-y-1">
+                                            {studentsInClass.map(student => (
+                                                <label key={student.id} className="flex items-center gap-3 p-2 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded cursor-pointer transition-colors">
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={selectedStudents.includes(student.id)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedStudents([...selectedStudents, student.id]);
+                                                            } else {
+                                                                setSelectedStudents(selectedStudents.filter(id => id !== student.id));
+                                                            }
+                                                        }}
+                                                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                                                    />
+                                                    <span className="text-sm text-slate-700 dark:text-slate-300">{student.name}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Materi / Catatan Pembinaan</label>

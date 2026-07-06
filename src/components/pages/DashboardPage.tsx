@@ -141,7 +141,7 @@ const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full min-h-full p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8">
+    <div className="w-full min-h-full p-3 md:p-5 lg:p-6 flex flex-col space-y-3 sm:space-y-4 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8">
       {isError && (
         <div className="rounded-xl border border-red-200/60 dark:border-red-500/30 bg-red-50/60 dark:bg-red-500/10 px-4 py-3 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -206,7 +206,7 @@ const DashboardPage: React.FC = () => {
 
       <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6">
         {/* Left Column Part 1 */}
-        <div className={`space-y-4 sm:space-y-6 order-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9 lg:col-start-1' : 'lg:col-span-12'}`}>
+        <div className={`space-y-3 sm:space-y-4 order-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9 lg:col-start-1' : 'lg:col-span-12'}`}>
           {/* Stats Section */}
           <section data-tutorial="dashboard-stats">{data && <StatsGrid data={data} currentTime={currentTime} />}</section>
 
@@ -230,7 +230,7 @@ const DashboardPage: React.FC = () => {
             />
 
             {/* AI Insight Widget */}
-            <div data-tutorial="ai-insight" className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl p-0 overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+            <div data-tutorial="ai-insight" className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl p-0 overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
               <div className="p-5 border-b border-slate-200/80 dark:border-slate-700/60 bg-gradient-to-r from-emerald-500/10 to-teal-500/5">
                 <h3 className="flex items-center gap-2 font-semibold text-xl text-slate-900 dark:text-white">
                   <BrainCircuitIcon className="w-5 h-5 text-emerald-500" />
@@ -248,7 +248,7 @@ const DashboardPage: React.FC = () => {
         </div>
 
         {/* Left Column Part 2 */}
-        <div className={`space-y-4 sm:space-y-6 order-3 lg:col-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'}`}>
+        <div className={`space-y-3 sm:space-y-4 order-3 lg:col-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'}`}>
           {/* Analytics Section */}
           <section className="space-y-6">
             <SectionHeading>Analisis Penilaian & Kehadiran</SectionHeading>
@@ -334,11 +334,11 @@ const DashboardPage: React.FC = () => {
                     tasks.slice(0, 10).map((task) => (
                       <div
                         key={task.id}
-                        className="p-4 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl hover:shadow-md transition-all group cursor-pointer"
+                        className="p-3 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 group cursor-pointer"
                       >
                         <div className="flex items-start justify-between">
                           <div>
-                            <p className="font-semibold text-slate-800 dark:text-white line-clamp-1 group-hover:text-amber-500 transition-colors">
+                            <p className="font-semibold text-sm text-slate-800 dark:text-white line-clamp-1 group-hover:text-amber-500 transition-colors">
                               {task.title}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1.5">

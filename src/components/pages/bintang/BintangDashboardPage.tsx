@@ -12,7 +12,7 @@ const BintangDashboardPage: React.FC = () => {
 
     const tabs: Array<{ id: TabId; label: string; icon: React.ComponentType<any> }> = [
         { id: 'mentoring', label: 'Jurnal Pembinaan', icon: Star },
-        { id: 'violation-recap', label: 'Rekap Pelanggaran', icon: BarChart3 },
+        { id: 'violation-recap', label: 'Observasi & Rekap Poin', icon: BarChart3 },
         { id: 'evaluation', label: 'Evaluasi & Cetak Rapor', icon: ClipboardCheck },
     ];
 
@@ -30,12 +30,12 @@ const BintangDashboardPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="flex space-x-1 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-full max-w-3xl overflow-x-auto scrollbar-hide">
+            <div className="flex space-x-1 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-full max-w-3xl overflow-x-auto scrollbar-hide snap-x">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex-shrink-0 sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg whitespace-nowrap transition-all duration-200 ${
+                        className={`snap-start flex-shrink-0 sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg whitespace-nowrap transition-all duration-200 min-h-[44px] ${
                             activeTab === tab.id
                                 ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10'
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-700/50'
