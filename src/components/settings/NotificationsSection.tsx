@@ -4,7 +4,6 @@ import { useToast } from '../../hooks/useToast';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
-import { Database } from '../../services/database.types';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Switch } from '../ui/Switch';
 import { AlertCircleIcon, BellIcon, CheckCircleIcon, ClockIcon, CheckSquareIcon, CalendarIcon, RefreshCwIcon } from '../Icons';
@@ -28,7 +27,7 @@ import {
 } from '../../services/notificationSoundSettings';
 import { SettingsCard } from './SettingsCard';
 
-type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
+
 
 const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
 

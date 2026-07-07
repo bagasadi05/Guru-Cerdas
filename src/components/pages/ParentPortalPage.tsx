@@ -10,7 +10,7 @@ import { generateReportCardPDF } from '../exports/generateReportCardPDF';
 import { generateGuardianSummaryPDF } from '../exports/generateGuardianSummaryPDF';
 import { useSemester } from '../../contexts/SemesterContext';
 import { getSemesterTerm } from '../../utils/semesterUtils';
-import { CalendarIcon, SparklesIcon } from '../Icons';
+import { CalendarIcon } from '../Icons';
 import { isAchievementsBackendMissing } from '../../utils/achievementBackend';
 import {
     GlassCard,

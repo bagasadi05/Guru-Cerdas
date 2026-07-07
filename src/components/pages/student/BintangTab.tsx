@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PrinterIcon, AlertCircleIcon, ShieldAlertIcon } from '../../Icons';
-import { bintangService, calculateAspectPoints, type BintangGrade, type AspectPointsSummary } from '../../../services/bintangService';
+import { PrinterIcon, ShieldAlertIcon } from '../../Icons';
+import { bintangService, calculateAspectPoints, type BintangGrade } from '../../../services/bintangService';
 import { ViolationRow } from './types';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../hooks/useAuth';
 import { downloadBintangReportAction } from '../../../services/bintangPdfGenerator';
-import { BINTANG_THRESHOLDS } from '../../../services/bintangService';
-import { Database } from '../../../services/database.types';
 
 const GRADE_COLORS: Record<BintangGrade, string> = {
     A: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
@@ -23,7 +21,7 @@ interface BintangTabProps {
     violations: ViolationRow[];
 }
 
-export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName, violations }) => {
+export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: _studentName, violations }) => {
     const toast = useToast();
     const { user } = useAuth();
     const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
@@ -139,6 +137,15 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName, 
                 <AspectCard title="Kedisiplinan" score={kedisiplinanScore} points={aspects.KEDISIPLINAN.points} notes={currentEval?.kedisiplinan_notes} />
                 <AspectCard title="Kerapian" score={kerapianScore} points={aspects.KERAPIAN.points} notes={currentEval?.kerapian_notes} />
             </div>
+
+            {(currentEval?.catatan_wali || currentEval?.adab_notes) && (
+                <div className="mt-6 bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+                    <span className="font-bold text-sm text-slate-800 dark:text-slate-200 block">Catatan Wali Kelas</span>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 bg-indigo-50/20 dark:bg-indigo-950/10 p-4 rounded-xl border border-indigo-500/10 min-h-[60px] leading-relaxed">
+                        {currentEval?.catatan_wali || currentEval?.adab_notes}
+                    </p>
+                </div>
+            )}
 
             <div className="mt-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
                 <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3">Status Evaluasi Bulan Ini:</h4>

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { CustomDropdown } from '../../ui/CustomDropdown';
-import { Card } from '../../ui/Card';
 import { useAuth } from '../../../hooks/useAuth';
 import { bintangService } from '../../../services/bintangService';
 import { supabase } from '../../../services/supabase';

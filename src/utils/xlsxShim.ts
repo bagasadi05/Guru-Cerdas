@@ -38,7 +38,7 @@ export const utils = {
         workbook.Sheets[name] = worksheet;
     },
 
-    json_to_sheet(data: any[], options?: any): WorksheetShim {
+    json_to_sheet(data: any[], _options?: any): WorksheetShim {
         const worksheet = new WorksheetShim();
         if (!data || data.length === 0) return worksheet;
 
@@ -103,7 +103,7 @@ export const utils = {
 };
 
 // Reads file data asynchronously using exceljs
-export async function read(data: ArrayBuffer | Uint8Array, options?: any): Promise<WorkbookShim> {
+export async function read(data: ArrayBuffer | Uint8Array, _options?: any): Promise<WorkbookShim> {
     const ExcelJS = await getExcelJS();
     const workbook = new ExcelJS.Workbook();
     

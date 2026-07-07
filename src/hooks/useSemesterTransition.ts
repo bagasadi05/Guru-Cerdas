@@ -172,7 +172,7 @@ export function useSemesterTransition(): SemesterTransitionState {
 
             const { data: semData, error: semError } = await supabase
                 .from('semesters')
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 .insert([
                     {
                         academic_year_id: yearData.id,

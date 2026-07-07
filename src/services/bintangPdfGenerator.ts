@@ -4,12 +4,7 @@ import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 import { BintangGrade, bintangService, calculateAspectPoints } from './bintangService';
 import { supabase } from './supabase';
 
-const GRADE_DESC: Record<BintangGrade, string> = {
-    A: 'Sangat Baik',
-    B: 'Baik',
-    C: 'Cukup',
-    D: 'Kurang',
-};
+
 
 type AppUser = {
     id: string;
@@ -57,7 +52,7 @@ export const generateBintangReportPdf = async (
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
 
-    const PRIMARY = [12, 74, 110] as [number, number, number]; // slate-900 / sky-900
+
     const PRIMARY_DARK = [7, 54, 66] as [number, number, number]; // #073642
     const MUTED = [71, 85, 105] as [number, number, number]; // slate-600
     const BORDER = [203, 213, 225] as [number, number, number]; // slate-300
@@ -328,7 +323,9 @@ export const generateBintangReportPdf = async (
         
         doc.setFontSize(9);
         
-        const generalNotes = cleanNote(report.evaluation?.adab_notes) || '-';
+        const generalNotes = (report.evaluation?.catatan_wali && report.evaluation.catatan_wali.trim() !== '')
+            ? report.evaluation.catatan_wali
+            : (cleanNote(report.evaluation?.adab_notes) || '-');
         
         // Use doc.splitTextToSize to calculate height
         const notesLines = doc.splitTextToSize(generalNotes, notesWidth);

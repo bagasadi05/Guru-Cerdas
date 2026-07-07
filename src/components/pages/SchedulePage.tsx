@@ -5,7 +5,7 @@ import { staggerContainerVariants, staggerItemVariants } from '../../utils/anima
 import { triggerSubtleConfetti } from '../../utils/confetti';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { TrashIcon, PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, CheckCircleIcon } from '../Icons';
+import { PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, CheckCircleIcon } from '../Icons';
 import { Modal } from '../ui/Modal';
 import { MarkdownText } from '../ui/MarkdownText';
 import { generateOpenRouterJson } from '../../services/openRouterService';

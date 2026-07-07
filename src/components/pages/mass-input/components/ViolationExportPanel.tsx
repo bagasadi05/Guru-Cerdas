@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '../../../ui/Button';
-import { Select } from '../../../ui/Select';
 import { CustomDropdown } from '../../../ui/CustomDropdown';
 import { DownloadIcon, FileTextIcon, FileSpreadsheetIcon, ShieldAlertIcon, SearchIcon, SparklesIcon } from '../../../Icons';
 import { ClassRow, ViolationRow, StudentRow, StudentFilter } from '../types';

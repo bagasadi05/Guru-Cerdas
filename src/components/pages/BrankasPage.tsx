@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
-import { Card, CardInteractive, CardHeader, CardTitle, CardContent } from '../ui/Card';
+import { Card, CardInteractive, CardContent } from '../ui/Card';
 import {
   Archive,
   BookOpen,

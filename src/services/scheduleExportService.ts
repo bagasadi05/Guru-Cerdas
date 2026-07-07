@@ -60,7 +60,7 @@ export async function exportSchedulePdf(
         return headerY + 15;
     };
 
-    let startY = drawHeader();
+    const startY = drawHeader();
     let yLeft = startY;
     let yRight = startY;
 

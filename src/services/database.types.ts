@@ -110,6 +110,7 @@ export type Database = {
           kedisiplinan_notes: string | null
           kerapian_score: string | null
           kerapian_notes: string | null
+          catatan_wali: string | null
           evaluator_id: string
           is_published: boolean
           created_at: string
@@ -125,6 +126,7 @@ export type Database = {
           kedisiplinan_notes?: string | null
           kerapian_score?: string | null
           kerapian_notes?: string | null
+          catatan_wali?: string | null
           evaluator_id: string
           is_published?: boolean
           created_at?: string
@@ -140,6 +142,7 @@ export type Database = {
           kedisiplinan_notes?: string | null
           kerapian_score?: string | null
           kerapian_notes?: string | null
+          catatan_wali?: string | null
           evaluator_id?: string
           is_published?: boolean
           created_at?: string

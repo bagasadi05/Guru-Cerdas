@@ -7,7 +7,6 @@ import { useToast } from '../../../hooks/useToast';
 import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { Select } from '../../ui/Select';
 import { CustomDropdown } from '../../ui/CustomDropdown';
 import { Textarea } from '../../ui/Textarea';
 import { journalSchema, JournalFormValues } from './schemas';

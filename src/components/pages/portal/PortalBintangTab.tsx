@@ -71,6 +71,15 @@ export const PortalBintangTab: React.FC<PortalBintangTabProps> = ({ evaluations 
                                     </p>
                                 </div>
                             </div>
+                            
+                            {(evalItem.catatan_wali || evalItem.adab_notes) && (
+                                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2">
+                                    <span className="font-bold text-sm text-slate-800 dark:text-slate-200 block">Catatan Wali Kelas</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 bg-indigo-50/20 dark:bg-indigo-950/10 p-4 rounded-xl border border-indigo-500/10 min-h-[60px] leading-relaxed">
+                                        {evalItem.catatan_wali || evalItem.adab_notes}
+                                    </p>
+                                </div>
+                            )}
                         </GlassCard>
                     ))}
                 </div>

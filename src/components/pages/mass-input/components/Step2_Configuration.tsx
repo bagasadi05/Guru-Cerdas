@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Input } from '../../../ui/Input';
-import { Select } from '../../../ui/Select';
 import { CustomDropdown } from '../../../ui/CustomDropdown';
 import { Button } from '../../../ui/Button';
 import { Modal } from '../../../ui/Modal';

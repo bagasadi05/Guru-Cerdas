@@ -9,7 +9,7 @@ import {
   ClipboardPenIcon,
   BookOpenIcon,
 } from '../Icons';
-import { Trash2, History, BarChart3, ShieldCheck, Trophy, Archive, Star, ClipboardCheck, Edit3 } from 'lucide-react';
+import { Trash2, History, BarChart3, ShieldCheck, Trophy, Archive, Star } from 'lucide-react';
 
 export interface DashboardMenuItem {
   href: string;

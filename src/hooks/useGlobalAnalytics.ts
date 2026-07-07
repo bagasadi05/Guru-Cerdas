@@ -46,7 +46,7 @@ export const useGlobalAnalytics = () => {
                 let totalWithViolations = 0;
                 let criticalCount = 0;
                 const classPointsMap: Record<string, number> = {};
-                let allRecentViolations: RecentViolation[] = [];
+                const allRecentViolations: RecentViolation[] = [];
 
                 studentsData.forEach((student: {
                     name: string;

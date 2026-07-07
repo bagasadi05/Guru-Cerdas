@@ -34,7 +34,7 @@ type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
 
 const DEFAULT_KKM = 75;
-const EMPTY_ARRAY: never[] = [];
+
 
 const BulkGradeInputPage: React.FC = () => {
     const { user } = useAuth();

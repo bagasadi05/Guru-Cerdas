@@ -1,13 +1,9 @@
 import { supabase } from './supabase';
 import { violationList, type BintangAspect } from './violations.data';
 import type { 
-  BintangMentoringRow, 
   BintangMentoringInsert, 
-  BintangDailyObservationRow, 
   BintangDailyObservationInsert,
-  BintangEvaluationRow,
-  BintangEvaluationInsert,
-  BintangEvaluationUpdate
+  BintangEvaluationInsert
 } from '../types/database';
 
 // =============================================================================

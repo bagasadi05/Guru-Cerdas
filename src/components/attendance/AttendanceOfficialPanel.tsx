@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { AttendanceStatus, StudentRow } from '../../types';
 import { statusOptions } from '../../constants';
-import { ShieldCheckIcon, LockIcon, CheckCircleIcon } from 'lucide-react';
+import { ShieldCheckIcon } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
   isHomeroom: boolean;
 }
 
-export const AttendanceOfficialPanel: React.FC<Props> = ({ students, attendanceRecords, selectedDate, isHomeroom }) => {
+export const AttendanceOfficialPanel: React.FC<Props> = ({ students, attendanceRecords, selectedDate: _selectedDate, isHomeroom }) => {
   const { user } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();

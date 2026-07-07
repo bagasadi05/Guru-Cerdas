@@ -21,10 +21,12 @@ export const useInternalNotifications = () => {
 
     useEffect(() => {
         if (!user) {
-            setNotifications([]);
-            setUnreadCount(0);
-            setLoading(false);
-            return;
+            const timer = setTimeout(() => {
+                setNotifications([]);
+                setUnreadCount(0);
+                setLoading(false);
+            }, 0);
+            return () => clearTimeout(timer);
         }
 
         const fetchNotifications = async () => {
@@ -57,7 +59,7 @@ export const useInternalNotifications = () => {
                     table: 'internal_notifications',
                     filter: `user_id=eq.${user.id}`,
                 },
-                (payload) => {
+                (_payload) => {
                     fetchNotifications(); // Refresh on any change
                 }
             )

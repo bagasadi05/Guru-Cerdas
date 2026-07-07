@@ -3,19 +3,14 @@ import { Button } from '../../ui/Button';
 import { CustomDropdown } from '../../ui/CustomDropdown';
 import { Card } from '../../ui/Card';
 import { useAuth } from '../../../hooks/useAuth';
-import { bintangService, calculateAspectPoints, BINTANG_THRESHOLDS, type AspectPointsSummary, type BintangGrade } from '../../../services/bintangService';
+import { bintangService, calculateAspectPoints, type AspectPointsSummary, type BintangGrade } from '../../../services/bintangService';
 import { downloadBintangReportAction } from '../../../services/bintangPdfGenerator';
 import { supabase } from '../../../services/supabase';
 import { Send, FileText, CheckCircle, Zap, Shield, AlertTriangle, Sparkles, Info, Printer } from 'lucide-react';
 import { Modal } from '../../ui/Modal';
 import { useToast } from '../../../hooks/useToast';
 
-const CATATAN_WALAS_TEMPLATES = [
-    "Selalu berbakti kepada orang tua dan hormati guru. Pertahankan akhlak muliamu di mana pun berada.",
-    "Biasakan datang lebih awal, patuhi semua tata tertib, dan jadilah contoh bagi teman-teman.",
-    "Pastikan seragam selalu rapi, jaga kebersihan diri, dan perhatikan kelengkapan atribut sekolah.",
-    "Terus tingkatkan prestasimu, jadilah anak yang saleh/salehah dan membanggakan keluarga."
-];
+
 
 /** Grade badge color map */
 const gradeColors: Record<string, string> = {
@@ -55,7 +50,8 @@ export const BintangEvaluationPage: React.FC = () => {
         kerapian_score: 'A' as BintangGrade,
         adab_notes: '',
         kedisiplinan_notes: '',
-        kerapian_notes: ''
+        kerapian_notes: '',
+        catatan_wali: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
@@ -205,6 +201,28 @@ export const BintangEvaluationPage: React.FC = () => {
         return { adabNote, kedisNote, kerapianNote };
     };
 
+    const generateHomeroomNote = (adab: BintangGrade, kedis: BintangGrade, kerapian: BintangGrade) => {
+        const grades = [adab, kedis, kerapian];
+        const countA = grades.filter(g => g === 'A').length;
+        const countB = grades.filter(g => g === 'B').length;
+        const hasD = grades.includes('D');
+        const hasC = grades.includes('C');
+        
+        if (countA === 3) {
+            return "Alhamdulillah, perkembangan sikap Ananda pada bulan ini sangat baik di kelas. Pertahankan adab mulia, kedisiplinan, dan kerapian yang telah ditunjukkan.";
+        }
+        if (hasD) {
+            return "Ananda memerlukan perhatian khusus dan bimbingan ekstra, baik di sekolah maupun di rumah, untuk memperbaiki kedisiplinan dan kepatuhan terhadap tata tertib sekolah.";
+        }
+        if (hasC) {
+            return "Secara keseluruhan sikap Ananda sudah cukup baik, namun mohon bantuan Orang Tua untuk memotivasi Ananda agar lebih meningkatkan kedisiplinan dan kerapian berpakaian.";
+        }
+        if (countB >= 2 || (countA >= 1 && countB >= 1)) {
+            return "Perkembangan sikap Ananda pada bulan ini dinilai baik. Teruslah bersemangat dalam belajar dan selalu konsisten mempertahankan sikap yang positif di sekolah.";
+        }
+        return "Perkembangan sikap Ananda secara keseluruhan dinilai baik. Mohon terus dukung dan arahkan Ananda agar dapat terus konsisten meningkatkan pembiasaan baiknya.";
+    };
+
     const handleOpenEditModal = (student: any) => {
         setEditingStudent(student);
         const existingEval = getEvaluationForStudent(student.id);
@@ -217,17 +235,20 @@ export const BintangEvaluationPage: React.FC = () => {
                 kerapian_score: existingEval.kerapian_score || aspect.KERAPIAN.grade,
                 adab_notes: existingEval.adab_notes || '',
                 kedisiplinan_notes: existingEval.kedisiplinan_notes || '',
-                kerapian_notes: existingEval.kerapian_notes || ''
+                kerapian_notes: existingEval.kerapian_notes || '',
+                catatan_wali: existingEval.catatan_wali || ''
             });
         } else {
             const autoNotes = generateAutoNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade);
+            const autoHomeroomNote = generateHomeroomNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade);
             setFormData({
                 adab_score: aspect.ADAB.grade,
                 kedisiplinan_score: aspect.KEDISIPLINAN.grade,
                 kerapian_score: aspect.KERAPIAN.grade,
                 adab_notes: autoNotes.adabNote,
                 kedisiplinan_notes: autoNotes.kedisNote,
-                kerapian_notes: autoNotes.kerapianNote
+                kerapian_notes: autoNotes.kerapianNote,
+                catatan_wali: autoHomeroomNote
             });
         }
         setIsEditModalOpen(true);
@@ -246,7 +267,8 @@ export const BintangEvaluationPage: React.FC = () => {
                 kerapian_score: formData.kerapian_score,
                 adab_notes: formData.adab_notes,
                 kedisiplinan_notes: formData.kedisiplinan_notes,
-                kerapian_notes: formData.kerapian_notes
+                kerapian_notes: formData.kerapian_notes,
+                catatan_wali: formData.catatan_wali
             });
             toast.success('Rapor BINTANG berhasil disimpan');
             setIsEditModalOpen(false);
@@ -265,6 +287,7 @@ export const BintangEvaluationPage: React.FC = () => {
             const evalInserts = students.map(student => {
                 const aspect = getAspectSummary(student.id);
                 const autoNotes = generateAutoNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade);
+                const autoHomeroomNote = generateHomeroomNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade);
                 return {
                     student_id: student.id,
                     month: selectedMonth,
@@ -275,6 +298,7 @@ export const BintangEvaluationPage: React.FC = () => {
                     kedisiplinan_notes: autoNotes.kedisNote,
                     kerapian_score: aspect.KERAPIAN.grade,
                     kerapian_notes: autoNotes.kerapianNote,
+                    catatan_wali: autoHomeroomNote
                 };
             });
             
@@ -580,6 +604,23 @@ export const BintangEvaluationPage: React.FC = () => {
                     {renderAspectSection('ADAB', 'adab_score')}
                     {renderAspectSection('KEDISIPLINAN', 'kedisiplinan_score')}
                     {renderAspectSection('KERAPIAN', 'kerapian_score')}
+
+                    <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
+                        <div className="flex items-center gap-2 mb-3">
+                            <FileText size={18} className="text-emerald-600 dark:text-emerald-400" />
+                            <span className="font-bold text-sm text-slate-800 dark:text-slate-200">Catatan Wali Kelas</span>
+                        </div>
+                        <div className="w-full">
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tuliskan pesan atau catatan perkembangan umum siswa untuk Orang Tua / Wali</label>
+                            <textarea
+                                className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                rows={3}
+                                value={formData.catatan_wali}
+                                onChange={(e) => setFormData({...formData, catatan_wali: e.target.value})}
+                                placeholder="Tuliskan catatan umum wali kelas di sini..."
+                            />
+                        </div>
+                    </div>
 
 
 

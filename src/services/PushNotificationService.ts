@@ -107,7 +107,7 @@ export class PushNotificationService {
     if (!userId) {
       throw new Error("User belum login.");
     }
-    const existing = await unsubscribeFromPush();
+    await unsubscribeFromPush();
 
     const { error } = await db
       .from("push_subscriptions")

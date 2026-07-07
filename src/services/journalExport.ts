@@ -309,7 +309,7 @@ export const exportJournalsToPDF = async (options: JournalPdfExportOptions): Pro
         },
         didDrawPage: (data) => {
             // Draw page number in footer
-            const pageCount = doc.getNumberOfPages();
+
             doc.setFontSize(8);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(100, 100, 100);

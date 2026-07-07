@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS public.bintang_monthly_evaluations (
     kedisiplinan_notes TEXT,
     kerapian_score VARCHAR(5),
     kerapian_notes TEXT,
+    catatan_wali TEXT,
     evaluator_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     is_published BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,

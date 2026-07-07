@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
 import { Modal } from '../ui/Modal';
 import {
     PlusIcon,

@@ -88,9 +88,6 @@ const renderJournalForm = (props = {}) => {
 
   return {
     ...utils,
-    // Helper helpers to retrieve inputs easily by name from document.body (due to Modal portal)
-    getClassSelect: () => document.body.querySelector('select[name="class_id"]') as HTMLSelectElement,
-    getSubjectInput: () => document.body.querySelector('input[name="subject"]') as HTMLInputElement,
     getTopicInput: () => document.body.querySelector('input[name="topic"]') as HTMLInputElement,
     getDateInput: () => document.body.querySelector('input[name="date"]') as HTMLInputElement,
   };
@@ -104,17 +101,16 @@ describe('JournalForm Validation', () => {
   });
 
   it('submits successfully when all required fields are valid', async () => {
-    const { getClassSelect, getSubjectInput, getTopicInput } = renderJournalForm();
+    const { getTopicInput } = renderJournalForm();
 
-    // Fill Class select
-    fireEvent.change(getClassSelect(), {
-      target: { value: '8be128d5-11ea-42f8-98e3-059954ccab5a' },
-    });
+    // Fill Class select via CustomDropdown
+    fireEvent.click(screen.getByRole('button', { name: /-- pilih kelas --/i }));
+    fireEvent.click(screen.getByText('Class 10-A'));
 
-    // Fill Subject
-    fireEvent.change(getSubjectInput(), {
-      target: { value: 'Biologi' },
-    });
+    // Fill Subject via CustomDropdown
+    fireEvent.click(screen.getByRole('button', { name: /-- pilih mapel --/i }));
+    const subjectOpt = screen.getAllByText('Matematika').find(el => el.tagName === 'SPAN') || screen.getAllByText('Matematika')[0];
+    fireEvent.click(subjectOpt);
 
     // Fill Topic
     fireEvent.change(getTopicInput(), {
@@ -128,7 +124,7 @@ describe('JournalForm Validation', () => {
       expect(mockCreateMutate).toHaveBeenCalledWith(
         expect.objectContaining({
           class_id: '8be128d5-11ea-42f8-98e3-059954ccab5a',
-          subject: 'Biologi',
+          subject: 'Matematika',
           topic: 'Sel Hewan dan Tumbuhan',
         })
       );
@@ -136,14 +132,9 @@ describe('JournalForm Validation', () => {
   });
 
   it('shows validation errors when required fields are empty', async () => {
-    const { getClassSelect, getSubjectInput, getTopicInput } = renderJournalForm();
+    renderJournalForm();
 
-    // Ensure they are empty
-    fireEvent.change(getClassSelect(), { target: { value: '' } });
-    fireEvent.change(getSubjectInput(), { target: { value: '' } });
-    fireEvent.change(getTopicInput(), { target: { value: '' } });
-
-    // Submit
+    // Default values are already empty, so we just submit
     fireEvent.click(screen.getByRole('button', { name: /simpan jurnal/i }));
 
     await waitFor(() => {
@@ -156,14 +147,16 @@ describe('JournalForm Validation', () => {
   });
 
   it('shows error if topic exceeds 200 characters', async () => {
-    const { getClassSelect, getSubjectInput, getTopicInput } = renderJournalForm();
+    const { getTopicInput } = renderJournalForm();
 
-    fireEvent.change(getClassSelect(), {
-      target: { value: '8be128d5-11ea-42f8-98e3-059954ccab5a' },
-    });
-    fireEvent.change(getSubjectInput(), {
-      target: { value: 'Biologi' },
-    });
+    // Fill Class select via CustomDropdown
+    fireEvent.click(screen.getByRole('button', { name: /-- pilih kelas --/i }));
+    fireEvent.click(screen.getByText('Class 10-A'));
+
+    // Fill Subject via CustomDropdown
+    fireEvent.click(screen.getByRole('button', { name: /-- pilih mapel --/i }));
+    const subjectOpt = screen.getAllByText('Matematika').find(el => el.tagName === 'SPAN') || screen.getAllByText('Matematika')[0];
+    fireEvent.click(subjectOpt);
 
     // Long topic (201 chars)
     const longTopic = 'a'.repeat(201);
@@ -181,14 +174,17 @@ describe('JournalForm Validation', () => {
   });
 
   it('shows error if date format is invalid', async () => {
-    const { getClassSelect, getSubjectInput, getTopicInput, getDateInput } = renderJournalForm();
+    const { getTopicInput, getDateInput } = renderJournalForm();
 
-    fireEvent.change(getClassSelect(), {
-      target: { value: '8be128d5-11ea-42f8-98e3-059954ccab5a' },
-    });
-    fireEvent.change(getSubjectInput(), {
-      target: { value: 'Biologi' },
-    });
+    // Fill Class select via CustomDropdown
+    fireEvent.click(screen.getByRole('button', { name: /-- pilih kelas --/i }));
+    fireEvent.click(screen.getByText('Class 10-A'));
+
+    // Fill Subject via CustomDropdown
+    fireEvent.click(screen.getByRole('button', { name: /-- pilih mapel --/i }));
+    const subjectOpt = screen.getAllByText('Matematika').find(el => el.tagName === 'SPAN') || screen.getAllByText('Matematika')[0];
+    fireEvent.click(subjectOpt);
+
     fireEvent.change(getTopicInput(), {
       target: { value: 'Sel Tumbuhan' },
     });

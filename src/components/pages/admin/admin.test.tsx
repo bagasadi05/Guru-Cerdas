@@ -59,7 +59,7 @@ describe('Admin Module - StatCard Component', () => {
     it.each([
         ['indigo', 'from-indigo-500'],
         ['blue', 'from-blue-500'],
-        ['green', 'from-green-500'],
+        ['green', 'from-emerald-500'],
         ['orange', 'from-orange-500'],
         ['purple', 'from-purple-500'],
         ['pink', 'from-pink-500'],
@@ -91,7 +91,7 @@ describe('Admin Module - getRoleBadgeClass', () => {
 
     it('returns correct class for student role', () => {
         const result = getRoleBadgeClass('student');
-        expect(result).toContain('green');
+        expect(result).toContain('emerald');
     });
 
     it('returns correct class for parent role', () => {

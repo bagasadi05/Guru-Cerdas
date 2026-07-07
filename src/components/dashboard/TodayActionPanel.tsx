@@ -69,27 +69,6 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
     const navigate = useNavigate();
     const { t } = useI18n();
 
-    if (isLoading) {
-        return (
-            <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
-                <div className="p-5 border-b border-slate-200/70 dark:border-slate-700/60">
-                    <Skeleton className="h-4 w-24 mb-3" />
-                    <Skeleton className="h-6 w-48 mb-1" />
-                    <Skeleton className="h-4 w-64" />
-                </div>
-                <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
-                    {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="rounded-2xl border border-slate-200/70 dark:border-slate-700/60 p-4">
-                            <Skeleton className="h-10 w-10 rounded-2xl mb-4" />
-                            <Skeleton className="h-4 w-24 mb-2" />
-                            <Skeleton className="h-3 w-full" />
-                        </div>
-                    ))}
-                </div>
-            </section>
-        );
-    }
-
     const actions = useMemo<TodayActionItem[]>(() => {
         if (!data) return [];
         const items: TodayActionItem[] = [];
@@ -170,6 +149,27 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
 
         return items.slice(0, 4);
     }, [data, t]);
+
+    if (isLoading) {
+        return (
+            <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+                <div className="p-5 border-b border-slate-200/70 dark:border-slate-700/60">
+                    <Skeleton className="h-4 w-24 mb-3" />
+                    <Skeleton className="h-6 w-48 mb-1" />
+                    <Skeleton className="h-4 w-64" />
+                </div>
+                <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="rounded-2xl border border-slate-200/70 dark:border-slate-700/60 p-4">
+                            <Skeleton className="h-10 w-10 rounded-2xl mb-4" />
+                            <Skeleton className="h-4 w-24 mb-2" />
+                            <Skeleton className="h-3 w-full" />
+                        </div>
+                    ))}
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">

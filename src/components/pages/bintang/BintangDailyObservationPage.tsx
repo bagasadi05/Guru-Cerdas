@@ -189,7 +189,6 @@ export const BintangDailyObservationPage: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-4 sm:px-6">
                         {(['ADAB', 'KEDISIPLINAN', 'KERAPIAN'] as const).map(aspect => {
                             const data = classSummary[aspect];
-                            const threshold = BINTANG_THRESHOLDS.find(t => t.grade === data.grade)!;
                             return (
                                 <div key={aspect} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-4">
                                     <div className="flex items-center gap-2 mb-3">

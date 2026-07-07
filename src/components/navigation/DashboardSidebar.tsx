@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCapIcon, LogoutIcon } from '../Icons';
+import { LogoutIcon } from '../Icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useSound } from '../../hooks/useSound';
 import { getDashboardNavSections } from './dashboardMenuConfig';

@@ -28,9 +28,7 @@ export const SemesterSelector: React.FC<SemesterSelectorProps> = ({
 }) => {
     const { semesters, isLoading } = useSemester();
 
-    const sizeClasses = size === 'sm'
-        ? 'h-9 text-sm pl-9'
-        : 'h-10 text-sm pl-10';
+
 
 
     const activeSemester = semesters.find(s => s.is_active);

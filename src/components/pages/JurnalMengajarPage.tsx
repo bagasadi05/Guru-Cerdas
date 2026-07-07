@@ -7,14 +7,10 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTeachingJournals, useDeleteJournal } from '../../hooks/useTeachingJournals';
 import { isTeachingJournalsBackendMissing } from '../../utils/journalBackend';
 import { supabase } from '../../services/supabase';
-import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
 import { CustomDropdown } from '../ui/CustomDropdown';
 import { Skeleton } from '../ui/Skeleton';
-import { EmptyState } from '../ui/EmptyState';
-import { useToast } from '../../hooks/useToast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import type { TeachingJournal, TeachingJournalFilters } from '../../types/teachingJournal';
 import { JournalForm } from './journal/JournalForm';
@@ -445,7 +441,7 @@ const JurnalMengajarPage: React.FC = () => {
                 {/* Timeline connector line for visual polish */}
                 <div className="absolute left-6 top-6 bottom-6 w-px bg-slate-200 dark:bg-slate-800 hidden md:block z-0" />
                 
-                {journals.map((j, idx) => {
+                {journals.map((j) => {
                   const className = j.class_id ? classMap.get(j.class_id) ?? 'Kelas tidak diketahui' : 'Tanpa kelas';
                   const activities = j.activities;
                   return (

@@ -30,7 +30,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
 import { AttendanceStreakIndicator } from '../attendance/AttendanceStreakIndicator';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { BarChart3, Flame } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 
 const AttendancePage: React.FC = () => {
     const {

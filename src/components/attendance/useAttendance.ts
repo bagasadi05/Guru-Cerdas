@@ -283,19 +283,7 @@ export const useAttendance = () => {
         return summary;
     }, [attendanceRecords]);
 
-    /** Official status summary — counted from get_attendance_status RPC or fallback */
-    const officialSummary = useMemo(() => {
-        const summary = statusOptions.reduce((acc, opt) => ({ ...acc, [opt.value]: 0 }), {} as Record<AttendanceStatus, number>);
-        if (!students || !existingAttendance) return summary;
-        // Count official_status where available, fallback to per-teacher status
-        const byStudent: Record<string, AttendanceStatus> = {};
-        Object.values(existingAttendance).forEach((rec: any) => {
-            const status = rec.official_status || rec.status;
-            byStudent[rec.student_id] = status;
-        });
-        Object.values(byStudent).forEach((s) => { summary[s]++ });
-        return summary;
-    }, [existingAttendance, students]);
+
 
     const unmarkedStudents = useMemo(() => {
         if (!students) return [];

@@ -32,7 +32,9 @@ describe('PortalNavigation', () => {
     it('shows badges for attention and unread messages', () => {
         render(<PortalNavigationHarness unreadMessagesCount={3} attentionCount={2} />);
 
-        const [berandaTab, , , komunikasiTab] = screen.getAllByRole('tab');
+        const tabs = screen.getAllByRole('tab');
+        const berandaTab = tabs[0];
+        const komunikasiTab = tabs[4];
 
         expect(berandaTab).toHaveTextContent('2');
         expect(komunikasiTab).toHaveTextContent('3');
