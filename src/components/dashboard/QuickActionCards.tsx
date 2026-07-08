@@ -13,6 +13,7 @@ import {
   ClockIcon,
   CheckSquareIcon,
 } from '../Icons';
+import { useAccessibility } from '../ui/AccessibilityFeatures';
 
 interface QuickAction {
   id: string;
@@ -36,6 +37,8 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
   pendingGrades = 0,
   incompleteTasks = 0,
 }) => {
+  const { isEasyMode } = useAccessibility();
+
   const quickActions: QuickAction[] = [
     {
       id: 'attendance',
@@ -84,12 +87,16 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
         {quickActions.map((action) => (
           <Link
             key={action.id}
             to={action.link}
-            className="group relative flex flex-col items-start h-full p-5 lg:p-6 rounded-3xl overflow-hidden bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500 hover:-translate-y-1"
+            className={`group relative flex flex-col items-start h-full p-6 lg:p-8 rounded-3xl overflow-hidden bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
+              isEasyMode
+                ? 'border-emerald-500 shadow-lg ring-2 ring-emerald-500/10 min-h-[180px]'
+                : 'border-slate-200/80 dark:border-white/10 shadow-sm'
+            }`}
           >
             {/* Animated Glow Background on Hover */}
             <div className={`absolute inset-0 bg-gradient-to-br ${action.glowColor} opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none blur-xl`} />
@@ -97,8 +104,8 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
             <div className="relative z-10 flex flex-col w-full">
               <div className="flex items-center justify-between mb-4 w-full">
                 {/* Icon Container with bouncy pop */}
-                <div className={`p-3.5 rounded-2xl ${action.iconBg} ${action.iconColor} shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3`}>
-                  {React.cloneElement(action.icon as React.ReactElement, { className: 'w-6 h-6' })}
+                <div className={`p-4 rounded-2xl ${action.iconBg} ${action.iconColor} shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3`}>
+                  {React.cloneElement(action.icon as React.ReactElement, { className: isEasyMode ? 'w-8 h-8' : 'w-6 h-6' })}
                 </div>
 
                 {/* Badges */}
@@ -121,11 +128,15 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
               </div>
 
               {/* Title & Description */}
-              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300">
+              <h3 className={`font-bold text-slate-800 dark:text-slate-100 mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300 ${
+                isEasyMode ? 'text-xl md:text-2xl mt-3' : 'text-lg'
+              }`}>
                 {action.title}
               </h3>
               
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors duration-300">
+              <p className={`font-medium text-slate-500 dark:text-slate-400 leading-relaxed group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors duration-300 ${
+                isEasyMode ? 'text-base md:text-lg' : 'text-sm'
+              }`}>
                 {action.description}
               </p>
             </div>
