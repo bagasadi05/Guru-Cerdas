@@ -105,7 +105,7 @@ export const bintangService = {
         if (studentIds.length === 0) return [];
       }
 
-      let query = supabase.from('bintang_mentoring_logs').select('*');
+      let query = supabase.from('bintang_mentoring_logs').select('*, students(name)');
       if (studentIds) {
         query = query.in('student_id', studentIds);
       }
@@ -209,7 +209,7 @@ export const bintangService = {
 
       const { data, error } = await supabase
         .from('violations')
-        .select('id, student_id, description, points, date, severity')
+        .select('id, student_id, description, points, date, severity, students(name)')
         .in('student_id', studentIds)
         .gte('date', startDate)
         .lt('date', endDate)
