@@ -2664,7 +2664,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           statusColor={getStatusColor(developmentBadges.cognitive.color)}
           statusDot={developmentBadges.cognitive.dot}
           score={overallAverage}
-          highlights={analysis.cognitive.strengths.slice(0, 3)}
+          highlights={analysis?.cognitive?.strengths?.slice(0, 3) || []}
         />
         <DevelopmentScoreCard
           aspect="affective"
@@ -2672,7 +2672,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           statusColor={getStatusColor(developmentBadges.affective.color)}
           statusDot={developmentBadges.affective.dot}
           score={attendanceRate}
-          highlights={analysis.affective.positiveCharacters.slice(0, 3)}
+          highlights={analysis?.affective?.positiveCharacters?.slice(0, 3) || []}
         />
         <DevelopmentScoreCard
           aspect="psychomotor"
@@ -2680,7 +2680,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           statusColor={getStatusColor(developmentBadges.psychomotor.color)}
           statusDot={developmentBadges.psychomotor.dot}
           score={keaktifan}
-          highlights={analysis.psychomotor.outstandingSkills.slice(0, 3)}
+          highlights={analysis?.psychomotor?.outstandingSkills?.slice(0, 3) || []}
         />
       </div>
 
@@ -2807,13 +2807,13 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
             {/* Rencana Pengembangan */}
             <DevelopmentTimeline
-              threeMonthTargets={analysis.recommendations.developmentPlan.threeMonths}
-              sixMonthTargets={analysis.recommendations.developmentPlan.sixMonths}
+              threeMonthTargets={analysis?.recommendations?.developmentPlan?.threeMonths || []}
+              sixMonthTargets={analysis?.recommendations?.developmentPlan?.sixMonths || []}
             />
 
             {/* Warning Banner */}
             <WarningBanner
-              warnings={analysis.recommendations.warningsSigns}
+              warnings={analysis?.recommendations?.warningsSigns || []}
             />
 
             {/* Footer Note */}
