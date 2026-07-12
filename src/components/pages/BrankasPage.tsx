@@ -54,7 +54,7 @@ interface ClassItem {
 }
 
 const BrankasPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
   const { activeAcademicYear } = useSemester();
@@ -77,15 +77,20 @@ const BrankasPage: React.FC = () => {
 
   // 1. Fetch ALL classes (both active and archived)
   const { data: allClasses = [], isLoading: loadingClasses } = useQuery<ClassItem[]>({
-    queryKey: ['classes', user?.id, 'all_classes_brankas'],
+    queryKey: ['classes', 'all_classes_brankas', user?.id, isAdmin],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from('classes')
         .select('*')
         .is('deleted_at', null)
-        .eq('user_id', user.id)
         .order('name');
+        
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id);
+      }
+      
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as unknown as ClassItem[];
@@ -526,7 +531,7 @@ const BrankasPage: React.FC = () => {
                           </span>
                         </h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
-                          Kelas {detailClass.name}
+                          {detailClass.name.toLowerCase().startsWith('kelas') ? detailClass.name : `Kelas ${detailClass.name}`}
                         </p>
                       </div>
                     </div>
@@ -725,7 +730,7 @@ const BrankasPage: React.FC = () => {
                         </div>
 
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex flex-wrap items-center gap-2 mb-2">
-                          Kelas {cls.name}
+                          {cls.name.toLowerCase().startsWith('kelas') ? cls.name : `Kelas ${cls.name}`}
                           {cls.grade_level && (
                             <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-semibold rounded border border-slate-200 dark:border-slate-700">
                               Tingkat {cls.grade_level}

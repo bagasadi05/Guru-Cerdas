@@ -85,7 +85,7 @@ const baseMoreMenuItems: DashboardMenuItem[] = [
   { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
 ];
 
-export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false, isEasyMode: boolean = false): DashboardMenuSection[] => {
+export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false, _isEasyMode: boolean = false): DashboardMenuSection[] => {
   let sections = baseNavSections.map((section) => ({
     ...section,
     items: [...section.items],
@@ -124,7 +124,7 @@ export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, 
   return sections;
 };
 
-export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false, isEasyMode: boolean = false): DashboardMenuItem[] => {
+export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false, _isEasyMode: boolean = false): DashboardMenuItem[] => {
   let items = [...baseMoreMenuItems];
   
   if (!isAdmin && !isHomeroomTeacher) {

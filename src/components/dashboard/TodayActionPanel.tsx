@@ -12,7 +12,6 @@ import type { DashboardQueryData } from '../../types';
 import { isTaskOverdue, isTaskDueSoon } from '../../utils/dateHelpers';
 import { useI18n } from '../../utils/i18n';
 import { Skeleton } from '../ui/Skeleton';
-import { useAccessibility } from '../ui/AccessibilityFeatures';
 
 interface TodayActionPanelProps {
     data: DashboardQueryData | null | undefined;

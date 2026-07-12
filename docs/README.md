@@ -16,6 +16,7 @@ docs/
 │   └── offline-sync.md     # PWA offline strategy
 ├── guides/                 # Developer Guides
 │   ├── getting-started.md  # Quick start guide
+│   ├── accessibility.md    # Accessibility and Easy Mode
 │   ├── contributing.md     # Contribution guidelines
 │   ├── deployment.md       # Deployment instructions
 │   ├── testing.md          # Testing strategies
@@ -29,8 +30,9 @@ docs/
 ### For New Developers
 
 1. [Getting Started](./guides/getting-started.md) - Setup development environment
-2. [Contributing Guide](./guides/contributing.md) - How to contribute
-3. [Architecture Overview](./architecture/overview.md) - Understand the system
+2. [Aksesibilitas & Mode Mudah](./guides/accessibility.md) - Penggunaan dan pemeliharaan Mode Mudah
+3. [Contributing Guide](./guides/contributing.md) - How to contribute
+4. [Architecture Overview](./architecture/overview.md) - Understand the system
 
 ### For Understanding the Codebase
 

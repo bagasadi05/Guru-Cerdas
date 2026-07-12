@@ -1,5 +1,6 @@
-import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogoutIcon } from '../Icons';
 import { useAuth } from '../../hooks/useAuth';
@@ -15,10 +16,39 @@ interface DashboardSidebarProps {
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, isHomeroomTeacher, onLinkClick }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, userRole } = useAuth();
   const { playClick } = useSound();
   const { isEasyMode } = useAccessibility();
   const navSections = getDashboardNavSections(isAdmin, userRole, isHomeroomTeacher, isEasyMode);
+  const [showAllEasyMenu, setShowAllEasyMenu] = useState(false);
+
+  const easyModePaths = useMemo(() => new Set([
+    '/dashboard',
+    '/absensi',
+    '/siswa',
+    '/jadwal',
+    '/jurnal',
+    '/tugas',
+  ]), []);
+
+  const isOutsideEasyMenu = navSections.some((section) =>
+    section.items.some((item) =>
+      !easyModePaths.has(item.href) && (location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)),
+    ),
+  );
+
+  const displayedNavSections = useMemo(() => {
+    if (!isEasyMode || showAllEasyMenu || isOutsideEasyMenu) {
+      return navSections;
+    }
+
+    const primaryItems = navSections.flatMap((section) =>
+      section.items.filter((item) => easyModePaths.has(item.href)),
+    );
+
+    return [{ id: 'easy-primary', label: 'Menu Utama', items: primaryItems }];
+  }, [easyModePaths, isEasyMode, isOutsideEasyMenu, navSections, showAllEasyMenu]);
 
   const handleLogout = async () => {
     if (onLinkClick) {
@@ -92,7 +122,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, isHomeroom
             className="flex-1 space-y-5 overflow-y-auto scrollbar-hide pr-1"
             aria-label="Main navigation"
           >
-            {navSections.map((section, sectionIndex) => (
+            {displayedNavSections.map((section, sectionIndex) => (
               <div
                 key={section.id}
                 className={
@@ -148,6 +178,23 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, isHomeroom
               </div>
             ))}
           </nav>
+
+          {isEasyMode && (
+            <button
+              type="button"
+              onClick={() => setShowAllEasyMenu((isOpen) => !isOpen)}
+              disabled={isOutsideEasyMenu}
+              className="mb-2 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 disabled:cursor-default disabled:opacity-80 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
+              aria-expanded={showAllEasyMenu || isOutsideEasyMenu}
+            >
+              {showAllEasyMenu || isOutsideEasyMenu ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {isOutsideEasyMenu
+                ? 'Menu lengkap untuk halaman ini'
+                : showAllEasyMenu
+                  ? 'Tampilkan menu utama'
+                  : 'Tampilkan semua menu'}
+            </button>
+          )}
 
           <div className="mt-auto pt-4 border-t border-slate-200 dark:border-white/5">
             <button

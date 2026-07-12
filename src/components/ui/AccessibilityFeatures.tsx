@@ -43,7 +43,7 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
         if (typeof localStorage !== 'undefined') {
             return localStorage.getItem('reducedMotion') === 'true';
         }
-        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     });
 
     const [fontSize, setFontSize] = useState<'normal' | 'large' | 'x-large'>(() => {
@@ -85,6 +85,7 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
 
     useEffect(() => {
         localStorage.setItem('isEasyMode', String(isEasyMode));
+        document.documentElement.setAttribute('data-easy-mode', String(isEasyMode));
         if (isEasyMode) {
             document.documentElement.classList.add('high-contrast');
             document.documentElement.setAttribute('data-font-size', 'large');
@@ -113,6 +114,11 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
             }}
         >
             {children}
+            <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {isEasyMode
+                    ? 'Mode mudah aktif. Teks diperbesar, kontras ditingkatkan, dan navigasi diprioritaskan untuk tugas harian.'
+                    : 'Mode mudah nonaktif.'}
+            </p>
         </AccessibilityContext.Provider>
     );
 };

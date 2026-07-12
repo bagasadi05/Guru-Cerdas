@@ -160,7 +160,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <SkipLinks />
 
       {/* Background Gradients */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      <div className="easy-mode-decorative fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[100px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-slate-500/5 rounded-full blur-[100px]"></div>
       </div>

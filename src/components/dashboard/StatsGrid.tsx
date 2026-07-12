@@ -21,7 +21,6 @@ import { staggerContainerVariants, statsCardVariants } from '../../utils/animati
 import { AnimatedCounter } from '../ui/AnimatedCounter';
 import { isTaskOverdue, isTaskDueToday } from '../../utils/dateHelpers';
 import type { DashboardQueryData } from '../../types';
-import { useAccessibility } from '../ui/AccessibilityFeatures';
 
 // =============================================================================
 // TYPES

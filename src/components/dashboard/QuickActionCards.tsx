@@ -13,7 +13,6 @@ import {
   ClockIcon,
   CheckSquareIcon,
 } from '../Icons';
-import { useAccessibility } from '../ui/AccessibilityFeatures';
 
 interface QuickAction {
   id: string;

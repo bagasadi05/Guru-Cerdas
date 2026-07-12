@@ -75,6 +75,30 @@ html[data-font-size="x-large"] .text-sm {
     font-size: 1.125rem;
 }
 
+/* Mode mudah keeps every feature available while making the interface calmer and easier to target. */
+html[data-easy-mode="true"] {
+    scroll-behavior: auto;
+}
+
+html[data-easy-mode="true"] button,
+html[data-easy-mode="true"] a,
+html[data-easy-mode="true"] [role="button"] {
+    min-height: 44px;
+}
+
+html[data-easy-mode="true"] .easy-mode-decorative {
+    display: none;
+}
+
+html[data-easy-mode="true"] *,
+html[data-easy-mode="true"] *::before,
+html[data-easy-mode="true"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+
 /* Focus Visible - Better focus indicators */
 *:focus-visible {
     outline: 2px solid #6366f1;

@@ -35,11 +35,12 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
                     : 'border-black/5 bg-white/50 text-slate-600 hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:text-slate-300 dark:hover:bg-slate-800'
                 }`}
                 aria-label={isEasyMode ? "Nonaktifkan Mode Mudah" : "Aktifkan Mode Mudah"}
-                title="Mode Mudah (Untuk Guru Senior)"
+                aria-pressed={isEasyMode}
+                title={isEasyMode ? 'Nonaktifkan Mode Mudah' : 'Aktifkan Mode Mudah'}
             >
                 <Eye className="w-5 h-5" />
                 <span className="text-sm font-medium hidden sm:block">
-                    {isEasyMode ? 'Mode Mudah Aktif' : 'Mode Mudah'}
+                    {isEasyMode ? 'Mode Mudah aktif' : 'Mode Mudah'}
                 </span>
             </button>
 
