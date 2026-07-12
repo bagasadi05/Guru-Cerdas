@@ -5,6 +5,7 @@ import { LogoutIcon } from '../Icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useSound } from '../../hooks/useSound';
 import { getDashboardNavSections } from './dashboardMenuConfig';
+import { useAccessibility } from '../ui/AccessibilityFeatures';
 
 interface DashboardSidebarProps {
   isAdmin: boolean;
@@ -16,7 +17,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, isHomeroom
   const navigate = useNavigate();
   const { user, logout, userRole } = useAuth();
   const { playClick } = useSound();
-  const navSections = getDashboardNavSections(isAdmin, userRole, isHomeroomTeacher);
+  const { isEasyMode } = useAccessibility();
+  const navSections = getDashboardNavSections(isAdmin, userRole, isHomeroomTeacher, isEasyMode);
 
   const handleLogout = async () => {
     if (onLinkClick) {

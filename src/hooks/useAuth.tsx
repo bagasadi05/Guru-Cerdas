@@ -207,14 +207,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const { data, error } = await supabase
           .from('user_roles')
-          .select('role')
+          .select('role, is_approved')
           .eq('user_id', userId)
           .single();
         
-        logger.debug(`fetchUserRole fetched: role=${data?.role}, error=${error?.message || 'none'}`, 'Auth');
+        logger.debug(`fetchUserRole fetched: role=${data?.role}, is_approved=${data?.is_approved}, error=${error?.message || 'none'}`, 'Auth');
         if (active) {
           if (!error && data) {
-            setUserRole(data.role);
+            if (data.is_approved === false) {
+              await supabase.auth.signOut();
+              toast.error('Akun Anda belum disetujui oleh Admin. Silakan hubungi Admin untuk persetujuan.');
+              setSession(null);
+              setUser(null);
+              setUserRole(null);
+            } else {
+              setUserRole(data.role);
+            }
           } else {
             setUserRole(null);
           }
@@ -240,7 +248,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       active = false;
     };
-  }, [session?.user?.id]);
+  }, [session?.user?.id, toast]);
 
   // 2. Initialize session and listen for auth state changes
   useEffect(() => {

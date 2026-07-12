@@ -131,7 +131,7 @@ const SchedulePage: React.FC = () => {
     });
 
     const { data: classes = [] } = useQuery({
-        queryKey: ['classes', user?.id],
+        queryKey: ['classes', 'schedule', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')

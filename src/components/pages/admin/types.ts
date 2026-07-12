@@ -9,6 +9,7 @@ export interface UserRoleRecord {
     full_name: string | null;
     created_at?: string;
     deleted_at?: string | null;
+    is_approved?: boolean | null;
 }
 
 export interface SystemStats {

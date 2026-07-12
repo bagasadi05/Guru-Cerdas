@@ -31,15 +31,6 @@
     --tw-text-opacity: 1 !important;
 }
 
-.high-contrast * {
-    border-color: currentColor !important;
-}
-
-.high-contrast button,
-.high-contrast a {
-    text-decoration: underline;
-}
-
 .high-contrast .text-slate-400 {
     color: #000 !important;
 }
@@ -56,10 +47,6 @@
 .dark.high-contrast .bg-slate-800 {
     background-color: #000 !important;
     border: 2px solid #fff !important;
-}
-
-.high-contrast .shadow {
-    box-shadow: 0 0 0 2px currentColor !important;
 }
 
 /* Reduced Motion */

@@ -51,7 +51,7 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
 
     // Fetch classes
     const { data: classes = [] } = useQuery({
-        queryKey: ['classes', user?.id],
+        queryKey: ['classes', 'mine_extracurricular', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')

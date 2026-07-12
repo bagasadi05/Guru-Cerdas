@@ -25,6 +25,8 @@ interface AccessibilityContextType {
     toggleReducedMotion: () => void;
     fontSize: 'normal' | 'large' | 'x-large';
     setFontSize: (size: 'normal' | 'large' | 'x-large') => void;
+    isEasyMode: boolean;
+    toggleEasyMode: () => void;
 }
 
 const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
@@ -51,6 +53,13 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
         return 'normal';
     });
 
+    const [isEasyMode, setIsEasyMode] = useState(() => {
+        if (typeof localStorage !== 'undefined') {
+            return localStorage.getItem('isEasyMode') === 'true';
+        }
+        return false;
+    });
+
     useEffect(() => {
         if (highContrastMode) {
             document.documentElement.classList.add('high-contrast');
@@ -74,8 +83,21 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
         localStorage.setItem('fontSize', fontSize);
     }, [fontSize]);
 
+    useEffect(() => {
+        localStorage.setItem('isEasyMode', String(isEasyMode));
+        if (isEasyMode) {
+            document.documentElement.classList.add('high-contrast');
+            document.documentElement.setAttribute('data-font-size', 'large');
+        } else if (!highContrastMode) {
+            // Restore previous settings if easy mode turned off
+            document.documentElement.classList.remove('high-contrast');
+            document.documentElement.setAttribute('data-font-size', fontSize);
+        }
+    }, [isEasyMode, highContrastMode, fontSize]);
+
     const toggleHighContrast = () => setHighContrastMode(prev => !prev);
     const toggleReducedMotion = () => setReducedMotion(prev => !prev);
+    const toggleEasyMode = () => setIsEasyMode(prev => !prev);
 
     return (
         <AccessibilityContext.Provider
@@ -86,6 +108,8 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
                 toggleReducedMotion,
                 fontSize,
                 setFontSize,
+                isEasyMode,
+                toggleEasyMode,
             }}
         >
             {children}

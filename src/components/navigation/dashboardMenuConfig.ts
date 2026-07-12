@@ -85,7 +85,7 @@ const baseMoreMenuItems: DashboardMenuItem[] = [
   { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
 ];
 
-export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false): DashboardMenuSection[] => {
+export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false, isEasyMode: boolean = false): DashboardMenuSection[] => {
   let sections = baseNavSections.map((section) => ({
     ...section,
     items: [...section.items],
@@ -94,6 +94,8 @@ export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, 
   if (!isAdmin && !isHomeroomTeacher) {
     sections = sections.filter(section => section.id !== 'bintang');
   }
+
+    // Easy Mode no longer hides menus to allow full access to features
 
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
     // Pimpinan tetap membutuhkan menu guru karena mereka bisa memiliki jam mengajar.
@@ -122,12 +124,13 @@ export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, 
   return sections;
 };
 
-export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false): DashboardMenuItem[] => {
+export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false, isEasyMode: boolean = false): DashboardMenuItem[] => {
   let items = [...baseMoreMenuItems];
   
   if (!isAdmin && !isHomeroomTeacher) {
     items = items.filter(item => item.href !== '/bintang');
   }
+    // Easy Mode no longer hides menus to allow full access to features
   
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
     items.push({ href: '/tindak-lanjut', label: 'Tindak Lanjut', icon: ShieldCheck });

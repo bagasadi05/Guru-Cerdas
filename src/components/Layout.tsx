@@ -14,6 +14,7 @@ import { useParentMessageNotifications } from '../hooks/useParentMessageNotifica
 import PullToRefresh from './ui/PullToRefresh';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { setNavigationInProgress } from '../utils/navigationState';
+import { useAccessibility } from './ui/AccessibilityFeatures';
 
 // Enhanced Mobile Navigation Components
 import { useOrientation } from '../hooks/useOrientation';
@@ -30,6 +31,7 @@ import { ShellHeaderActions } from './layout/ShellHeaderActions';
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, userRole } = useAuth();
   const { showTour, endTour } = useOnboarding();
+  const { isEasyMode } = useAccessibility();
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
@@ -73,8 +75,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [teacherAssignments]);
 
   const dynamicMoreMenuItems = useMemo(() => {
-    return getDashboardMoreMenuItems(isAdmin, userRole, isHomeroomTeacher);
-  }, [isAdmin, userRole, isHomeroomTeacher]);
+    return getDashboardMoreMenuItems(isAdmin, userRole, isHomeroomTeacher, isEasyMode);
+  }, [isAdmin, userRole, isHomeroomTeacher, isEasyMode]);
 
   const dynamicMobileNavItems = useMemo(() => {
     return getMobileNavItems(userRole);

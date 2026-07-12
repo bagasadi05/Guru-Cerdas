@@ -432,6 +432,29 @@ const AdminPage: React.FC = () => {
         }
     };
 
+    // Toggle user approval status
+    const handleToggleApproval = async (userId: string, currentStatus: boolean) => {
+        if (userId === user?.id) {
+            setError('Tidak dapat mengubah status persetujuan akun sendiri');
+            return;
+        }
+        try {
+            const userToUpdate = users.find(u => u.user_id === userId) || null;
+            const nextStatus = !currentStatus;
+            const { error } = await supabase
+                .from('user_roles')
+                .update({ is_approved: nextStatus })
+                .eq('user_id', userId);
+            if (error) throw error;
+            const updatedUser = userToUpdate ? { ...userToUpdate, is_approved: nextStatus } : { user_id: userId, is_approved: nextStatus };
+            await logAdminAction('user_roles', nextStatus ? 'APPROVE_USER' : 'DISAPPROVE_USER', userId, userToUpdate, updatedUser);
+            fetchUsers();
+            fetchActivityLogs();
+        } catch (err: unknown) {
+            setError('Error: ' + (err as Error).message);
+        }
+    };
+
     // Soft delete user (sets deleted_at timestamp)
     // P0 Fix: Cegah self-delete
     const openDeleteModal = (userToDelete: UserRoleRecord) => {
@@ -692,6 +715,7 @@ const AdminPage: React.FC = () => {
                         setNewRole={setNewRole}
                         updating={updating}
                         handleUpdateRole={handleUpdateRole}
+                        handleToggleApproval={handleToggleApproval}
                         openDeleteModal={openDeleteModal}
                         restoreUser={restoreUser}
                         permanentDeleteUser={permanentDeleteUser}

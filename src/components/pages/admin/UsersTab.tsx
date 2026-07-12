@@ -11,6 +11,7 @@ import {
 import { UserRoleRecord } from './types';
 import { getRoleBadgeClass } from './components';
 import { Button } from '../../ui/Button';
+import { useAuth } from '../../../hooks/useAuth';
 
 const USER_PAGE_SIZE = 20;
 
@@ -39,6 +40,7 @@ interface UsersTabProps {
     deletedTotal: number;
     showDeletedUsers: boolean;
     setShowDeletedUsers: (show: boolean) => void;
+    handleToggleApproval?: (userId: string, currentStatus: boolean) => Promise<void>;
 }
 
 const roleLabelMap: Record<string, string> = {
@@ -81,7 +83,9 @@ export const UsersTab: React.FC<UsersTabProps> = ({
     deletedTotal,
     showDeletedUsers,
     setShowDeletedUsers,
+    handleToggleApproval,
 }) => {
+    const { user } = useAuth();
     const userPageCount = Math.max(1, Math.ceil(userTotal / USER_PAGE_SIZE));
     const deletedPageCount = Math.max(1, Math.ceil(deletedTotal / USER_PAGE_SIZE));
 
@@ -134,6 +138,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                         <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             <th className="px-6 py-4 text-left">Pengguna</th>
                             <th className="px-6 py-4 text-left">Peran</th>
+                            <th className="px-6 py-4 text-left">Persetujuan</th>
                             <th className="px-6 py-4 text-left">Bergabung</th>
                             <th className="px-6 py-4 text-right">Aksi</th>
                         </tr>
@@ -141,13 +146,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                         {usersLoading ? (
                             <tr>
-                                <td colSpan={4} className="px-6 py-12 text-center">
+                                <td colSpan={5} className="px-6 py-12 text-center">
                                     <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
                                 </td>
                             </tr>
                         ) : users.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                                     Tidak ada pengguna ditemukan
                                 </td>
                             </tr>
@@ -195,6 +200,31 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                             {getRoleLabel(u.role)}
                                         </span>
                                     )}
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                                        {u.is_approved ? (
+                                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50">
+                                                Disetujui
+                                            </span>
+                                        ) : (
+                                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/50 animate-pulse">
+                                                Menunggu
+                                            </span>
+                                        )}
+                                        {u.user_id !== user?.id && (
+                                            <button
+                                                onClick={() => handleToggleApproval?.(u.user_id, !!u.is_approved)}
+                                                className={`text-xs px-2 py-0.5 rounded-lg border transition-all ${
+                                                    u.is_approved
+                                                        ? 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
+                                                        : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-850 dark:text-indigo-450 dark:hover:bg-indigo-950/20 font-medium'
+                                                }`}
+                                            >
+                                                {u.is_approved ? 'Blokir' : 'Setujui'}
+                                            </button>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500">
                                     {u.created_at ? new Date(u.created_at).toLocaleDateString('id-ID') : '-'}

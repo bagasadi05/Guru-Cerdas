@@ -101,7 +101,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                 supabase
                     .from('user_roles')
                     .select('user_id, full_name, email, role')
-                    .in('role', ['admin', 'teacher'])
+                    .in('role', ['admin', 'teacher', 'kepala_madrasah', 'waka_kesiswaan'])
                     .is('deleted_at', null)
                     .order('full_name'),
                 supabase

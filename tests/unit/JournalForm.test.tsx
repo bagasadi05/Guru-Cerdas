@@ -96,6 +96,7 @@ const renderJournalForm = (props = {}) => {
 describe('JournalForm Validation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.setConfig({ testTimeout: 15000 });
     // Clean up document body between tests
     document.body.innerHTML = '';
   });

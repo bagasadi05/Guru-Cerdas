@@ -23,6 +23,7 @@ import {
     User,
     UserCheck,
     UserPlus,
+    Lightbulb,
     UserMinus,
     BarChart,
     BookOpen,
@@ -176,10 +177,14 @@ export const DownloadIcon = Download;
 export const XIcon = X;
 export const UploadIcon = Upload;
 export const FileSpreadsheetIcon = FileSpreadsheet;
+export const LoaderIcon = Loader2;
 export const Loader2Icon = Loader2;
 export const KeyboardIcon = Keyboard;
+export const KeyIcon = KeyRound;
+export const LightbulbIcon = Lightbulb;
 export const WifiOffIcon = WifiOff;
 export const ImageIcon = ImageIconLucide;
+
 
 // Custom Icons that don't have direct equivalents or need specific styling
 export const IconH: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

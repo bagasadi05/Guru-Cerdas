@@ -18,7 +18,7 @@ import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../u
 import { type AttendanceViewMode } from './attendanceMenuConfig';
 
 export const useAttendance = () => {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const toast = useToast();
     const isOnline = useOfflineStatus();
     const queryClient = useQueryClient();
@@ -90,7 +90,7 @@ export const useAttendance = () => {
     const [isSaveConfirmOpen, setIsSaveConfirmOpen] = useState(false);
 
     const { data: classes = [], isLoading: isLoadingClasses, error: classesError, refetch: refetchClasses } = useQuery({
-        queryKey: ['classes', user?.id],
+        queryKey: ['classes', 'attendance', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')
@@ -121,11 +121,12 @@ export const useAttendance = () => {
 
     const attendanceClasses = useMemo(() => {
         if (!classes || !user) return [];
+        if (isAdmin) return classes;
         return classes.filter((classRow) => (
             classRow.user_id === user.id
             || hasHomeroomAssignment(teacherAssignments, classRow.id, null)
         ));
-    }, [classes, teacherAssignments, user]);
+    }, [classes, teacherAssignments, user, isAdmin]);
 
     useEffect(() => {
         if (attendanceClasses.length === 0) {
@@ -164,7 +165,6 @@ export const useAttendance = () => {
             const { data: attendanceData, error: attendanceError } = await supabase
                 .from('attendance')
                 .select('id, student_id, status, notes, official_status, teacher_id')
-                .eq('teacher_id' as any, user.id)
                 .eq('date', selectedDate)
                 .in('student_id', students.map((student) => student.id))
                 .is('deleted_at', null);
@@ -202,7 +202,6 @@ export const useAttendance = () => {
             const { data, error } = await supabase
                 .from('attendance')
                 .select('student_id, date, status')
-                .eq('user_id', user.id)
                 .in('student_id', students.map((student) => student.id))
                 .gte('date', calendarRange.start)
                 .lte('date', calendarRange.end)
@@ -522,7 +521,6 @@ export const useAttendance = () => {
                 .from('attendance')
                 .update({ deleted_at: new Date().toISOString() } as never)
                 .eq('date', selectedDate)
-                .eq('user_id', user.id)
                 .in('student_id', studentIds);
 
             if (error) throw error;

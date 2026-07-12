@@ -46,7 +46,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
 
     // Fetch classes
     const { data: classes = [] } = useQuery({
-        queryKey: ['classes', user?.id],
+        queryKey: ['classes', 'mine', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')

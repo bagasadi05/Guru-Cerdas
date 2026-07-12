@@ -111,7 +111,7 @@ export const GradeAdjustmentPage: React.FC = () => {
 
     // Fetch classes
     const { data: classes } = useQuery({
-        queryKey: ['classes', user?.id],
+        queryKey: ['classes', 'grade_adjustment', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')

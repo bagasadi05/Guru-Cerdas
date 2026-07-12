@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Eye } from 'lucide-react';
 import ThemeToggle from '../ui/ThemeToggle';
 import NotificationPanel from '../ui/NotificationPanel';
 import { NetworkQualityIndicator, EnhancedSyncStatus } from '../ui/PerformanceIndicators';
+import { useAccessibility } from '../ui/AccessibilityFeatures';
 
 interface ShellHeaderActionsProps {
     user: {
@@ -21,8 +22,27 @@ const ShellIconButton: React.FC<{ children: React.ReactNode }> = ({ children }) 
 export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
     user,
 }) => {
+    const { isEasyMode, toggleEasyMode } = useAccessibility();
+
     return (
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            {/* Easy Mode Toggle */}
+            <button
+                onClick={toggleEasyMode}
+                className={`flex min-h-[44px] items-center justify-center gap-2 px-3 rounded-xl border transition-all ${
+                    isEasyMode 
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-900/50 dark:border-emerald-700/50 dark:text-emerald-300' 
+                    : 'border-black/5 bg-white/50 text-slate-600 hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:text-slate-300 dark:hover:bg-slate-800'
+                }`}
+                aria-label={isEasyMode ? "Nonaktifkan Mode Mudah" : "Aktifkan Mode Mudah"}
+                title="Mode Mudah (Untuk Guru Senior)"
+            >
+                <Eye className="w-5 h-5" />
+                <span className="text-sm font-medium hidden sm:block">
+                    {isEasyMode ? 'Mode Mudah Aktif' : 'Mode Mudah'}
+                </span>
+            </button>
+
             {/* Unified Help & Tutorial Button */}
             <button
                 onClick={() => document.dispatchEvent(new CustomEvent('open-help-center'))}

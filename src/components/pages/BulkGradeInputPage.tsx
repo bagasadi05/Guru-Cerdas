@@ -167,7 +167,7 @@ const BulkGradeInputPage: React.FC = () => {
 
     // Fetch classes
     const { data: classes, isLoading: loadingClasses } = useQuery({
-        queryKey: ['classes', user?.id],
+        queryKey: ['classes', 'bulk_grade', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('classes')

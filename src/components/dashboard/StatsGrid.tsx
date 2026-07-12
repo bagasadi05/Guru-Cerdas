@@ -80,7 +80,6 @@ interface StatCardConfig {
  * ```
  */
 const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
-    const { isEasyMode } = useAccessibility();
     const {
         students,
         tasks,
@@ -192,18 +191,14 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                     custom={index}
                 >
                     <Link to={stat.link} className="group block h-full">
-                        <div className={`bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 h-full flex flex-col justify-between relative overflow-hidden border transition-all duration-300 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group-hover:-translate-y-1 ${
-                            isEasyMode 
-                                ? 'border-emerald-500 ring-2 ring-emerald-500/10 min-h-[160px]' 
-                                : 'border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] group-hover:border-indigo-500/20'
-                        }`}>
+                        <div className={`bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 h-full flex flex-col justify-between relative overflow-hidden border transition-all duration-300 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group-hover:-translate-y-1 border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] group-hover:border-indigo-500/20`}>
                             {/* Hover overlay effect */}
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                             {/* Icon container */}
                             <div className="relative z-10 mb-4 sm:mb-6 flex items-start justify-between gap-2 sm:gap-3">
-                                <div className={`${isEasyMode ? 'w-12 h-12' : 'w-9 h-9 sm:w-11 sm:h-11'} shrink-0 rounded-lg flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-sm text-white transform group-hover:scale-105 transition-transform duration-300`}>
-                                    <stat.icon className={isEasyMode ? 'w-6 h-6 sm:w-7 sm:h-7' : 'w-5 h-5 sm:w-6 sm:h-6'} />
+                                <div className={`${'w-9 h-9 sm:w-11 sm:h-11'} shrink-0 rounded-lg flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-sm text-white transform group-hover:scale-105 transition-transform duration-300`}>
+                                    <stat.icon className={'w-5 h-5 sm:w-6 sm:h-6'} />
                                 </div>
                                 <span className={`max-w-[108px] truncate rounded-full px-2.5 py-1 text-xxs font-bold uppercase tracking-[0.12em] ${getToneBadgeClass(stat.tone)}`}>
                                     {stat.statusLabel}
@@ -212,21 +207,21 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
 
                             {/* Metric Value & Label */}
                             <div className="relative z-10">
-                                <span className={`block font-extrabold text-slate-900 dark:text-white leading-none ${isEasyMode ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'}`}>
+                                <span className={`block font-extrabold text-slate-900 dark:text-white leading-none ${'text-2xl sm:text-3xl'}`}>
                                     {typeof stat.value === 'number' ? (
                                         <AnimatedCounter value={stat.value} duration={1500} />
                                     ) : (
                                         stat.value
                                     )}
                                 </span>
-                                <span className={`block font-bold text-slate-500 dark:text-slate-400 mt-2 ${isEasyMode ? 'text-base sm:text-lg' : 'text-xs sm:text-sm'}`}>
+                                <span className={`block font-bold text-slate-500 dark:text-slate-400 mt-2 ${'text-xs sm:text-sm'}`}>
                                     {stat.label}
                                 </span>
                             </div>
 
                             {stat.subValue && (
                                 <div className="relative z-10 mt-3">
-                                    <p className={`font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-lg inline-block ${isEasyMode ? 'text-sm' : 'text-xs'}`}>
+                                    <p className={`font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-lg inline-block ${'text-xs'}`}>
                                         {stat.subValue}
                                     </p>
                                 </div>
@@ -248,12 +243,12 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
 
                             <div className="relative z-10 mt-4 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-2">
                                 <span className={`font-semibold line-clamp-1 flex-1 ${
-                                    isEasyMode ? 'text-sm text-slate-700 dark:text-slate-300' : 'text-xxs text-slate-400 dark:text-slate-500'
+                                    'text-xxs text-slate-400 dark:text-slate-500'
                                 }`}>
                                     {stat.statusDetail}
                                 </span>
                                 <ArrowRightIcon className={`shrink-0 transition-transform duration-300 group-hover:translate-x-1 ${
-                                    isEasyMode ? 'w-5 h-5 text-emerald-500' : 'w-3.5 h-3.5 text-slate-400 dark:text-slate-600'
+                                    'w-3.5 h-3.5 text-slate-400 dark:text-slate-600'
                                 }`} />
                             </div>
                         </div>
@@ -280,20 +275,5 @@ const getToneBadgeClass = (tone: StatCardConfig['tone']) => {
     }
 };
 
-const getToneDotClass = (tone: StatCardConfig['tone']) => {
-    switch (tone) {
-        case 'emerald':
-            return 'bg-emerald-500';
-        case 'amber':
-            return 'bg-amber-500';
-        case 'rose':
-            return 'bg-rose-500';
-        case 'violet':
-            return 'bg-violet-500';
-        case 'blue':
-        default:
-            return 'bg-sky-500';
-    }
-};
 
 export default StatsGrid;
