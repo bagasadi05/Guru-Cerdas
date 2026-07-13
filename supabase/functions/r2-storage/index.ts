@@ -77,6 +77,7 @@ Deno.serve(async (req) => {
     const s3 = new S3Client({
       region: "auto",
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      forcePathStyle: true,
       credentials: {
         accessKeyId,
         secretAccessKey,
@@ -125,7 +126,10 @@ Deno.serve(async (req) => {
       });
 
       // Generate presigned PUT URL valid for 1 hour (3600 seconds)
-      const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+      const uploadUrl = await getSignedUrl(s3, command, { 
+        expiresIn: 3600,
+        signableHeaders: new Set(["host", "content-type"])
+      });
       const cleanBase = publicUrlBase.endsWith("/") ? publicUrlBase.slice(0, -1) : publicUrlBase;
       const publicUrl = `${cleanBase}/${key}`;
 
