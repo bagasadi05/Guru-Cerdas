@@ -58,6 +58,19 @@
     transition-duration: 0.01ms !important;
 }
 
+/* Honor the operating-system setting, including older devices where motion
+   and compositing effects make scrolling noticeably less responsive. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
 /* Font Size Control */
 html[data-font-size="large"] {
     font-size: 18px;

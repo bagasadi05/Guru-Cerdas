@@ -46,7 +46,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
           </div>
         </Link>
 
-        {isAdmin ? (
+        {canManageActiveClass || isAdmin ? (
           <button
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
             onClick={() => {

@@ -44,7 +44,19 @@ export interface AuditLog {
     new_data: Record<string, unknown> | null;
 }
 
-export type TabType = 'overview' | 'students' | 'users' | 'assignments' | 'announcements' | 'activity' | 'system';
+export interface ClassRecord {
+    id: string;
+    name: string;
+    grade_level?: number | null;
+    user_id?: string;
+    created_at?: string | null;
+    updated_at?: string | null;
+    deleted_at?: string | null;
+    is_archived?: boolean;
+    academic_year?: string | null;
+}
+
+export type TabType = 'overview' | 'students' | 'classes' | 'users' | 'assignments' | 'announcements' | 'activity' | 'system';
 
 export type AnnouncementTemplateIcon =
     | 'calendar'

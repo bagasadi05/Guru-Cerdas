@@ -1,0 +1,268 @@
+{
+  "Sheet1": [
+    {
+      "name": "BULAN : JANUARI 2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ABBAS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALUNA KAYLA KHANZA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALYA AZ ZAHRA SALEH BAHADJ",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARJUNA ALGHIFARY IBRAHIM",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ASHILLA ALMAHYRA SHANUM",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ASMA KALILA AZ-ZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AURORA SHAFIRA BILQIS",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "DANISH ARAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DINAR KHOIRUNNISAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FATIMAH ROHIMA HANIFA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "GEOVANI ARYA TIASTA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "HUSEIN FIKRI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "JACINDA FATHIYYA BAHIRA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "JADDA JAYYID ZIDANE",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "LAVIOLA CANTIQA NAURA QUEEN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD AHNAF ALFARIZQY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD DONY AL-FATIH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RADEVA ALANO KHALFANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NARARYA ARDI PRADIPTA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NAURA ALYA MAHIRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QAISHA AZZAHRA KUMARA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QISYA HUMAIRA MARWAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QUEENA AURANISSA ANNAFI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAISA AZKAZAKIYA KUSUMA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RASYA BIMA ALKHALIFI RAMADHAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "REIKI ARSA SAVIAN ALTEZZA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RIFQY ARKANA SAHITYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SHAKILLA HANANIA IRAWAN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SYANALA KANIA AYUNDA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "TIVANIA KAYLA RAMADHANI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "VANESSA ANGEL ANASTASYA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ZIVANNA VALLERIE JASMINE",
+      "gender": "Perempuan"
+    }
+  ],
+  "LAKI-LAKI": [
+    {
+      "name": "ABBAS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARJUNA ALGHIFARY IBRAHIM",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "GEOVANI ARYA TIASTA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "HUSEIN FIKRI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "JADDA JAYYID ZIDANE",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD AHNAF ALFARIZQY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD DONY AL-FATIH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RADEVA ALANO KHALFANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NARARYA ARDI PRADIPTA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RASYA BIMA ALKHALIFI RAMADHAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "REIKI ARSA SAVIAN ALTEZZA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RIFQY ARKANA SAHITYA",
+      "gender": "Laki-laki"
+    }
+  ],
+  "PEREMPUAN": [
+    {
+      "name": "ALUNA KAYLA KHANZA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALYA AZ ZAHRA SALEH BAHADJ",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ASHILLA ALMAHYRA SHANUM",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ASMA KALILA AZ-ZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AURORA SHAFIRA BILQIS",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "DANISH ARAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DINAR KHOIRUNNISAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FATIMAH ROHIMA HANIFA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "JACINDA FATHIYYA BAHIRA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "LAVIOLA CANTIQA NAURA QUEEN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NAURA ALYA MAHIRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QAISHA AZZAHRA KUMARA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QISYA HUMAIRA MARWAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QUEENA AURANISSA ANNAFI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAISA AZKAZAKIYA KUSUMA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SHAKILLA HANANIA IRAWAN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SYANALA KANIA AYUNDA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "TIVANIA KAYLA RAMADHANI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "VANESSA ANGEL ANASTASYA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ZIVANNA VALLERIE JASMINE",
+      "gender": "Perempuan"
+    }
+  ]
+}

@@ -1,0 +1,408 @@
+{
+  "Sheet1": [
+    {
+      "name": "ABSENSI SISWA KELAS 2B",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MI AL IRSYAD AL-ISLAMIYYAH MADIUN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "TAHUN PELAJARAN 2026/2027",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "TANGGAL",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AIRLANGGA DZAKY ADIANSYAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ATHAFARIZ RAFIF NARENDRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AULIAN RASYA ATTALLAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AYANNA ALFARIZQA HASMORO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "BIANCA SHAQUEEN HUMAIRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "DHATU SHEA KALA WASTI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "EL RHEA LOVANDRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FAREZKY ABRISAM WINASIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HANANIA AIRISSYIFA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "HAYDAR GUSTA WISTARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HIKARI AZZALEA SELLA TURSICA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KAMILA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KEYSA PUTRI ARMANDA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KHADIJA RAYYAMADINA WIJAYANTO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MARSA INARA ATMARINI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MARYAM ZAILA ZAHWA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MIKALA MEDINA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD ADZRIEL KHAIZURAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD FATHAN ALFAHREZI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RAFAZKA ANDIKA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAFASYA HIESKAPUTRI SUSILO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NATTA PUTRA WICAKSANA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NAYRA LAKEISHA CALYSTA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NUR BUSSAINA HANUM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "QUINZHA PUTRI ANGGRAINI WIBOWO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAFARDHAN KANAKA GUMILANG",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAZIQ AMADA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SYAFIA AZZAHRA MALIKA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ZAVIER AUSHAF ARDANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "WALI KELAS 2B",
+      "gender": "Perempuan"
+    }
+  ],
+  "Sheet2": [
+    {
+      "name": "ABSENSI SISWA KELAS IV C SEMESTER I",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MI AL IRSYAD AL-ISLAMIYYAH MADIUN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "TAHUN PELAJARAN 2020/2021",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "TANGGAL",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADELLIA ROSALINA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ANGGA DZYAR RAUSAN FIKRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ASHYFA QORY SYAQEENA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AZZAM FARIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BAGINDA KAY KHAN LAKSMANA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "BRIAN TSAQIF EKI PRAYATA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BRIELLYAN KEANO BINTANG RAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "CALISTA ALAYA WIDYATMOKO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "CAMELIA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "FATUR ALDIANO MURJOKO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAFIZ RIZKY IRAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HASAN FIKRI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HUSAM NABIL SUNGKAR",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "JAWAD ATTAQIEY KARIMULLAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KENAN GASTIASHH ABHYASA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "LEUAN AURELLIN KEYZAHRA ALVARETTA SETIAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD AKMAL",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD ALIF ALFATIH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NADHIF AMMARTIKA RAMADHAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAYLA PUTRI ZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RADHITYA KUMARA WIDI PAMBAYUN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAISYA FITRIA  PRAMESWARI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "REVALINO KENZIE PRADANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Rr. ALISHA NAJWA KANABILA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "VIOLA SYAHVIRA PERMATASARI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "YASLAM FARIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FATIMAH NIMAH ADZKIYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "LINTAR RAFAN ISLAMI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAYHAN ARKA WIRATAMA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "GIANKUMARA RIFFAT MAHARDIKA FARANSYAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Wali Kelas IV C",
+      "gender": "Perempuan"
+    }
+  ],
+  "Sheet3": [
+    {
+      "name": "AIRLANGGA DZAKY ADIANSYAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ATHAFARIZ RAFIF NARENDRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AULIAN RASYA ATTALLAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AYANNA ALFARIZQA HASMORO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "BIANCA SHAQUEEN HUMAIRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "DHATU SHEA KALA WASTI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "EL RHEA LOVANDRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FAREZKY ABRISAM WINASIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HANANIA AIRISSYIFA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "HAYDAR GUSTA WISTARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HIKARI AZZALEA SELLA TURSICA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KAMILA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KEYSA PUTRI ARMANDA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KHADIJA RAYYAMADINA WIJAYANTO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MARSA INARA ATMARINI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MARYAM ZAILA ZAHWA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MIKALA MEDINA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD ADZRIEL KHAIZURAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD FATHAN ALFAHREZI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RAFAZKA ANDIKA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAFASYA HIESKAPUTRI SUSILO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NATTA PUTRA WICAKSANA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NAYRA LAKEISHA CALYSTA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NUR BUSSAINA HANUM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "QUINZHA PUTRI ANGGRAINI WIBOWO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAFARDHAN KANAKA GUMILANG",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAZIQ AMADA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SYAFIA AZZAHRA MALIKA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ZAVIER AUSHAF ARDANI",
+      "gender": "Laki-laki"
+    }
+  ]
+}

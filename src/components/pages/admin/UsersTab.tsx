@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Search,
     Loader2,
@@ -7,11 +7,14 @@ import {
     X,
     Trash2,
     Undo2,
+    UserPlus,
 } from 'lucide-react';
 import { UserRoleRecord } from './types';
 import { getRoleBadgeClass } from './components';
 import { Button } from '../../ui/Button';
 import { useAuth } from '../../../hooks/useAuth';
+import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../../../services/supabase';
 
 const USER_PAGE_SIZE = 20;
 
@@ -31,8 +34,10 @@ interface UsersTabProps {
     setEditingUserId: (id: string | null) => void;
     newRole: string;
     setNewRole: (role: string) => void;
+    newName: string;
+    setNewName: (name: string) => void;
     updating: boolean;
-    handleUpdateRole: (userId: string) => Promise<void>;
+    handleUpdateUser: (userId: string) => Promise<void>;
     openDeleteModal: (user: UserRoleRecord) => void;
     restoreUser: (user: UserRoleRecord) => Promise<void>;
     permanentDeleteUser: (userId: string) => Promise<void>;
@@ -41,6 +46,7 @@ interface UsersTabProps {
     showDeletedUsers: boolean;
     setShowDeletedUsers: (show: boolean) => void;
     handleToggleApproval?: (userId: string, currentStatus: boolean) => Promise<void>;
+    onRefreshRequested?: () => void;
 }
 
 const roleLabelMap: Record<string, string> = {
@@ -74,8 +80,10 @@ export const UsersTab: React.FC<UsersTabProps> = ({
     setEditingUserId,
     newRole,
     setNewRole,
+    newName,
+    setNewName,
     updating,
-    handleUpdateRole,
+    handleUpdateUser,
     openDeleteModal,
     restoreUser,
     permanentDeleteUser,
@@ -84,8 +92,55 @@ export const UsersTab: React.FC<UsersTabProps> = ({
     showDeletedUsers,
     setShowDeletedUsers,
     handleToggleApproval,
+    onRefreshRequested,
 }) => {
     const { user } = useAuth();
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [addUserForm, setAddUserForm] = useState({ name: '', email: '', password: '', role: 'teacher' });
+    const [isAddingUser, setIsAddingUser] = useState(false);
+    const [addUserError, setAddUserError] = useState<string | null>(null);
+
+    const handleAddUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setAddUserError(null);
+        setIsAddingUser(true);
+        try {
+            // Gunakan tempClient dengan persistSession: false agar tidak me-logout admin
+            const tempClient = createClient(
+                import.meta.env.VITE_SUPABASE_URL,
+                import.meta.env.VITE_SUPABASE_ANON_KEY,
+                { auth: { persistSession: false, autoRefreshToken: false } }
+            );
+
+            const { data, error } = await tempClient.auth.signUp({
+                email: addUserForm.email,
+                password: addUserForm.password,
+                options: {
+                    data: { full_name: addUserForm.name }
+                }
+            });
+
+            if (error) throw error;
+            if (!data.user) throw new Error('Gagal membuat akun.');
+
+            // Update role dan auto-approve (karena dibuat oleh admin)
+            const { error: updateError } = await supabase.from('user_roles').update({
+                role: addUserForm.role as any,
+                is_approved: true
+            }).eq('user_id', data.user.id);
+
+            if (updateError) throw updateError;
+
+            setShowAddModal(false);
+            setAddUserForm({ name: '', email: '', password: '', role: 'teacher' });
+            if (onRefreshRequested) onRefreshRequested();
+        } catch (err: unknown) {
+            setAddUserError((err as Error).message);
+        } finally {
+            setIsAddingUser(false);
+        }
+    };
+
     const userPageCount = Math.max(1, Math.ceil(userTotal / USER_PAGE_SIZE));
     const deletedPageCount = Math.max(1, Math.ceil(deletedTotal / USER_PAGE_SIZE));
 
@@ -129,6 +184,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                     <option value="student">Siswa</option>
                     <option value="parent">Orang Tua</option>
                 </select>
+                <Button 
+                    onClick={() => setShowAddModal(true)}
+                    className="flex items-center gap-2 whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                    <UserPlus size={18} />
+                    <span>Tambah Pengguna</span>
+                </Button>
             </div>
 
             {/* User Table */}
@@ -163,9 +225,20 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
                                             {u.full_name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase() || 'U'}
                                         </div>
-                                        <div>
-                                            <p className="font-medium text-gray-900 dark:text-white">{u.full_name || 'Tanpa Nama'}</p>
-                                            <p className="text-xs text-gray-500">{u.email}</p>
+                                        <div className="flex-1 min-w-0">
+                                            {editingUserId === u.user_id ? (
+                                                <input
+                                                    type="text"
+                                                    value={newName}
+                                                    onChange={e => setNewName(e.target.value)}
+                                                    className="w-full px-2 py-1 mb-1 text-sm font-medium border-2 border-indigo-500 rounded-lg dark:bg-gray-900"
+                                                    placeholder="Nama Lengkap"
+                                                    autoFocus
+                                                />
+                                            ) : (
+                                                <p className="font-medium text-gray-900 dark:text-white truncate">{u.full_name || 'Tanpa Nama'}</p>
+                                            )}
+                                            <p className="text-xs text-gray-500 truncate">{u.email}</p>
                                         </div>
                                     </div>
                                 </td>
@@ -184,7 +257,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                                 <option value="student">Siswa</option>
                                                 <option value="parent">Orang Tua</option>
                                             </select>
-                                            <button onClick={() => handleUpdateRole(u.user_id)} disabled={updating} className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
+                                            <button onClick={() => handleUpdateUser(u.user_id)} disabled={updating} className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
                                                 {updating ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                             </button>
                                             <button
@@ -232,7 +305,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex justify-end gap-2">
                                         <button
-                                            onClick={() => { setEditingUserId(u.user_id); setNewRole(u.role || 'teacher'); }}
+                                            onClick={() => { setEditingUserId(u.user_id); setNewRole(u.role || 'teacher'); setNewName(u.full_name || ''); }}
                                             className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg"
                                         >
                                             <Edit2 size={16} />
@@ -396,6 +469,96 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Add User Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Tambah Pengguna Baru</h3>
+                            <button
+                                onClick={() => setShowAddModal(false)}
+                                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        {addUserError && (
+                            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm">
+                                {addUserError}
+                            </div>
+                        )}
+                        <form onSubmit={handleAddUser} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={addUserForm.name}
+                                    onChange={e => setAddUserForm({ ...addUserForm, name: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-xl dark:bg-gray-900 dark:border-gray-700"
+                                    placeholder="Masukkan nama lengkap"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={addUserForm.email}
+                                    onChange={e => setAddUserForm({ ...addUserForm, email: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-xl dark:bg-gray-900 dark:border-gray-700"
+                                    placeholder="email@sekolah.sch.id"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                                <input
+                                    type="password"
+                                    required
+                                    minLength={6}
+                                    value={addUserForm.password}
+                                    onChange={e => setAddUserForm({ ...addUserForm, password: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-xl dark:bg-gray-900 dark:border-gray-700"
+                                    placeholder="Minimal 6 karakter"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Peran</label>
+                                <select
+                                    value={addUserForm.role}
+                                    onChange={e => setAddUserForm({ ...addUserForm, role: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-xl dark:bg-gray-900 dark:border-gray-700"
+                                >
+                                    <option value="admin">Admin</option>
+                                    <option value="teacher">Guru</option>
+                                    <option value="waka_kesiswaan">Waka Kesiswaan</option>
+                                    <option value="kepala_madrasah">Kepala Madrasah</option>
+                                    <option value="student">Siswa</option>
+                                    <option value="parent">Orang Tua</option>
+                                </select>
+                            </div>
+                            <div className="flex gap-3 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => setShowAddModal(false)}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                                    disabled={isAddingUser}
+                                >
+                                    {isAddingUser ? <Loader2 size={18} className="animate-spin mx-auto" /> : 'Simpan Akun'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

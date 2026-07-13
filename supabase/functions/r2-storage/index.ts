@@ -40,14 +40,18 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const token = authHeader.startsWith("Bearer ") || authHeader.startsWith("bearer ")
+      ? authHeader.substring(7)
+      : authHeader;
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     if (userError || !user) {
+      console.error("getUser failed for token:", token.substring(0, 15) + "...", "Error:", userError);
       return jsonResponse({ error: "Unauthorized user session" }, 401);
     }
 
@@ -61,6 +65,7 @@ Deno.serve(async (req) => {
     if (!accountId || !accessKeyId || !secretAccessKey || !bucketName || !publicUrlBase) {
       return jsonResponse(
         {
+          code: "R2_CONFIGURATION_MISSING",
           error: "Cloudflare R2 environment variables are not fully configured in Supabase. " +
             "Required variables: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL"
         },

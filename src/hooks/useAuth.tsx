@@ -380,8 +380,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       options: {
         data: {
           name,
+          full_name: name,
           avatar_url: getStudentAvatar(null, null, email, name)
-        }
+        },
+        emailRedirectTo: window.location.origin
       }
     }),
     logout: async () => {

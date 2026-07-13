@@ -89,7 +89,12 @@ export const QuickTemplateIcons: React.FC<QuickTemplateIconsProps> = ({
             {templates.map((template) => (
                 <button
                     key={template.id}
-                    onClick={() => onApplyTemplate(template)}
+                    type="button"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onApplyTemplate(template);
+                    }}
                     className={`
                         group flex flex-col items-center justify-center gap-1
                         w-16 sm:w-20 min-h-[64px] px-2 py-2 rounded-xl

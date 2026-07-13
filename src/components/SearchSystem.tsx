@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
 import { Search, X, Clock, Users, Calendar, ClipboardList, Filter, ChevronRight } from 'lucide-react';
+import { useGlobalSearch } from './GlobalSearchContext';
 import { sanitizeHtml } from '../utils/validation';
 
 /**
@@ -108,7 +109,7 @@ interface GlobalSearchContextValue {
 
 const GlobalSearchContext = createContext<GlobalSearchContextValue | null>(null);
 
-export const useGlobalSearch = () => {
+const useGlobalSearchLegacy = () => {
     const context = useContext(GlobalSearchContext);
     if (!context) {
         throw new Error('useGlobalSearch must be used within GlobalSearchProvider');
@@ -471,7 +472,7 @@ export const GlobalSearchModal: React.FC<{
 // ============================================
 
 export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }> = ({ className = '', iconOnly = false }) => {
-    const { open } = useGlobalSearch();
+    const { open } = useGlobalSearchLegacy();
 
     if (iconOnly) {
         return (

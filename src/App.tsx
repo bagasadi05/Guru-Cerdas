@@ -14,7 +14,7 @@ import PwaPrompt from './components/PwaPrompt';
 import { queryClient } from './services/queryClient';
 import { AppProviders } from './components/AppProviders';
 import { OfflineBanner } from './components/StatusIndicators';
-import { GlobalSearchProvider } from './components/SearchSystem';
+import { GlobalSearchProvider } from './components/GlobalSearchContext';
 import { TourProvider } from './components/OnboardingHelp';
 import { useKeyboardShortcuts } from './components/advanced-features/useKeyboardShortcuts';
 import { startCleanupScheduler } from './services/CleanupService';

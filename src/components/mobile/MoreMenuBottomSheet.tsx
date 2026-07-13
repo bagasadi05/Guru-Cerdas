@@ -2,6 +2,8 @@ import React, { useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSound } from '../../hooks/useSound';
 import { useHaptic } from '../../hooks/useHaptic';
+import { useAuth } from '../../hooks/useAuth';
+import { LogOutIcon } from 'lucide-react';
 
 interface MoreMenuItem {
   href: string;
@@ -28,6 +30,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
   const location = useLocation();
   const { playClick } = useSound();
   const { triggerHaptic } = useHaptic();
+  const { logout } = useAuth();
   const sheetRef = useRef<HTMLDivElement>(null);
 
   // Check if current path is active
@@ -76,13 +79,22 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
     setTimeout(() => navigate(href), 50);
   };
 
+  // Handle logout
+  const handleLogout = async () => {
+    playClick();
+    triggerHaptic('medium');
+    onClose();
+    await logout();
+    navigate('/', { replace: true });
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-overlay">
+    <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center pointer-events-none">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in pointer-events-auto"
         onClick={handleClose}
         onTouchEnd={(e) => {
           e.preventDefault();
@@ -94,14 +106,14 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
       {/* Bottom Sheet */}
       <div
         ref={sheetRef}
-        className="absolute bottom-0 left-0 right-0 z-modal
+        className="absolute bottom-0 left-0 right-0 z-[10001]
                   bg-white dark:bg-slate-900 
                   rounded-t-3xl shadow-2xl 
                   border-t border-slate-200 dark:border-slate-700
                   animate-slide-up"
         style={{
-          maxHeight: '70vh',
-          paddingBottom: 'max(env(safe-area-inset-bottom), 16px)',
+          maxHeight: '85vh',
+          paddingBottom: 'calc(max(env(safe-area-inset-bottom), 16px) + 80px)',
         }}
         role="dialog"
         aria-modal="true"
@@ -133,7 +145,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
         {/* Content - Grid Layout */}
         <div 
           className="px-6 py-4 overflow-y-auto overscroll-contain" 
-          style={{ maxHeight: 'calc(70vh - 180px)' }}
+          style={{ maxHeight: 'calc(85vh - 300px)' }}
         >
           <div className="grid grid-cols-2 gap-3">
             {items.map((item) => {
@@ -187,8 +199,26 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
           </div>
         </div>
 
-        {/* Close Button */}
-        <div className="px-6 pb-4 pt-2">
+        {/* Logout & Close Buttons */}
+        <div className="px-6 pb-4 pt-2 space-y-2">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full py-3.5 rounded-xl
+                      bg-red-50 dark:bg-red-500/10 
+                      hover:bg-red-100 dark:hover:bg-red-500/20
+                      active:bg-red-200 dark:active:bg-red-500/30
+                      text-red-600 dark:text-red-400 
+                      font-semibold text-sm
+                      transition-colors duration-150
+                      focus-visible:outline-none focus-visible:ring-2 
+                      focus-visible:ring-red-500/60
+                      select-none
+                      flex items-center justify-center gap-2"
+          >
+            <LogOutIcon className="w-4 h-4" />
+            Logout
+          </button>
           <button
             type="button"
             onClick={handleClose}
@@ -213,3 +243,4 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
 
 export default MoreMenuBottomSheet;
 export type { MoreMenuItem };
+

@@ -13,7 +13,28 @@ interface PresignResponse {
   publicUrl: string;
   key: string;
   error?: string;
+  code?: string;
 }
+
+const getFunctionErrorMessage = async (error: unknown): Promise<string> => {
+  const context = error && typeof error === 'object' && 'context' in error
+    ? (error as { context?: unknown }).context
+    : null;
+
+  if (context instanceof Response) {
+    try {
+      const payload = await context.clone().json() as { error?: string; code?: string };
+      if (payload.code === 'R2_CONFIGURATION_MISSING') {
+        return 'Upload foto belum dikonfigurasi di server. Hubungi administrator untuk melengkapi konfigurasi Cloudflare R2.';
+      }
+      if (payload.error) return payload.error;
+    } catch {
+      // Fall through to the generic message below.
+    }
+  }
+
+  return error instanceof Error ? error.message : 'Gagal menghubungi layanan upload foto.';
+};
 
 const MAX_SIZES: Record<R2StorageFolder, number> = {
   student_avatars: 2 * 1024 * 1024,
@@ -43,13 +64,6 @@ class R2StorageService {
     file: File,
     folder: R2StorageFolder
   ): Promise<{ publicUrl: string; key: string }> {
-    // --- Size validation ---
-    if (file.size > MAX_SIZES[folder]) {
-      throw new Error(
-        `File terlalu besar untuk ${folder}. Maksimal ${MAX_SIZES[folder] / 1024 / 1024}MB`
-      );
-    }
-
     // --- Type validation ---
     const allowed = ALLOWED_TYPES[folder];
     if (!allowed.includes(file.type)) {
@@ -76,6 +90,14 @@ class R2StorageService {
       }
     }
 
+    // Validate the processed output, not the original camera file. This lets a
+    // photo within the UI limit be resized/compressed before it reaches R2.
+    if (fileToUpload.size > MAX_SIZES[folder]) {
+      throw new Error(
+        `File terlalu besar untuk ${folder} setelah dikompresi. Maksimal ${MAX_SIZES[folder] / 1024 / 1024}MB`
+      );
+    }
+
     // 1. Get presigned PUT URL
     const { data, error } = await supabase.functions.invoke<PresignResponse>('r2-storage', {
       body: {
@@ -87,7 +109,7 @@ class R2StorageService {
     });
 
     if (error) {
-      throw new Error(`Failed to request presigned upload URL: ${error.message}`);
+      throw new Error(await getFunctionErrorMessage(error));
     }
 
     if (!data?.success || !data?.uploadUrl || !data?.publicUrl) {
@@ -122,7 +144,7 @@ class R2StorageService {
     });
 
     if (error) {
-      throw new Error(`Failed to invoke storage delete service: ${error.message}`);
+      throw new Error(await getFunctionErrorMessage(error));
     }
 
     if (!data?.success) {

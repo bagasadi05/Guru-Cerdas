@@ -43,7 +43,7 @@ import { SchoolViolationsWidget } from '../dashboard/SchoolViolationsWidget';
 import { SchoolAttendanceWidget } from '../dashboard/SchoolAttendanceWidget';
 import { transformToGameData } from '../../services/gamificationService';
 import { ErrorState } from '../ui/ErrorState';
-import { useGlobalSearch } from '../SearchSystem';
+import { useGlobalSearch } from '../GlobalSearchContext';
 
 // ==========================================
 // DASHBOARD PAGE

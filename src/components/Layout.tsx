@@ -7,7 +7,7 @@ import { supabase } from '../services/supabase';
 import GreetingRobot from './GreetingRobot';
 import { useOnboarding, OnboardingTour } from './ui/OnboardingTour';
 import { InteractiveTutorialProvider, TutorialPicker } from './ui/InteractiveTutorial';
-import { SearchTrigger } from './SearchSystem';
+import { SearchTrigger } from './SearchTrigger';
 import { SkipLinks } from './AccessibilityComponents';
 import { UploadProgressIndicator } from './ui/PerformanceIndicators';
 import { useParentMessageNotifications } from '../hooks/useParentMessageNotifications';

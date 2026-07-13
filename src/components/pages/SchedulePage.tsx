@@ -62,7 +62,7 @@ const toLiveSchedulePayload = (
 const inputStyles = `${componentStyles.input} pl-10 min-h-[44px]`;
 
 const SchedulePage: React.FC = () => {
-    const { user, isNotificationsEnabled } = useAuth();
+    const { user, loading: authLoading, isNotificationsEnabled } = useAuth();
     const navigate = useNavigate();
     const toast = useToast();
     const queryClient = useQueryClient();
@@ -95,6 +95,7 @@ const SchedulePage: React.FC = () => {
     const [analysisResult, setAnalysisResult] = useState<{ sections: { title: string; points: string[] }[] } | { error: string } | null>(null);
     const [isAnalysisLoading, setAnalysisLoading] = useState(false);
     const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(isNotificationsEnabled);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [confirmModalState, setConfirmModalState] = useState<{ isOpen: boolean; data: ScheduleRow | null }>({ isOpen: false, data: null });
     const lastScheduleErrorRef = useRef<string | null>(null);
@@ -103,6 +104,10 @@ const SchedulePage: React.FC = () => {
         const timerId = setInterval(() => setCurrentTime(new Date()), 60000);
         return () => clearInterval(timerId);
     }, []);
+
+    useEffect(() => {
+        setNotificationsEnabled(isNotificationsEnabled);
+    }, [isNotificationsEnabled]);
 
     useEffect(() => {
         if (!daysOfWeek.includes(selectedDay)) {
@@ -122,6 +127,7 @@ const SchedulePage: React.FC = () => {
                 .from('schedules')
                 .select('*')
                 .eq('user_id', user!.id)
+                .is('deleted_at', null)
                 .order('day')
                 .order('start_time');
             if (error) throw error;
@@ -130,7 +136,7 @@ const SchedulePage: React.FC = () => {
         enabled: !!user,
     });
 
-    const { data: classes = [] } = useQuery({
+    const { data: classes = [], isLoading: isLoadingClasses, isError: isClassesError, refetch: refetchClasses } = useQuery({
         queryKey: ['classes', 'schedule', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
@@ -138,6 +144,7 @@ const SchedulePage: React.FC = () => {
                 .select('*')
                 .is('deleted_at', null)
                 .eq('is_archived', false)
+                .eq('user_id', user!.id)
                 .order('name');
             if (error) throw error;
             return data || [];
@@ -236,6 +243,28 @@ const SchedulePage: React.FC = () => {
             subject: formData.subject, class_id: formData.class_id, start_time: formData.start_time, end_time: formData.end_time
         }, scheduleRules);
         if (!validationResult.isValid) { setErrors(validationResult.errors); return; }
+
+        if (formData.end_time <= formData.start_time) {
+            setErrors({ end_time: 'Waktu selesai harus setelah waktu mulai.' });
+            return;
+        }
+
+        if (!classes.some((classItem) => classItem.id === formData.class_id)) {
+            setErrors({ class_id: 'Pilih kelas yang tersedia pada daftar.' });
+            return;
+        }
+
+        const hasConflict = schedule.some((item) => (
+            item.id !== modalState.data?.id
+            && item.day === formData.day
+            && formData.start_time < item.end_time
+            && formData.end_time > item.start_time
+        ));
+        if (hasConflict) {
+            setErrors({ start_time: 'Waktu ini bertabrakan dengan jadwal mengajar lain.' });
+            return;
+        }
+
         setErrors({});
         if (modalState.mode === 'add') {
             scheduleMutation.mutate({ mode: 'add', data: { ...formData, user_id: user.id } });
@@ -288,7 +317,8 @@ const SchedulePage: React.FC = () => {
             if (result.enabled && result.serverRegistered) {
                 // Also sync the legacy flag so isNotificationsEnabled stays in sync
                 localStorage.setItem('scheduleNotificationsEnabled', 'true');
-                toast.success("Notifikasi jadwal berhasil diaktifkan! Anda akan diingatkan sebelum jam mengajar.");
+                setNotificationsEnabled(true);
+                toast.success('Notifikasi jadwal berhasil diaktifkan! Anda akan diingatkan sebelum jam mengajar.');
             } else if (result.permission === 'denied') {
                 toast.error("Izin notifikasi ditolak oleh browser. Buka pengaturan browser untuk mengizinkan notifikasi.");
             } else {
@@ -321,7 +351,7 @@ const SchedulePage: React.FC = () => {
         return (endH * 60 + endM) - (startH * 60 + startM);
     };
 
-    if (pageLoading) return <SchedulePageSkeleton />;
+    if (authLoading || pageLoading) return <SchedulePageSkeleton />;
 
     const currentDaySchedule = scheduleByDay[selectedDay] || [];
 
@@ -352,7 +382,7 @@ const SchedulePage: React.FC = () => {
                     </div>
                 </header>
 
-                {!isNotificationsEnabled && <NotificationPrompt onEnable={handleEnableNotifications} isLoading={isEnablingNotifications} />}
+                {!notificationsEnabled && <NotificationPrompt onEnable={handleEnableNotifications} isLoading={isEnablingNotifications} />}
 
                 {conflictWarnings.length > 0 ? (
                     <div className="bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-200 dark:border-red-500/20 p-4 animate-fade-in">
@@ -445,7 +475,14 @@ const SchedulePage: React.FC = () => {
                     </div>
                     <FormInputWrapper label="Mata Pelajaran" icon={BookOpenIcon}><Input value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })} className={inputStyles} placeholder="cth. Matematika" error={errors.subject} /></FormInputWrapper>
                     <FormInputWrapper label="Kelas" icon={GraduationCapIcon}>
-                        {classes && classes.length > 0 ? (
+                        {isLoadingClasses ? (
+                            <div className="h-11 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" aria-label="Memuat kelas" />
+                        ) : isClassesError ? (
+                            <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 dark:border-red-900/50 px-3 py-2 text-sm text-red-600 dark:text-red-300">
+                                <span>Gagal memuat kelas.</span>
+                                <Button type="button" size="sm" variant="ghost" onClick={() => refetchClasses()}>Coba lagi</Button>
+                            </div>
+                        ) : classes.length > 0 ? (
                             <CustomDropdown
                                 value={formData.class_id ?? ''}
                                 onChange={(val) => setFormData({ ...formData, class_id: val })}
@@ -453,13 +490,15 @@ const SchedulePage: React.FC = () => {
                                 placeholder="Pilih Kelas"
                             />
                         ) : (
-                            <Input value={formData.class_id ?? ''} onChange={e => setFormData({ ...formData, class_id: e.target.value })} className={inputStyles} placeholder="cth. 7A" error={errors.class_id} />
+                            <p className="rounded-lg border border-amber-200 dark:border-amber-900/50 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+                                Belum ada kelas aktif. Tambahkan kelas terlebih dahulu sebelum membuat jadwal.
+                            </p>
                         )}
                         {errors.class_id && <p className="text-red-500 text-xs mt-1">{errors.class_id}</p>}
                     </FormInputWrapper>
                     <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="ghost" onClick={handleCloseModal} disabled={scheduleMutation.isPending}>Batal</Button>
-                        <Button type="submit" disabled={scheduleMutation.isPending}>{scheduleMutation.isPending ? 'Menyimpan...' : 'Simpan'}</Button>
+                        <Button type="submit" disabled={scheduleMutation.isPending || isLoadingClasses || isClassesError || classes.length === 0}>{scheduleMutation.isPending ? 'Menyimpan...' : 'Simpan'}</Button>
                     </div>
                 </form>
             </Modal>

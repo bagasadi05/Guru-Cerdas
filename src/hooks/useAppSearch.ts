@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
 import { globalSearch, type SearchEntityType } from '../services/SearchService';
-import type { SearchResult } from '../components/SearchSystem';
+import type { SearchResult } from '../components/searchTypes';
 import { logger } from '../services/logger';
 
 /**

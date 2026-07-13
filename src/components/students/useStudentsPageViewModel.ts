@@ -29,7 +29,7 @@ export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false, canVi
     useBulkSelection(data.studentsForActiveClass);
 
   const canManageClass = (classItem: ClassRow) => {
-    return classItem.user_id === userId || hasHomeroomAssignment(data.userAssignments, classItem.id);
+    return isAdmin || classItem.user_id === userId || hasHomeroomAssignment(data.userAssignments, classItem.id);
   };
 
   const actions = useStudentsPageActions({

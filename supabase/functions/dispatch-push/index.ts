@@ -245,13 +245,16 @@ async function processScheduleReminders(
   const currentHour = wibNow.getHours();
   const currentMinute = wibNow.getMinutes();
   const currentMinutes = currentHour * 60 + currentMinute;
-  const horizonMinutes = currentMinutes + 60; // Look ahead 60 minutes
+  const reminderLeadMinutes = 5;
+  const reminderWindowMinutes = 15; // Dispatcher runs every 15 minutes.
+  const horizonMinutes = currentMinutes + reminderLeadMinutes + reminderWindowMinutes;
 
   // Query schedules for today that haven't been reminded
   const { data: schedules, error } = await supabase
     .from("schedules")
     .select("id, user_id, day, start_time, end_time, subject, class_id, room, reminded")
     .eq("day", todayName)
+    .is("deleted_at", null)
     .or("reminded.is.null,reminded.eq.false")
     .limit(500);
 
@@ -260,11 +263,13 @@ async function processScheduleReminders(
     return { found: 0, notified: 0, failed: 0 };
   }
 
-  // Filter: only schedules starting within the next 60 minutes
+  // The cron runs every 15 minutes, so notify schedules that are roughly five
+  // minutes away without missing a schedule between two cron executions.
   const upcoming = ((schedules ?? []) as ScheduleRow[]).filter((s) => {
     const [h, m] = s.start_time.split(":").map(Number);
     const startMinutes = h * 60 + m;
-    return startMinutes >= currentMinutes && startMinutes <= horizonMinutes;
+    return startMinutes >= currentMinutes + reminderLeadMinutes
+      && startMinutes <= horizonMinutes;
   });
 
   const found = upcoming.length;
@@ -314,10 +319,15 @@ async function processScheduleReminders(
       requireInteraction: minutesUntil <= 5,
     };
 
+    let delivered = false;
     for (const sub of userSubs) {
       const result = await sendToSubscription(supabase, sub, payload);
-      if (result.ok) notified++;
-      else failed++;
+      if (result.ok) {
+        notified++;
+        delivered = true;
+      } else {
+        failed++;
+      }
 
       if (result.reason === "subscription_gone") {
         await supabase
@@ -327,7 +337,7 @@ async function processScheduleReminders(
       }
     }
 
-    remindedIds.push(schedule.id);
+    if (delivered) remindedIds.push(schedule.id);
   }
 
   if (remindedIds.length > 0) {

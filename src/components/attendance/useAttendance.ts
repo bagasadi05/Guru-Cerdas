@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useDeferredValue } from 'react';
+import { useState, useEffect, useMemo, useDeferredValue, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { generateOpenRouterJson } from '../../services/openRouterService';
@@ -58,6 +58,9 @@ export const useAttendance = () => {
     }, [selectedDate, selectedSemester]);
 
     const [attendanceRecords, setAttendanceRecords] = useState<Record<string, AttendanceRecord>>({});
+    const initialSyncRef = useRef(false);
+    const localDirtyRef = useRef(false);
+    const attendanceContextRef = useRef<string>('');
     const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
     const [isDatePickerOpen, setDatePickerOpen] = useState(false);
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
@@ -124,9 +127,9 @@ export const useAttendance = () => {
         if (isAdmin) return classes;
         return classes.filter((classRow) => (
             classRow.user_id === user.id
-            || hasHomeroomAssignment(teacherAssignments, classRow.id, null)
+            || hasHomeroomAssignment(teacherAssignments, classRow.id, selectedSemesterId)
         ));
-    }, [classes, teacherAssignments, user, isAdmin]);
+    }, [classes, teacherAssignments, user, isAdmin, selectedSemesterId]);
 
     useEffect(() => {
         if (attendanceClasses.length === 0) {
@@ -143,7 +146,7 @@ export const useAttendance = () => {
     }, [attendanceClasses, selectedClass]);
 
     const { data: students = [], isLoading: isLoadingStudents, error: studentsError, refetch: refetchStudents } = useQuery({
-        queryKey: ['studentsForAttendance', selectedClass],
+        queryKey: ['studentsForAttendance', user?.id, selectedClass],
         queryFn: async () => {
             if (!selectedClass || !user) return [];
             const { data: studentsData, error: studentsError } = await supabase
@@ -158,7 +161,7 @@ export const useAttendance = () => {
         enabled: !!selectedClass && !!user
     });
 
-    const { data: existingAttendance } = useQuery({
+    const { data: existingAttendance, isSuccess: hasLoadedAttendance } = useQuery({
         queryKey: ['attendanceData', user?.id, selectedClass, selectedDate],
         queryFn: async () => {
             if (!user || !students || students.length === 0) return {};
@@ -166,6 +169,7 @@ export const useAttendance = () => {
                 .from('attendance')
                 .select('id, student_id, status, notes, official_status, teacher_id')
                 .eq('date', selectedDate)
+                .eq('user_id', user.id)
                 .in('student_id', students.map((student) => student.id))
                 .is('deleted_at', null);
 
@@ -178,15 +182,35 @@ export const useAttendance = () => {
         enabled: !!user && !!selectedClass && !!selectedDate && !!students && students.length > 0,
     });
 
+    // Drafts belong to exactly one teacher, class, and date. Never let an
+    // unsaved draft from a previous context appear in or save into a new one.
     useEffect(() => {
-        setAttendanceRecords(existingAttendance || {});
-    }, [existingAttendance]);
+        const nextContext = `${user?.id || ''}:${selectedClass}:${selectedDate}`;
+        if (attendanceContextRef.current === nextContext) return;
+
+        attendanceContextRef.current = nextContext;
+        initialSyncRef.current = false;
+        localDirtyRef.current = false;
+        setAttendanceRecords({});
+        setSelectedStudents(new Set());
+    }, [user?.id, selectedClass, selectedDate]);
+
+    // Sync DB→state only once per class/date. A response that arrives after
+    // a quick action must not overwrite the teacher's local changes.
+    useEffect(() => {
+        if (initialSyncRef.current || !hasLoadedAttendance) return;
+
+        initialSyncRef.current = true;
+        if (!localDirtyRef.current) {
+            setAttendanceRecords(existingAttendance || {});
+        }
+    }, [existingAttendance, hasLoadedAttendance]);
 
     const calendarRange = useMemo(() => {
         const [year, monthNum] = calendarMonth.split('-').map(Number);
         if (!year || !monthNum) return null;
         const monthStart = `${year}-${String(monthNum).padStart(2, '0')}-01`;
-        const monthEnd = new Date(year, monthNum, 0).toISOString().split('T')[0];
+        const monthEnd = `${year}-${String(monthNum).padStart(2, '0')}-${String(new Date(year, monthNum, 0).getDate()).padStart(2, '0')}`;
         if (!selectedSemester) return { start: monthStart, end: monthEnd };
 
         const start = monthStart < selectedSemester.start_date ? selectedSemester.start_date : monthStart;
@@ -202,6 +226,7 @@ export const useAttendance = () => {
             const { data, error } = await supabase
                 .from('attendance')
                 .select('student_id, date, status')
+                .eq('user_id', user.id)
                 .in('student_id', students.map((student) => student.id))
                 .gte('date', calendarRange.start)
                 .lte('date', calendarRange.end)
@@ -268,6 +293,7 @@ export const useAttendance = () => {
             }
         },
         onSettled: () => {
+            localDirtyRef.current = false;
             queryClient.invalidateQueries({ queryKey: ['attendanceData', user?.id, selectedClass, selectedDate] });
             queryClient.invalidateQueries({ queryKey: ['attendanceCalendar'] });
             queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
@@ -286,7 +312,7 @@ export const useAttendance = () => {
 
     const unmarkedStudents = useMemo(() => {
         if (!students) return [];
-        return students.filter(student => !attendanceRecords[student.id]);
+        return students.filter(student => !attendanceRecords[student.id]?.status);
     }, [students, attendanceRecords]);
 
     const filteredStudents = useMemo(() => {
@@ -344,25 +370,47 @@ export const useAttendance = () => {
 
     const handleSaveNote = () => {
         if (selectedStudents.size === 0) return;
+        if (isSaving) {
+            toast.warning('Tunggu sampai proses simpan selesai.');
+            return;
+        }
+
+        const studentsWithStatus = Array.from(selectedStudents).filter(studentId => attendanceRecords[studentId]?.status);
+        if (studentsWithStatus.length === 0) {
+            toast.warning('Pilih status absensi siswa terlebih dahulu sebelum menambahkan catatan.');
+            return;
+        }
+
+        localDirtyRef.current = true;
         const updatedRecords = { ...attendanceRecords };
-        selectedStudents.forEach(studentId => {
+        studentsWithStatus.forEach(studentId => {
             updatedRecords[studentId] = { ...updatedRecords[studentId], note: noteText };
         });
         setAttendanceRecords(updatedRecords);
         setSelectedStudents(new Set());
         setIsNoteModalOpen(false);
         setNoteText('');
-        toast.success(`Catatan berhasil disimpan`);
+        toast.success('Catatan berhasil disimpan');
     };
 
     const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
+        if (isSaving) {
+            toast.warning('Tunggu sampai proses simpan selesai.');
+            return;
+        }
+        localDirtyRef.current = true;
         setAttendanceRecords(prev => ({
             ...prev,
-            [studentId]: { ...prev[studentId], status, note: (status === 'Izin' || status === 'Sakit') ? (prev[studentId]?.note || '') : '' }
+            [studentId]: { ...prev[studentId], status, note: prev[studentId]?.note || '' }
         }));
     };
 
     const markRestAsPresent = () => {
+        if (isSaving) {
+            toast.warning('Tunggu sampai proses simpan selesai.');
+            return;
+        }
+        localDirtyRef.current = true;
         const updatedRecords = { ...attendanceRecords };
         unmarkedStudents.forEach(student => {
             updatedRecords[student.id] = { status: AttendanceStatus.Hadir, note: '' };
@@ -383,20 +431,21 @@ export const useAttendance = () => {
     }, [selectedDate, selectedSemester]);
 
     const { data: attendanceHistory = [] } = useQuery({
-        queryKey: ['attendanceHistory', selectedClass, streakRange.start, streakRange.end],
+        queryKey: ['attendanceHistory', user?.id, selectedClass, streakRange.start, streakRange.end],
         queryFn: async () => {
-            if (!students || students.length === 0) return [];
+            if (!user || !students || students.length === 0) return [];
             const { data, error } = await supabase
                 .from('attendance')
                 .select('student_id, date, status')
                 .gte('date', streakRange.start)
                 .lte('date', streakRange.end)
+                .eq('user_id', user.id)
                 .in('student_id', students.map(student => student.id))
                 .is('deleted_at', null);
             if (error) throw error;
             return (data || []) as unknown as AttendanceRow[];
         },
-        enabled: !!students && students.length > 0,
+        enabled: !!user && !!students && students.length > 0,
     });
 
     // Calculate attendance streaks with real historical data
@@ -478,33 +527,45 @@ export const useAttendance = () => {
 
     // Handle template application
     const handleApplyTemplate = (template: { defaultStatus: AttendanceStatus, applyToAll: boolean }) => {
-        if (!students) return;
-
-        const newRecords = { ...attendanceRecords };
-
-        if (template.applyToAll) {
-            students.forEach(student => {
-                newRecords[student.id] = {
-                    ...newRecords[student.id],
-                    status: template.defaultStatus,
-                };
-            });
-            toast.success(`Semua siswa ditandai sebagai ${template.defaultStatus}`);
-        } else {
-            let count = 0;
-            students.forEach(student => {
-                if (!newRecords[student.id]?.status) {
-                    newRecords[student.id] = {
-                        ...newRecords[student.id],
-                        status: template.defaultStatus,
-                    };
-                    count++;
-                }
-            });
-            toast.success(`${count} siswa ditandai sebagai ${template.defaultStatus}`);
+        if (!students || students.length === 0) return;
+        if (isSaving) {
+            toast.warning('Tunggu sampai proses simpan selesai.');
+            return;
         }
 
-        setAttendanceRecords(newRecords);
+        localDirtyRef.current = true;
+        initialSyncRef.current = true;
+
+        const unmarkedCount = template.applyToAll
+            ? students.length
+            : students.filter(student => !attendanceRecords[student.id]?.status).length;
+        const updatedRecords = { ...attendanceRecords };
+
+        students.forEach(student => {
+            if (template.applyToAll || !updatedRecords[student.id]?.status) {
+                updatedRecords[student.id] = {
+                    ...updatedRecords[student.id],
+                    status: template.defaultStatus,
+                    note: updatedRecords[student.id]?.note || '',
+                };
+            }
+        });
+
+        // Keep the visible state and query cache aligned so a delayed query
+        // response cannot revert a quick-action selection.
+        setAttendanceRecords(updatedRecords);
+        queryClient.setQueryData(
+            ['attendanceData', user?.id, selectedClass, selectedDate],
+            updatedRecords,
+        );
+
+        if (template.applyToAll) {
+            toast.success(`Semua siswa ditandai sebagai ${template.defaultStatus}`);
+        } else if (unmarkedCount > 0) {
+            toast.success(`${unmarkedCount} siswa ditandai sebagai ${template.defaultStatus}`);
+        } else {
+            toast.info('Semua siswa sudah memiliki status absensi');
+        }
     };
 
     // Reset Attendance Mutation
@@ -519,13 +580,15 @@ export const useAttendance = () => {
             const studentIds = students.map(s => s.id);
             const { error } = await supabase
                 .from('attendance')
-                .update({ deleted_at: new Date().toISOString() } as never)
-                .eq('date', selectedDate)
-                .in('student_id', studentIds);
+                    .update({ deleted_at: new Date().toISOString() } as never)
+                    .eq('date', selectedDate)
+                    .eq('user_id', user.id)
+                    .in('student_id', studentIds);
 
             if (error) throw error;
         },
         onSuccess: () => {
+            localDirtyRef.current = false;
             setAttendanceRecords({});
             setIsResetModalOpen(false);
             toast.success('Absensi berhasil direset! Semua data absensi untuk tanggal ini telah dihapus.');
@@ -542,7 +605,11 @@ export const useAttendance = () => {
     });
 
     const handleResetAttendance = () => {
-        const hasAttendanceData = Object.keys(attendanceRecords).length > 0;
+        if (isSaving) {
+            toast.warning('Tunggu sampai proses simpan selesai.');
+            return;
+        }
+        const hasAttendanceData = Object.values(attendanceRecords).some(record => record.status);
         if (!hasAttendanceData) {
             toast.warning('Tidak ada data absensi untuk direset pada tanggal ini.');
             return;
@@ -555,17 +622,24 @@ export const useAttendance = () => {
     };
 
     const performSave = () => {
-        if (!user || !students) return;
+        if (!user || !students || isSaving) return;
 
         const recordsToSave = { ...attendanceRecords };
         unmarkedStudents.forEach(student => {
             recordsToSave[student.id] = { status: AttendanceStatus.Hadir, note: '' };
         });
 
-        const semesterIdForDate = getSemesterByDate(selectedDate)?.id || selectedSemesterId || activeSemester?.id || null;
+        const recordsWithIds = Object.fromEntries(
+            Object.entries(recordsToSave).map(([studentId, record]) => [
+                studentId,
+                { ...record, id: record.id || crypto.randomUUID() },
+            ]),
+        ) as Record<string, AttendanceRecord>;
+        setAttendanceRecords(recordsWithIds);
 
-        const recordsToUpsert = Object.entries(recordsToSave).map(([student_id, record]: [string, AttendanceRecord]) => ({
-            id: record.id || crypto.randomUUID(),
+        const semesterIdForDate = getSemesterByDate(selectedDate)?.id || selectedSemesterId || activeSemester?.id || null;
+        const recordsToUpsert = Object.entries(recordsWithIds).map(([student_id, record]) => ({
+            id: record.id!,
             student_id,
             date: selectedDate,
             status: record.status,
@@ -573,7 +647,7 @@ export const useAttendance = () => {
             teacher_id: user.id,
             notes: record.note,
             user_id: user.id,
-            semester_id: semesterIdForDate
+            semester_id: semesterIdForDate,
         }));
 
         saveAttendance(recordsToUpsert);
@@ -595,7 +669,7 @@ export const useAttendance = () => {
         if (exportPeriod === 'monthly') {
             const [year, monthNum] = exportMonth.split('-').map(Number);
             startDate = `${year}-${String(monthNum).padStart(2, '0')}-01`;
-            endDate = new Date(year, monthNum, 0).toISOString().split('T')[0];
+            endDate = `${year}-${String(monthNum).padStart(2, '0')}-${String(new Date(year, monthNum, 0).getDate()).padStart(2, '0')}`;
         } else {
             const semester = semesters.find(s => s.id === exportSemesterId);
             if (!semester) throw new Error('Semester tidak valid');

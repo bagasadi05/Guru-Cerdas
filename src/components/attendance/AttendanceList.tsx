@@ -31,12 +31,12 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         key={student.id}
                         id={`student-${student.id}`}
                         className={`
-                            group flex flex-col p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]
-                            hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-emerald-500/20 dark:hover:border-emerald-500/30 hover:-translate-y-0.5
-                            transition-all duration-300 card-interactive animate-list-item
+                            attendance-student-card group flex flex-col p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900/60 sm:backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)]
+                            sm:hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] sm:hover:border-emerald-500/20 dark:sm:hover:border-emerald-500/30 sm:hover:-translate-y-0.5
+                            transition-colors sm:transition-all duration-200 card-interactive
                             ${highlightedStudentId === student.id ? 'ring-2 ring-emerald-500' : ''}
                         `}
-                        style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
+                        style={{ contentVisibility: 'auto', containIntrinsicSize: '220px' }}
                     >
                         {/* 1. Student Info (Top Row) */}
                         <div className="flex items-center gap-4 min-w-0">

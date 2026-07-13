@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { AttendancePageSkeleton } from '../skeletons/PageSkeletons';
 import { SemesterSelector } from '../ui/SemesterSelector';
 import {
@@ -21,9 +21,9 @@ import { useAttendance } from '../attendance/useAttendance';
 import { AttendanceSummaryWidget } from '../attendance/AttendanceSummaryWidget';
 import { AttendanceHeader } from '../attendance/AttendanceHeader';
 import { AttendanceList } from '../attendance/AttendanceList';
-import { AttendanceExportModal } from '../attendance/AttendanceExportModal';
-import { AiAnalysisModal } from '../attendance/AiAnalysisModal';
-import { AttendanceCalendar } from '../attendance/AttendanceCalendar';
+const AttendanceExportModal = lazy(() => import('../attendance/AttendanceExportModal').then(module => ({ default: module.AttendanceExportModal })));
+const AiAnalysisModal = lazy(() => import('../attendance/AiAnalysisModal').then(module => ({ default: module.AiAnalysisModal })));
+const AttendanceCalendar = lazy(() => import('../attendance/AttendanceCalendar').then(module => ({ default: module.AttendanceCalendar })));
 import { AttendanceClassSelector } from '../attendance/AttendanceClassSelector';
 import { AttendanceQuickActionsBar } from '../attendance/AttendanceQuickActionsBar';
 import { EmptyState } from '../ui/EmptyState';
@@ -251,12 +251,14 @@ const AttendancePage: React.FC = () => {
                             className="bg-white/50 dark:bg-white/5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700"
                         />
                     ) : viewMode === 'calendar' ? (
-                        <AttendanceCalendar
-                            records={calendarSummaryRecords}
-                            selectedDate={selectedDate}
-                            onDateClick={(date) => setSelectedDate(date)}
-                            onMonthChange={(date) => setCalendarMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`)}
-                        />
+                        <Suspense fallback={<div className="p-8 text-center text-slate-500">Memuat kalender...</div>}>
+                            <AttendanceCalendar
+                                records={calendarSummaryRecords}
+                                selectedDate={selectedDate}
+                                onDateClick={(date) => setSelectedDate(date)}
+                                onMonthChange={(date) => setCalendarMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`)}
+                            />
+                        </Suspense>
                     ) : (
                         <AttendanceList
                             students={filteredStudents}
@@ -326,12 +328,16 @@ const AttendancePage: React.FC = () => {
                 </div>
             )}
 
-            <AiAnalysisModal
-                isOpen={isAiModalOpen}
-                onClose={() => setIsAiModalOpen(false)}
-                isLoading={isAiLoading}
-                result={aiAnalysisResult}
-            />
+            {isAiModalOpen && (
+                <Suspense fallback={null}>
+                    <AiAnalysisModal
+                        isOpen={isAiModalOpen}
+                        onClose={() => setIsAiModalOpen(false)}
+                        isLoading={isAiLoading}
+                        result={aiAnalysisResult}
+                    />
+                </Suspense>
+            )}
 
             <Modal title="Catatan Absensi" isOpen={isNoteModalOpen} onClose={() => setIsNoteModalOpen(false)}>
                 <div className="space-y-4">
@@ -349,21 +355,25 @@ const AttendancePage: React.FC = () => {
                 </div>
             </Modal>
 
-            <AttendanceExportModal
-                isOpen={isExportModalOpen}
-                onClose={() => setIsExportModalOpen(false)}
-                onExport={handleExport}
-                isExporting={isExporting}
-                exportMonth={exportMonth}
-                setExportMonth={setExportMonth}
-                classes={attendanceClasses}
-                selectedExportClass={selectedExportClass}
-                setSelectedExportClass={setSelectedExportClass}
-                exportPeriod={exportPeriod}
-                setExportPeriod={setExportPeriod}
-                exportSemesterId={exportSemesterId}
-                setExportSemesterId={setExportSemesterId}
-            />
+            {isExportModalOpen && (
+                <Suspense fallback={null}>
+                    <AttendanceExportModal
+                        isOpen={isExportModalOpen}
+                        onClose={() => setIsExportModalOpen(false)}
+                        onExport={handleExport}
+                        isExporting={isExporting}
+                        exportMonth={exportMonth}
+                        setExportMonth={setExportMonth}
+                        classes={attendanceClasses}
+                        selectedExportClass={selectedExportClass}
+                        setSelectedExportClass={setSelectedExportClass}
+                        exportPeriod={exportPeriod}
+                        setExportPeriod={setExportPeriod}
+                        exportSemesterId={exportSemesterId}
+                        setExportSemesterId={setExportSemesterId}
+                    />
+                </Suspense>
+            )}
 
             <BottomSheet isOpen={isDatePickerOpen} onClose={() => setDatePickerOpen(false)} title="Pilih Tanggal Absensi">
                 <div className="space-y-6 pb-6">
@@ -378,6 +388,7 @@ const AttendancePage: React.FC = () => {
                         <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Aksi Cepat</label>
                         <div className="grid grid-cols-2 gap-3">
                             <button
+                                type="button"
                                 onClick={() => {
                                     setSelectedDate(today);
                                     setDatePickerOpen(false);
@@ -391,6 +402,7 @@ const AttendancePage: React.FC = () => {
                                 <span className="font-bold">Hari Ini</span>
                             </button>
                             <button
+                                type="button"
                                 onClick={() => {
                                     setSelectedDate(yesterday);
                                     setDatePickerOpen(false);

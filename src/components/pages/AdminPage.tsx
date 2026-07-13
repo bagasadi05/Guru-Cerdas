@@ -16,6 +16,7 @@ import {
     Undo2,
     UserCheck,
     GraduationCap,
+    Library,
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { softDelete } from '../../services/SoftDeleteService';
@@ -38,6 +39,7 @@ import {
     ActivityLogsTab,
     SystemTab,
     StudentsMasterDataTab,
+    ClassesMasterDataTab,
 } from './admin';
 
 const USER_PAGE_SIZE = 20;
@@ -81,6 +83,7 @@ const AdminPage: React.FC = () => {
     const [deletedTotal, setDeletedTotal] = useState(0);
     const [editingUserId, setEditingUserId] = useState<string | null>(null);
     const [newRole, setNewRole] = useState<string>('');
+    const [newName, setNewName] = useState<string>('');
     const [updating, setUpdating] = useState(false);
 
     // Stats State
@@ -405,10 +408,10 @@ const AdminPage: React.FC = () => {
 
     // Update user role
     // P0 Fix: Cegah self-demote dan validasi
-    const handleUpdateRole = async (userId: string) => {
+    const handleUpdateUser = async (userId: string) => {
         if (!newRole) return;
         if (userId === user?.id) {
-            setError('Tidak dapat mengubah role akun sendiri');
+            setError('Tidak dapat mengubah akun sendiri');
             return;
         }
         setUpdating(true);
@@ -416,11 +419,11 @@ const AdminPage: React.FC = () => {
             const userToUpdate = users.find(u => u.user_id === userId) || null;
             const { error } = await supabase
                 .from('user_roles')
-                .update({ role: newRole as 'admin' | 'teacher' | 'student' | 'parent' })
+                .update({ role: newRole as 'admin' | 'teacher' | 'student' | 'parent', full_name: newName || null })
                 .eq('user_id', userId);
             if (error) throw error;
-            const updatedUser = userToUpdate ? { ...userToUpdate, role: newRole } : { user_id: userId, role: newRole };
-            await logAdminAction('user_roles', 'UPDATE_ROLE', userId, userToUpdate, updatedUser);
+            const updatedUser = userToUpdate ? { ...userToUpdate, role: newRole, full_name: newName } : { user_id: userId, role: newRole, full_name: newName };
+            await logAdminAction('user_roles', 'UPDATE', userId, userToUpdate, updatedUser);
             setEditingUserId(null);
             fetchStats();
             fetchUsers();
@@ -441,13 +444,18 @@ const AdminPage: React.FC = () => {
         try {
             const userToUpdate = users.find(u => u.user_id === userId) || null;
             const nextStatus = !currentStatus;
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('user_roles')
                 .update({ is_approved: nextStatus })
-                .eq('user_id', userId);
+                .eq('user_id', userId)
+                .select('user_id, is_approved')
+                .maybeSingle();
             if (error) throw error;
+            if (!data || data.is_approved !== nextStatus) {
+                throw new Error('Status persetujuan tidak berubah. Pastikan akun Anda memiliki izin admin.');
+            }
             const updatedUser = userToUpdate ? { ...userToUpdate, is_approved: nextStatus } : { user_id: userId, is_approved: nextStatus };
-            await logAdminAction('user_roles', nextStatus ? 'APPROVE_USER' : 'DISAPPROVE_USER', userId, userToUpdate, updatedUser);
+            await logAdminAction('user_roles', 'UPDATE', userId, userToUpdate, updatedUser);
             fetchUsers();
             fetchActivityLogs();
         } catch (err: unknown) {
@@ -482,7 +490,7 @@ const AdminPage: React.FC = () => {
             // Log the action
             await logAdminAction(
                 'user_roles',
-                'SOFT_DELETE',
+                'UPDATE',
                 userToDelete.user_id,
                 userToDelete,
                 { ...userToDelete, deleted_at: deletedAt }
@@ -515,7 +523,7 @@ const AdminPage: React.FC = () => {
 
             await logAdminAction(
                 'user_roles',
-                'RESTORE',
+                'UPDATE',
                 userToRestore.user_id,
                 userToRestore,
                 { ...userToRestore, deleted_at: null }
@@ -604,6 +612,7 @@ const AdminPage: React.FC = () => {
     const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
         { id: 'overview', label: 'Ringkasan', icon: <BarChart3 size={18} /> },
         { id: 'students', label: 'Kelola Siswa', icon: <GraduationCap size={18} /> },
+        { id: 'classes', label: 'Kelola Kelas', icon: <Library size={18} /> },
         { id: 'users', label: 'Pengguna & Guru', icon: <Users size={18} /> },
         { id: 'assignments', label: 'Penugasan Guru', icon: <UserCheck size={18} /> },
         { id: 'announcements', label: 'Pengumuman', icon: <Megaphone size={18} /> },
@@ -696,6 +705,10 @@ const AdminPage: React.FC = () => {
                     <StudentsMasterDataTab />
                 )}
 
+                {activeTab === 'classes' && (
+                    <ClassesMasterDataTab onLogAction={logAdminAction} />
+                )}
+
                 {activeTab === 'users' && (
                     <UsersTab
                         users={users}
@@ -713,8 +726,10 @@ const AdminPage: React.FC = () => {
                         setEditingUserId={setEditingUserId}
                         newRole={newRole}
                         setNewRole={setNewRole}
+                        newName={newName}
+                        setNewName={setNewName}
                         updating={updating}
-                        handleUpdateRole={handleUpdateRole}
+                        handleUpdateUser={handleUpdateUser}
                         handleToggleApproval={handleToggleApproval}
                         openDeleteModal={openDeleteModal}
                         restoreUser={restoreUser}
@@ -723,6 +738,7 @@ const AdminPage: React.FC = () => {
                         deletedTotal={deletedTotal}
                         showDeletedUsers={showDeletedUsers}
                         setShowDeletedUsers={setShowDeletedUsers}
+                        onRefreshRequested={() => { fetchStats(); fetchUsers(); fetchActivityLogs(); }}
                     />
                 )}
 

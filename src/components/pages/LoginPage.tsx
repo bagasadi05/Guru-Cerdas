@@ -51,7 +51,16 @@ const LoginPage: React.FC = () => {
                 loginEmail = `${loginEmail}@guru.local`;
             }
             const response = await login(loginEmail, data.password);
-            if (response.error) throw response.error;
+            if (response.error) {
+                const message = response.error.message.toLowerCase();
+                if (message.includes('email not confirmed') || message.includes('email belum dikonfirmasi')) {
+                    throw new Error('Email belum diverifikasi. Buka tautan verifikasi di email Anda, lalu coba masuk kembali.');
+                }
+                if (message.includes('invalid login credentials')) {
+                    throw new Error('Email atau password tidak sesuai. Gunakan email yang didaftarkan dan password yang sama; persetujuan admin tidak mengubah password.');
+                }
+                throw response.error;
+            }
             
             // Otomatis meminta izin notifikasi setelah login berhasil
             if (response.data?.user) {
@@ -75,7 +84,10 @@ const LoginPage: React.FC = () => {
             const response = await signup(data.name, data.email, data.password);
             if (response.error) throw response.error;
             if (response.data.user) {
-                toast.success('Pendaftaran berhasil! Silakan periksa email Anda untuk verifikasi.');
+                const needsEmailVerification = !response.data.session;
+                toast.success(needsEmailVerification
+                    ? 'Pendaftaran berhasil. Verifikasi email terlebih dahulu, lalu tunggu persetujuan Admin sebelum masuk.'
+                    : 'Pendaftaran berhasil. Tunggu persetujuan Admin sebelum masuk.');
                 setFormMode('login');
                 resetSignup();
             }

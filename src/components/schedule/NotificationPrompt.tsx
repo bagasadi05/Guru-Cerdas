@@ -16,7 +16,7 @@ export const NotificationPrompt: React.FC<NotificationPromptProps> = ({ onEnable
                 </div>
                 <div>
                     <h4 className="font-semibold text-slate-800 dark:text-white text-sm">Jangan Lewatkan Jadwal</h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">Aktifkan notifikasi untuk pengingat 5 menit sebelum kelas.</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">Aktifkan notifikasi untuk pengingat sekitar 5–20 menit sebelum kelas.</p>
                 </div>
             </div>
             <Button onClick={onEnable} disabled={isLoading} size="sm" className="w-full sm:w-auto flex-shrink-0">

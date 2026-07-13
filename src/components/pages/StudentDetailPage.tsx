@@ -202,8 +202,8 @@ const StudentDetailPage = () => {
     const student = studentProfile.student;
     const assignments = studentProfile.assignments || [];
     const classes = studentProfile.classes || [];
-    const canManageStudentProfile = student.user_id === user?.id;
     const isHomeroomTeacher = assignments.some((a: any) => a.class_id === student.class_id && a.assignment_role === 'homeroom');
+    const canManageStudentProfile = student.user_id === user?.id || isHomeroomTeacher || userRole === 'admin';
     const isAssistant = assignments.some((a: any) => a.class_id === student.class_id && a.assignment_role === 'assistant');
     const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan';
     const canAdd = !isAssistant && !isLeadership;
