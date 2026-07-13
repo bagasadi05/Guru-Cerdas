@@ -7,9 +7,8 @@ export type R2StorageFolder =
   | 'student_avatars'
   | 'teacher_avatars';
 
-interface PresignResponse {
+interface UploadResponse {
   success: boolean;
-  uploadUrl: string;
   publicUrl: string;
   key: string;
   error?: string;
@@ -81,7 +80,9 @@ class R2StorageService {
         const compressed = await imageCompression(file, {
           maxSizeMB: folder === 'violations' ? 2 : 1,
           maxWidthOrHeight: maxWidth,
-          useWebWorker: true,
+          // Running in a worker makes the library load its default jsDelivr
+          // worker script, which is intentionally blocked by the app CSP.
+          useWebWorker: false,
           initialQuality: 0.8,
         });
         fileToUpload = compressed;
@@ -98,35 +99,24 @@ class R2StorageService {
       );
     }
 
-    // 1. Get presigned PUT URL
-    const { data, error } = await supabase.functions.invoke<PresignResponse>('r2-storage', {
-      body: {
-        action: 'presign',
-        filename: fileToUpload.name,
-        contentType: fileToUpload.type || 'application/octet-stream',
-        folder,
-      },
+    // Upload through the Edge Function instead of a browser-to-R2 presigned
+    // PUT. R2's S3 endpoint does not allow the local app origin by default,
+    // which made the browser preflight request fail before the upload began.
+    const uploadBody = new FormData();
+    uploadBody.append('action', 'upload');
+    uploadBody.append('folder', folder);
+    uploadBody.append('file', fileToUpload, fileToUpload.name);
+
+    const { data, error } = await supabase.functions.invoke<UploadResponse>('r2-storage', {
+      body: uploadBody,
     });
 
     if (error) {
       throw new Error(await getFunctionErrorMessage(error));
     }
 
-    if (!data?.success || !data?.uploadUrl || !data?.publicUrl) {
-      throw new Error(data?.error || 'Failed to retrieve presigned URL from storage service.');
-    }
-
-    // 2. Upload
-    const uploadResponse = await fetch(data.uploadUrl, {
-      method: 'PUT',
-      body: fileToUpload,
-      headers: {
-        'Content-Type': fileToUpload.type || 'application/octet-stream',
-      },
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error(`Cloudflare R2 upload failed with status ${uploadResponse.status}`);
+    if (!data?.success || !data?.publicUrl || !data?.key) {
+      throw new Error(data?.error || 'Gagal mengunggah file ke layanan penyimpanan.');
     }
 
     return {

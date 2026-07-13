@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Search,
     Loader2,
@@ -99,6 +99,37 @@ export const UsersTab: React.FC<UsersTabProps> = ({
     const [addUserForm, setAddUserForm] = useState({ name: '', email: '', password: '', role: 'teacher' });
     const [isAddingUser, setIsAddingUser] = useState(false);
     const [addUserError, setAddUserError] = useState<string | null>(null);
+    const [walasAssignments, setWalasAssignments] = useState<Record<string, string[]>>({});
+
+    useEffect(() => {
+        const fetchAssignments = async () => {
+            try {
+                const { data: semesters } = await supabase.from('semesters').select('id').eq('is_active', true).limit(1);
+                if (!semesters || semesters.length === 0) return;
+                
+                const { data } = await supabase
+                    .from('teacher_class_assignments')
+                    .select('teacher_user_id, notes, classes(name)')
+                    .eq('assignment_role', 'homeroom')
+                    .eq('semester_id', semesters[0].id)
+                    .is('deleted_at', null);
+                    
+                if (data) {
+                    const mapping: Record<string, string[]> = {};
+                    data.forEach((a: any) => {
+                        if (!mapping[a.teacher_user_id]) mapping[a.teacher_user_id] = [];
+                        const role = a.notes === 'Asisten' ? 'Asisten' : 'Walas';
+                        const className = a.classes?.name?.replace('Kelas ', '') || '';
+                        mapping[a.teacher_user_id].push(`${role} ${className}`);
+                    });
+                    setWalasAssignments(mapping);
+                }
+            } catch (err) {
+                console.error('Failed to fetch walas assignments:', err);
+            }
+        };
+        fetchAssignments();
+    }, []);
 
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -269,9 +300,16 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                             </button>
                                         </div>
                                     ) : (
-                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClass(u.role || 'user')}`}>
-                                            {getRoleLabel(u.role)}
-                                        </span>
+                                        <div className="flex flex-col gap-1.5 items-start">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClass(u.role || 'user')}`}>
+                                                {getRoleLabel(u.role)}
+                                            </span>
+                                            {walasAssignments[u.user_id]?.map((assignment, idx) => (
+                                                <span key={idx} className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
+                                                    {assignment}
+                                                </span>
+                                            ))}
+                                        </div>
                                     )}
                                 </td>
                                 <td className="px-6 py-4">

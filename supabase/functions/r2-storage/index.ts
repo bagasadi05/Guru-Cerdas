@@ -1,16 +1,57 @@
 // Supabase Edge Function: r2-storage
-// Securely generates Cloudflare R2 presigned URLs for client-side uploads
-// and handles file deletions.
+// Securely uploads files to Cloudflare R2 and handles file deletions.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "npm:@aws-sdk/client-s3@3.515.0";
-import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner@3.515.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const allowedFolders = [
+  "teaching_journals",
+  "achievement_certificates",
+  "violations",
+  "student_avatars",
+  "teacher_avatars",
+] as const;
+
+const uploadRules = {
+  teaching_journals: {
+    maxBytes: 5 * 1024 * 1024,
+    contentTypes: [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ],
+  },
+  achievement_certificates: {
+    maxBytes: 5 * 1024 * 1024,
+    contentTypes: ["application/pdf", "image/jpeg", "image/png", "image/webp"],
+  },
+  violations: {
+    maxBytes: 5 * 1024 * 1024,
+    contentTypes: ["application/pdf", "image/jpeg", "image/png", "image/webp"],
+  },
+  student_avatars: {
+    maxBytes: 2 * 1024 * 1024,
+    contentTypes: ["image/jpeg", "image/png", "image/webp"],
+  },
+  teacher_avatars: {
+    maxBytes: 2 * 1024 * 1024,
+    contentTypes: ["image/jpeg", "image/png", "image/webp"],
+  },
+} as const;
+
+type R2StorageFolder = keyof typeof uploadRules;
+
+const isR2StorageFolder = (value: string): value is R2StorageFolder =>
+  allowedFolders.includes(value as R2StorageFolder);
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -84,58 +125,68 @@ Deno.serve(async (req) => {
       },
     });
 
-    // 4. Parse request body
-    let body;
+    // 4. Parse request body. Uploads use multipart form data so the browser
+    // communicates only with this CORS-enabled function, never R2 directly.
+    const isMultipart = req.headers.get("content-type")?.includes("multipart/form-data");
+    let body: Record<string, unknown>;
+    let uploadFile: File | null = null;
     try {
-      body = await req.json();
+      if (isMultipart) {
+        const formData = await req.formData();
+        body = {
+          action: formData.get("action"),
+          folder: formData.get("folder"),
+        };
+        const candidate = formData.get("file");
+        uploadFile = candidate instanceof File ? candidate : null;
+      } else {
+        body = await req.json();
+      }
     } catch {
-      return jsonResponse({ error: "Invalid JSON body" }, 400);
+      return jsonResponse({ error: "Invalid request body" }, 400);
     }
 
-    const { action } = body;
+    const { action } = body as { action?: string };
     if (!action) {
       return jsonResponse({ error: "Missing 'action' parameter in request body." }, 400);
     }
 
-    if (action === "presign") {
-      const { filename, contentType, folder } = body;
-      if (!filename || !contentType || !folder) {
-        return jsonResponse({ error: "Missing required parameters: filename, contentType, folder" }, 400);
+    if (action === "upload") {
+      const folder = typeof body.folder === "string" ? body.folder : "";
+      if (!isR2StorageFolder(folder) || !uploadFile) {
+        return jsonResponse({ error: "A valid folder and file are required for upload." }, 400);
       }
 
-      // Whitelist folders to prevent arbitrary writing
-      const allowedFolders = [
-        "teaching_journals",
-        "achievement_certificates",
-        "violations",
-        "student_avatars",
-        "teacher_avatars",
-      ];
-      if (!allowedFolders.includes(folder)) {
-        return jsonResponse({ error: `Invalid folder target. Allowed: ${allowedFolders.join(", ")}` }, 400);
+      const rule = uploadRules[folder];
+      if (!rule.contentTypes.includes(uploadFile.type as never)) {
+        return jsonResponse({ error: `File type ${uploadFile.type || "unknown"} is not allowed for ${folder}.` }, 400);
+      }
+      if (uploadFile.size === 0 || uploadFile.size > rule.maxBytes) {
+        return jsonResponse({ error: `File size must be between 1 byte and ${rule.maxBytes} bytes.` }, 400);
       }
 
       // Generate unique file key path
-      const cleanFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const cleanFilename = uploadFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       const key = `${folder}/${crypto.randomUUID()}-${cleanFilename}`;
+      // The AWS SDK's stream adapters are not consistent across Edge Runtime
+      // versions. Files are capped at 5 MB, so a Uint8Array is reliable and
+      // keeps the upload entirely server-side.
+      const fileBytes = new Uint8Array(await uploadFile.arrayBuffer());
 
       const command = new PutObjectCommand({
         Bucket: bucketName,
         Key: key,
-        ContentType: contentType,
+        Body: fileBytes,
+        ContentLength: uploadFile.size,
+        ContentType: uploadFile.type,
       });
 
-      // Generate presigned PUT URL valid for 1 hour (3600 seconds)
-      const uploadUrl = await getSignedUrl(s3, command, { 
-        expiresIn: 3600,
-        signableHeaders: new Set(["host", "content-type"])
-      });
+      await s3.send(command);
       const cleanBase = publicUrlBase.endsWith("/") ? publicUrlBase.slice(0, -1) : publicUrlBase;
       const publicUrl = `${cleanBase}/${key}`;
 
       return jsonResponse({
         success: true,
-        uploadUrl,
         publicUrl,
         key,
       });

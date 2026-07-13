@@ -410,13 +410,16 @@ export const useAttendance = () => {
             toast.warning('Tunggu sampai proses simpan selesai.');
             return;
         }
-        localDirtyRef.current = true;
+        
+        // Update local state first for immediate UI response
         const updatedRecords = { ...attendanceRecords };
         unmarkedStudents.forEach(student => {
             updatedRecords[student.id] = { status: AttendanceStatus.Hadir, note: '' };
         });
         setAttendanceRecords(updatedRecords);
-        toast.success(`${unmarkedStudents.length} siswa ditandai Hadir`);
+        
+        // Trigger save directly
+        performSave();
     };
 
     const streakRange = useMemo(() => {
