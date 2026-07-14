@@ -31,7 +31,7 @@ export const ScheduleViewToolbar: React.FC<ScheduleViewToolbarProps> = ({
           const Icon = option.icon;
           const isActive = viewMode === option.mode;
           return (
-            <button
+            <button type="button"
               key={option.mode}
               onClick={() => onViewModeChange(option.mode)}
               className={`p-2 rounded-lg transition-all ${

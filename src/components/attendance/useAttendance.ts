@@ -104,6 +104,7 @@ export const useAttendance = () => {
             return (data || []) as unknown as ClassRow[];
         },
         enabled: !!user,
+        staleTime: 0,
     });
 
     const { data: teacherAssignments = [] } = useQuery({
@@ -120,6 +121,7 @@ export const useAttendance = () => {
             return (data || []) as TeacherClassAssignmentRow[];
         },
         enabled: !!user,
+        staleTime: 0,
     });
 
     const attendanceClasses = useMemo(() => {

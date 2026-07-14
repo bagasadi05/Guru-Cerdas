@@ -204,7 +204,7 @@ export const PortalMoreTab: React.FC<PortalMoreTabProps> = ({
                                 Setiap menu dibuat seperti kartu kerja agar orang tua bisa langsung tahu hal yang perlu dibaca, dipantau, atau ditindaklanjuti.
                             </p>
                         </div>
-                        <button
+                        <button type="button"
                             className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100"
                             onClick={onDownloadPdf}
                         >
@@ -464,7 +464,7 @@ export const PortalMoreTab: React.FC<PortalMoreTabProps> = ({
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Dokumen Sekolah</h3>
                                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Sekolah: {schoolInfo.school_name}</p>
                             </div>
-                            <button className="rounded-2xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600" onClick={onDownloadPdf}>
+                            <button type="button" className="rounded-2xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600" onClick={onDownloadPdf}>
                                 <DownloadIcon className="mr-2 inline-block h-4 w-4" />
                                 PDF
                             </button>
@@ -510,7 +510,7 @@ export const PortalMoreTab: React.FC<PortalMoreTabProps> = ({
                                 <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
                                     {selectedReport.content || 'Dokumen ini tersedia sebagai arsip portal. Unduh PDF ringkasan jika ingin menyimpan salinan.'}
                                 </p>
-                                <button className="mt-5 inline-flex items-center rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950" onClick={onDownloadPdf}>
+                                <button type="button" className="mt-5 inline-flex items-center rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950" onClick={onDownloadPdf}>
                                     <DownloadIcon className="mr-2 h-4 w-4" />
                                     Unduh Ringkasan
                                 </button>
@@ -536,8 +536,8 @@ export const PortalMoreTab: React.FC<PortalMoreTabProps> = ({
                                 Pastikan data wali dan nomor WhatsApp aktif agar informasi dari sekolah mudah diterima.
                             </p>
                             <div className="mt-5 flex flex-wrap gap-3">
-                                <button className="rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950" onClick={onOpenSettings}>Buka Pengaturan</button>
-                                <button className="rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700" onClick={onDownloadPdf}>Unduh PDF</button>
+                                <button type="button" className="rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950" onClick={onOpenSettings}>Buka Pengaturan</button>
+                                <button type="button" className="rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700" onClick={onDownloadPdf}>Unduh PDF</button>
                             </div>
                         </div>
 

@@ -70,7 +70,7 @@ export function ExportPreviewModal<T>({
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
             <p className="text-sm text-slate-500">{data.length} data akan diekspor</p>
           </div>
-          <button onClick={onClose} aria-label="Tutup pratinjau" className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button type="button" onClick={onClose} aria-label="Tutup pratinjau" className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
             <X className="h-5 w-5 text-slate-500" />
           </button>
         </div>
@@ -80,7 +80,7 @@ export function ExportPreviewModal<T>({
             <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">Format File</h3>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {formats.map((format) => (
-                <button
+                <button type="button"
                   key={format.value}
                   onClick={() => setSelectedFormat(format.value)}
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${
@@ -100,7 +100,7 @@ export function ExportPreviewModal<T>({
             <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">Kolom yang Diekspor</h3>
             <div className="flex flex-wrap gap-2">
               {columns.map((column) => (
-                <button
+                <button type="button"
                   key={String(column.key)}
                   onClick={() => toggleColumn(column.key)}
                   className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${
@@ -163,13 +163,13 @@ export function ExportPreviewModal<T>({
             {selectedColumns.size} dari {columns.length} kolom dipilih
           </span>
           <div className="flex gap-3">
-            <button
+            <button type="button"
               onClick={onClose}
               className="rounded-lg px-4 py-2 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               Batal
             </button>
-            <button
+            <button type="button"
               onClick={handleExport}
               disabled={isExporting || selectedColumns.size === 0}
               className="flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-white hover:bg-indigo-600 disabled:opacity-50"

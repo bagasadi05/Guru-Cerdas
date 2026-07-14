@@ -160,7 +160,7 @@ export const AccessibilitySettings: React.FC<{ className?: string }> = ({ classN
                         Increase color contrast for better readability
                     </p>
                 </div>
-                <button
+                <button type="button"
                     id="high-contrast-toggle"
                     onClick={toggleHighContrast}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${highContrastMode ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'
@@ -189,7 +189,7 @@ export const AccessibilitySettings: React.FC<{ className?: string }> = ({ classN
                         Minimize animations and transitions
                     </p>
                 </div>
-                <button
+                <button type="button"
                     id="reduced-motion-toggle"
                     onClick={toggleReducedMotion}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${reducedMotion ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'
@@ -212,7 +212,7 @@ export const AccessibilitySettings: React.FC<{ className?: string }> = ({ classN
                 </label>
                 <div className="flex gap-2">
                     {(['normal', 'large', 'x-large'] as const).map((size) => (
-                        <button
+                        <button type="button"
                             key={size}
                             onClick={() => setFontSize(size)}
                             className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all ${fontSize === size

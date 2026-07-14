@@ -114,7 +114,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                     }
 
                                     return (
-                                        <button
+                                        <button type="button"
                                             key={opt.value}
                                             onClick={() => onStatusChange(student.id, opt.value)}
                                             className="group/btn flex-1 sm:flex-none flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl outline-none min-w-[48px] min-h-[44px]"
@@ -136,7 +136,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
 
                         {/* 3. Action Buttons (Bottom Row) */}
                         <div className="flex items-center justify-end gap-2">
-                            <button
+                            <button type="button"
                                 onClick={() => onNoteClick(student.id, record?.note || '')}
                                 className={`
                                     w-10 h-10 flex items-center justify-center rounded-xl transition-all
@@ -165,7 +165,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                         <Share2Icon className="w-4 h-4" aria-hidden="true" />
                                     </a>
                                 ) : (
-                                    <button
+                                    <button type="button"
                                         disabled
                                         className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-300 dark:text-slate-600 cursor-not-allowed opacity-50"
                                         title="Nomor WhatsApp orang tua belum diisi"

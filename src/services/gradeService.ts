@@ -178,7 +178,8 @@ export const checkRateLimit = async (
 
     if (error) {
         console.error('Rate limit check error:', error);
-        return true; // Allow on error to not block user
+        // Ponytail: return false when backend can't be reached to fail-safe (block, not allow)
+        return false;
     }
 
     return data as boolean;

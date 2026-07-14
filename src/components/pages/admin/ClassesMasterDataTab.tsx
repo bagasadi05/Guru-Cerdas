@@ -209,14 +209,14 @@ export const ClassesMasterDataTab: React.FC<ClassesMasterDataTabProps> = ({ onLo
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
-                                        <button
+                                        <button type="button"
                                             onClick={() => handleOpenModal(cls)}
                                             className="p-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
                                             title="Edit"
                                         >
                                             <Edit2 size={16} />
                                         </button>
-                                        <button
+                                        <button type="button"
                                             onClick={() => handleDelete(cls)}
                                             className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                                             title="Hapus"

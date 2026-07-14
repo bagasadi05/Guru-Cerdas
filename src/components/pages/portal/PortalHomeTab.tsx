@@ -388,7 +388,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                     <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 hover:shadow-md">
                         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
                             <h4 className="text-lg font-bold text-slate-900 dark:text-white">Aktivitas Terbaru Siswa</h4>
-                            <button
+                            <button type="button"
                                 className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-350 dark:hover:bg-slate-800 transition-all"
                                 onClick={onDownloadPdf}
                             >

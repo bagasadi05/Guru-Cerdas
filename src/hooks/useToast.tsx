@@ -218,7 +218,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
  *     }
  *   };
  * 
- *   return <button onClick={handleSave}>Save</button>;
+ *   return <button type="button" onClick={handleSave}>Save</button>;
  * }
  * ```
  * 
@@ -232,7 +232,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
  *     toast.info('This message will stay for 10 seconds', { duration: 10000 });
  *   };
  * 
- *   return <button onClick={showLongToast}>Show Long Toast</button>;
+ *   return <button type="button" onClick={showLongToast}>Show Long Toast</button>;
  * }
  * ```
  * 
@@ -244,10 +244,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
  * 
  *   return (
  *     <div>
- *       <button onClick={() => toast.success('Operation completed')}>Success</button>
- *       <button onClick={() => toast.error('Something went wrong')}>Error</button>
- *       <button onClick={() => toast.warning('Please review your input')}>Warning</button>
- *       <button onClick={() => toast.info('New update available')}>Info</button>
+ *       <button type="button" onClick={() => toast.success('Operation completed')}>Success</button>
+ *       <button type="button" onClick={() => toast.error('Something went wrong')}>Error</button>
+ *       <button type="button" onClick={() => toast.warning('Please review your input')}>Warning</button>
+ *       <button type="button" onClick={() => toast.info('New update available')}>Info</button>
  *     </div>
  *   );
  * }

@@ -123,7 +123,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, ti
                             <h3 id="bottomsheet-title" className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {title || 'Menu'}
                             </h3>
-                            <button
+                            <button type="button"
                                 onClick={onClose}
                                 aria-label="Tutup bottom sheet"
                                 className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"

@@ -160,7 +160,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                         <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Perkembangan</p>
                         <h3 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">Ringkasan akademik dan evaluasi siswa</h3>
                     </div>
-                    <button className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition-colors" onClick={onDownloadPdf}><DownloadIcon className="mr-2 inline-block h-4 w-4" />Unduh PDF</button>
+                    <button type="button" className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition-colors" onClick={onDownloadPdf}><DownloadIcon className="mr-2 inline-block h-4 w-4" />Unduh PDF</button>
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-3">

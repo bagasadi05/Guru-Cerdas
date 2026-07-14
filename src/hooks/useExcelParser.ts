@@ -55,9 +55,9 @@ export const useExcelParser = () => {
             const workbook = await XLSX.read(data, { type: 'array' });
 
             // Prefer 'Data Nilai', otherwise skip 'Info' if possible
-            let sheetName = workbook.SheetNames.find(n => n.toLowerCase() === 'data nilai');
+            let sheetName = workbook.SheetNames.find(n => n.toLowerCase().trim() === 'data nilai');
             if (!sheetName) {
-                sheetName = workbook.SheetNames.find(n => n.toLowerCase() !== 'info');
+                sheetName = workbook.SheetNames.find(n => n.toLowerCase().trim() !== 'info');
             }
             if (!sheetName) {
                 sheetName = workbook.SheetNames[0];
@@ -79,18 +79,69 @@ export const useExcelParser = () => {
                 throw new Error('File kosong');
             }
 
+            // Auto-detect header row if expectedColumns is provided
+            let detectedSkipRows = skipRows;
+            if (expectedColumns && expectedColumns.length > 0) {
+                let bestMatchCount = 0;
+                let bestRowIndex = skipRows;
+
+                // Scan the first 15 rows of the sheet
+                const scanLimit = Math.min(jsonData.length, skipRows + 15);
+                for (let i = skipRows; i < scanLimit; i++) {
+                    const row = jsonData[i] || [];
+                    let matchCount = 0;
+
+                    expectedColumns.forEach(col => {
+                        const patterns = [
+                            col.key.toLowerCase(),
+                            col.label.toLowerCase(),
+                            ...(col.key === 'name' ? ['nama', 'siswa', 'student', 'nama siswa', 'nama lengkap'] : []),
+                            ...(col.key === 'score' ? ['nilai', 'score', 'skor', 'poin', 'points', 'grade'] : []),
+                            ...(col.key === 'notes' ? ['catatan', 'notes', 'keterangan', 'remarks'] : []),
+                        ];
+
+                        const rowValuesLower = row.map((v: any) => String(v ?? '').toLowerCase().trim());
+                        const hasMatch = rowValuesLower.some((val: string) => 
+                            patterns.includes(val) || 
+                            patterns.some(p => val.includes(p) || p.includes(val))
+                        );
+                        if (hasMatch) {
+                            matchCount++;
+                        }
+                    });
+
+                    if (matchCount > bestMatchCount) {
+                        bestMatchCount = matchCount;
+                        bestRowIndex = i;
+                    }
+                }
+
+                // If a row matched at least one expected column header, use it
+                if (bestMatchCount > 0) {
+                    detectedSkipRows = bestRowIndex;
+                }
+            }
+
             // Get headers (first row after skip)
-            const headers = (jsonData[skipRows] || []).map((h: any) => String(h).trim());
+            const headers = (jsonData[detectedSkipRows] || []).map((h: any) => String(h).trim());
 
             // Get data rows
-            const dataRows = jsonData.slice(skipRows + 1, skipRows + 1 + maxRows);
+            const dataRows = jsonData.slice(detectedSkipRows + 1, detectedSkipRows + 1 + maxRows);
 
             // Convert to objects
             const parsedData: ParsedRow[] = dataRows.map(row => {
                 const obj: ParsedRow = {};
                 headers.forEach((header, index) => {
                     if (header) {
-                        obj[header] = row[index] ?? '';
+                        let value = row[index] ?? '';
+                        // Normalize comma decimal to dot if it is a string representing a decimal
+                        if (typeof value === 'string' && value.trim() !== '') {
+                            const normalized = value.trim().replace(',', '.');
+                            if (!isNaN(Number(normalized))) {
+                                value = normalized;
+                            }
+                        }
+                        obj[header] = value;
                     }
                 });
                 return obj;

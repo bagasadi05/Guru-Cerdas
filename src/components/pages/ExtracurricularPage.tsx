@@ -385,7 +385,7 @@ const ExtracurricularPage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                         {canAdd && (
-                            <button
+                            <button type="button"
                                 onClick={() => setIsExternalStudentsView(!isExternalStudentsView)}
                                 className={`px-4 py-2 text-sm font-medium rounded-xl border transition-colors ${
                                     isExternalStudentsView 

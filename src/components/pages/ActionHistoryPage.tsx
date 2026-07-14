@@ -411,7 +411,7 @@ const ActionHistoryPage: React.FC = () => {
                             </Button>
                         )}
 
-                        <button
+                        <button type="button"
                             onClick={() => setShowInfo(true)}
                             className="p-2.5 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors shadow-sm"
                             title="Informasi"
@@ -508,7 +508,7 @@ const ActionHistoryPage: React.FC = () => {
                             />
                         </div>
 
-                        <button
+                        <button type="button"
                             onClick={() => setShowFilters(!showFilters)}
                             className={`flex items-center gap-2 px-5 py-3 rounded-xl border transition-all ${hasActiveFilters
                                 ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/25'
@@ -604,7 +604,7 @@ const ActionHistoryPage: React.FC = () => {
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
                                         {totalCount} hasil ditemukan
                                     </p>
-                                    <button
+                                    <button type="button"
                                         onClick={clearFilters}
                                         className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                                     >
@@ -686,7 +686,7 @@ const ActionHistoryPage: React.FC = () => {
 
                                                     {/* Actions */}
                                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                                        <button
+                                                        <button type="button"
                                                             onClick={() => setViewDetailItem(action)}
                                                             className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
                                                             title="Lihat Detail"
@@ -695,7 +695,7 @@ const ActionHistoryPage: React.FC = () => {
                                                         </button>
 
                                                         {action.canUndo ? (
-                                                            <button
+                                                            <button type="button"
                                                                 onClick={() => undoMutation.mutate(action.id)}
                                                                 disabled={undoMutation.isPending}
                                                                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50"
@@ -720,7 +720,7 @@ const ActionHistoryPage: React.FC = () => {
 
                         {/* Pagination */}
                         <div className="flex items-center justify-center gap-2 pt-6">
-                            <button
+                            <button type="button"
                                 onClick={() => setPage(p => Math.max(0, p - 1))}
                                 disabled={page === 0}
                                 className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
@@ -739,7 +739,7 @@ const ActionHistoryPage: React.FC = () => {
                                 </span>
                             </div>
 
-                            <button
+                            <button type="button"
                                 onClick={() => setPage(p => p + 1)}
                                 disabled={(page + 1) * pageSize >= totalCount}
                                 className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
@@ -916,7 +916,7 @@ const ActionHistoryPage: React.FC = () => {
                         </p>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <button
+                            <button type="button"
                                 onClick={() => handleExport('csv')}
                                 disabled={isExporting}
                                 className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all group"
@@ -930,7 +930,7 @@ const ActionHistoryPage: React.FC = () => {
                                 </div>
                             </button>
 
-                            <button
+                            <button type="button"
                                 onClick={() => handleExport('json')}
                                 disabled={isExporting}
                                 className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all group"

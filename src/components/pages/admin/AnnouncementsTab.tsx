@@ -93,7 +93,7 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
         <div className="space-y-6">
             {/* Create Button */}
             <div className="flex justify-end">
-                <button
+                <button type="button"
                     onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
                     className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30"
                 >
@@ -107,7 +107,7 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold">Pengumuman Baru</h3>
-                        <button
+                        <button type="button"
                             onClick={() => setShowTemplates(!showTemplates)}
                             className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all"
                         >
@@ -122,7 +122,7 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
                             <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300 mb-3">Pilih Template</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
                                 {announcementTemplates.map(template => (
-                                    <button
+                                    <button type="button"
                                         key={template.id}
                                         onClick={() => applyTemplate(template)}
                                         className="group text-left p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 hover:shadow-md transition-all"
@@ -180,10 +180,10 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
                             <option value="students">Siswa</option>
                         </select>
                         <div className="flex gap-3">
-                            <button onClick={handleSubmit} className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">
+                            <button type="button" onClick={handleSubmit} className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">
                                 Simpan
                             </button>
-                            <button onClick={() => setShowAnnouncementForm(false)} className="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl">
+                            <button type="button" onClick={() => setShowAnnouncementForm(false)} className="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl">
                                 Batal
                             </button>
                         </div>
@@ -215,7 +215,7 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
                                             <span>{a.created_at ? new Date(a.created_at).toLocaleDateString('id-ID') : '-'}</span>
                                         </div>
                                     </div>
-                                    <button
+                                    <button type="button"
                                         onClick={() => onDeleteAnnouncement(a.id)}
                                         aria-label="Hapus pengumuman"
                                         className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"

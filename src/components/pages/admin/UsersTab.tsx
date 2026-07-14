@@ -288,10 +288,10 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                                 <option value="student">Siswa</option>
                                                 <option value="parent">Orang Tua</option>
                                             </select>
-                                            <button onClick={() => handleUpdateUser(u.user_id)} disabled={updating} className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
+                                            <button type="button" onClick={() => handleUpdateUser(u.user_id)} disabled={updating} className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
                                                 {updating ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                             </button>
-                                            <button
+                                            <button type="button"
                                                 onClick={() => setEditingUserId(null)}
                                                 aria-label="Batal edit"
                                                 className="p-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
@@ -324,7 +324,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                             </span>
                                         )}
                                         {u.user_id !== user?.id && (
-                                            <button
+                                            <button type="button"
                                                 onClick={() => handleToggleApproval?.(u.user_id, !!u.is_approved)}
                                                 className={`text-xs px-2 py-0.5 rounded-lg border transition-all ${
                                                     u.is_approved
@@ -342,13 +342,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex justify-end gap-2">
-                                        <button
+                                        <button type="button"
                                             onClick={() => { setEditingUserId(u.user_id); setNewRole(u.role || 'teacher'); setNewName(u.full_name || ''); }}
                                             className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg"
                                         >
                                             <Edit2 size={16} />
                                         </button>
-                                        <button
+                                        <button type="button"
                                             onClick={() => openDeleteModal(u)}
                                             className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
                                         >
@@ -369,7 +369,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                         Menampilkan {userRangeStart}-{userRangeEnd} dari {userTotal}
                     </p>
                     <div className="flex items-center gap-2">
-                        <button
+                        <button type="button"
                             onClick={() => setUserPage(prev => Math.max(1, prev - 1))}
                             disabled={userPage === 1 || usersLoading}
                             className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
@@ -379,7 +379,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                         <span className="text-sm text-gray-500">
                             Halaman {userPage} dari {userPageCount}
                         </span>
-                        <button
+                        <button type="button"
                             onClick={() => setUserPage(prev => Math.min(userPageCount, prev + 1))}
                             disabled={userPage >= userPageCount || usersLoading}
                             className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
@@ -454,7 +454,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    <button
+                                                    <button type="button"
                                                         onClick={() => restoreUser(u)}
                                                         className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all border border-emerald-200 dark:border-emerald-800 px-3"
                                                         title="Pulihkan Pengguna"
@@ -462,7 +462,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                                         <Undo2 size={14} />
                                                         Pulihkan
                                                     </button>
-                                                    <button
+                                                    <button type="button"
                                                         onClick={() => permanentDeleteUser(u.user_id)}
                                                         className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg"
                                                         title="Hapus Permanen"
@@ -484,7 +484,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                     Menampilkan {deletedRangeStart}-{deletedRangeEnd} dari {deletedTotal}
                                 </p>
                                 <div className="flex items-center gap-2">
-                                    <button
+                                    <button type="button"
                                         onClick={() => setDeletedPage(prev => Math.max(1, prev - 1))}
                                         disabled={deletedPage === 1 || usersLoading}
                                         className="px-3 py-2 text-sm bg-red-100/60 dark:bg-red-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
@@ -494,7 +494,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                     <span className="text-sm text-gray-500">
                                         Halaman {deletedPage} dari {deletedPageCount}
                                     </span>
-                                    <button
+                                    <button type="button"
                                         onClick={() => setDeletedPage(prev => Math.min(deletedPageCount, prev + 1))}
                                         disabled={deletedPage >= deletedPageCount || usersLoading}
                                         className="px-3 py-2 text-sm bg-red-100/60 dark:bg-red-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
@@ -514,7 +514,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                     <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xl font-bold text-gray-900 dark:text-white">Tambah Pengguna Baru</h3>
-                            <button
+                            <button type="button"
                                 onClick={() => setShowAddModal(false)}
                                 className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
                             >

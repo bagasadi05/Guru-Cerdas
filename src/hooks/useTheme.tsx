@@ -176,7 +176,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
  *   const { theme, themePreference, toggleTheme, isSystemTheme } = useTheme();
  * 
  *   return (
- *     <button onClick={toggleTheme}>
+ *     <button type="button" onClick={toggleTheme}>
  *       {isSystemTheme ? '🖥️ Auto' : theme === 'light' ? '☀️ Light' : '🌙 Dark'}
  *     </button>
  *   );

@@ -111,7 +111,7 @@ export const TabsTrigger: React.FC<{ children: React.ReactNode, value: string, c
   };
 
   return (
-    <button
+    <button type="button"
       onClick={() => setActiveTab(value)}
       onKeyDown={handleKeyDown}
       data-state={isActive ? 'active' : 'inactive'}

@@ -110,35 +110,35 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     Aksi Cepat
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    <button
+                    <button type="button"
                         onClick={() => onTabChange('users')}
                         className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group"
                     >
                         <UserCog size={24} className="text-gray-400 group-hover:text-indigo-500 mb-2" />
                         <p className="font-medium text-sm">Kelola Pengguna</p>
                     </button>
-                    <button
+                    <button type="button"
                         onClick={() => onTabChange('announcements')}
                         className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group"
                     >
                         <Megaphone size={24} className="text-gray-400 group-hover:text-indigo-500 mb-2" />
                         <p className="font-medium text-sm">Pengumuman</p>
                     </button>
-                    <button
+                    <button type="button"
                         onClick={() => onTabChange('assignments')}
                         className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group"
                     >
                         <UserCheck size={24} className="text-gray-400 group-hover:text-indigo-500 mb-2" />
                         <p className="font-medium text-sm">Penugasan Guru</p>
                     </button>
-                    <button
+                    <button type="button"
                         onClick={() => navigate('/analytics')}
                         className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group"
                     >
                         <BarChart3 size={24} className="text-gray-400 group-hover:text-indigo-500 mb-2" />
                         <p className="font-medium text-sm">Analitik</p>
                     </button>
-                    <button
+                    <button type="button"
                         onClick={() => navigate('/pengaturan')}
                         className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left group"
                     >

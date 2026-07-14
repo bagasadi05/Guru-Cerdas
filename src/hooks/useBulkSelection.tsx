@@ -250,7 +250,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
                 </div>
 
                 {/* Select All / Deselect All */}
-                <button
+                <button type="button"
                     onClick={isAllSelected ? onDeselectAll : onSelectAll}
                     className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
@@ -263,7 +263,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                     {actions.map((action) => (
-                        <button
+                        <button type="button"
                             key={action.id}
                             onClick={action.onClick}
                             disabled={action.disabled}
@@ -284,7 +284,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
                 <div className="w-px h-8 bg-slate-200 dark:bg-slate-700" />
 
                 {/* Cancel Button */}
-                <button
+                <button type="button"
                     onClick={onCancel}
                     className="p-2 rounded-xl text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     title="Batal"
@@ -420,7 +420,7 @@ export const BulkSelectHeader: React.FC<BulkSelectHeaderProps> = ({
                             : 'Pilih item'
                         }
                     </span>
-                    <button
+                    <button type="button"
                         onClick={onExitSelectionMode}
                         className="ml-auto text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
                     >
@@ -428,7 +428,7 @@ export const BulkSelectHeader: React.FC<BulkSelectHeaderProps> = ({
                     </button>
                 </>
             ) : (
-                <button
+                <button type="button"
                     onClick={onEnterSelectionMode}
                     className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >

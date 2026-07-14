@@ -168,6 +168,7 @@ export const useStudentDetailPage = () => {
             return { student: studentWithClass, assignments, classes: classRows };
         },
         enabled: !!studentId && !!user,
+        staleTime: 0,
     });
 
     // 2. Stats Query (Attendance & Violations) - Needed for top cards

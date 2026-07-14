@@ -183,7 +183,7 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                     { id: 'task', label: 'Tugas' },
                     { id: 'attendance', label: 'Absensi' }
                 ].map(tab => (
-                    <button
+                    <button type="button"
                         key={tab.id}
                         onClick={() => setFilter(tab.id as any)}
                         className={`text-xs font-bold px-3 py-1 rounded-lg transition-all flex-shrink-0 ${
@@ -270,7 +270,7 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
             {/* View All Button */}
             {filteredActivities.length > maxItems && (
                 <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-850">
-                    <button 
+                    <button type="button" 
                         onClick={() => navigate('/riwayat')}
                         className="w-full px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all flex items-center justify-center gap-2 border border-emerald-200/50 dark:border-emerald-900/30 active:scale-[0.98]"
                     >

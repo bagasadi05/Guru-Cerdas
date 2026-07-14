@@ -173,7 +173,7 @@ const SettingsPage: React.FC = () => {
                                 className="block w-full pl-11 pr-10 py-3 sm:py-3.5 rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder-emerald-200/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent text-sm transition-all shadow-inner"
                             />
                             {searchQuery && (
-                                <button
+                                <button type="button"
                                     onClick={() => setSearchQuery('')}
                                     className="absolute inset-y-0 right-0 pr-4 flex items-center text-xs text-emerald-300 hover:text-white font-semibold transition-colors"
                                 >
@@ -195,7 +195,7 @@ const SettingsPage: React.FC = () => {
                             {filteredSearch.map((item, index) => {
                                 const theme = getTabTheme(item.tab);
                                 return (
-                                    <button
+                                    <button type="button"
                                         key={index}
                                         onClick={() => {
                                             setActiveTab(item.tab);
@@ -221,25 +221,25 @@ const SettingsPage: React.FC = () => {
                 {searchQuery === '' && (
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-3 px-3 scrollbar-hide">
                         <span className="text-xxs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">Asisten Cerdas:</span>
-                        <button
+                        <button type="button"
                             onClick={() => setActiveTab('appearance')}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-indigo-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
                             <span>🌓 Mode Gelap/Terang</span>
                         </button>
-                        <button
+                        <button type="button"
                             onClick={() => setActiveTab('academic')}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-blue-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
                             <span>🏫 Kelola Semester / KKM</span>
                         </button>
-                        <button
+                        <button type="button"
                             onClick={() => setActiveTab('account')}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-red-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
                             <span>🔑 Ganti Sandi Akun</span>
                         </button>
-                        <button
+                        <button type="button"
                             onClick={() => setActiveTab('database')}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-slate-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
@@ -257,7 +257,7 @@ const SettingsPage: React.FC = () => {
                             const theme = getTabTheme(item.id);
                             const isActive = activeTab === item.id;
                             return (
-                                <button
+                                <button type="button"
                                     key={item.id}
                                     onClick={() => setActiveTab(item.id)}
                                     aria-current={isActive ? 'page' : undefined}
@@ -289,7 +289,7 @@ const SettingsPage: React.FC = () => {
                                 const theme = getTabTheme(item.id);
                                 const isActive = activeTab === item.id;
                                 return (
-                                    <button
+                                    <button type="button"
                                         key={item.id}
                                         onClick={() => setActiveTab(item.id)}
                                         aria-current={isActive ? 'page' : undefined}

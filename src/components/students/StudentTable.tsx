@@ -98,7 +98,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                             <code className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-mono text-xs border border-gray-200 dark:border-gray-600">
                                                 {student.access_code}
                                             </code>
-                                            <button
+                                            <button type="button"
                                                 onClick={() => { navigator.clipboard.writeText(student.access_code || ''); toast.success("Disalin!"); }}
                                                 className="text-gray-400 hover:text-emerald-600 transition-colors opacity-0 group-hover:opacity-100"
                                                 title="Salin"
@@ -120,7 +120,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                         </Link>
                                         {isAdmin && (
                                             <>
-                                                <button
+                                                <button type="button"
                                                     onClick={() => onAction(student, 'edit')}
                                                     aria-label={`Edit siswa ${student.name}`}
                                                     title="Edit Siswa"
@@ -128,7 +128,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                                 >
                                                     <PencilIcon className="w-4 h-4" aria-hidden="true" />
                                                 </button>
-                                                <button
+                                                <button type="button"
                                                     onClick={() => onAction(student, 'delete')}
                                                     aria-label={`Hapus siswa ${student.name}`}
                                                     title="Hapus Siswa"
@@ -187,7 +187,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
             </div>
             {hasMore && (
                 <div className="flex justify-center py-4">
-                    <button
+                    <button type="button"
                         onClick={handleLoadMore}
                         className="px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
                     >

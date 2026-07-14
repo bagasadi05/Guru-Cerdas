@@ -20,7 +20,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
 
     return (
         <div className={className}>
-            <button
+            <button type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 aria-expanded={isOpen}

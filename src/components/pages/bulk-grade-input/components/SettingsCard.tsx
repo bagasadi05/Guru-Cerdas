@@ -142,7 +142,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                         min={0}
                         max={100}
                         value={kkm}
-                        onChange={(e) => setKkm(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                        onChange={(e) => setKkm(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
                         placeholder="75"
                     />
                 </div>

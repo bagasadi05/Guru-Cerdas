@@ -424,7 +424,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                             Filter Mata Pelajaran
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            <button
+                            <button type="button"
                                 onClick={() => { setShowAllSubjects(true); setSelectedSubjects(new Set(allSubjects)); }}
                                 className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-medium ${showAllSubjects
                                     ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300'
@@ -432,7 +432,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                             >
                                 Semua
                             </button>
-                            <button
+                            <button type="button"
                                 onClick={() => setShowAllSubjects(false)}
                                 className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-medium ${!showAllSubjects
                                     ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300'
@@ -445,7 +445,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                         {!showAllSubjects && (
                             <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
                                 {allSubjects.map(subject => (
-                                    <button
+                                    <button type="button"
                                         key={subject}
                                         onClick={() => toggleSubject(subject)}
                                         className={`px-2 py-1 text-xs rounded-md border transition-all ${selectedSubjects.has(subject)

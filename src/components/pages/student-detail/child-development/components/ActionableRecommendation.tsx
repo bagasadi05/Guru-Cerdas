@@ -81,7 +81,7 @@ export const ActionableRecommendation: React.FC<{
           <MarkdownText text={description} />
         </div>
         {isLongDescription && (
-          <button
+          <button type="button"
             onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
             className="mt-1 text-xs text-indigo-500 dark:text-indigo-400 hover:underline font-medium"
           >
@@ -90,7 +90,7 @@ export const ActionableRecommendation: React.FC<{
         )}
 
         {/* Expand action steps */}
-        <button
+        <button type="button"
           onClick={() => setIsExpanded(!isExpanded)}
           className="mt-3 text-sm text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1.5 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
         >

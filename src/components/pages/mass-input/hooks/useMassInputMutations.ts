@@ -19,6 +19,14 @@ import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../..
 
 const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
 
+/** Safe crypto.randomUUID with fallback for non-secure contexts */
+const selfCryptoUUID = (): string => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 const getDuplicateGuardWindowIso = () => (
     new Date(Date.now() - DUPLICATE_GUARD_WINDOW_MINUTES * 60 * 1000).toISOString()
 );
@@ -141,17 +149,20 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         throw new Error('Mata pelajaran, nama penilaian, dan setidaknya satu nilai harus diisi.');
                     if (Object.keys(validationErrors).length > 0)
                         throw new Error('Perbaiki nilai yang tidak valid sebelum menyimpan.');
-                    const existingGradesMap = new Map(
-                        dedupeAcademicRecords(existingGrades || []).map(g => [g.student_id, g.id])
-                    );
                     const records = Object.entries(scores)
                         .filter(([, score]: [string, string]) => score && score.trim() !== '')
                         .map(([student_id, score]: [string, string]) => {
                             const numScore = Number(score);
                             if (numScore < 0 || numScore > 100)
                                 throw new Error(`Nilai untuk siswa tidak valid: ${numScore}. Harus antara 0-100.`);
+                            // Ponytail: key by student_id+subject+assessment_name to prevent cross-assessment overwrite
+                            const existingRecord = dedupeAcademicRecords(existingGrades || []).find(
+                                g => g.student_id === student_id
+                                    && g.subject === subjectGradeInfo.subject
+                                    && g.assessment_name === subjectGradeInfo.assessment_name
+                            );
                             return {
-                                id: existingGradesMap.get(student_id) || crypto.randomUUID(),
+                                id: existingRecord?.id || selfCryptoUUID(),
                                 subject: subjectGradeInfo.subject,
                                 assessment_name: subjectGradeInfo.assessment_name,
                                 notes: subjectGradeInfo.notes || '',
@@ -229,6 +240,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         },
         onSuccess: (message) => {
             toast.success(message || 'Data berhasil disimpan!');
+            queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
             queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
             isScoresDirty.current = false;
         },
@@ -253,6 +265,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
             queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
+            setConfirmDeleteModal({ isOpen: false, count: 0 });
             setSelectedStudentIds(new Set());
         },
         onError: (err: Error) => toast.error(`Gagal menghapus: ${err.message}`),
@@ -274,10 +287,23 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             const parsedResults = await generateOpenRouterJson<ReviewDataItem[]>(prompt, systemInstruction);
             if (!Array.isArray(parsedResults)) throw new Error('Format respon AI tidak valid (bukan list).');
             const newScores: Record<string, string> = {}; let matchedCount = 0;
+            const unmatchedNames: string[] = [];
             parsedResults.forEach(item => {
+                if (!item || typeof item.studentName !== 'string') return;
                 const student = findStudentMatch(item.studentName, studentsData);
-                if (student) { newScores[student.id] = String(item.score); matchedCount++; }
+                if (student) {
+                    const score = item.score !== undefined && item.score !== null ? String(item.score) : '';
+                    if (score && !isNaN(Number(score))) {
+                        newScores[student.id] = score;
+                        matchedCount++;
+                    }
+                } else {
+                    unmatchedNames.push(item.studentName);
+                }
             });
+            if (unmatchedNames.length > 0) {
+                toast.warning(`Nama tidak dikenali: ${unmatchedNames.slice(0, 3).join(', ')}${unmatchedNames.length > 3 ? `, dan ${unmatchedNames.length - 3} lainnya` : ''}`);
+            }
             setScores(prev => ({ ...prev, ...newScores }));
             toast.success(`${matchedCount} dari ${parsedResults.length} nilai berhasil dicocokkan dan diisi.`);
         } catch (error) {
@@ -439,9 +465,11 @@ Format JSON yang diharapkan:
     };
 
     const handleConfirmDelete = () => {
-        const recordIdsToDelete = filteredExistingGrades.filter(g => selectedStudentIds.has(g.student_id)).map(g => g.id);
+        const recordIdsToDelete = filteredExistingGrades
+            .filter(g => selectedStudentIds.has(g.student_id))
+            .map(g => g.id);
+        // Modal will be closed in onSuccess callback to prevent premature dismissal on failure
         deleteGrades(recordIdsToDelete);
-        setConfirmDeleteModal({ isOpen: false, count: 0 });
     };
 
     const handleSubmit = () => {

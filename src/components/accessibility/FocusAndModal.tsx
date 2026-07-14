@@ -130,7 +130,7 @@ export const AccessibleModal: React.FC<AccessibleModalProps> = ({
                         <h2 id={titleId} className="text-xl font-semibold text-slate-900 dark:text-white">
                             {title}
                         </h2>
-                        <button
+                        <button type="button"
                             onClick={onClose}
                             aria-label="Tutup modal"
                             className="p-1 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"

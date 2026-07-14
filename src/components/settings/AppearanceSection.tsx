@@ -42,7 +42,7 @@ const AppearanceSection: React.FC = () => {
                 </CardHeader>
                 <CardContent className="pt-8 space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <button
+                        <button type="button"
                             onClick={() => setTheme('light')}
                             className={`
                                 group relative p-6 rounded-2xl border-2 transition-all duration-300 overflow-hidden
@@ -68,7 +68,7 @@ const AppearanceSection: React.FC = () => {
                             )}
                         </button>
 
-                        <button
+                        <button type="button"
                             onClick={() => setTheme('dark')}
                             className={`
                                 group relative p-6 rounded-2xl border-2 transition-all duration-300 overflow-hidden

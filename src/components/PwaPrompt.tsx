@@ -100,7 +100,7 @@ const PwaPrompt: React.FC = () => {
                   <p className="text-xs text-white/90 mt-0.5">Agar bekerja offline tanpa Safari</p>
                 </div>
               </div>
-              <button onClick={handleDismiss} className="p-1 rounded-full hover:bg-white/20 transition-colors">
+              <button type="button" onClick={handleDismiss} className="p-1 rounded-full hover:bg-white/20 transition-colors">
                 <X className="w-5 h-5 text-white/80" />
               </button>
             </div>

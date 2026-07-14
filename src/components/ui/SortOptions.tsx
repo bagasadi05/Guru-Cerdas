@@ -62,14 +62,14 @@ export const SortOptions: React.FC<SortOptionsProps> = ({
         <div ref={containerRef} className={`relative ${className}`}>
             {/* Trigger Button */}
             <div className="flex items-center">
-                <button
+                <button type="button"
                     onClick={() => setIsOpen(!isOpen)}
                     className="flex items-center gap-2 px-3 py-2 rounded-l-lg border border-r-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
                 >
                     <span className="text-sm whitespace-nowrap">{currentLabel}</span>
                     <ChevronDownIcon className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
-                <button
+                <button type="button"
                     onClick={handleDirectionToggle}
                     className="flex items-center justify-center w-9 h-9 rounded-r-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
                     title={value.direction === 'asc' ? 'Ascending (A-Z, 0-9)' : 'Descending (Z-A, 9-0)'}
@@ -86,7 +86,7 @@ export const SortOptions: React.FC<SortOptionsProps> = ({
             {isOpen && (
                 <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 py-1 animate-fade-in">
                     {options.map((option) => (
-                        <button
+                        <button type="button"
                             key={option.value}
                             onClick={() => handleFieldChange(option.value)}
                             className={`w-full flex items-center justify-between px-4 py-2 text-sm text-left transition-colors ${value.field === option.value

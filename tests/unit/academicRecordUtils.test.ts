@@ -49,6 +49,39 @@ describe('academicRecordUtils', () => {
         ]);
     });
 
+    it('deduplicates academic records across different teachers, keeping the latest priority', () => {
+        const records = [
+            {
+                id: 'teacher-1-row',
+                student_id: 'student-1',
+                user_id: 'teacher-1',
+                subject: 'Informatika',
+                assessment_name: 'PH 6',
+                score: 59,
+                notes: '',
+                semester_id: 'semester-2',
+                created_at: '2026-04-20T07:00:00.000Z',
+                version: 1,
+            },
+            {
+                id: 'teacher-2-row',
+                student_id: 'student-1',
+                user_id: 'teacher-2',
+                subject: 'Informatika',
+                assessment_name: 'PH 6',
+                score: 85,
+                notes: '',
+                semester_id: 'semester-2',
+                created_at: '2026-04-20T08:00:00.000Z',
+                version: 2,
+            },
+        ] as AcademicRecordRow[];
+
+        expect(dedupeAcademicRecords(records).map((record) => record.id)).toEqual([
+            'teacher-2-row',
+        ]);
+    });
+
     it('keeps only the latest identical quiz point record per student activity', () => {
         const records = [
             {

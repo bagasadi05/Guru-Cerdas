@@ -20,7 +20,7 @@ export const DashboardConfigurator: React.FC<{
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                         Kustomisasi Dashboard
                     </h2>
-                    <button onClick={onClose} aria-label="Tutup kustomisasi" className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <button type="button" onClick={onClose} aria-label="Tutup kustomisasi" className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <X className="h-5 w-5 text-slate-500" />
                     </button>
                 </div>
@@ -42,7 +42,7 @@ export const DashboardConfigurator: React.FC<{
                                         <p className="text-sm text-slate-500">{available.description}</p>
                                     </div>
                                     {existing ? (
-                                        <button
+                                        <button type="button"
                                             onClick={() => toggleWidget(existing.id)}
                                             className={`rounded-lg p-2 ${
                                                 existing.visible
@@ -53,7 +53,7 @@ export const DashboardConfigurator: React.FC<{
                                             {existing.visible ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                                         </button>
                                     ) : (
-                                        <button
+                                        <button type="button"
                                             onClick={() => addWidget({
                                                 type: available.type,
                                                 title: available.title,
@@ -72,13 +72,13 @@ export const DashboardConfigurator: React.FC<{
                 </div>
 
                 <div className="flex justify-between border-t border-slate-200 p-4 dark:border-slate-800">
-                    <button
+                    <button type="button"
                         onClick={resetLayout}
                         className="rounded-lg px-4 py-2 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
                     >
                         Reset ke Default
                     </button>
-                    <button
+                    <button type="button"
                         onClick={onClose}
                         className="rounded-lg bg-indigo-500 px-4 py-2 text-white hover:bg-indigo-600"
                     >

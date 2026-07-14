@@ -7,13 +7,12 @@ type AcademicRecordIdentity = Pick<
 
 const normalizeText = (value?: string | null) => value?.trim().toLowerCase() || '';
 
-export const buildAcademicRecordIdentityKey = (record: AcademicRecordIdentity) => (
+export const buildAcademicRecordIdentityKey = (record: Omit<AcademicRecordIdentity, 'user_id'>) => (
     [
         record.student_id,
         normalizeText(record.subject),
         normalizeText(record.assessment_name),
         record.semester_id || 'no-semester',
-        record.user_id,
     ].join('::')
 );
 

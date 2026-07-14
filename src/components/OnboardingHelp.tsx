@@ -270,7 +270,7 @@ const TourOverlay: React.FC = () => {
                 </p>
 
                 {step.action && (
-                    <button
+                    <button type="button"
                         onClick={step.action.onClick}
                         className="w-full mb-3 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-xl font-medium hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors"
                     >
@@ -279,7 +279,7 @@ const TourOverlay: React.FC = () => {
                 )}
 
                 <div className="flex items-center justify-between">
-                    <button
+                    <button type="button"
                         onClick={skip}
                         className="text-sm text-slate-500 hover:text-slate-700"
                     >
@@ -287,14 +287,14 @@ const TourOverlay: React.FC = () => {
                     </button>
                     <div className="flex items-center gap-2">
                         {!isFirstStep && (
-                            <button
+                            <button type="button"
                                 onClick={prev}
                                 className="p-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
                         )}
-                        <button
+                        <button type="button"
                             onClick={isLastStep ? complete : next}
                             className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-medium"
                         >
@@ -429,7 +429,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                                 {selectedArticle ? selectedArticle.title : 'Pusat Bantuan'}
                             </h2>
                             {selectedArticle && (
-                                <button
+                                <button type="button"
                                     onClick={() => setSelectedArticle(null)}
                                     className="text-sm text-indigo-600"
                                 >
@@ -438,7 +438,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                             )}
                         </div>
                     </div>
-                    <button onClick={onClose} aria-label="Tutup bantuan" className="p-2 text-slate-400 hover:text-slate-600">
+                    <button type="button" onClick={onClose} aria-label="Tutup bantuan" className="p-2 text-slate-400 hover:text-slate-600">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -472,7 +472,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
 
                         {/* Categories */}
                         <div className="flex items-center gap-2 p-4 overflow-x-auto border-b border-slate-200 dark:border-slate-800">
-                            <button
+                            <button type="button"
                                 onClick={() => setSelectedCategory(null)}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${!selectedCategory
                                     ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600'
@@ -482,7 +482,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                                 Semua
                             </button>
                             {categories.map(cat => (
-                                <button
+                                <button type="button"
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
                                     className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory === cat
@@ -499,7 +499,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                         <div className="flex-1 overflow-y-auto p-4">
                             <div className="grid gap-3">
                                 {filteredArticles.map(article => (
-                                    <button
+                                    <button type="button"
                                         key={article.id}
                                         onClick={() => {
                                             setSelectedArticle(article);
@@ -631,7 +631,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, className = '' })
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                 {/* Center play button */}
                 {!isPlaying && (
-                    <button
+                    <button type="button"
                         onClick={togglePlay}
                         className="absolute inset-0 flex items-center justify-center"
                     >
@@ -656,14 +656,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, className = '' })
 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <button
+                            <button type="button"
                                 onClick={togglePlay}
                                 aria-label={isPlaying ? 'Jeda video' : 'Putar video'}
                                 className="text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
                             >
                                 {isPlaying ? <Pause className="w-5 h-5" aria-hidden="true" /> : <Play className="w-5 h-5" aria-hidden="true" />}
                             </button>
-                            <button
+                            <button type="button"
                                 onClick={toggleMute}
                                 aria-label={isMuted ? 'Aktifkan suara' : 'Bisukan'}
                                 className="text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
@@ -674,7 +674,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, className = '' })
                                 {formatTime(currentTime)} / {formatTime(duration)}
                             </span>
                         </div>
-                        <button
+                        <button type="button"
                             onClick={toggleFullscreen}
                             aria-label="Layar penuh"
                             className="text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
@@ -740,7 +740,7 @@ export const FeatureTip: React.FC<FeatureTipProps> = ({
                             <h4 className="font-medium">{title}</h4>
                         </div>
                         <p className="text-sm text-indigo-100 mb-3">{description}</p>
-                        <button
+                        <button type="button"
                             onClick={dismiss}
                             className="text-sm font-medium text-indigo-200 hover:text-white"
                         >
@@ -762,7 +762,7 @@ export const HelpButton: React.FC<{
     className?: string;
 }> = ({ onClick, className = '' }) => {
     return (
-        <button
+        <button type="button"
             id="tour-help-button"
             onClick={onClick}
             className={`fixed bottom-24 lg:bottom-4 right-4 w-12 h-12 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-all hover:scale-105 ${className}`}

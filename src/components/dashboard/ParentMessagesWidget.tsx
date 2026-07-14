@@ -174,7 +174,7 @@ const ParentMessagesWidget: React.FC = () => {
                     <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                         {messages.map((msg) => (
                             <li key={msg.id}>
-                                <button
+                                <button type="button"
                                     onClick={() => handleMessageClick(msg.student_id)}
                                     className="w-full p-4 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
                                 >

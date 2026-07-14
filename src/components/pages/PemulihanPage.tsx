@@ -328,7 +328,7 @@ const PemulihanPage: React.FC = () => {
 
                 {/* Quick Links */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button
+                    <button type="button"
                         onClick={() => navigate('/sampah')}
                         className="flex items-center gap-4 p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group text-left"
                     >
@@ -344,7 +344,7 @@ const PemulihanPage: React.FC = () => {
                         <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                     </button>
 
-                    <button
+                    <button type="button"
                         onClick={() => navigate('/riwayat')}
                         className="flex items-center gap-4 p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group text-left"
                     >

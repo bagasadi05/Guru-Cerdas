@@ -110,7 +110,7 @@ const InteractiveAttendanceChartBase: React.FC<InteractiveAttendanceChartProps> 
                     </div>
                 </div>
                 {showExport && (
-                    <button
+                    <button type="button"
                         onClick={handleExport}
                         className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                         aria-label="Export data kehadiran"
@@ -123,7 +123,7 @@ const InteractiveAttendanceChartBase: React.FC<InteractiveAttendanceChartProps> 
                 {/* Date Range Filter */}
                 {showDateFilter && (
                     <div className="relative">
-                        <button
+                        <button type="button"
                             onClick={() => setShowRangeDropdown(!showRangeDropdown)}
                             className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                             aria-label="Pilih rentang waktu"
@@ -141,7 +141,7 @@ const InteractiveAttendanceChartBase: React.FC<InteractiveAttendanceChartProps> 
                                     className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 min-w-[120px]"
                                 >
                                     {(Object.keys(rangeLabels) as DateRangeOption[]).map((range) => (
-                                        <button
+                                        <button type="button"
                                             key={range}
                                             onClick={() => handleRangeChange(range)}
                                             className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg ${selectedRange === range ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : ''}`}

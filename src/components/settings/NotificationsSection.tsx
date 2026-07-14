@@ -514,7 +514,7 @@ const NotificationsSection: React.FC = () => {
 
                                         {/* Preview button for built-in sounds */}
                                         {sound.id !== 'none' && sound.id !== 'custom' && (
-                                            <button
+                                            <button type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handlePreviewSound(sound.id);
@@ -528,7 +528,7 @@ const NotificationsSection: React.FC = () => {
 
                                         {/* Custom sound upload button */}
                                         {sound.id === 'custom' && (
-                                            <button
+                                            <button type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     fileInputRef.current?.click();

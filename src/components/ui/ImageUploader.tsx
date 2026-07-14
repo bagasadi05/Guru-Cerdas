@@ -353,7 +353,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
                 {/* Delete Button */}
                 {showDeleteButton && currentImageUrl && onDelete && !isLoading && (
-                    <button
+                    <button type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleDelete();
@@ -434,7 +434,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                     <div className="flex flex-wrap items-center justify-center gap-4">
                         {/* Zoom Control */}
                         <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl p-2">
-                            <button
+                            <button type="button"
                                 onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}
                                 className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                 title="Perkecil"
@@ -444,7 +444,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                                 </svg>
                             </button>
                             <span className="text-sm font-medium w-12 text-center">{Math.round(zoom * 100)}%</span>
-                            <button
+                            <button type="button"
                                 onClick={() => setZoom(Math.min(3, zoom + 0.1))}
                                 className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                 title="Perbesar"
@@ -457,7 +457,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
                         {/* Rotation Control */}
                         <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl p-2">
-                            <button
+                            <button type="button"
                                 onClick={() => setRotation(rotation - 90)}
                                 className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                 title="Putar kiri"
@@ -465,7 +465,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                                 <RotateCwIcon className="w-4 h-4 transform -scale-x-100" />
                             </button>
                             <span className="text-sm font-medium w-10 text-center">{rotation}°</span>
-                            <button
+                            <button type="button"
                                 onClick={() => setRotation(rotation + 90)}
                                 className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                 title="Putar kanan"
@@ -475,7 +475,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                         </div>
 
                         {/* Reset Button */}
-                        <button
+                        <button type="button"
                             onClick={() => {
                                 setZoom(1);
                                 setRotation(0);

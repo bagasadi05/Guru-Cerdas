@@ -104,7 +104,10 @@ const AttendancePage: React.FC = () => {
     } = useAttendance();
     const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
 
-    if (isLoadingClasses || isLoadingStudents) return <AttendancePageSkeleton />;
+    // Keep the selected class and page controls visible while its students load.
+    // Replacing the whole page with a skeleton here made each class change look
+    // like a full reload and forced teachers to re-orient themselves.
+    if (isLoadingClasses) return <AttendancePageSkeleton />;
 
     if (classesError || studentsError) {
         return (

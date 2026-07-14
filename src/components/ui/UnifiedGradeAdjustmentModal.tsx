@@ -96,25 +96,27 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
     useEffect(() => {
         if (!isOpen) return;
 
-        const newScores: Record<string, string> = {};
-        listData.forEach(item => {
-            // If student already has a manual override, don't overwrite it
-            if (manualOverrides.has(item.id)) {
-                newScores[item.id] = finalScores[item.id] || String(item.original);
-                return;
-            }
+        setFinalScores(prev => {
+            const next: Record<string, string> = {};
+            listData.forEach(item => {
+                // If student already has a manual override, preserve it
+                if (manualOverrides.has(item.id)) {
+                    next[item.id] = prev[item.id] || String(item.original);
+                    return;
+                }
 
-            if (activeScenario === 'original') {
-                const originalStr = scores[item.id] !== undefined ? String(scores[item.id]) : '';
-                newScores[item.id] = originalStr;
-            } else if (activeScenario === 'formula') {
-                newScores[item.id] = String(item.formula);
-            } else if (activeScenario === 'ai') {
-                newScores[item.id] = String(item.ai);
-            }
+                if (activeScenario === 'original') {
+                    const originalStr = scores[item.id] !== undefined ? String(scores[item.id]) : '';
+                    next[item.id] = originalStr;
+                } else if (activeScenario === 'formula') {
+                    next[item.id] = String(item.formula);
+                } else if (activeScenario === 'ai') {
+                    next[item.id] = String(item.ai);
+                }
+            });
+            return next;
         });
-        setFinalScores(newScores);
-    }, [isOpen, activeScenario, listData, scores]);
+    }, [isOpen, activeScenario, listData, scores, manualOverrides]);
 
     // Reset settings when modal closes
     useEffect(() => {
@@ -181,7 +183,9 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
 
     // Apply manual override to a specific student
     const handleManualScoreChange = (studentId: string, value: string) => {
-        const val = value === '' ? '' : String(Math.min(targetAvgRange.max, Math.max(targetAvgRange.min, parseInt(value) || 0)));
+        const parsed = parseInt(value) || 0;
+        const clamped = Math.max(0, Math.min(parsed, 100));
+        const val = value === '' ? '' : String(clamped);
         setFinalScores(prev => ({ ...prev, [studentId]: val }));
         
         const nextOverrides = new Set(manualOverrides);
@@ -273,7 +277,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                                     min="0"
                                     max="100"
                                     value={constant}
-                                    onChange={(e) => setConstant(Math.max(0, Math.min(100, parseInt(e.target.value) || 40)))}
+                                    onChange={(e) => setConstant(Math.max(0, Math.min(100, parseFloat(e.target.value) || 40)))}
                                     className="h-9 py-1 text-sm text-center font-semibold"
                                 />
                             </div>
@@ -324,7 +328,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                             Pilih Skenario Nilai
                         </h3>
                         <div className="flex flex-col gap-2">
-                            <button
+                            <button type="button"
                                 onClick={() => setActiveScenario('original')}
                                 className={`text-left px-3 py-2 text-xs font-semibold rounded-lg border transition-all ${
                                     activeScenario === 'original'
@@ -334,7 +338,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                             >
                                 Skenario A: Nilai Asli
                             </button>
-                            <button
+                            <button type="button"
                                 onClick={() => setActiveScenario('formula')}
                                 className={`text-left px-3 py-2 text-xs font-semibold rounded-lg border transition-all ${
                                     activeScenario === 'formula'
@@ -344,7 +348,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                             >
                                 Skenario B: Rumus Excel Default
                             </button>
-                            <button
+                            <button type="button"
                                 onClick={() => setActiveScenario('ai')}
                                 disabled={aiAdjustments.length === 0}
                                 className={`text-left px-3 py-2 text-xs font-semibold rounded-lg border transition-all flex items-center justify-between ${
@@ -363,7 +367,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                                 <span className="text-xxs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                                     {manualOverrides.size} Edit Manual
                                 </span>
-                                <button
+                                <button type="button"
                                     onClick={handleResetOverrides}
                                     className="text-xxs font-bold text-slate-400 hover:text-red-500 transition-colors"
                                 >

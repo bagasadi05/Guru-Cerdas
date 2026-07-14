@@ -367,7 +367,7 @@ const BrankasPage: React.FC = () => {
       {/* Tabs and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6">
         <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-white/5 w-full sm:w-fit">
-          <button
+          <button type="button"
             onClick={() => handleTabSwitch('active')}
             className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all duration-200 ${
               activeTab === 'active'
@@ -378,7 +378,7 @@ const BrankasPage: React.FC = () => {
             <Unlock className="w-3.5 h-3.5 hidden sm:block" />
             Kelas Aktif ({activeClasses.length})
           </button>
-          <button
+          <button type="button"
             onClick={() => handleTabSwitch('archived')}
             className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all duration-200 ${
               activeTab === 'archived'
@@ -414,7 +414,7 @@ const BrankasPage: React.FC = () => {
             {/* Detail Header */}
             <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/60 dark:border-slate-700/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
-              <button
+              <button type="button"
                 onClick={() => {
                   setDetailClass(null);
                   setSelectedStudent(null);
@@ -471,7 +471,7 @@ const BrankasPage: React.FC = () => {
                   <div className="py-20 text-center text-slate-400 italic text-xs">Siswa tidak ditemukan.</div>
                 ) : (
                   displayedStudents.map((student) => (
-                    <button
+                    <button type="button"
                       key={student.id}
                       onClick={() => setSelectedStudent(student)}
                       className={`w-full flex items-center gap-3 p-3 rounded-2xl border text-left transition-all duration-200 ${

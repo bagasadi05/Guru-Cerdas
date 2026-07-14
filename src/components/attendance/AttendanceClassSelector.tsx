@@ -17,7 +17,7 @@ export const AttendanceClassSelector: React.FC<AttendanceClassSelectorProps> = (
     <div className="mb-6" data-tutorial="class-selector">
       <div className="flex flex-wrap items-center gap-2">
         {classes.map((classItem) => (
-          <button
+          <button type="button"
             key={classItem.id}
             onClick={() => onSelectClass(classItem.id)}
             data-tutorial="class-pill"

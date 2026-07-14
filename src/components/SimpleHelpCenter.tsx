@@ -584,7 +584,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {selectedGuide ? (
-                                <button
+                                <button type="button"
                                     onClick={handleBack}
                                     className="rounded-lg bg-white/20 p-2 transition-colors hover:bg-white/30"
                                     aria-label="Kembali"
@@ -609,7 +609,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                         </div>
                         <div className="flex items-center gap-2">
                             {/* Font Size Controls */}
-                            <button
+                            <button type="button"
                                 onClick={decreaseFontSize}
                                 className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-50"
                                 aria-label="Perkecil teks"
@@ -617,7 +617,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                             >
                                 <ZoomOut className="w-5 h-5" />
                             </button>
-                            <button
+                            <button type="button"
                                 onClick={increaseFontSize}
                                 className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-50"
                                 aria-label="Perbesar teks"
@@ -625,7 +625,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                             >
                                 <ZoomIn className="w-5 h-5" />
                             </button>
-                            <button
+                            <button type="button"
                                 onClick={onClose}
                                 className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
                                 aria-label="Tutup"
@@ -654,7 +654,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
                                 />
                                 {searchQuery && (
-                                    <button
+                                    <button type="button"
                                         onClick={() => setSearchQuery('')}
                                         aria-label="Hapus pencarian panduan"
                                         className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
@@ -667,7 +667,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                             {/* Category Tabs */}
                             <div className="flex flex-wrap gap-2">
                                 {categoryTabs.map((tab) => (
-                                    <button
+                                    <button type="button"
                                         key={tab.id}
                                         onClick={() => setActiveCategory(tab.id)}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeCategory === tab.id
@@ -683,7 +683,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
 
                             {/* Tutorial Interactive Banner */}
                             {!searchQuery && activeCategory === 'semua' && (
-                                <button 
+                                <button type="button" 
                                     onClick={() => {
                                         onClose();
                                         document.dispatchEvent(new CustomEvent('open-tutorial-picker'));
@@ -733,7 +733,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                                 key={faq.id}
                                                 className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50"
                                             >
-                                                <button
+                                                <button type="button"
                                                     onClick={() => setExpandedFaq(expandedFaq === faq.id ? null : faq.id)}
                                                     className="w-full p-4 text-left flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
                                                 >
@@ -749,7 +749,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                         ))}
                                     </div>
                                     {activeCategory === 'semua' && filteredFaqs.length > 3 && (
-                                        <button
+                                        <button type="button"
                                             onClick={() => setActiveCategory('faq')}
                                             className="text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline"
                                         >
@@ -770,7 +770,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                     )}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {filteredGuides.map((guide) => (
-                                            <button
+                                            <button type="button"
                                                 key={guide.id}
                                                 onClick={() => handleSelectGuide(guide)}
                                                 className={`p-6 rounded-2xl ${guide.bgColor} border-2 border-transparent hover:border-current transition-all text-left group hover:shadow-lg hover:-translate-y-1`}
@@ -880,7 +880,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                 {/* Tutorial Image */}
                                 {selectedGuide.steps[currentStep].image && (
                                     <div className="mt-6">
-                                        <button
+                                        <button type="button"
                                             onClick={() => setEnlargedImage(selectedGuide.steps[currentStep].image!)}
                                             className="w-full relative group rounded-2xl overflow-hidden shadow-md border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-all"
                                         >
@@ -915,7 +915,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
 
                             {/* Navigation Buttons */}
                             <div className="flex items-center justify-between gap-4 pt-4">
-                                <button
+                                <button type="button"
                                     onClick={handlePrevStep}
                                     disabled={currentStep === 0}
                                     className="flex items-center gap-2 px-6 py-3 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
@@ -925,7 +925,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                 </button>
 
                                 {currentStep < selectedGuide.steps.length - 1 ? (
-                                    <button
+                                    <button type="button"
                                         onClick={handleNextStep}
                                         className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 font-semibold text-white shadow-lg transition-colors hover:from-indigo-600 hover:to-purple-600"
                                     >
@@ -933,7 +933,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                         <ChevronRight className="w-5 h-5" />
                                     </button>
                                 ) : (
-                                    <button
+                                    <button type="button"
                                         onClick={handleBack}
                                         className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 font-semibold text-white shadow-lg transition-colors hover:from-indigo-600 hover:to-purple-600"
                                     >
@@ -965,7 +965,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                     className="fixed inset-0 z-[60] bg-black/90 backdrop-blur flex items-center justify-center p-4 animate-in fade-in duration-200"
                     onClick={() => setEnlargedImage(null)}
                 >
-                    <button
+                    <button type="button"
                         onClick={() => setEnlargedImage(null)}
                         className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
                     >
@@ -993,7 +993,7 @@ interface FloatingHelpButtonProps {
 
 export const FloatingHelpButton: React.FC<FloatingHelpButtonProps> = ({ onClick }) => {
     return (
-        <button
+        <button type="button"
             onClick={onClick}
             className="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 z-40 w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-2xl shadow-indigo-500/30 flex items-center justify-center hover:scale-110 transition-transform group"
             aria-label="Buka Pusat Bantuan"

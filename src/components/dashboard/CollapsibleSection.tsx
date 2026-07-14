@@ -58,7 +58,7 @@ const CollapsibleSectionBase: React.FC<CollapsibleSectionProps> = ({
     return (
         <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-sm ${className}`}>
             {/* Header */}
-            <button
+            <button type="button"
                 onClick={toggleExpanded}
                 className={`w-full flex items-center justify-between p-4 sm:p-5 text-left hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors ${headerClassName}`}
                 aria-expanded={isExpanded}

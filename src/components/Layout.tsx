@@ -67,7 +67,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         .eq('teacher_user_id', user.id);
       return data || [];
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 0,
   });
 
   const isHomeroomTeacher = useMemo(() => {

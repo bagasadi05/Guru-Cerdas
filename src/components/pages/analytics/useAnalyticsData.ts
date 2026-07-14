@@ -60,7 +60,8 @@ export const useAnalyticsData = () => {
             if (error) throw error;
             return (data || []) as AnalyticsClass[];
         },
-        enabled: !!user
+        enabled: !!user,
+        staleTime: 0,
     });
 
     // Fetch main analytics data

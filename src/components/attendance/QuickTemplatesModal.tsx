@@ -115,7 +115,7 @@ export const QuickTemplatesModal: React.FC<QuickTemplatesModalProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
                     {templates.map((template) => (
-                        <button
+                        <button type="button"
                             key={template.id}
                             onClick={() => handleApply(template)}
                             className={`group text-left p-4 rounded-2xl border-2 ${template.borderColor} ${template.bgColor} hover:shadow-lg transition-all hover:scale-105 active:scale-95`}
@@ -143,7 +143,7 @@ export const QuickTemplatesModal: React.FC<QuickTemplatesModalProps> = ({
                 </div>
 
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <button
+                    <button type="button"
                         onClick={onClose}
                         className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
                     >

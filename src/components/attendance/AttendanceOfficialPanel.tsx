@@ -3,14 +3,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
-import { AttendanceStatus, StudentRow } from '../../types';
+import { AttendanceStatus, AttendanceRecord, StudentRow } from '../../types';
 import { statusOptions } from '../../constants';
 import { ShieldCheckIcon } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface Props {
   students: StudentRow[];
-  attendanceRecords: Record<string, any>;
+  attendanceRecords: Record<string, AttendanceRecord>;
   selectedDate: string;
   isHomeroom: boolean;
 }
@@ -34,16 +34,18 @@ export const AttendanceOfficialPanel: React.FC<Props> = ({ students, attendanceR
 
   const { mutate: setOfficial, isPending } = useMutation({
     mutationFn: async (updates: { student_id: string; official_status: AttendanceStatus }[]) => {
-      for (const u of updates) {
-        const rec = attendanceRecords[u.student_id];
-        if (rec?.id) {
-          await (supabase.from('attendance') as any).update({
-            official_status: u.official_status,
-            official_by: user?.id,
-            official_at: new Date().toISOString(),
-          }).eq('id', rec.id);
-        }
-      }
+      const ids = updates.map(u => attendanceRecords[u.student_id]?.id).filter(Boolean) as string[];
+      if (ids.length === 0) return;
+
+      const { error } = await (supabase.from('attendance') as any)
+        .update({
+          official_status: updates[0].official_status,
+          official_by: user?.id,
+          official_at: new Date().toISOString(),
+        })
+        .in('id', ids);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendanceData', user?.id] });
@@ -94,7 +96,7 @@ export const AttendanceOfficialPanel: React.FC<Props> = ({ students, attendanceR
                   const val = opt.value as AttendanceStatus;
                   const active = current === val;
                   return (
-                    <button
+                    <button type="button"
                       key={val}
                       onClick={() => {
                         const updates = [{ student_id: s.id, official_status: val }];

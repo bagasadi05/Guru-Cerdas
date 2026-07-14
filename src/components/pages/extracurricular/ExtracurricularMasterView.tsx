@@ -126,7 +126,7 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
                             Anda belum menambahkan data ekstrakurikuler atau tidak ada data yang cocok dengan pencarian Anda.
                         </p>
                         {canAdd && (
-                            <button
+                            <button type="button"
                                 onClick={() => onOpenModal()}
                                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all"
                             >
@@ -187,13 +187,13 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
 
                             {/* Actions Overlay */}
                             <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2 relative z-10" onClick={(e) => e.stopPropagation()}>
-                                <button
+                                <button type="button"
                                     onClick={() => onOpenModal(extracurricular)}
                                     className="flex-1 px-3 py-1.5 text-xs font-semibold bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/30 dark:hover:text-amber-400 transition-colors"
                                 >
                                     Edit
                                 </button>
-                                <button
+                                <button type="button"
                                     onClick={() => onDeleteExtracurricular(extracurricular)}
                                     className="px-3 py-1.5 text-xs font-semibold bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
                                 >

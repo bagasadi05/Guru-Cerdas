@@ -82,7 +82,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                             </option>
                         ))}
                     </select>
-                    <button
+                    <button type="button"
                         onClick={onAddExternalStudent}
                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-800 dark:bg-white text-white dark:text-slate-900 text-sm font-medium rounded-xl hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors whitespace-nowrap"
                     >
@@ -158,7 +158,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                                             </td>
                                             <td className="block lg:table-cell lg:px-6 lg:py-4">
                                                 <div className="flex items-center justify-end lg:justify-center gap-2">
-                                                    <button
+                                                    <button type="button"
                                                         onClick={() => onEnrollmentChange(student.id, student.type, isEnrolled ? 'unenroll' : 'enroll')}
                                                         className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all w-full lg:w-auto ${
                                                             isEnrolled
@@ -170,7 +170,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                                                     </button>
                                                     
                                                     {student.type === 'extracurricular_student' && (
-                                                        <button
+                                                        <button type="button"
                                                             onClick={() => onEditExternalStudent(student.id)}
                                                             className="px-3 py-1.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-600 w-full lg:w-auto"
                                                         >

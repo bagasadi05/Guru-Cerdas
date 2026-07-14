@@ -95,7 +95,7 @@ export const QuickNotePresets: React.FC<QuickNotePresetsProps> = ({
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {notePresets.map((preset) => (
-                    <button
+                    <button type="button"
                         key={preset.id}
                         onClick={() => onSelectPreset(preset.text)}
                         className={`flex items-center gap-2 p-2.5 rounded-lg border-2 ${preset.bgColor} transition-all hover:shadow-md active:scale-95 ${currentNote === preset.text ? 'ring-2 ring-indigo-500' : ''

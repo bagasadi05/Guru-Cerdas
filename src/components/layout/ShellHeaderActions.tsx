@@ -27,7 +27,7 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
     return (
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
             {/* Easy Mode Toggle */}
-            <button
+            <button type="button"
                 onClick={toggleEasyMode}
                 className={`flex min-h-[44px] items-center justify-center gap-2 px-3 rounded-xl border transition-all ${
                     isEasyMode 
@@ -45,7 +45,7 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
             </button>
 
             {/* Unified Help & Tutorial Button */}
-            <button
+            <button type="button"
                 onClick={() => document.dispatchEvent(new CustomEvent('open-help-center'))}
                 className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
                 aria-label="Pusat Bantuan & Tutorial"

@@ -83,7 +83,7 @@ export const EmptyGradesConfirmation: React.FC<EmptyGradesConfirmationProps> = (
     emptyCount,
     totalCount,
 }) => {
-    const percentage = Math.round((filledCount / totalCount) * 100);
+    const percentage = totalCount > 0 ? Math.round((filledCount / totalCount) * 100) : 0;
 
     return (
         <Modal

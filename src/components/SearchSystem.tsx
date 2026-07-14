@@ -307,7 +307,7 @@ export const GlobalSearchModal: React.FC<{
                         className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 outline-none text-lg"
                     />
                     {query && (
-                        <button
+                        <button type="button"
                             onClick={() => setQuery('')}
                             aria-label="Hapus pencarian"
                             className="p-1 text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded"
@@ -324,7 +324,7 @@ export const GlobalSearchModal: React.FC<{
                 {/* Entity Type Tabs */}
                 <div className="flex items-center gap-1 p-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto">
                     {(Object.keys(entityLabels) as SearchEntityType[]).map(type => (
-                        <button
+                        <button type="button"
                             key={type}
                             onClick={() => setEntityType(type)}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${entityType === type
@@ -348,7 +348,7 @@ export const GlobalSearchModal: React.FC<{
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm"
                             >
                                 {filter.label || filter.field}: {String(filter.value)}
-                                <button
+                                <button type="button"
                                     onClick={() => removeFilter(filter.field)}
                                     aria-label={`Hapus filter ${filter.label || filter.field}`}
                                     className="hover:text-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded"
@@ -370,7 +370,7 @@ export const GlobalSearchModal: React.FC<{
                         results.length > 0 ? (
                             <div className="py-2">
                                 {results.map((result, index) => (
-                                    <button
+                                    <button type="button"
                                         key={result.id}
                                         onClick={() => handleSelect(result)}
                                         className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${index === clampedIndex
@@ -416,7 +416,7 @@ export const GlobalSearchModal: React.FC<{
                                     <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                                         Pencarian Terakhir
                                     </span>
-                                    <button
+                                    <button type="button"
                                         onClick={clearHistory}
                                         className="text-xs text-indigo-600 hover:text-indigo-700"
                                     >
@@ -424,7 +424,7 @@ export const GlobalSearchModal: React.FC<{
                                     </button>
                                 </div>
                                 {history.map((item, index) => (
-                                    <button
+                                    <button type="button"
                                         key={index}
                                         onClick={() => setQuery(item.query)}
                                         className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50"
@@ -434,7 +434,7 @@ export const GlobalSearchModal: React.FC<{
                                         {item.resultCount !== undefined && (
                                             <span className="text-xs text-slate-400">{item.resultCount} hasil</span>
                                         )}
-                                        <button
+                                        <button type="button"
                                             onClick={(e) => { e.stopPropagation(); removeFromHistory(item.query); }}
                                             className="p-1 text-slate-400 hover:text-slate-600"
                                         >
@@ -476,7 +476,7 @@ export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }>
 
     if (iconOnly) {
         return (
-            <button
+            <button type="button"
                 onClick={open}
                 className={`flex items-center justify-center w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 transition-all border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
                 aria-label="Cari"
@@ -487,7 +487,7 @@ export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }>
     }
 
     return (
-        <button
+        <button type="button"
             onClick={open}
             className={`flex items-center justify-center sm:justify-between gap-2 w-10 h-10 sm:w-[340px] sm:h-10 px-0 sm:px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 transition-all border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
         >
@@ -584,7 +584,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                     />
                 )}
 
-                <button
+                <button type="button"
                     onClick={handleAdd}
                     disabled={!selectedField || !value}
                     className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-300 text-white rounded-lg text-sm font-medium transition-colors"
@@ -602,7 +602,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full text-sm"
                         >
                             <strong>{filter.label || filter.field}:</strong> {String(filter.value)}
-                            <button
+                            <button type="button"
                                 onClick={() => onRemoveFilter(filter.field)}
                                 className="ml-1 hover:text-indigo-900"
                             >
@@ -610,7 +610,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                             </button>
                         </span>
                     ))}
-                    <button
+                    <button type="button"
                         onClick={onClear}
                         className="text-sm text-slate-500 hover:text-slate-700"
                     >

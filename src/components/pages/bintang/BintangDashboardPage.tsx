@@ -32,7 +32,7 @@ const BintangDashboardPage: React.FC = () => {
 
             <div className="flex space-x-1 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-full max-w-3xl overflow-x-auto scrollbar-hide snap-x">
                 {tabs.map(tab => (
-                    <button
+                    <button type="button"
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`snap-start flex-shrink-0 sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg whitespace-nowrap transition-all duration-200 min-h-[44px] ${

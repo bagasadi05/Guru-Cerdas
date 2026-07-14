@@ -35,7 +35,7 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                                 />
                             </div>
                             <div className="absolute top-3 right-3">
-                                <button
+                                <button type="button"
                                     onClick={() => onAction(student, 'menu')}
                                     aria-label={`Menu aksi siswa ${student.name}`}
                                     className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
@@ -89,7 +89,7 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
             </div>
             {hasMore && (
                 <div className="flex justify-center py-2">
-                    <button
+                    <button type="button"
                         onClick={handleLoadMore}
                         className="px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
                     >

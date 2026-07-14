@@ -383,7 +383,7 @@ export const EnhancedFAB: React.FC<EnhancedFABProps> = ({
                 </span>
 
                 {/* Action Button */}
-                <button
+                <button type="button"
                   role="menuitem"
                   aria-label={action.label}
                   onClick={() => handleActionClick(action)}
@@ -401,7 +401,7 @@ export const EnhancedFAB: React.FC<EnhancedFABProps> = ({
         )}
 
         {/* Main FAB Button */}
-        <button
+        <button type="button"
           onClick={handleFABClick}
           aria-label={label}
           aria-expanded={hasActions ? isExpanded : undefined}

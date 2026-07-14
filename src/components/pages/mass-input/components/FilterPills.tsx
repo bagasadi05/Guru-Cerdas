@@ -8,7 +8,7 @@ export const FilterPills: React.FC<{
 }> = ({ options, currentValue, onFilterChange }) => (
     <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap min-w-max">
         {options.map(({ value, label }) => (
-            <button
+            <button type="button"
                 key={value}
                 onClick={() => onFilterChange(value)}
                 aria-pressed={currentValue === value}

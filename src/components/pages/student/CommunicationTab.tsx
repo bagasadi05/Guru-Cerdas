@@ -212,7 +212,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                         Komunikasi dengan Orang Tua
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                        <button
+                        <button type="button"
                             onClick={() => setShowSearch(!showSearch)}
                             className={`p-2 rounded-lg transition-colors ${showSearch ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500'}`}
                             title="Cari pesan"
@@ -234,7 +234,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                                 className="pl-9 h-9 text-sm"
                             />
                             {searchQuery && (
-                                <button
+                                <button type="button"
                                     onClick={() => setSearchQuery('')}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                                 >
@@ -275,7 +275,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                                     <SearchIcon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
                                 </div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Tidak ada pesan yang cocok</p>
-                                <button
+                                <button type="button"
                                     onClick={() => { setSearchQuery(''); setFilter('all'); }}
                                     className="text-xs text-blue-600 dark:text-blue-400 mt-2 hover:underline"
                                 >
@@ -382,7 +382,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
 
                 {/* Template Selector */}
                 <div className="relative mb-3" ref={templateMenuRef}>
-                    <button
+                    <button type="button"
                         onClick={() => setShowTemplates(!showTemplates)}
                         className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                         disabled={!isOnline}
@@ -397,14 +397,14 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                         <div className="absolute bottom-full left-0 mb-2 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 animate-fade-in-up max-h-80 overflow-hidden">
                             {/* Category Tabs */}
                             <div className="flex items-center gap-1 p-2 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
-                                <button
+                                <button type="button"
                                     onClick={() => setSelectedCategory('all')}
                                     className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === 'all' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                                 >
                                     Semua
                                 </button>
                                 {Object.entries(TEMPLATE_CATEGORIES).map(([key, { label }]) => (
-                                    <button
+                                    <button type="button"
                                         key={key}
                                         onClick={() => setSelectedCategory(key as MessageTemplate['category'])}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === key ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
@@ -417,7 +417,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                             {/* Template List */}
                             <div className="max-h-52 overflow-y-auto">
                                 {filteredTemplates.map(template => (
-                                    <button
+                                    <button type="button"
                                         key={template.id}
                                         onClick={() => handleSelectTemplate(template)}
                                         className="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700/50 last:border-0 transition-colors"

@@ -108,7 +108,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                         />
 
                         {/* Quick Stats Toggle */}
-                        <button
+                        <button type="button"
                             onClick={() => setShowStats(!showStats)}
                             className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all w-fit ${showStats
                                 ? 'bg-purple-500 text-white'

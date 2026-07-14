@@ -88,7 +88,7 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
         </div>
 
         {/* Sidebar toggle (XL only) */}
-        <button
+        <button type="button"
           onClick={onToggleSidebar}
           className="hidden lg:flex items-center gap-2 bg-white/40 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl text-xs font-black text-slate-700 dark:text-indigo-200 px-3.5 py-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
         >

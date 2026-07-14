@@ -63,7 +63,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-2 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-2xl border border-slate-200 dark:border-slate-800">
-                    <button
+                    <button type="button"
                         onClick={onExportPDF}
                         disabled={enrollments.length === 0}
                         className="flex items-center justify-center w-10 h-10 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 transition-colors disabled:opacity-50"
@@ -71,7 +71,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                     >
                         <FileText className="w-5 h-5" />
                     </button>
-                    <button
+                    <button type="button"
                         onClick={onExportExcel}
                         disabled={enrollments.length === 0}
                         className="flex items-center justify-center w-10 h-10 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-200 transition-colors disabled:opacity-50"
@@ -96,7 +96,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                     <div className="flex items-center gap-3">
                         <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">Mode Simpan:</span>
                         <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <button
+                            <button type="button"
                                 onClick={() => onToggleAutoSave(true)}
                                 className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
                                     autoSaveAttendance 
@@ -106,7 +106,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                             >
                                 ⚡ Otomatis
                             </button>
-                            <button
+                            <button type="button"
                                 onClick={() => onToggleAutoSave(false)}
                                 className={`relative px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
                                     !autoSaveAttendance 
@@ -131,7 +131,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                             { label: 'Izin', status: 'Izin', icon: Info, color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40', border: 'border-amber-200 dark:border-amber-800/50' },
                             { label: 'Libur', status: 'Libur', icon: CalendarOff, color: 'text-purple-700 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40', border: 'border-purple-200 dark:border-purple-800/50' },
                         ].map((btn) => (
-                            <button
+                            <button type="button"
                                 key={btn.status}
                                 onClick={() => onMarkAll(btn.status)}
                                 className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-medium rounded-lg border transition-colors ${btn.bg} ${btn.color} ${btn.border}`}
@@ -257,7 +257,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                                 }
 
                                                 return (
-                                                    <button
+                                                    <button type="button"
                                                         key={status.id}
                                                         onClick={() => onAttendanceClick(enrollment.participantId, enrollment.participantType, status.id)}
                                                         className="group/btn flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl outline-none"
@@ -286,7 +286,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
             {/* Floating Save Button for Manual Mode */}
             {!autoSaveAttendance && pendingChangesCount > 0 && (
                 <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
-                    <button
+                    <button type="button"
                         onClick={onSaveManual}
                         disabled={isSaving}
                         className="flex items-center gap-2 px-6 py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-70 disabled:hover:scale-100"

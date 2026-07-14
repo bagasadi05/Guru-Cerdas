@@ -1763,7 +1763,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
   const renderSegmentedControl = () => (
     <div className="flex justify-center mb-6">
       <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shadow-inner border border-slate-200/50 dark:border-slate-700/50">
-        <button
+        <button type="button"
           onClick={() => setActiveTabMode('single')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
             activeTabMode === 'single'
@@ -1773,7 +1773,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         >
           <span>🎯</span> Analisis Semester Aktif
         </button>
-        <button
+        <button type="button"
           onClick={() => setActiveTabMode('comparative')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
             activeTabMode === 'comparative'

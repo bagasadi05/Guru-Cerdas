@@ -65,7 +65,7 @@ export const OperationProgress: React.FC<OperationProgressProps> = ({
                             <span className="text-xs text-slate-500">{Math.round(progress)}% selesai</span>
                             <div className="flex gap-2">
                                 {status === 'error' && onRetry && (
-                                    <button
+                                    <button type="button"
                                         onClick={onRetry}
                                         className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
                                     >
@@ -73,7 +73,7 @@ export const OperationProgress: React.FC<OperationProgressProps> = ({
                                     </button>
                                 )}
                                 {status === 'running' && onCancel && (
-                                    <button
+                                    <button type="button"
                                         onClick={onCancel}
                                         className="text-xs font-medium text-red-600 hover:text-red-700"
                                     >

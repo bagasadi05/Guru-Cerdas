@@ -953,7 +953,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <span className="text-white/60 text-xxs font-mono">{stepIndex + 1}/{totalSteps}</span>
-                            <button
+                            <button type="button"
                                 onClick={onSkip}
                                 className="p-1 rounded-md hover:bg-white/20 text-white/70 hover:text-white transition-colors"
                                 aria-label="Tutup tutorial (Esc)"
@@ -998,7 +998,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
 
                         {/* Navigation */}
                         <div className="flex items-center justify-between">
-                            <button
+                            <button type="button"
                                 onClick={onPrev}
                                 disabled={stepIndex === 0}
                                 className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -1009,7 +1009,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
 
                             <div className="flex items-center gap-2">
                                 {step.advanceOnTargetClick && (
-                                    <button
+                                    <button type="button"
                                         onClick={onNext}
                                         className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                     >
@@ -1115,7 +1115,7 @@ export const TutorialPicker: React.FC<TutorialPickerProps> = ({ isOpen, onClose 
                                 <p className="text-white/70 text-xs">Belajar langsung di halaman asli</p>
                             </div>
                         </div>
-                        <button
+                        <button type="button"
                             onClick={onClose}
                             className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
                             aria-label="Tutup"
@@ -1141,7 +1141,7 @@ export const TutorialPicker: React.FC<TutorialPickerProps> = ({ isOpen, onClose 
                 {/* Filter tabs */}
                 <div className="px-4 pt-3 pb-2 flex gap-2 border-b border-slate-100 dark:border-slate-700">
                     {(['semua', 'dasar', 'lanjutan'] as const).map(tab => (
-                        <button
+                        <button type="button"
                             key={tab}
                             onClick={() => setFilter(tab)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -1160,7 +1160,7 @@ export const TutorialPicker: React.FC<TutorialPickerProps> = ({ isOpen, onClose 
                     {filteredFlows.map((flow) => {
                         const isCompleted = completedFlows.includes(flow.id);
                         return (
-                            <button
+                            <button type="button"
                                 key={flow.id}
                                 onClick={() => handleStart(flow.id)}
                                 className={`w-full flex items-center gap-3 p-3.5 rounded-xl border transition-all text-left group ${
@@ -1200,7 +1200,7 @@ export const TutorialPicker: React.FC<TutorialPickerProps> = ({ isOpen, onClose 
                         Praktik langsung di halaman asli
                     </p>
                     {completedCount > 0 && (
-                        <button
+                        <button type="button"
                             onClick={handleReset}
                             className="text-xxs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1"
                         >

@@ -42,7 +42,7 @@ export const HighContrastToggle: React.FC<HighContrastToggleProps> = ({ classNam
     const { isHighContrast, toggle } = useHighContrast();
 
     return (
-        <button
+        <button type="button"
             onClick={toggle}
             aria-pressed={isHighContrast}
             className={`rounded-lg p-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 ${className}`}
@@ -138,7 +138,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
                             <p className="text-sm text-slate-500 dark:text-slate-400">Gunakan pintasan untuk navigasi cepat</p>
                         </div>
                     </div>
-                    <button
+                    <button type="button"
                         onClick={onClose}
                         aria-label="Tutup"
                         className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
@@ -212,7 +212,7 @@ export const AccessibilitySettingsPanel: React.FC<{
                             </svg>
                             Pengaturan Aksesibilitas
                         </h2>
-                        <button onClick={onClose} aria-label="Tutup" className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <button type="button" onClick={onClose} aria-label="Tutup" className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -225,7 +225,7 @@ export const AccessibilitySettingsPanel: React.FC<{
                                 <h3 className="font-medium text-slate-900 dark:text-white">Kontras Tinggi</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Meningkatkan kontras warna untuk visibilitas lebih baik</p>
                             </div>
-                            <button
+                            <button type="button"
                                 role="switch"
                                 aria-checked={isHighContrast}
                                 onClick={toggleContrast}

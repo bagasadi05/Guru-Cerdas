@@ -192,7 +192,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
 
                         {/* Menu */}
                         <div className="relative">
-                            <button
+                            <button type="button"
                                 onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
                                 className="p-2 -mr-1 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
                                 aria-label="Opsi tugas"
@@ -206,14 +206,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                                 <>
                                     <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} aria-hidden="true" />
                                     <div className="absolute right-0 top-full mt-1 w-40 sm:w-36 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1 z-20">
-                                        <button
+                                        <button type="button"
                                             onClick={(e) => { e.stopPropagation(); onEdit(task); setShowMenu(false); }}
                                             className="w-full flex items-center gap-3 sm:gap-2 px-4 sm:px-3 py-3 sm:py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50"
                                         >
                                             <EditIcon className="w-4 h-4" />
                                             Edit
                                         </button>
-                                        <button
+                                        <button type="button"
                                             onClick={(e) => { e.stopPropagation(); onDelete(task.id); setShowMenu(false); }}
                                             className="w-full flex items-center gap-3 sm:gap-2 px-4 sm:px-3 py-3 sm:py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
                                         >
@@ -248,7 +248,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                         {/* Status Change Buttons */}
                         <div className="flex items-center gap-2 ml-auto">
                             {prevStatus && (
-                                <button
+                                <button type="button"
                                     onClick={() => onStatusChange(task.id, prevStatus)}
                                     className="px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600/50 hover:text-slate-800 dark:hover:text-white transition-all flex items-center gap-1.5 sm:gap-1"
                                     title={`Pindah ke ${statusConfig[prevStatus].title}`}
@@ -259,7 +259,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                                 </button>
                             )}
                             {nextStatus && (
-                                <button
+                                <button type="button"
                                     onClick={() => onStatusChange(task.id, nextStatus)}
                                     className={`px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 sm:gap-1 ${nextStatus === 'done'
                                         ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30'
@@ -335,7 +335,7 @@ const Column: React.FC<ColumnProps> = ({
                         <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-200/50 dark:bg-slate-700/50 px-2 py-0.5 rounded-full">{tasks.length} tugas</span>
                     </div>
                 </div>
-                <button
+                <button type="button"
                     onClick={() => onAddTask(status)}
                     className="p-2 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
                     title="Tambah tugas"
@@ -363,7 +363,7 @@ const Column: React.FC<ColumnProps> = ({
                                 {config.icon}
                             </div>
                             <p className="text-sm text-slate-500">Tidak ada tugas</p>
-                            <button
+                            <button type="button"
                                 onClick={() => onAddTask(status)}
                                 className="mt-3 text-sm text-indigo-400 hover:text-indigo-300"
                             >
@@ -706,7 +706,7 @@ const TasksPage: React.FC = () => {
                         const config = statusConfig[statusKey];
                         const count = tasksByStatus[statusKey].length;
                         return (
-                            <button
+                            <button type="button"
                                 key={statusKey}
                                 onClick={() => setMobileActiveTab(statusKey)}
                                 className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-sm font-medium transition-all ${mobileActiveTab === statusKey
@@ -736,7 +736,7 @@ const TasksPage: React.FC = () => {
                                 {statusConfig[mobileActiveTab].icon}
                             </div>
                             <p className="text-slate-500 dark:text-slate-500 mb-3">Tidak ada tugas {statusConfig[mobileActiveTab].title}</p>
-                            <button
+                            <button type="button"
                                 onClick={() => handleAddTask(mobileActiveTab)}
                                 className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-medium"
                             >

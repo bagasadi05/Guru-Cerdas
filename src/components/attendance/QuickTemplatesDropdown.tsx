@@ -123,7 +123,7 @@ export const QuickTemplatesDropdown: React.FC<QuickTemplatesDropdownProps> = ({
     return (
         <div className="relative" ref={dropdownRef}>
             {/* Trigger Button */}
-            <button
+            <button type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
                     inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg
@@ -164,7 +164,7 @@ export const QuickTemplatesDropdown: React.FC<QuickTemplatesDropdownProps> = ({
                     {/* Template Options */}
                     <div className="p-2 max-h-80 overflow-y-auto">
                         {templates.map((template) => (
-                            <button
+                            <button type="button"
                                 key={template.id}
                                 onClick={() => handleApply(template)}
                                 className={`

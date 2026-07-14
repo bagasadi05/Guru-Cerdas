@@ -113,7 +113,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
     return (
         <div ref={containerRef} className={`relative ${className}`}>
             {/* Trigger Button */}
-            <button
+            <button type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${hasValue
                         ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
@@ -123,7 +123,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
                 <CalendarIcon className="w-4 h-4" />
                 <span className="text-sm whitespace-nowrap">{formatDateDisplay()}</span>
                 {hasValue ? (
-                    <button
+                    <button type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleClear();
@@ -146,7 +146,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
                             <p className="text-xs font-medium text-gray-500 px-2 mb-1">Preset Cepat</p>
                             <div className="grid grid-cols-2 gap-1">
                                 {PRESETS.map((preset) => (
-                                    <button
+                                    <button type="button"
                                         key={preset.label}
                                         onClick={() => handlePresetClick(preset)}
                                         className="px-3 py-1.5 text-sm text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
@@ -186,13 +186,13 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
 
                     {/* Apply Button */}
                     <div className="p-3 border-t border-gray-200 dark:border-gray-700 flex gap-2">
-                        <button
+                        <button type="button"
                             onClick={handleClear}
                             className="flex-1 px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
                         >
                             Reset
                         </button>
-                        <button
+                        <button type="button"
                             onClick={() => setIsOpen(false)}
                             className="flex-1 px-3 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
                         >

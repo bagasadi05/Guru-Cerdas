@@ -94,7 +94,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             {/* Page Navigation */}
             <div className="flex items-center gap-1">
                 {/* Previous */}
-                <button
+                <button type="button"
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -109,7 +109,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                         page === 'ellipsis' ? (
                             <span key={`ellipsis-${index}`} className="px-2 text-gray-400">...</span>
                         ) : (
-                            <button
+                            <button type="button"
                                 key={page}
                                 onClick={() => onPageChange(page)}
                                 className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${currentPage === page
@@ -129,7 +129,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 </span>
 
                 {/* Next */}
-                <button
+                <button type="button"
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"

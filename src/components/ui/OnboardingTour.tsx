@@ -276,7 +276,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                             </span>
                         </div>
                     </div>
-                    <button
+                    <button type="button"
                         onClick={handleSkip}
                         className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                         aria-label="Lewati tutorial"
@@ -293,7 +293,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                 {/* Tips section */}
                 {step.tips && step.tips.length > 0 && (
                     <div className="mb-4">
-                        <button
+                        <button type="button"
                             onClick={() => setShowTips(!showTips)}
                             className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1 transition-colors"
                         >
@@ -324,7 +324,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                 {/* Step dots - clickable */}
                 <div className="flex gap-1 mb-4 flex-wrap justify-center">
                     {tourSteps.map((_, index) => (
-                        <button
+                        <button type="button"
                             key={index}
                             onClick={() => handleGoTo(index)}
                             className={`w-2 h-2 rounded-full transition-all duration-300 ${
@@ -341,7 +341,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
 
                 {/* Actions */}
                 <div className="flex items-center justify-between">
-                    <button
+                    <button type="button"
                         onClick={handlePrev}
                         disabled={currentStep === 0}
                         className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"

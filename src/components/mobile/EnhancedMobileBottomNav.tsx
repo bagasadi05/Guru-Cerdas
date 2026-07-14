@@ -130,7 +130,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
         ))}
 
         {/* More Button */}
-        <button
+        <button type="button"
           onClick={handleMoreClick}
           className="flex flex-col items-center justify-center gap-0.5 
                     relative touch-manipulation focus-visible:outline-none 

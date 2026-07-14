@@ -32,7 +32,7 @@ export const ExtracurricularDetailView: React.FC<ExtracurricularDetailViewProps>
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-orange-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
 
                 <div className="relative z-10">
-                    <button
+                    <button type="button"
                         onClick={onBack}
                         className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all text-sm font-medium mb-6 backdrop-blur-sm"
                     >
@@ -83,7 +83,7 @@ export const ExtracurricularDetailView: React.FC<ExtracurricularDetailViewProps>
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
                         return (
-                            <button
+                            <button type="button"
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`

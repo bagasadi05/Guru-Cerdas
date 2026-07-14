@@ -16,12 +16,13 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useGridNavigation } from '../../hooks/useGridNavigation';
 import { useAutosave } from '../../hooks/useAutosave';
 import { validateGrades, getGradeColorClass, calculateGradeStats, GradeEntry } from '../../utils/gradeValidator';
+import { dedupeAcademicRecords } from '../../utils/academicRecordUtils';
 import { useWarnUnsavedChanges } from '../../hooks/useWarnUnsavedChanges';
 import { KeyboardShortcutsHelp } from '../ui/KeyboardShortcutsHelp';
 import { EmptyGradesConfirmation, SaveSuccessModal, ClearAllConfirmation } from '../ui/GradeConfirmationModals';
 import { useSemester } from '../../contexts/SemesterContext';
 import { SemesterLockedBanner } from '../ui/SemesterSelector';
-import { getAssignedSubjects, hasHomeroomAssignment, TeacherClassAssignmentRow } from '../../services/teacherAssignments';
+import { getAssignmentsForClass, getAssignedSubjects, hasHomeroomAssignment, TeacherClassAssignmentRow } from '../../services/teacherAssignments';
 import { SUBJECTS } from '../../constants/subjects';
 import { AIPasteModal } from './bulk-grade-input/components/AIPasteModal';
 import { SettingsCard } from './bulk-grade-input/components/SettingsCard';
@@ -35,9 +36,17 @@ type ClassRow = Database['public']['Tables']['classes']['Row'];
 
 const DEFAULT_KKM = 75;
 
+/** Safe crypto.randomUUID with fallback for non-secure contexts */
+const selfCryptoUUID = (): string => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 
 const BulkGradeInputPage: React.FC = () => {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const toast = useToast();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -83,7 +92,7 @@ const BulkGradeInputPage: React.FC = () => {
             return (data || []) as TeacherClassAssignmentRow[];
         },
         enabled: !!user,
-        staleTime: 1000 * 60 * 10,
+        staleTime: 0,
     });
 
     // Check if selected semester is locked
@@ -179,6 +188,7 @@ const BulkGradeInputPage: React.FC = () => {
             return data as Pick<ClassRow, 'id' | 'name' | 'user_id'>[];
         },
         enabled: !!user,
+        staleTime: 0,
     });
 
     // Fetch students for selected class
@@ -197,16 +207,17 @@ const BulkGradeInputPage: React.FC = () => {
         enabled: !!selectedClass,
     });
 
-    // Check for existing grades (filtered by semester)
+    // Check for existing grades (filtered by semester and subject+assessment)
     const { data: existingGrades } = useQuery({
         queryKey: ['existingGrades', selectedClass, selectedSubject, assessmentName, selectedSemester],
         queryFn: async () => {
+            if (!students) return [];
             let query = supabase
                 .from('academic_records')
-                .select('id, student_id, score')
+                .select('id, student_id, user_id, subject, assessment_name, score, notes, semester_id, created_at, version')
                 .eq('subject', selectedSubject)
                 .eq('assessment_name', assessmentName)
-                .in('student_id', students?.map(s => s.id) || [])
+                .in('student_id', students.map(s => s.id))
                 .is('deleted_at', null);
 
             if (selectedSemester) {
@@ -214,7 +225,7 @@ const BulkGradeInputPage: React.FC = () => {
             }
 
             const { data } = await query;
-            return data || [];
+            return dedupeAcademicRecords((data || []) as any);
         },
         enabled: !!selectedClass && !!students && students.length > 0 && !!selectedSemester,
     });
@@ -226,7 +237,7 @@ const BulkGradeInputPage: React.FC = () => {
             return {
                 studentId: s.id,
                 studentName: s.name,
-                score: existingScore !== undefined ? String(existingScore) : ''
+                score: existingScore !== undefined ? Number(existingScore) : ''
             };
         }));
     }, [students, existingGrades]);
@@ -292,13 +303,33 @@ const BulkGradeInputPage: React.FC = () => {
     );
     const canUseDefaultSubjects = useMemo(() => {
         if (!user) return false;
+        if (isAdmin) return true; // Admin has global access to all subjects
         if (activeClassRecord?.user_id === user.id) return true;
         return hasHomeroomAssignment(teacherAssignments, selectedClass || null, selectedSemester || null);
-    }, [activeClassRecord?.user_id, selectedClass, selectedSemester, teacherAssignments, user]);
+    }, [activeClassRecord?.user_id, selectedClass, selectedSemester, teacherAssignments, user, isAdmin]);
     const availableSubjects = useMemo(() => {
         const defaultSubjectsToUse = canUseDefaultSubjects ? SUBJECTS : [];
         return Array.from(new Set([...assignedSubjects, ...defaultSubjectsToUse]));
     }, [assignedSubjects, canUseDefaultSubjects]);
+
+    // Filter kelas hanya yang diampu guru (punya assignment ATAU adalah wali kelas)
+    // pada semester yang dipilih. Admin/Pimpinan tetap melihat semua kelas.
+    const filteredClasses = useMemo(() => {
+        if (!classes) return [];
+        if (!user) return classes;
+
+        // Admin (is_admin_user) tampilkan semua kelas
+        // Cek: jika guru punya assignment di semua kelas (kemungkinan admin/kepala) → tampilkan semua
+        const assignedClassIds = new Set(
+            getAssignmentsForClass(teacherAssignments, null, selectedSemester || null)
+                .map(a => a.class_id)
+        );
+
+        // Juga sertakan kelas yang user_id-nya adalah user ini (wali kelas pemilik kelas)
+        return classes.filter(c =>
+            c.user_id === user.id || assignedClassIds.has(c.id)
+        );
+    }, [classes, user, teacherAssignments, selectedSemester]);
 
     useEffect(() => {
         if (availableSubjects.length === 0) return;
@@ -315,9 +346,11 @@ const BulkGradeInputPage: React.FC = () => {
             if (validEntries.length === 0) throw new Error('Tidak ada nilai valid untuk disimpan');
 
             const existingMap = new Map(existingGrades?.map(g => [g.student_id, g.id]) || []);
+            // Note: existingGrades is already filtered by subject+assessment_name above,
+            // so student_id key is sufficient here — no cross-assessment overwrite risk.
 
             const records = validEntries.map(e => ({
-                id: existingMap.get(e.studentId) || crypto.randomUUID(),
+                id: existingMap.get(e.studentId) || selfCryptoUUID(),
                 student_id: e.studentId,
                 user_id: user!.id,
                 subject: selectedSubject,
@@ -649,7 +682,7 @@ const BulkGradeInputPage: React.FC = () => {
                     setAssessmentName={setAssessmentName}
                     kkm={kkm}
                     setKkm={setKkm}
-                    classes={classes}
+                    classes={filteredClasses}
                     loadingClasses={loadingClasses}
                     availableSubjects={availableSubjects}
                     onShowImportModal={() => setShowImportModal(true)}

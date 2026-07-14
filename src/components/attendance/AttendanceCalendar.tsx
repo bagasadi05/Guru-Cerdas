@@ -146,7 +146,7 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                         <h3 className="text-lg font-bold text-white">
                             {MONTHS[month]} {year}
                         </h3>
-                        <button
+                        <button type="button"
                             onClick={goToToday}
                             className="text-xs text-white/70 hover:text-white transition-colors"
                         >
@@ -205,7 +205,7 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                         const isSelected = selectedDate === dateStr;
 
                         return (
-                            <button
+                            <button type="button"
                                 key={day}
                                 onClick={() => onDateClick?.(dateStr)}
                                 className={`

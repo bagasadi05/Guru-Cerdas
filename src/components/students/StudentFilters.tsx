@@ -41,14 +41,14 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
 
             <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
                 <div className="flex items-center bg-white dark:bg-gray-800 rounded-2xl p-1 border border-gray-200 dark:border-gray-700 shadow-sm">
-                    <button
+                    <button type="button"
                         onClick={() => onViewModeChange('grid')}
                         className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
                         title="Tampilan Grid"
                     >
                         <LayoutGridIcon className="h-5 w-5" />
                     </button>
-                    <button
+                    <button type="button"
                         onClick={() => onViewModeChange('list')}
                         className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
                         title="Tampilan List/Tabel"

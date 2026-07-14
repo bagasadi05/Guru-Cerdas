@@ -1,15 +1,15 @@
 /**
  * @fileoverview Central export point for all type definitions
- * 
+ *
  * This file serves as the main entry point for importing types throughout
  * the application. Import types from here instead of individual type files.
- * 
+ *
  * @example
  * ```typescript
  * import type { StudentRow, DashboardQueryData } from '@/types';
  * import { AttendanceStatus } from '@/types';
  * ```
- * 
+ *
  * @module types
  */
 
@@ -196,6 +196,7 @@ export type AttendanceRecord = {
     id?: string;
     status: import('./enums').AttendanceStatus;
     note: string;
+    official_status?: import('./enums').AttendanceStatus | null;
 };
 
 // =============================================================================
@@ -227,4 +228,3 @@ export type {
     TeachingJournalFilters,
     TeachingJournalRekap,
 } from './teachingJournal';
-

@@ -43,7 +43,7 @@ interface AccessibleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEle
 export const AccessibleButton = React.forwardRef<HTMLButtonElement, AccessibleButtonProps>(
     ({ children, loading, loadingText = 'Memuat...', disabled, ...props }, ref) => {
         return (
-            <button
+            <button type="button"
                 ref={ref}
                 disabled={disabled || loading}
                 aria-disabled={disabled || loading}
@@ -90,7 +90,7 @@ export const AccessibleIconButton: React.FC<AccessibleIconButtonProps> = ({
     ...props
 }) => {
     return (
-        <button
+        <button type="button"
             aria-label={label}
             title={label}
             className={`rounded-lg p-2 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:hover:bg-slate-800 ${className}`}

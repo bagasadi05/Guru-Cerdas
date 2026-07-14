@@ -202,7 +202,7 @@ const SmartInsightsPanel: React.FC = () => {
                                         </ul>
                                     )}
                                     {ins.cta && (
-                                        <button onClick={ins.cta.onClick} className={`mt-2 text-xs font-semibold ${sev.text} hover:underline inline-flex items-center gap-1`}>
+                                        <button type="button" onClick={ins.cta.onClick} className={`mt-2 text-xs font-semibold ${sev.text} hover:underline inline-flex items-center gap-1`}>
                                             {ins.cta.label} &rarr;
                                         </button>
                                     )}

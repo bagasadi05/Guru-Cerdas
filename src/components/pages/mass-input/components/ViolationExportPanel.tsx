@@ -271,7 +271,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                         </div>
                         <div className="flex gap-2">
                             {filterTabs.map(tab => (
-                                <button
+                                <button type="button"
                                     key={tab.value}
                                     onClick={() => setStudentFilter(tab.value)}
                                     className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${studentFilter === tab.value ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}

@@ -29,6 +29,7 @@ import {
 } from '../Icons';
 import { TeacherClassAssignmentRow } from '../../services/teacherAssignments';
 import { Database } from '../../services/database.types';
+import { dedupeAcademicRecords } from '../../utils/academicRecordUtils';
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -107,6 +108,7 @@ export const GradeAdjustmentPage: React.FC = () => {
             return (data || []) as TeacherClassAssignmentRow[];
         },
         enabled: !!user,
+        staleTime: 0,
     });
 
     // Fetch classes
@@ -123,6 +125,7 @@ export const GradeAdjustmentPage: React.FC = () => {
             return data as Pick<ClassRow, 'id' | 'name' | 'user_id' | 'grade_level'>[];
         },
         enabled: !!user,
+        staleTime: 0,
     });
 
     const accessibleClasses = useMemo(
@@ -242,7 +245,7 @@ export const GradeAdjustmentPage: React.FC = () => {
 
             let query = supabase
                 .from('academic_records')
-                .select('id, student_id, score, assessment_name')
+                .select('id, student_id, user_id, subject, assessment_name, score, notes, semester_id, created_at, version')
                 .eq('subject', selectedSubject)
                 .eq('semester_id', selectedSemester)
                 .in('student_id', studentIds)
@@ -254,7 +257,7 @@ export const GradeAdjustmentPage: React.FC = () => {
 
             const { data, error } = await query;
             if (error) throw error;
-            return data || [];
+            return dedupeAcademicRecords((data || []) as any);
         },
         enabled: !!selectedClass && !!selectedSubject && !!activeAssessmentName && !!selectedSemester && !!students && students.length > 0,
     });
@@ -609,7 +612,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                         <div>
                             <div className="flex justify-between items-center mb-1">
                                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Nama Penilaian</label>
-                                <button
+                                <button type="button"
                                     onClick={() => {
                                         setIsCustomAssessment(!isCustomAssessment);
                                         setAssessmentName('');
@@ -829,7 +832,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="flex flex-col gap-2">
-                                    <button
+                                    <button type="button"
                                         onClick={() => setActiveScenario('original')}
                                         className={`text-left px-3 py-2.5 text-xs font-semibold rounded-lg border transition-all ${
                                             activeScenario === 'original'
@@ -839,7 +842,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                     >
                                         Skenario A: Nilai Asli
                                     </button>
-                                    <button
+                                    <button type="button"
                                         onClick={() => setActiveScenario('formula')}
                                         className={`text-left px-3 py-2.5 text-xs font-semibold rounded-lg border transition-all ${
                                             activeScenario === 'formula'
@@ -849,7 +852,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                     >
                                         Skenario B: Rumus Excel
                                     </button>
-                                    <button
+                                    <button type="button"
                                         onClick={() => setActiveScenario('ai')}
                                         disabled={aiAdjustments.length === 0}
                                         className={`text-left px-3 py-2.5 text-xs font-semibold rounded-lg border transition-all flex items-center justify-between ${
@@ -864,7 +867,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                     {manualOverrides.size > 0 && (
                                         <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xxs">
                                             <span className="font-bold text-amber-600 dark:text-amber-400">{manualOverrides.size} Revisi Manual</span>
-                                            <button
+                                            <button type="button"
                                                 onClick={() => setManualOverrides(new Set())}
                                                 className="text-slate-400 hover:text-red-500 font-bold"
                                             >

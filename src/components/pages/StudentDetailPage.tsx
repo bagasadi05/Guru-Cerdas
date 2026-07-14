@@ -308,7 +308,7 @@ const StudentDetailPage = () => {
                             <img src={getStudentAvatar(student.avatar_url, student.gender, student.id)} alt={student.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md group-hover:shadow-lg transition-all duration-300 dark:border-white/10 group-hover:scale-105" />
                             <input type="file" ref={photoInputRef} onChange={handlePhotoChange} accept="image/png, image/jpeg" className="hidden" disabled={isUploadingPhoto || !isOnline} />
                             {canManageStudentProfile ? (
-                                <button onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} aria-label="Unggah foto profil siswa" className="absolute -bottom-1 -right-1 p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-md hover:scale-110 transition-transform">
+                                <button type="button" onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} aria-label="Unggah foto profil siswa" className="absolute -bottom-1 -right-1 p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-md hover:scale-110 transition-transform">
                                     <CameraIcon className="w-4 h-4" />
                                 </button>
                             ) : null}

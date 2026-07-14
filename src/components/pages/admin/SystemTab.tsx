@@ -138,7 +138,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({
                         <Cpu size={20} className="text-indigo-500" />
                         Informasi Sistem
                     </h3>
-                    <button
+                    <button type="button"
                         onClick={checkSystemHealth}
                         className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
                     >

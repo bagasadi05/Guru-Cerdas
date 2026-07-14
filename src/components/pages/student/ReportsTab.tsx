@@ -342,13 +342,13 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
 
                 {/* View Mode Toggle */}
                 <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <button
+                    <button type="button"
                         onClick={() => setViewMode('timeline')}
                         className={`px-3 py-2 text-sm ${viewMode === 'timeline' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
                     >
                         Timeline
                     </button>
-                    <button
+                    <button type="button"
                         onClick={() => setViewMode('list')}
                         className={`px-3 py-2 text-sm ${viewMode === 'list' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
                     >
@@ -358,7 +358,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
 
                 {/* Clear Filters */}
                 {hasActiveFilters && (
-                    <button
+                    <button type="button"
                         onClick={clearFilters}
                         className="px-3 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
                     >

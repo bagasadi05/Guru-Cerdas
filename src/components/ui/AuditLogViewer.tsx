@@ -201,7 +201,7 @@ export const ChangelogBadge: React.FC<{
     onClick: () => void;
     changeCount?: number;
 }> = ({ onClick, changeCount }) => (
-    <button
+    <button type="button"
         onClick={onClick}
         className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 hover:text-indigo-500 
                    bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"

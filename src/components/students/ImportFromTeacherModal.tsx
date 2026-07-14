@@ -247,7 +247,7 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
                                     className="pr-12"
                                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                                 />
-                                <button
+                                <button type="button"
                                     onClick={handleSearch}
                                     disabled={isSearching}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-800/50 transition-colors"
@@ -289,14 +289,14 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
                                     Pilih Kelas untuk Di-import
                                 </label>
                                 <div className="flex gap-2">
-                                    <button
+                                    <button type="button"
                                         onClick={selectAllClasses}
                                         className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                                     >
                                         Pilih Semua
                                     </button>
                                     <span className="text-slate-300 dark:text-slate-600">|</span>
-                                    <button
+                                    <button type="button"
                                         onClick={deselectAllClasses}
                                         className="text-xs text-slate-500 hover:underline"
                                     >

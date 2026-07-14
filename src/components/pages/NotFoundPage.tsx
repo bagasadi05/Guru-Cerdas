@@ -105,7 +105,7 @@ const NotFoundPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <button
+          <button type="button"
             onClick={() => navigate('/dashboard', { replace: true })}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:-translate-y-0.5"
           >
@@ -114,7 +114,7 @@ const NotFoundPage: React.FC = () => {
             </svg>
             Ke Dashboard
           </button>
-          <button
+          <button type="button"
             onClick={() => navigate(-1)}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 hover:-translate-y-0.5"
           >

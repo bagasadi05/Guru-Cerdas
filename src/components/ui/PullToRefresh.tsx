@@ -176,7 +176,7 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
                             <span className="text-sm text-red-800 dark:text-red-200 flex-1">
                                 Gagal memperbarui data
                             </span>
-                            <button
+                            <button type="button"
                                 onClick={handleRetry}
                                 disabled={isRefreshing}
                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-800/50 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors min-h-[36px] min-w-[36px] justify-center"

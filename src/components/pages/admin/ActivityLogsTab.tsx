@@ -42,7 +42,7 @@ export const ActivityLogsTab: React.FC<ActivityLogsTabProps> = ({
                         <Activity size={20} className="text-indigo-500" />
                         Log Aktivitas
                     </h3>
-                    <button
+                    <button type="button"
                         onClick={fetchActivityLogs}
                         className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
                     >
@@ -129,7 +129,7 @@ export const ActivityLogsTab: React.FC<ActivityLogsTabProps> = ({
                         Menampilkan {logRangeStart}-{logRangeEnd} dari {logTotal}
                     </p>
                     <div className="flex items-center gap-2">
-                        <button
+                        <button type="button"
                             onClick={() => setLogPage(prev => Math.max(1, prev - 1))}
                             disabled={logPage === 1 || logsLoading}
                             className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
@@ -139,7 +139,7 @@ export const ActivityLogsTab: React.FC<ActivityLogsTabProps> = ({
                         <span className="text-sm text-gray-500">
                             Halaman {logPage} dari {logPageCount}
                         </span>
-                        <button
+                        <button type="button"
                             onClick={() => setLogPage(prev => Math.min(logPageCount, prev + 1))}
                             disabled={logPage >= logPageCount || logsLoading}
                             className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"

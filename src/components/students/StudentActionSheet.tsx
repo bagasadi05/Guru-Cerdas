@@ -47,7 +47,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
         </Link>
 
         {canManageActiveClass || isAdmin ? (
-          <button
+          <button type="button"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
             onClick={() => {
               onEdit(student);
@@ -65,7 +65,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
         ) : null}
 
         {canManageActiveClass && !student.access_code && (
-          <button
+          <button type="button"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
             onClick={() => {
               onGenerateCodeInfo();
@@ -83,7 +83,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
         )}
 
         {canManageActiveClass && student.access_code && (
-          <button
+          <button type="button"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
             onClick={() => {
               onCopyCode(student.access_code || '');
@@ -103,7 +103,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
         {isAdmin ? <div className="h-px bg-gray-200 dark:bg-gray-800 my-1"></div> : null}
 
         {isAdmin ? (
-          <button
+          <button type="button"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left group"
             onClick={() => {
               onDelete(student);

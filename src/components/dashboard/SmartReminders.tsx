@@ -126,7 +126,7 @@ export const SmartReminders: React.FC<SmartRemindersProps> = ({
                                     </div>
 
                                     {reminder.dismissible && onDismiss && (
-                                        <button
+                                        <button type="button"
                                             onClick={() => onDismiss(reminder.id)}
                                             className="flex-shrink-0 p-1 rounded-lg hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors"
                                             aria-label="Dismiss"
@@ -171,7 +171,7 @@ export const SmartReminders: React.FC<SmartRemindersProps> = ({
                                     </div>
 
                                     {reminder.dismissible && onDismiss && (
-                                        <button
+                                        <button type="button"
                                             onClick={() => onDismiss(reminder.id)}
                                             className="flex-shrink-0 p-1 rounded-lg hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors opacity-0 group-hover:opacity-100"
                                             aria-label="Dismiss"

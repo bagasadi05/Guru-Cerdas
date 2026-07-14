@@ -45,6 +45,7 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
       return (data || EMPTY_ASSIGNMENTS) as TeacherClassAssignmentRow[];
     },
     enabled: !!userId,
+    staleTime: 0,
   });
 
   const {
@@ -81,6 +82,7 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
       return (data || EMPTY_CLASSES) as unknown as ClassRow[];
     },
     enabled: !!userId,
+    staleTime: 0,
   });
 
   const {

@@ -298,26 +298,19 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                             />
                         </Modal>
 
-                        {pendingImportData && (
+                        {pendingImportData && pendingImportData.length > 0 && (
                             <ImportPreviewModal
-                                isOpen={!!pendingImportData}
+                                isOpen={Array.isArray(pendingImportData) && pendingImportData.length > 0}
                                 onClose={() => setPendingImportData(null)}
                                 parsedData={pendingImportData}
                                 students={studentsData?.map(s => ({ id: s.id, name: s.name })) || []}
                                 onConfirm={(mappedScores) => {
-                                    const nextScores = { ...scores, ...mappedScores };
-                                    setScores(nextScores);
-                                    if (props.setScores) {
-                                        props.setScores(nextScores);
-                                    }
-                                    if (props.setSelectedStudentIds) {
-                                        // Auto-select students that received scores
-                                        props.setSelectedStudentIds(prev => {
-                                            const next = new Set(prev);
-                                            Object.keys(mappedScores).forEach(id => next.add(id));
-                                            return next;
-                                        });
-                                    }
+                                    setScores(prev => ({ ...prev, ...mappedScores }));
+                                    props.setSelectedStudentIds?.(prev => {
+                                        const next = new Set(prev);
+                                        Object.keys(mappedScores).forEach(id => next.add(id));
+                                        return next;
+                                    });
                                     toast.success(`Berhasil memproses dan menerapkan ${Object.keys(mappedScores).length} nilai siswa.`);
                                 }}
                             />

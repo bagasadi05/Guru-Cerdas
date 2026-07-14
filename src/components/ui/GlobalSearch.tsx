@@ -180,7 +180,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                         aria-label="Kotak Pencarian Global"
                     />
                     {searchTerm && (
-                        <button
+                        <button type="button"
                             onClick={() => { setSearchTerm(''); setActiveIndex(0); }}
                             aria-label="Hapus pencarian"
                             className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded"
@@ -194,7 +194,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                 {searchTerm.length >= 2 && (
                     <div className="flex gap-1 px-4 py-2 border-b border-gray-200 dark:border-gray-700 overflow-x-auto scrollbar-hide">
                         {(['all', 'students', 'classes', 'tasks', 'schedules'] as SearchEntityType[]).map(type => (
-                            <button
+                            <button type="button"
                                 key={type}
                                 onClick={() => { setActiveTab(type); setActiveIndex(0); }}
                                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${activeTab === type
@@ -215,7 +215,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                         <div className="space-y-2">
                             <div className="flex items-center justify-between px-2">
                                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Pencarian Terakhir</span>
-                                <button
+                                <button type="button"
                                     onClick={() => { clearSearchHistory(); setShowHistory(false); }}
                                     className="text-xs text-red-500 hover:text-red-600"
                                 >
@@ -224,7 +224,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                             </div>
                             <div className="space-y-1">
                                 {searchHistory.map((query, index) => (
-                                    <button
+                                    <button type="button"
                                         key={index}
                                         onClick={() => handleHistoryClick(query)}
                                         className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
@@ -242,7 +242,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                         <div className="space-y-1">
                             <span className="text-xs font-medium text-gray-500 dark:text-gray-400 px-2">Saran</span>
                             {suggestions.map((suggestion, index) => (
-                                <button
+                                <button type="button"
                                     key={index}
                                     onClick={() => handleSuggestionClick(suggestion)}
                                     className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
@@ -262,7 +262,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                                 const Icon = getResultIcon(result.type);
 
                                 return (
-                                    <button
+                                    <button type="button"
                                         key={`${result.type}-${result.id}`}
                                         onClick={() => handleNavigate(result)}
                                         className={`flex items-center gap-4 w-full p-3 rounded-lg cursor-pointer transition-colors text-left ${isActive ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-800'

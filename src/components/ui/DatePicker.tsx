@@ -94,7 +94,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
     return (
         <div className={`relative ${className}`}>
-            <button
+            <button type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-amber-500 dark:hover:border-amber-500 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-amber-500/20"
             >
@@ -124,7 +124,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4">
-                            <button
+                            <button type="button"
                                 onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
                                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400"
                             >
@@ -133,7 +133,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                             <span className="font-semibold text-slate-900 dark:text-white">
                                 {MONTHS[month]} {year}
                             </span>
-                            <button
+                            <button type="button"
                                 onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
                                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400"
                             >
@@ -156,7 +156,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                                 day === null ? (
                                     <div key={`empty-${index}`} />
                                 ) : (
-                                    <button
+                                    <button type="button"
                                         key={day}
                                         onClick={() => handleDayClick(day)}
                                         className={`
@@ -176,7 +176,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         </div>
 
                         <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                            <button
+                            <button type="button"
                                 onClick={() => {
                                     const today = new Date();
                                     onChange(today.toISOString().split('T')[0]);

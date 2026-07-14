@@ -243,7 +243,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
 
     return (
         <div className={`relative ${className}`}>
-            <button
+            <button type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg ${config.bg} ${config.color} transition-colors`}
                 title={config.label}
@@ -279,7 +279,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
                             </div>
                         )}
                         {(status === 'pending' || status === 'error') && (
-                            <button
+                            <button type="button"
                                 onClick={sync}
                                 className="w-full px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium"
                             >
@@ -431,7 +431,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
                         <Wifi className="w-5 h-5" />
                         <span className="font-medium">Kembali online!</span>
                         {pendingCount > 0 && (
-                            <button
+                            <button type="button"
                                 onClick={sync}
                                 className="ml-2 px-3 py-1 bg-white/20 rounded-full text-sm hover:bg-white/30"
                             >
@@ -548,7 +548,7 @@ export const UploadProgressPanel: React.FC<{ className?: string }> = ({ classNam
     return (
         <div className={`fixed bottom-20 right-4 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-40 ${className}`}>
             {/* Header */}
-            <button
+            <button type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
@@ -575,7 +575,7 @@ export const UploadProgressPanel: React.FC<{ className?: string }> = ({ classNam
                                         {formatSize(upload.size)} • {upload.progress}%
                                     </p>
                                 </div>
-                                <button
+                                <button type="button"
                                     onClick={() => cancelUpload(upload.id)}
                                     className="p-1 text-slate-400 hover:text-red-500"
                                 >
@@ -598,7 +598,7 @@ export const UploadProgressPanel: React.FC<{ className?: string }> = ({ classNam
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm text-slate-700 dark:text-slate-300 truncate">{upload.name}</p>
                             </div>
-                            <button
+                            <button type="button"
                                 onClick={() => removeUpload(upload.id)}
                                 className="p-1 text-slate-400 hover:text-slate-600"
                             >
@@ -616,7 +616,7 @@ export const UploadProgressPanel: React.FC<{ className?: string }> = ({ classNam
                                     <p className="text-sm text-slate-700 dark:text-slate-300 truncate">{upload.name}</p>
                                     <p className="text-xs text-red-500">{upload.error}</p>
                                 </div>
-                                <button
+                                <button type="button"
                                     onClick={() => removeUpload(upload.id)}
                                     className="p-1 text-slate-400 hover:text-slate-600"
                                 >

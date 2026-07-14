@@ -22,7 +22,7 @@ export const ScheduleDaySelector: React.FC<ScheduleDaySelectorProps> = ({
         const isSelected = selectedDay === day;
 
         return (
-          <button
+          <button type="button"
             key={day}
             onClick={() => onSelectDay(day)}
             className={`

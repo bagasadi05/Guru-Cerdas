@@ -243,7 +243,7 @@ const ViolationCard: React.FC<{
 
             {/* Follow-up Status */}
             <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-                <button
+                <button type="button"
                     onClick={() => setShowFollowUp(!showFollowUp)}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${followUp.color === 'green'
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
@@ -263,7 +263,7 @@ const ViolationCard: React.FC<{
                             const StatusIcon = FOLLOW_UP_STATUS[status].icon;
                             const isActive = violation.follow_up_status === status;
                             return (
-                                <button
+                                <button type="button"
                                     key={status}
                                     onClick={() => onUpdateFollowUp(status)}
                                     disabled={!isOnline || isActive}
@@ -417,7 +417,7 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                 </select>
 
                 {(severityFilter !== 'all' || statusFilter !== 'all') && (
-                    <button
+                    <button type="button"
                         onClick={() => { setSeverityFilter('all'); setStatusFilter('all'); }}
                         className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                     >

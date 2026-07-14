@@ -1116,7 +1116,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         return (
             <div className={`flex gap-2 ${className}`}>
                 {languages.map((lang) => (
-                    <button
+                    <button type="button"
                         key={lang.code}
                         onClick={() => setLanguage(lang.code)}
                         className={`

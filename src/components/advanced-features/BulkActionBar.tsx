@@ -50,7 +50,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
 
       <div className="flex items-center gap-2">
         {actions.map((action) => (
-          <button
+          <button type="button"
             key={action.id}
             onClick={() => handleAction(action, [])}
             disabled={loadingAction !== null}
@@ -70,7 +70,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
 
       <div className="h-6 w-px bg-slate-700" />
 
-      <button onClick={onClear} className="rounded-lg p-2 hover:bg-white/10" aria-label="Batalkan pilihan">
+      <button type="button" onClick={onClear} className="rounded-lg p-2 hover:bg-white/10" aria-label="Batalkan pilihan">
         <X className="h-4 w-4" />
       </button>
     </div>

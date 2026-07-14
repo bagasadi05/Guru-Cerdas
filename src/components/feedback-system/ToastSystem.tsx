@@ -242,7 +242,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
 
                     <div className="mt-2 flex items-center gap-2">
                         {toast.undoAction && (
-                            <button
+                            <button type="button"
                                 onClick={() => {
                                     toast.undoAction?.();
                                     handleDismiss();
@@ -254,7 +254,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
                             </button>
                         )}
                         {toast.action && (
-                            <button
+                            <button type="button"
                                 onClick={() => {
                                     toast.action?.onClick();
                                     handleDismiss();
@@ -269,7 +269,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
                 </div>
 
                 {toast.dismissible && (
-                    <button
+                    <button type="button"
                         onClick={handleDismiss}
                         className="flex-shrink-0 rounded-lg p-1 text-slate-400 hover:bg-white/50 hover:text-slate-600 dark:hover:bg-slate-800/50 dark:hover:text-slate-300"
                         aria-label="Tutup notifikasi"

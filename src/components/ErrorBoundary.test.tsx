@@ -122,7 +122,7 @@ describe('AsyncErrorBoundary', () => {
 
   const NavButton = () => {
     const navigate = useNavigate();
-    return <button onClick={() => navigate('/safe')}>go-safe</button>;
+    return <button type="button" onClick={() => navigate('/safe')}>go-safe</button>;
   };
 
   const Thrower = () => {

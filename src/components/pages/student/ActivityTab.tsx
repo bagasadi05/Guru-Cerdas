@@ -47,7 +47,7 @@ const CategoryFilter: React.FC<{
 }> = ({ selectedCategory, onSelect }) => {
     return (
         <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
-            <button
+            <button type="button"
                 onClick={() => onSelect('all')}
                 className={`px-3 py-1.5 sm:px-4 sm:py-2 min-h-[36px] sm:min-h-[40px] text-xs sm:text-sm font-medium rounded-full transition-all ${selectedCategory === 'all'
                     ? 'bg-indigo-600 text-white shadow-sm'
@@ -57,7 +57,7 @@ const CategoryFilter: React.FC<{
                 Semua
             </button>
             {Object.entries(POINT_CATEGORIES).map(([key, { label, icon }]) => (
-                <button
+                <button type="button"
                     key={key}
                     onClick={() => onSelect(key as PointCategory)}
                     className={`px-3 py-1.5 sm:px-4 sm:py-2 min-h-[36px] sm:min-h-[40px] text-xs sm:text-sm font-medium rounded-full transition-all flex items-center gap-1.5 ${selectedCategory === key
@@ -367,7 +367,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
 
             {/* View Toggle */}
             <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                <button
+                <button type="button"
                     onClick={() => setViewMode('available')}
                     className={`px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-lg transition-all ${viewMode === 'available'
                         ? 'bg-indigo-600 text-white'
@@ -377,7 +377,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                     <StarIcon className="w-4 h-4 inline mr-1" />
                     Tersedia
                 </button>
-                <button
+                <button type="button"
                     onClick={() => setViewMode('overview')}
                     className={`px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-lg transition-all ${viewMode === 'overview'
                         ? 'bg-indigo-600 text-white'
@@ -387,7 +387,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                     <TagIcon className="w-4 h-4 inline mr-1" />
                     Per Mapel
                 </button>
-                <button
+                <button type="button"
                     onClick={() => setViewMode('history')}
                     className={`px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-lg transition-all ${viewMode === 'history'
                         ? 'bg-indigo-600 text-white'

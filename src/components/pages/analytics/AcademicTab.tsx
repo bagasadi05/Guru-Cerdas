@@ -100,7 +100,7 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({ gradeStats, classes, s
             </Card>
 
             <div className="flex justify-center">
-                <button 
+                <button type="button" 
                     onClick={() => setShowDetails(!showDetails)}
                     className="flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full hover:bg-indigo-100 transition-colors min-h-[44px] sm:min-h-0"
                 >

@@ -117,7 +117,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
             {isExpanded && quickActions && quickActions.length > 0 && (
                 <div className="absolute bottom-16 right-0 mb-2 flex flex-col gap-2 animate-fade-in">
                     {quickActions.map((action, index) => (
-                        <button
+                        <button type="button"
                             key={index}
                             onClick={() => handleQuickAction(action)}
                             aria-label={action.label}
@@ -143,7 +143,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
             )}
 
             {/* Main FAB Button */}
-            <button
+            <button type="button"
                 className={`
                     flex items-center justify-center
                     rounded-full shadow-lg

@@ -121,7 +121,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
     return (
         <div className={`relative ${className}`}>
             {/* Status Badge */}
-            <button
+            <button type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`flex items-center gap-1.5 px-2 py-1.5 rounded-full ${config.bg} transition-all hover:scale-105`}
                 title={config.label}
@@ -212,7 +212,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
 
                     {/* Actions */}
                     <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                        <button
+                        <button type="button"
                             onClick={handleSync}
                             disabled={!isOnline || isSyncing}
                             className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${isOnline && !isSyncing

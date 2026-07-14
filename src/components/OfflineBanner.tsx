@@ -25,7 +25,7 @@ const OfflineBanner: React.FC = () => {
           <RefreshCwIcon className={`w-5 h-5 ${isSyncing ? 'animate-spin' : ''}`} />
           <span>{isSyncing ? 'Sedang menyinkronkan data...' : `${pendingCount} perubahan belum disinkronkan.`}</span>
           {!isSyncing && (
-            <button
+            <button type="button"
               onClick={() => processQueue()}
               className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs font-bold transition-colors"
             >

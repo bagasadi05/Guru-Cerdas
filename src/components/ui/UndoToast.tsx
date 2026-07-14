@@ -169,7 +169,7 @@ export const UndoToast: React.FC<UndoToastProps> = ({
                     </div>
 
                     {/* Undo button */}
-                    <button
+                    <button type="button"
                         onClick={handleUndo}
                         disabled={isUndoing || timeRemaining <= 0}
                         className={`
@@ -187,7 +187,7 @@ export const UndoToast: React.FC<UndoToastProps> = ({
                     </button>
 
                     {/* Close button */}
-                    <button
+                    <button type="button"
                         onClick={handleDismiss}
                         className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                         aria-label="Tutup"

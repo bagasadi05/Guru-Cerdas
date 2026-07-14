@@ -384,7 +384,7 @@ export const EnhancedSyncStatus: React.FC<EnhancedSyncStatusProps> = ({
     return (
         <div className={`relative ${className}`}>
             {/* Main Status Button - Icon Only with Tooltip */}
-            <button
+            <button type="button"
                 onClick={() => showDetails && setIsExpanded(!isExpanded)}
                 className={`
                     flex items-center justify-center w-10 h-10 rounded-xl border transition-all
@@ -420,7 +420,7 @@ export const EnhancedSyncStatus: React.FC<EnhancedSyncStatusProps> = ({
                             <h3 className="font-semibold text-slate-800 dark:text-slate-200">
                                 Antrian Sinkronisasi
                             </h3>
-                            <button
+                            <button type="button"
                                 onClick={() => setIsExpanded(false)}
                                 className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
                             >
@@ -466,7 +466,7 @@ export const EnhancedSyncStatus: React.FC<EnhancedSyncStatusProps> = ({
                                             )}
                                         </div>
                                         {item.status === 'failed' && (
-                                            <button
+                                            <button type="button"
                                                 onClick={() => { }}
                                                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
                                                 title="Coba lagi"
@@ -484,7 +484,7 @@ export const EnhancedSyncStatus: React.FC<EnhancedSyncStatusProps> = ({
                     {(failedCount > 0 || items.length > 5) && (
                         <div className="p-3 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
                             {failedCount > 0 && (
-                                <button
+                                <button type="button"
                                     onClick={retryAll}
                                     className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
                                 >
@@ -492,7 +492,7 @@ export const EnhancedSyncStatus: React.FC<EnhancedSyncStatusProps> = ({
                                 </button>
                             )}
                             {failedCount > 0 && (
-                                <button
+                                <button type="button"
                                     onClick={clearFailed}
                                     className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
                                 >
@@ -661,7 +661,7 @@ export const UploadProgressIndicator: React.FC<UploadProgressIndicatorProps> = (
         <div className={`fixed bottom-24 lg:bottom-6 right-6 z-40 ${className}`}>
             {/* Collapsed View */}
             {!isExpanded && (
-                <button
+                <button type="button"
                     onClick={() => setIsExpanded(true)}
                     className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700"
                 >
@@ -708,14 +708,14 @@ export const UploadProgressIndicator: React.FC<UploadProgressIndicatorProps> = (
                         </div>
                         <div className="flex items-center gap-2">
                             {completedCount > 0 && (
-                                <button
+                                <button type="button"
                                     onClick={clearCompleted}
                                     className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                                 >
                                     Hapus Selesai
                                 </button>
                             )}
-                            <button
+                            <button type="button"
                                 onClick={() => setIsExpanded(false)}
                                 className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
                             >
@@ -776,7 +776,7 @@ export const UploadProgressIndicator: React.FC<UploadProgressIndicatorProps> = (
                                             </div>
                                         )}
                                     </div>
-                                    <button
+                                    <button type="button"
                                         onClick={() => removeUpload(upload.id)}
                                         className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                     >

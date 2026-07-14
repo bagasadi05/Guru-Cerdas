@@ -132,7 +132,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
 
             <div className="flex gap-3 mt-6">
                 {onGoBack && (
-                    <button
+                    <button type="button"
                         onClick={onGoBack}
                         className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                     >
@@ -141,7 +141,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
                 )}
 
                 {isRetryable(error) && onRetry && (
-                    <button
+                    <button type="button"
                         onClick={onRetry}
                         className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                     >
@@ -150,7 +150,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
                 )}
 
                 {onDismiss && (
-                    <button
+                    <button type="button"
                         onClick={onDismiss}
                         className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                     >
@@ -199,7 +199,7 @@ export const InlineError: React.FC<InlineErrorProps> = ({
             </svg>
             <p className="flex-1 text-sm text-red-700 dark:text-red-300">{message}</p>
             {onDismiss && (
-                <button
+                <button type="button"
                     onClick={onDismiss}
                     className="text-red-400 hover:text-red-600 transition-colors"
                 >
@@ -279,7 +279,7 @@ export const EmptyFallback: React.FC<EmptyFallbackProps> = ({
             </p>
 
             {action && (
-                <button
+                <button type="button"
                     onClick={action.onClick}
                     className="mt-4 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
                 >
@@ -346,7 +346,7 @@ export const OfflineFallback: React.FC<OfflineFallbackProps> = ({
                     </p>
                 </div>
                 {onRetry && (
-                    <button
+                    <button type="button"
                         onClick={onRetry}
                         className="px-3 py-1.5 text-sm text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-lg transition-colors"
                     >

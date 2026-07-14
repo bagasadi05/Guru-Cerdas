@@ -179,7 +179,7 @@ export function WindowedList<T>({
 
             {hasMore && (
                 <div className="flex justify-center py-4">
-                    <button
+                    <button type="button"
                         onClick={handleLoadMore}
                         className="px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
                     >

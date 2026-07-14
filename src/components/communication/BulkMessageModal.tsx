@@ -166,7 +166,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 Kirim Ke
                             </label>
                             <div className="flex flex-wrap gap-2">
-                                <button
+                                <button type="button"
                                     onClick={() => setSelectionMode('all')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'all'
                                         ? 'bg-indigo-600 text-white'
@@ -176,7 +176,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                     <UsersIcon className="w-4 h-4 inline-block mr-2" />
                                     Semua Siswa ({students.length})
                                 </button>
-                                <button
+                                <button type="button"
                                     onClick={() => setSelectionMode('class')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'class'
                                         ? 'bg-indigo-600 text-white'
@@ -185,7 +185,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 >
                                     Per Kelas
                                 </button>
-                                <button
+                                <button type="button"
                                     onClick={() => setSelectionMode('custom')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'custom'
                                         ? 'bg-indigo-600 text-white'
@@ -225,7 +225,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                         Pilih Siswa ({selectedStudentIds.size} dipilih)
                                     </label>
-                                    <button
+                                    <button type="button"
                                         onClick={handleSelectAll}
                                         className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                                     >
@@ -277,7 +277,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
 
                         {/* Template Selector */}
                         <div className="relative">
-                            <button
+                            <button type="button"
                                 onClick={() => setShowTemplates(!showTemplates)}
                                 className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                             >
@@ -289,14 +289,14 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                             {showTemplates && (
                                 <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 max-h-60 overflow-hidden">
                                     <div className="flex items-center gap-1 p-2 border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
-                                        <button
+                                        <button type="button"
                                             onClick={() => setSelectedCategory('all')}
                                             className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === 'all' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                                         >
                                             Semua
                                         </button>
                                         {Object.entries(TEMPLATE_CATEGORIES).map(([key, { label }]) => (
-                                            <button
+                                            <button type="button"
                                                 key={key}
                                                 onClick={() => setSelectedCategory(key as MessageTemplate['category'])}
                                                 className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === key ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
@@ -307,7 +307,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                     </div>
                                     <div className="max-h-40 overflow-y-auto">
                                         {filteredTemplates.map(template => (
-                                            <button
+                                            <button type="button"
                                                 key={template.id}
                                                 onClick={() => handleSelectTemplate(template)}
                                                 className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700/50 last:border-0"

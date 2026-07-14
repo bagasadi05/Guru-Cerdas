@@ -363,7 +363,7 @@ export function SwipeableListItem({
           aria-hidden={!isRevealed || isRevealed !== 'right'}
         >
           {leftActions.map((action, index) => (
-            <button
+            <button type="button"
               key={index}
               onClick={() => handleActionClick(action)}
               className={`flex flex-col items-center justify-center px-4 text-white text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-inset ${action.color}`}
@@ -385,7 +385,7 @@ export function SwipeableListItem({
           aria-hidden={!isRevealed || isRevealed !== 'left'}
         >
           {rightActions.map((action, index) => (
-            <button
+            <button type="button"
               key={index}
               onClick={() => handleActionClick(action)}
               className={`flex flex-col items-center justify-center px-4 text-white text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-inset ${action.color}`}

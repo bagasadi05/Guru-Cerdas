@@ -60,14 +60,25 @@ export const AIPasteModal: React.FC<AIPasteModalProps> = ({
 
             const newScores: Record<string, string> = {};
             let matchedCount = 0;
+            const unmatchedNames: string[] = [];
 
             parsedResults.forEach(item => {
+                if (!item || typeof item.studentName !== 'string') return;
                 const matchResult = findStudentMatch(item.studentName, students);
                 if (matchResult.method !== 'none') {
-                    newScores[matchResult.studentId] = String(item.score);
-                    matchedCount++;
+                    const score = item.score !== undefined && item.score !== null ? String(item.score) : '';
+                    if (score && !isNaN(Number(score))) {
+                        newScores[matchResult.studentId] = score;
+                        matchedCount++;
+                    }
+                } else {
+                    unmatchedNames.push(item.studentName);
                 }
             });
+
+            if (unmatchedNames.length > 0) {
+                toast.warning(`Nama tidak dikenali: ${unmatchedNames.slice(0, 3).join(', ')}${unmatchedNames.length > 3 ? `, dan ${unmatchedNames.length - 3} lainnya` : ''}`);
+            }
 
             onParseSuccess(newScores);
             setPasteData('');

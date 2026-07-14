@@ -39,7 +39,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-700">
                 <h3 className="font-medium text-slate-900 dark:text-white">{widget.title}</h3>
                 <div className="relative">
-                    <button
+                    <button type="button"
                         onClick={() => setShowMenu(!showMenu)}
                         className="rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-slate-700"
                     >
@@ -51,7 +51,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
                             <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                             <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
                                 {onSettings && (
-                                    <button
+                                    <button type="button"
                                         onClick={() => {
                                             onSettings();
                                             setShowMenu(false);
@@ -62,7 +62,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
                                         Pengaturan
                                     </button>
                                 )}
-                                <button
+                                <button type="button"
                                     onClick={() => {
                                         toggleWidget(widget.id);
                                         setShowMenu(false);
@@ -72,7 +72,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
                                     <EyeOff className="h-4 w-4" />
                                     Sembunyikan
                                 </button>
-                                <button
+                                <button type="button"
                                     onClick={() => {
                                         removeWidget(widget.id);
                                         setShowMenu(false);

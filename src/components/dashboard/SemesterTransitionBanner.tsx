@@ -87,7 +87,7 @@ const SemesterTransitionBanner: React.FC = () => {
                             {/* Right: Actions */}
                             {!isCreating && target && (
                                 <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-                                    <button
+                                    <button type="button"
                                         onClick={dismiss}
                                         className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 font-medium px-3 py-2 rounded-xl hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-all"
                                         disabled={isTransitioning}
@@ -111,7 +111,7 @@ const SemesterTransitionBanner: React.FC = () => {
 
                             {/* Close button (absolute positioned) */}
                             {!isCreating && (
-                                <button
+                                <button type="button"
                                     onClick={dismiss}
                                     className="absolute top-3 right-3 p-1.5 rounded-lg text-amber-400 hover:text-amber-600 dark:text-amber-600 dark:hover:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all"
                                     aria-label="Tutup"

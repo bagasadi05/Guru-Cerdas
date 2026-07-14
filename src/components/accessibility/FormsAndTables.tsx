@@ -95,7 +95,7 @@ export function AccessibleTable<T extends { id: string | number }>({
                                 }
                             >
                                 {column.sortable && onSort ? (
-                                    <button
+                                    <button type="button"
                                         onClick={() => onSort(column.key)}
                                         className="flex items-center gap-1 transition-colors hover:text-indigo-600"
                                     >
@@ -195,7 +195,7 @@ export const AccessibleTabs: React.FC<AccessibleTabsProps> = ({
                 onKeyDown={onKeyDown as React.KeyboardEventHandler<HTMLDivElement>}
             >
                 {tabs.map((tab, index) => (
-                    <button
+                    <button type="button"
                         key={tab.id}
                         ref={element => {
                             tabsRef.current[index] = element;

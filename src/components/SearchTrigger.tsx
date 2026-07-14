@@ -7,7 +7,7 @@ export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }>
 
     if (iconOnly) {
         return (
-            <button
+            <button type="button"
                 onClick={open}
                 className={`flex items-center justify-center w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 transition-colors border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
                 aria-label="Cari"
@@ -18,7 +18,7 @@ export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }>
     }
 
     return (
-        <button
+        <button type="button"
             onClick={open}
             className={`flex items-center justify-center sm:justify-between gap-2 w-10 h-10 sm:w-[340px] sm:h-10 px-0 sm:px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 transition-colors border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
         >

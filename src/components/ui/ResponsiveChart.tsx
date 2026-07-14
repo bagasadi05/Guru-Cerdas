@@ -118,7 +118,7 @@ export const ResponsiveChart: React.FC<ResponsiveChartProps> = ({
                         <div className="flex items-center gap-1">
                             {enableZoom && (
                                 <>
-                                    <button
+                                    <button type="button"
                                         onClick={handleZoomOut}
                                         disabled={zoom <= 0.5}
                                         className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -127,7 +127,7 @@ export const ResponsiveChart: React.FC<ResponsiveChartProps> = ({
                                         <ZoomOutIcon className="w-4 h-4 text-gray-500" />
                                     </button>
                                     <span className="text-xs text-gray-400 w-12 text-center">{Math.round(zoom * 100)}%</span>
-                                    <button
+                                    <button type="button"
                                         onClick={handleZoomIn}
                                         disabled={zoom >= 2}
                                         className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -138,7 +138,7 @@ export const ResponsiveChart: React.FC<ResponsiveChartProps> = ({
                                 </>
                             )}
                             {enableFullscreen && (
-                                <button
+                                <button type="button"
                                     onClick={toggleFullscreen}
                                     className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                                     title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}

@@ -47,7 +47,7 @@ export const AttendanceQuickActionsBar: React.FC<AttendanceQuickActionsBarProps>
               const Icon = option.icon;
               const isActive = viewMode === option.mode;
               return (
-                <button
+                <button type="button"
                   key={option.mode}
                   onClick={() => onViewModeChange(option.mode)}
                   className={`w-10 h-10 rounded-lg transition-colors ${

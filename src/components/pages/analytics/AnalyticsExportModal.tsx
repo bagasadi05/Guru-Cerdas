@@ -74,7 +74,7 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
             <Card className="w-full max-w-md bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl shadow-2xl border-0 overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="relative p-6 bg-gradient-to-br from-indigo-600 to-violet-700">
-                    <button
+                    <button type="button"
                         onClick={onClose}
                         className="absolute top-4 right-4 p-1 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                     >

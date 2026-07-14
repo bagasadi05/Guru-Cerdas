@@ -39,7 +39,7 @@ import { logger } from '../services/logger';
  *       {pendingCount > 0 && (
  *         <div>
  *           <p>{pendingCount} changes pending sync</p>
- *           <button onClick={processQueue} disabled={isSyncing}>
+ *           <button type="button" onClick={processQueue} disabled={isSyncing}>
  *             {isSyncing ? 'Syncing...' : 'Sync Now'}
  *           </button>
  *         </div>

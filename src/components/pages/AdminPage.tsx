@@ -664,7 +664,7 @@ const AdminPage: React.FC = () => {
                                     {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                 </p>
                             </div>
-                            <button
+                            <button type="button"
                                 onClick={() => { fetchStats(); fetchUsers(); fetchAnnouncements(); fetchActivityLogs(); checkSystemHealth(); }}
                                 className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-500/50 transition-all shadow-sm"
                             >
@@ -677,7 +677,7 @@ const AdminPage: React.FC = () => {
                     {/* Tab Navigation */}
                     <div className="mt-6 flex gap-2 overflow-x-auto pb-2">
                         {tabs.map(tab => (
-                            <button
+                            <button type="button"
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
@@ -791,7 +791,7 @@ const AdminPage: React.FC = () => {
                     <div className="fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3">
                         <AlertCircle size={20} />
                         <span>{error}</span>
-                        <button onClick={() => setError(null)} aria-label="Tutup pesan error"><X size={18} /></button>
+                        <button type="button" onClick={() => setError(null)} aria-label="Tutup pesan error"><X size={18} /></button>
                     </div>
                 )}
 
@@ -825,13 +825,13 @@ const AdminPage: React.FC = () => {
                             </div>
 
                             <div className="flex gap-3">
-                                <button
+                                <button type="button"
                                     onClick={() => setDeleteModal({ show: false, user: null })}
                                     className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
                                 >
                                     Batal
                                 </button>
-                                <button
+                                <button type="button"
                                     onClick={confirmSoftDelete}
                                     className="flex-1 px-4 py-2.5 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/30"
                                 >
@@ -855,14 +855,14 @@ const AdminPage: React.FC = () => {
                                 <p className="text-sm text-gray-400">{undoToast.user.email}</p>
                             </div>
                         </div>
-                        <button
+                        <button type="button"
                             onClick={() => { restoreUser(undoToast.user!); setUndoToast({ show: false, user: null, timeout: null }); }}
                             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-medium transition-all"
                         >
                             <Undo2 size={16} />
                             Batalkan
                         </button>
-                        <button
+                        <button type="button"
                             onClick={() => setUndoToast({ show: false, user: null, timeout: null })}
                             className="p-1.5 hover:bg-white/10 rounded-lg transition-all"
                         >

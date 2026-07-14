@@ -406,7 +406,7 @@ const DashboardPage: React.FC = () => {
               <CalendarIcon className="w-6 h-6" aria-hidden="true" />
             </div>
           </Link>
-          <button onClick={openSearch} role="menuitem" aria-label="Cari" className="flex items-center gap-3 pr-1 group">
+          <button type="button" onClick={openSearch} role="menuitem" aria-label="Cari" className="flex items-center gap-3 pr-1 group">
             <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0" aria-hidden="true">
               Cari
             </span>
@@ -414,7 +414,7 @@ const DashboardPage: React.FC = () => {
               <SearchIcon className="w-6 h-6" aria-hidden="true" />
             </div>
           </button>
-          <button
+          <button type="button"
             onClick={() => document.dispatchEvent(new CustomEvent('open-ai-chat'))}
             role="menuitem"
             aria-label="Buka AI Chat"

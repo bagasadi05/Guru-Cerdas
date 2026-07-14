@@ -126,7 +126,7 @@ export const TrashToolbar: React.FC<TrashToolbarProps> = ({
 
             {/* Filter Chips */}
             <div className="flex flex-wrap items-center gap-2">
-                <button
+                <button type="button"
                     onClick={() => setFilterEntity('all')}
                     aria-pressed={filterEntity === 'all'}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
@@ -139,7 +139,7 @@ export const TrashToolbar: React.FC<TrashToolbarProps> = ({
                 </button>
 
                 {Object.entries(entityConfig).map(([key, config]) => (
-                    <button
+                    <button type="button"
                         key={key}
                         onClick={() => setFilterEntity(filterEntity === key ? 'all' : key as SoftDeleteEntity)}
                         aria-pressed={filterEntity === key}
@@ -156,7 +156,7 @@ export const TrashToolbar: React.FC<TrashToolbarProps> = ({
                     </button>
                 ))}
 
-                <button
+                <button type="button"
                     onClick={() => setShowExpiringOnly(prev => !prev)}
                     aria-pressed={showExpiringOnly}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
@@ -169,7 +169,7 @@ export const TrashToolbar: React.FC<TrashToolbarProps> = ({
                 </button>
 
                 {hasActiveFilters && (
-                    <button
+                    <button type="button"
                         onClick={() => {
                             setSearchQuery('');
                             setFilterEntity('all');

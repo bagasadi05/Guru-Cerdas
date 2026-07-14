@@ -273,7 +273,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             {/* Actions */}
             <div className="flex flex-col sm:flex-row items-center gap-3">
                 {primaryAction && (
-                    <button
+                    <button type="button"
                         onClick={primaryAction.onClick}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transform hover:-translate-y-0.5 transition-all duration-200"
                     >
@@ -283,7 +283,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
                     </button>
                 )}
                 {secondaryAction && (
-                    <button
+                    <button type="button"
                         onClick={secondaryAction.onClick}
                         className="inline-flex items-center gap-2 px-5 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors"
                     >
@@ -495,7 +495,7 @@ export const CompactEmptyState: React.FC<CompactEmptyStateProps> = ({
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{message}</p>
         {action && (
-            <button
+            <button type="button"
                 onClick={action.onClick}
                 className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-500 font-medium inline-flex items-center gap-1"
             >
@@ -525,7 +525,7 @@ export const InlineEmptyState: React.FC<InlineEmptyStateProps> = ({
         <p className="text-sm text-slate-500 dark:text-slate-400">
             {message}
             {action && (
-                <button
+                <button type="button"
                     onClick={action.onClick}
                     className="ml-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-500 font-medium"
                 >
@@ -574,7 +574,7 @@ export const WelcomeEmptyState: React.FC<WelcomeEmptyStateProps> = ({
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3">
-            <button
+            <button type="button"
                 onClick={onGetStarted}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transform hover:-translate-y-0.5 transition-all"
             >
@@ -582,7 +582,7 @@ export const WelcomeEmptyState: React.FC<WelcomeEmptyStateProps> = ({
                 Mulai Sekarang
             </button>
             {onViewTutorial && (
-                <button
+                <button type="button"
                     onClick={onViewTutorial}
                     className="inline-flex items-center gap-2 px-5 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors"
                 >

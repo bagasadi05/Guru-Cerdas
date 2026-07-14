@@ -64,7 +64,11 @@ export const utils = {
         const headerOption = options?.header;
         if (headerOption === 1) {
             // Return array of arrays
-            return worksheet.rows;
+            let rows = worksheet.rows;
+            if (options?.blankrows === false) {
+                rows = rows.filter(row => row && row.some(v => v !== undefined && v !== null && v !== ''));
+            }
+            return rows;
         }
 
         // Return array of objects

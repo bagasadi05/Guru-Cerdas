@@ -59,7 +59,7 @@ const TrashPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <button
+                        <button type="button"
                             onClick={() => trashData.setShowInfo(true)}
                             className="p-2.5 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors shadow-sm"
                             title="Informasi"

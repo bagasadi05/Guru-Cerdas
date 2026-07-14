@@ -29,7 +29,7 @@ interface SortButtonProps {
 
 const SortButton: React.FC<SortButtonProps> = ({ field, label, isActive, direction, onClick }) => {
     return (
-        <button
+        <button type="button"
             onClick={() => onClick(field)}
             className={`
                 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
@@ -106,7 +106,7 @@ export const StudentSortControls: React.FC<StudentSortControlsProps> = ({
                 <div className="flex items-center gap-1 flex-wrap">
                     <span className="text-xs text-gray-400 mr-1 whitespace-nowrap">Kelompok:</span>
                     <div className="flex items-center gap-1">
-                        <button
+                        <button type="button"
                             onClick={() => onGroupByChange('none')}
                             className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'none'
                                 ? 'bg-indigo-500 text-white'
@@ -115,7 +115,7 @@ export const StudentSortControls: React.FC<StudentSortControlsProps> = ({
                         >
                             Semua
                         </button>
-                        <button
+                        <button type="button"
                             onClick={() => onGroupByChange('status')}
                             className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'status'
                                 ? 'bg-indigo-500 text-white'
@@ -124,7 +124,7 @@ export const StudentSortControls: React.FC<StudentSortControlsProps> = ({
                         >
                             Status
                         </button>
-                        <button
+                        <button type="button"
                             onClick={() => onGroupByChange('scoreRange')}
                             className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'scoreRange'
                                 ? 'bg-indigo-500 text-white'

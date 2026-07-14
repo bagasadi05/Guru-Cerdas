@@ -139,4 +139,15 @@ describe('AttendancePage Integration', () => {
             expect(supabase.from).toHaveBeenCalledWith('attendance');
         });
     }, 15000);
+
+    it('marks every unmarked student as present without losing the local selection', async () => {
+        renderPage();
+
+        const markRestButton = await screen.findByRole('button', { name: /Tandai Sisa Hadir \(2\)/i });
+        fireEvent.click(markRestButton);
+
+        await waitFor(() => {
+            expect(screen.queryByRole('button', { name: /Tandai Sisa Hadir/i })).not.toBeInTheDocument();
+        });
+    });
 });

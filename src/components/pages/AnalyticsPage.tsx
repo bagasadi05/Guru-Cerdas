@@ -155,7 +155,7 @@ const AnalyticsPage: React.FC = () => {
             {/* Smart Navigation Tabs */}
             <div id="tour-tabs" className="flex overflow-x-auto scrollbar-hide gap-2 p-1 sm:p-1.5 bg-slate-100 dark:bg-slate-800/50 rounded-2xl snap-x">
                 {tabs.filter(tab => tab.id !== 'comparison' || isLeadership).map(tab => (
-                    <button
+                    <button type="button"
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`snap-start relative flex-shrink-0 sm:flex-1 min-w-[110px] min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 focus:outline-none

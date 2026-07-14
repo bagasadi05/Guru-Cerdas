@@ -101,7 +101,7 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
 
     return (
         <DashboardPanel>
-            <button
+            <button type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
             >

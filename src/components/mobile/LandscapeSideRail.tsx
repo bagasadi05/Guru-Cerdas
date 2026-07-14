@@ -116,7 +116,7 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
       <div className="w-8 h-px bg-slate-200 dark:bg-slate-700 my-1" />
 
       {/* More Button */}
-      <button
+      <button type="button"
         onClick={handleMoreClick}
         className={`w-12 h-12 rounded-xl flex items-center justify-center
                   transition-all duration-300 relative group

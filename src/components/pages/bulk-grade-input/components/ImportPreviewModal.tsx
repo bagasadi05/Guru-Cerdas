@@ -5,6 +5,7 @@ import { Select } from '../../../ui/Select';
 import { Input } from '../../../ui/Input';
 import { CheckIcon, AlertTriangleIcon, XCircleIcon } from '../../../Icons';
 import { findStudentMatch } from '../../../../utils/studentMatcher';
+import { validateSingleGrade } from '../../../../utils/gradeValidator';
 
 interface Student {
     id: string;
@@ -96,6 +97,18 @@ export const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
         });
     };
 
+    // Validate each row's score dynamically
+    const validatedRows = rows.map(row => {
+        const normalizedScore = typeof row.score === 'string' ? row.score.trim().replace(',', '.') : row.score;
+        const validation = validateSingleGrade(normalizedScore);
+        return {
+            ...row,
+            validation,
+        };
+    });
+
+    const hasErrors = validatedRows.some(r => r.selectedStudentId !== '' && r.score.trim() !== '' && !r.validation.isValid);
+
     // Calculate statistics
     const stats = rows.reduce((acc, row) => {
         if (row.method === 'exact') acc.exact++;
@@ -105,13 +118,13 @@ export const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
     }, { exact: 0, fuzzy: 0, unmatched: 0 });
 
     const totalRows = rows.length;
-    const canApply = rows.some(r => r.selectedStudentId !== '');
+    const canApply = rows.some(r => r.selectedStudentId !== '') && !hasErrors;
 
     const handleApply = () => {
         const mappedScores: Record<string, string> = {};
         rows.forEach(row => {
             if (row.selectedStudentId && row.score.trim() !== '') {
-                const parsedVal = parseFloat(row.score);
+                const parsedVal = parseFloat(row.score.trim().replace(',', '.'));
                 if (!isNaN(parsedVal)) {
                     // Round to 2 decimal places
                     const rounded = Math.round(parsedVal * 100) / 100;
@@ -129,6 +142,23 @@ export const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                     Berikut adalah pratinjau hasil pembacaan berkas Excel Anda. Silakan verifikasi kecocokan nama dan nilai sebelum menerapkannya ke tabel utama.
                 </p>
+
+                {/* Error Banner */}
+                {hasErrors && (
+                    <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 animate-fade-in">
+                        <div className="flex items-start gap-2.5">
+                            <AlertTriangleIcon className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                                <p className="text-sm font-bold text-red-800 dark:text-red-300">
+                                    Format Nilai Tidak Valid Terdeteksi
+                                </p>
+                                <p className="text-xs text-red-700 dark:text-red-400 mt-0.5">
+                                    Ada nilai yang tidak sesuai (berisi teks bukan angka, kurang dari 0, lebih dari 100, atau memiliki lebih dari 2 angka desimal). Silakan perbaiki nilai tersebut pada kolom skor di bawah sebelum melanjutkan impor.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -162,7 +192,8 @@ export const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                            {rows.map((row, index) => {
+                            {validatedRows.map((row, index) => {
+                                const isInvalid = row.selectedStudentId !== '' && row.score.trim() !== '' && !row.validation.isValid;
                                 return (
                                     <tr key={index} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
                                         <td className="px-4 py-3 font-medium text-gray-900 dark:text-white max-w-[200px] truncate">
@@ -203,15 +234,24 @@ export const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
                                             </Select>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Input
-                                                type="number"
-                                                step="any"
-                                                min={0}
-                                                max={100}
-                                                value={row.score}
-                                                onChange={(e) => handleScoreChange(index, e.target.value)}
-                                                className="h-9 text-center font-semibold text-xs rounded-lg"
-                                            />
+                                            <div className="relative">
+                                                <Input
+                                                    type="text"
+                                                    value={row.score}
+                                                    onChange={(e) => handleScoreChange(index, e.target.value)}
+                                                    className={`h-9 text-center font-semibold text-xs rounded-lg ${
+                                                        isInvalid
+                                                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-950/20 text-red-900 dark:text-red-100'
+                                                            : ''
+                                                    }`}
+                                                    placeholder="0-100"
+                                                />
+                                                {isInvalid && (
+                                                    <span className="block mt-1 text-[10px] text-red-500 font-medium text-left">
+                                                        {row.validation.error}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 );

@@ -50,7 +50,7 @@ const NotificationItem: React.FC<{
     };
 
     return (
-        <button
+        <button type="button"
             onClick={handleClick}
             className={`w-full text-left p-3 rounded-xl transition-colors flex items-start gap-3 ${notification.is_read
                     ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -132,7 +132,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
     return (
         <div className={`relative ${className}`} ref={panelRef}>
             {/* Trigger Button */}
-            <button
+            <button type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Notifikasi"
@@ -153,7 +153,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
                         <h3 className="font-semibold text-gray-900 dark:text-white">Notifikasi</h3>
                         <div className="flex items-center gap-1">
                             {unreadCount > 0 && (
-                                <button
+                                <button type="button"
                                     onClick={handleMarkAllAsRead}
                                     className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
                                     title="Tandai semua sudah dibaca"
@@ -162,7 +162,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
                                 </button>
                             )}
                             {notifications.length > 0 && (
-                                <button
+                                <button type="button"
                                     onClick={handleClear}
                                     className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                     title="Hapus semua"
@@ -170,7 +170,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
                                     <TrashIcon className="w-4 h-4" />
                                 </button>
                             )}
-                            <button
+                            <button type="button"
                                 onClick={() => setIsOpen(false)}
                                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >

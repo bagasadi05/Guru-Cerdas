@@ -177,7 +177,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onClick, c
     };
 
     return (
-        <button
+        <button type="button"
             className={`
                 group flex w-full items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white
                 focus:outline-none focus-visible:bg-slate-100 focus-visible:dark:bg-slate-800 focus-visible:text-slate-900 focus-visible:dark:text-white

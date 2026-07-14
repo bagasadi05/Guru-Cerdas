@@ -51,7 +51,7 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
             {/* Header */}
             <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-amber-50/70 dark:bg-amber-900/20">
                 <div className="flex items-center justify-between">
-                    <button
+                    <button type="button"
                         onClick={() => setIsOpen(!isOpen)}
                         className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                     >
@@ -121,7 +121,7 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
                     {/* Show More */}
                     {leaderboard.length >= limit && (
                         <div className="p-3 border-t border-slate-100 dark:border-slate-800">
-                            <button
+                            <button type="button"
                                 onClick={() => setLimit(prev => prev + 5)}
                                 className="w-full py-2 text-sm font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
                             >

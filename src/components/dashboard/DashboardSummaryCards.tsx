@@ -286,7 +286,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
           </div>
         </div>
 
-        <button 
+        <button type="button" 
           onClick={() => navigate('/tugas')}
           className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center gap-1.5 w-full hover:scale-[1.02] active:scale-[0.98] transition-all"
         >
@@ -347,7 +347,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
           </div>
         </div>
 
-        <button 
+        <button type="button" 
           onClick={() => navigate('/siswa')}
           className="text-xs font-bold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center gap-1.5 w-full hover:scale-[1.02] active:scale-[0.98] transition-all"
         >

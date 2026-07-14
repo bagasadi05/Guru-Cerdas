@@ -165,14 +165,14 @@ export const TrashList: React.FC<TrashListProps> = ({
                                     </div>
 
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
+                                        <button type="button"
                                             onClick={() => setViewDetailItem(item)}
                                             className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                                             title="Lihat Detail"
                                         >
                                             <Eye className="w-5 h-5" />
                                         </button>
-                                        <button
+                                        <button type="button"
                                             onClick={() => restoreMutation.mutate(item)}
                                             disabled={restoreMutation.isPending}
                                             className="p-2.5 rounded-xl hover:bg-emerald-500/15 text-slate-400 hover:text-emerald-500 transition-colors"
@@ -180,7 +180,7 @@ export const TrashList: React.FC<TrashListProps> = ({
                                         >
                                             <RotateCcw className="w-5 h-5" />
                                         </button>
-                                        <button
+                                        <button type="button"
                                             onClick={() => setConfirmDeleteId(item.id)}
                                             className="p-2.5 rounded-xl hover:bg-red-500/15 text-slate-400 hover:text-red-500 transition-colors"
                                             title="Hapus Permanen"

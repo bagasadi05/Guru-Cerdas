@@ -84,7 +84,7 @@ export const SyncProgressIndicator: React.FC<SyncProgressIndicatorProps> = ({ cl
     return (
         <div className={`relative ${className}`}>
             {/* Main Indicator */}
-            <button
+            <button type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`
                     flex items-center gap-2 px-3 py-2 rounded-full transition-all
@@ -109,7 +109,7 @@ export const SyncProgressIndicator: React.FC<SyncProgressIndicatorProps> = ({ cl
                         {/* Status Header */}
                         <div className="flex items-center justify-between">
                             <h4 className="font-semibold text-slate-900 dark:text-white">Status Sinkronisasi</h4>
-                            <button
+                            <button type="button"
                                 onClick={() => setIsExpanded(false)}
                                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                             >

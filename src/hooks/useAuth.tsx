@@ -426,7 +426,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
  * 
  *   if (!user) {
  *     return (
- *       <button onClick={() => login('user@example.com', 'password')}>
+ *       <button type="button" onClick={() => login('user@example.com', 'password')}>
  *         Login
  *       </button>
  *     );
@@ -435,7 +435,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
  *   return (
  *     <div>
  *       <p>Welcome, {user.name}!</p>
- *       <button onClick={logout}>Logout</button>
+ *       <button type="button" onClick={logout}>Logout</button>
  *     </div>
  *   );
  * }
