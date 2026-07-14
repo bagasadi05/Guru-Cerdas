@@ -110,7 +110,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
                   bg-white dark:bg-slate-900 
                   rounded-t-3xl shadow-2xl 
                   border-t border-slate-200 dark:border-slate-700
-                  animate-slide-up"
+                  animate-slide-up pointer-events-auto"
         style={{
           maxHeight: '85vh',
           paddingBottom: 'calc(max(env(safe-area-inset-bottom), 16px) + 80px)',
