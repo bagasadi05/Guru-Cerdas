@@ -57,7 +57,7 @@ function isDismissedToday(): boolean {
 }
 
 export function useSemesterTransition(): SemesterTransitionState {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const { activeSemester, activeAcademicYear, semesters, refreshSemester } = useSemester();
     const toast = useToast();
 
@@ -70,6 +70,7 @@ export function useSemesterTransition(): SemesterTransitionState {
     // 1. Determine if the active semester has ended
     // ──────────────────────────────────────────────────────────
     const hasEnded = useMemo(() => {
+        if (!isAdmin) return false;
         if (!activeSemester) return false;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
