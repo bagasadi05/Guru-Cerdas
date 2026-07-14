@@ -125,10 +125,13 @@ export const useAttendance = () => {
     const attendanceClasses = useMemo(() => {
         if (!classes || !user) return [];
         if (isAdmin) return classes;
-        return classes.filter((classRow) => (
-            classRow.user_id === user.id
-            || hasHomeroomAssignment(teacherAssignments, classRow.id, selectedSemesterId)
-        ));
+        return classes.filter((classRow) => {
+            if (classRow.user_id === user.id) return true;
+            return teacherAssignments.some(a => 
+                a.class_id === classRow.id 
+                && (!selectedSemesterId || a.semester_id === selectedSemesterId)
+            );
+        });
     }, [classes, teacherAssignments, user, isAdmin, selectedSemesterId]);
 
     useEffect(() => {
@@ -169,7 +172,6 @@ export const useAttendance = () => {
                 .from('attendance')
                 .select('id, student_id, status, notes, official_status, teacher_id')
                 .eq('date', selectedDate)
-                .eq('user_id', user.id)
                 .in('student_id', students.map((student) => student.id))
                 .is('deleted_at', null);
 
@@ -226,7 +228,6 @@ export const useAttendance = () => {
             const { data, error } = await supabase
                 .from('attendance')
                 .select('student_id, date, status')
-                .eq('user_id', user.id)
                 .in('student_id', students.map((student) => student.id))
                 .gte('date', calendarRange.start)
                 .lte('date', calendarRange.end)
@@ -442,7 +443,6 @@ export const useAttendance = () => {
                 .select('student_id, date, status')
                 .gte('date', streakRange.start)
                 .lte('date', streakRange.end)
-                .eq('user_id', user.id)
                 .in('student_id', students.map(student => student.id))
                 .is('deleted_at', null);
             if (error) throw error;
@@ -583,10 +583,9 @@ export const useAttendance = () => {
             const studentIds = students.map(s => s.id);
             const { error } = await supabase
                 .from('attendance')
-                    .update({ deleted_at: new Date().toISOString() } as never)
-                    .eq('date', selectedDate)
-                    .eq('user_id', user.id)
-                    .in('student_id', studentIds);
+                .update({ deleted_at: new Date().toISOString() } as never)
+                .eq('date', selectedDate)
+                .in('student_id', studentIds);
 
             if (error) throw error;
         },
@@ -699,7 +698,6 @@ export const useAttendance = () => {
             supabase
                 .from('attendance')
                 .select('student_id, date, status')
-                .eq('user_id', user.id)
                 .gte('date', startDate)
                 .lte('date', endDate)
                 .is('deleted_at', null),

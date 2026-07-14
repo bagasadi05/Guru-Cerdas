@@ -494,7 +494,22 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
 
                         {assignmentRole === 'subject_teacher' ? (
                             <div>
-                                <label className="block text-sm font-medium mb-1.5">Mata Pelajaran</label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="block text-sm font-medium">Mata Pelajaran</label>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => {
+                                            if (selectedSubjects.length === DEFAULT_SUBJECT_OPTIONS.length) {
+                                                setSelectedSubjects([]);
+                                            } else {
+                                                setSelectedSubjects([...DEFAULT_SUBJECT_OPTIONS]);
+                                            }
+                                        }}
+                                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold transition-colors"
+                                    >
+                                        {selectedSubjects.length === DEFAULT_SUBJECT_OPTIONS.length ? 'Batal Pilih Semua' : 'Pilih Semua'}
+                                    </button>
+                                </div>
                                 <div className="grid grid-cols-2 gap-2 mb-3">
                                     {DEFAULT_SUBJECT_OPTIONS.map((subject) => {
                                         const isSelected = selectedSubjects.includes(subject);

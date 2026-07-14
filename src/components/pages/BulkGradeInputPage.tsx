@@ -219,17 +219,31 @@ const BulkGradeInputPage: React.FC = () => {
         enabled: !!selectedClass && !!students && students.length > 0 && !!selectedSemester,
     });
 
-    // Initialize grades when students change
-    useEffect(() => {
-        if (students) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setGrades(students.map(s => ({
+    const initializeGrades = useCallback(() => {
+        if (!students) return;
+        setGrades(students.map(s => {
+            const existingScore = existingGrades?.find(eg => eg.student_id === s.id)?.score;
+            return {
                 studentId: s.id,
                 studentName: s.name,
-                score: ''
-            })));
+                score: existingScore !== undefined ? String(existingScore) : ''
+            };
+        }));
+    }, [students, existingGrades]);
+
+    const lastContextKey = useRef<string>('');
+    const contextKey = `${selectedClass}-${selectedSubject}-${assessmentName}-${selectedSemester}`;
+
+    useEffect(() => {
+        // Initialize grades ONLY when context changes AND data is available.
+        // This prevents any accidental resets when data refetches in the background.
+        if (students && existingGrades !== undefined) {
+            if (lastContextKey.current !== contextKey) {
+                initializeGrades();
+                lastContextKey.current = contextKey;
+            }
         }
-    }, [students]);
+    }, [students, existingGrades, contextKey, initializeGrades]);
 
     // Warn before unload if there are unsaved changes
     useEffect(() => {
@@ -324,10 +338,10 @@ const BulkGradeInputPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
             clearDraft();
             setShowSuccessModal(true);
-            // Reset grades
-            if (students) {
-                setGrades(students.map(s => ({ studentId: s.id, studentName: s.name, score: '' })));
-            }
+            // Reset grades (Removed to prevent inputs from clearing after save)
+            // if (students) {
+            //     setGrades(students.map(s => ({ studentId: s.id, studentName: s.name, score: '' })));
+            // }
         },
         onError: (error: Error) => {
             toast.error(`Gagal menyimpan: ${error.message}`);

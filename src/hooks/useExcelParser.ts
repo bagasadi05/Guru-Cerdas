@@ -54,8 +54,14 @@ export const useExcelParser = () => {
             const data = await file.arrayBuffer();
             const workbook = await XLSX.read(data, { type: 'array' });
 
-            // Get first sheet
-            const sheetName = workbook.SheetNames[0];
+            // Prefer 'Data Nilai', otherwise skip 'Info' if possible
+            let sheetName = workbook.SheetNames.find(n => n.toLowerCase() === 'data nilai');
+            if (!sheetName) {
+                sheetName = workbook.SheetNames.find(n => n.toLowerCase() !== 'info');
+            }
+            if (!sheetName) {
+                sheetName = workbook.SheetNames[0];
+            }
             if (!sheetName) {
                 throw new Error('File tidak memiliki data');
             }
