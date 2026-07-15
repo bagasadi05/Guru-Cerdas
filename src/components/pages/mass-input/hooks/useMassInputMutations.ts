@@ -53,7 +53,8 @@ export interface UseMassInputMutationsParams {
     setScores: React.Dispatch<React.SetStateAction<Record<string, string>>>;
     setSelectedStudentIds: React.Dispatch<React.SetStateAction<Set<string>>>;
     bypassDuplicateGuard: boolean;
-    isScoresDirty: React.MutableRefObject<boolean>;
+    isScoresDirtyRef: React.MutableRefObject<boolean>;
+    clearSubjectGradeDraft: () => void;
 }
 
 import { findStudentMatch as centralFindStudentMatch } from '../../../../utils/studentMatcher';
@@ -72,7 +73,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         existingGrades, selectedStudentIds, selectedViolationCode, violationDate, violationNotes,
         studentsData, noteMethod, templateNote, pasteData,
         gradedCount, filteredExistingGrades, classes,
-        setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirty,
+        setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirtyRef, clearSubjectGradeDraft,
     } = params;
 
     const { user } = useAuth();
@@ -242,7 +243,8 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             toast.success(message || 'Data berhasil disimpan!');
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
             queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
-            isScoresDirty.current = false;
+            isScoresDirtyRef.current = false;
+            clearSubjectGradeDraft();
         },
         onError: (err: Error) => toast.error(`Gagal menyimpan: ${err.message}`),
     });

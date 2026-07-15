@@ -5,7 +5,10 @@ import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from 'workbox-strategi
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
-self.skipWaiting();
+// Do NOT call self.skipWaiting() here. This was causing forced mid-session
+// reloads whenever a new Service Worker was deployed (e.g. while a teacher
+// was saving grades). The new SW will now wait until the user explicitly
+// clicks "Perbarui" on the update banner, or all tabs are closed naturally.
 clientsClaim();
 
 cleanupOutdatedCaches();

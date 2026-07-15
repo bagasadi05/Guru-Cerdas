@@ -477,7 +477,6 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                 .from('quiz_points')
                 .select('id, points')
                 .eq('student_id', studentId)
-                .eq('user_id', userId)
                 .eq('is_used', false)
                 .is('deleted_at', null);
 
@@ -485,7 +484,6 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                 .from('academic_records')
                 .select('id, score')
                 .eq('student_id', studentId)
-                .eq('user_id', userId)
                 .eq('subject', subject)
                 .is('deleted_at', null)
                 .order('created_at', { ascending: false })
@@ -514,8 +512,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             const { error: updateGradeError } = await supabase
                 .from('academic_records')
                 .update({ score: newScore })
-                .eq('id', currentGrade.id)
-                .eq('user_id', userId);
+                .eq('id', currentGrade.id);
 
             if (updateGradeError) throw updateGradeError;
 
@@ -526,8 +523,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                     used_at: usedAt,
                     used_for_subject: subject
                 })
-                .in('id', points.map(point => point.id))
-                .eq('user_id', userId);
+                .in('id', points.map(point => point.id));
 
             if (updatePointsError) throw updatePointsError;
             await writeAuditLog({

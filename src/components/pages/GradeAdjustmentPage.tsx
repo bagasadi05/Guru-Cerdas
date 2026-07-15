@@ -108,7 +108,6 @@ export const GradeAdjustmentPage: React.FC = () => {
             return (data || []) as TeacherClassAssignmentRow[];
         },
         enabled: !!user,
-        staleTime: 0,
     });
 
     // Fetch classes
@@ -125,7 +124,6 @@ export const GradeAdjustmentPage: React.FC = () => {
             return data as Pick<ClassRow, 'id' | 'name' | 'user_id' | 'grade_level'>[];
         },
         enabled: !!user,
-        staleTime: 0,
     });
 
     const accessibleClasses = useMemo(

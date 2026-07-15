@@ -52,10 +52,23 @@ export const AIInsightWidget: React.FC<AIInsightWidgetProps> = ({
   // Loading state
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-4 w-1/2" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
+      <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center animate-fade-in">
+        <div className="relative flex items-center justify-center w-16 h-16">
+          {/* Outer ping animation */}
+          <div className="absolute inset-0 rounded-full bg-primary-500/20 animate-ping"></div>
+          {/* Inner pulse circle */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 animate-pulse"></div>
+          {/* Icon */}
+          <SparklesIcon className="relative w-8 h-8 text-white animate-bounce" />
+        </div>
+        <div>
+          <p className="font-semibold text-slate-800 dark:text-slate-200">
+            AI sedang bekerja...
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
+            Menganalisis data kehadiran, nilai, dan pelanggaran siswa untuk memberikan wawasan yang akurat.
+          </p>
+        </div>
       </div>
     );
   }

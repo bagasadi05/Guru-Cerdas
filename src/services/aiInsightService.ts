@@ -10,6 +10,7 @@
 import { generateOpenRouterJson } from './openRouterService';
 import type { Database } from './database.types';
 import { logger } from './logger';
+import { supabase } from './supabase';
 
 // =============================================================================
 // TYPES
@@ -197,58 +198,76 @@ Tugas Anda:
 // =============================================================================
 
 /**
- * Saves insight to localStorage with timestamp.
+ * Saves insight to Supabase database.
  */
-export const cacheInsight = (insight: AIInsight, userId?: string | null): void => {
-  const storageKey = getInsightStorageKey(userId);
+export const cacheInsight = async (insight: AIInsight, userId?: string | null): Promise<void> => {
+  if (!userId) return;
   const today = getTodayDate();
-  const storedData: StoredInsight = { date: today, insight };
   
   try {
-    localStorage.setItem(storageKey, JSON.stringify(storedData));
+    const { error } = await supabase
+      .from('ai_insights')
+      .upsert(
+        { 
+          user_id: userId, 
+          date: today, 
+          insight_data: insight as any 
+        },
+        { onConflict: 'user_id, date' }
+      );
+      
+    if (error) throw error;
   } catch (error) {
-    logger.error('Failed to cache AI insight', error as Error, undefined, 'AIInsight');
+    logger.error('Failed to cache AI insight to Supabase', error as Error, undefined, 'AIInsight');
   }
 };
 
 /**
- * Retrieves cached insight from localStorage.
+ * Retrieves cached insight from Supabase.
  * Returns null if cache is invalid or expired.
  */
-export const getCachedInsight = (userId?: string | null): AIInsight | null => {
-  const storageKey = getInsightStorageKey(userId);
-  const stored = localStorage.getItem(storageKey);
-  
-  if (!stored) return null;
+export const getCachedInsight = async (userId?: string | null): Promise<AIInsight | null> => {
+  if (!userId) return null;
+  const today = getTodayDate();
   
   try {
-    const parsed: StoredInsight = JSON.parse(stored);
-    const today = getTodayDate();
+    const { data, error } = await supabase
+      .from('ai_insights')
+      .select('insight_data')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .maybeSingle();
+      
+    if (error) throw error;
     
-    // Check if cached insight is from today
-    if (parsed.date === today) {
-      return parsed.insight;
+    if (data && data.insight_data) {
+      return data.insight_data as unknown as AIInsight;
     }
     
-    // Cache expired - return null
     return null;
   } catch (error) {
-    logger.error('Error parsing stored insight', error as Error, undefined, 'AIInsight');
+    logger.error('Error retrieving insight from Supabase', error as Error, undefined, 'AIInsight');
     return null;
   }
 };
 
 /**
- * Clears cached insight from localStorage.
+ * Clears cached insight from Supabase.
  */
-export const clearInsightCache = (userId?: string | null): void => {
-  const storageKey = getInsightStorageKey(userId);
-  localStorage.removeItem(storageKey);
+export const clearInsightCache = async (userId?: string | null): Promise<void> => {
+  if (!userId) return;
+  const today = getTodayDate();
+  try {
+    await supabase.from('ai_insights').delete().eq('user_id', userId).eq('date', today);
+  } catch (err) {
+    logger.error('Error clearing insight cache', err as Error, undefined, 'AIInsight');
+  }
 };
 
 /**
  * Checks if cached insight exists and is valid for today.
  */
-export const hasCachedInsightForToday = (userId?: string | null): boolean => {
-  return getCachedInsight(userId) !== null;
+export const hasCachedInsightForToday = async (userId?: string | null): Promise<boolean> => {
+  const insight = await getCachedInsight(userId);
+  return insight !== null;
 };

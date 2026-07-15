@@ -3,23 +3,54 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useSemester } from '../../../../contexts/SemesterContext';
 import { InputMode, Step, StudentFilter } from '../types';
 
+export interface SubjectGradeDraft {
+    step: Step;
+    mode: InputMode | null;
+    selectedClass: string;
+    subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
+    scores: Record<string, string>;
+    selectedStudentIds: string[];
+}
+
+const SUBJECT_GRADE_DRAFT_KEY = 'guru_cerdas_subject_grade_draft';
+
+function readSubjectGradeDraft(): SubjectGradeDraft | null {
+    try {
+        const data = sessionStorage.getItem(SUBJECT_GRADE_DRAFT_KEY);
+        return data ? JSON.parse(data) : null;
+    } catch {
+        return null;
+    }
+}
+
+function writeSubjectGradeDraft(draft: SubjectGradeDraft) {
+    try {
+        sessionStorage.setItem(SUBJECT_GRADE_DRAFT_KEY, JSON.stringify(draft));
+    } catch (e) {
+        console.error('Failed to save subject grade draft:', e);
+    }
+}
+
 export function useMassInputState() {
     const { activeSemester } = useSemester();
     const location = useLocation();
     const navigate = useNavigate();
-    const isScoresDirty = useRef(false);
+    const [initialDraft] = useState<SubjectGradeDraft | null>(() => readSubjectGradeDraft());
+    const isScoresDirty = useRef(Boolean(initialDraft && Object.keys(initialDraft.scores).length > 0));
 
-    const [step, setStep] = useState<Step>(1);
-    const [mode, setMode] = useState<InputMode | null>(null);
-    const [selectedClass, setSelectedClass] = useState('');
+    const [step, setStep] = useState<Step>(() => initialDraft?.step || 1);
+    const [mode, setMode] = useState<InputMode | null>(() => initialDraft?.mode || null);
+    const [selectedClass, setSelectedClass] = useState(() => initialDraft?.selectedClass || '');
+    const prevClassRef = useRef(selectedClass);
+    const prevModeRef = useRef(mode);
     const [quizInfo, setQuizInfo] = useState({ name: '', subject: '', date: new Date().toISOString().slice(0, 10) });
-    const [subjectGradeInfo, setSubjectGradeInfo] = useState({ subject: '', assessment_name: '', notes: '', semester: '' });
-    const [scores, setScores] = useState<Record<string, string>>({});
+    const [subjectGradeInfo, setSubjectGradeInfo] = useState(() => initialDraft?.subjectGradeInfo || { subject: '', assessment_name: '', notes: '', semester: '' });
+    const [scores, setScores] = useState<Record<string, string>>(() => initialDraft?.scores || {});
     const [pasteData, setPasteData] = useState('');
     const [selectedViolationCode, setSelectedViolationCode] = useState('');
     const [violationDate, setViolationDate] = useState(new Date().toISOString().slice(0, 10));
     const [violationNotes, setViolationNotes] = useState('');
-    const [selectedStudentIds, setSelectedStudentIds] = useState(new Set<string>());
+    const [selectedStudentIds, setSelectedStudentIds] = useState(() => new Set<string>(initialDraft?.selectedStudentIds || []));
     const [searchTerm, setSearchTerm] = useState('');
     const [studentFilter, setStudentFilter] = useState<StudentFilter>('all');
     const [noteMethod, setNoteMethod] = useState<'ai' | 'template'>('ai');
@@ -77,25 +108,40 @@ export function useMassInputState() {
 
     // Reset student selection / scores when class changes
     useEffect(() => {
-        const timer = setTimeout(() => {
+        if (prevClassRef.current !== selectedClass) {
             setSelectedStudentIds(new Set());
             setScores({});
             setSearchTerm('');
             setStudentFilter('all');
             setBypassDuplicateGuard(false);
             isScoresDirty.current = false;
-        }, 0);
-        return () => clearTimeout(timer);
+            prevClassRef.current = selectedClass;
+        }
     }, [selectedClass]);
 
     // Reset filter when mode changes
     useEffect(() => {
-        const timer = setTimeout(() => {
+        if (prevModeRef.current !== mode) {
             setStudentFilter('all');
             setBypassDuplicateGuard(false);
-        }, 0);
-        return () => clearTimeout(timer);
+            prevModeRef.current = mode;
+        }
     }, [mode]);
+
+    // Auto-save draft when values change
+    useEffect(() => {
+        if (mode !== 'subject_grade' || !isScoresDirty.current || Object.keys(scores).length === 0) return;
+
+        const draft: SubjectGradeDraft = {
+            step: 2,
+            mode,
+            selectedClass,
+            subjectGradeInfo,
+            scores,
+            selectedStudentIds: Array.from(selectedStudentIds),
+        };
+        writeSubjectGradeDraft(draft);
+    }, [mode, selectedClass, selectedStudentIds, scores, subjectGradeInfo]);
 
     const handleModeSelect = (selectedMode: InputMode) => {
         if (selectedMode === 'grade_adjustment') {
@@ -107,7 +153,16 @@ export function useMassInputState() {
         setIsCustomSubject(false);
     };
 
+    const clearSubjectGradeDraft = () => {
+        sessionStorage.removeItem(SUBJECT_GRADE_DRAFT_KEY);
+    };
+
+    const saveSubjectGradeDraft = (draft: Omit<SubjectGradeDraft, 'step' | 'mode'>) => {
+        writeSubjectGradeDraft({ step: 2, mode: 'subject_grade', ...draft });
+    };
+
     const handleBack = () => {
+        clearSubjectGradeDraft();
         setStep(1); setMode(null); setSelectedClass('');
         setQuizInfo({ name: '', subject: '', date: new Date().toISOString().slice(0, 10) });
         setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '', semester: activeSemester?.id || '' });
@@ -172,6 +227,8 @@ export function useMassInputState() {
         showChartModal, setShowChartModal,
         isScoresDirty,
         setIsScoresDirty,
+        clearSubjectGradeDraft,
+        saveSubjectGradeDraft,
         bypassDuplicateGuard, setBypassDuplicateGuard,
         pendingImportData, setPendingImportData,
         handleModeSelect, handleBack, handleScoreChange, handleStudentSelect,

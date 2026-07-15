@@ -119,7 +119,8 @@ export function useMassInputViewModel() {
         setScores: state.setScores,
         setSelectedStudentIds: state.setSelectedStudentIds,
         bypassDuplicateGuard: state.bypassDuplicateGuard,
-        isScoresDirty: state.isScoresDirty,
+        isScoresDirtyRef: state.isScoresDirty,
+        clearSubjectGradeDraft: state.clearSubjectGradeDraft,
     });
 
     const summaryText = useMemo(() => {
@@ -176,6 +177,29 @@ export function useMassInputViewModel() {
             score: row.score !== undefined && row.score !== null ? String(row.score) : ''
         })));
         state.setShowImportModal(false);
+    };
+
+    const handleImportConfirm = (mappedScores: Record<string, string>) => {
+        const importedScores = { ...state.scores, ...mappedScores };
+        const importedStudentIds = Array.from(new Set([
+            ...state.selectedStudentIds,
+            ...Object.keys(mappedScores),
+        ]));
+
+        // Persist synchronously before React updates state. A service-worker
+        // controller change can remount this page immediately after this click.
+        state.saveSubjectGradeDraft({
+            selectedClass: state.selectedClass,
+            subjectGradeInfo: state.subjectGradeInfo,
+            scores: importedScores,
+            selectedStudentIds: importedStudentIds,
+        });
+        state.setScores(importedScores);
+        state.setSelectedStudentIds(new Set(importedStudentIds));
+        // Do not let an in-flight existing-grades query overwrite imported
+        // values before the teacher explicitly saves them.
+        state.setIsScoresDirty(true);
+        toast.success(`Berhasil memproses dan menerapkan ${Object.keys(mappedScores).length} nilai siswa. Klik Simpan untuk menyimpannya ke database.`);
     };
 
     const handleDeleteConfirmClick = () => {
@@ -269,6 +293,7 @@ export function useMassInputViewModel() {
         handleDeleteConfirmClick,
         // import modal
         handleImport,
+        handleImportConfirm,
         pendingImportData: state.pendingImportData,
         setPendingImportData: state.setPendingImportData,
         validationErrors: state.validationErrors,

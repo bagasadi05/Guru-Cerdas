@@ -68,18 +68,12 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 
 // Register Service Worker for PWA
 if (isProduction) {
-  let isReloadingForUpdate = false;
-
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (isReloadingForUpdate) return;
-    isReloadingForUpdate = true;
-    window.location.reload();
-  });
-
   const updateSW = registerSW({
     onNeedRefresh() {
-      logger.info('New content available, reloading to apply update.', 'SW');
-      void updateSW(true);
+      logger.info('New content available. Prompting user to update.', 'SW');
+      // Show a non-intrusive banner rather than force-reloading mid-task.
+      // We dispatch a custom event so any mounted component can react to it.
+      window.dispatchEvent(new CustomEvent('sw-update-available', { detail: { updateSW } }));
     },
     onOfflineReady() {
       logger.info('App is ready to work offline.', 'SW');

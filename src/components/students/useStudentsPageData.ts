@@ -29,6 +29,7 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
 
   const {
     data: userAssignments = EMPTY_ASSIGNMENTS,
+    isLoading: isLoadingAssignments,
   } = useQuery({
     queryKey: ['teacherClassAssignments', userId],
     queryFn: async () => {
@@ -45,7 +46,6 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
       return (data || EMPTY_ASSIGNMENTS) as TeacherClassAssignmentRow[];
     },
     enabled: !!userId,
-    staleTime: 0,
   });
 
   const {
@@ -81,8 +81,9 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
       if (error) throw new Error(error.message);
       return (data || EMPTY_CLASSES) as unknown as ClassRow[];
     },
-    enabled: !!userId,
-    staleTime: 0,
+    // Wait for assignments before asking for classes. Otherwise this runs once
+    // without assignment access and immediately repeats when assignments arrive.
+    enabled: !!userId && !isLoadingAssignments,
   });
 
   const {

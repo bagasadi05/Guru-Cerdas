@@ -70,6 +70,7 @@ const BulkGradeInputPage: React.FC = () => {
     const [lastSaveCount, setLastSaveCount] = useState(0);
     const [kkm, setKkm] = useState(DEFAULT_KKM);
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [isScoresDirty, setIsScoresDirty] = useState(false);
 
     // Default to active semester when it loads
     useEffect(() => {
@@ -92,7 +93,6 @@ const BulkGradeInputPage: React.FC = () => {
             return (data || []) as TeacherClassAssignmentRow[];
         },
         enabled: !!user,
-        staleTime: 0,
     });
 
     // Check if selected semester is locked
@@ -126,7 +126,7 @@ const BulkGradeInputPage: React.FC = () => {
         enabled: grades.some(g => g.score !== '') && !!selectedClass && !!selectedSemester,
     });
 
-    useWarnUnsavedChanges(hasDraft, 'Ada nilai yang belum disimpan ke database. Yakin ingin keluar?');
+    useWarnUnsavedChanges(isScoresDirty, 'Ada nilai yang belum disimpan ke database. Yakin ingin keluar?');
 
     // Check for draft on mount
     useEffect(() => {
@@ -188,7 +188,6 @@ const BulkGradeInputPage: React.FC = () => {
             return data as Pick<ClassRow, 'id' | 'name' | 'user_id'>[];
         },
         enabled: !!user,
-        staleTime: 0,
     });
 
     // Fetch students for selected class
@@ -208,7 +207,7 @@ const BulkGradeInputPage: React.FC = () => {
     });
 
     // Check for existing grades (filtered by semester and subject+assessment)
-    const { data: existingGrades } = useQuery({
+    const { data: existingGrades, error: existingGradesError, isError: isExistingGradesError, refetch: refetchExistingGrades } = useQuery({
         queryKey: ['existingGrades', selectedClass, selectedSubject, assessmentName, selectedSemester],
         queryFn: async () => {
             if (!students) return [];
@@ -224,7 +223,10 @@ const BulkGradeInputPage: React.FC = () => {
                 query = query.eq('semester_id', selectedSemester);
             }
 
-            const { data } = await query;
+            const { data, error } = await query;
+            if (error) {
+                throw new Error(`Gagal membaca nilai tersimpan: ${error.message}`);
+            }
             return dedupeAcademicRecords((data || []) as any);
         },
         enabled: !!selectedClass && !!students && students.length > 0 && !!selectedSemester,
@@ -240,6 +242,7 @@ const BulkGradeInputPage: React.FC = () => {
                 score: existingScore !== undefined ? Number(existingScore) : ''
             };
         }));
+        setIsScoresDirty(false);
     }, [students, existingGrades]);
 
     const lastContextKey = useRef<string>('');
@@ -259,8 +262,7 @@ const BulkGradeInputPage: React.FC = () => {
     // Warn before unload if there are unsaved changes
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            const hasUnsaved = grades.some(g => g.score !== '');
-            if (hasUnsaved) {
+            if (isScoresDirty) {
                 e.preventDefault();
                 e.returnValue = 'Anda memiliki nilai yang belum disimpan. Apakah Anda yakin ingin keluar?';
                 return e.returnValue;
@@ -269,7 +271,7 @@ const BulkGradeInputPage: React.FC = () => {
 
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [grades]);
+    }, [isScoresDirty]);
 
     // Validation
     const validation = useMemo(() => {
@@ -342,46 +344,185 @@ const BulkGradeInputPage: React.FC = () => {
     // Mutation to save all grades
     const saveMutation = useMutation({
         mutationFn: async (entries: GradeEntry[]) => {
-            const validEntries = entries.filter(e => e.score !== '' && Number(e.score) >= 0 && Number(e.score) <= 100);
+            const validEntries = entries.filter((entry) => {
+                if (entry.score === '') return false;
+                const numericScore = Number(entry.score);
+                return (
+                    Number.isFinite(numericScore) &&
+                    numericScore >= 0 &&
+                    numericScore <= 100
+                );
+            });
             if (validEntries.length === 0) throw new Error('Tidak ada nilai valid untuk disimpan');
 
-            const existingMap = new Map(existingGrades?.map(g => [g.student_id, g.id]) || []);
+            const existingMap = new Map(existingGrades?.map(g => [g.student_id, g]) || []);
             // Note: existingGrades is already filtered by subject+assessment_name above,
             // so student_id key is sufficient here — no cross-assessment overwrite risk.
 
-            const records = validEntries.map(e => ({
-                id: existingMap.get(e.studentId) || selfCryptoUUID(),
-                student_id: e.studentId,
-                user_id: user!.id,
-                subject: selectedSubject,
-                assessment_name: assessmentName,
-                score: Number(e.score),
-                notes: '',
-                semester_id: selectedSemester || null,
-            }));
+            const records = validEntries.map(e => {
+                const existing = existingMap.get(e.studentId);
+                return {
+                    id: existing?.id || selfCryptoUUID(),
+                    student_id: e.studentId,
+                    user_id: existing?.user_id || user!.id,
+                    subject: selectedSubject,
+                    assessment_name: assessmentName,
+                    score: Number(e.score),
+                    notes: existing?.notes || '',
+                    semester_id: selectedSemester || null,
+                };
+            });
 
-            const { error } = await supabase.from('academic_records').upsert(records);
-            if (error) throw error;
-            return validEntries.length;
+            // Upsert with Select
+            const { data: savedRows, error: saveError } = await supabase
+                .from('academic_records')
+                .upsert(records)
+                .select(`
+                    id,
+                    student_id,
+                    user_id,
+                    subject,
+                    assessment_name,
+                    score,
+                    notes,
+                    semester_id,
+                    created_at,
+                    version
+                `);
+
+            if (saveError) {
+                throw saveError;
+            }
+
+            if (!savedRows) {
+                throw new Error('Database tidak mengembalikan data hasil penyimpanan.');
+            }
+
+            // Read-After-Write Verification
+            const studentIds = validEntries.map((entry) => entry.studentId);
+            const { data: verificationRows, error: verificationError } = await supabase
+                .from('academic_records')
+                .select(`
+                    id,
+                    student_id,
+                    user_id,
+                    subject,
+                    assessment_name,
+                    score,
+                    notes,
+                    semester_id,
+                    created_at,
+                    version
+                `)
+                .eq('subject', selectedSubject)
+                .eq('assessment_name', assessmentName)
+                .eq('semester_id', selectedSemester)
+                .in('student_id', studentIds)
+                .is('deleted_at', null);
+
+            if (verificationError) {
+                throw new Error(`Nilai dikirim, tetapi gagal diverifikasi: ${verificationError.message}`);
+            }
+
+            const verifiedRecords = dedupeAcademicRecords((verificationRows || []) as any);
+            const verificationMap = new Map(
+                verifiedRecords.map(row => [row.student_id, row])
+            );
+
+            const mismatches: { studentName: string; reason: string }[] = [];
+
+            validEntries.forEach(entry => {
+                const dbRow = verificationMap.get(entry.studentId);
+                if (!dbRow) {
+                    mismatches.push({
+                        studentName: entry.studentName,
+                        reason: 'tidak ditemukan di database'
+                    });
+                    return;
+                }
+                
+                const scoreDiff = Math.abs(Number(dbRow.score) - Number(entry.score));
+                const isSubjectMatch = dbRow.subject === selectedSubject;
+                const isAssessmentMatch = dbRow.assessment_name === assessmentName;
+                const isSemesterMatch = dbRow.semester_id === selectedSemester;
+                
+                if (scoreDiff >= 0.001 || !isSubjectMatch || !isAssessmentMatch || !isSemesterMatch) {
+                    mismatches.push({
+                        studentName: entry.studentName,
+                        reason: 'nilai atau metadata tidak cocok'
+                    });
+                }
+            });
+
+            if (mismatches.length > 0) {
+                const failedNames = mismatches.slice(0, 5).map(m => m.studentName).join(', ');
+                const extraInfo = mismatches.length > 5 ? ` dan ${mismatches.length - 5} siswa lainnya` : '';
+                throw new Error(
+                    `Penyimpanan belum terverifikasi. ${mismatches.length} dari ${validEntries.length} nilai tidak ditemukan atau tidak cocok di database (Siswa: ${failedNames}${extraInfo}).`
+                );
+            }
+
+            return {
+                verifiedCount: validEntries.length,
+                verificationRows: verifiedRecords
+            };
         },
-        onSuccess: (count) => {
-            toast.success(`${count} nilai berhasil disimpan!`);
-            queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
-            queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
-            queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
+        onSuccess: (data) => {
+            toast.success(`${data.verifiedCount} nilai tersimpan dan terverifikasi di database.`);
+            
+            // Invalidate and immediately set the cache data
+            queryClient.setQueryData(
+                ['existingGrades', selectedClass, selectedSubject, assessmentName, selectedSemester],
+                data.verificationRows
+            );
+
+            queryClient.invalidateQueries({
+                queryKey: ['existingGrades', selectedClass, selectedSubject, assessmentName, selectedSemester]
+            });
+            queryClient.invalidateQueries({ queryKey: ['studentGrades'], exact: false });
+            queryClient.invalidateQueries({ queryKey: ['reportData'], exact: false });
+            queryClient.invalidateQueries({ queryKey: ['dashboardData'], exact: false });
+            
             clearDraft();
+
+            // Synchronize the form state
+            if (students) {
+                setGrades(students.map(s => {
+                    const verifiedRecord = data.verificationRows.find(vr => vr.student_id === s.id);
+                    return {
+                        studentId: s.id,
+                        studentName: s.name,
+                        score: verifiedRecord !== undefined ? Number(verifiedRecord.score) : ''
+                    };
+                }));
+            }
+
+            setIsScoresDirty(false);
+            setLastSaveCount(data.verifiedCount);
             setShowSuccessModal(true);
-            // Reset grades (Removed to prevent inputs from clearing after save)
-            // if (students) {
-            //     setGrades(students.map(s => ({ studentId: s.id, studentName: s.name, score: '' })));
-            // }
         },
-        onError: (error: Error) => {
-            toast.error(`Gagal menyimpan: ${error.message}`);
+        onError: (error: any) => {
+            const errorMsg = error?.message || '';
+            const errorCode = error?.code || '';
+            const isRLSError = 
+                errorCode === '42501' || 
+                errorMsg.toLowerCase().includes('row-level security') || 
+                errorMsg.toLowerCase().includes('permission denied') || 
+                errorMsg.toLowerCase().includes('violates row-level security policy');
+
+            if (isRLSError) {
+                toast.error(
+                    'Nilai tidak dapat disimpan karena akun ini belum memiliki akses ke kelas, semester, atau mata pelajaran yang dipilih. Periksa penugasan guru pada menu Admin.'
+                );
+            } else {
+                toast.error(`Gagal menyimpan: ${errorMsg}`);
+            }
+            console.error('Error saving grades:', error);
         },
     });
 
     const handleScoreChange = useCallback((studentId: string, value: string) => {
+        setIsScoresDirty(true);
         if (value === '') {
             setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: '' } : g));
             return;
@@ -425,7 +566,6 @@ const BulkGradeInputPage: React.FC = () => {
     const doSave = () => {
         setShowEmptyConfirm(false);
         const gradesToSave = grades.filter(g => g.score !== '');
-        setLastSaveCount(gradesToSave.length);
         saveMutation.mutate(gradesToSave);
     };
 
@@ -435,17 +575,20 @@ const BulkGradeInputPage: React.FC = () => {
             ...g,
             score: g.score === '' ? value : g.score
         })));
+        setIsScoresDirty(true);
         toast.info(`Mengisi nilai kosong dengan ${value}`);
     };
 
     const handleFillAllWith = (value: number) => {
         setGrades(prev => prev.map(g => ({ ...g, score: value })));
+        setIsScoresDirty(true);
         toast.info(`Semua nilai diisi dengan ${value}`);
     };
 
     const handleClearAll = () => {
         setShowClearConfirm(false);
         setGrades(prev => prev.map(g => ({ ...g, score: '' })));
+        setIsScoresDirty(true);
         toast.info('Semua nilai dihapus');
     };
 
@@ -474,8 +617,9 @@ const BulkGradeInputPage: React.FC = () => {
         }));
         
         const matchedCount = Object.keys(mappedScores).length;
-        toast.success(`${matchedCount} nilai berhasil diimpor setelah peninjauan.`);
+        toast.success(`${matchedCount} nilai diterapkan ke formulir. Klik ‘Simpan Semua Nilai’ untuk menyimpannya ke database.`);
         setPendingImportData([]);
+        setIsScoresDirty(true);
     };
 
     const handleAIPasteSuccess = (parsedScores: Record<string, string>) => {
@@ -490,6 +634,9 @@ const BulkGradeInputPage: React.FC = () => {
             }
             return g;
         }));
+        const matchedCount = Object.keys(parsedScores).length;
+        toast.success(`${matchedCount} nilai diterapkan ke formulir. Klik ‘Simpan Semua Nilai’ untuk menyimpannya ke database.`);
+        setIsScoresDirty(true);
     };
 
     // Restore draft
@@ -499,6 +646,7 @@ const BulkGradeInputPage: React.FC = () => {
             setGrades(draft.grades || []);
             setSelectedSubject(draft.selectedSubject || availableSubjects[0] || SUBJECTS[0]);
             setAssessmentName(draft.assessmentName || 'Ulangan Harian');
+            setIsScoresDirty(true);
             toast.success('Draft berhasil dipulihkan');
         }
         setShowDraftPrompt(false);
@@ -540,7 +688,8 @@ const BulkGradeInputPage: React.FC = () => {
                     }
                 }
                 
-                toast.success(`${pasteCount} nilai berhasil ditempel (paste) dari Excel!`);
+                toast.success(`${pasteCount} nilai diterapkan ke formulir. Klik ‘Simpan Semua Nilai’ untuk menyimpannya ke database.`);
+                setIsScoresDirty(true);
                 return newGrades;
             });
         }
@@ -670,6 +819,14 @@ const BulkGradeInputPage: React.FC = () => {
                     </div>
                 )}
 
+                {/* Unsaved Changes Banner */}
+                {isScoresDirty && (
+                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm font-medium flex items-center gap-2">
+                        <AlertTriangleIcon className="w-5 h-5 flex-shrink-0 animate-pulse text-amber-500" />
+                        <span>Belum disimpan ke database</span>
+                    </div>
+                )}
+
                 {/* Settings Card */}
                 <SettingsCard
                     selectedClass={selectedClass}
@@ -690,6 +847,27 @@ const BulkGradeInputPage: React.FC = () => {
                     onExport={handleExport}
                     gradesEmpty={grades.length === 0}
                 />
+
+                {/* Query Error Banner */}
+                {isExistingGradesError && (
+                    <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                        <div className="flex items-start gap-2 text-red-600 dark:text-red-400">
+                            <AlertTriangleIcon className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                                <p className="font-bold">Gagal memuat nilai yang tersimpan</p>
+                                <p className="text-sm mt-1">{existingGradesError instanceof Error ? existingGradesError.message : String(existingGradesError)}</p>
+                                <Button
+                                    onClick={() => refetchExistingGrades()}
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-3 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-700 dark:text-red-300 bg-white dark:bg-gray-900"
+                                >
+                                    Coba Lagi
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Semester Locked Banner */}
                 {semesterLocked && selectedSemester && (
@@ -759,7 +937,7 @@ const BulkGradeInputPage: React.FC = () => {
                         </Button>
                         <Button
                             onClick={handleSaveAll}
-                            disabled={saveMutation.isPending || filledCount === 0 || semesterLocked || !selectedSemester || availableSubjects.length === 0}
+                            disabled={saveMutation.isPending || filledCount === 0 || semesterLocked || !selectedSemester || availableSubjects.length === 0 || isExistingGradesError}
                             className="flex-1 h-14 text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {saveMutation.isPending ? (
@@ -885,6 +1063,7 @@ const BulkGradeInputPage: React.FC = () => {
                             ? Number(finalScores[g.studentId]) 
                             : ''
                     })));
+                    setIsScoresDirty(true);
                 }}
                 kkm={kkm}
                 subject={selectedSubject}

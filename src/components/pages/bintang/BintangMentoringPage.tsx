@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { CustomDropdown } from '../../ui/CustomDropdown';
@@ -14,14 +14,15 @@ export const BintangMentoringPage: React.FC = () => {
     const toast = useToast();
     
     const [logs, setLogs] = useState<any[]>([]);
-    const [classes, setClasses] = useState<any[]>([]);
+    const [classes, setClasses] = useState<Array<{id: string; name: string}>>([]);
     const [isLoading, setIsLoading] = useState(true);
-    
+    const [searchQuery, setSearchQuery] = useState('');
+
     // Form state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedClass, setSelectedClass] = useState('');
     const [targetType, setTargetType] = useState<'all' | 'specific'>('all');
-    const [studentsInClass, setStudentsInClass] = useState<any[]>([]);
+    const [studentsInClass, setStudentsInClass] = useState<Array<{id: string; name: string}>>([]);
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [mentorRole, setMentorRole] = useState('WALAS');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -30,7 +31,7 @@ export const BintangMentoringPage: React.FC = () => {
 
     useEffect(() => {
         const fetchClasses = async () => {
-            const { data } = await supabase.from('classes').select('id, name').eq('is_archived', false);
+            const { data } = await supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false);
             if (data) setClasses(data);
         };
         fetchClasses();
@@ -44,7 +45,7 @@ export const BintangMentoringPage: React.FC = () => {
                     .from('students')
                     .select('id, name')
                     .eq('class_id', selectedClass)
-                    .eq('status', 'active')
+                    .is('deleted_at', null)
                     .order('name');
                 setStudentsInClass(data || []);
                 setSelectedStudents([]); // reset selection
@@ -112,15 +113,28 @@ export const BintangMentoringPage: React.FC = () => {
         }
     };
 
+    // Filter logs by search query
+    const filteredLogs = useMemo(() => {
+        if (!searchQuery.trim()) return logs;
+        const query = searchQuery.toLowerCase();
+        return logs.filter((log: any) => {
+            const studentName = ((log.students as any)?.name || '').toLowerCase();
+            const logNotes = (log.notes || '').toLowerCase();
+            return studentName.includes(query) || logNotes.includes(query);
+        });
+    }, [logs, searchQuery]);
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex-1 w-full max-w-sm">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-                        <Input 
-                            placeholder="Cari siswa atau kelas..." 
+                        <Input
+                            placeholder="Cari siswa atau catatan..."
                             className="pl-10 w-full"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
                 </div>
@@ -133,8 +147,10 @@ export const BintangMentoringPage: React.FC = () => {
             <div className="p-0">
                 {isLoading ? (
                     <div className="text-center py-10 text-slate-500">Memuat data...</div>
-                ) : logs.length === 0 ? (
-                    <div className="text-center py-10 text-slate-500">Belum ada catatan pembinaan.</div>
+                ) : filteredLogs.length === 0 ? (
+                    <div className="text-center py-10 text-slate-500">
+                        {searchQuery.trim() ? 'Tidak ada catatan yang cocok dengan pencarian.' : 'Belum ada catatan pembinaan.'}
+                    </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
@@ -147,7 +163,7 @@ export const BintangMentoringPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {logs.map((log) => (
+                                {filteredLogs.map((log) => (
                                     <tr key={log.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                         <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
                                             {new Date(log.date).toLocaleDateString('id-ID')}

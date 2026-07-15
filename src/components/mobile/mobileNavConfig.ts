@@ -1,8 +1,3 @@
-/**
- * Mobile Navigation Configuration
- * Shared constants for mobile navigation items
- */
-
 import {
   HomeIcon,
   ClipboardIcon,
@@ -10,6 +5,7 @@ import {
   CheckSquareIcon,
   UsersIcon,
   BarChart3Icon,
+  ClipboardPenIcon,
 } from '../Icons';
 
 export interface MobileNavItem {
@@ -30,8 +26,8 @@ export const getMobileNavItems = (role?: string | null): MobileNavItem[] => {
   }
   return [
     { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
+    { href: '/input-massal', label: 'Penilaian', icon: ClipboardPenIcon },
+    { href: '/siswa', label: 'Siswa', icon: UsersIcon },
     { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
-    { href: '/jadwal', label: 'Jadwal', icon: CalendarIcon },
-    { href: '/tugas', label: 'Tugas', icon: CheckSquareIcon },
   ];
 };

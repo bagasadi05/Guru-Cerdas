@@ -144,9 +144,8 @@ export const useStudentDetailPage = () => {
                     : Promise.resolve({ data: null, error: null }),
                 supabase
                     .from('teacher_class_assignments')
-                    .select('class_id, assignment_role')
+                    .select('class_id, assignment_role, subject_name')
                     .eq('teacher_user_id', user.id)
-                    .in('assignment_role', ['homeroom', 'assistant'])
                     .is('deleted_at', null),
                 supabase
                     .from('classes')
@@ -160,10 +159,10 @@ export const useStudentDetailPage = () => {
             if (classesRes.error) throw classesRes.error;
 
             const studentData = studentRes.data as unknown as StudentWithClass;
-            const assignments = (assignmentsRes.data || []) as { class_id: string, assignment_role: string }[];
+            const assignments = (assignmentsRes.data || []) as { class_id: string, assignment_role: string, subject_name: string | null }[];
             const classRows = (classesRes.data || []) as unknown as Database['public']['Tables']['classes']['Row'][];
             const classInfo = classInfoRes.data as Database['public']['Tables']['classes']['Row'];
-            const studentWithClass = { ...studentData, classes: classInfo ? { id: classInfo.id, name: classInfo.name } : null };
+            const studentWithClass = { ...studentData, classes: classInfo ? { id: classInfo.id, name: classInfo.name, user_id: classInfo.user_id } : null };
 
             return { student: studentWithClass, assignments, classes: classRows };
         },
@@ -214,7 +213,23 @@ export const useStudentDetailPage = () => {
         queryFn: async () => {
             const { data, error } = await supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId!).is('deleted_at', null);
             if (error) throw error;
-            return (data || []) as AcademicRecordRow[];
+            const rawRecords = (data || []) as AcademicRecordRow[];
+            const recorderIds = Array.from(new Set(rawRecords.map(r => r.user_id).filter(Boolean)));
+            let recorderNames: Record<string, string> = {};
+            if (recorderIds.length > 0) {
+                const { data: roleRows } = await supabase
+                    .from('user_roles')
+                    .select('user_id, full_name')
+                    .in('user_id', recorderIds);
+                recorderNames = (roleRows || []).reduce((acc, r) => {
+                    if (r.user_id) acc[r.user_id] = r.full_name || '';
+                    return acc;
+                }, {} as Record<string, string>);
+            }
+            return rawRecords.map(r => ({
+                ...r,
+                recorded_by_name: recorderNames[r.user_id || ''] || null
+            })) as AcademicRecordRow[];
         },
         enabled: !!studentId && !!user && shouldLoadGrades,
         staleTime: 5 * 60 * 1000
@@ -226,7 +241,23 @@ export const useStudentDetailPage = () => {
         queryFn: async () => {
             const { data, error } = await supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId!).is('deleted_at', null);
             if (error) throw error;
-            return (data || []) as unknown as QuizPointRow[];
+            const rawQuizzes = (data || []) as unknown as QuizPointRow[];
+            const recorderIds = Array.from(new Set(rawQuizzes.map(q => q.user_id).filter(Boolean)));
+            let recorderNames: Record<string, string> = {};
+            if (recorderIds.length > 0) {
+                const { data: roleRows } = await supabase
+                    .from('user_roles')
+                    .select('user_id, full_name')
+                    .in('user_id', recorderIds);
+                recorderNames = (roleRows || []).reduce((acc, r) => {
+                    if (r.user_id) acc[r.user_id] = r.full_name || '';
+                    return acc;
+                }, {} as Record<string, string>);
+            }
+            return rawQuizzes.map(q => ({
+                ...q,
+                recorded_by_name: recorderNames[q.user_id || ''] || null
+            })) as QuizPointRow[];
         },
         enabled: !!studentId && !!user && shouldLoadActivity
     });
@@ -741,8 +772,27 @@ export const useStudentDetailPage = () => {
     const uniqueSubjectsForGrades = useMemo((): (string | null)[] => {
         const records = filteredAcademicRecords as AcademicRecordRow[];
         const subjects = records.map(r => r.subject);
-        return [...new Set(subjects)];
-    }, [filteredAcademicRecords]);
+        const unique = [...new Set(subjects)];
+
+        // Walas or admin has access to all subjects
+        const isWalas = studentProfile?.student?.classes?.user_id === user?.id || 
+            (studentProfile?.assignments || []).some(
+                (a: any) => a.class_id === studentProfile?.student?.class_id && a.assignment_role === 'homeroom'
+            );
+
+        if (isWalas || userRole === 'admin') {
+            return unique;
+        }
+
+        // Subject teacher: only allow subjects they teach in this class
+        const taughtSubjects = new Set(
+            (studentProfile?.assignments || [])
+                .filter((a: any) => a.class_id === studentProfile?.student?.class_id && a.assignment_role === 'subject_teacher' && a.subject_name)
+                .map((a: any) => a.subject_name.trim().toLowerCase())
+        );
+
+        return unique.filter(s => s && taughtSubjects.has(s.trim().toLowerCase()));
+    }, [filteredAcademicRecords, studentProfile, user, userRole]);
 
     const currentRecordForSubject = useMemo(() => {
         if (!subjectToApply) return null;

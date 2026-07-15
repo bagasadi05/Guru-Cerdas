@@ -17,19 +17,19 @@ const DESKRIPSI_ASPEK = {
     ADAB: {
         A: "Ananda telah menunjukkan adab yang sangat baik dan budi pekerti luhur dalam berinteraksi dengan Bapak/Ibu Guru serta teman sebaya. Mohon untuk terus dipertahankan.",
         B: "Adab dan perilaku Ananda secara umum sudah baik, namun masih perlu arahan dan bimbingan agar senantiasa menjaga tata krama dan lisan dalam pergaulan sehari-hari.",
-        C: "Adab dan perilaku Ananda secara umum sudah baik, namun masih perlu arahan dan bimbingan agar senantiasa menjaga tata krama dan lisan dalam pergaulan sehari-hari.",
+        C: "Adab Ananda masih perlu banyak bimbingan. Mohon perhatian orang tua untuk membantu Ananda memperbaiki tata krama dan sopan santun dalam pergaulan sehari-hari.",
         D: "Ananda memerlukan perhatian dan bimbingan ekstra dari orang tua di rumah terkait etika dan kesantunan, agar dapat mencerminkan akhlak mulia sesuai harapan kita bersama."
     },
     KEDISIPLINAN: {
         A: "Ananda memiliki kedisiplinan yang sangat tinggi, senantiasa mematuhi aturan kelas, dan menjalankan tugas dengan penuh tanggung jawab.",
         B: "Kedisiplinan Ananda sudah cukup memadai, namun mohon bantuan orang tua untuk terus memotivasi agar lebih konsisten dalam mematuhi tata tertib sekolah.",
-        C: "Kedisiplinan Ananda sudah cukup memadai, namun mohon bantuan orang tua untuk terus memotivasi agar lebih konsisten dalam mematuhi tata tertib sekolah.",
+        C: "Kedisiplinan Ananda masih kurang konsisten. Mohon bantuan orang tua untuk lebih tegas mengawasi kepatuhan Ananda terhadap jadwal dan aturan sekolah.",
         D: "Tingkat kedisiplinan Ananda masih butuh perhatian khusus. Kami memohon sinergi dari orang tua untuk lebih intensif memantau dan membimbing kedisiplinan Ananda."
     },
     KERAPIAN: {
         A: "Ananda senantiasa menjaga kebersihan dan kerapian diri dengan konsisten, serta selalu mengenakan atribut seragam sekolah dengan sangat rapi.",
         B: "Kerapian Ananda terpantau cukup baik, namun sesekali masih perlu diingatkan terkait kelengkapan atribut seragam sekolah sesuai hari yang ditentukan.",
-        C: "Kerapian Ananda terpantau cukup baik, namun sesekali masih perlu diingatkan terkait kelengkapan atribut seragam sekolah sesuai hari yang ditentukan.",
+        C: "Kerapian Ananda masih perlu banyak perbaikan. Mohon orang tua membiasakan Ananda untuk selalu mengecek kelengkapan dan kerapian seragam sebelum berangkat sekolah.",
         D: "Ananda masih perlu bimbingan dalam menjaga kerapian berpenampilan. Mohon kerja sama orang tua untuk senantiasa mengecek seragam Ananda sebelum berangkat sekolah."
     }
 };
@@ -43,7 +43,8 @@ export const generateBintangReportPdf = async (
     reports: Array<{student: any, evaluation: any, aspects: any, violations?: any[]}>,
     monthName: string,
     printDate: string,
-    user: AppUser | null
+    user: AppUser | null,
+    options?: { schoolName?: string; academicYear?: string; semesterName?: string }
 ) => {
     await ensureBintangLogosLoaded();
     const { default: autoTable } = await getAutoTable();
@@ -65,7 +66,11 @@ export const generateBintangReportPdf = async (
 
         const report = reports[i];
         
-        let currentY = addPdfHeader(doc, { schoolName: 'MI AL IRSYAD AL ISLAMIYYAH KOTA MADIUN' }) + 2; // Reduced gap
+        const resolvedSchoolName = options?.schoolName || 'MI AL IRSYAD AL ISLAMIYYAH KOTA MADIUN';
+        const resolvedAcademicYear = options?.academicYear || '2026/2027';
+        const resolvedSemester = options?.semesterName || 'Ganjil';
+
+        let currentY = addPdfHeader(doc, { schoolName: resolvedSchoolName }) + 2; // Reduced gap
 
         // 2. Title
         doc.setFont('helvetica', 'bold');
@@ -110,7 +115,7 @@ export const generateBintangReportPdf = async (
         doc.text(":", col2X + 25, lineY);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        doc.text("2026/2027", col2X + 28, lineY);
+        doc.text(resolvedAcademicYear, col2X + 28, lineY);
 
         lineY += lineSpacing;
 
@@ -129,7 +134,7 @@ export const generateBintangReportPdf = async (
         doc.text(":", col2X + 25, lineY);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        doc.text("Ganjil", col2X + 28, lineY);
+        doc.text(resolvedSemester, col2X + 28, lineY);
 
         lineY += lineSpacing;
 
@@ -140,7 +145,8 @@ export const generateBintangReportPdf = async (
         doc.text(":", col1X + 25, lineY);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        doc.text("- / -", col1X + 28, lineY);
+        const nisNisn = `${report.student.nis || '-'} / ${report.student.nisn || '-'}`;
+        doc.text(nisNisn, col1X + 28, lineY);
 
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
@@ -155,7 +161,7 @@ export const generateBintangReportPdf = async (
         const checkPageBreak = (requiredSpace: number) => {
             if (currentY + requiredSpace > pageHeight - margin) {
                 doc.addPage();
-                currentY = addPdfHeader(doc, { schoolName: 'MI AL IRSYAD AL ISLAMIYYAH KOTA MADIUN' }) + 5;
+                currentY = addPdfHeader(doc, { schoolName: resolvedSchoolName }) + 5;
             }
         };
 
@@ -299,12 +305,15 @@ export const generateBintangReportPdf = async (
         const formalTemplates = [
             "Ananda telah menunjukkan adab yang sangat baik dan budi pekerti luhur dalam berinteraksi dengan Bapak/Ibu Guru serta teman sebaya. Mohon untuk terus dipertahankan.",
             "Adab dan perilaku Ananda secara umum sudah baik, namun masih perlu arahan dan bimbingan agar senantiasa menjaga tata krama dan lisan dalam pergaulan sehari-hari.",
+            "Adab Ananda masih perlu banyak bimbingan. Mohon perhatian orang tua untuk membantu Ananda memperbaiki tata krama dan sopan santun dalam pergaulan sehari-hari.",
             "Ananda memerlukan perhatian dan bimbingan ekstra dari orang tua di rumah terkait etika dan kesantunan, agar dapat mencerminkan akhlak mulia sesuai harapan kita bersama.",
             "Ananda memiliki kedisiplinan yang sangat tinggi, senantiasa mematuhi aturan kelas, dan menjalankan tugas dengan penuh tanggung jawab.",
             "Kedisiplinan Ananda sudah cukup memadai, namun mohon bantuan orang tua untuk terus memotivasi agar lebih konsisten dalam mematuhi tata tertib sekolah.",
+            "Kedisiplinan Ananda masih kurang konsisten. Mohon bantuan orang tua untuk lebih tegas mengawasi kepatuhan Ananda terhadap jadwal dan aturan sekolah.",
             "Tingkat kedisiplinan Ananda masih butuh perhatian khusus. Kami memohon sinergi dari orang tua untuk lebih intensif memantau dan membimbing kedisiplinan Ananda.",
             "Ananda senantiasa menjaga kebersihan dan kerapian diri dengan konsisten, serta selalu mengenakan atribut seragam sekolah dengan sangat rapi.",
             "Kerapian Ananda terpantau cukup baik, namun sesekali masih perlu diingatkan terkait kelengkapan atribut seragam sekolah sesuai hari yang ditentukan.",
+            "Kerapian Ananda masih perlu banyak perbaikan. Mohon orang tua membiasakan Ananda untuk selalu mengecek kelengkapan dan kerapian seragam sebelum berangkat sekolah.",
             "Ananda masih perlu bimbingan dalam menjaga kerapian berpenampilan. Mohon kerja sama orang tua untuk senantiasa mengecek seragam Ananda sebelum berangkat sekolah.",
             "Sangat santun dan ramah kepada guru maupun teman.",
             "Mohon tingkatkan lagi tata krama saat berinteraksi.",
@@ -429,7 +438,7 @@ export const downloadBintangReportAction = async ({
     if (studentId) {
         const { data: sData, error: sError } = await supabase
             .from('students')
-            .select('id, name, access_code, class_id')
+            .select('id, name, access_code, class_id, nis, nisn')
             .eq('id', studentId)
             .single();
         if (sError) throw sError;
@@ -454,7 +463,7 @@ export const downloadBintangReportAction = async ({
 
         const { data: sData, error: sError } = await supabase
             .from('students')
-            .select('id, name, access_code, class_id')
+            .select('id, name, access_code, class_id, nis, nisn')
             .eq('class_id', classId)
             .is('deleted_at', null)
             .order('name', { ascending: true });
@@ -489,7 +498,17 @@ export const downloadBintangReportAction = async ({
     const monthName = monthDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
     const printDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    await generateBintangReportPdf(doc, reports, monthName, printDate, user);
+    // Derive academic year and semester from the selected month
+    const monthSemester = monthDate.getMonth() >= 6 ? '1' : '2';
+    const monthAcadYearStart = monthSemester === '1' ? monthDate.getFullYear() : monthDate.getFullYear() - 1;
+    const academicYear = `${monthAcadYearStart}/${monthAcadYearStart + 1}`;
+    const semesterName = monthSemester === '1' ? 'Ganjil' : 'Genap';
+
+    await generateBintangReportPdf(doc, reports, monthName, printDate, user, {
+        schoolName: undefined, // Will use default from addPdfHeader
+        academicYear,
+        semesterName
+    });
     
     const fileName = classId 
         ? `Rapor_Bintang_Kelas_${reports[0]?.student?.classes?.name || classId}_${monthName.replace(/\s+/g, '_')}.pdf`

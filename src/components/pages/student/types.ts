@@ -3,7 +3,9 @@ import { Database } from '../../../services/database.types';
 export type StudentRow = Database['public']['Tables']['students']['Row'];
 export type ClassRow = Database['public']['Tables']['classes']['Row'];
 export type AttendanceRow = Database['public']['Tables']['attendance']['Row'];
-export type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
+export type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'] & {
+    recorded_by_name?: string | null;
+};
 
 /**
  * Base report row from database.
@@ -112,9 +114,11 @@ export type QuizPointRow = QuizPointRowBase & {
     category?: PointCategory;
     /** Maximum points value */
     max_points?: number;
+    /** F17-2: nama guru yang mencatat point (untuk akuntabilitas akses kolaboratif) */
+    recorded_by_name?: string | null;
 };
 
-export type StudentWithClass = StudentRow & { classes: Pick<ClassRow, 'id' | 'name'> | null };
+export type StudentWithClass = StudentRow & { classes: Pick<ClassRow, 'id' | 'name' | 'user_id'> | null };
 
 export type StudentDetailsData = {
     student: StudentWithClass;

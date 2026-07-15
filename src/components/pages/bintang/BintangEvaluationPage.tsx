@@ -8,6 +8,7 @@ import { downloadBintangReportAction } from '../../../services/bintangPdfGenerat
 import { supabase } from '../../../services/supabase';
 import { Send, FileText, CheckCircle, Zap, Shield, AlertTriangle, Sparkles, Info, Printer } from 'lucide-react';
 import { Modal } from '../../ui/Modal';
+import { useConfirmation } from '../../ui/ConfirmationDialog';
 import { useToast } from '../../../hooks/useToast';
 
 
@@ -29,16 +30,25 @@ const aspectMeta = {
 export const BintangEvaluationPage: React.FC = () => {
     const { user } = useAuth();
     const toast = useToast();
+    const { confirm: confirmPublish, Dialog: PublishConfirmDialog } = useConfirmation();
     
-    const [classes, setClasses] = useState<any[]>([]);
+    const [classes, setClasses] = useState<Array<{id: string; name: string}>>([]);
     const [selectedClass, setSelectedClass] = useState('');
-    
+
     const currentMonth = new Date().toISOString().slice(0, 7);
     const [selectedMonth, setSelectedMonth] = useState(currentMonth);
-    
-    const [students, setStudents] = useState<any[]>([]);
-    const [evaluations, setEvaluations] = useState<any[]>([]);
-    const [violations, setViolations] = useState<any[]>([]);
+
+    const [students, setStudents] = useState<Array<{id: string; name: string}>>([]);
+    const [evaluations, setEvaluations] = useState<Array<{
+        id: string; student_id: string; month: string;
+        adab_score: string | null; kedisiplinan_score: string | null; kerapian_score: string | null;
+        adab_notes: string | null; kedisiplinan_notes: string | null; kerapian_notes: string | null;
+        catatan_wali: string | null; is_published: boolean; evaluator_id: string;
+    }>>([]);
+    const [violations, setViolations] = useState<Array<{
+        id: string; student_id: string; description: string; points: number;
+        date: string; severity: string | null; students: {name: string} | null;
+    }>>([]);
     const [isLoading, setIsLoading] = useState(false);
     
     // Edit Modal state
@@ -74,7 +84,7 @@ export const BintangEvaluationPage: React.FC = () => {
     }, [selectedClass, selectedMonth]);
 
     const fetchClasses = async () => {
-        const { data } = await supabase.from('classes').select('id, name').eq('is_archived', false);
+        const { data } = await supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false);
         if (data) setClasses(data);
     };
 
@@ -230,9 +240,9 @@ export const BintangEvaluationPage: React.FC = () => {
         
         if (existingEval) {
             setFormData({
-                adab_score: existingEval.adab_score || aspect.ADAB.grade,
-                kedisiplinan_score: existingEval.kedisiplinan_score || aspect.KEDISIPLINAN.grade,
-                kerapian_score: existingEval.kerapian_score || aspect.KERAPIAN.grade,
+                adab_score: (existingEval.adab_score as BintangGrade) || aspect.ADAB.grade,
+                kedisiplinan_score: (existingEval.kedisiplinan_score as BintangGrade) || aspect.KEDISIPLINAN.grade,
+                kerapian_score: (existingEval.kerapian_score as BintangGrade) || aspect.KERAPIAN.grade,
                 adab_notes: existingEval.adab_notes || '',
                 kedisiplinan_notes: existingEval.kedisiplinan_notes || '',
                 kerapian_notes: existingEval.kerapian_notes || '',
@@ -314,17 +324,25 @@ export const BintangEvaluationPage: React.FC = () => {
     };
 
     const handlePublish = async () => {
-        setIsPublishing(true);
-        try {
-            await bintangService.publishEvaluations(selectedClass, selectedMonth);
-            toast.success('Rapor BINTANG berhasil dipublikasikan');
-            fetchData();
-        } catch (error) {
-            console.error(error);
-            toast.error('Gagal mempublikasikan rapor');
-        } finally {
-            setIsPublishing(false);
-        }
+        await confirmPublish({
+            title: 'Publikasi Rapor BINTANG',
+            message: `Anda akan mempublikasikan rapor BINTANG untuk ${evalStats.filled} siswa. Rapor yang sudah dipublikasikan tidak dapat diubah lagi. Lanjutkan?`,
+            confirmText: 'Ya, Publikasikan',
+            variant: 'warning',
+            onConfirm: async () => {
+                setIsPublishing(true);
+                try {
+                    await bintangService.publishEvaluations(selectedClass, selectedMonth);
+                    toast.success('Rapor BINTANG berhasil dipublikasikan');
+                    fetchData();
+                } catch (error) {
+                    console.error(error);
+                    toast.error('Gagal mempublikasikan rapor');
+                } finally {
+                    setIsPublishing(false);
+                }
+            }
+        });
     };
     
     // Progress stats
@@ -585,6 +603,9 @@ export const BintangEvaluationPage: React.FC = () => {
                 </Card>
                 )}
             </div>
+
+            {/* Publish Confirmation */}
+            {PublishConfirmDialog}
 
             {/* Edit Modal */}
             <Modal

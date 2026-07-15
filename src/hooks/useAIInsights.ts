@@ -78,7 +78,9 @@ export const useAIInsights = (
       const today = getTodayDate();
 
       // Save to cache
-      cacheInsight(generatedInsight, userId);
+      if (userId) {
+        await cacheInsight(generatedInsight, userId);
+      }
 
       // Update state
       setInsight(generatedInsight);
@@ -94,20 +96,35 @@ export const useAIInsights = (
   /**
    * Clears current insight from state and cache.
    */
-  const clearInsight = useCallback(() => {
+  const clearInsight = useCallback(async () => {
     setInsight(null);
     setLastGeneratedDate(null);
     setError(null);
-  }, []);
+    if (userId) {
+      await clearInsightCache(userId);
+    }
+  }, [userId]);
 
   // Load cached insight on mount or when userId changes
   useEffect(() => {
-    const cachedInsight = getCachedInsight(userId);
+    let isMounted = true;
 
-    if (cachedInsight) {
-      setInsight(cachedInsight);
-      setLastGeneratedDate(getTodayDate());
-    }
+    const loadCache = async () => {
+      if (!userId) return;
+      
+      const cachedInsight = await getCachedInsight(userId);
+      
+      if (isMounted && cachedInsight) {
+        setInsight(cachedInsight);
+        setLastGeneratedDate(getTodayDate());
+      }
+    };
+
+    loadCache();
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId]);
 
   // Auto-generate insight if data is available and cache is expired
@@ -140,6 +157,6 @@ export const useAIInsights = (
     error,
     lastGeneratedDate,
     generateInsight,
-    clearInsight,
+    clearInsight: () => { clearInsight(); },
   };
 };

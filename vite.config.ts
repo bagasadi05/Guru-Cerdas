@@ -143,7 +143,23 @@ export default defineConfig(({ mode }) => {
     },
     // Optimize dependencies
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-router-dom'],
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@supabase/supabase-js',
+        '@tanstack/react-query',
+        'framer-motion',
+        'lucide-react',
+        'recharts',
+        'exceljs',
+        'jspdf',
+        'jspdf-autotable',
+        'zod',
+        'date-fns',
+        'react-hook-form',
+        '@hookform/resolvers'
+      ],
     },
     test: {
       globals: true,

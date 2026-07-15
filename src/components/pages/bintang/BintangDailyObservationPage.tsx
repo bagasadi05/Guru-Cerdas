@@ -33,12 +33,15 @@ export const BintangDailyObservationPage: React.FC = () => {
     const { user } = useAuth();
     const toast = useToast();
     
-    const [classes, setClasses] = useState<any[]>([]);
+    const [classes, setClasses] = useState<Array<{id: string; name: string}>>([]);
     const [selectedClass, setSelectedClass] = useState('');
     const currentMonth = new Date().toISOString().slice(0, 7);
     const [selectedMonth, setSelectedMonth] = useState(currentMonth);
-    
-    const [violations, setViolations] = useState<any[]>([]);
+
+    const [violations, setViolations] = useState<Array<{
+        id: string; student_id: string; description: string; points: number;
+        date: string; severity: string | null; students: {name: string} | null;
+    }>>([]);
     const [isLoading, setIsLoading] = useState(false);
     
     // Modal states
@@ -48,11 +51,11 @@ export const BintangDailyObservationPage: React.FC = () => {
     const [obsIsPositive, setObsIsPositive] = useState(true);
     const [obsNotes, setObsNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [studentsInClass, setStudentsInClass] = useState<any[]>([]);
+    const [studentsInClass, setStudentsInClass] = useState<Array<{id: string; name: string}>>([]);
 
     useEffect(() => {
         const fetchClasses = async () => {
-            const { data } = await supabase.from('classes').select('id, name').eq('is_archived', false);
+            const { data } = await supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false);
             if (data) setClasses(data);
         };
         fetchClasses();
@@ -65,7 +68,7 @@ export const BintangDailyObservationPage: React.FC = () => {
                     .from('students')
                     .select('id, name')
                     .eq('class_id', selectedClass)
-                    .eq('status', 'active')
+                    .is('deleted_at', null)
                     .order('name');
                 setStudentsInClass(data || []);
             };

@@ -7,6 +7,7 @@ type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
 
 interface WeeklyScheduleViewProps {
     schedule: ScheduleRow[];
+    classes?: { id: string; name: string }[];
     onEdit: (item: ScheduleRow) => void;
     onIsiJurnal?: (item: ScheduleRow) => void;
 }
@@ -32,7 +33,7 @@ const getColorForSubject = (subject: string): string => {
     return colors[Math.abs(hash) % colors.length];
 };
 
-export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule, onEdit, onIsiJurnal }) => {
+export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule, classes = [], onEdit, onIsiJurnal }) => {
     const scheduleByDay = useMemo(() => {
         const map = new Map<string, ScheduleRow[]>();
         daysOfWeek.forEach(day => map.set(day, []));
@@ -47,6 +48,12 @@ export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule
         });
         return map;
     }, [schedule]);
+
+    const classNameMap = useMemo(() => {
+        const map = new Map<string, string>();
+        classes.forEach(c => map.set(c.id, c.name));
+        return map;
+    }, [classes]);
 
     const hasSchedule = useMemo(() => Array.from(scheduleByDay.values()).some(list => list.length > 0), [scheduleByDay]);
 
@@ -101,7 +108,7 @@ export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule
                                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/50">
                                             <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-500">
                                                 <UsersIcon className="w-3 h-3" />
-                                                <span className="text-xxs font-medium">{item.class_id}</span>
+                                                <span className="text-xxs font-medium">{(item.class_id ? classNameMap.get(item.class_id) : null) || item.class_id || 'N/A'}</span>
                                             </div>
                                             {onIsiJurnal && (
                                                 <button

@@ -14,7 +14,6 @@ import { ViolationExportPanel } from './components/ViolationExportPanel';
 import { InputMode, Step, StudentFilter, StudentRow, AcademicRecordRow, ClassRow, ViolationRow } from './types';
 import { ImportPreviewModal } from '../bulk-grade-input/components/ImportPreviewModal';
 import { violationList } from '../../../services/violations.data';
-import { useToast } from '../../../hooks/useToast';
 
 export interface MassInputPageViewProps {
     step: Step;
@@ -97,6 +96,7 @@ export interface MassInputPageViewProps {
     handleDeleteConfirmClick: () => void;
     // import modal
     handleImport: (data: Record<string, unknown>[]) => void;
+    handleImportConfirm: (mappedScores: Record<string, string>) => void;
     pendingImportData: any[] | null;
     setPendingImportData: (v: any[] | null) => void;
     bypassDuplicateGuard: boolean;
@@ -104,7 +104,6 @@ export interface MassInputPageViewProps {
 }
 
 export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
-    const toast = useToast();
     const { semesters } = useSemester();
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
     const {
@@ -125,7 +124,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         isSubmitting, isDeleting, studentsData, existingViolations, isLoadingViolations,
         showChartModal, setShowChartModal,
         confirmDeleteModal, setConfirmDeleteModal, confirmDeleteText, setConfirmDeleteText,
-        handleDeleteConfirmClick, handleImport, pendingImportData, setPendingImportData,
+        handleDeleteConfirmClick, handleImport, handleImportConfirm, pendingImportData, setPendingImportData,
         bypassDuplicateGuard, setBypassDuplicateGuard,
     } = props;
 
@@ -304,15 +303,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                 onClose={() => setPendingImportData(null)}
                                 parsedData={pendingImportData}
                                 students={studentsData?.map(s => ({ id: s.id, name: s.name })) || []}
-                                onConfirm={(mappedScores) => {
-                                    setScores(prev => ({ ...prev, ...mappedScores }));
-                                    props.setSelectedStudentIds?.(prev => {
-                                        const next = new Set(prev);
-                                        Object.keys(mappedScores).forEach(id => next.add(id));
-                                        return next;
-                                    });
-                                    toast.success(`Berhasil memproses dan menerapkan ${Object.keys(mappedScores).length} nilai siswa.`);
-                                }}
+                                onConfirm={handleImportConfirm}
                             />
                         )}
                     </>

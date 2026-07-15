@@ -144,13 +144,42 @@ const SchedulePage: React.FC = () => {
                 .select('*')
                 .is('deleted_at', null)
                 .eq('is_archived', false)
-                .eq('user_id', user!.id)
                 .order('name');
             if (error) throw error;
             return data || [];
         },
         enabled: !!user,
     });
+
+    const { data: teacherAssignments = [] } = useQuery({
+        queryKey: ['teacherClassAssignments', 'schedule', user?.id],
+        queryFn: async () => {
+            if (!user) return [];
+            const { data, error } = await supabase
+                .from('teacher_class_assignments')
+                .select('*')
+                .eq('teacher_user_id', user.id)
+                .is('deleted_at', null);
+            if (error) throw error;
+            return data || [];
+        },
+        enabled: !!user,
+    });
+
+    const accessibleClasses = useMemo(() => {
+        const assignedClassIds = new Set(
+            teacherAssignments.map(a => a.class_id)
+        );
+        return classes.filter(c =>
+            c.user_id === user?.id || assignedClassIds.has(c.id)
+        );
+    }, [classes, user, teacherAssignments]);
+
+    const classNameMap = useMemo(() => {
+        const map = new Map<string, string>();
+        classes.forEach(c => map.set(c.id, c.name));
+        return map;
+    }, [classes]);
 
     const schedule = rawSchedule;
     const scheduleByDay = useMemo(() => {
@@ -249,7 +278,7 @@ const SchedulePage: React.FC = () => {
             return;
         }
 
-        if (!classes.some((classItem) => classItem.id === formData.class_id)) {
+        if (!accessibleClasses.some((classItem) => classItem.id === formData.class_id)) {
             setErrors({ class_id: 'Pilih kelas yang tersedia pada daftar.' });
             return;
         }
@@ -414,7 +443,7 @@ const SchedulePage: React.FC = () => {
                     <ScheduleViewToolbar viewMode={viewMode} selectedDay={selectedDay} currentDaySessions={currentDaySchedule.length} onViewModeChange={setViewMode} />
 
                     {viewMode === 'weekly' ? (
-                        <WeeklyScheduleView schedule={schedule} onEdit={handleOpenEditModal} onIsiJurnal={handleIsiJurnal} />
+                        <WeeklyScheduleView schedule={schedule} classes={classes} onEdit={handleOpenEditModal} onIsiJurnal={handleIsiJurnal} />
                     ) : (
                         <>
                             {currentDaySchedule.length === 0 ? (
@@ -439,6 +468,7 @@ const SchedulePage: React.FC = () => {
                                             <motion.div key={item.id} variants={staggerItemVariants} custom={index}>
                                                 <ScheduleCard
                                                     item={item}
+                                                    classNameLabel={item.class_id ? classNameMap.get(item.class_id) : undefined}
                                                     isOngoing={status === 'ongoing'}
                                                     isPast={status === 'past'}
                                                     onEdit={handleOpenEditModal}
@@ -482,11 +512,11 @@ const SchedulePage: React.FC = () => {
                                 <span>Gagal memuat kelas.</span>
                                 <Button type="button" size="sm" variant="ghost" onClick={() => refetchClasses()}>Coba lagi</Button>
                             </div>
-                        ) : classes.length > 0 ? (
+                        ) : accessibleClasses.length > 0 ? (
                             <CustomDropdown
                                 value={formData.class_id ?? ''}
                                 onChange={(val) => setFormData({ ...formData, class_id: val })}
-                                options={classes.map(c => ({ value: c.id, label: c.name }))}
+                                options={accessibleClasses.map(c => ({ value: c.id, label: c.name }))}
                                 placeholder="Pilih Kelas"
                             />
                         ) : (
@@ -498,7 +528,7 @@ const SchedulePage: React.FC = () => {
                     </FormInputWrapper>
                     <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="ghost" onClick={handleCloseModal} disabled={scheduleMutation.isPending}>Batal</Button>
-                        <Button type="submit" disabled={scheduleMutation.isPending || isLoadingClasses || isClassesError || classes.length === 0}>{scheduleMutation.isPending ? 'Menyimpan...' : 'Simpan'}</Button>
+                        <Button type="submit" disabled={scheduleMutation.isPending || isLoadingClasses || isClassesError || accessibleClasses.length === 0}>{scheduleMutation.isPending ? 'Menyimpan...' : 'Simpan'}</Button>
                     </div>
                 </form>
             </Modal>

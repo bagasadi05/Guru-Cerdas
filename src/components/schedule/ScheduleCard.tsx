@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '..
 
 export interface ScheduleCardProps {
     item: ScheduleRow;
+    classNameLabel?: string;
     isOngoing: boolean;
     isPast: boolean;
     onEdit: (item: ScheduleRow) => void;
@@ -16,7 +17,7 @@ export interface ScheduleCardProps {
     onIsiJurnal?: (item: ScheduleRow) => void;
 }
 
-export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, isOngoing, isPast, onEdit, onDuplicate, onDelete, getDuration, onIsiJurnal }) => {
+export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel, isOngoing, isPast, onEdit, onDuplicate, onDelete, getDuration, onIsiJurnal }) => {
     const colorClass = useMemo(() => getColorForSubject(item.subject), [item.subject]);
 
     return (
@@ -57,7 +58,7 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, isOngoing, isP
                     </h3>
                     <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                         <UsersIcon className="w-3.5 h-3.5" />
-                        <span className="text-xs font-medium">Kelas {item.class_id}</span>
+                        <span className="text-xs font-medium">Kelas {classNameLabel || item.class_id}</span>
                     </div>
                 </div>
 

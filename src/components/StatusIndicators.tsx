@@ -675,6 +675,56 @@ export const LoadingWithStatus: React.FC<LoadingWithStatusProps> = ({
 };
 
 // ============================================
+// SW UPDATE BANNER
+// ============================================
+
+/**
+ * Non-intrusive banner that appears when a new Service Worker is available.
+ * Users can choose to reload at their own convenience instead of being
+ * force-reloaded mid-task (which was causing the "reload when saving" bug).
+ */
+export const SWUpdateBanner: React.FC = () => {
+    const [updateFn, setUpdateFn] = useState<(() => void) | null>(null);
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const handler = (e: Event) => {
+            const { updateSW } = (e as CustomEvent).detail as { updateSW: (reload?: boolean) => void };
+            setUpdateFn(() => () => updateSW(true));
+            setVisible(true);
+        };
+        window.addEventListener('sw-update-available', handler);
+        return () => window.removeEventListener('sw-update-available', handler);
+    }, []);
+
+    if (!visible) return null;
+
+    return (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 rounded-2xl bg-slate-900 dark:bg-white px-5 py-3 shadow-2xl ring-1 ring-white/10 dark:ring-slate-900/10 animate-slide-up">
+            <RefreshCw className="w-4 h-4 text-emerald-400 dark:text-emerald-600 flex-shrink-0" />
+            <span className="text-sm font-medium text-white dark:text-slate-900">
+                Versi terbaru tersedia
+            </span>
+            <button
+                type="button"
+                onClick={() => updateFn?.()}
+                className="ml-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-3 py-1 text-xs font-semibold text-white transition-colors"
+            >
+                Perbarui
+            </button>
+            <button
+                type="button"
+                onClick={() => setVisible(false)}
+                className="text-slate-400 dark:text-slate-500 hover:text-white dark:hover:text-slate-900 transition-colors"
+                aria-label="Tutup notifikasi"
+            >
+                <X className="w-4 h-4" />
+            </button>
+        </div>
+    );
+};
+
+// ============================================
 // EXPORTS
 // ============================================
 

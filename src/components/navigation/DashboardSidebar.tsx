@@ -25,11 +25,9 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, isHomeroom
 
   const easyModePaths = useMemo(() => new Set([
     '/dashboard',
-    '/absensi',
+    '/input-massal',
     '/siswa',
-    '/jadwal',
-    '/jurnal',
-    '/tugas',
+    '/absensi',
   ]), []);
 
   const isOutsideEasyMenu = navSections.some((section) =>

@@ -13,7 +13,7 @@ import Layout from './components/Layout';
 import PwaPrompt from './components/PwaPrompt';
 import { queryClient } from './services/queryClient';
 import { AppProviders } from './components/AppProviders';
-import { OfflineBanner } from './components/StatusIndicators';
+import { OfflineBanner, SWUpdateBanner } from './components/StatusIndicators';
 import { GlobalSearchProvider } from './components/GlobalSearchContext';
 import { TourProvider } from './components/OnboardingHelp';
 import { useKeyboardShortcuts } from './components/advanced-features/useKeyboardShortcuts';
@@ -60,6 +60,7 @@ const JurnalMengajarPage = lazy(() => import('@/components/pages/JurnalMengajarP
 const PemulihanPage = lazy(() => import('@/components/pages/PemulihanPage'));
 const TindakLanjutPage = lazy(() => import('@/components/pages/TindakLanjutPage'));
 const BintangDashboardPage = lazy(() => import('@/components/pages/bintang/BintangDashboardPage'));
+const ModulAjarCreatorPage = lazy(() => import('@/components/pages/modul-ajar/ModulAjarCreatorPage'));
 
 const SimpleHelpCenter = lazy(() => import('./components/SimpleHelpCenter').then(m => ({ default: m.SimpleHelpCenter })));
 const GlobalSearchModal = lazy(() => import('./components/SearchSystem').then(m => ({ default: m.GlobalSearchModal })));
@@ -77,6 +78,13 @@ const AppLoadingScreen = () => (
 
 const PrivateRoutes = () => {
   const { session, loading } = useAuth();
+
+  React.useEffect(() => {
+    console.log('[PrivateRoutes] mounted!');
+    return () => console.log('[PrivateRoutes] unmounted!');
+  }, []);
+
+  console.log('[PrivateRoutes] render:', { hasSession: !!session, loading });
 
   if (loading) {
     return <AppLoadingScreen />;
@@ -177,6 +185,7 @@ function AppContent() {
               <Route path="/tindak-lanjut" element={<AsyncErrorBoundary context="TindakLanjutPage"><TindakLanjutPage /></AsyncErrorBoundary>} />
               <Route path="/pemulihan" element={<AsyncErrorBoundary context="PemulihanPage"><PemulihanPage /></AsyncErrorBoundary>} />
               <Route path="/bintang" element={<AsyncErrorBoundary context="BintangDashboardPage"><BintangDashboardPage /></AsyncErrorBoundary>} />
+              <Route path="/modul-ajar" element={<AsyncErrorBoundary context="ModulAjarCreatorPage"><ModulAjarCreatorPage /></AsyncErrorBoundary>} />
               <Route path="/admin" element={<AsyncErrorBoundary context="AdminPage"><AdminPage /></AsyncErrorBoundary>} />
             </Route>
 
@@ -188,6 +197,7 @@ function AppContent() {
 
           <PwaPrompt />
           <OfflineBanner />
+          <SWUpdateBanner />
           <Suspense fallback={null}>
             <GlobalSearchModal onSelect={handleSearchResult} />
             <SimpleHelpCenter

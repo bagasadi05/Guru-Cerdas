@@ -10,12 +10,13 @@ const OPENROUTER_DIRECT_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_PROXY = '/api/openrouter';
 
 // Primary reasoning model + free fallbacks
-const PRIMARY_MODEL = 'google/gemma-4-31b-it:free';
-const FALLBACK_MODELS = [
-    PRIMARY_MODEL,
-    'google/gemma-4-26b-a4b-it:free',
+const CUSTOM_MODEL = import.meta.env.VITE_AI_MODEL || '';
+
+const FALLBACK_MODELS = CUSTOM_MODEL ? [CUSTOM_MODEL] : [
+    'tencent/hy3:free',
+    'google/gemma-2-9b-it:free',
     'meta-llama/llama-3.3-70b-instruct:free',
-    'meta-llama/llama-3.2-3b-instruct:free',
+    'meta-llama/llama-3.1-8b-instruct:free',
 ];
 
 export interface OpenRouterMessage {
@@ -52,7 +53,7 @@ export async function generateOpenRouterContent(
     // 2. Dev direct call with API key
     // 3. Default same-domain proxy /api/openrouter (production Vercel)
     const endpoint = OPENROUTER_PROXY_URL || (IS_DEV && DEV_API_KEY ? OPENROUTER_DIRECT_URL : DEFAULT_PROXY);
-    const authHeaders: Record<string, string> = (!OPENROUTER_PROXY_URL && IS_DEV && DEV_API_KEY)
+    const authHeaders: Record<string, string> = DEV_API_KEY
         ? { "Authorization": `Bearer ${DEV_API_KEY}` }
         : {};
 
@@ -90,9 +91,18 @@ export async function generateOpenRouterContent(
             clearTimeout(timeoutId);
 
             if (response.status === 429) {
-                logger.warn(`Model ${model} rate limited (429). Switch to next model.`, 'OpenRouter');
+                const errorText = await response.text();
+                logger.warn(`Model ${model} rate limited (429). Switch to next model.`, 'OpenRouter', { errorText });
                 lastError = new Error(`Rate limit exceeded for ${model}`);
-                continue; // Try next model immediately
+                
+                // If it's our proxy's rate limit, all subsequent calls will fail too, so break immediately.
+                if (errorText.includes('Rate limit exceeded') && !errorText.includes('openrouter')) {
+                    throw new Error("Anda telah mencapai batas wawasan AI. Silakan tunggu beberapa saat (1 menit) sebelum mencoba lagi.");
+                }
+
+                // Add a small delay (1.5 seconds) before trying the next model to avoid hitting burst limits again
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                continue;
             }
 
             if (!response.ok) {
@@ -101,6 +111,7 @@ export async function generateOpenRouterContent(
                 if (response.status >= 500) {
                     logger.warn(`Model ${model} server error (${response.status}). Switch to next model.`, 'OpenRouter');
                     lastError = new Error(`Server error ${response.status} from ${model}`);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     continue;
                 }
                 throw new Error(`OpenRouter API Error (${model}): ${response.status} ${response.statusText} - ${errorText}`);

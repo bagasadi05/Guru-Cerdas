@@ -146,9 +146,22 @@ const UsedPointsHistory: React.FC<{ records: QuizPointRow[] }> = ({ records }) =
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-600 dark:text-gray-400 truncate">{record.quiz_name}</p>
-                            <p className="text-xs text-gray-400">
-                                Digunakan untuk {record.used_for_subject || record.subject}
-                                {record.used_at && ` • ${new Date(record.used_at).toLocaleDateString('id-ID')}`}
+                            <p className="text-xs text-gray-400 flex items-center gap-1.5 flex-wrap">
+                                <span>Digunakan untuk {record.used_for_subject || record.subject}</span>
+                                {record.used_at && (
+                                    <>
+                                        <span>•</span>
+                                        <span>{new Date(record.used_at).toLocaleDateString('id-ID')}</span>
+                                    </>
+                                )}
+                                {record.recorded_by_name && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="text-slate-600 dark:text-slate-400 font-semibold bg-gray-200 dark:bg-slate-700/50 px-1 py-0.5 rounded text-[10px]">
+                                            Oleh: {record.recorded_by_name}
+                                        </span>
+                                    </>
+                                )}
                             </p>
                         </div>
                         <span className="text-xs px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-500">+1</span>
@@ -288,8 +301,18 @@ const ActivityPointsHistory: React.FC<{
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                    {record.subject || 'N/A'} &middot; {new Date(record.quiz_date || record.created_at).toLocaleDateString('id-ID')}
+                                <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 flex-wrap mt-1">
+                                    <span>{record.subject || 'N/A'}</span>
+                                    <span>&middot;</span>
+                                    <span>{new Date(record.quiz_date || record.created_at).toLocaleDateString('id-ID')}</span>
+                                    {record.recorded_by_name && (
+                                        <>
+                                            <span>&middot;</span>
+                                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50/80 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded-md text-[10px]">
+                                                Oleh: {record.recorded_by_name}
+                                            </span>
+                                        </>
+                                    )}
                                 </p>
                             </div>
                         </div>

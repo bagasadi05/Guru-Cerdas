@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, ClipboardCheck, BarChart3 } from 'lucide-react';
+import { Star, ClipboardCheck, BarChart3, ShieldAlert } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../../../hooks/useAuth';
+import { supabase } from '../../../services/supabase';
 import BintangMentoringPage from './BintangMentoringPage';
 import BintangDailyObservationPage from './BintangDailyObservationPage';
 import BintangEvaluationPage from './BintangEvaluationPage';
@@ -8,7 +11,40 @@ import BintangEvaluationPage from './BintangEvaluationPage';
 type TabId = 'mentoring' | 'violation-recap' | 'evaluation';
 
 const BintangDashboardPage: React.FC = () => {
+    const { user, isAdmin } = useAuth();
     const [activeTab, setActiveTab] = useState<TabId>('mentoring');
+
+    // Check if user is a homeroom teacher (wali kelas)
+    const { data: teacherAssignments = [] } = useQuery({
+        queryKey: ['teacher_assignments', user?.id],
+        queryFn: async () => {
+            if (!user) return [];
+            const { data } = await supabase
+                .from('teacher_class_assignments')
+                .select('*')
+                .eq('teacher_user_id', user.id);
+            return data || [];
+        },
+        enabled: !!user,
+    });
+
+    const isHomeroomTeacher = useMemo(() => {
+        return teacherAssignments.some((a: any) => a.assignment_role === 'homeroom');
+    }, [teacherAssignments]);
+
+    // Access control: only admin or homeroom teacher
+    if (!isAdmin && !isHomeroomTeacher) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
+                <ShieldAlert size={64} className="text-rose-400 mb-4" />
+                <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Akses Ditolak</h2>
+                <p className="text-slate-500 dark:text-slate-400 max-w-md">
+                    Program BINTANG hanya dapat diakses oleh <strong>Admin</strong> dan <strong>Wali Kelas</strong>.
+                    Hubungi admin jika Anda memerlukan akses.
+                </p>
+            </div>
+        );
+    }
 
     const tabs: Array<{ id: TabId; label: string; icon: React.ComponentType<any> }> = [
         { id: 'mentoring', label: 'Jurnal Pembinaan', icon: Star },
@@ -57,7 +93,7 @@ const BintangDashboardPage: React.FC = () => {
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+                            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 relative">
                                 <BintangMentoringPage />
                             </div>
                         </motion.div>
@@ -70,7 +106,7 @@ const BintangDashboardPage: React.FC = () => {
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+                            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 relative">
                                 <BintangDailyObservationPage />
                             </div>
                         </motion.div>
@@ -83,7 +119,7 @@ const BintangDashboardPage: React.FC = () => {
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+                            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 relative">
                                 <BintangEvaluationPage />
                             </div>
                         </motion.div>

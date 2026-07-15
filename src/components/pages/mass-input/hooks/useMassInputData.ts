@@ -41,7 +41,6 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             return (data || []) as TeacherClassAssignmentRow[];
         },
         enabled: !!user,
-        staleTime: 0,
     });
 
     const { data: classes, isLoading: isLoadingClasses } = useQuery({
@@ -61,7 +60,6 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             if (error) throw error; return (data || []) as unknown as ClassRow[];
         },
         enabled: !!user,
-        staleTime: 0,
     });
 
     const { data: studentsData, isLoading: isLoadingStudents } = useQuery({

@@ -68,7 +68,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       return data || [];
     },
     enabled: !!user,
-    staleTime: 0,
   });
 
   const isHomeroomTeacher = useMemo(() => {
@@ -129,6 +128,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       mediaQuery.addListener(checkMobile);
       return () => mediaQuery.removeListener(checkMobile);
     }
+  }, []);
+
+  useEffect(() => {
+    console.log('[Layout] mounted!');
+    return () => console.log('[Layout] unmounted!');
   }, []);
 
   useEffect(() => {

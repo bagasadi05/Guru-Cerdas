@@ -325,8 +325,16 @@ const GradesPanel: React.FC<{
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                                    {new Date(record.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1.5">
+                                                    <span>{new Date(record.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                                    {record.recorded_by_name && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded-md text-[10px]">
+                                                                Oleh: {record.recorded_by_name}
+                                                            </span>
+                                                        </>
+                                                    )}
                                                 </p>
                                                 {record.notes && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 italic">"{record.notes}"</p>}
                                             </div>

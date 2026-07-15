@@ -107,7 +107,11 @@ export const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
         };
     });
 
-    const hasErrors = validatedRows.some(r => r.selectedStudentId !== '' && r.score.trim() !== '' && !r.validation.isValid);
+    const mappedStudentIds = rows.map(r => r.selectedStudentId).filter(Boolean);
+    const duplicateStudentIds = Array.from(new Set(mappedStudentIds.filter((id, index) => mappedStudentIds.indexOf(id) !== index)));
+    const hasDuplicates = duplicateStudentIds.length > 0;
+
+    const hasErrors = validatedRows.some(r => r.selectedStudentId !== '' && r.score.trim() !== '' && !r.validation.isValid) || hasDuplicates;
 
     // Calculate statistics
     const stats = rows.reduce((acc, row) => {
@@ -142,6 +146,25 @@ export const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                     Berikut adalah pratinjau hasil pembacaan berkas Excel Anda. Silakan verifikasi kecocokan nama dan nilai sebelum menerapkannya ke tabel utama.
                 </p>
+
+                {/* Duplicate Student Mapping Banner */}
+                {hasDuplicates && (
+                    <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 animate-fade-in">
+                        <div className="flex items-start gap-2.5">
+                            <AlertTriangleIcon className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                                <p className="text-sm font-bold text-red-800 dark:text-red-300">
+                                    Duplikasi Pemetaan Siswa Terdeteksi
+                                </p>
+                                <p className="text-xs text-red-700 dark:text-red-400 mt-0.5">
+                                    Ada beberapa baris dari Excel yang dipetakan ke siswa yang sama: {
+                                        duplicateStudentIds.map(id => students.find(s => s.id === id)?.name).filter(Boolean).join(', ')
+                                    }. Harap pilih siswa yang berbeda atau kosongkan pemetaan yang tidak sesuai sebelum melanjutkan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Error Banner */}
                 {hasErrors && (

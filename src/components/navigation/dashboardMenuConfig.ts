@@ -28,12 +28,12 @@ const adminMenuItem: DashboardMenuItem = { href: '/admin', label: 'Panel Admin',
 const baseNavSections: DashboardMenuSection[] = [
   {
     id: 'primary',
-    label: 'Utama',
+    label: 'Menu Utama',
     items: [
       { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
-      { href: '/absensi', label: 'Kehadiran Siswa', icon: ClipboardIcon },
-      { href: '/siswa', label: 'Direktori Siswa', icon: UsersIcon },
-      { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
+      { href: '/input-massal', label: 'Input Penilaian', icon: ClipboardPenIcon },
+      { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
+      { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
     ],
   },
   {
@@ -42,8 +42,9 @@ const baseNavSections: DashboardMenuSection[] = [
     items: [
       { href: '/jadwal', label: 'Jadwal Kelas', icon: CalendarIcon },
       { href: '/jurnal', label: 'Jurnal Harian', icon: BookOpenIcon },
+      { href: '/modul-ajar', label: 'Modul Ajar', icon: BookOpenIcon },
       { href: '/tugas', label: 'Penugasan', icon: CheckSquareIcon },
-      { href: '/input-massal', label: 'Input Penilaian', icon: ClipboardPenIcon },
+      { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
     ],
   },
   {
@@ -73,9 +74,10 @@ const baseNavSections: DashboardMenuSection[] = [
 ];
 
 const baseMoreMenuItems: DashboardMenuItem[] = [
-  { href: '/siswa', label: 'Direktori Siswa', icon: UsersIcon },
+  { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
   { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
   { href: '/jurnal', label: 'Jurnal Harian', icon: BookOpenIcon },
+  { href: '/modul-ajar', label: 'Modul Ajar', icon: BookOpenIcon },
   { href: '/input-massal', label: 'Input Penilaian', icon: ClipboardPenIcon },
   { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
   { href: '/analytics', label: 'Analitik Akademik', icon: BarChart3 },
@@ -86,6 +88,7 @@ const baseMoreMenuItems: DashboardMenuItem[] = [
 ];
 
 export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false, _isEasyMode: boolean = false): DashboardMenuSection[] => {
+
   let sections = baseNavSections.map((section) => ({
     ...section,
     items: [...section.items],
@@ -95,11 +98,7 @@ export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, 
     sections = sections.filter(section => section.id !== 'bintang');
   }
 
-    // Easy Mode no longer hides menus to allow full access to features
-
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
-    // Pimpinan tetap membutuhkan menu guru karena mereka bisa memiliki jam mengajar.
-    // Tambahkan menu khusus Tindak Lanjut Pelanggaran untuk Pimpinan.
     const insightsSection = sections.find(s => s.id === 'insights');
     if (insightsSection) {
       insightsSection.items.push({ href: '/tindak-lanjut', label: 'Tindak Lanjut', icon: ShieldCheck });
@@ -125,12 +124,12 @@ export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, 
 };
 
 export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false, _isEasyMode: boolean = false): DashboardMenuItem[] => {
+
   let items = [...baseMoreMenuItems];
   
   if (!isAdmin && !isHomeroomTeacher) {
     items = items.filter(item => item.href !== '/bintang');
   }
-    // Easy Mode no longer hides menus to allow full access to features
   
   if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
     items.push({ href: '/tindak-lanjut', label: 'Tindak Lanjut', icon: ShieldCheck });
