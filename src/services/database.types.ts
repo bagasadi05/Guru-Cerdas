@@ -14,6 +14,147 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_generation_queue: {
+        Row: {
+          id: string
+          user_id: string
+          user_name: string
+          job_type: string
+          status: string
+          error_message: string | null
+          result_content: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          user_name: string
+          job_type: string
+          status?: string
+          error_message?: string | null
+          result_content?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          user_name?: string
+          job_type?: string
+          status?: string
+          error_message?: string | null
+          result_content?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_insights: {
+        Row: {
+          id: string
+          user_id: string
+          date: string
+          insight_data: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          date?: string
+          insight_data: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          date?: string
+          insight_data?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      ref_capaian_pembelajaran: {
+        Row: {
+          id: string
+          fase: string
+          mata_pelajaran: string
+          elemen: string | null
+          deskripsi_cp: string
+          cp_teks: string | null
+        }
+        Insert: {
+          id?: string
+          fase: string
+          mata_pelajaran: string
+          elemen?: string | null
+          deskripsi_cp: string
+          cp_teks?: string | null
+        }
+        Update: {
+          id?: string
+          fase?: string
+          mata_pelajaran?: string
+          elemen?: string | null
+          deskripsi_cp?: string
+          cp_teks?: string | null
+        }
+        Relationships: []
+      }
+      ref_model_pembelajaran: {
+        Row: {
+          id: string
+          nama_model: string
+          sintaks_inti: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          nama_model: string
+          sintaks_inti: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          nama_model?: string
+          sintaks_inti?: string[]
+          created_at?: string
+        }
+        Relationships: []
+      }
+      lesson_plans: {
+        Row: {
+          id: string
+          user_id: string | null
+          document_type: string
+          curriculum_approach: string
+          identity: Json
+          components: Json
+          generated_content: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          document_type: string
+          curriculum_approach: string
+          identity: Json
+          components: Json
+          generated_content: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          document_type?: string
+          curriculum_approach?: string
+          identity?: Json
+          components?: Json
+          generated_content?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       bintang_mentoring_logs: {
         Row: {
           id: string

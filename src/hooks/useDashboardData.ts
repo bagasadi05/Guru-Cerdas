@@ -126,10 +126,11 @@ const calculateWeeklyAttendance = (
  * @returns Promise resolving to dashboard data
  * @throws Error if any of the queries fail
  */
-export const fetchDashboardData = async (userId: string): Promise<DashboardQueryData> => {
+export const fetchDashboardData = async (userId: string, userRole: string): Promise<DashboardQueryData> => {
     const today = new Date().toISOString().slice(0, 10);
     const todayDay = getTodayDayName();
     const last5Days = getLastNDays(5);
+    const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'kepala_madrasah';
 
     // Execute all queries in parallel for optimal performance
     const [
@@ -169,23 +170,31 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             .eq('day', todayDay as Database['public']['Tables']['schedules']['Row']['day'])
             .order('start_time'),
 
-        supabase
-            .from('classes')
-            .select('id, name')
-            .is('deleted_at', null)
-            .eq('is_archived', false),
+        // Fetch classes (scoped by user_id for teachers)
+        isGlobalRole
+            ? supabase
+                .from('classes')
+                .select('id, name')
+                .is('deleted_at', null)
+                .eq('is_archived', false)
+            : supabase
+                .from('classes')
+                .select('id, name')
+                .is('deleted_at', null)
+                .eq('is_archived', false)
+                .eq('user_id', userId),
 
-        // Fetch today's attendance for summary
+        // Fetch today's attendance (student_id selected to filter in memory)
         supabase
             .from('attendance')
-            .select('status', { count: 'exact' })
+            .select('student_id, status')
             .eq('date', today)
             .is('deleted_at', null),
 
-        // Fetch last 5 days attendance for trend chart
+        // Fetch last 5 days attendance for trend chart (student_id selected to filter in memory)
         supabase
             .from('attendance')
-            .select('date, status')
+            .select('student_id, date, status')
             .gte('date', last5Days[0])
             .lte('date', last5Days[4])
             .is('deleted_at', null),
@@ -213,14 +222,14 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
             .order('created_at', { ascending: false })
             .limit(5),
 
-        // Fetch recent attendance records for activity feed
+        // Fetch recent attendance records for activity feed (student_id selected to filter in memory)
         supabase
             .from('attendance')
-            .select('created_at, status')
+            .select('student_id, created_at, status')
             .eq('date', today)
             .is('deleted_at', null)
             .order('created_at', { ascending: false })
-            .limit(10),
+            .limit(100),
 
         // Fetch unread messages from parents for daily follow-up
         supabase
@@ -262,16 +271,28 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
     // Filter active classes and active students in memory
     const activeClassIds = new Set((classesRes.data || []).map(c => c.id));
     const activeStudents = (studentsRes.data || []).filter(s => s.class_id && activeClassIds.has(s.class_id));
+    const activeStudentIds = new Set(activeStudents.map(s => s.id));
 
-    // Calculate attendance statistics
-    const presentCount = dailyAttendanceRes.data?.filter(a => a.status === 'Hadir').length || 0;
+    // Calculate attendance statistics (only include active students for this teacher)
+    const dailyAttendanceForActive = (dailyAttendanceRes.data || []).filter(
+        a => a.student_id && activeStudentIds.has(a.student_id)
+    );
+    const presentCount = dailyAttendanceForActive.filter(a => a.status === 'Hadir').length || 0;
     const totalStudents = activeStudents.length || 1;
 
-    // Calculate weekly attendance from raw data
+    // Filter weekly attendance to active students in memory
+    const weeklyAttendanceFiltered = (weeklyAttendanceRes.data || []).filter(
+        a => a.student_id && activeStudentIds.has(a.student_id)
+    );
     const weeklyAttendance = calculateWeeklyAttendance(
-        weeklyAttendanceRes.data || [],
+        weeklyAttendanceFiltered,
         last5Days,
         totalStudents
+    );
+
+    // Filter recent attendance records to active students in memory
+    const recentAttendanceForActive = (todayAttendanceRecordsRes.data || []).filter(
+        r => r.student_id && activeStudentIds.has(r.student_id)
     );
 
     return {
@@ -293,14 +314,14 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
         classes: classesRes.data || [],
         dailyAttendanceSummary: {
             present: presentCount,
-            total: dailyAttendanceRes.count || 0
+            total: dailyAttendanceForActive.length
         },
         weeklyAttendance,
         academicRecords: (academicRecordsRes.data || []).filter(r => activeStudents.some(s => s.id === r.student_id)),
         violations: (violationsRes.data || []).filter(v => activeStudents.some(s => s.id === v.student_id)),
         achievements: ((achievementsRes.data || []) as any[]).filter(ach => activeStudents.some(s => s.id === ach.student_id)),
         recentTasks: recentTasksRes.data || [],
-        todayAttendanceRecords: todayAttendanceRecordsRes.data?.reduce((acc: { created_at: string; status: string; count: number }[], record) => {
+        todayAttendanceRecords: recentAttendanceForActive.slice(0, 10).reduce((acc: { created_at: string; status: string; count: number }[], record) => {
             const existing = acc.find(a => a.created_at === record.created_at && a.status === record.status);
             if (existing) {
                 existing.count++;
@@ -341,7 +362,7 @@ export const fetchDashboardData = async (userId: string): Promise<DashboardQuery
  * ```
  */
 export function useDashboardData(): UseDashboardDataReturn {
-    const { user } = useAuth();
+    const { user, userRole } = useAuth();
 
     const {
         data,
@@ -352,8 +373,8 @@ export function useDashboardData(): UseDashboardDataReturn {
         isRefetching
     } = useQuery({
         queryKey: queryKeys.dashboard.data(user?.id ?? ''),
-        queryFn: () => fetchDashboardData(user!.id),
-        enabled: !!user,
+        queryFn: () => fetchDashboardData(user!.id, userRole ?? ''),
+        enabled: !!user && userRole !== undefined,
         refetchOnWindowFocus: false,
         // Keep previous data while refetching
         placeholderData: (previousData) => previousData,

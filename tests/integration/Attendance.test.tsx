@@ -9,6 +9,8 @@ import { AuthContext } from '../../src/hooks/useAuth';
 import { ToastProvider } from '../../src/hooks/useToast';
 
 // Mock Supabase
+let mockAttendance: any[] = [];
+
 vi.mock('../../src/services/supabase', () => ({
     supabase: {
         from: vi.fn((table: string) => {
@@ -19,12 +21,11 @@ vi.mock('../../src/services/supabase', () => ({
                     { id: '1', name: 'Budi', class_id: 'class-1', user_id: 'test-user' },
                     { id: '2', name: 'Siti', class_id: 'class-1', user_id: 'test-user' },
                 ],
-                attendance: [],
+                attendance: mockAttendance,
                 semesters: [],
                 academic_years: [],
             };
-
-            const response = { data: responses[table] || [], error: null };
+            const response = { data: table === 'attendance' ? mockAttendance : (responses[table] || []), error: null };
             const query = {
                 select: vi.fn(() => query),
                 eq: vi.fn(() => query),
@@ -36,7 +37,11 @@ vi.mock('../../src/services/supabase', () => ({
                 single: vi.fn(() => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Not found' } })),
                 maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
                 update: vi.fn(() => query),
-                upsert: vi.fn(() => Promise.resolve({ error: null })),
+                upsert: vi.fn((records: any) => {
+                    const arr = Array.isArray(records) ? records : [records];
+                    mockAttendance.push(...arr);
+                    return Promise.resolve({ error: null });
+                }),
                 then: vi.fn((resolve) => Promise.resolve(response).then(resolve)),
             };
 
@@ -53,6 +58,12 @@ vi.mock('../../src/services/supabase', () => ({
 // Mock useOfflineStatus
 vi.mock('../../src/hooks/useOfflineStatus', () => ({
     useOfflineStatus: () => true,
+}));
+
+// Mock Confetti
+vi.mock('../../src/utils/confetti', () => ({
+    triggerPerfectAttendanceConfetti: vi.fn(),
+    triggerSubtleConfetti: vi.fn(),
 }));
 
 vi.mock('../../src/contexts/SemesterContext', () => ({
@@ -74,6 +85,7 @@ describe('AttendancePage Integration', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.stubGlobal('confirm', vi.fn(() => true));
+        mockAttendance.length = 0;
     });
 
     afterEach(() => {

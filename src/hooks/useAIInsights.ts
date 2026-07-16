@@ -14,6 +14,7 @@ import {
   cacheInsight,
   getCachedInsight,
   getTodayDate,
+  clearInsightCache,
   type AIInsight,
   type DashboardDataForAI,
 } from '../services/aiInsightService';

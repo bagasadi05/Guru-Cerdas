@@ -412,6 +412,9 @@ export const useAttendance = () => {
             return;
         }
         
+        localDirtyRef.current = true;
+        initialSyncRef.current = true;
+
         // Update local state first for immediate UI response
         const updatedRecords = { ...attendanceRecords };
         unmarkedStudents.forEach(student => {
