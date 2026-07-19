@@ -130,7 +130,7 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
     const today = new Date().toISOString().slice(0, 10);
     const todayDay = getTodayDayName();
     const last5Days = getLastNDays(5);
-    const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'kepala_madrasah';
+    const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'kepala_madrasah' || userRole === 'admin';
 
     // Execute all queries in parallel for optimal performance
     const [

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { ScheduleRow } from '../../types';
-import { formatTimeRange, getColorForSubject } from '../../utils/scheduleUtils';
+import { formatTimeRange, getColorForSubject, resolveClassName } from '../../utils/scheduleUtils';
 import { ClockIcon, UsersIcon, BookOpenIcon, EditIcon, CopyIcon, TrashIcon, MoreVerticalIcon } from '../Icons';
 import { Button } from '../ui/Button';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
@@ -58,7 +58,7 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel
                     </h3>
                     <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                         <UsersIcon className="w-3.5 h-3.5" />
-                        <span className="text-xs font-medium">Kelas {classNameLabel || item.class_id}</span>
+                        <span className="text-xs font-medium">{resolveClassName(classNameLabel, item.class_id)}</span>
                     </div>
                 </div>
 

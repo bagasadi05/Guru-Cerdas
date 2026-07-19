@@ -2,6 +2,7 @@ import React from 'react';
 import { useMemo } from 'react';
 import { Database } from '../../services/database.types';
 import { ClockIcon, UsersIcon } from '../Icons';
+import { resolveClassName } from '../../utils/scheduleUtils';
 
 type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
 
@@ -108,7 +109,7 @@ export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule
                                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/50">
                                             <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-500">
                                                 <UsersIcon className="w-3 h-3" />
-                                                <span className="text-xxs font-medium">{(item.class_id ? classNameMap.get(item.class_id) : null) || item.class_id || 'N/A'}</span>
+                                                <span className="text-xxs font-medium">{resolveClassName(item.class_id ? classNameMap.get(item.class_id) : undefined, item.class_id)}</span>
                                             </div>
                                             {onIsiJurnal && (
                                                 <button

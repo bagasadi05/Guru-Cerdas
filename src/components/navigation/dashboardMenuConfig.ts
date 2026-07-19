@@ -75,9 +75,11 @@ const baseNavSections: DashboardMenuSection[] = [
 
 const baseMoreMenuItems: DashboardMenuItem[] = [
   { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
-  { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
+  { href: '/jadwal', label: 'Jadwal Kelas', icon: CalendarIcon },
   { href: '/jurnal', label: 'Jurnal Harian', icon: BookOpenIcon },
   { href: '/modul-ajar', label: 'Modul Ajar', icon: BookOpenIcon },
+  { href: '/tugas', label: 'Penugasan', icon: CheckSquareIcon },
+  { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
   { href: '/input-massal', label: 'Input Penilaian', icon: ClipboardPenIcon },
   { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
   { href: '/analytics', label: 'Analitik Akademik', icon: BarChart3 },

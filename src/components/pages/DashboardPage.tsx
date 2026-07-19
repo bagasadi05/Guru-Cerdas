@@ -8,6 +8,7 @@ import { useGradeAudit } from '../../hooks/useGradeAudit';
 import { useDashboardActivities } from '../../hooks/useDashboardActivities';
 import { useTodayJournalStatus } from '../../hooks/useTodayJournalStatus';
 import { isTaskOverdue, formatTaskDueDate } from '../../utils/dateHelpers';
+import { resolveClassName } from '../../utils/scheduleUtils';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   CalendarIcon,
@@ -51,7 +52,7 @@ import { useGlobalSearch } from '../GlobalSearchContext';
 
 const DashboardPage: React.FC = () => {
   const { user, userRole } = useAuth();
-  const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'kepala_madrasah';
+  const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'kepala_madrasah' || userRole === 'admin';
   const todayStr = new Date().toLocaleDateString('sv-SE');
   const { data: journalStatus } = useTodayJournalStatus(todayStr);
   const navigate = useNavigate();
@@ -124,7 +125,7 @@ const DashboardPage: React.FC = () => {
   } = data || {};
   const todaySchedule = schedule.map((item) => ({
     ...item,
-    className: classes.find((c) => c.id === item.class_id)?.name || item.class_id,
+    className: resolveClassName(classes.find((c) => c.id === item.class_id)?.name, item.class_id),
   }));
 
   // Show welcome state for new users with no data

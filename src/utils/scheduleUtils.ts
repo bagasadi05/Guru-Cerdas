@@ -28,3 +28,18 @@ export function formatTime(time: string): string {
 export function formatTimeRange(start: string, end: string): string {
     return `${formatTime(start)} - ${formatTime(end)}`;
 }
+
+export function isUUID(str?: string | null): boolean {
+    if (!str) return false;
+    return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
+}
+
+export function resolveClassName(classNameLabel?: string | null, classId?: string | null): string {
+    if (classNameLabel && classNameLabel.trim() !== '') {
+        return classNameLabel.startsWith('Kelas') ? classNameLabel : `Kelas ${classNameLabel}`;
+    }
+    if (!classId || classId.trim() === '' || isUUID(classId)) {
+        return 'Kelas (Tidak Ditemukan)';
+    }
+    return classId.startsWith('Kelas') ? classId : `Kelas ${classId}`;
+}
