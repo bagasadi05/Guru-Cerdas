@@ -283,12 +283,24 @@ const SchedulePage: React.FC = () => {
             return;
         }
 
-        const hasConflict = schedule.some((item) => (
-            item.id !== modalState.data?.id
-            && item.day === formData.day
-            && formData.start_time < item.end_time
-            && formData.end_time > item.start_time
-        ));
+        const toMinutes = (timeStr: string) => {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        };
+
+        const formStart = toMinutes(formData.start_time);
+        const formEnd = toMinutes(formData.end_time);
+
+        const hasConflict = schedule.some((item) => {
+            const itemStart = toMinutes(item.start_time);
+            const itemEnd = toMinutes(item.end_time);
+            return (
+                item.id !== modalState.data?.id
+                && item.day === formData.day
+                && formStart < itemEnd
+                && formEnd > itemStart
+            );
+        });
         if (hasConflict) {
             setErrors({ start_time: 'Waktu ini bertabrakan dengan jadwal mengajar lain.' });
             return;
