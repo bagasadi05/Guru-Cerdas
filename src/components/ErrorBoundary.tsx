@@ -135,6 +135,12 @@ class ErrorBoundary extends Component<Props, State> {
 
   private recoverFromChunkError = async () => {
     try {
+      // Save current path to restore it after reloading
+      sessionStorage.setItem(
+        'post-reload-path',
+        window.location.pathname + window.location.search
+      );
+
       // Only perform SW unregistration and cache deletion if the user is online.
       // If offline, we shouldn't unregister the service worker as it's needed for offline mode.
       if (navigator.onLine !== false) {
@@ -147,14 +153,38 @@ class ErrorBoundary extends Component<Props, State> {
             for (const registration of registrations) {
               await registration.update().catch(() => {});
             }
-            
-            // Wait 1.5 seconds to see if the update triggers controllerchange (which reloads)
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            
-            // Step 2: If we are still here, force unregister and clear cache to fetch a fresh page
-            logger.warn('Update check complete but page did not reload. Force clearing Service Workers...', 'ErrorBoundary');
+
+            // Attempt to skip waiting for waiting Service Workers
+            let controllerChanged = false;
+            const controllerHandler = () => {
+              controllerChanged = true;
+            };
+            navigator.serviceWorker.addEventListener('controllerchange', controllerHandler);
+
             for (const registration of registrations) {
-              await registration.unregister().catch(() => {});
+              if (registration.waiting) {
+                logger.info('Found waiting SW, posting SKIP_WAITING to recover...', 'ErrorBoundary');
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+            }
+
+            // Wait max 2 seconds for controllerchange
+            for (let i = 0; i < 20; i++) {
+              if (controllerChanged) {
+                logger.info('Service Worker controller changed, reloading page...', 'ErrorBoundary');
+                break;
+              }
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+
+            navigator.serviceWorker.removeEventListener('controllerchange', controllerHandler);
+
+            if (!controllerChanged) {
+              // Step 2: Force unregister Service Workers
+              logger.warn('Update check complete but page did not reload. Force clearing Service Workers...', 'ErrorBoundary');
+              for (const registration of registrations) {
+                await registration.unregister().catch(() => {});
+              }
             }
           }
         }

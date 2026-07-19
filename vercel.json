@@ -9,7 +9,7 @@
             "destination": "https://pub-56e5bb83497b4de198d9ee6ad82fc35b.r2.dev/:path*"
         },
         {
-            "source": "/(.*)",
+            "source": "/((?!api/|assets/|assets-r2/|sw\\.js|manifest\\.webmanifest).*)",
             "destination": "/index.html"
         }
     ],

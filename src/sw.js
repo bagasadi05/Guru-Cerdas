@@ -25,6 +25,16 @@ registerRoute(
     new CacheFirst({
         cacheName: 'app-static-runtime',
         plugins: [
+            {
+                cacheWillUpdate: async ({ request, response }) => {
+                    const contentType = response.headers.get('content-type') || '';
+                    const destinations = ['script', 'style', 'font', 'worker'];
+                    if (destinations.includes(request.destination) && contentType.includes('text/html')) {
+                        return null;
+                    }
+                    return response;
+                }
+            },
             new CacheableResponsePlugin({
                 statuses: [0, 200],
             }),
@@ -328,7 +338,9 @@ self.addEventListener('periodicsync', (event) => {
 
 self.addEventListener('message', (event) => {
     if (event.data) {
-        if (event.data.type === 'CLEAR_SUPABASE_CACHE') {
+        if (event.data.type === 'SKIP_WAITING') {
+            self.skipWaiting();
+        } else if (event.data.type === 'CLEAR_SUPABASE_CACHE') {
             event.waitUntil(clearSupabaseCache());
         } else if (event.data.type === 'QUEUE_SYNC_REQUEST') {
             event.waitUntil(addToSyncQueue(event.data.request, event.data.data));

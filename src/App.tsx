@@ -114,12 +114,19 @@ function App() {
     </AppProviders>
   );
 }
-
 function AppContent() {
   const navigate = useNavigate();
   const [showHelp, setShowHelp] = React.useState(false);
   const [showShortcuts, setShowShortcuts] = React.useState(false);
   const { registerShortcut } = useKeyboardShortcuts();
+
+  React.useEffect(() => {
+    const postReloadPath = sessionStorage.getItem('post-reload-path');
+    if (postReloadPath) {
+      sessionStorage.removeItem('post-reload-path');
+      navigate(postReloadPath, { replace: true });
+    }
+  }, [navigate]);
 
   // Extracted hooks
   const { handleSearch, handleSearchResult } = useAppSearch();
