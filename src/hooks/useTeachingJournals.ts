@@ -68,10 +68,14 @@ export const useCreateJournal = (onSuccess?: () => void) => {
         mutationFn: (payload: Omit<TeachingJournalInsert, 'user_id'>) => {
             return journalService.create(payload);
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.teachingJournals.lists() });
             queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-            toast.success('Jurnal mengajar berhasil ditambahkan!');
+            if (data && (data as any).isOfflineQueued) {
+                toast.info('Jurnal disimpan offline. Akan disinkronkan saat kembali online.');
+            } else {
+                toast.success('Jurnal mengajar berhasil ditambahkan!');
+            }
             if (onSuccess) onSuccess();
         },
         onError: (error: Error) => {
@@ -91,10 +95,14 @@ export const useUpdateJournal = (onSuccess?: () => void) => {
         mutationFn: ({ id, payload }: { id: string; payload: TeachingJournalUpdate }) => {
             return journalService.update(id, payload);
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.teachingJournals.lists() });
             queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-            toast.success('Jurnal mengajar berhasil diperbarui!');
+            if (data && (data as any).isOfflineQueued) {
+                toast.info('Jurnal disimpan offline. Akan disinkronkan saat kembali online.');
+            } else {
+                toast.success('Jurnal mengajar berhasil diperbarui!');
+            }
             if (onSuccess) onSuccess();
         },
         onError: (error: Error) => {

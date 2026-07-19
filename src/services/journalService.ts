@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, wasLastResponseQueued } from './supabase';
 import { r2StorageService } from './r2StorageService';
 import type {
     TeachingJournal,
@@ -95,6 +95,14 @@ const create = async (
         .select('*')
         .single();
 
+    if (wasLastResponseQueued()) {
+        return {
+            ...fullPayload,
+            id: 'offline-queued-id',
+            isOfflineQueued: true
+        } as any;
+    }
+
     if (error) throw error;
 
     return data as TeachingJournal;
@@ -119,6 +127,15 @@ const update = async (
         .eq('user_id', userData.user.id)
         .select('*')
         .single();
+
+    if (wasLastResponseQueued()) {
+        return {
+            ...payload,
+            id,
+            user_id: userData.user.id,
+            isOfflineQueued: true
+        } as any;
+    }
 
     if (error) throw error;
 

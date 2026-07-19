@@ -14,6 +14,7 @@ import {
 import { supabase } from '../services/supabase';
 import { logger } from '../services/logger';
 import { useToast } from './useToast';
+import { beginSyncBypass, endSyncBypass } from '../services/syncBypass';
 
 // ============================================
 // OFFLINE SYNC HOOK
@@ -203,88 +204,125 @@ async function syncItem(
     conflictStrategy: ConflictResolution,
     onConflict?: (itemId: string, local: any, server: any) => Promise<any>
 ): Promise<SyncResult> {
-    const { type, table, data } = item;
+    beginSyncBypass();
+    try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const currentUserId = sessionData.session?.user?.id;
 
-    // Check for conflicts (for UPDATE operations)
-    if (type === 'UPDATE' && data.id) {
-        const { data: serverData, error: fetchError } = await (supabase
-            .from(table as any) as any)
-            .select('*')
-            .eq('id', data.id)
-            .single();
-
-        if (fetchError) {
-            throw new Error(`Failed to fetch server data: ${fetchError.message}`);
+        if (!sessionData.session) {
+            logger.info('Session is null during hook replay, keeping pending', 'OfflineSync', { id: item.id });
+            const sessionError = new Error('SESSION_NULL');
+            (sessionError as any).code = 'SESSION_NULL';
+            throw sessionError;
         }
 
-        if (serverData && detectConflict(data, serverData)) {
-            if (onConflict) {
-                // Let the caller handle the conflict
-                const resolved = await onConflict(item.id, data, serverData);
-                if (resolved.needsManualResolution) {
-                    return {
-                        success: false,
-                        item,
-                        serverData,
-                        conflict: true
-                    };
+        // Identity Guard
+        if (item.userId === null || item.userId === undefined) {
+            // Legacy item ownership verification
+            const queue = offlineQueue.getQueue();
+            const otherUserIds = new Set(queue.map(q => q.userId).filter((uid): uid is string => !!uid));
+            if (otherUserIds.size > 0 && !otherUserIds.has(currentUserId!)) {
+                logger.warn('Ambiguous owners for legacy queue item, keeping pending', 'OfflineSync', { id: item.id });
+                const authError = new Error('USER_AMBIGUOUS');
+                (authError as any).code = 'USER_AMBIGUOUS';
+                throw authError;
+            }
+        } else if (item.userId !== currentUserId) {
+            logger.info('Hook replay user mismatch, keeping item pending', 'OfflineSync', { 
+                id: item.id, 
+                mutationUserId: item.userId, 
+                currentUserId 
+            });
+            const authError = new Error('USER_MISMATCH');
+            (authError as any).code = 'USER_MISMATCH';
+            throw authError;
+        }
+
+        const { type, table, data } = item;
+
+        // Check for conflicts (for UPDATE operations)
+        if (type === 'UPDATE' && data.id) {
+            const { data: serverData, error: fetchError } = await (supabase
+                .from(table as any) as any)
+                .select('*')
+                .eq('id', data.id)
+                .single();
+
+            if (fetchError) {
+                throw new Error(`Failed to fetch server data: ${fetchError.message}`);
+            }
+
+            if (serverData && detectConflict(data, serverData)) {
+                if (onConflict) {
+                    // Let the caller handle the conflict
+                    const resolved = await onConflict(item.id, data, serverData);
+                    if (resolved.needsManualResolution) {
+                        return {
+                            success: false,
+                            item,
+                            serverData,
+                            conflict: true
+                        };
+                    }
+                    // Use resolved data
+                    item.data = resolved;
+                } else {
+                    // Auto-resolve using strategy
+                    item.data = resolveConflict(data, serverData, conflictStrategy);
                 }
-                // Use resolved data
-                item.data = resolved;
-            } else {
-                // Auto-resolve using strategy
-                item.data = resolveConflict(data, serverData, conflictStrategy);
             }
         }
-    }
 
-    // Perform the operation
-    let result: any;
-    let error: any;
+        // Perform the operation
+        let result: any;
+        let error: any;
 
-    switch (type) {
-        case 'CREATE': {
-            const { id: _, ...createData } = data;
-            ({ data: result, error } = await (supabase
-                .from(table as any) as any)
-                .insert(createData)
-                .select()
-                .single());
-            break;
+        switch (type) {
+            case 'CREATE': {
+                const { id: _, ...createData } = data;
+                ({ data: result, error } = await (supabase
+                    .from(table as any) as any)
+                    .insert(createData)
+                    .select()
+                    .single());
+                break;
+            }
+
+            case 'UPDATE': {
+                const { _localTimestamp, ...updateData } = data;
+                ({ data: result, error } = await (supabase
+                    .from(table as any) as any)
+                    .update(updateData)
+                    .eq('id', data.id)
+                    .select()
+                    .single());
+                break;
+            }
+
+            case 'DELETE': {
+                ({ error } = await (supabase
+                    .from(table as any) as any)
+                    .delete()
+                    .eq('id', data.id));
+                result = { deleted: true };
+                break;
+            }
+        }
+        if (error) {
+            throw new Error(error.message);
         }
 
-        case 'UPDATE': {
-            const { _localTimestamp, ...updateData } = data;
-            ({ data: result, error } = await (supabase
-                .from(table as any) as any)
-                .update(updateData)
-                .eq('id', data.id)
-                .select()
-                .single());
-            break;
-        }
+        // Invalidate cache after successful sync
+        await invalidateCache(table);
 
-        case 'DELETE': {
-            ({ error } = await (supabase
-                .from(table as any) as any)
-                .delete()
-                .eq('id', data.id));
-            result = { deleted: true };
-            break;
-        }
+        return {
+            success: true,
+            item,
+            serverData: result
+        };
+    } finally {
+        endSyncBypass();
     }
-    if (error) {
-        throw new Error(error.message);
-    }
-
-    // Invalidate cache after successful sync
-    await invalidateCache(table);
-
-    return {
-        success: true,
-        item,
-        serverData: result
-    };
 }
 
 // ============================================

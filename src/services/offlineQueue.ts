@@ -19,6 +19,7 @@ import { Database } from "./database.types";
 import { supabase } from "./supabase";
 import { storageGetJSON, storageSetJSON, storageRemove } from '../utils/storage';
 import { logger } from './logger';
+import { beginSyncBypass, endSyncBypass } from './syncBypass';
 
 // ============================================
 // ORIGINAL FUNCTIONAL OFFLINE QUEUE CONSTANTS
@@ -43,7 +44,7 @@ export type MutationStatus = 'pending' | 'processing' | 'failed' | 'success';
  */
 export type QueuedMutation = {
     id: string;
-    table: keyof Database['public']['Tables'];
+    table: keyof Database['public']['Tables'] | 'rpc';
     operation: 'upsert' | 'insert' | 'update' | 'delete';
     payload: Record<string, unknown> | Record<string, unknown>[];
     onConflict?: string;
@@ -53,6 +54,13 @@ export type QueuedMutation = {
     createdAt: number;
     lastAttempt?: number;
     error?: string;
+    userId?: string | null;
+    request?: {
+        url: string;
+        method: string;
+        body: string | null;
+        headers: Record<string, string>;
+    };
 };
 
 /**
@@ -352,17 +360,114 @@ const getBackoffDelay = (retryCount: number): number => {
  * Process a single mutation
  */
 const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
-    const { table, operation, payload, onConflict } = mutation;
+    const { table, operation, payload, onConflict, request } = mutation;
 
+    beginSyncBypass();
     try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const currentUserId = sessionData.session?.user?.id;
+        
+        if (!sessionData.session) {
+            logger.info('Session is null during replay, keeping item pending', 'OfflineQueue', { id: mutation.id });
+            const sessionError = new Error('SESSION_NULL');
+            (sessionError as any).code = 'SESSION_NULL';
+            throw sessionError;
+        }
+
+        // Identity Guard
+        if (mutation.userId === null || mutation.userId === undefined) {
+            // Legacy item ownership verification
+            const queue = await getQueue();
+            const otherUserIds = new Set(queue.map(m => m.userId).filter((uid): uid is string => !!uid));
+            if (otherUserIds.size > 0 && !otherUserIds.has(currentUserId!)) {
+                logger.warn('Ambiguous owners for legacy mutation, keeping pending', 'OfflineQueue', { id: mutation.id });
+                const authError = new Error('USER_AMBIGUOUS');
+                (authError as any).code = 'USER_AMBIGUOUS';
+                throw authError;
+            }
+        } else if (mutation.userId !== currentUserId) {
+            logger.info('Replay user mismatch, keeping item pending', 'OfflineQueue', { 
+                id: mutation.id, 
+                mutationUserId: mutation.userId, 
+                currentUserId 
+            });
+            const authError = new Error('USER_MISMATCH');
+            (authError as any).code = 'USER_MISMATCH';
+            throw authError;
+        }
+
         let result;
+
+        if (request) {
+            let token = sessionData.session.access_token;
+
+            const executeFetch = async (accessToken: string): Promise<Response> => {
+                const headers: Record<string, string> = {
+                    ...request.headers,
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+                    'Authorization': `Bearer ${accessToken}`
+                };
+                
+                return await fetch(request.url, {
+                    method: request.method,
+                    headers,
+                    body: request.body
+                });
+            };
+
+            let response = await executeFetch(token!);
+
+            if (response.status === 401) {
+                logger.info('Received 401 during replay, attempting session refresh', 'OfflineQueue');
+                const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+                if (refreshError || !refreshData.session) {
+                    logger.warn('Session refresh failed during replay, keeping item pending', 'OfflineQueue', refreshError);
+                    const sessionError = new Error('SESSION_EXPIRED');
+                    (sessionError as any).code = 'SESSION_EXPIRED';
+                    throw sessionError;
+                }
+                
+                token = refreshData.session.access_token;
+                response = await executeFetch(token!);
+                
+                if (response.status === 401) {
+                    logger.error('Received 401 even after session refresh, keeping item pending', 'OfflineQueue');
+                    const sessionError = new Error('SESSION_EXPIRED');
+                    (sessionError as any).code = 'SESSION_EXPIRED';
+                    throw sessionError;
+                }
+            }
+
+            if (!response.ok) {
+                const errText = await response.text();
+                // Check if it is an RLS error code in the body or 403 status
+                if (response.status === 403 || errText.includes('42501') || errText.includes('permission denied')) {
+                    const rlsError = new Error(`RLS_FORBIDDEN: ${errText || 'Access Denied'}`);
+                    (rlsError as any).code = '42501';
+                    throw rlsError;
+                }
+                throw new Error(`HTTP ${response.status}: ${errText || response.statusText}`);
+            }
+
+            return true;
+        }
+
+        if (table === 'rpc') {
+            throw new Error('RPC offline replaying requires captured request details');
+        }
 
         switch (operation) {
             case 'insert':
                 result = await supabase.from(table).insert(payload as any);
                 break;
             case 'update':
-                result = await supabase.from(table).update(payload as any).match({ id: (payload as any).id });
+                if (payload && !Array.isArray(payload) && payload.id) {
+                    result = await supabase.from(table).update(payload as any).match({ id: payload.id });
+                } else {
+                    const err = new Error('Legacy update mutation lacks valid payload.id');
+                    logger.error(err.message, 'OfflineQueue', { mutationId: mutation.id });
+                    throw err;
+                }
                 break;
             case 'upsert':
                 if (onConflict) {
@@ -372,7 +477,13 @@ const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
                 }
                 break;
             case 'delete':
-                result = await supabase.from(table).delete().match({ id: (payload as any).id });
+                if (payload && !Array.isArray(payload) && payload.id) {
+                    result = await supabase.from(table).delete().match({ id: payload.id });
+                } else {
+                    const err = new Error('Legacy delete mutation lacks valid payload.id');
+                    logger.error(err.message, 'OfflineQueue', { mutationId: mutation.id });
+                    throw err;
+                }
                 break;
             default:
                 throw new Error(`Unknown operation: ${operation}`);
@@ -386,6 +497,8 @@ const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
     } catch (error) {
         logger.error(`Failed to process mutation ${mutation.id}`, undefined, error);
         throw error;
+    } finally {
+        endSyncBypass();
     }
 };
 
@@ -426,6 +539,18 @@ export const retryMutation = async (id: string): Promise<boolean> => {
  * @returns {Promise<SyncProgress>} Final sync progress after processing the queue.
  */
 export const processQueue = async (): Promise<SyncProgress> => {
+    if (!navigator.onLine) {
+        const progress: SyncProgress = {
+            total: 0,
+            processed: 0,
+            succeeded: 0,
+            failed: 0,
+            status: 'idle'
+        };
+        notifySyncProgress(progress);
+        return progress;
+    }
+
     const queue = await getQueue();
     const pendingMutations = queue.filter(m => m.status === 'pending' || m.status === 'failed');
 
@@ -473,13 +598,34 @@ export const processQueue = async (): Promise<SyncProgress> => {
             await removeMutation(mutation.id);
             progress.succeeded++;
         } catch (error: unknown) {
+            const errCode = (error as any)?.code;
             const errorMessage = error instanceof Error ? error.message : String(error);
-            await updateMutation(mutation.id, {
-                status: 'failed',
-                error: errorMessage,
-                retryCount: mutation.retryCount + 1
-            });
-            progress.failed++;
+            const isSessionIssue = errCode === 'SESSION_NULL' || errCode === 'SESSION_EXPIRED' || errCode === 'USER_MISMATCH' || errCode === 'USER_AMBIGUOUS';
+
+            if (isSessionIssue) {
+                logger.warn('Sync halted due to auth session/user issue', 'OfflineQueue', error);
+                await updateMutation(mutation.id, { status: 'pending', error: errorMessage });
+                progress.failed++;
+                notifySyncProgress({ ...progress });
+                break;
+            }
+
+            const isRLSError = errCode === '42501' || errorMessage.includes('42501') || errorMessage.includes('403') || errorMessage.includes('RLS_FORBIDDEN') || errorMessage.includes('permission denied');
+            if (isRLSError) {
+                logger.error('RLS Access Denied during replay, marking as failed', 'OfflineQueue', error);
+                await updateMutation(mutation.id, {
+                    status: 'failed',
+                    error: `Akses ditolak: ${errorMessage}`
+                });
+                progress.failed++;
+            } else {
+                await updateMutation(mutation.id, {
+                    status: 'failed',
+                    error: errorMessage,
+                    retryCount: mutation.retryCount + 1
+                });
+                progress.failed++;
+            }
         }
 
         progress.processed++;
@@ -533,6 +679,7 @@ export interface QueueItem<T = Record<string, unknown>> {
     error?: string;
     conflictWith?: T;
     priority: number;
+    userId?: string | null;
 }
 
 export interface SyncResult<T = Record<string, unknown>> {
@@ -683,7 +830,6 @@ class OfflineQueueService {
         return () => this.listeners.delete(callback);
     }
 
-    // Add item to queue
     async add<T extends Record<string, unknown>>(
         type: OperationType,
         table: string,
@@ -691,6 +837,9 @@ class OfflineQueueService {
         priority: number = 5
     ): Promise<string> {
         const id = crypto.randomUUID();
+        const sessionData = await supabase.auth.getSession().catch(() => null);
+        const userId = sessionData?.data?.session?.user?.id || null;
+
         const item: QueueItem<T & { _localTimestamp: string }> = {
             id,
             type,
@@ -700,7 +849,8 @@ class OfflineQueueService {
             retryCount: 0,
             maxRetries: MAX_RETRIES,
             status: 'pending',
-            priority
+            priority,
+            userId
         };
 
         this.queue.push(item);
@@ -797,7 +947,13 @@ class OfflineQueueService {
                 }
             } catch (err) {
                 const error = err instanceof Error ? err : new Error(String(err));
-                await this.handleSyncError(item, error);
+                try {
+                    await this.handleSyncError(item, error);
+                } catch (haltError) {
+                    logger.info('Sync queue processing halted due to auth/session issue', 'OfflineQueue', haltError);
+                    this.syncInProgress = false;
+                    return; // Exit processQueue early
+                }
             }
         }
 
@@ -829,6 +985,28 @@ class OfflineQueueService {
     }
 
     private async handleSyncError(item: QueueItem<Record<string, unknown>>, error: Error | { message?: string }): Promise<void> {
+        const errCode = (error as any)?.code;
+        const errMsg = error.message || '';
+        const isSessionIssue = errCode === 'SESSION_NULL' || errCode === 'SESSION_EXPIRED' || errCode === 'USER_MISMATCH' || errCode === 'USER_AMBIGUOUS';
+
+        if (isSessionIssue) {
+            item.status = 'pending';
+            item.error = errMsg;
+            await this.saveQueue();
+            logger.warn(`Sync paused for ${item.id} due to session/user state: ${errMsg}`, 'OfflineQueue');
+            throw error; // Re-throw to halt processQueue loop
+        }
+
+        const isRLSError = errCode === '42501' || errMsg.includes('42501') || errMsg.includes('403') || errMsg.includes('RLS_FORBIDDEN') || errMsg.includes('permission denied');
+        if (isRLSError) {
+            item.status = 'failed';
+            item.error = `Akses ditolak: ${errMsg}`;
+            await this.logSync(item, 'failed');
+            await this.saveQueue();
+            logger.error(`Sync failed for ${item.id} due to RLS Access Denied`, 'OfflineQueue', error);
+            return;
+        }
+
         item.retryCount++;
 
         if (item.retryCount >= item.maxRetries) {
@@ -862,6 +1040,38 @@ class OfflineQueueService {
                 timestamp: new Date().toISOString(),
                 error: item.error
             });
+
+            // Prune: delete older than 7 days OR limit to max 500 entries
+            const countRequest = store.count();
+            countRequest.onsuccess = () => {
+                const count = countRequest.result;
+                const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+                
+                const timestampIndex = store.index('timestamp');
+                const range = IDBKeyRange.upperBound(sevenDaysAgo);
+                const cursorRequest = timestampIndex.openCursor(range);
+                cursorRequest.onsuccess = (event) => {
+                    const cursor = (event.target as IDBRequest).result;
+                    if (cursor) {
+                        cursor.delete();
+                        cursor.continue();
+                    } else {
+                        if (count > 500) {
+                            const oldestCursorRequest = store.openCursor();
+                            let deletedCount = 0;
+                            const toDelete = count - 500;
+                            oldestCursorRequest.onsuccess = (ev) => {
+                                const oldestCursor = (ev.target as IDBRequest).result;
+                                if (oldestCursor && deletedCount < toDelete) {
+                                    oldestCursor.delete();
+                                    deletedCount++;
+                                    oldestCursor.continue();
+                                }
+                            };
+                        }
+                    }
+                };
+            };
         } catch {
             // Ignore log errors
         }
