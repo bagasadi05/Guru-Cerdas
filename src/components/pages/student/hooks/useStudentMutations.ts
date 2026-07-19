@@ -55,6 +55,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             queryClient.invalidateQueries({ queryKey: ['studentQuizzes', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentReports', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
+            queryClient.invalidateQueries({ queryKey: ['students'] });
             queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
             onSuccessCloseModal();
             toast.success("Data berhasil disimpan!");
