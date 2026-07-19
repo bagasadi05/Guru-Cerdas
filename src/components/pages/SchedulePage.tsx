@@ -393,6 +393,11 @@ const SchedulePage: React.FC = () => {
                         <p className="mt-1 text-slate-500 dark:text-slate-400">Kelola dan pantau jadwal mengajar Anda.</p>
                     </div>
                     <div className="flex flex-wrap gap-2 self-end md:self-center">
+                        <Button onClick={() => handleOpenAddModal()} variant="primary" size="sm"
+                            className="h-10 px-3 sm:px-4 rounded-lg">
+                            <PlusIcon className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Tambah Jadwal</span>
+                        </Button>
                         <Button onClick={handleAnalyzeSchedule} variant="outline" size="sm" disabled={!isOnline || schedule.length === 0}
                             className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white">
                             <BrainCircuitIcon className="w-4 h-4 sm:mr-2 text-emerald-500 dark:text-emerald-400" />
