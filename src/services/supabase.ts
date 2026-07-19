@@ -119,11 +119,15 @@ const queueOfflineRequest = async (url: string, init?: RequestInit): Promise<voi
       }
     }
 
+    const sessionData = await supabase.auth.getSession().catch(() => null);
+    const userId = sessionData?.data?.session?.user?.id || null;
+
     await addToQueue({
       table: tableName as any,
       operation,
       payload,
       onConflict: urlObj.searchParams.get('on_conflict') || undefined,
+      userId,
       request: {
         url,
         method,

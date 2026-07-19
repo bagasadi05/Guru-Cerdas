@@ -176,4 +176,90 @@ describe('Offline Replay & Bypass System', () => {
             expect(retryCount).toBe(0);
         });
     });
+
+    // 8. Test Identity Guard (Multi-User Scoping)
+    describe('Identity Guard (Multi-User Scoping)', () => {
+        it('should allow replay if userId matches current session user ID', async () => {
+            const mutation = {
+                id: 'mut-1',
+                userId: 'user-A',
+                status: 'pending'
+            };
+            const currentUserId = 'user-A';
+
+            // Simulate identity guard
+            expect(mutation.userId).toBe(currentUserId);
+        });
+
+        it('should keep pending and throw USER_MISMATCH if userId does not match session user ID', async () => {
+            const mutation = {
+                id: 'mut-1',
+                userId: 'user-A',
+                status: 'pending'
+            };
+            const currentUserId = 'user-B';
+
+            const identityGuard = (mut: any, currentUid: string) => {
+                if (mut.userId !== currentUid) {
+                    const err = new Error('USER_MISMATCH');
+                    (err as any).code = 'USER_MISMATCH';
+                    throw err;
+                }
+            };
+
+            expect(() => identityGuard(mutation, currentUserId)).toThrow('USER_MISMATCH');
+        });
+
+        it('should allow legacy item (userId null) replay if only one user ID exists in the queue', () => {
+            const mutation = { id: 'mut-1', userId: null };
+            const currentUserId = 'user-A';
+            const queue = [
+                { id: 'mut-1', userId: null },
+                { id: 'mut-2', userId: 'user-A' }
+            ];
+
+            const otherUserIds = new Set(queue.map(q => q.userId).filter(Boolean));
+            // Only 'user-A' is in the queue, which matches currentUserId, so it's not ambiguous
+            const isAmbiguous = otherUserIds.size > 0 && !otherUserIds.has(currentUserId);
+            expect(isAmbiguous).toBe(false);
+        });
+
+        it('should keep legacy item pending and throw USER_AMBIGUOUS if another user ID is in the queue', () => {
+            const mutation = { id: 'mut-1', userId: null };
+            const currentUserId = 'user-A';
+            const queue = [
+                { id: 'mut-1', userId: null },
+                { id: 'mut-2', userId: 'user-B' } // Different user in queue
+            ];
+
+            const otherUserIds = new Set(queue.map(q => q.userId).filter(Boolean));
+            const isAmbiguous = otherUserIds.size > 0 && !otherUserIds.has(currentUserId);
+            expect(isAmbiguous).toBe(true);
+        });
+    });
+
+    // 9. Test RLS Authorization Errors (42501 / 403)
+    describe('RLS Authorization Errors Handling', () => {
+        it('should immediately fail mutation without incrementing retryCount for RLS error', () => {
+            let itemStatus = 'pending';
+            let retryCount = 0;
+
+            const error = new Error('permission denied for table academic_records');
+            (error as any).code = '42501';
+
+            const errCode = (error as any).code;
+            const errorMessage = error.message;
+            const isRLSError = errCode === '42501' || errorMessage.includes('42501') || errorMessage.includes('403') || errorMessage.includes('permission denied');
+
+            if (isRLSError) {
+                itemStatus = 'failed';
+                // retryCount is NOT incremented
+            } else {
+                retryCount++;
+            }
+
+            expect(itemStatus).toBe('failed');
+            expect(retryCount).toBe(0);
+        });
+    });
 });

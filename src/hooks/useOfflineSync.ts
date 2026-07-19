@@ -206,6 +206,38 @@ async function syncItem(
 ): Promise<SyncResult> {
     beginSyncBypass();
     try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const currentUserId = sessionData.session?.user?.id;
+
+        if (!sessionData.session) {
+            logger.info('Session is null during hook replay, keeping pending', 'OfflineSync', { id: item.id });
+            const sessionError = new Error('SESSION_NULL');
+            (sessionError as any).code = 'SESSION_NULL';
+            throw sessionError;
+        }
+
+        // Identity Guard
+        if (item.userId === null || item.userId === undefined) {
+            // Legacy item ownership verification
+            const queue = offlineQueue.getQueue();
+            const otherUserIds = new Set(queue.map(q => q.userId).filter((uid): uid is string => !!uid));
+            if (otherUserIds.size > 0 && !otherUserIds.has(currentUserId!)) {
+                logger.warn('Ambiguous owners for legacy queue item, keeping pending', 'OfflineSync', { id: item.id });
+                const authError = new Error('USER_AMBIGUOUS');
+                (authError as any).code = 'USER_AMBIGUOUS';
+                throw authError;
+            }
+        } else if (item.userId !== currentUserId) {
+            logger.info('Hook replay user mismatch, keeping item pending', 'OfflineSync', { 
+                id: item.id, 
+                mutationUserId: item.userId, 
+                currentUserId 
+            });
+            const authError = new Error('USER_MISMATCH');
+            (authError as any).code = 'USER_MISMATCH';
+            throw authError;
+        }
+
         const { type, table, data } = item;
 
         // Check for conflicts (for UPDATE operations)
