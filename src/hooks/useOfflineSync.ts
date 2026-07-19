@@ -14,6 +14,7 @@ import {
 import { supabase } from '../services/supabase';
 import { logger } from '../services/logger';
 import { useToast } from './useToast';
+import { beginSyncBypass, endSyncBypass } from '../services/syncBypass';
 
 // ============================================
 // OFFLINE SYNC HOOK
@@ -203,88 +204,93 @@ async function syncItem(
     conflictStrategy: ConflictResolution,
     onConflict?: (itemId: string, local: any, server: any) => Promise<any>
 ): Promise<SyncResult> {
-    const { type, table, data } = item;
+    beginSyncBypass();
+    try {
+        const { type, table, data } = item;
 
-    // Check for conflicts (for UPDATE operations)
-    if (type === 'UPDATE' && data.id) {
-        const { data: serverData, error: fetchError } = await (supabase
-            .from(table as any) as any)
-            .select('*')
-            .eq('id', data.id)
-            .single();
+        // Check for conflicts (for UPDATE operations)
+        if (type === 'UPDATE' && data.id) {
+            const { data: serverData, error: fetchError } = await (supabase
+                .from(table as any) as any)
+                .select('*')
+                .eq('id', data.id)
+                .single();
 
-        if (fetchError) {
-            throw new Error(`Failed to fetch server data: ${fetchError.message}`);
-        }
+            if (fetchError) {
+                throw new Error(`Failed to fetch server data: ${fetchError.message}`);
+            }
 
-        if (serverData && detectConflict(data, serverData)) {
-            if (onConflict) {
-                // Let the caller handle the conflict
-                const resolved = await onConflict(item.id, data, serverData);
-                if (resolved.needsManualResolution) {
-                    return {
-                        success: false,
-                        item,
-                        serverData,
-                        conflict: true
-                    };
+            if (serverData && detectConflict(data, serverData)) {
+                if (onConflict) {
+                    // Let the caller handle the conflict
+                    const resolved = await onConflict(item.id, data, serverData);
+                    if (resolved.needsManualResolution) {
+                        return {
+                            success: false,
+                            item,
+                            serverData,
+                            conflict: true
+                        };
+                    }
+                    // Use resolved data
+                    item.data = resolved;
+                } else {
+                    // Auto-resolve using strategy
+                    item.data = resolveConflict(data, serverData, conflictStrategy);
                 }
-                // Use resolved data
-                item.data = resolved;
-            } else {
-                // Auto-resolve using strategy
-                item.data = resolveConflict(data, serverData, conflictStrategy);
             }
         }
-    }
 
-    // Perform the operation
-    let result: any;
-    let error: any;
+        // Perform the operation
+        let result: any;
+        let error: any;
 
-    switch (type) {
-        case 'CREATE': {
-            const { id: _, ...createData } = data;
-            ({ data: result, error } = await (supabase
-                .from(table as any) as any)
-                .insert(createData)
-                .select()
-                .single());
-            break;
+        switch (type) {
+            case 'CREATE': {
+                const { id: _, ...createData } = data;
+                ({ data: result, error } = await (supabase
+                    .from(table as any) as any)
+                    .insert(createData)
+                    .select()
+                    .single());
+                break;
+            }
+
+            case 'UPDATE': {
+                const { _localTimestamp, ...updateData } = data;
+                ({ data: result, error } = await (supabase
+                    .from(table as any) as any)
+                    .update(updateData)
+                    .eq('id', data.id)
+                    .select()
+                    .single());
+                break;
+            }
+
+            case 'DELETE': {
+                ({ error } = await (supabase
+                    .from(table as any) as any)
+                    .delete()
+                    .eq('id', data.id));
+                result = { deleted: true };
+                break;
+            }
+        }
+        if (error) {
+            throw new Error(error.message);
         }
 
-        case 'UPDATE': {
-            const { _localTimestamp, ...updateData } = data;
-            ({ data: result, error } = await (supabase
-                .from(table as any) as any)
-                .update(updateData)
-                .eq('id', data.id)
-                .select()
-                .single());
-            break;
-        }
+        // Invalidate cache after successful sync
+        await invalidateCache(table);
 
-        case 'DELETE': {
-            ({ error } = await (supabase
-                .from(table as any) as any)
-                .delete()
-                .eq('id', data.id));
-            result = { deleted: true };
-            break;
-        }
+        return {
+            success: true,
+            item,
+            serverData: result
+        };
+    } finally {
+        endSyncBypass();
     }
-    if (error) {
-        throw new Error(error.message);
-    }
-
-    // Invalidate cache after successful sync
-    await invalidateCache(table);
-
-    return {
-        success: true,
-        item,
-        serverData: result
-    };
 }
 
 // ============================================

@@ -13,6 +13,27 @@ import type { Database } from './database.types'; // This will be generated from
 import { networkResilience } from './networkResilience';
 import { addToQueue } from './offlineQueue';
 import { logger } from './logger';
+import { isSyncBypassActive } from './syncBypass';
+
+export const OFFLINE_QUEUED_HEADER = 'X-Offline-Queued';
+
+export const isOfflineQueuedResponse = (response: unknown): boolean => {
+  if (!response) return false;
+  if (response instanceof Response) {
+    return response.headers.get(OFFLINE_QUEUED_HEADER) === 'true';
+  }
+  if (typeof response === 'object') {
+    return (response as any).offline === true && (response as any).queued === true;
+  }
+  return false;
+};
+
+export const wasLastResponseQueued = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const lastQueued = (window as any).__last_supabase_offline_queued;
+  if (!lastQueued) return false;
+  return Date.now() - lastQueued < 2000;
+};
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -48,7 +69,7 @@ const queueOfflineRequest = async (url: string, init?: RequestInit): Promise<voi
     if (!tableName) return;
 
     let operation: 'upsert' | 'insert' | 'update' | 'delete' = 'insert';
-    const method = init?.method?.toUpperCase();
+    const method = init?.method?.toUpperCase() || 'POST';
     
     switch (method) {
       case 'POST':
@@ -71,11 +92,44 @@ const queueOfflineRequest = async (url: string, init?: RequestInit): Promise<voi
       }
     }
 
+    const headersRecord: Record<string, string> = {};
+    if (init?.headers) {
+      const hdrs = init.headers;
+      if (hdrs instanceof Headers) {
+        hdrs.forEach((val, key) => {
+          const lowerKey = key.toLowerCase();
+          if (['prefer', 'content-type', 'content-profile', 'accept-profile'].includes(lowerKey)) {
+            headersRecord[lowerKey] = val;
+          }
+        });
+      } else if (Array.isArray(hdrs)) {
+        hdrs.forEach(([key, val]) => {
+          const lowerKey = key.toLowerCase();
+          if (['prefer', 'content-type', 'content-profile', 'accept-profile'].includes(lowerKey)) {
+            headersRecord[lowerKey] = val;
+          }
+        });
+      } else {
+        Object.entries(hdrs).forEach(([key, val]) => {
+          const lowerKey = key.toLowerCase();
+          if (['prefer', 'content-type', 'content-profile', 'accept-profile'].includes(lowerKey)) {
+            headersRecord[lowerKey] = val;
+          }
+        });
+      }
+    }
+
     await addToQueue({
-      table: tableName as keyof Database['public']['Tables'],
+      table: tableName as any,
       operation,
       payload,
-      onConflict: urlObj.searchParams.get('on_conflict') || undefined
+      onConflict: urlObj.searchParams.get('on_conflict') || undefined,
+      request: {
+        url,
+        method,
+        body: init?.body ? String(init.body) : null,
+        headers: headersRecord
+      }
     });
 
     logger.info('Request queued for offline processing', 'ResilientSupabase', {
@@ -93,13 +147,14 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
   logger.debug(`[SupabaseFetch] Request starting: ${url} (${init?.method || 'GET'})`);
   const isAuth = url.includes('/auth/');
   const isMutation = isMutationRequest(init?.method);
+  const isSystemBSync = isSyncBypassActive();
   
   try {
     const response = await networkResilience.fetch(url, {
       ...init,
       priority: getRequestPriority(url),
       retries: getRetryCount(url),
-      queueWhenOffline: isMutation && !isAuth // Only queue mutations, never auth or GET requests
+      queueWhenOffline: isMutation && !isAuth && !isSystemBSync
     });
     logger.debug(`[SupabaseFetch] Request succeeded: ${url} (${response.status})`);
     return response;
@@ -109,6 +164,10 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
       url,
       method: init?.method || 'GET'
     });
+    
+    if (isSystemBSync) {
+      throw error;
+    }
     
     if (isMutation && !isAuth) {
       await queueOfflineRequest(url, init);
@@ -130,7 +189,7 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
         statusText: 'Accepted (Offline Queued)',
         headers: { 
           'Content-Type': 'application/json',
-          'X-Offline-Queued': 'true'
+          [OFFLINE_QUEUED_HEADER]: 'true'
         }
       });
     }

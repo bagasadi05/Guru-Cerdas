@@ -10,7 +10,7 @@
  * See docs for SQL definitions.
  */
 
-import { supabase } from './supabase';
+import { supabase, wasLastResponseQueued } from './supabase';
 
 // Types
 export interface GradeInput {
@@ -99,6 +99,16 @@ export const bulkInsertGrades = async (
         p_grades: grades,
         p_teacher_id: teacherId,
     });
+
+    if (wasLastResponseQueued()) {
+        return {
+            success: true,
+            inserted: grades.length,
+            failed: 0,
+            errors: [],
+            code: 'OFFLINE_QUEUED',
+        };
+    }
 
     if (error) {
         console.error('Bulk insert RPC error:', error);

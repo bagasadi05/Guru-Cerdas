@@ -19,6 +19,7 @@ import { Database } from "./database.types";
 import { supabase } from "./supabase";
 import { storageGetJSON, storageSetJSON, storageRemove } from '../utils/storage';
 import { logger } from './logger';
+import { beginSyncBypass, endSyncBypass } from './syncBypass';
 
 // ============================================
 // ORIGINAL FUNCTIONAL OFFLINE QUEUE CONSTANTS
@@ -43,7 +44,7 @@ export type MutationStatus = 'pending' | 'processing' | 'failed' | 'success';
  */
 export type QueuedMutation = {
     id: string;
-    table: keyof Database['public']['Tables'];
+    table: keyof Database['public']['Tables'] | 'rpc';
     operation: 'upsert' | 'insert' | 'update' | 'delete';
     payload: Record<string, unknown> | Record<string, unknown>[];
     onConflict?: string;
@@ -53,6 +54,12 @@ export type QueuedMutation = {
     createdAt: number;
     lastAttempt?: number;
     error?: string;
+    request?: {
+        url: string;
+        method: string;
+        body: string | null;
+        headers: Record<string, string>;
+    };
 };
 
 /**
@@ -352,17 +359,84 @@ const getBackoffDelay = (retryCount: number): number => {
  * Process a single mutation
  */
 const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
-    const { table, operation, payload, onConflict } = mutation;
+    const { table, operation, payload, onConflict, request } = mutation;
 
+    beginSyncBypass();
     try {
         let result;
+
+        if (request) {
+            const { data: sessionData } = await supabase.auth.getSession();
+            let token = sessionData.session?.access_token;
+            
+            if (!sessionData.session) {
+                logger.info('Session is null during replay, keeping item pending', 'OfflineQueue', { id: mutation.id });
+                const sessionError = new Error('SESSION_NULL');
+                (sessionError as any).code = 'SESSION_NULL';
+                throw sessionError;
+            }
+
+            const executeFetch = async (accessToken: string): Promise<Response> => {
+                const headers: Record<string, string> = {
+                    ...request.headers,
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+                    'Authorization': `Bearer ${accessToken}`
+                };
+                
+                return await fetch(request.url, {
+                    method: request.method,
+                    headers,
+                    body: request.body
+                });
+            };
+
+            let response = await executeFetch(token!);
+
+            if (response.status === 401) {
+                logger.info('Received 401 during replay, attempting session refresh', 'OfflineQueue');
+                const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+                if (refreshError || !refreshData.session) {
+                    logger.warn('Session refresh failed during replay, keeping item pending', 'OfflineQueue', refreshError);
+                    const sessionError = new Error('SESSION_EXPIRED');
+                    (sessionError as any).code = 'SESSION_EXPIRED';
+                    throw sessionError;
+                }
+                
+                token = refreshData.session.access_token;
+                response = await executeFetch(token!);
+                
+                if (response.status === 401) {
+                    logger.error('Received 401 even after session refresh, keeping item pending', 'OfflineQueue');
+                    const sessionError = new Error('SESSION_EXPIRED');
+                    (sessionError as any).code = 'SESSION_EXPIRED';
+                    throw sessionError;
+                }
+            }
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errText || response.statusText}`);
+            }
+
+            return true;
+        }
+
+        if (table === 'rpc') {
+            throw new Error('RPC offline replaying requires captured request details');
+        }
 
         switch (operation) {
             case 'insert':
                 result = await supabase.from(table).insert(payload as any);
                 break;
             case 'update':
-                result = await supabase.from(table).update(payload as any).match({ id: (payload as any).id });
+                if (payload && !Array.isArray(payload) && payload.id) {
+                    result = await supabase.from(table).update(payload as any).match({ id: payload.id });
+                } else {
+                    const err = new Error('Legacy update mutation lacks valid payload.id');
+                    logger.error(err.message, 'OfflineQueue', { mutationId: mutation.id });
+                    throw err;
+                }
                 break;
             case 'upsert':
                 if (onConflict) {
@@ -372,7 +446,13 @@ const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
                 }
                 break;
             case 'delete':
-                result = await supabase.from(table).delete().match({ id: (payload as any).id });
+                if (payload && !Array.isArray(payload) && payload.id) {
+                    result = await supabase.from(table).delete().match({ id: payload.id });
+                } else {
+                    const err = new Error('Legacy delete mutation lacks valid payload.id');
+                    logger.error(err.message, 'OfflineQueue', { mutationId: mutation.id });
+                    throw err;
+                }
                 break;
             default:
                 throw new Error(`Unknown operation: ${operation}`);
@@ -386,6 +466,8 @@ const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
     } catch (error) {
         logger.error(`Failed to process mutation ${mutation.id}`, undefined, error);
         throw error;
+    } finally {
+        endSyncBypass();
     }
 };
 
@@ -426,6 +508,18 @@ export const retryMutation = async (id: string): Promise<boolean> => {
  * @returns {Promise<SyncProgress>} Final sync progress after processing the queue.
  */
 export const processQueue = async (): Promise<SyncProgress> => {
+    if (!navigator.onLine) {
+        const progress: SyncProgress = {
+            total: 0,
+            processed: 0,
+            succeeded: 0,
+            failed: 0,
+            status: 'idle'
+        };
+        notifySyncProgress(progress);
+        return progress;
+    }
+
     const queue = await getQueue();
     const pendingMutations = queue.filter(m => m.status === 'pending' || m.status === 'failed');
 
@@ -473,6 +567,14 @@ export const processQueue = async (): Promise<SyncProgress> => {
             await removeMutation(mutation.id);
             progress.succeeded++;
         } catch (error: unknown) {
+            const errCode = (error as any)?.code;
+            if (errCode === 'SESSION_NULL' || errCode === 'SESSION_EXPIRED') {
+                logger.warn('Sync halted due to auth session issue', 'OfflineQueue', error);
+                await updateMutation(mutation.id, { status: 'pending', error: (error as Error).message });
+                progress.failed++;
+                notifySyncProgress({ ...progress });
+                break;
+            }
             const errorMessage = error instanceof Error ? error.message : String(error);
             await updateMutation(mutation.id, {
                 status: 'failed',
@@ -862,6 +964,38 @@ class OfflineQueueService {
                 timestamp: new Date().toISOString(),
                 error: item.error
             });
+
+            // Prune: delete older than 7 days OR limit to max 500 entries
+            const countRequest = store.count();
+            countRequest.onsuccess = () => {
+                const count = countRequest.result;
+                const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+                
+                const timestampIndex = store.index('timestamp');
+                const range = IDBKeyRange.upperBound(sevenDaysAgo);
+                const cursorRequest = timestampIndex.openCursor(range);
+                cursorRequest.onsuccess = (event) => {
+                    const cursor = (event.target as IDBRequest).result;
+                    if (cursor) {
+                        cursor.delete();
+                        cursor.continue();
+                    } else {
+                        if (count > 500) {
+                            const oldestCursorRequest = store.openCursor();
+                            let deletedCount = 0;
+                            const toDelete = count - 500;
+                            oldestCursorRequest.onsuccess = (ev) => {
+                                const oldestCursor = (ev.target as IDBRequest).result;
+                                if (oldestCursor && deletedCount < toDelete) {
+                                    oldestCursor.delete();
+                                    deletedCount++;
+                                    oldestCursor.continue();
+                                }
+                            };
+                        }
+                    }
+                };
+            };
         } catch {
             // Ignore log errors
         }

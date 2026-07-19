@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useDeferredValue, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../services/supabase';
+import { supabase, wasLastResponseQueued } from '../../services/supabase';
 import { generateOpenRouterJson } from '../../services/openRouterService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -248,7 +248,8 @@ export const useAttendance = () => {
             if (isOnline) {
                 const { error } = await supabase.from('attendance').upsert(recordsToUpsert);
                 if (error) throw error;
-                return { synced: true };
+                const queued = wasLastResponseQueued();
+                return { synced: !queued };
             } else {
                 await addToQueue({
                     table: 'attendance',

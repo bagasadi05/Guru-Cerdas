@@ -97,7 +97,9 @@ export const useGradeManagement = (
             const result = await bulkInsertGrades(grades, user.id);
             setLastResult(result);
 
-            if (result.success) {
+            if (result.code === 'OFFLINE_QUEUED') {
+                toast.info('Nilai disimpan offline. Akan disinkronkan saat kembali online.');
+            } else if (result.success) {
                 toast.success(`${result.inserted} nilai berhasil disimpan!`);
             } else if (result.code === 'RATE_LIMIT') {
                 toast.error('Terlalu banyak request. Tunggu beberapa menit.');
