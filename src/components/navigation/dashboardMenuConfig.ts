@@ -100,12 +100,7 @@ export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, 
     sections = sections.filter(section => section.id !== 'bintang');
   }
 
-  if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
-    const insightsSection = sections.find(s => s.id === 'insights');
-    if (insightsSection) {
-      insightsSection.items.push({ href: '/tindak-lanjut', label: 'Tindak Lanjut', icon: ShieldCheck });
-    }
-  }
+
 
   if (!isAdmin) {
     return sections;
@@ -133,9 +128,7 @@ export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null
     items = items.filter(item => item.href !== '/bintang');
   }
   
-  if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
-    items.push({ href: '/tindak-lanjut', label: 'Tindak Lanjut', icon: ShieldCheck });
-  }
+
 
   if (!isAdmin) {
     return items;

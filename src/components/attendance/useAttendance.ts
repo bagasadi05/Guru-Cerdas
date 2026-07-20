@@ -296,7 +296,9 @@ export const useAttendance = () => {
         },
         onSettled: () => {
             localDirtyRef.current = false;
-            queryClient.invalidateQueries({ queryKey: ['attendanceData', user?.id, selectedClass, selectedDate] });
+            // Removed queryClient.invalidateQueries for attendanceData to prevent UI flickering 
+            // after save. The cache is already optimistically updated in onMutate, and local 
+            // state handles the immediate UI update.
             queryClient.invalidateQueries({ queryKey: ['attendanceCalendar'] });
             queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
         },

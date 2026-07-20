@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, ShieldAlertIcon, PencilIcon, TrashIcon, AlertTriangleIcon, CheckCircleIcon, ClockIcon, CameraIcon, BellIcon, FilterIcon, FileTextIcon, FileSpreadsheetIcon, DownloadIcon, LockIcon } from 'lucide-react';
+import { PlusIcon, ShieldAlertIcon, PencilIcon, TrashIcon, AlertTriangleIcon, CameraIcon, BellIcon, FilterIcon, FileTextIcon, FileSpreadsheetIcon, DownloadIcon, LockIcon } from 'lucide-react';
 import { ViolationRow } from './types';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../../ui/DropdownMenu';
 import { exportViolationsToPDF, exportViolationsToExcel } from '../../../services/violationExport';
@@ -22,15 +22,7 @@ export type SeverityLevel = keyof typeof SEVERITY_LEVELS;
 const isSeverityLevel = (value: string | null | undefined): value is SeverityLevel =>
     !!value && value in SEVERITY_LEVELS;
 
-export const FOLLOW_UP_STATUS = {
-    pending: { label: 'Belum Ditindak', color: 'gray', icon: ClockIcon },
-    in_progress: { label: 'Sedang Diproses', color: 'blue', icon: AlertTriangleIcon },
-    resolved: { label: 'Sudah Selesai', color: 'green', icon: CheckCircleIcon },
-} as const;
 
-export type FollowUpStatus = keyof typeof FOLLOW_UP_STATUS;
-const isFollowUpStatus = (value: string | null | undefined): value is FollowUpStatus =>
-    !!value && value in FOLLOW_UP_STATUS;
 
 // Warning thresholds
 const WARNING_THRESHOLD = 25;
@@ -43,7 +35,7 @@ interface ViolationsTabProps {
     onEdit: (record: ViolationRow) => void;
     onDelete: (id: string) => void;
     onNotifyParent?: (violation: ViolationRow) => void;
-    onUpdateFollowUp?: (id: string, status: FollowUpStatus, notes?: string) => void;
+
     isOnline: boolean;
     currentUserId?: string;
     studentName?: string;
@@ -119,14 +111,13 @@ const ViolationStats: React.FC<{ violations: ViolationRow[] }> = ({ violations }
             sedang: violations.filter(v => v.severity === 'sedang').length,
             berat: violations.filter(v => v.severity === 'berat').length,
         };
-        const pending = violations.filter(v => v.follow_up_status === 'pending' || !v.follow_up_status).length;
         const notified = violations.filter(v => v.parent_notified).length;
 
-        return { totalPoints, bySeverity, pending, notified, total: violations.length };
+        return { totalPoints, bySeverity, notified, total: violations.length };
     }, [violations]);
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
             <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30">
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.totalPoints}</p>
                 <p className="text-[11px] text-red-500 truncate" title="Total Poin">Total Poin</p>
@@ -143,10 +134,6 @@ const ViolationStats: React.FC<{ violations: ViolationRow[] }> = ({ violations }
                 <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.bySeverity.berat}</p>
                 <p className="text-[11px] text-rose-500 truncate" title="Berat">Berat</p>
             </div>
-            <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
-                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{stats.pending}</p>
-                <p className="text-[11px] text-gray-500 truncate" title="Pending">Pending</p>
-            </div>
             <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.notified}</p>
                 <p className="text-[11px] text-blue-500 truncate" title="Notifikasi">Notifikasi</p>
@@ -161,16 +148,12 @@ const ViolationCard: React.FC<{
     onEdit: () => void;
     onDelete: () => void;
     onNotifyParent?: () => void;
-    onUpdateFollowUp?: (status: FollowUpStatus) => void;
     isOnline: boolean;
     isLocked?: boolean;
     currentUserId?: string;
     isHomeroomTeacher?: boolean;
-}> = ({ violation, onEdit, onDelete, onNotifyParent, onUpdateFollowUp, isOnline, isLocked = false, currentUserId, isHomeroomTeacher = false }) => {
-    const [showFollowUp, setShowFollowUp] = useState(false);
+}> = ({ violation, onEdit, onDelete, onNotifyParent, isOnline, isLocked = false, currentUserId, isHomeroomTeacher = false }) => {
     const severity = isSeverityLevel(violation.severity) ? SEVERITY_LEVELS[violation.severity] : SEVERITY_LEVELS.ringan;
-    const followUp = isFollowUpStatus(violation.follow_up_status) ? FOLLOW_UP_STATUS[violation.follow_up_status] : FOLLOW_UP_STATUS.pending;
-    const FollowUpIcon = followUp.icon;
     const isCreator = violation.user_id === currentUserId;
     const canModify = (isCreator || isHomeroomTeacher) && !isLocked;
 
@@ -241,57 +224,10 @@ const ViolationCard: React.FC<{
                 </div>
             )}
 
-            {/* Follow-up Status */}
-            <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-                <button type="button"
-                    onClick={() => setShowFollowUp(!showFollowUp)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${followUp.color === 'green'
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                        : followUp.color === 'blue'
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
-                        }`}
-                >
-                    <FollowUpIcon className="w-4 h-4" />
-                    {followUp.label}
-                </button>
-
-                {/* Quick Follow-up Actions */}
-                {showFollowUp && onUpdateFollowUp && (
-                    <div className="flex items-center gap-1 animate-fade-in">
-                        {(['pending', 'in_progress', 'resolved'] as FollowUpStatus[]).map((status) => {
-                            const StatusIcon = FOLLOW_UP_STATUS[status].icon;
-                            const isActive = violation.follow_up_status === status;
-                            return (
-                                <button type="button"
-                                    key={status}
-                                    onClick={() => onUpdateFollowUp(status)}
-                                    disabled={!isOnline || isActive}
-                                    className={`p-2 rounded-lg transition-colors ${isActive
-                                        ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600'
-                                        : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500'
-                                        }`}
-                                    title={FOLLOW_UP_STATUS[status].label}
-                                >
-                                    <StatusIcon className="w-4 h-4" />
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
-
             {/* Keterangan / Konteks */}
             {violation.context_notes && (
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 pt-3 border-t border-gray-200 dark:border-gray-700">
                     📄 {violation.context_notes}
-                </p>
-            )}
-
-            {/* Follow-up Notes */}
-            {violation.follow_up_notes && (
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 italic">
-                    📝 {violation.follow_up_notes}
                 </p>
             )}
         </div>
@@ -300,7 +236,6 @@ const ViolationCard: React.FC<{
 
 // Filter options
 type SeverityFilter = SeverityLevel | 'all';
-type StatusFilter = FollowUpStatus | 'all';
 
 export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     violations,
@@ -308,7 +243,7 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     onEdit,
     onDelete,
     onNotifyParent,
-    onUpdateFollowUp,
+
     isOnline,
     currentUserId,
     studentName,
@@ -318,7 +253,7 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     canAdd = true,
 }) => {
     const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
-    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
     const { isLocked } = useSemester();
     const { user } = useAuth();
     const toast = useToast();
@@ -328,9 +263,8 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     const filteredViolations = useMemo(() => {
         return [...violations]
             .filter(v => severityFilter === 'all' || v.severity === severityFilter)
-            .filter(v => statusFilter === 'all' || v.follow_up_status === statusFilter || (!v.follow_up_status && statusFilter === 'pending'))
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [violations, severityFilter, statusFilter]);
+    }, [violations, severityFilter]);
 
     return (
         <div className="p-4 sm:p-6">
@@ -404,21 +338,9 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                     <option value="berat">🔴 Berat</option>
                 </select>
 
-                {/* Status Filter */}
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                    className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                >
-                    <option value="all">Semua Status</option>
-                    <option value="pending">Belum Ditindak</option>
-                    <option value="in_progress">Sedang Diproses</option>
-                    <option value="resolved">Sudah Selesai</option>
-                </select>
-
-                {(severityFilter !== 'all' || statusFilter !== 'all') && (
+                {severityFilter !== 'all' && (
                     <button type="button"
-                        onClick={() => { setSeverityFilter('all'); setStatusFilter('all'); }}
+                        onClick={() => setSeverityFilter('all')}
                         className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                     >
                         Reset Filter
@@ -441,7 +363,6 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                                     onEdit={() => onEdit(v)}
                                     onDelete={() => onDelete(v.id)}
                                     onNotifyParent={onNotifyParent ? () => onNotifyParent(v) : undefined}
-                                    onUpdateFollowUp={onUpdateFollowUp ? (status) => onUpdateFollowUp(v.id, status) : undefined}
                                     isOnline={isOnline}
                                     isLocked={isViolationLocked}
                                     currentUserId={currentUserId}

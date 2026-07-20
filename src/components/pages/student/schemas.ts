@@ -65,13 +65,12 @@ export const violationSchema = z.object({
     description: z.string().min(1, "Jenis pelanggaran harus dipilih"),
     context_notes: z.string().optional().nullable(),
     severity: z.enum(['ringan', 'sedang', 'berat']).optional().nullable(),
-    follow_up_notes: z.string().optional().nullable(),
 });
 
 export const violationRules: ValidationRules = {
     date: [ValidationService.validators.required("Tanggal harus diisi")],
     description: [ValidationService.validators.required("Jenis pelanggaran harus dipilih")],
-    // severity and follow_up_notes are optional
+    // severity is optional
 };
 
 export const communicationSchema = z.object({

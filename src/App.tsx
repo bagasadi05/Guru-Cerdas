@@ -58,7 +58,7 @@ const NotFoundPage = lazy(() => import('@/components/pages/NotFoundPage'));
 const BrankasPage = lazy(() => import('@/components/pages/BrankasPage'));
 const JurnalMengajarPage = lazy(() => import('@/components/pages/JurnalMengajarPage'));
 const PemulihanPage = lazy(() => import('@/components/pages/PemulihanPage'));
-const TindakLanjutPage = lazy(() => import('@/components/pages/TindakLanjutPage'));
+
 const BintangDashboardPage = lazy(() => import('@/components/pages/bintang/BintangDashboardPage'));
 const ModulAjarCreatorPage = lazy(() => import('@/components/pages/modul-ajar/ModulAjarCreatorPage'));
 
@@ -189,7 +189,7 @@ function AppContent() {
               <Route path="/analytics" element={<AsyncErrorBoundary context="AnalyticsPage"><AnalyticsPage /></AsyncErrorBoundary>} />
               <Route path="/ekstrakurikuler" element={<AsyncErrorBoundary context="ExtracurricularPage"><ExtracurricularPage /></AsyncErrorBoundary>} />
               <Route path="/jurnal" element={<AsyncErrorBoundary context="JurnalMengajarPage"><JurnalMengajarPage /></AsyncErrorBoundary>} />
-              <Route path="/tindak-lanjut" element={<AsyncErrorBoundary context="TindakLanjutPage"><TindakLanjutPage /></AsyncErrorBoundary>} />
+
               <Route path="/pemulihan" element={<AsyncErrorBoundary context="PemulihanPage"><PemulihanPage /></AsyncErrorBoundary>} />
               <Route path="/bintang" element={<AsyncErrorBoundary context="BintangDashboardPage"><BintangDashboardPage /></AsyncErrorBoundary>} />
               <Route path="/modul-ajar" element={<AsyncErrorBoundary context="ModulAjarCreatorPage"><ModulAjarCreatorPage /></AsyncErrorBoundary>} />

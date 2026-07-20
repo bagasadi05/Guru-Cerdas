@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
+import { useSemester } from '../contexts/SemesterContext';
 
 interface RecentViolation {
     studentName: string;
@@ -25,8 +26,11 @@ export interface GlobalAnalyticsData {
 export const useGlobalAnalytics = () => {
     const [data, setData] = useState<GlobalAnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
+    const { activeSemester } = useSemester();
 
     useEffect(() => {
+        if (!activeSemester) return;
+
         const fetchGlobalData = async () => {
             setLoading(true);
 
@@ -37,8 +41,8 @@ export const useGlobalAnalytics = () => {
                     id, 
                     name, 
                     class_id,
-                    classes (name),
-                    violations (points, created_at, deleted_at)
+                    classes (name, deleted_at),
+                    violations (points, created_at, deleted_at, semester_id)
                 `)
                 .is('deleted_at', null);
 
@@ -50,10 +54,15 @@ export const useGlobalAnalytics = () => {
 
                 studentsData.forEach((student: {
                     name: string;
-                    classes: { name: string } | null;
-                    violations: { points: number; created_at: string; deleted_at: string | null }[];
+                    classes: { name: string; deleted_at?: string | null } | null;
+                    violations: { points: number; created_at: string; deleted_at: string | null; semester_id: string | null }[];
                 }) => {
-                    const activeViolations = (student.violations || []).filter((v) => v.deleted_at === null);
+                    // Skip if class is deleted (archived)
+                    if (!student.classes || student.classes.deleted_at !== null) return;
+
+                    const activeViolations = (student.violations || []).filter((v) => 
+                        v.deleted_at === null && v.semester_id === activeSemester.id
+                    );
                     if (activeViolations.length > 0) {
                         const totalPoints = activeViolations.reduce((sum: number, v: { points: number }) => sum + v.points, 0);
                         if (totalPoints > 0) totalWithViolations++;
@@ -120,7 +129,7 @@ export const useGlobalAnalytics = () => {
         };
 
         fetchGlobalData();
-    }, []);
+    }, [activeSemester]);
 
     return { data, loading };
 };

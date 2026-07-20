@@ -209,15 +209,13 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     const records: Database['public']['Tables']['violations']['Insert'][] = studentIds
                         .filter((student_id) => !duplicateStudentIds.has(student_id))
                         .map((student_id: string) => {
-                            const finalDescription = violationNotes
-                                ? `${selectedViolation.description} - ${violationNotes}`
-                                : selectedViolation.description;
-
                             return {
                                 date: violationDate,
-                                description: finalDescription,
+                                description: selectedViolation.description,
+                                context_notes: violationNotes || null,
                                 points: selectedViolation.points,
                                 type: selectedViolation.code,
+                                severity: selectedViolation.category?.toLowerCase() || 'ringan',
                                 student_id,
                                 user_id: user.id,
                                 semester_id: activeSemester?.id || null,

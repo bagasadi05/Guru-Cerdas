@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase, clearStaleAuthTokens } from '../services/supabase';
 import type { User, Session, AuthResponse, UserResponse } from '@supabase/supabase-js';
 import type { Database } from '../services/database.types';
@@ -309,7 +309,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const enableScheduleNotifications = async (schedule: ScheduleWithClassName[]): Promise<boolean> => {
+  const enableScheduleNotifications = useCallback(async (schedule: ScheduleWithClassName[]): Promise<boolean> => {
     try {
       // Request permission using the appropriate method for platform
       const permissionGranted = await requestNotificationPermission();
@@ -334,9 +334,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.error('Gagal mengaktifkan notifikasi.');
       return false;
     }
-  };
+  }, [toast]);
 
-  const disableScheduleNotifications = async () => {
+  const disableScheduleNotifications = useCallback(async () => {
     try {
       if ('serviceWorker' in navigator) {
         // Clear service worker notifications on web/PWA
@@ -350,7 +350,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     localStorage.removeItem('scheduleNotificationsEnabled');
     setIsNotificationsEnabled(false);
-  };
+  }, []);
 
   const clearSupabaseCache = async () => {
     if ('serviceWorker' in navigator) {
@@ -366,7 +366,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     session,
     user,
     userRole,
@@ -401,7 +401,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }),
     enableScheduleNotifications,
     disableScheduleNotifications,
-  };
+  }), [session, user, userRole, loading, isNotificationsEnabled, enableScheduleNotifications, disableScheduleNotifications]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

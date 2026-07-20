@@ -40,7 +40,7 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
             date: defaultValues?.date || new Date().toISOString().slice(0, 10),
             description: defaultValues?.description || '',
             severity: normalizedSeverity,
-            follow_up_notes: defaultValues?.follow_up_notes || '',
+
             context_notes: defaultValues?.context_notes || '',
         }
     });
@@ -215,15 +215,7 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
                 />
             </div>
 
-            {/* Follow-up Notes */}
-            <div>
-                <label className="block text-sm font-medium mb-1">Catatan Tindak Lanjut (Opsional)</label>
-                <Textarea
-                    {...register('follow_up_notes')}
-                    placeholder="Catatan tambahan atau rencana tindak lanjut..."
-                    rows={3}
-                />
-            </div>
+
 
             {/* Actions */}
             <div className="flex justify-end gap-2 pt-4">

@@ -126,7 +126,7 @@ const StudentDetailPage = () => {
         handleCommunicationSubmit,
         handleDelete,
         handleCopyAccessCode,
-        handleUpdateViolationFollowUp,
+
         handleNotifyParent,
         handleGenerateAccessCode,
         handlePhotoChange,
@@ -437,7 +437,7 @@ const StudentDetailPage = () => {
                                         onAdd={() => setModalState({ type: 'violation', mode: 'add', data: null })}
                                         onEdit={(r) => setModalState({ type: 'violation', mode: 'edit', data: r })}
                                         onDelete={(id) => handleDelete('violations', id)}
-                                        onUpdateFollowUp={handleUpdateViolationFollowUp}
+
                                         onNotifyParent={handleNotifyParent}
                                         studentName={student.name}
                                         className={student.classes?.name || '-'}

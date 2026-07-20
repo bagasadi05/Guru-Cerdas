@@ -507,8 +507,7 @@ export const useStudentDetailPage = () => {
             points: selectedViolation?.points ?? existingViolation?.points ?? 0,
             type: existingViolation?.type || 'general',
             severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || existingViolation?.severity || null,
-            follow_up_status: existingViolation?.follow_up_status || 'pending',
-            follow_up_notes: data.follow_up_notes || null,
+
             evidence_url: evidenceUrl,
             student_id: studentId,
             user_id: user.id,
@@ -948,7 +947,7 @@ Tulis laporan yang menyentuh hati, memotivasi, dan komprehensif agar orang tua m
         handleCommunicationSubmit,
         handleDelete,
         handleCopyAccessCode,
-        handleUpdateViolationFollowUp,
+
         handleNotifyParent,
         handleGenerateAccessCode,
         handlePhotoChange,
