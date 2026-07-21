@@ -20,6 +20,7 @@ interface GradesTabProps {
     kkm?: number; // Kriteria Ketuntasan Minimal
     semesterLabel?: string;
     canAdd?: boolean;
+    canManageAllRecords?: boolean;
 }
 
 // Helper to predict final grade based on trend
@@ -236,7 +237,8 @@ const GradesPanel: React.FC<{
     currentUserId?: string;
     kkm: number;
     semesterLabel?: string;
-}> = ({ records, onEdit, onDelete, isOnline, currentUserId, kkm, semesterLabel }) => {
+    canManageAllRecords?: boolean;
+}> = ({ records, onEdit, onDelete, isOnline, currentUserId, kkm, semesterLabel, canManageAllRecords }) => {
     const { isLocked } = useSemester();
     const recordsBySubject = useMemo(() => {
         if (!records || records.length === 0) return {};
@@ -341,7 +343,7 @@ const GradesPanel: React.FC<{
                                         </div>
                                         <div className="absolute top-3 right-3 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                             {(() => {
-                                                const canModify = record.user_id === currentUserId && !isLocked(record.semester_id || record.created_at);
+                                                const canModify = (record.user_id === currentUserId || canManageAllRecords) && !isLocked(record.semester_id || record.created_at);
 
                                                 return (
                                                     <>
@@ -393,6 +395,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
     kkm = DEFAULT_KKM,
     semesterLabel,
     canAdd = true,
+    canManageAllRecords = false,
 }) => {
     const chartRef = useRef<HTMLDivElement>(null);
 
@@ -482,6 +485,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                 currentUserId={currentUserId}
                 kkm={kkm}
                 semesterLabel={semesterLabel}
+                canManageAllRecords={canManageAllRecords}
             />
         </div>
     );

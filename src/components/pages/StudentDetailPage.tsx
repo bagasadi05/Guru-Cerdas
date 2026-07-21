@@ -204,6 +204,7 @@ const StudentDetailPage = () => {
     const classes = studentProfile.classes || [];
     const isHomeroomTeacher = assignments.some((a: any) => a.class_id === student.class_id && a.assignment_role === 'homeroom');
     const canManageStudentProfile = student.user_id === user?.id || isHomeroomTeacher || userRole === 'admin';
+    const canManageAllRecords = isHomeroomTeacher || userRole === 'admin';
     const isAssistant = assignments.some((a: any) => a.class_id === student.class_id && a.assignment_role === 'assistant');
     const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan';
     const canAdd = !isAssistant && !isLeadership;
@@ -418,14 +419,14 @@ const StudentDetailPage = () => {
                         <TabsContent value="grades" className="p-0">
                             {activeTab === 'grades' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} currentUserId={user?.id} kkm={kkm} semesterLabel={selectedSemesterLabel} canAdd={canAdd} />
+                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} currentUserId={user?.id} kkm={kkm} semesterLabel={selectedSemesterLabel} canAdd={canAdd} canManageAllRecords={canManageAllRecords} />
                                 </Suspense>
                             )}
                         </TabsContent>
                         <TabsContent value="activity" className="p-0">
                             {activeTab === 'activity' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} currentUserId={user?.id} semesterLabel={selectedSemesterLabel} canAdd={canAdd} />
+                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} currentUserId={user?.id} semesterLabel={selectedSemesterLabel} canAdd={canAdd} canManageAllRecords={canManageAllRecords} />
                                 </Suspense>
                             )}
                         </TabsContent>
@@ -446,6 +447,7 @@ const StudentDetailPage = () => {
                                         semesterLabel={selectedSemesterLabel}
                                         isHomeroomTeacher={isHomeroomTeacher}
                                         canAdd={canAdd}
+                                        canManageAllRecords={canManageAllRecords}
                                     />
                                 </Suspense>
                             )}

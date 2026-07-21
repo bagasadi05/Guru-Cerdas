@@ -43,6 +43,7 @@ interface ViolationsTabProps {
     semesterLabel?: string;
     isHomeroomTeacher?: boolean;
     canAdd?: boolean;
+    canManageAllRecords?: boolean;
 }
 
 // Threshold Alert Component
@@ -152,10 +153,11 @@ const ViolationCard: React.FC<{
     isLocked?: boolean;
     currentUserId?: string;
     isHomeroomTeacher?: boolean;
-}> = ({ violation, onEdit, onDelete, onNotifyParent, isOnline, isLocked = false, currentUserId, isHomeroomTeacher = false }) => {
+    canManageAllRecords?: boolean;
+}> = ({ violation, onEdit, onDelete, onNotifyParent, isOnline, isLocked = false, currentUserId, isHomeroomTeacher = false, canManageAllRecords = false }) => {
     const severity = isSeverityLevel(violation.severity) ? SEVERITY_LEVELS[violation.severity] : SEVERITY_LEVELS.ringan;
     const isCreator = violation.user_id === currentUserId;
-    const canModify = (isCreator || isHomeroomTeacher) && !isLocked;
+    const canModify = (isCreator || isHomeroomTeacher || canManageAllRecords) && !isLocked;
 
     return (
         <div className={`group relative p-4 rounded-xl border-2 ${severity.borderClass} ${severity.bgClass} transition-all hover:shadow-md`}>
@@ -243,14 +245,14 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     onEdit,
     onDelete,
     onNotifyParent,
-
     isOnline,
     currentUserId,
     studentName,
     className,
-    isHomeroomTeacher,
+    isHomeroomTeacher = false,
     semesterLabel,
     canAdd = true,
+    canManageAllRecords = false,
 }) => {
     const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
 
@@ -367,6 +369,7 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                                     isLocked={isViolationLocked}
                                     currentUserId={currentUserId}
                                     isHomeroomTeacher={isHomeroomTeacher}
+                                    canManageAllRecords={canManageAllRecords}
                                 />
                             );
                         })}

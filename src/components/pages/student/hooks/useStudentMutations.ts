@@ -128,8 +128,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                     const { error } = await supabase
                         .from('academic_records')
                         .update(vars.data)
-                        .eq('id', latestExistingRecord.id)
-                        .eq('user_id', userId);
+                        .eq('id', latestExistingRecord.id);
                     if (error) throw error;
                     await writeAuditLog({
                         userId,
@@ -147,7 +146,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                 if (error) throw error;
             } else {
                 const oldData = await getAuditRecord('academic_records', vars.id, userId);
-                const { error } = await supabase.from('academic_records').update(vars.data).eq('id', vars.id).eq('user_id', userId);
+                const { error } = await supabase.from('academic_records').update(vars.data).eq('id', vars.id);
                 if (error) throw error;
                 await writeAuditLog({
                     userId,
@@ -193,8 +192,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                     const { error } = await supabase
                         .from('quiz_points')
                         .update(vars.data)
-                        .eq('id', existingRow.id)
-                        .eq('user_id', userId);
+                        .eq('id', existingRow.id);
                     if (error) throw error;
                     await writeAuditLog({
                         userId,
@@ -212,7 +210,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                 if (error) throw error;
             } else {
                 const oldData = await getAuditRecord('quiz_points', vars.id, userId);
-                const { error } = await supabase.from('quiz_points').update(vars.data).eq('id', vars.id).eq('user_id', userId);
+                const { error } = await supabase.from('quiz_points').update(vars.data).eq('id', vars.id);
                 if (error) throw error;
                 await writeAuditLog({
                     userId,
@@ -261,8 +259,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                     const { error } = await supabase
                         .from('violations')
                         .update(vars.data)
-                        .eq('id', existingRow.id)
-                        .eq('user_id', userId);
+                        .eq('id', existingRow.id);
                     if (error) throw error;
                     await writeAuditLog({
                         userId,
@@ -280,7 +277,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                 if (error) throw error;
             } else {
                 const oldData = await getAuditRecord('violations', vars.id, userId);
-                const { error } = await supabase.from('violations').update(vars.data).eq('id', vars.id).eq('user_id', userId);
+                const { error } = await supabase.from('violations').update(vars.data).eq('id', vars.id);
                 if (error) throw error;
                 await writeAuditLog({
                     userId,
@@ -359,7 +356,7 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             // records silently affect 0 rows (UI showed success but data persisted).
             // For these tables we omit the owner filter and rely on RLS to decide who
             // may modify/delete; .select('id') lets the caller detect a 0-row no-op.
-            const COLLAB_TABLES = new Set<keyof Database['public']['Tables']>(['violations']);
+            const COLLAB_TABLES = new Set<keyof Database['public']['Tables']>(['violations', 'academic_records', 'quiz_points']);
             const ownerScoped = !COLLAB_TABLES.has(table);
             const base = SOFT_DELETE_TABLES.has(table)
                 ? fromTable.update({ deleted_at: new Date().toISOString() }).eq('id', id)

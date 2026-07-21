@@ -511,7 +511,7 @@ export const downloadBintangReportAction = async ({
     if (studentId) {
         const { data: sData, error: sError } = await supabase
             .from('students')
-            .select('id, name, access_code, class_id, nis, nisn')
+            .select('id, name, access_code, class_id')
             .eq('id', studentId)
             .single();
         if (sError) throw sError;
@@ -536,7 +536,7 @@ export const downloadBintangReportAction = async ({
 
         const { data: sData, error: sError } = await supabase
             .from('students')
-            .select('id, name, access_code, class_id, nis, nisn')
+            .select('id, name, access_code, class_id')
             .eq('class_id', classId)
             .is('deleted_at', null)
             .order('name', { ascending: true });
@@ -558,12 +558,18 @@ export const downloadBintangReportAction = async ({
 
         // Fetch quiz points (keaktifan) for the month
         // month is in YYYY-MM format, so we use string matching on quiz_date
-        const { data: qpData } = await supabase
+        const lastDay = new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate();
+        const { data: qpData, error: qpError } = await supabase
             .from('quiz_points')
             .select('*')
             .eq('student_id', student.id)
             .is('deleted_at', null)
-            .like('quiz_date', `${month}-%`);
+            .gte('quiz_date', `${month}-01`)
+            .lte('quiz_date', `${month}-${lastDay}`);
+            
+        if (qpError) {
+            console.error('Error fetching quiz points:', qpError);
+        }
 
         reports.push({
             student,

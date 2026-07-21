@@ -38,6 +38,7 @@ interface ActivityTabProps {
     currentUserId?: string;
     semesterLabel?: string;
     canAdd?: boolean;
+    canManageAllRecords?: boolean;
 }
 
 // Category Filter Component
@@ -248,7 +249,8 @@ const ActivityPointsHistory: React.FC<{
     currentUserId?: string;
     categoryFilter: PointCategory | 'all';
     semesterLabel?: string;
-}> = ({ records, onEdit, onDelete, isOnline, currentUserId, categoryFilter, semesterLabel }) => {
+    canManageAllRecords?: boolean;
+}> = ({ records, onEdit, onDelete, isOnline, currentUserId, categoryFilter, semesterLabel, canManageAllRecords }) => {
     const filteredRecords = useMemo(() => {
         let filtered = records.filter(r => !r.is_used);
         if (categoryFilter !== 'all') {
@@ -317,8 +319,8 @@ const ActivityPointsHistory: React.FC<{
                             </div>
                         </div>
                         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(record)} aria-label="Edit Poin" disabled={!isOnline || record.user_id !== currentUserId}><PencilIcon className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 dark:text-red-400" onClick={() => onDelete(record.id)} aria-label="Hapus Poin" disabled={!isOnline || record.user_id !== currentUserId}><TrashIcon className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(record)} aria-label="Edit Poin" disabled={!isOnline || (!canManageAllRecords && record.user_id !== currentUserId)}><PencilIcon className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 dark:text-red-400" onClick={() => onDelete(record.id)} aria-label="Hapus Poin" disabled={!isOnline || (!canManageAllRecords && record.user_id !== currentUserId)}><TrashIcon className="h-4 w-4" /></Button>
                         </div>
                     </div>
                 );
@@ -366,7 +368,7 @@ const ApplyPointsPanel: React.FC<{
 // View Toggle
 type ViewMode = 'available' | 'history' | 'overview';
 
-export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onEdit, onDelete, onApplyPoints, isOnline, currentUserId, semesterLabel, canAdd = true }) => {
+export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onEdit, onDelete, onApplyPoints, isOnline, currentUserId, semesterLabel, canAdd = true, canManageAllRecords = false }) => {
     const [categoryFilter, setCategoryFilter] = useState<PointCategory | 'all'>('all');
     const [viewMode, setViewMode] = useState<ViewMode>('available');
 
@@ -446,6 +448,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ quizPoints, onAdd, onE
                         currentUserId={currentUserId}
                         categoryFilter={categoryFilter}
                         semesterLabel={semesterLabel}
+                        canManageAllRecords={canManageAllRecords}
                     />
                 </>
             )}
