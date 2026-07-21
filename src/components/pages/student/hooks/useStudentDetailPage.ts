@@ -613,35 +613,6 @@ export const useStudentDetailPage = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleUpdateViolationFollowUp = async (violationId: string, status: 'pending' | 'in_progress' | 'resolved', notes?: string) => {
-        try {
-            if (!user) return;
-            const { data: updated, error } = await supabase.rpc('update_accessible_violation_follow_up', {
-                p_violation_id: violationId,
-                p_status: status,
-                p_notes: notes ?? null,
-            });
-
-            if (error) throw error;
-            if (!updated) throw new Error('Data pelanggaran tidak dapat diperbarui.');
-
-            queryClient.invalidateQueries({ queryKey: ['studentStats', studentId] });
-            queryClient.invalidateQueries({ queryKey: ['studentCommsUnreadCount', studentId] });
-            await writeAuditLog({
-                userId: user.id,
-                userEmail: user.email,
-                tableName: 'violations',
-                recordId: violationId,
-                action: 'UPDATE',
-                oldData: { follow_up_status: 'unknown' },
-                newData: { follow_up_status: status, follow_up_notes: notes || null },
-            });
-            toast.success(`Status tindak lanjut berhasil diubah menjadi "${status === 'pending' ? 'Belum Ditindak' : status === 'in_progress' ? 'Sedang Diproses' : 'Sudah Selesai'}"`);
-        } catch (error: unknown) {
-            toast.error(`Gagal mengubah status: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    };
-
     const handleNotifyParent = async (violation: ViolationRow) => {
         try {
             if (!studentDetails?.student || !user) return;

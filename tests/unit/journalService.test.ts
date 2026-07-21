@@ -39,6 +39,7 @@ vi.mock('../../src/services/supabase', () => {
   };
 
   return {
+    wasLastResponseQueued: vi.fn().mockReturnValue(false),
     supabase: {
       auth: {
         getUser: vi.fn().mockResolvedValue({

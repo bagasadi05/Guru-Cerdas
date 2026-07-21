@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { supabase } from '../services/supabase';
 import { logger } from '../services/logger';
 import { SemesterRow, AcademicYearRow } from '../types';
-
+import { useAuth } from '../hooks/useAuth';
+import { autoInitializeSemesters, getCurrentAcademicTerm } from '../services/semesterAutoPilot';
 
 interface StudentAccessPeriod {
     canAccess: boolean;
@@ -29,6 +30,7 @@ interface SemesterContextType {
 const SemesterContext = createContext<SemesterContextType | undefined>(undefined);
 
 export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { userRole } = useAuth();
     const [activeSemester, setActiveSemester] = useState<SemesterRow | null>(null);
     const [activeAcademicYear, setActiveAcademicYear] = useState<AcademicYearRow | null>(null);
     const [semesters, setSemesters] = useState<SemesterWithYear[]>([]);
@@ -38,16 +40,52 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
     const fetchSemestersData = useCallback(async () => {
         setIsLoading(true);
         try {
-            // Fetch all semesters with academic year info
-            const semestersQuery = supabase
-                .from('semesters')
-                .select('*, academic_years(*)')
-                .is('deleted_at', null);
-            const { data: allSemesters, error: allSemestersError } =
-                typeof (semestersQuery as { order?: unknown }).order === 'function'
-                    ? await (semestersQuery as unknown as { order: (column: string, options: { ascending: boolean }) => Promise<{ data: SemesterWithYear[] | null; error: { code?: string; message: string } | null }> })
-                        .order('start_date', { ascending: false })
-                    : await semestersQuery;
+            const performFetch = async () => {
+                // Fetch all semesters with academic year info
+                const semestersQuery = supabase
+                    .from('semesters')
+                    .select('*, academic_years(*)')
+                    .is('deleted_at', null);
+                
+                const { data: allSemesters, error: allSemestersError } =
+                    typeof (semestersQuery as { order?: unknown }).order === 'function'
+                        ? await (semestersQuery as unknown as { order: (column: string, options: { ascending: boolean }) => Promise<{ data: SemesterWithYear[] | null; error: { code?: string; message: string } | null }> })
+                            .order('start_date', { ascending: false })
+                        : await semestersQuery;
+
+                // Find the active semester
+                const { data: semesterData, error: semesterError } = await supabase
+                    .from('semesters')
+                    .select('*')
+                    .eq('is_active', true)
+                    .is('deleted_at', null)
+                    .maybeSingle();
+
+                return { allSemesters, allSemestersError, semesterData, semesterError };
+            };
+
+            let { allSemesters, allSemestersError, semesterData, semesterError } = await performFetch();
+
+            // Auto-Pilot Logic: Check if we need to initialize or switch semesters
+            const isGlobalRole = userRole === 'admin' || userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan';
+            if (isGlobalRole && !allSemestersError) {
+                const { semesterType } = getCurrentAcademicTerm();
+                const expectedNames = semesterType === 'Ganjil' ? ['ganjil', '1'] : ['genap', '2'];
+                const isActiveCorrect = semesterData && expectedNames.includes(semesterData.name.toLowerCase());
+                
+                if (!allSemesters || allSemesters.length === 0 || !isActiveCorrect) {
+                     logger.info('Auto-Pilot triggered: updating semesters...', undefined, 'SemesterContext');
+                     const dataChanged = await autoInitializeSemesters();
+                     if (dataChanged) {
+                         // Re-fetch after auto generation
+                         const newFetch = await performFetch();
+                         allSemesters = newFetch.allSemesters;
+                         allSemestersError = newFetch.allSemestersError;
+                         semesterData = newFetch.semesterData;
+                         semesterError = newFetch.semesterError;
+                     }
+                }
+            }
 
             if (allSemestersError) {
                 logger.error('Error fetching semesters', allSemestersError as unknown as Error, undefined, 'SemesterContext');
@@ -55,21 +93,12 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                 setSemesters(allSemesters as unknown as SemesterWithYear[]);
             }
 
-            // Find the active semester
-            const { data: semesterData, error: semesterError } = await supabase
-                .from('semesters')
-                .select('*')
-                .eq('is_active', true)
-                .is('deleted_at', null)
-                .maybeSingle();
-
             if (semesterError) {
                 if (semesterError.code !== 'PGRST116') { // Not found error code
                     logger.error('Error fetching active semester', semesterError as unknown as Error, undefined, 'SemesterContext');
                 }
                 setActiveSemester(null);
                 setActiveAcademicYear(null);
-                // Don't return, keep semesters list populated
             } else if (!semesterData) {
                 setActiveSemester(null);
                 setActiveAcademicYear(null);
@@ -95,7 +124,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [userRole]);
 
     useEffect(() => {
         fetchSemestersData();
@@ -106,11 +135,6 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
         return semesters.find(s => {
             const start = new Date(s.start_date);
             const end = new Date(s.end_date);
-            // Include end date in the range (set to end of day if needed, but simple comparison usually works if dates are YYYY-MM-DD)
-            // Assuming database dates are just dates or start/end of days.
-            // Let's ensure strict day comparison if inputs are ISO strings.
-            // For now, simple object comparison might be risky if times differ.
-            // Let's normalize to string YYYY-MM-DD for safety if they are strings in DB.
             return checkDate >= start && checkDate <= end;
         });
     }, [semesters]);
@@ -129,9 +153,6 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const checkStudentAccess = useCallback((): StudentAccessPeriod => {
         if (!activeSemester) return { canAccess: true }; // Allow if no semester system active yet? Or block?
-
-        // Example logic: if semester is locked, maybe students can't edit things?
-        // For now, always return true unless specific logic added
         return { canAccess: true };
     }, [activeSemester]);
 

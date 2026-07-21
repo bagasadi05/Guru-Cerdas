@@ -299,7 +299,7 @@ For standard CSS transitions, use the following tokens:
 
 ### Framer Motion Tokens
 
-For React animations using `framer-motion`, import unified tokens from [motion.ts](file:///c:/Users/yuiop/Documents/Coding/Guru-Cerdas/Guru-Cerdas/src/styles/motion.ts).
+For React animations using `framer-motion`, import unified tokens from [motion.ts](../src/styles/motion.ts).
 
 #### Durations
 
@@ -378,7 +378,7 @@ All interactive elements must have a clear, high-contrast focus ring when focuse
 ### 2. Screen Readers & Labels
 Icon-only buttons **must** have descriptive text labels for screen readers. Use either `aria-label` directly or the unified `IconButton` component. Inputs must have either a visible `<label htmlFor>` or an `aria-label`. Decorative icons should be marked `aria-hidden="true"`. Live regions exist via `AnnouncerProvider`/`useAnnounce` for dynamic updates.
 - Never use a raw icon inside a button without a label.
-- Use the unified `IconButton` component from [accessibility.tsx](file:///c:/Users/yuiop/Documents/Coding/Guru-Cerdas/Guru-Cerdas/src/utils/accessibility.tsx):
+- Use the unified `IconButton` component from [accessibility.tsx](../src/utils/accessibility.tsx):
 ```tsx
 import { IconButton } from '@/utils/accessibility';
 import { EditIcon } from '@/components/Icons';

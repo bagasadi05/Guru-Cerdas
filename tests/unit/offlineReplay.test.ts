@@ -47,7 +47,7 @@ describe('Offline Replay & Bypass System', () => {
             try {
                 beginSyncBypass();
                 throw new Error('Simulation error');
-            } catch (e) {
+            } catch {
                 // error handled
             } finally {
                 endSyncBypass();
@@ -151,10 +151,10 @@ describe('Offline Replay & Bypass System', () => {
     describe('Session Null Handling', () => {
         it('should halt processing and keep item pending if session is null', async () => {
             let itemStatus = 'pending';
-            let retryCount = 0;
+            const retryCount = 0;
 
             const mockSession = null;
-            const processMutationSim = async (mut: any) => {
+            const processMutationSim = async (_mut: any) => {
                 if (!mockSession) {
                     const sessionError = new Error('SESSION_NULL');
                     (sessionError as any).code = 'SESSION_NULL';
@@ -211,7 +211,6 @@ describe('Offline Replay & Bypass System', () => {
         });
 
         it('should allow legacy item (userId null) replay if only one user ID exists in the queue', () => {
-            const mutation = { id: 'mut-1', userId: null };
             const currentUserId = 'user-A';
             const queue = [
                 { id: 'mut-1', userId: null },
@@ -225,7 +224,6 @@ describe('Offline Replay & Bypass System', () => {
         });
 
         it('should keep legacy item pending and throw USER_AMBIGUOUS if another user ID is in the queue', () => {
-            const mutation = { id: 'mut-1', userId: null };
             const currentUserId = 'user-A';
             const queue = [
                 { id: 'mut-1', userId: null },

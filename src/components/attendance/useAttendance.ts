@@ -9,7 +9,7 @@ import { addToQueue } from '../../services/offlineQueue';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import { useSemester } from '../../contexts/SemesterContext';
 import { queryKeys } from '../../lib/queryKeys';
-import { hasHomeroomAssignment, type TeacherClassAssignmentRow } from '../../services/teacherAssignments';
+import { type TeacherClassAssignmentRow } from '../../services/teacherAssignments';
 import { AttendanceRecord, AttendanceStatus, AttendanceInsert, AiAnalysis, StudentRow, ClassRow, AttendanceRow } from '../../types';
 import { statusOptions } from '../../constants';
 import { getAutoTable, getJsPDF, getXLSX } from '../../utils/dynamicImports';
