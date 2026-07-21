@@ -3,7 +3,7 @@ import { Input } from '../../../ui/Input';
 import { Checkbox } from '../../../ui/Checkbox';
 import { SearchIcon, CheckSquareIcon, BarChartIcon } from '../../../Icons';
 import { FilterPills } from './FilterPills';
-import { StudentRow, InputMode, StudentFilter, AcademicRecordRow } from '../types';
+import { StudentRow, InputMode, StudentFilter, AcademicRecordRow, ClassRow } from '../types';
 import { useGridNavigation } from '../../../../hooks/useGridNavigation';
 import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortField, SortDirection, GroupBy } from '../../../ui/StudentSortControls';
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
@@ -26,12 +26,15 @@ interface Step2_StudentListProps {
     handleScoreChange: (id: string, value: string) => void;
     validationErrors?: Record<string, string>;
     existingGrades: AcademicRecordRow[] | undefined;
+    classes?: ClassRow[];
+    selectedClass?: string;
 }
 
 export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     mode, searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
     isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
-    selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors = {}, existingGrades
+    selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors = {}, existingGrades,
+    classes, selectedClass
 }) => {
     // Sorting and Grouping State
     const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: SortDirection }>({
@@ -209,7 +212,14 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                     />
                                                                 </div>
                                                                 <div className="flex flex-col">
-                                                                    <span className={`font-medium text-base ${isSelected || hasScore ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-green-100'}`}>{s.name}</span>
+                                                                    <span className={`font-medium text-base ${isSelected || hasScore ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-green-100'}`}>
+                                                                        {s.name}
+                                                                        {selectedClass === 'all' && classes && (
+                                                                            <span className="ml-2 text-xs text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/50">
+                                                                                {classes.find(c => c.id === s.class_id)?.name || 'Unknown Class'}
+                                                                            </span>
+                                                                        )}
+                                                                    </span>
                                                                     {mode === 'subject_grade' && hasGrade && (
                                                                         <span className="animate-pulse text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 flex items-center gap-1 w-fit mt-1">
                                                                             ⚠️ Nilai Sudah Ada
@@ -307,7 +317,14 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         className="w-14 h-14 rounded-full object-cover ring-2 ring-slate-200 dark:ring-white/20 shadow-md"
                                                     />
                                                     <div className="flex-grow min-w-0">
-                                                        <p className="font-bold text-slate-900 dark:text-white text-lg truncate">{s.name}</p>
+                                                        <p className="font-bold text-slate-900 dark:text-white text-lg truncate flex items-center gap-2">
+                                                            {s.name}
+                                                            {selectedClass === 'all' && classes && (
+                                                                <span className="text-xs font-normal text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/50 flex-shrink-0">
+                                                                    {classes.find(c => c.id === s.class_id)?.name || 'Unknown'}
+                                                                </span>
+                                                            )}
+                                                        </p>
                                                         <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                                             <span className="text-sm text-slate-500 dark:text-indigo-200/70">No. {globalIndex + 1}</span>
                                                             {mode === 'subject_grade' && hasGrade && (

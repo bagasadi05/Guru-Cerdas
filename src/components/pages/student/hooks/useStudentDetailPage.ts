@@ -177,7 +177,7 @@ export const useStudentDetailPage = () => {
             if (!studentId || !user) return { attendanceRecords: [], violations: [] };
             const [attendanceRes, violationsRes] = await Promise.all([
                 supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null),
-                supabase.from('violations').select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null)
+                supabase.from('violations').select('id, student_id, user_id, date, description, context_notes, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null)
             ]);
             // F17-2: enrich tiap pelanggaran dengan nama guru pencatat (akuntabilitas).
             // Karena akses kini kolaboratif, daftar bisa berisi catatan dari guru lain.

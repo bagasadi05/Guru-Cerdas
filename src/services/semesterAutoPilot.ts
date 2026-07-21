@@ -33,7 +33,7 @@ export function getCurrentAcademicTerm(date: Date = new Date()) {
  * Checks if the database has the current semester, if not, it automatically generates it.
  * Should only be called by an Admin/Global role to avoid RLS issues.
  */
-export async function autoInitializeSemesters(): Promise<boolean> {
+export async function autoInitializeSemesters(userId: string): Promise<boolean> {
     try {
         const { academicYearName, semesterType, semesterNumber } = getCurrentAcademicTerm();
         
@@ -57,7 +57,8 @@ export async function autoInitializeSemesters(): Promise<boolean> {
                 name: academicYearName,
                 start_date: `${startYear}-07-01`,
                 end_date: `${startYear + 1}-06-30`,
-                is_active: true
+                is_active: true,
+                user_id: userId
             };
             
             const { data: newAy, error: createAyError } = await supabase
@@ -97,10 +98,12 @@ export async function autoInitializeSemesters(): Promise<boolean> {
                 .insert({
                     academic_year_id: academicYear!.id,
                     name: 'Ganjil',
+                    semester_number: 1,
                     start_date: `${startYear}-07-01`,
                     end_date: `${startYear}-12-31`,
                     is_active: semesterType === 'Ganjil',
-                    is_locked: false
+                    is_locked: false,
+                    user_id: userId
                 })
                 .select()
                 .single();
@@ -119,10 +122,12 @@ export async function autoInitializeSemesters(): Promise<boolean> {
                 .insert({
                     academic_year_id: academicYear!.id,
                     name: 'Genap',
+                    semester_number: 2,
                     start_date: `${startYear + 1}-01-01`,
                     end_date: `${startYear + 1}-06-30`,
                     is_active: semesterType === 'Genap',
-                    is_locked: false
+                    is_locked: false,
+                    user_id: userId
                 })
                 .select()
                 .single();

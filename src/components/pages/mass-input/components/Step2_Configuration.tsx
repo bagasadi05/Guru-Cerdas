@@ -51,6 +51,10 @@ interface Step2_ConfigurationProps {
     onOpenImport?: () => void;
     bypassDuplicateGuard: boolean;
     setBypassDuplicateGuard: (v: boolean) => void;
+    handleSubmit?: () => void;
+    isSubmitDisabled?: boolean;
+    isSubmitting?: boolean;
+    submitButtonTooltip?: string;
 }
 
 export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
@@ -59,7 +63,8 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     uniqueSubjects, selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
     violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote, assessmentNames,
     pasteData, setPasteData, isParsing, handleAiParse, isOnline, onOpenImport,
-    bypassDuplicateGuard, setBypassDuplicateGuard
+    bypassDuplicateGuard, setBypassDuplicateGuard,
+    handleSubmit, isSubmitDisabled, isSubmitting, submitButtonTooltip
 }) => {
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
     const [violationSearchTerm, setViolationSearchTerm] = useState('');
@@ -187,7 +192,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="quiz-subject" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Mata Pelajaran</label>
+                                    <label htmlFor="quiz-subject" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Mata Pelajaran / Kategori</label>
                                     {isCustomSubject ? (
                                         <div className="flex gap-2">
                                             <Input
@@ -220,8 +225,9 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                     setQuizInfo(p => ({ ...p, subject: val }));
                                                 }
                                             }}
-                                            placeholder="-- Pilih Mapel --"
+                                            placeholder="-- Pilih Mapel / Kategori --"
                                             options={[
+                                                { value: 'Umum (Non-Mapel)', label: 'Umum (Non-Mapel)' },
                                                 ...(uniqueSubjects?.map(s => ({ value: s, label: s })) || []),
                                                 { value: '__NEW__', label: '+ Ketik Mapel Baru' }
                                             ]}
@@ -232,6 +238,20 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     <label htmlFor="quiz-date" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Tanggal</label>
                                     <Input id="quiz-date" type="date" value={quizInfo.date} onChange={e => setQuizInfo(p => ({ ...p, date: e.target.value }))} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl" />
                                 </div>
+                                
+                                {handleSubmit && selectedClass === 'all' && (
+                                    <div className="pt-2" title={submitButtonTooltip}>
+                                        <Button
+                                            type="button"
+                                            onClick={handleSubmit}
+                                            disabled={isSubmitDisabled || isSubmitting}
+                                            className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold tracking-wide shadow-md shadow-indigo-500/30"
+                                        >
+                                            <CheckIcon className="w-5 h-5 mr-2" />
+                                            {isSubmitting ? 'Menyimpan...' : 'Simpan Keaktifan'}
+                                        </Button>
+                                    </div>
+                                )}
                             </>
                         )}
 
@@ -386,6 +406,20 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                         className="w-full h-24 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-indigo-500/50 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-all"
                                     />
                                 </div>
+                                
+                                {handleSubmit && selectedClass === 'all' && (
+                                    <div className="pt-2" title={submitButtonTooltip}>
+                                        <Button
+                                            type="button"
+                                            onClick={handleSubmit}
+                                            disabled={isSubmitDisabled || isSubmitting}
+                                            className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold tracking-wide shadow-md shadow-indigo-500/30"
+                                        >
+                                            <CheckIcon className="w-5 h-5 mr-2" />
+                                            {isSubmitting ? 'Menyimpan...' : 'Simpan Pelanggaran'}
+                                        </Button>
+                                    </div>
+                                )}
 
                                 {/* Violation Selection Modal */}
                                 <Modal

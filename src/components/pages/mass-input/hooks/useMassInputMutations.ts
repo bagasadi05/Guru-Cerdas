@@ -209,10 +209,9 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     const records: Database['public']['Tables']['violations']['Insert'][] = studentIds
                         .filter((student_id) => !duplicateStudentIds.has(student_id))
                         .map((student_id: string) => {
-                            return {
+                            const record: Database['public']['Tables']['violations']['Insert'] = {
                                 date: violationDate,
                                 description: selectedViolation.description,
-                                context_notes: violationNotes || null,
                                 points: selectedViolation.points,
                                 type: selectedViolation.code,
                                 severity: selectedViolation.category?.toLowerCase() || 'ringan',
@@ -220,6 +219,10 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                                 user_id: user.id,
                                 semester_id: activeSemester?.id || null,
                             };
+                            if (violationNotes) {
+                                record.context_notes = violationNotes;
+                            }
+                            return record;
                         });
 
                     if (records.length === 0) {
@@ -241,6 +244,8 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             toast.success(message || 'Data berhasil disimpan!');
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
             queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['studentStats'] });
+            queryClient.invalidateQueries({ queryKey: ['existingViolations'] });
             isScoresDirtyRef.current = false;
             clearSubjectGradeDraft();
         },

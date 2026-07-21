@@ -48,12 +48,13 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         queryFn: async (): Promise<ClassRow[]> => {
             if (!user) return [];
             
-            // Kolaboratif: Mode pelanggaran bisa diakses semua guru,
+            // Kolaboratif: Mode pelanggaran dan keaktifan bisa diakses semua guru,
             // jadi kita pakai RPC khusus yang membypass RLS assignments.
-            if (mode === 'violation') {
+            if (mode === 'violation' || mode === 'quiz') {
                 const { data, error } = await supabase.rpc('get_active_classes');
                 if (error) throw error; 
-                return (data || []) as unknown as ClassRow[];
+                const classesData = (data || []) as unknown as ClassRow[];
+                return [{ id: 'all', name: 'Semua Kelas (Lintas Kelas)', user_id: 'system' } as ClassRow, ...classesData];
             }
             
             const { data, error } = await supabase.from('classes').select('id, name, user_id').is('deleted_at', null).eq('is_archived', false).order('name');
@@ -67,12 +68,23 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         queryFn: async (): Promise<StudentRow[]> => {
             if (!selectedClass) return [];
             
-            // Kolaboratif: Mode pelanggaran bisa diakses semua guru
-            if (mode === 'violation') {
+            // Kolaboratif: Mode pelanggaran dan keaktifan bisa diakses semua guru
+            if (mode === 'violation' || mode === 'quiz') {
                 const { data, error } = await supabase.rpc('get_student_directory');
                 if (error) throw error;
-                // get_student_directory returns all students, filter by selectedClass
-                const filteredData = (data || []).filter((s: any) => s.class_id === selectedClass);
+                
+                let activeClassIds: Set<string> | null = null;
+                if (selectedClass === 'all') {
+                     const { data: activeClasses, error: acError } = await supabase.rpc('get_active_classes');
+                     if (!acError && activeClasses) {
+                         activeClassIds = new Set((activeClasses as { id: string }[]).map(c => c.id));
+                     }
+                }
+
+                // get_student_directory returns all students
+                const filteredData = selectedClass === 'all' 
+                    ? (data || []).filter((s: { class_id: string | null }) => activeClassIds && s.class_id ? activeClassIds.has(s.class_id) : true) 
+                    : (data || []).filter((s: { class_id: string | null }) => s.class_id === selectedClass);
                 return filteredData as unknown as StudentRow[];
             }
             
@@ -166,7 +178,21 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
     const { data: existingViolations, isLoading: isLoadingViolations } = useQuery({
         queryKey: ['existingViolations', selectedClass, user?.id],
         queryFn: async (): Promise<ViolationRow[]> => {
-            if (!selectedClass || !studentsData) return [];
+            if (!selectedClass || !studentsData || studentsData.length === 0) return [];
+            
+            if (selectedClass === 'all') {
+                const { data, error } = await supabase
+                    .from('violations')
+                    .select('id, student_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, user_id')
+                    .is('deleted_at', null)
+                    .order('date', { ascending: false });
+                if (error) throw error; 
+                
+                const studentIds = new Set(studentsData.map(s => s.id));
+                const allData = (data || []).filter(v => studentIds.has(v.student_id));
+                return allData as unknown as ViolationRow[];
+            }
+            
             const { data, error } = await supabase
                 .from('violations')
                 .select('id, student_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, user_id')

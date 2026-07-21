@@ -40,7 +40,13 @@ export const ensureBintangLogosLoaded = async (): Promise<void> => {
 
 export const generateBintangReportPdf = async (
     doc: jsPDF,
-    reports: Array<{student: any, evaluation: any, aspects: any, violations?: any[]}>,
+    reports: Array<{
+        student: { id: string; name?: string | null; classes?: { name?: string | null } | null; nis?: string | null; nisn?: string | null; class_id?: string | null; access_code?: string | null };
+        evaluation: Record<string, string | number | boolean | null> | null;
+        aspects: any;
+        violations?: { date: string; description: string; points: number }[];
+        quizPoints?: { quiz_name?: string; category?: string; points: number }[];
+    }>,
     monthName: string,
     printDate: string,
     user: AppUser | null,
@@ -213,7 +219,7 @@ export const generateBintangReportPdf = async (
                 2: { halign: 'center', fontStyle: 'bold', cellWidth: 15, textColor: PRIMARY_DARK },
                 3: { cellWidth: 'auto', textColor: MUTED, halign: 'justify' }
             },
-            didDrawPage: (data: any) => {
+            didDrawPage: (data: { cursor?: { y: number } | null }) => {
                 currentY = data.cursor?.y || currentY;
             }
         });
@@ -241,7 +247,7 @@ export const generateBintangReportPdf = async (
             doc.text("Alhamdulillah, Ananda tidak memiliki catatan poin pelanggaran pada bulan ini.", margin + 5, currentY + 7.5);
             currentY += 12;
         } else {
-            const viosData = report.violations.map((v: any, idx: number) => {
+            const viosData = report.violations.map((v: { date: string; description: string; points: number }, idx: number) => {
                 const vDate = new Date(v.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
                 return [
                     (idx + 1).toString(),
@@ -278,15 +284,80 @@ export const generateBintangReportPdf = async (
                     2: { cellWidth: 'auto' },
                     3: { halign: 'center', cellWidth: 15, fontStyle: 'bold', textColor: [225, 29, 72] }
                 },
-                didDrawPage: (data: any) => {
+                didDrawPage: (data: { cursor?: { y: number } | null }) => {
                     currentY = data.cursor?.y || currentY;
                 }
             });
         }
 
-        currentY += 5;
+        // 6. Rincian Poin Keaktifan & Prestasi
+        if (report.quizPoints && report.quizPoints.length > 0) {
+            checkPageBreak(25);
+            doc.setFillColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
+            doc.roundedRect(margin, currentY, pageWidth - (margin * 2), 7, 2, 2, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(255, 255, 255);
+            doc.text("C. Rincian Poin Keaktifan & Prestasi", margin + 3, currentY + 5);
+            
+            currentY += 7;
 
-        // 6. Catatan Wali Kelas
+            const groupedQP = new Map<string, { activity: string; count: number; totalPoints: number }>();
+            report.quizPoints.forEach((item: { quiz_name?: string; category?: string; points: number }) => {
+                const activity = item.quiz_name || item.category || 'Aktivitas';
+                const current = groupedQP.get(activity);
+                if (current) {
+                    current.count += 1;
+                    current.totalPoints += item.points;
+                } else {
+                    groupedQP.set(activity, { activity, count: 1, totalPoints: item.points });
+                }
+            });
+
+            const qpData = Array.from(groupedQP.values())
+                .sort((a, b) => b.totalPoints - a.totalPoints)
+                .map((q, idx) => [
+                    (idx + 1).toString(),
+                    q.activity,
+                    q.count + 'x',
+                    q.totalPoints.toString()
+                ]);
+
+            autoTable(doc, {
+                startY: currentY,
+                margin: { left: margin, right: margin },
+                head: [['No', 'Kegiatan / Prestasi', 'Frekuensi', 'Total Poin']],
+                body: qpData,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [248, 250, 252],
+                    textColor: PRIMARY_DARK,
+                    fontStyle: 'bold',
+                    halign: 'center',
+                    lineWidth: 0.1,
+                    lineColor: BORDER
+                },
+                bodyStyles: {
+                    textColor: PRIMARY_DARK,
+                    fontSize: 9,
+                    lineWidth: 0.1,
+                    lineColor: BORDER,
+                    cellPadding: 2
+                },
+                columnStyles: {
+                    0: { halign: 'center', cellWidth: 10, textColor: MUTED },
+                    1: { cellWidth: 'auto' },
+                    2: { halign: 'center', cellWidth: 30, fontStyle: 'bold' },
+                    3: { halign: 'center', cellWidth: 25, fontStyle: 'bold', textColor: [5, 150, 105] } // emerald-600
+                },
+                didDrawPage: (data: { cursor?: { y: number } | null }) => {
+                    currentY = data.cursor?.y || currentY;
+                }
+            });
+            currentY += 5;
+        }
+
+        // 7. Catatan Wali Kelas
         checkPageBreak(25);
         
         doc.setFillColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
@@ -294,7 +365,7 @@ export const generateBintangReportPdf = async (
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
         doc.setTextColor(255, 255, 255);
-        doc.text("C. Catatan Wali Kelas", margin + 3, currentY + 5);
+        doc.text((report.quizPoints && report.quizPoints.length > 0) ? "D. Catatan Wali Kelas" : "C. Catatan Wali Kelas", margin + 3, currentY + 5);
         
         currentY += 7;
         
@@ -332,9 +403,11 @@ export const generateBintangReportPdf = async (
         
         doc.setFontSize(9);
         
-        const generalNotes = (report.evaluation?.catatan_wali && report.evaluation.catatan_wali.trim() !== '')
-            ? report.evaluation.catatan_wali
-            : (cleanNote(report.evaluation?.adab_notes) || '-');
+        const catatanWaliStr = report.evaluation?.catatan_wali ? String(report.evaluation.catatan_wali) : '';
+        const adabNotesStr = report.evaluation?.adab_notes ? String(report.evaluation.adab_notes) : undefined;
+        const generalNotes = (catatanWaliStr.trim() !== '')
+            ? catatanWaliStr
+            : (cleanNote(adabNotesStr) || '-');
         
         // Use doc.splitTextToSize to calculate height
         const notesLines = doc.splitTextToSize(generalNotes, notesWidth);
@@ -433,7 +506,7 @@ export const downloadBintangReportAction = async ({
 }) => {
     if (!studentId && !classId) return;
 
-    let studentsToFetch: any[] = [];
+    let studentsToFetch: Array<{ id: string; name?: string | null; access_code?: string | null; class_id?: string | null; nis?: string | null; nisn?: string | null; classes?: { name: string | null } | null }> = [];
     
     if (studentId) {
         const { data: sData, error: sError } = await supabase
@@ -483,11 +556,21 @@ export const downloadBintangReportAction = async ({
         const vios = await bintangService.getViolationsForStudent(student.id, month);
         const aspects = calculateAspectPoints(vios);
 
+        // Fetch quiz points (keaktifan) for the month
+        // month is in YYYY-MM format, so we use string matching on quiz_date
+        const { data: qpData } = await supabase
+            .from('quiz_points')
+            .select('*')
+            .eq('student_id', student.id)
+            .is('deleted_at', null)
+            .like('quiz_date', `${month}-%`);
+
         reports.push({
             student,
             evaluation: currentEval || null,
             aspects,
-            violations: vios
+            violations: vios,
+            quizPoints: qpData || []
         });
     }
 

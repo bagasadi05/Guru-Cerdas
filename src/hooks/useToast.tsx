@@ -91,7 +91,7 @@ const ToastContainer: React.FC<{ toasts: Toast[]; onDismiss: (id: number) => voi
 
     useEffect(() => {
         const node = document.createElement('div');
-        node.className = 'fixed top-5 right-5 z-toast space-y-3';
+        node.className = 'fixed top-10 left-1/2 -translate-x-1/2 z-toast space-y-3 flex flex-col items-center';
         document.body.appendChild(node);
         // Defer setState to prevent cascading renders
         Promise.resolve().then(() => setPortalNode(node));

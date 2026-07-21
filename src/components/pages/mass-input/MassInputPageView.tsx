@@ -227,6 +227,10 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     bypassDuplicateGuard={bypassDuplicateGuard}
                                     setBypassDuplicateGuard={setBypassDuplicateGuard}
                                     onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
+                                    handleSubmit={handleSubmit}
+                                    isSubmitDisabled={isSubmitDisabled}
+                                    isSubmitting={isSubmitting}
+                                    submitButtonTooltip={submitButtonTooltip}
                                 />
                             </div>
                             <div className={`${isConfigOpen ? 'lg:col-span-2' : 'lg:col-span-3'} transition-all duration-300`}>
@@ -247,6 +251,8 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     handleScoreChange={handleScoreChange}
                                     validationErrors={validationErrors}
                                     existingGrades={mode === 'delete_subject_grade' ? filteredExistingGrades : existingGrades}
+                                    classes={classes}
+                                    selectedClass={selectedClass}
                                 />
                             </div>
                         </>

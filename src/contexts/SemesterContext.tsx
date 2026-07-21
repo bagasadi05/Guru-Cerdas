@@ -30,7 +30,7 @@ interface SemesterContextType {
 const SemesterContext = createContext<SemesterContextType | undefined>(undefined);
 
 export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { userRole } = useAuth();
+    const { userRole, user } = useAuth();
     const [activeSemester, setActiveSemester] = useState<SemesterRow | null>(null);
     const [activeAcademicYear, setActiveAcademicYear] = useState<AcademicYearRow | null>(null);
     const [semesters, setSemesters] = useState<SemesterWithYear[]>([]);
@@ -75,7 +75,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                 
                 if (!allSemesters || allSemesters.length === 0 || !isActiveCorrect) {
                      logger.info('Auto-Pilot triggered: updating semesters...', undefined, 'SemesterContext');
-                     const dataChanged = await autoInitializeSemesters();
+                     const dataChanged = user ? await autoInitializeSemesters(user.id) : false;
                      if (dataChanged) {
                          // Re-fetch after auto generation
                          const newFetch = await performFetch();
@@ -124,7 +124,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
         } finally {
             setIsLoading(false);
         }
-    }, [userRole]);
+    }, [userRole, user]);
 
     useEffect(() => {
         fetchSemestersData();
