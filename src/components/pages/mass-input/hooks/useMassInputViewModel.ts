@@ -70,9 +70,6 @@ export function useMassInputViewModel() {
         if (state.mode === 'subject_grade') {
             if (state.studentFilter === 'graded') filtered = filtered.filter(s => studentsWithInputScores.has(s.id));
             else if (state.studentFilter === 'ungraded') filtered = filtered.filter(s => !studentsWithInputScores.has(s.id));
-        } else if (state.mode === 'delete_subject_grade') {
-            if (state.studentFilter === 'graded') filtered = filtered.filter(s => studentsWithGrades.has(s.id));
-            else if (state.studentFilter === 'ungraded') filtered = filtered.filter(s => !studentsWithGrades.has(s.id));
         } else if (state.mode) {
             if (state.studentFilter === 'selected') filtered = filtered.filter(s => state.selectedStudentIds.has(s.id));
             else if (state.studentFilter === 'unselected') filtered = filtered.filter(s => !state.selectedStudentIds.has(s.id));
@@ -84,13 +81,12 @@ export function useMassInputViewModel() {
     const gradedCount = useMemo(() => Object.values(state.scores).filter((s: string) => s && s.trim() !== '').length, [state.scores]);
 
     const isAllSelected = useMemo(() => {
-        if (state.mode === 'subject_grade') return false;
         if (students.length === 0) return false;
         return students.every(s => state.selectedStudentIds.has(s.id));
-    }, [state.mode, state.selectedStudentIds, students]);
+    }, [state.selectedStudentIds, students]);
 
     const filterOptions = useMemo((): { value: StudentFilter; label: string }[] => {
-        if (state.mode === 'subject_grade' || state.mode === 'delete_subject_grade')
+        if (state.mode === 'subject_grade')
             return [{ value: 'all', label: 'Semua' }, { value: 'graded', label: 'Sudah Dinilai' }, { value: 'ungraded', label: 'Belum Dinilai' }];
         if (['quiz', 'violation', 'bulk_report', 'academic_print'].includes(state.mode || ''))
             return [{ value: 'all', label: 'Semua' }, { value: 'selected', label: 'Terpilih' }, { value: 'unselected', label: 'Belum Dipilih' }];
@@ -126,9 +122,8 @@ export function useMassInputViewModel() {
     const summaryText = useMemo(() => {
         const totalStudents = data.studentsData?.length || 0;
         if (state.mode === 'subject_grade') return `${gradedCount} dari ${totalStudents} siswa telah dinilai.`;
-        if (state.mode === 'delete_subject_grade') return `${state.selectedStudentIds.size} dari ${studentsWithGrades.size} siswa terpilih untuk dihapus.`;
         return `${state.selectedStudentIds.size} dari ${totalStudents} siswa dipilih.`;
-    }, [state.mode, gradedCount, state.selectedStudentIds.size, data.studentsData, studentsWithGrades]);
+    }, [state.mode, gradedCount, state.selectedStudentIds.size, data.studentsData]);
 
     const submitButtonTooltip = useMemo(() => {
         if (!mutations.isOnline) return 'Fitur ini memerlukan koneksi internet.';
@@ -144,9 +139,6 @@ export function useMassInputViewModel() {
             case 'violation':
                 if (!state.selectedViolationCode) return 'Pilih jenis pelanggaran.';
                 if (state.selectedStudentIds.size === 0) return 'Pilih setidaknya satu siswa.'; break;
-            case 'delete_subject_grade':
-                if (!state.subjectGradeInfo.subject || !state.subjectGradeInfo.assessment_name) return 'Pilih mata pelajaran dan penilaian.';
-                if (state.selectedStudentIds.size === 0) return 'Pilih setidaknya satu nilai siswa untuk dihapus.'; break;
             case 'bulk_report':
             case 'academic_print':
                 if (state.selectedStudentIds.size === 0) return 'Pilih setidaknya satu siswa.';
@@ -158,7 +150,6 @@ export function useMassInputViewModel() {
     const isSubmitDisabled = !!submitButtonTooltip;
 
     const handleSelectAllStudents = (checked: boolean) => {
-        if (state.mode === 'subject_grade') return;
         const visibleStudentIds = students.map(s => s.id);
 
         state.setSelectedStudentIds(prev => {
@@ -196,6 +187,7 @@ export function useMassInputViewModel() {
         });
         state.setScores(importedScores);
         state.setSelectedStudentIds(new Set(importedStudentIds));
+        state.setPendingImportData(null);
         // Do not let an in-flight existing-grades query overwrite imported
         // values before the teacher explicitly saves them.
         state.setIsScoresDirty(true);
@@ -279,6 +271,7 @@ export function useMassInputViewModel() {
         submitButtonTooltip,
         isSubmitting: mutations.isSubmitting,
         isDeleting: mutations.isDeleting,
+        onDeleteSelected: mutations.handleDeleteSelected,
         studentsData: data.studentsData,
         existingViolations: data.existingViolations,
         isLoadingViolations: data.isLoadingViolations,

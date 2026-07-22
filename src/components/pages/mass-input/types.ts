@@ -31,7 +31,7 @@ export type ViolationRow = Partial<ViolationRowBase> & Pick<ViolationRowBase, Vi
 };
 
 
-export type InputMode = 'quiz' | 'subject_grade' | 'violation' | 'violation_export' | 'bulk_report' | 'academic_print' | 'delete_subject_grade' | 'grade_adjustment';
+export type InputMode = 'quiz' | 'subject_grade' | 'violation' | 'violation_export' | 'bulk_report' | 'academic_print' | 'grade_adjustment';
 export type Step = 1 | 2;
 export type ReviewDataItem = { studentName: string; score: string; };
 export type StudentFilter = 'all' | 'selected' | 'unselected' | 'graded' | 'ungraded';

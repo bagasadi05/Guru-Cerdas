@@ -253,21 +253,56 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     });
 
     const { mutate: deleteGrades, isPending: isDeleting } = useMutation({
-        mutationFn: async (recordIds: string[]) => {
-            if (recordIds.length === 0) return 'Tidak ada nilai yang dipilih untuk dihapus.';
-            const { error } = await supabase
-                .from('academic_records')
-                .update({ deleted_at: new Date().toISOString() } as never)
-                .in('id', recordIds);
-            if (error) throw error;
-            if (user) {
-                await recordAction(user.id, 'delete', 'academic_records', recordIds);
+        mutationFn: async ({ studentIds, recordIds }: { studentIds: string[]; recordIds: string[] }) => {
+            if (studentIds.length === 0 && recordIds.length === 0) {
+                throw new Error('Pilih setidaknya satu siswa untuk dihapus.');
             }
-            return `${recordIds.length} data nilai berhasil dihapus.`;
+
+            let query = supabase
+                .from('academic_records')
+                .update({ deleted_at: new Date().toISOString() } as never);
+
+            if (recordIds.length > 0) {
+                query = query.in('id', recordIds);
+            } else {
+                query = query
+                    .in('student_id', studentIds)
+                    .eq('subject', subjectGradeInfo.subject)
+                    .eq('assessment_name', subjectGradeInfo.assessment_name)
+                    .is('deleted_at', null);
+
+                if (subjectGradeInfo.semester) {
+                    query = query.eq('semester_id', subjectGradeInfo.semester);
+                }
+            }
+
+            const { data, error } = await query.select();
+            if (error) throw error;
+
+            const deletedRecords = data || [];
+            if (deletedRecords.length === 0) {
+                throw new Error('Tidak ada data nilai tersimpan yang cocok untuk dihapus.');
+            }
+
+            if (user && deletedRecords.length > 0) {
+                await recordAction(user.id, 'delete', 'academic_records', deletedRecords.map(d => d.id));
+            }
+            return `${deletedRecords.length} data nilai berhasil dihapus.`;
         },
         onSuccess: (message) => {
             toast.success(message);
+            // Clear local scores for deleted students
+            setScores(prev => {
+                const next = { ...prev };
+                selectedStudentIds.forEach(id => {
+                    delete next[id];
+                });
+                return next;
+            });
+            isScoresDirtyRef.current = false;
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
+            queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['studentStats'] });
             queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
             queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
             setConfirmDeleteModal({ isOpen: false, count: 0 });
@@ -470,17 +505,21 @@ Format JSON yang diharapkan:
     };
 
     const handleConfirmDelete = () => {
-        const recordIdsToDelete = filteredExistingGrades
+        const studentIds = Array.from(selectedStudentIds);
+        const recordIds = (existingGrades || [])
             .filter(g => selectedStudentIds.has(g.student_id))
             .map(g => g.id);
-        // Modal will be closed in onSuccess callback to prevent premature dismissal on failure
-        deleteGrades(recordIdsToDelete);
+
+        deleteGrades({ studentIds, recordIds });
+    };
+
+    const handleDeleteSelected = () => {
+        setConfirmDeleteModal({ isOpen: true, count: selectedStudentIds.size });
     };
 
     const handleSubmit = () => {
         if (mode === 'bulk_report') handlePrintBulkReports();
         else if (mode === 'academic_print') handlePrintGrades();
-        else if (mode === 'delete_subject_grade') setConfirmDeleteModal({ isOpen: true, count: selectedStudentIds.size });
         else submitData();
     };
 
@@ -492,7 +531,7 @@ Format JSON yang diharapkan:
         isExporting, exportProgress,
         confirmDeleteModal, setConfirmDeleteModal,
         confirmDeleteText, setConfirmDeleteText,
-        handleConfirmDelete, handleSubmit,
+        handleConfirmDelete, handleDeleteSelected, handleSubmit,
         isOnline,
     };
 }

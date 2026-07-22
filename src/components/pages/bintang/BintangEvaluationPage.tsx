@@ -430,35 +430,35 @@ export const BintangEvaluationPage: React.FC = () => {
                     </div>
                 </div>
                 {students.length > 0 && (
-                    <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+                    <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
                         <Button 
                             onClick={handleGenerateAll} 
                             disabled={isGenerating || students.length === 0}
                             variant="outline"
-                            className="flex items-center justify-center gap-2 col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-0"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-1 text-xs sm:text-sm h-10 px-2 sm:px-3.5 whitespace-nowrap font-medium"
                         >
-                            <Zap size={16} />
-                            {isGenerating ? 'Generating...' : 'Generate Semua'}
+                            <Zap size={14} className="flex-shrink-0" />
+                            <span>{isGenerating ? 'Proses...' : 'Generate'}<span className="hidden sm:inline"> Semua</span></span>
                         </Button>
                         <Button 
                             onClick={handleDownloadClassPdf}
                             disabled={isDownloadingClass || !selectedClass}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 min-h-[44px] sm:min-h-0"
+                            className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1 text-xs sm:text-sm h-10 px-2 sm:px-3.5 whitespace-nowrap font-medium"
                         >
                             {isDownloadingClass ? (
-                                <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
+                                <span className="animate-spin inline-block w-3.5 h-3.5 border-[2px] border-current border-t-transparent rounded-full flex-shrink-0" />
                             ) : (
-                                <Printer size={16} />
+                                <Printer size={14} className="flex-shrink-0" />
                             )}
-                            <span className="hidden sm:inline">{isDownloadingClass ? 'Proses...' : 'Cetak Kelas'}</span>
+                            <span>{isDownloadingClass ? 'Proses...' : 'Cetak'}<span className="hidden sm:inline"> Kelas</span></span>
                         </Button>
                         <Button 
                             onClick={handlePublish} 
                             disabled={evaluations.length === 0 || isPublishing}
-                            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 min-h-[44px] sm:min-h-0"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm h-10 px-2 sm:px-3.5 whitespace-nowrap font-medium"
                         >
-                            <Send size={16} />
-                            Publikasi
+                            <Send size={14} className="flex-shrink-0" />
+                            <span>Publikasi</span>
                         </Button>
                     </div>
                 )}
@@ -492,23 +492,17 @@ export const BintangEvaluationPage: React.FC = () => {
                     {isLoading ? (
                         <div className="text-center py-10 text-slate-500">Memuat data siswa dan evaluasi...</div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left border-collapse min-w-[480px]">
                                 <thead>
                                     <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
-                                        <th className="py-2 px-2 sm:py-3 sm:px-4 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300">Nama Siswa</th>
-                                        <th className="py-2 px-1 sm:py-3 sm:px-4 font-semibold text-[10px] sm:text-sm text-slate-600 dark:text-slate-300 text-center">Poin</th>
-                                        <th className="py-2 px-1 sm:py-3 sm:px-4 font-semibold text-[10px] sm:text-sm text-slate-600 dark:text-slate-300 text-center">Adab</th>
-                                        <th className="py-2 px-1 sm:py-3 sm:px-4 font-semibold text-[10px] sm:text-sm text-slate-600 dark:text-slate-300 text-center">
-                                            <span className="hidden sm:inline">Kedisiplinan</span>
-                                            <span className="sm:hidden">Disiplin</span>
-                                        </th>
-                                        <th className="py-2 px-1 sm:py-3 sm:px-4 font-semibold text-[10px] sm:text-sm text-slate-600 dark:text-slate-300 text-center">
-                                            <span className="hidden sm:inline">Kerapian</span>
-                                            <span className="sm:hidden">Rapi</span>
-                                        </th>
-                                        <th className="hidden md:table-cell py-2 px-2 sm:py-3 sm:px-4 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center">Status</th>
-                                        <th className="py-2 px-2 sm:py-3 sm:px-4 font-semibold text-[10px] sm:text-sm text-slate-600 dark:text-slate-300 text-right">Aksi</th>
+                                        <th className="py-2.5 px-3 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">Nama Siswa</th>
+                                        <th className="py-2.5 px-2 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center whitespace-nowrap">Poin</th>
+                                        <th className="py-2.5 px-2 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center whitespace-nowrap">Adab</th>
+                                        <th className="py-2.5 px-2 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center whitespace-nowrap">Disiplin</th>
+                                        <th className="py-2.5 px-2 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center whitespace-nowrap">Rapi</th>
+                                        <th className="hidden md:table-cell py-2.5 px-3 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center whitespace-nowrap">Status</th>
+                                        <th className="py-2.5 px-3 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-right whitespace-nowrap">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>

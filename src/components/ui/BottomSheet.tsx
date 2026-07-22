@@ -85,7 +85,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, ti
     return createPortal(
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-modal flex items-end justify-center sm:items-center">
+                <div className="fixed inset-0 z-[10000] flex items-end justify-center sm:items-center">
                     {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -110,7 +110,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, ti
                         transition={shouldReduceMotion ? { duration: 0 } : { duration: duration.base, ease: easing.easeOut }}
                         className="relative w-full max-w-lg bg-white dark:bg-slate-900 
                                   rounded-t-2xl sm:rounded-2xl shadow-xl 
-                                  max-h-[90vh] flex flex-col focus:outline-none z-10"
+                                  max-h-[85vh] sm:max-h-[90vh] flex flex-col focus:outline-none z-10"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Handle bar for mobile feel */}
@@ -133,7 +133,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, ti
                         </div>
 
                         {/* Scrollable Content */}
-                        <div className="overflow-y-auto p-4">
+                        <div className="overflow-y-auto p-4 sm:p-6 pb-12 sm:pb-6">
                             {children}
                         </div>
                     </motion.div>

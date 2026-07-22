@@ -327,10 +327,10 @@ function suggestColumnMappings(
     const mappings: ColumnMapping[] = [];
 
     const similarityPatterns: Record<string, string[]> = {
-        'name': ['nama', 'name', 'siswa', 'student', 'nama siswa', 'nama lengkap'],
-        'score': ['nilai', 'score', 'skor', 'poin', 'points', 'grade'],
-        'notes': ['catatan', 'notes', 'keterangan', 'remarks'],
-        'no': ['no', 'nomor', 'number', '#'],
+        'name': ['nama', 'name', 'siswa', 'student', 'nama siswa', 'nama lengkap', 'nama/nisn', 'peserta', 'nama murid'],
+        'score': ['nilai', 'score', 'skor', 'poin', 'points', 'grade', 'nilai akhir', 'nilai ph', 'nilai pts', 'nilai pas', 'nilai harian', 'hasil', 'ujicoba', 'uh'],
+        'notes': ['catatan', 'notes', 'keterangan', 'remarks', 'deskripsi'],
+        'no': ['no', 'nomor', 'number', '#', 'no.'],
     };
 
     targetColumns.forEach(target => {

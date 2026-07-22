@@ -13,6 +13,7 @@ export interface MinimStudent {
 export const cleanNameString = (str: string): string => {
     if (!str) return '';
     return str.toLowerCase()
+              .replace(/^\s*\d+[\.\)\-]?\s*/, '') // Remove leading row numbers/bullets like "1. ", "01 - "
               .replace(/[.,\-_']/g, ' ')
               .replace(/\s+/g, ' ')
               .trim();

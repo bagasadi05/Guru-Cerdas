@@ -149,7 +149,7 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             const names = ((data as { assessment_name: string | null }[]) || []).map((item) => item.assessment_name).filter((name): name is string => name !== null);
             return [...new Set(names)].sort();
         },
-        enabled: (mode === 'delete_subject_grade') && !!selectedClass && !!subject && !!studentsData,
+        enabled: !!selectedClass && !!subject && !!studentsData,
     });
 
     const { data: existingGrades, isLoading: isLoadingGrades } = useQuery({
@@ -172,7 +172,7 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             if (error) throw error;
             return dedupeAcademicRecords((data || []) as unknown as AcademicRecordRow[]);
         },
-        enabled: !!selectedClass && !!subject && !!assessmentName && !!studentsData && (mode === 'subject_grade' || mode === 'delete_subject_grade'),
+        enabled: !!selectedClass && !!subject && !!assessmentName && !!studentsData && mode === 'subject_grade',
     });
 
     const { data: existingViolations, isLoading: isLoadingViolations } = useQuery({

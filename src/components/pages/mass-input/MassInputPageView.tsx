@@ -101,6 +101,7 @@ export interface MassInputPageViewProps {
     setPendingImportData: (v: any[] | null) => void;
     bypassDuplicateGuard: boolean;
     setBypassDuplicateGuard: (v: boolean) => void;
+    onDeleteSelected?: () => void;
 }
 
 export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
@@ -250,9 +251,13 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     scores={scores}
                                     handleScoreChange={handleScoreChange}
                                     validationErrors={validationErrors}
-                                    existingGrades={mode === 'delete_subject_grade' ? filteredExistingGrades : existingGrades}
+                                    existingGrades={existingGrades}
                                     classes={classes}
                                     selectedClass={selectedClass}
+                                    handleSubmit={handleSubmit}
+                                    isSubmitDisabled={isSubmitDisabled}
+                                    isSubmitting={isSubmitting}
+                                    onShowAdjustment={() => setShowAdjustmentModal(true)}
                                 />
                             </div>
                         </>
@@ -338,6 +343,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         existingViolations={existingViolations}
                         onShowChart={() => setShowChartModal(true)}
                         onShowAdjustment={() => setShowAdjustmentModal(true)}
+                        onDeleteSelected={props.onDeleteSelected}
                     />
                 )}
 

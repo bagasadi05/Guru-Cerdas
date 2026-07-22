@@ -25,7 +25,6 @@ import { SectionHeading } from '../ui/SectionHeading';
 import { WelcomeEmptyState } from '../EmptyStates';
 import { AIInsightWidget } from '../dashboard/AIInsightWidget';
 import StatsGrid from '../dashboard/StatsGrid';
-import { QuickActionCards } from '../dashboard/QuickActionCards';
 import DashboardPageSkeleton from '../skeletons/DashboardPageSkeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import DashboardGreeting from '../dashboard/DashboardGreeting';
@@ -224,12 +223,6 @@ const DashboardPage: React.FC = () => {
           <TodayActionPanel data={data} isLoading={isLoading} />
           {/* Operational Section */}
           <section className="space-y-4">
-            <SectionHeading>Aksi Cepat & Wawasan</SectionHeading>
-            <QuickActionCards
-              pendingGrades={studentsMissingGrade.length}
-              incompleteTasks={tasks.length}
-            />
-
             {/* AI Insight Widget */}
             <div data-tutorial="ai-insight" className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl p-0 overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
               <div className="p-5 border-b border-slate-200/80 dark:border-slate-700/60 bg-gradient-to-r from-emerald-500/10 to-teal-500/5">

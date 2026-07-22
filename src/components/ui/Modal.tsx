@@ -113,11 +113,11 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 20 }}
             transition={shouldReduceMotion ? { duration: 0 } : easing.spring}
-            className={`relative w-full ${maxWidth} mx-4 max-h-[90vh] sm:max-h-[85vh] flex flex-col`}
+            className={`relative w-full ${maxWidth} mx-1 sm:mx-3 max-h-[95vh] flex flex-col`}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
             id="modal-container"
           >
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col max-h-[90vh] sm:max-h-[85vh]">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col h-full max-h-[95vh]">
           <div className="relative p-6 border-b border-slate-200/70 dark:border-slate-700/60">
             <div className="flex justify-between items-center gap-4">
               <div className="flex items-center gap-3">

@@ -2,11 +2,9 @@ import { GraduationCapIcon, XCircleIcon, CheckSquareIcon, ShieldAlertIcon, Print
 import { InputMode } from './types';
 
 export const inputCards: { mode: InputMode; title: string; description: string; icon: React.FC<{ className?: string }> }[] = [
-    { mode: 'subject_grade', title: 'Input Nilai Mapel', description: 'Masukkan nilai sumatif/akhir untuk satu kelas sekaligus.', icon: GraduationCapIcon },
+    { mode: 'subject_grade', title: 'Input Nilai Mapel', description: 'Masukkan nilai sumatif/akhir kelas (dilengkapi fitur Katrol Nilai & Hapus Nilai Massal).', icon: GraduationCapIcon },
     { mode: 'quiz', title: 'Input Poin Keaktifan', description: 'Beri poin untuk siswa yang aktif di kelas.', icon: CheckSquareIcon },
     { mode: 'violation', title: 'Input Pelanggaran', description: 'Catat poin pelanggaran untuk beberapa siswa.', icon: ShieldAlertIcon },
-    { mode: 'grade_adjustment', title: 'Katrol & Evaluasi Nilai', description: 'Kalkulasi penyesuaian nilai tersimpan menggunakan rumus excel & audit AI.', icon: SparklesIcon },
-    { mode: 'delete_subject_grade', title: 'Hapus Nilai Massal', description: 'Hapus data nilai untuk satu kelas dan penilaian tertentu.', icon: XCircleIcon },
 ];
 
 export const exportCards: { mode: InputMode; title: string; description: string; icon: React.FC<{ className?: string }> }[] = [

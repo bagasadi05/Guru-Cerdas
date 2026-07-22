@@ -25,57 +25,76 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
     onAccessCodeFilterChange,
 }) => {
     return (
-        <div className="flex flex-col lg:flex-row gap-4">
-            <div className="relative flex-grow group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <SearchIcon className="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+            {/* Search Input */}
+            <div className="relative flex-1 group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
+                    <SearchIcon className="h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                 </div>
                 <Input
                     type="text"
                     placeholder="Cari nama atau kode akses siswa..."
                     value={searchTerm}
                     onChange={e => onSearchChange(e.target.value)}
-                    className="pl-11 h-12 text-base w-full shadow-sm border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500 rounded-2xl bg-white dark:bg-gray-800 transition-all"
+                    className="pl-10 h-11 text-xs sm:text-sm w-full shadow-sm border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 rounded-xl bg-white dark:bg-slate-800 transition-all"
                 />
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-                <div className="flex items-center bg-white dark:bg-gray-800 rounded-2xl p-1 border border-gray-200 dark:border-gray-700 shadow-sm">
-                    <button type="button"
+            {/* Filter Controls Row */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
+                {/* View Mode Toggle */}
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 rounded-xl p-1 border border-slate-200 dark:border-slate-700/60 shadow-sm shrink-0 h-11">
+                    <button
+                        type="button"
                         onClick={() => onViewModeChange('grid')}
-                        className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                        className={`h-9 px-2.5 rounded-lg flex items-center justify-center transition-all ${
+                            viewMode === 'grid'
+                                ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm font-semibold'
+                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                        }`}
                         title="Tampilan Grid"
                     >
-                        <LayoutGridIcon className="h-5 w-5" />
+                        <LayoutGridIcon className="h-4 w-4" />
                     </button>
-                    <button type="button"
+                    <button
+                        type="button"
                         onClick={() => onViewModeChange('list')}
-                        className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                        className={`h-9 px-2.5 rounded-lg flex items-center justify-center transition-all ${
+                            viewMode === 'list'
+                                ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm font-semibold'
+                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                        }`}
                         title="Tampilan List/Tabel"
                     >
-                        <ListIcon className="h-5 w-5" />
+                        <ListIcon className="h-4 w-4" />
                     </button>
                 </div>
 
-                <Select
-                    value={genderFilter}
-                    onChange={(e) => onGenderFilterChange(e.target.value as any)}
-                    className="h-12 w-40 rounded-2xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                >
-                    <option value="all">Semua Gender</option>
-                    <option value="Laki-laki">Laki-laki</option>
-                    <option value="Perempuan">Perempuan</option>
-                </Select>
+                {/* Gender Select */}
+                <div className="flex-1 sm:flex-none min-w-[145px]">
+                    <Select
+                        value={genderFilter}
+                        onChange={(e) => onGenderFilterChange(e.target.value as any)}
+                        className="h-11 !text-xs sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 !px-3 shadow-sm cursor-pointer"
+                    >
+                        <option value="all">Semua Gender</option>
+                        <option value="Laki-laki">Laki-laki</option>
+                        <option value="Perempuan">Perempuan</option>
+                    </Select>
+                </div>
 
-                <Select
-                    value={accessCodeFilter}
-                    onChange={(e) => onAccessCodeFilterChange(e.target.value as any)}
-                    className="h-12 w-44 rounded-2xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                >
-                    <option value="all">Semua Status</option>
-                    <option value="has_code">Sudah Ada Kode</option>
-                    <option value="no_code">Belum Ada Kode</option>
-                </Select>
+                {/* Status Select */}
+                <div className="flex-1 sm:flex-none min-w-[155px]">
+                    <Select
+                        value={accessCodeFilter}
+                        onChange={(e) => onAccessCodeFilterChange(e.target.value as any)}
+                        className="h-11 !text-xs sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 !px-3 shadow-sm cursor-pointer"
+                    >
+                        <option value="all">Semua Status</option>
+                        <option value="has_code">Sudah Ada Kode</option>
+                        <option value="no_code">Belum Ada Kode</option>
+                    </Select>
+                </div>
             </div>
         </div>
     );

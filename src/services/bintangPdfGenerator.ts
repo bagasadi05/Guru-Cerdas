@@ -45,7 +45,7 @@ export const generateBintangReportPdf = async (
         evaluation: Record<string, string | number | boolean | null> | null;
         aspects: any;
         violations?: { date: string; description: string; points: number }[];
-        quizPoints?: { quiz_name?: string; category?: string; points: number }[];
+        quizPoints?: { quiz_name?: string | null; category?: string | null; points: number }[];
     }>,
     monthName: string,
     printDate: string,

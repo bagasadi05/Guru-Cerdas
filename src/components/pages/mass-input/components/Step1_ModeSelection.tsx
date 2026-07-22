@@ -33,7 +33,7 @@ export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode)
                 <span className="w-1.5 h-8 bg-green-500 rounded-full"></span>
                 Input & Kelola Data
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {inputCards.map((card, index) => (
                     <div key={card.mode} onClick={() => handleModeSelect(card.mode)}
                         role="button" tabIndex={0} aria-label={card.title}

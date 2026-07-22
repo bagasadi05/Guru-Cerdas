@@ -235,11 +235,11 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
             isOpen={isOpen}
             onClose={onClose}
             title="Katrol Nilai & Pratinjau Cetak Lembar Nilai"
-            maxWidth="max-w-7xl"
+            maxWidth="max-w-[98vw]"
         >
-            <div className="flex flex-col lg:flex-row gap-6 max-h-[80vh] overflow-hidden">
+            <div className="flex flex-col lg:flex-row gap-6 h-[80vh] overflow-hidden">
                 {/* LEFT COLUMN: Controls & Configurations */}
-                <div className="w-full lg:w-1/4 flex flex-col gap-4 overflow-y-auto pr-2 pb-4">
+                <div className="w-full lg:w-1/3 flex flex-col gap-4 overflow-y-auto pr-2 pb-4 custom-scrollbar h-full">
                     {/* Excel Formula Config Card */}
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
                         <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
@@ -406,9 +406,9 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                 </div>
 
                 {/* RIGHT COLUMN: Print Preview Paper document */}
-                <div className="w-full lg:w-3/4 bg-slate-200/50 dark:bg-slate-900/50 p-4 sm:p-6 rounded-3xl flex flex-col items-center overflow-y-auto">
+                <div className="w-full lg:w-2/3 bg-slate-200/50 dark:bg-slate-900/50 p-3 sm:p-5 rounded-3xl flex flex-col items-center overflow-y-auto overflow-x-auto custom-scrollbar h-full">
                     {/* Paper Document Container (Target for print) */}
-                    <div className="print-area w-full max-w-3xl bg-white text-slate-900 p-8 sm:p-12 rounded-lg shadow-xl border border-slate-300/40 relative min-h-[75vh] flex flex-col justify-between font-sans">
+                    <div className="print-area w-full bg-white text-slate-900 p-5 sm:p-8 rounded-lg shadow-xl border border-slate-300/40 relative min-h-[70vh] flex flex-col justify-between font-sans overflow-x-auto">
                         
                         {/* Printable CSS style wrapper */}
                         <style>{`

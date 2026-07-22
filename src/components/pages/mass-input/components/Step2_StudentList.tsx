@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { Input } from '../../../ui/Input';
 import { Checkbox } from '../../../ui/Checkbox';
-import { SearchIcon, CheckSquareIcon, BarChartIcon } from '../../../Icons';
+import { SearchIcon, CheckSquareIcon, BarChartIcon, CheckIcon, SparklesIcon } from '../../../Icons';
 import { FilterPills } from './FilterPills';
 import { StudentRow, InputMode, StudentFilter, AcademicRecordRow, ClassRow } from '../types';
 import { useGridNavigation } from '../../../../hooks/useGridNavigation';
 import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortField, SortDirection, GroupBy } from '../../../ui/StudentSortControls';
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
 import { getStudentAvatar } from '../../../../utils/avatarUtils';
+import { Button } from '../../../ui/Button';
 
 interface Step2_StudentListProps {
     mode: InputMode | null;
@@ -28,13 +29,17 @@ interface Step2_StudentListProps {
     existingGrades: AcademicRecordRow[] | undefined;
     classes?: ClassRow[];
     selectedClass?: string;
+    handleSubmit?: () => void;
+    isSubmitDisabled?: boolean;
+    isSubmitting?: boolean;
+    onShowAdjustment?: () => void;
 }
 
 export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     mode, searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
     isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
     selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors = {}, existingGrades,
-    classes, selectedClass
+    classes, selectedClass, handleSubmit, isSubmitDisabled, isSubmitting, onShowAdjustment
 }) => {
     // Sorting and Grouping State
     const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: SortDirection }>({
@@ -94,14 +99,41 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                     />
                 </div>
 
+                {/* Top Action Buttons (Simpan & Katrol Nilai - 50/50 Symmetric Layout) */}
+                {mode === 'subject_grade' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
+                        {handleSubmit && (
+                            <Button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={isSubmitDisabled || isSubmitting}
+                                className="w-full h-11 font-bold text-xs sm:text-sm bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl shadow-md shadow-emerald-500/15 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]"
+                            >
+                                <CheckIcon className="w-4 h-4" />
+                                <span>{isSubmitting ? 'Memproses...' : 'Simpan Data Nilai'}</span>
+                            </Button>
+                        )}
+                        {onShowAdjustment && (
+                            <Button
+                                type="button"
+                                onClick={onShowAdjustment}
+                                className="w-full h-11 font-bold text-xs sm:text-sm bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl shadow-md shadow-indigo-500/15 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]"
+                            >
+                                <SparklesIcon className="w-4 h-4 text-amber-300" />
+                                <span>Katrol & Pratinjau Nilai</span>
+                            </Button>
+                        )}
+                    </div>
+                )}
+
                 {/* Filter Pills - Horizontal scroll on mobile */}
                 <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
                     <FilterPills options={filterOptions} currentValue={studentFilter} onFilterChange={setStudentFilter} />
                 </div>
 
-                {/* Sorting and Grouping Controls - Only for subject_grade mode */}
+                {/* Sorting, Grouping & Quick Stats Controls */}
                 {mode === 'subject_grade' && students && students.length > 0 && (
-                    <div className="flex flex-col gap-3 pt-2 border-t border-slate-200 dark:border-white/10">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
                         <StudentSortControls
                             sortConfig={sortConfig}
                             onSortChange={setSortConfig}
@@ -110,16 +142,16 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                             showGrouping={true}
                         />
 
-                        {/* Quick Stats Toggle */}
+                        {/* Quick Stats Toggle - Aligned on right side of control bar */}
                         <button type="button"
                             onClick={() => setShowStats(!showStats)}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all w-fit ${showStats
-                                ? 'bg-purple-500 text-white'
-                                : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20'
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${showStats
+                                ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
+                                : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20 border border-slate-200 dark:border-white/10'
                                 }`}
                         >
-                            <BarChartIcon className="w-3 h-3" />
-                            Statistik
+                            <BarChartIcon className="w-3.5 h-3.5" />
+                            <span>Grafik Statistik</span>
                         </button>
                     </div>
                 )}
@@ -145,18 +177,16 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                 <thead>
                                     <tr className="text-green-600 dark:text-green-200">
                                         <th className="p-4 text-left w-14 font-bold tracking-wide uppercase text-xs">
-                                            {mode !== 'subject_grade' && (
-                                                <Checkbox
-                                                    checked={isAllSelected}
-                                                    onChange={e => handleSelectAllStudents(e.target.checked)}
-                                                    aria-label="Pilih semua siswa"
-                                                    className="border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                                                />
-                                            )}
+                                            <Checkbox
+                                                checked={isAllSelected}
+                                                onChange={e => handleSelectAllStudents(e.target.checked)}
+                                                aria-label="Pilih semua siswa"
+                                                className="border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                                            />
                                         </th>
                                         <th className="p-4 text-left font-bold tracking-wide uppercase text-xs">Nama Siswa</th>
                                         <th className="p-4 text-left font-bold tracking-wide uppercase text-xs">
-                                            {mode === 'subject_grade' ? 'Input Nilai' : (mode === 'academic_print' || mode === 'delete_subject_grade') ? 'Nilai Saat Ini' : 'Status'}
+                                            {mode === 'subject_grade' ? 'Input Nilai' : mode === 'academic_print' ? 'Nilai Saat Ini' : 'Status'}
                                         </th>
                                     </tr>
                                 </thead>
@@ -192,14 +222,11 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         `}
                                                     >
                                                         <td className="p-4 rounded-l-xl border-y border-l border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
-                                                            {mode !== 'subject_grade' && (
-                                                                <Checkbox
-                                                                    checked={isSelected}
-                                                                    onChange={() => handleStudentSelect(s.id)}
-                                                                    disabled={mode === 'delete_subject_grade' && !hasGrade}
-                                                                    className="border-slate-300 dark:border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                                                                />
-                                                            )}
+                                                            <Checkbox
+                                                                checked={isSelected}
+                                                                onChange={() => handleStudentSelect(s.id)}
+                                                                className="border-slate-300 dark:border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                                                            />
                                                         </td>
                                                         <td className="p-4 border-y border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
                                                             <div className="flex items-center gap-4">
@@ -254,7 +281,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                         </div>
                                                                     )}
                                                                 </div> :
-                                                                (mode === 'academic_print' || mode === 'delete_subject_grade') ?
+                                                                mode === 'academic_print' ?
                                                                     <span className={`font-bold px-4 py-2 rounded-lg text-sm ${hasGrade ? 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-gray-500 border border-slate-200 dark:border-white/5'}`}>
                                                                         {hasGrade ? gradeRecord?.score : 'N/A'}
                                                                     </span> :
@@ -303,14 +330,11 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                         `}
                                             >
                                                 <div className="flex items-center gap-4 mb-4">
-                                                    {mode !== 'subject_grade' && (
                                                         <Checkbox
                                                             checked={isSelected}
                                                             onChange={() => handleStudentSelect(s.id)}
-                                                            disabled={mode === 'delete_subject_grade' && !hasGrade}
                                                             className="w-6 h-6 border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
                                                         />
-                                                    )}
                                                     <img
                                                         src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name)}
                                                         alt={s.name}
@@ -337,28 +361,32 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 </div>
 
                                                 {mode === 'subject_grade' ? (
-                                                    <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
-                                                        <label className="text-sm font-bold text-indigo-600 dark:text-indigo-200 uppercase tracking-wide">Nilai</label>
-                                                        <div className="flex-grow flex items-center gap-3">
-                                                            <Input
-                                                                ref={(el) => registerRef(globalIndex, el)}
-                                                                onKeyDown={(e) => handleKeyDown(e, globalIndex)}
-                                                                type="number"
-                                                                inputMode="numeric"
-                                                                min="0"
-                                                                max="100"
-                                                                step="any"
-                                                                value={scores[s.id] || ''}
-                                                                onChange={e => handleScoreChange(s.id, e.target.value)}
-                                                                placeholder=""
-                                                                aria-label={`Nilai untuk ${s.name}`}
-                                                                className={`flex-grow text-xl font-bold text-center h-12 rounded-xl transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500'}`}
-                                                            />
-                                                            {scores[s.id] && !validationErrors[s.id] && (
-                                                                <span className={`px-4 py-2 rounded-xl text-sm font-bold shadow-lg ${parseInt(scores[s.id]) >= 75 ? 'bg-emerald-500 text-white' : parseInt(scores[s.id]) >= 60 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'}`}>
-                                                                    {parseInt(scores[s.id]) >= 75 ? 'Baik' : parseInt(scores[s.id]) >= 60 ? 'Cukup' : 'Kurang'}
-                                                                </span>
-                                                            )}
+                                                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                                                        <div className="flex items-center gap-3 w-full">
+                                                            <label className="text-xs font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-wider whitespace-nowrap flex-shrink-0">
+                                                                Nilai
+                                                            </label>
+                                                            <div className="flex-1 min-w-0 flex items-center gap-2">
+                                                                <Input
+                                                                    ref={(el) => registerRef(globalIndex, el)}
+                                                                    onKeyDown={(e) => handleKeyDown(e, globalIndex)}
+                                                                    type="number"
+                                                                    inputMode="numeric"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    step="any"
+                                                                    value={scores[s.id] || ''}
+                                                                    onChange={e => handleScoreChange(s.id, e.target.value)}
+                                                                    placeholder=""
+                                                                    aria-label={`Nilai untuk ${s.name}`}
+                                                                    className={`w-full min-w-0 flex-1 text-xl font-bold text-center h-12 rounded-xl transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500'}`}
+                                                                />
+                                                                {scores[s.id] && !validationErrors[s.id] && (
+                                                                    <span className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-md whitespace-nowrap flex-shrink-0 ${parseInt(scores[s.id]) >= 75 ? 'bg-emerald-500 text-white' : parseInt(scores[s.id]) >= 60 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'}`}>
+                                                                        {parseInt(scores[s.id]) >= 75 ? 'Baik' : parseInt(scores[s.id]) >= 60 ? 'Cukup' : 'Kurang'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         {validationErrors[s.id] && (
                                                             <div className="text-xs text-rose-500 mt-2 font-medium">
@@ -366,7 +394,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                             </div>
                                                         )}
                                                     </div>
-                                                ) : (mode === 'academic_print' || mode === 'delete_subject_grade') ? (
+                                                ) : mode === 'academic_print' ? (
                                                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
                                                         <span className="text-sm text-slate-600 dark:text-indigo-200">Nilai Saat Ini</span>
                                                         <span className={`font-bold px-4 py-2 rounded-xl text-lg ${hasGrade ? 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-white border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/50 border border-slate-200 dark:border-white/5'}`}>

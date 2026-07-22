@@ -40,8 +40,7 @@ const baseNavSections: DashboardMenuSection[] = [
     id: 'academic',
     label: 'Akademik',
     items: [
-      { href: '/jadwal', label: 'Jadwal Kelas', icon: CalendarIcon },
-      { href: '/jurnal', label: 'Jurnal Harian', icon: BookOpenIcon },
+      { href: '/jadwal', label: 'Jadwal & Jurnal', icon: CalendarIcon },
       { href: '/modul-ajar', label: 'Modul Ajar', icon: BookOpenIcon },
       { href: '/tugas', label: 'Penugasan', icon: CheckSquareIcon },
       { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
@@ -64,10 +63,9 @@ const baseNavSections: DashboardMenuSection[] = [
   },
   {
     id: 'system',
-    label: 'Sistem',
+    label: 'Sistem & Maintenance',
     items: [
-      { href: '/riwayat', label: 'Riwayat Aksi', icon: History },
-      { href: '/sampah', label: 'Sampah', icon: Trash2 },
+      { href: '/pemulihan', label: 'Pemulihan & Audit', icon: Trash2 },
       { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
     ],
   },
@@ -75,8 +73,7 @@ const baseNavSections: DashboardMenuSection[] = [
 
 const baseMoreMenuItems: DashboardMenuItem[] = [
   { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
-  { href: '/jadwal', label: 'Jadwal Kelas', icon: CalendarIcon },
-  { href: '/jurnal', label: 'Jurnal Harian', icon: BookOpenIcon },
+  { href: '/jadwal', label: 'Jadwal & Jurnal', icon: CalendarIcon },
   { href: '/modul-ajar', label: 'Modul Ajar', icon: BookOpenIcon },
   { href: '/tugas', label: 'Penugasan', icon: CheckSquareIcon },
   { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
@@ -84,8 +81,7 @@ const baseMoreMenuItems: DashboardMenuItem[] = [
   { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
   { href: '/analytics', label: 'Analitik Akademik', icon: BarChart3 },
   { href: '/bintang', label: 'Program Bintang', icon: Star },
-  { href: '/riwayat', label: 'Riwayat Aksi', icon: History },
-  { href: '/sampah', label: 'Sampah', icon: Trash2 },
+  { href: '/pemulihan', label: 'Pemulihan & Audit', icon: Trash2 },
   { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
 ];
 

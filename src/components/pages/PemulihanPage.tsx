@@ -9,12 +9,14 @@
  */
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../hooks/useToast';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
+import TrashPage from './TrashPage';
+import ActionHistoryPage from './ActionHistoryPage';
 import {
     Database,
     Trash2,
@@ -171,7 +173,10 @@ const PemulihanPage: React.FC = () => {
     const { session } = useAuth();
     const toast = useToast();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const queryClient = useQueryClient();
+
+    const activeTab = searchParams.get('tab') || 'trash';
 
     const [showImportModal, setShowImportModal] = useState(false);
     const [importFile, setImportFile] = useState<File | null>(null);
@@ -239,7 +244,7 @@ const PemulihanPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-            <div className="p-4 md:p-6 lg:p-8 space-y-6 w-full pb-24 lg:pb-6">
+            <div className="p-4 md:p-6 lg:p-8 space-y-6 w-full pb-24 lg:pb-6 max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
@@ -249,15 +254,59 @@ const PemulihanPage: React.FC = () => {
                             </div>
                             <div>
                                 <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
-                                    Pusat Pemulihan Data
+                                    Pusat Pemulihan & Audit Log
                                 </h1>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    Kelola pemulihan data, backup, dan audit penghapusan
+                                    Kelola tempat sampah, riwayat aksi user, serta cadangan & pemulihan data
                                 </p>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Tab Navigation Pill */}
+                <div className="flex flex-wrap items-center gap-2 p-1 bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md rounded-2xl w-fit border border-slate-300/40 dark:border-slate-700/40">
+                    <button
+                        onClick={() => setSearchParams({ tab: 'trash' })}
+                        className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                            activeTab === 'trash'
+                                ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-md'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Tempat Sampah</span>
+                    </button>
+                    <button
+                        onClick={() => setSearchParams({ tab: 'history' })}
+                        className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                            activeTab === 'history'
+                                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                    >
+                        <History className="w-4 h-4" />
+                        <span>Riwayat Aksi</span>
+                    </button>
+                    <button
+                        onClick={() => setSearchParams({ tab: 'backup' })}
+                        className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                            activeTab === 'backup'
+                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-md'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                    >
+                        <HardDrive className="w-4 h-4" />
+                        <span>Cadangan & Pemulihan</span>
+                    </button>
+                </div>
+
+                {activeTab === 'trash' ? (
+                    <TrashPage />
+                ) : activeTab === 'history' ? (
+                    <ActionHistoryPage />
+                ) : (
+                    <>
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -487,6 +536,8 @@ const PemulihanPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
+                    </>
+                )}
             </div>
 
             {/* Import Modal */}

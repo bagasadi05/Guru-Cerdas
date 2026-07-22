@@ -58,7 +58,9 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                                 </div>
                             </div>
 
-                            <h4 className="mt-2 sm:mt-4 font-bold text-sm sm:text-lg text-gray-900 dark:text-white text-center line-clamp-1 w-full px-1 sm:px-2">{student.name}</h4>
+                            <h4 className="mt-2 sm:mt-4 font-bold text-xs sm:text-base text-gray-900 dark:text-white text-center line-clamp-2 leading-tight w-full px-1 min-h-[2.25rem] sm:min-h-[2.5rem] flex items-center justify-center">
+                                {student.name}
+                            </h4>
 
                             <div className="mt-1 sm:mt-2 flex items-center gap-2">
                                 {student.access_code ? (

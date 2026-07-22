@@ -31,6 +31,7 @@ interface Step2_FooterProps {
     existingViolations?: any[];
     onShowChart?: () => void;
     onShowAdjustment?: () => void;
+    onDeleteSelected?: () => void;
 }
 
 export const Step2_Footer: React.FC<Step2_FooterProps> = ({
@@ -38,7 +39,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
     isExporting, exportProgress, handleSubmit, isSubmitDisabled, submitButtonTooltip,
     isSubmitting, isDeleting,
     scores, students, subjectGradeInfo, className, existingViolations, onShowChart,
-    onShowAdjustment
+    onShowAdjustment, onDeleteSelected
 }) => {
     const handleExportExcel = async () => {
         if (!scores || !students) return;
@@ -182,6 +183,16 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                         </Button>
                     )}
 
+                    {mode === 'subject_grade' && selectedStudentIds.size > 0 && onDeleteSelected && (
+                        <Button
+                            onClick={onDeleteSelected}
+                            className="w-full sm:w-auto font-bold tracking-wide text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-lg shadow-rose-900/20 flex items-center justify-center gap-2 transition-all duration-300 transform hover:-translate-y-1"
+                        >
+                            <XCircleIcon className="w-4 h-4 text-white" />
+                            Hapus Nilai Terpilih ({selectedStudentIds.size})
+                        </Button>
+                    )}
+
                     {isExporting ? (
                         <div className="w-full sm:w-64 text-center">
                             <div className="relative pt-1">
@@ -198,20 +209,14 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                             onClick={handleSubmit}
                             disabled={isSubmitDisabled}
                             title={submitButtonTooltip}
-                            className={`
-                                w-full sm:w-auto font-bold tracking-wide shadow-lg transition-all duration-300 transform hover:-translate-y-1
-                                ${mode === 'delete_subject_grade'
-                                    ? 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-rose-900/20'
-                                    : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-green-900/20'
-                                }
-                            `}
+                            className="w-full sm:w-auto font-bold tracking-wide shadow-lg transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-green-900/20"
                         >
                             {isSubmitting || isDeleting ? (
                                 <span className="flex items-center gap-2">
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                     Memproses...
                                 </span>
-                            ) : mode === 'delete_subject_grade' ? 'Hapus Nilai Terpilih' : (mode?.includes('print') || mode?.includes('report')) ? 'Cetak Laporan' : 'Simpan Data'}
+                            ) : (mode?.includes('print') || mode?.includes('report')) ? 'Cetak Laporan' : 'Simpan Data'}
                         </Button>
                     )}
                 </div>

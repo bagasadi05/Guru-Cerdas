@@ -379,16 +379,15 @@ export const useAttendance = () => {
             return;
         }
 
-        const studentsWithStatus = Array.from(selectedStudents).filter(studentId => attendanceRecords[studentId]?.status);
-        if (studentsWithStatus.length === 0) {
-            toast.warning('Pilih status absensi siswa terlebih dahulu sebelum menambahkan catatan.');
-            return;
-        }
-
         localDirtyRef.current = true;
         const updatedRecords = { ...attendanceRecords };
-        studentsWithStatus.forEach(studentId => {
-            updatedRecords[studentId] = { ...updatedRecords[studentId], note: noteText };
+        Array.from(selectedStudents).forEach(studentId => {
+            const currentStatus = updatedRecords[studentId]?.status || 'Izin';
+            updatedRecords[studentId] = {
+                ...updatedRecords[studentId],
+                status: currentStatus,
+                note: noteText,
+            };
         });
         setAttendanceRecords(updatedRecords);
         setSelectedStudents(new Set());
@@ -700,13 +699,15 @@ export const useAttendance = () => {
                 .from('students')
                 .select('id, name, class_id, user_id')
                 .in('class_id', classIds)
-                .is('deleted_at', null),
+                .is('deleted_at', null)
+                .range(0, 1999),
             supabase
                 .from('attendance')
                 .select('student_id, date, status')
                 .gte('date', startDate)
                 .lte('date', endDate)
-                .is('deleted_at', null),
+                .is('deleted_at', null)
+                .range(0, 9999),
         ]);
 
         if (studentsRes.error || attendanceRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
@@ -937,7 +938,8 @@ export const useAttendance = () => {
                     });
 
                     const ws = XLSX.utils.json_to_sheet(sheetData);
-                    XLSX.utils.book_append_sheet(wb, ws, `Kelas ${classData.name}`);
+                    const cleanSheetName = `Kelas ${classData.name}`.replace(/[\\/?*:[\]]/g, '').slice(0, 31);
+                    XLSX.utils.book_append_sheet(wb, ws, cleanSheetName);
                 }
 
                 await XLSX.writeFile(wb, `Laporan_Absensi_${exportPeriod === 'monthly' ? exportMonth : 'Semester'}.xlsx`);

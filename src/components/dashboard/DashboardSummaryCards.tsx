@@ -168,53 +168,8 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
   }, [students, classes, violations]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-      
-      {/* CARD 1: Kehadiran Minggu Ini */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-        <div>
-          <div className="flex items-center justify-between mb-3.5">
-            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              Kehadiran Minggu Ini
-            </span>
-            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-
-          <div className="flex items-baseline gap-1.5 mb-4">
-            <span className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">
-              {avgPresent}%
-            </span>
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">
-              Rata-rata Hadir
-            </span>
-          </div>
-
-          {/* Progress Bar: Hadir vs Tidak Hadir */}
-          <div className="w-full h-2.5 rounded-full overflow-hidden flex bg-slate-100 dark:bg-slate-800 mb-5 shadow-inner">
-            <div style={{ width: `${avgPresent}%` }} className="h-full bg-emerald-500 transition-all duration-500" title={`Hadir: ${avgPresent}%`}></div>
-            <div style={{ width: `${notHadir}%` }} className="h-full bg-rose-400 transition-all duration-500" title={`Tidak Hadir: ${notHadir}%`}></div>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-xs border-t border-slate-100 dark:border-slate-800/80 pt-3">
-          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-400">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-            <span>Hadir: {avgPresent}%</span>
-          </div>
-          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-400">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-400 shrink-0"></span>
-            <span>Tidak Hadir: {notHadir}%</span>
-          </div>
-          <div className="col-span-2 text-xxs text-slate-400 dark:text-slate-500 italic mt-0.5">
-            Data izin/sakit/alfa belum tersedia
-          </div>
-        </div>
-      </div>
-
-      {/* CARD 2: Kelas Perlu Perhatian */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+      {/* CARD 1: Kelas Perlu Perhatian */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -252,50 +207,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
         </div>
       </div>
 
-      {/* CARD 3: Tugas Terdekat */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              Tugas Terdekat
-            </span>
-            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </div>
-
-          <div className="space-y-2 mt-2">
-            {upcomingTasks.map((task, idx) => (
-              <div 
-                key={idx}
-                onClick={() => navigate('/tugas')}
-                className="flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all cursor-pointer border border-slate-100 dark:border-slate-800/30 bg-slate-50/30 dark:bg-slate-900/10 hover:translate-x-0.5"
-              >
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate flex-1 min-w-0" title={task.title}>
-                  {task.title}
-                </span>
-                <span className={`text-xxs font-semibold px-2 py-0.5 rounded-lg border whitespace-nowrap flex-shrink-0 ${
-                  task.isUrgent 
-                    ? 'text-rose-600 bg-rose-50 border-rose-200/40 dark:text-rose-400 dark:bg-rose-950/20 dark:border-rose-900/20' 
-                    : 'text-slate-500 bg-slate-100 border-slate-200/30 dark:text-slate-400 dark:bg-slate-850 dark:border-slate-800/20'
-                }`}>
-                  {task.dueDate}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <button type="button" 
-          onClick={() => navigate('/tugas')}
-          className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center gap-1.5 w-full hover:scale-[1.02] active:scale-[0.98] transition-all"
-        >
-          <span>Kelola Semua Tugas</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* CARD 4: Siswa Prioritas */}
+      {/* CARD 2: Siswa Prioritas */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -355,7 +267,6 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
-
     </div>
   );
 };

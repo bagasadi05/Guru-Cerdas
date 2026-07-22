@@ -182,13 +182,13 @@ function AppContent() {
               <Route path="/pengaturan" element={<AsyncErrorBoundary context="SettingsPage"><SettingsPage /></AsyncErrorBoundary>} />
               <Route path="/tugas" element={<AsyncErrorBoundary context="TasksPage"><TasksPage /></AsyncErrorBoundary>} />
               <Route path="/input-massal" element={<AsyncErrorBoundary context="MassInputPage"><MassInputPage /></AsyncErrorBoundary>} />
-              <Route path="/input-nilai-cepat" element={<AsyncErrorBoundary context="BulkGradeInputPage"><BulkGradeInputPage /></AsyncErrorBoundary>} />
-              <Route path="/katrol-nilai" element={<AsyncErrorBoundary context="GradeAdjustmentPage"><GradeAdjustmentPage /></AsyncErrorBoundary>} />
-              <Route path="/sampah" element={<AsyncErrorBoundary context="TrashPage"><TrashPage /></AsyncErrorBoundary>} />
-              <Route path="/riwayat" element={<AsyncErrorBoundary context="ActionHistoryPage"><ActionHistoryPage /></AsyncErrorBoundary>} />
+              <Route path="/input-nilai-cepat" element={<Navigate to="/input-massal" replace />} />
+              <Route path="/katrol-nilai" element={<Navigate to="/input-massal" replace />} />
+              <Route path="/sampah" element={<Navigate to="/pemulihan?tab=trash" replace />} />
+              <Route path="/riwayat" element={<Navigate to="/pemulihan?tab=history" replace />} />
               <Route path="/analytics" element={<AsyncErrorBoundary context="AnalyticsPage"><AnalyticsPage /></AsyncErrorBoundary>} />
               <Route path="/ekstrakurikuler" element={<AsyncErrorBoundary context="ExtracurricularPage"><ExtracurricularPage /></AsyncErrorBoundary>} />
-              <Route path="/jurnal" element={<AsyncErrorBoundary context="JurnalMengajarPage"><JurnalMengajarPage /></AsyncErrorBoundary>} />
+              <Route path="/jurnal" element={<Navigate to="/jadwal?tab=jurnal" replace />} />
 
               <Route path="/pemulihan" element={<AsyncErrorBoundary context="PemulihanPage"><PemulihanPage /></AsyncErrorBoundary>} />
               <Route path="/bintang" element={<AsyncErrorBoundary context="BintangDashboardPage"><BintangDashboardPage /></AsyncErrorBoundary>} />

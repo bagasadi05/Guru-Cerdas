@@ -598,42 +598,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                             </div>
                         )}
 
-                        {mode === 'delete_subject_grade' && (
-                            <>
-                                <div className="space-y-2">
-                                    <label htmlFor="delete-subject" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Mata Pelajaran</label>
-                                    <CustomDropdown
-                                        id="delete-subject"
-                                        value={subjectGradeInfo.subject}
-                                        onChange={val => setSubjectGradeInfo(p => ({ ...p, subject: val, assessment_name: '' }))}
-                                        placeholder="-- Pilih Mapel --"
-                                        options={uniqueSubjects?.map(s => ({ value: s, label: s })) || []}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="delete-semester" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Semester</label>
-                                    <SemesterSelector
-                                        value={subjectGradeInfo.semester}
-                                        onChange={(val) => setSubjectGradeInfo(p => ({ ...p, semester: val }))}
-                                        includeAllOption={true}
-                                        activeOnly={true}
-                                        showIcon={true}
-                                        className="w-full"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="delete-assessment" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Nama Penilaian</label>
-                                    <CustomDropdown
-                                        id="delete-assessment"
-                                        value={subjectGradeInfo.assessment_name}
-                                        onChange={val => setSubjectGradeInfo(p => ({ ...p, assessment_name: val }))}
-                                        disabled={!subjectGradeInfo.subject || !assessmentNames}
-                                        placeholder="-- Pilih Penilaian --"
-                                        options={assessmentNames?.map(name => ({ value: name, label: name })) || []}
-                                    />
-                                </div>
-                            </>
-                        )}
+
                     </div>
                 </div>
             </div>

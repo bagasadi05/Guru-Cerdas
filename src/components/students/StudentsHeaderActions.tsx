@@ -20,11 +20,11 @@ interface StudentsHeaderActionsProps {
 }
 
 const outlineActionClasses =
-  'h-11 px-3 sm:px-4 rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-600 shadow-sm';
+  'h-11 px-3 sm:px-4 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-600 shadow-sm font-semibold text-xs sm:text-sm flex items-center justify-center';
 const primaryActionClasses =
-  'h-11 px-4 rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white border-none';
+  'h-11 px-4 rounded-xl shadow-md shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white border-none font-semibold text-xs sm:text-sm flex items-center justify-center';
 const overflowTriggerClasses =
-  'h-11 w-11 p-0 rounded-xl items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm';
+  'h-11 w-11 p-0 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition-all';
 
 const renderActionButton = (
   action: StudentsHeaderAction,
