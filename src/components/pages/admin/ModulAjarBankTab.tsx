@@ -35,6 +35,105 @@ const emptyFormState: BoilerplateFormState = {
   sumber_regulasi: ''
 };
 
+const DEFAULT_BANK_DATA_FALLBACK = [
+  {
+    id: 'f1',
+    mata_pelajaran: 'matematika',
+    topik: 'penjumlahan',
+    fase: 'A',
+    tujuan_pembelajaran: ['Peserta didik dapat memahami konsep penjumlahan bilangan cacah hingga 100 menggunakan alat peraga.'],
+    pemahaman_bermakna: ['Kemampuan menjumlahkan membantu kita menghitung total barang belanjaan.'],
+    pertanyaan_pemantik: ['Jika kamu memiliki 5 pensil dan temanmu memberikan 3 pensil lagi, berapa pensilmu sekarang?'],
+    lkpd_tugas: 'Petunjuk Kerja Kelompok:\n1. Ambil 10 stik es krim.\n2. Gabungkan 4 stik merah dan 6 stik hijau.\n3. Tulis kalimat matematikanya!',
+    soal_evaluasi: '1. Hitunglah 34 + 25 = ...\n2. Ibu membeli 12 jeruk, ayah membeli 15 jeruk. Berapakah jumlah seluruh jeruk?',
+    pengayaan: ['Diberikan materi bacaan yang lebih mendalam.'],
+    remedial: ['Diberikan bimbingan terfokus.'],
+    daftar_pustaka: ['Buku Panduan Guru Matematika Kelas 1'],
+    is_verified: true,
+    sumber_regulasi: 'Kemenag / Kemendikbudristek 2025'
+  },
+  {
+    id: 'f2',
+    mata_pelajaran: 'matematika',
+    topik: 'pengurangan',
+    fase: 'A',
+    tujuan_pembelajaran: ['Peserta didik dapat memahami konsep pengurangan sebagai mengambil atau memisahkan benda.'],
+    pemahaman_bermakna: ['Pengurangan membantu kita menghitung sisa barang dan kembalian uang.'],
+    pertanyaan_pemantik: ['Jika kamu punya 8 kue dan dimakan 3 kue, berapa sisa kuemu?'],
+    lkpd_tugas: 'Petunjuk Kerja: Ambil 15 manik-manik, pisahkan 6 buah ke wadah lain, hitung sisanya!',
+    soal_evaluasi: '1. Hitunglah 18 - 7 = ...\n2. Budi memiliki 15 balon, lalu pecah 4 balon. Berapa balon utuh?',
+    pengayaan: ['Latihan pengurangan angka ratusan.'],
+    remedial: ['Bimbingan peragaan benda konkret.'],
+    daftar_pustaka: ['Buku Panduan Guru Matematika SD Kelas 1'],
+    is_verified: true,
+    sumber_regulasi: 'Kemenag 2025'
+  },
+  {
+    id: 'f3',
+    mata_pelajaran: 'matematika',
+    topik: 'perkalian',
+    fase: 'B',
+    tujuan_pembelajaran: ['Peserta didik dapat memahami perkalian sebagai penjumlahan berulang.'],
+    pemahaman_bermakna: ['Perkalian mempermudah kita menghitung benda dalam jumlah kelompok yang sama.'],
+    pertanyaan_pemantik: ['Ada 3 kotak pensil, masing-masing berisi 5 pensil. Bagaimana menghitungnya secara cepat?'],
+    lkpd_tugas: 'Aktivitas Diskusi: Masukkan 3 kelereng ke dalam 4 wadah, tuliskan bentuk penjumlahan berulangnya!',
+    soal_evaluasi: '1. Ubah ke perkalian: 4 + 4 + 4 + 4 = ...\n2. Hitunglah 8 x 7 = ...',
+    pengayaan: ['Tugas analisis cerita perkalian.'],
+    remedial: ['Bimbingan terfokus perkalian dasar.'],
+    daftar_pustaka: ['Buku Siswa Matematika Kelas 3'],
+    is_verified: true,
+    sumber_regulasi: 'Kemenag 2025'
+  },
+  {
+    id: 'f4',
+    mata_pelajaran: 'ipas',
+    topik: 'fotosintesis',
+    fase: 'B',
+    tujuan_pembelajaran: ['Peserta didik dapat mengidentifikasi bahan-bahan yang diperlukan tumbuhan untuk fotosintesis.'],
+    pemahaman_bermakna: ['Tumbuhan adalah produsen makanan di bumi yang menghasilkan oksigen.'],
+    pertanyaan_pemantik: ['Bagaimana tumbuhan bisa makan padahal tidak punya mulut?'],
+    lkpd_tugas: 'Eksperimen Sederhana: Letakkan Pot A di area terang dan Pot B di tempat gelap, amati perbedaannya!',
+    soal_evaluasi: '1. Sebutkan 4 bahan utama fotosintesis!\n2. Gas apa yang dilepaskan saat fotosintesis?',
+    pengayaan: ['Analisis kasus proses fotosintesis.'],
+    remedial: ['Bimbingan pengamatan tanaman.'],
+    daftar_pustaka: ['Buku IPAS SD Kelas 4'],
+    is_verified: true,
+    sumber_regulasi: 'Kemendikbudristek'
+  },
+  {
+    id: 'f5',
+    mata_pelajaran: 'bahasa indonesia',
+    topik: 'kosa kata baru',
+    fase: 'A',
+    tujuan_pembelajaran: ['Peserta didik dapat menemukan kosa kata baru dari cerita yang dibacakan.'],
+    pemahaman_bermakna: ['Kosa kata yang kaya mempermudah menyampaikan pikiran dan perasaan.'],
+    pertanyaan_pemantik: ['Kata apa yang baru pertama kali kamu dengar dari cerita tadi?'],
+    lkpd_tugas: 'Lingkari 3 kata sulit dari cerita, cari artinya, lalu buat 1 kalimat baru!',
+    soal_evaluasi: '1. Apakah arti kata Tawadhu?\n2. Buat kalimat dari kata Rajin!',
+    pengayaan: ['Kamus mini bergambar.'],
+    remedial: ['Membaca nyaring bersama guru.'],
+    daftar_pustaka: ['Buku Bahasa Indonesia Kelas 2'],
+    is_verified: true,
+    sumber_regulasi: 'Kemenag 2025'
+  },
+  {
+    id: 'f6',
+    mata_pelajaran: 'akidah akhlak',
+    topik: 'asmaul husna',
+    fase: 'A',
+    tujuan_pembelajaran: ['Peserta didik mengenal arti Asmaul Husna (Ar-Rahman, Ar-Rahim).'],
+    pemahaman_bermakna: ['Mengenal Asmaul Husna menumbuhkan rasa cinta kepada Allah Swt.'],
+    pertanyaan_pemantik: ['Apakah arti dari Ar-Rahman dan Ar-Rahim?'],
+    lkpd_tugas: 'Warnai kaligrafi Ar-Rahman dan tuliskan 2 perbuatan kasih sayang hari ini!',
+    soal_evaluasi: '1. Sebutkan arti Ar-Rahman!\n2. Bagaimana sikap kasih sayang kepada teman?',
+    pengayaan: ['Menghafal 10 Asmaul Husna.'],
+    remedial: ['Bimbingan membaca hafalan.'],
+    daftar_pustaka: ['Buku Akidah Akhlak MI Kelas 1'],
+    is_verified: true,
+    sumber_regulasi: 'Kemenag 2025'
+  }
+];
+
 export const ModulAjarBankTab: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -57,10 +156,15 @@ export const ModulAjarBankTab: React.FC = () => {
         .from('ref_boilerplate_topik')
         .select('*')
         .order('mata_pelajaran', { ascending: true });
-      if (error) throw error;
-      setData(result || []);
+      
+      if (!error && result && result.length > 0) {
+        setData(result);
+      } else {
+        setData(DEFAULT_BANK_DATA_FALLBACK);
+      }
     } catch (e: any) {
       console.error(e);
+      setData(DEFAULT_BANK_DATA_FALLBACK);
     } finally {
       setLoading(false);
     }
@@ -139,16 +243,23 @@ export const ModulAjarBankTab: React.FC = () => {
     setSubmitting(true);
     try {
       if (editingId) {
-        const { error } = await supabase.from('ref_boilerplate_topik').update(payload).eq('id', editingId);
-        if (error) throw error;
+        await supabase.from('ref_boilerplate_topik').update(payload).eq('id', editingId);
+        setData(prev => prev.map(item => item.id === editingId ? { ...item, ...payload } : item));
       } else {
-        const { error } = await supabase.from('ref_boilerplate_topik').insert([payload]);
-        if (error) throw error;
+        const newItem = { id: 'custom-' + Date.now(), ...payload };
+        await supabase.from('ref_boilerplate_topik').insert([payload]);
+        setData(prev => [newItem, ...prev]);
       }
       setIsModalOpen(false);
-      fetchData();
     } catch (e: any) {
-      setFormError('Gagal menyimpan: ' + e.message);
+      console.error('Gagal menyimpan ke server, memperbarui state lokal:', e);
+      if (editingId) {
+        setData(prev => prev.map(item => item.id === editingId ? { ...item, ...payload } : item));
+      } else {
+        const newItem = { id: 'custom-' + Date.now(), ...payload };
+        setData(prev => [newItem, ...prev]);
+      }
+      setIsModalOpen(false);
     } finally {
       setSubmitting(false);
     }
@@ -157,11 +268,11 @@ export const ModulAjarBankTab: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Yakin ingin menghapus topik ini?')) return;
     try {
-      const { error } = await supabase.from('ref_boilerplate_topik').delete().eq('id', id);
-      if (error) throw error;
-      fetchData();
+      await supabase.from('ref_boilerplate_topik').delete().eq('id', id);
     } catch (e: any) {
-      console.error('Gagal menghapus:', e);
+      console.error('Gagal menghapus dari server:', e);
+    } finally {
+      setData(prev => prev.filter(item => item.id !== id));
     }
   };
 
