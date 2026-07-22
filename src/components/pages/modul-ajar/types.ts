@@ -37,6 +37,18 @@ export interface FormState {
   alokasiInti: number;
   alokasiPenutup: number;
   rubrikAsesmen: RubrikRow[];
+
+  // KBC (Kurikulum Berbasis Cinta - Kemenag 2025)
+  isKbcIntegrated: boolean;
+  temaKbc: string[];
+  materiInsersi: string;
+  modelPembelajaranKbc?: string;
+  asesmenSikap?: string;
+
+  // Learning Models Catalog Hierarchy
+  pendekatanPembelajaran?: 'Student Centered' | 'Teacher Centered';
+  selectedModelId?: string;
+  teknikPembelajaran?: string;
 }
 
 export interface RubrikRow {

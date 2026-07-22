@@ -40,6 +40,7 @@ import {
     SystemTab,
     StudentsMasterDataTab,
     ClassesMasterDataTab,
+    ModulAjarBankTab,
 } from './admin';
 
 const USER_PAGE_SIZE = 20;
@@ -618,6 +619,7 @@ const AdminPage: React.FC = () => {
         { id: 'announcements', label: 'Pengumuman', icon: <Megaphone size={18} /> },
         { id: 'activity', label: 'Aktivitas', icon: <Activity size={18} /> },
         { id: 'system', label: 'Sistem', icon: <Settings size={18} /> },
+        { id: 'modul-ajar-bank', label: 'Bank Modul Ajar', icon: <Library size={18} /> },
     ];
 
     const _userPageCount = Math.max(1, Math.ceil(userTotal / USER_PAGE_SIZE));
@@ -784,6 +786,10 @@ const AdminPage: React.FC = () => {
                         deletedTotal={deletedTotal}
                         logTotal={logTotal}
                     />
+                )}
+
+                {activeTab === 'modul-ajar-bank' && (
+                    <ModulAjarBankTab />
                 )}
 
                 {/* Error Toast */}

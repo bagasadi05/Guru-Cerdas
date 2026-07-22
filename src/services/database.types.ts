@@ -122,6 +122,252 @@ export type Database = {
         }
         Relationships: []
       }
+      ref_sintaks_kegiatan: {
+        Row: {
+          id: string
+          model_id: string | null
+          urutan: number
+          nama_langkah: string
+          kegiatan_guru: string
+          kegiatan_siswa: string
+          estimasi_menit_persen: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          model_id?: string | null
+          urutan: number
+          nama_langkah: string
+          kegiatan_guru: string
+          kegiatan_siswa: string
+          estimasi_menit_persen?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          model_id?: string | null
+          urutan?: number
+          nama_langkah?: string
+          kegiatan_guru?: string
+          kegiatan_siswa?: string
+          estimasi_menit_persen?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ref_sintaks_kegiatan_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "ref_model_pembelajaran"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      ref_boilerplate_topik: {
+        Row: {
+          id: string
+          mata_pelajaran: string
+          topik: string
+          fase: string | null
+          tujuan_pembelajaran: Json
+          pemahaman_bermakna: Json
+          pertanyaan_pemantik: Json
+          lkpd_tugas: string
+          soal_evaluasi: string
+          pengayaan: Json
+          remedial: Json
+          daftar_pustaka: Json
+          is_verified: boolean | null
+          sumber_regulasi: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          mata_pelajaran: string
+          topik: string
+          fase?: string | null
+          tujuan_pembelajaran?: Json
+          pemahaman_bermakna?: Json
+          pertanyaan_pemantik?: Json
+          lkpd_tugas: string
+          soal_evaluasi: string
+          pengayaan?: Json
+          remedial?: Json
+          daftar_pustaka?: Json
+          is_verified?: boolean | null
+          sumber_regulasi?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          mata_pelajaran?: string
+          topik?: string
+          fase?: string | null
+          tujuan_pembelajaran?: Json
+          pemahaman_bermakna?: Json
+          pertanyaan_pemantik?: Json
+          lkpd_tugas?: string
+          soal_evaluasi?: string
+          pengayaan?: Json
+          remedial?: Json
+          daftar_pustaka?: Json
+          is_verified?: boolean | null
+          sumber_regulasi?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ref_rubrik_template: {
+        Row: {
+          id: string
+          kategori: string
+          kriteria: string
+          sangat_baik: string
+          baik: string
+          cukup: string
+          perlu_bimbingan: string
+          urutan: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          kategori: string
+          kriteria: string
+          sangat_baik: string
+          baik: string
+          cukup: string
+          perlu_bimbingan: string
+          urutan: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          kategori?: string
+          kriteria?: string
+          sangat_baik?: string
+          baik?: string
+          cukup?: string
+          perlu_bimbingan?: string
+          urutan?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ref_tema_kbc: {
+        Row: {
+          id: string
+          nama_tema: string
+          deskripsi: string
+          tujuan: string
+          urutan: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          nama_tema: string
+          deskripsi: string
+          tujuan: string
+          urutan: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          nama_tema?: string
+          deskripsi?: string
+          tujuan?: string
+          urutan?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ref_materi_insersi: {
+        Row: {
+          id: string
+          tema_id: string | null
+          konten: string
+          konteks_penggunaan: string
+          frasa_tp: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          tema_id?: string | null
+          konten: string
+          konteks_penggunaan: string
+          frasa_tp: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          tema_id?: string | null
+          konten?: string
+          konteks_penggunaan?: string
+          frasa_tp?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ref_materi_insersi_tema_id_fkey"
+            columns: ["tema_id"]
+            isOneToOne: false
+            referencedRelation: "ref_tema_kbc"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      ref_bank_tp_iktp: {
+        Row: {
+          id: string
+          cp_id: string | null
+          tujuan_pembelajaran: string
+          iktp: Json
+          is_verified: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          cp_id?: string | null
+          tujuan_pembelajaran: string
+          iktp?: Json
+          is_verified?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          cp_id?: string | null
+          tujuan_pembelajaran?: string
+          iktp?: Json
+          is_verified?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ref_bank_tp_iktp_cp_id_fkey"
+            columns: ["cp_id"]
+            isOneToOne: false
+            referencedRelation: "ref_capaian_pembelajaran"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       lesson_plans: {
         Row: {
           id: string

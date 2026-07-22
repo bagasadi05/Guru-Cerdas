@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, Heart, CheckCircle2, AlertTriangle, Compass } from 'lucide-react';
 import { FormState, RubrikRow } from '../types';
-import { TOPIC_RECOMMENDATIONS, RUBRIK_TEMPLATES } from '../utils/manualBoilerplates';
+import { useTopikRecommendations, useRubrikTemplates, useTemaKbc, useMateriInsersiMulti } from '../hooks/useModulAjarQueries';
+import { LEARNING_MODELS, ENNIS_IKTP_BANK, ModelCategory } from '../constants/learningModels';
 
 interface ModulAjarFormProps {
   formState: FormState;
@@ -28,18 +29,22 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   setActiveStep,
   isGeneratingCP,
   onGenerateCP,
-  models,
-  isLoadingModels,
+  models: _models,
+  isLoadingModels: _isLoadingModels,
   queueStatus,
   onGenerate
 }) => {
+  const [activeCategoryTab, setActiveCategoryTab] = React.useState<ModelCategory>('hots');
   const PROFIL_OPTIONS = ['Beriman & Bertakwa', 'Berkebinekaan Global', 'Bergotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
   const METODE_OPTIONS = ['Ceramah', 'Diskusi', 'Tanya Jawab', 'Demonstrasi', 'Eksperimen', 'Proyek', 'Role Playing', 'Penugasan'];
 
-  const subjectKey = Object.keys(TOPIC_RECOMMENDATIONS).find(
-    k => k.toLowerCase() === formState.mataPelajaran.trim().toLowerCase()
-  );
-  const recommendations = subjectKey ? TOPIC_RECOMMENDATIONS[subjectKey] : [];
+  const { data: recommendations = [] } = useTopikRecommendations(formState.mataPelajaran);
+  const { data: rubrikDiskusi = [] } = useRubrikTemplates('diskusi');
+  const { data: rubrikPresentasi = [] } = useRubrikTemplates('presentasi');
+  const { data: rubrikSikap = [] } = useRubrikTemplates('sikap');
+  
+  const { data: temaKbcData = [] } = useTemaKbc();
+  const { data: materiInsersiData = [] } = useMateriInsersiMulti(formState.temaKbc);
 
   const adjustPendahuluan = (newVal: number) => {
     const total = formState.jpPerPertemuan * formState.durasiPerJp;
@@ -127,45 +132,47 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
           >
             {/* Step 1: Jenis & Kurikulum */}
             {activeStep === 1 && (
-              <div className="space-y-5">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">1. Jenis Dokumen & Kurikulum</h3>
+              <div className="space-y-6">
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-wide border-b pb-2 border-slate-100 dark:border-slate-800">
+                  1. JENIS DOKUMEN & KURIKULUM
+                </h3>
                 
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">Metode Penyusunan</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Metode Penyusunan</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {[
-                        { id: 'AI', label: 'AI (Otomatis)', desc: 'Disusun instan oleh AI' },
-                        { id: 'Manual', label: 'Manual', desc: 'Isi & edit manual' }
+                        { id: 'Manual', label: '⚡ Database (Non-AI)', desc: 'Penyusunan instan dari Bank Data & Template (Sangat Cepat & Ringan)' },
+                        { id: 'AI', label: '✨ Generatif AI', desc: 'Disusun otomatis oleh AI (Perlu Koneksi)' }
                       ].map(method => (
                         <button
                           key={method.id}
                           type="button"
                           onClick={() => onChange('generationMethod', method.id)}
-                          className={`p-3 rounded-xl border text-left transition-all ${
+                          className={`p-3.5 rounded-xl border text-left transition-all ${
                             formState.generationMethod === method.id
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-500'
-                            : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
+                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-500 font-semibold shadow-sm'
+                            : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:border-slate-300'
                           }`}
                         >
                           <div className="font-bold text-sm">{method.label}</div>
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{method.desc}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">{method.desc}</div>
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">Jenis Dokumen</label>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Jenis Dokumen</label>
                     <div className="grid grid-cols-2 gap-3">
                       {['Modul Ajar', 'RPP'].map(type => (
                         <button
                           key={type}
                           type="button"
                           onClick={() => onChange('documentType', type)}
-                          className={`p-3 rounded-xl border text-sm font-semibold transition-all ${
+                          className={`p-3 rounded-xl border text-sm font-bold transition-all ${
                             formState.documentType === type
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-500'
+                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-500'
                             : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
                           }`}
                         >
@@ -176,24 +183,129 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">Pendekatan Kurikulum</label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Pendekatan Kurikulum</label>
+                    <div className="grid grid-cols-3 gap-2.5">
                       {['Merdeka', 'Berbasis Cinta', 'Hybrid'].map(approach => (
                         <button
                           key={approach}
                           type="button"
-                          onClick={() => onChange('curriculumApproach', approach)}
-                          className={`p-2.5 rounded-lg border text-xs font-semibold transition-all ${
+                          onClick={() => {
+                            onChange('curriculumApproach', approach);
+                            if (approach === 'Berbasis Cinta') {
+                              onChange('isKbcIntegrated', true);
+                            }
+                          }}
+                          className={`p-3 rounded-xl border text-xs sm:text-sm font-bold transition-all ${
                             formState.curriculumApproach === approach
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-500'
+                            ? 'bg-emerald-50 border-emerald-500 text-emerald-800 dark:bg-emerald-950/50 dark:border-emerald-500 dark:text-emerald-200'
                             : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
                           }`}
                         >
-                          {approach}
+                          {approach === 'Berbasis Cinta' ? '❤️ KBC (Kemenag)' : approach}
                         </button>
                       ))}
                     </div>
                   </div>
+
+                  {/* KBC Integrated Options */}
+                  {(formState.curriculumApproach === 'Berbasis Cinta' || formState.isKbcIntegrated) && (
+                    <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Heart className="w-4 h-4 text-emerald-600 dark:text-emerald-400 fill-emerald-500/20" />
+                          <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-200 uppercase tracking-wide">
+                            Integrasi Kurikulum Berbasis Cinta (KBC 2025)
+                          </h4>
+                        </div>
+                        <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded-full font-semibold">
+                          Panduan Kemenag
+                        </span>
+                      </div>
+
+                      {/* Topik Panca Cinta Selection */}
+                      <div>
+                        <label className="block text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-1.5">
+                          Topik Panca Cinta (Pilih 1-2 Topik Wajib)
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {temaKbcData.map(topic => {
+                            const isSelected = formState.temaKbc.includes(topic.id);
+                            return (
+                              <button
+                                key={topic.id}
+                                type="button"
+                                onClick={() => {
+                                  let newTopics = [...formState.temaKbc];
+                                  if (isSelected) {
+                                    newTopics = newTopics.filter(id => id !== topic.id);
+                                  } else {
+                                    if (newTopics.length >= 2) newTopics.shift(); // Max 2 topics
+                                    newTopics.push(topic.id);
+                                  }
+                                  onChange('temaKbc', newTopics);
+                                }}
+                                className={`p-2.5 rounded-lg border text-left transition-all text-xs flex items-start gap-2 ${
+                                  isSelected
+                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-emerald-100 dark:border-emerald-900/50 hover:border-emerald-400'
+                                }`}
+                              >
+                                <div className="mt-0.5 shrink-0">
+                                  {isSelected ? (
+                                    <CheckCircle2 className="w-4 h-4 text-white" />
+                                  ) : (
+                                    <Heart className="w-3.5 h-3.5 text-emerald-500" />
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="font-bold">{topic.nama_tema}</div>
+                                  <div className={`text-[10px] mt-0.5 line-clamp-2 ${isSelected ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'}`}>
+                                    {topic.deskripsi}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Materi Insersi Preset & Custom */}
+                      <div>
+                        <label className="block text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-1">
+                          Materi Insersi Nilai Cinta (Butir Spesifik)
+                        </label>
+                        
+                        {/* Preset Suggestions */}
+                        {formState.temaKbc.length > 0 && (
+                          <div className="mb-2 space-y-1">
+                            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium block">
+                              Preset Insersi dari Kemenag (Klik untuk memilih):
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {materiInsersiData.map((materi, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => onChange('materiInsersi', materi.konten)}
+                                  className="px-2 py-1 bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800 hover:border-emerald-500 rounded text-[11px] text-emerald-800 dark:text-emerald-300 font-medium text-left transition-colors"
+                                >
+                                  + {materi.konten}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <textarea
+                          rows={2}
+                          value={formState.materiInsersi}
+                          onChange={(e) => onChange('materiInsersi', e.target.value)}
+                          placeholder="Contoh: Meneladani Asmaul Husna Ar-Rahman dalam berinteraksi dengan sesama teman..."
+                          className="w-full p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Satuan Pendidikan</label>
@@ -411,6 +523,43 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
                           placeholder="Contoh:&#10;1. Siswa dapat memahami perkalian dasar.&#10;2. Siswa dapat menjawab soal cerita perkalian."
                         />
+
+                        {/* Ennis Critical Thinking IKTP Bank */}
+                        <div className="mt-2.5 p-3 bg-indigo-50/70 dark:bg-indigo-950/30 rounded-xl border border-indigo-200 dark:border-indigo-800/50 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
+                              <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                              💡 Bank Rekomendasi Indikator Berpikir Kritis (Klik + untuk isi otomatis)
+                            </span>
+                            <span className="text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded font-bold">
+                              HOTS
+                            </span>
+                          </div>
+                          <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+                            {ENNIS_IKTP_BANK.map((cat, catIdx) => (
+                              <div key={catIdx} className="space-y-1.5">
+                                <span className="text-xs font-bold text-indigo-800 dark:text-indigo-300 block">
+                                  • {cat.kategori}
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {cat.contohIktp.map((iktp, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => {
+                                        const current = formState.manualTujuanPembelajaran ? formState.manualTujuanPembelajaran + '\n' : '';
+                                        onChange('manualTujuanPembelajaran', current + iktp);
+                                      }}
+                                      className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 hover:border-indigo-500 rounded-lg text-xs text-indigo-900 dark:text-indigo-200 text-left transition-colors font-medium shadow-2xs"
+                                    >
+                                      + {iktp}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Pertanyaan Pemantik (Satu per baris)</label>
@@ -464,26 +613,145 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                     </div>
                   </div>
 
+                  {/* Pendekatan Pembelajaran */}
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Model Pembelajaran</label>
-                    <select 
-                      value={formState.modelPembelajaran}
-                      onChange={(e) => onChange('modelPembelajaran', e.target.value)}
-                      disabled={isLoadingModels}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white disabled:opacity-50"
-                    >
-                      {models.length > 0 ? (
-                        models.map(m => (
-                          <option key={m.id} value={m.nama_model}>{m.nama_model}</option>
-                        ))
-                      ) : (
-                        <option value="Tatap Muka">Tatap Muka</option>
-                      )}
-                    </select>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-medium">Pendekatan Pembelajaran</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'Student Centered', label: 'Student Centered', desc: 'Berpusat pada keaktifan siswa' },
+                        { id: 'Teacher Centered', label: 'Teacher Centered', desc: 'Berpusat pada pengarahan guru' }
+                      ].map(p => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => onChange('pendekatanPembelajaran', p.id)}
+                          className={`p-2.5 rounded-lg border text-left transition-all ${
+                            (formState.pendekatanPembelajaran || 'Student Centered') === p.id
+                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-950/40 dark:border-indigo-500 dark:text-indigo-300'
+                            : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          <div className="text-xs font-bold">{p.label}</div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500">{p.desc}</div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
+                  {/* Categorized Model Picker */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        Model Pembelajaran & Sintaksis Wajib
+                      </label>
+                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded">
+                        Katalog Modern
+                      </span>
+                    </div>
+
+                    {/* Category Tabs */}
+                    <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl gap-1">
+                      {[
+                        { id: 'hots', label: '🔥 HOTS', count: LEARNING_MODELS.filter(m => m.kategori === 'hots').length },
+                        { id: 'retensi', label: '💡 Retensi', count: LEARNING_MODELS.filter(m => m.kategori === 'retensi').length },
+                        { id: 'sosial', label: '👥 Kooperatif', count: LEARNING_MODELS.filter(m => m.kategori === 'sosial').length },
+                        { id: 'kbc', label: '❤️ KBC/Karakter', count: LEARNING_MODELS.filter(m => m.kategori === 'kbc').length },
+                      ].map(tab => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setActiveCategoryTab(tab.id as ModelCategory)}
+                          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all text-center ${
+                            activeCategoryTab === tab.id
+                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Models Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {LEARNING_MODELS.filter(m => m.kategori === activeCategoryTab).map(model => {
+                        const isSelected = formState.selectedModelId === model.id || formState.modelPembelajaran === model.nama;
+                        return (
+                          <button
+                            key={model.id}
+                            type="button"
+                            onClick={() => {
+                              onChange('selectedModelId', model.id);
+                              onChange('modelPembelajaran', model.nama);
+                            }}
+                            className={`p-3 rounded-xl border text-left transition-all relative ${
+                              isSelected
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-indigo-400'
+                            }`}
+                          >
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="font-bold text-xs">{model.nama}</span>
+                              {isSelected && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
+                            </div>
+                            <div className={`text-[10px] font-medium mb-2 ${isSelected ? 'text-indigo-100' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                              {model.fokus}
+                            </div>
+                            <div className={`text-[9px] line-clamp-2 ${isSelected ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'}`}>
+                              Sintaks: {model.sintaks.map(s => s.langkah.split(':')[0]).join(' → ')}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Active Selected Model Details Card */}
+                    {(() => {
+                      const selectedModelObj = LEARNING_MODELS.find(m => m.id === formState.selectedModelId || m.nama === formState.modelPembelajaran);
+                      if (!selectedModelObj) return null;
+                      return (
+                        <div className="p-3.5 bg-indigo-50/60 dark:bg-indigo-950/30 rounded-xl border border-indigo-200 dark:border-indigo-800/50 space-y-2 text-xs">
+                          <div className="flex items-center justify-between border-b border-indigo-200/60 dark:border-indigo-800/40 pb-2">
+                            <span className="font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
+                              <Compass className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                              Sintaksis Wajib: {selectedModelObj.nama} ({selectedModelObj.sumber})
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-1 pl-1">
+                            {selectedModelObj.sintaks.map((step, idx) => (
+                              <div key={idx} className="flex items-start gap-2 text-[11px]">
+                                <span className="font-bold text-indigo-700 dark:text-indigo-300 shrink-0">{idx + 1}.</span>
+                                <div>
+                                  <span className="font-semibold text-slate-800 dark:text-slate-200">{step.langkah}</span>
+                                  <span className="text-slate-500 dark:text-slate-400 block text-[10px]">{step.deskripsi}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-indigo-200/60 dark:border-indigo-800/40 text-[10px]">
+                            <div>
+                              <span className="font-bold text-emerald-700 dark:text-emerald-400 block mb-0.5">✓ Kelebihan:</span>
+                              <ul className="list-disc pl-3 space-y-0.5 text-slate-600 dark:text-slate-400">
+                                {selectedModelObj.kelebihan.map((k, i) => <li key={i}>{k}</li>)}
+                              </ul>
+                            </div>
+                            <div>
+                              <span className="font-bold text-amber-700 dark:text-amber-400 block mb-0.5">⚠️ Risiko / Tantangan:</span>
+                              <ul className="list-disc pl-3 space-y-0.5 text-slate-600 dark:text-slate-400">
+                                {selectedModelObj.kekurangan.map((k, i) => <li key={i}>{k}</li>)}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Metode Pembelajaran */}
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2">Metode Pembelajaran</label>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">Metode Pembelajaran (Pelengkap)</label>
                     <div className="flex flex-wrap gap-2">
                       {METODE_OPTIONS.map(metode => (
                         <button
@@ -500,6 +768,19 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                         </button>
                       ))}
                     </div>
+
+                    {/* Verbalism Warning Banner */}
+                    {formState.metodePembelajaran.length === 1 && formState.metodePembelajaran[0] === 'Ceramah' && (
+                      <div className="mt-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-bold mb-0.5">Saran Pedagogis: Risiko Verbalisme</div>
+                          <div className="text-[11px] text-amber-800 dark:text-amber-300 leading-snug">
+                            Metode <strong>Ceramah</strong> secara tunggal berisiko tinggi membuat siswa menghafal tanpa memahami makna secara konkrit. Disarankan menambah metode pendamping seperti <strong>Diskusi</strong>, <strong>Tanya Jawab</strong>, atau <strong>Demonstrasi</strong>.
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Visual Time Allocator Slider */}
@@ -564,21 +845,21 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       <div className="flex gap-1">
                         <button
                           type="button"
-                          onClick={() => onChange('rubrikAsesmen', RUBRIK_TEMPLATES.diskusi)}
+                          onClick={() => onChange('rubrikAsesmen', rubrikDiskusi)}
                           className="px-2 py-1 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded text-[9px] font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 transition-colors animate-pulse"
                         >
                           + Diskusi
                         </button>
                         <button
                           type="button"
-                          onClick={() => onChange('rubrikAsesmen', RUBRIK_TEMPLATES.presentasi)}
+                          onClick={() => onChange('rubrikAsesmen', rubrikPresentasi)}
                           className="px-2 py-1 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded text-[9px] font-semibold text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition-colors"
                         >
                           + Presentasi
                         </button>
                         <button
                           type="button"
-                          onClick={() => onChange('rubrikAsesmen', RUBRIK_TEMPLATES.sikap)}
+                          onClick={() => onChange('rubrikAsesmen', rubrikSikap)}
                           className="px-2 py-1 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 rounded text-[9px] font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors"
                         >
                           + Sikap

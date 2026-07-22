@@ -303,7 +303,7 @@ export const generateBintangReportPdf = async (
             currentY += 7;
 
             const groupedQP = new Map<string, { activity: string; count: number; totalPoints: number }>();
-            report.quizPoints.forEach((item: { quiz_name?: string; category?: string; points: number }) => {
+            report.quizPoints.forEach((item: { quiz_name?: string | null; category?: string | null; points: number }) => {
                 const activity = item.quiz_name || item.category || 'Aktivitas';
                 const current = groupedQP.get(activity);
                 if (current) {

@@ -168,6 +168,10 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
               <tr style="border: none;"><td style="padding: 4px; border: none;">Mata Pelajaran</td><td style="padding: 4px; border: none;">:</td><td style="padding: 4px; border: none;">${formState.mataPelajaran}</td></tr>
               <tr style="border: none;"><td style="padding: 4px; border: none;">Materi Pokok / Topik</td><td style="padding: 4px; border: none;">:</td><td style="padding: 4px; border: none;">${formState.topik}</td></tr>
               <tr style="border: none;"><td style="padding: 4px; border: none;">Alokasi Waktu</td><td style="padding: 4px; border: none;">:</td><td style="padding: 4px; border: none;">${totalJP} JP (${formState.jumlahPertemuan} Pertemuan x ${formState.durasiPerJp} menit)</td></tr>
+              ${(formState.isKbcIntegrated || formState.curriculumApproach === 'Berbasis Cinta') ? `
+              <tr style="border: none; background-color: #e6f4ea;"><td style="padding: 4px; border: none; color: #137333;"><strong>Integrasi Kurikulum</strong></td><td style="padding: 4px; border: none; color: #137333;">:</td><td style="padding: 4px; border: none; color: #137333;"><strong>Kurikulum Berbasis Cinta (KBC - Kemenag RI 2025)</strong></td></tr>
+              ${formState.materiInsersi ? `<tr style="border: none; background-color: #e6f4ea;"><td style="padding: 4px; border: none; color: #137333;"><strong>Materi Insersi KBC</strong></td><td style="padding: 4px; border: none; color: #137333;">:</td><td style="padding: 4px; border: none; color: #137333;">${sanitize(formState.materiInsersi)}</td></tr>` : ''}
+              ` : ''}
             </table>
           </td>
         </tr>
@@ -600,6 +604,25 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
             ${formatEvaluasiContent(data.soalEvaluasi)}
           </div>
         </div>
+      </div>
+
+      <!-- SIGNATURE BLOCK -->
+      <div style="margin-top: 40px; page-break-inside: avoid; font-family: 'Times New Roman'; font-size: 11pt;">
+        <table style="width: 100%; border: none;">
+          <tr style="border: none;">
+            <td style="width: 50%; text-align: center; border: none; vertical-align: top;">
+              Mengetahui,<br/>
+              Kepala ${formState.satuanPendidikan}<br/><br/><br/><br/><br/>
+              <strong><u>.......................................................</u></strong><br/>
+              NIP. ...................................................
+            </td>
+            <td style="width: 50%; text-align: center; border: none; vertical-align: top;">
+              Guru Mata Pelajaran,<br/><br/><br/><br/><br/>
+              <strong><u>${formState.guru || '...................................................'}</u></strong><br/>
+              NIP. ...................................................
+            </td>
+          </tr>
+        </table>
       </div>
 
       <div style="margin-top: 30px; font-size: 10pt; line-height: 1.4; font-family: 'Times New Roman'; text-align: left;">

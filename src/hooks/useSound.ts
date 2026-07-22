@@ -7,54 +7,85 @@ import {
     playMessageSound,
     playReminderSound,
 } from '../utils/notificationSound';
+import { useIsLowPerformanceDevice } from './useReducedMotion';
+
+// Global AudioContext Singleton
+let globalAudioContext: AudioContext | null = null;
+let globalGainNode: GainNode | null = null;
+
+const getAudioContext = () => {
+    if (typeof window === 'undefined') return null;
+    if (!globalAudioContext) {
+        try {
+            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioContextClass) {
+                globalAudioContext = new AudioContextClass();
+                globalGainNode = globalAudioContext.createGain();
+                globalGainNode.connect(globalAudioContext.destination);
+            }
+        } catch (_e) {
+            // Silent fail
+        }
+    }
+    return { ctx: globalAudioContext, gain: globalGainNode };
+};
 
 // Short "pop" / "click" sound using AudioContext
 
 export const useSound = () => {
+    const isLowPerf = useIsLowPerformanceDevice();
+
     const playAudioClick = useCallback(() => {
+        if (isLowPerf) return;
+
         try {
-            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioContext) return;
+            const audioData = getAudioContext();
+            if (!audioData || !audioData.ctx || !audioData.gain) return;
+            const { ctx, gain } = audioData;
 
-            const ctx = new AudioContext();
+            if (ctx.state === 'suspended') {
+                ctx.resume().catch(() => {});
+            }
+
             const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
             osc.connect(gain);
-            gain.connect(ctx.destination);
 
             // Very short, high pitch "tick"
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(800, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.05);
+            const now = ctx.currentTime;
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
 
-            gain.gain.setValueAtTime(0.1, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
 
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.05);
         } catch (_e) {
             // Silent fail for audio
         }
-    }, []);
+    }, [isLowPerf]);
 
     // Combined audio + haptic feedback
     const playClick = useCallback(() => {
+        if (isLowPerf) return;
         playAudioClick();
         hapticLight();
-    }, [playAudioClick]);
+    }, [playAudioClick, isLowPerf]);
 
     // Medium haptic for toggles and confirms
     const playToggle = useCallback(() => {
+        if (isLowPerf) return;
         playAudioClick();
         hapticMedium();
-    }, [playAudioClick]);
+    }, [playAudioClick, isLowPerf]);
 
     // Heavy haptic for important actions
     const playAction = useCallback(() => {
+        if (isLowPerf) return;
         playAudioClick();
         hapticHeavy();
-    }, [playAudioClick]);
+    }, [playAudioClick, isLowPerf]);
 
     // Success feedback with sound and haptic
     const playSuccess = useCallback(() => {

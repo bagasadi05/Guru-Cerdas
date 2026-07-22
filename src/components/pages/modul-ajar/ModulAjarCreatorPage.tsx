@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, History, Copy, Printer, FileText, Clock } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
@@ -6,7 +6,7 @@ import { supabase } from '../../../services/supabase';
 import { FormState } from './types';
 import { useModulAjarQueue } from './hooks/useModulAjarQueue';
 import { buildHtmlTemplate, extractStudentHtml } from './utils/template';
-import { getManualBoilerplate, RUBRIK_TEMPLATES } from './utils/manualBoilerplates';
+import { modulAjarContentService } from '../../../services/modulAjarContentService';
 import { ModulAjarForm } from './components/ModulAjarForm';
 import { ModulAjarHistory } from './components/ModulAjarHistory';
 import { ModulAjarPreview } from './components/ModulAjarPreview';
@@ -14,7 +14,7 @@ import { ModulAjarPreview } from './components/ModulAjarPreview';
 const ModulAjarCreatorPage: React.FC = () => {
   const { user } = useAuth();
   const [formState, setFormState] = useState<FormState>({
-    generationMethod: 'AI',
+    generationMethod: 'Manual',
     documentType: 'Modul Ajar',
     curriculumApproach: 'Merdeka',
     satuanPendidikan: 'MI Al Irsyad',
@@ -44,6 +44,14 @@ const ModulAjarCreatorPage: React.FC = () => {
     alokasiInti: 50,
     alokasiPenutup: 10,
     rubrikAsesmen: [],
+    isKbcIntegrated: false,
+    temaKbc: [],
+    materiInsersi: '',
+    modelPembelajaranKbc: 'FIDS',
+    asesmenSikap: '',
+    pendekatanPembelajaran: 'Student Centered',
+    selectedModelId: 'pbl',
+    teknikPembelajaran: '',
   });
 
   const [activeStep, setActiveStep] = useState(1);
@@ -72,20 +80,22 @@ const ModulAjarCreatorPage: React.FC = () => {
       if (formState.topik !== lastLoadedTopicRef.current) {
         lastLoadedTopicRef.current = formState.topik;
         
-        const selectedModelObj = models.find(m => m.nama_model === formState.modelPembelajaran);
-        const syntax = selectedModelObj?.sintaks_inti || ['Pendahuluan', 'Kegiatan Inti', 'Penutup'];
-        const bp = getManualBoilerplate(formState.mataPelajaran, formState.topik, formState.kelas, formState.fase, syntax);
-
-        setFormState(prev => ({
-          ...prev,
-          manualTujuanPembelajaran: bp.tujuanPembelajaran.join('\n'),
-          manualPertanyaanPemantik: bp.pertanyaanPemantik.join('\n'),
-          manualLkpdTugas: bp.lkpdTugas,
-          manualSoalEvaluasi: bp.soalEvaluasi
-        }));
+        const loadBoilerplate = async () => {
+          const bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
+          if (bp) {
+            setFormState(prev => ({
+              ...prev,
+              manualTujuanPembelajaran: Array.isArray(bp.tujuan_pembelajaran) ? bp.tujuan_pembelajaran.join('\n') : '',
+              manualPertanyaanPemantik: Array.isArray(bp.pertanyaan_pemantik) ? bp.pertanyaan_pemantik.join('\n') : '',
+              manualLkpdTugas: bp.lkpd_tugas || '',
+              manualSoalEvaluasi: bp.soal_evaluasi || ''
+            }));
+          }
+        };
+        loadBoilerplate();
       }
     }
-  }, [formState.topik, formState.mataPelajaran, formState.generationMethod, models, formState.modelPembelajaran]);
+  }, [formState.generationMethod, formState.topik, formState.mataPelajaran, formState.kelas, formState.fase]);
 
   const [logoBase64, setLogoBase64] = useState<string>('');
 
@@ -127,20 +137,41 @@ const ModulAjarCreatorPage: React.FC = () => {
 
     try {
       const selectedModelObj = models.find(m => m.nama_model === formState.modelPembelajaran);
-      const syntax = selectedModelObj?.sintaks_inti || ['Pendahuluan', 'Kegiatan Inti', 'Penutup'];
 
-      const bp = getManualBoilerplate(formState.mataPelajaran, formState.topik, formState.kelas, formState.fase, syntax);
+      const bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
+
+      let sintaksIntiHtml = `Aktivitas inti sesuai model ${formState.modelPembelajaran}`;
+      if (selectedModelObj?.id) {
+        const sintaksList = await modulAjarContentService.getSintaksKegiatan(selectedModelObj.id, {
+          topik: formState.topik,
+          mapel: formState.mataPelajaran,
+          kelas: formState.kelas
+        });
+        if (sintaksList.length > 0) {
+          sintaksIntiHtml = sintaksList.map(s => `<b>${s.nama_langkah}</b><br/>- Guru: ${s.kegiatan_guru}<br/>- Siswa: ${s.kegiatan_siswa}`).join('<br/><br/>');
+        }
+      }
 
       const manualData = {
         ...bp,
         tujuanPembelajaran: formState.manualTujuanPembelajaran
           ? formState.manualTujuanPembelajaran.split('\n').filter(line => line.trim() !== '')
-          : bp.tujuanPembelajaran,
+          : bp?.tujuan_pembelajaran || [],
+        pemahamanBermakna: bp?.pemahaman_bermakna || [],
         pertanyaanPemantik: formState.manualPertanyaanPemantik
           ? formState.manualPertanyaanPemantik.split('\n').filter(line => line.trim() !== '')
-          : bp.pertanyaanPemantik,
-        lkpdTugas: formState.manualLkpdTugas || bp.lkpdTugas,
-        soalEvaluasi: formState.manualSoalEvaluasi || bp.soalEvaluasi,
+          : bp?.pertanyaan_pemantik || [],
+        lkpdTugas: formState.manualLkpdTugas || bp?.lkpd_tugas || '',
+        soalEvaluasi: formState.manualSoalEvaluasi || bp?.soal_evaluasi || '',
+        kegiatanPendahuluan: `Guru membuka kelas dengan salam, memeriksa kehadiran, menyampaikan apersepsi, dan tujuan pembelajaran terkait ${formState.topik}.`,
+        kegiatanInti: sintaksIntiHtml,
+        kegiatanPenutup: `Guru membimbing refleksi pembelajaran, menyimpulkan materi, dan menutup dengan doa.`,
+        asesmenSikap: 'Observasi sikap peserta didik selama pembelajaran',
+        asesmenKeterampilan: 'Penilaian unjuk kerja/proyek presentasi',
+        asesmenPengetahuan: 'Tes tertulis/lisan di akhir materi',
+        pengayaan: bp?.pengayaan || [],
+        remedial: bp?.remedial || [],
+        daftarPustaka: bp?.daftar_pustaka || [],
       };
 
       const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
@@ -190,6 +221,26 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   };
 
+  const fetchHistory = useCallback(async () => {
+    if (!user) return;
+    setIsLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('lesson_plans')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (data && !error) {
+        setHistory(data);
+      }
+    } catch (e) {
+      console.error('Failed to load history:', e);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [user]);
+
   // Load models & history on mount
   useEffect(() => {
     const fetchModels = async () => {
@@ -210,27 +261,7 @@ const ModulAjarCreatorPage: React.FC = () => {
     };
     fetchModels();
     fetchHistory();
-  }, [user]);
-
-  const fetchHistory = async () => {
-    if (!user) return;
-    setIsLoadingHistory(true);
-    try {
-      const { data, error } = await supabase
-        .from('lesson_plans')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (data && !error) {
-        setHistory(data);
-      }
-    } catch (e) {
-      console.error('Failed to load history:', e);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
+  }, [user, fetchHistory]);
 
   const handleInputChange = (field: keyof FormState, value: any) => {
     setFormState(prev => {
@@ -273,7 +304,7 @@ const ModulAjarCreatorPage: React.FC = () => {
     
     setIsGeneratingCP(true);
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('ref_capaian_pembelajaran')
         .select('deskripsi_cp')
         .eq('fase', formState.fase)
@@ -399,7 +430,7 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const restoreParameters = (plan: any) => {
     setFormState({
-      generationMethod: 'AI',
+      generationMethod: plan.generation_method || 'Manual',
       documentType: plan.document_type || 'Modul Ajar',
       curriculumApproach: plan.curriculum_approach || 'Merdeka',
       satuanPendidikan: plan.identity?.satuanPendidikan || 'MI Al Irsyad',
@@ -429,6 +460,10 @@ const ModulAjarCreatorPage: React.FC = () => {
       alokasiInti: plan.components?.alokasi?.inti || 50,
       alokasiPenutup: plan.components?.alokasi?.penutup || 10,
       rubrikAsesmen: plan.components?.rubrik || [],
+      isKbcIntegrated: plan.components?.isKbcIntegrated || false,
+      temaKbc: plan.components?.temaKbc || [],
+      materiInsersi: plan.components?.materiInsersi || '',
+      modelPembelajaranKbc: plan.components?.modelPembelajaranKbc || 'FIDS',
     });
     setGeneratedDocument(plan.generated_content);
     setActiveTab('preview');
