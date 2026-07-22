@@ -100,9 +100,9 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
           </button>
         )}
 
-        {isAdmin ? <div className="h-px bg-gray-200 dark:bg-gray-800 my-1"></div> : null}
+        {(isAdmin || canManageActiveClass) ? <div className="h-px bg-gray-200 dark:bg-gray-800 my-1"></div> : null}
 
-        {isAdmin ? (
+        {(isAdmin || canManageActiveClass) ? (
           <button type="button"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left group"
             onClick={() => {
@@ -115,7 +115,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
             </div>
             <div className="flex-grow">
               <p className="font-semibold text-red-600 dark:text-red-400">Hapus Siswa</p>
-              <p className="text-xs text-red-400/70">Tindakan ini tidak dapat dibatalkan</p>
+              <p className="text-xs text-red-400/70">Pindahkan ke sampah (dapat dipulihkan)</p>
             </div>
           </button>
         ) : null}
