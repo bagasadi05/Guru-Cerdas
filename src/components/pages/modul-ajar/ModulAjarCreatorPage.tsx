@@ -60,6 +60,13 @@ const ModulAjarCreatorPage: React.FC = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   const lastLoadedTopicRef = useRef<string>('');
 
+  // Sync teacher name from profile whenever user.name changes
+  useEffect(() => {
+    if (user?.name) {
+      setFormState(prev => ({ ...prev, guru: user.name }));
+    }
+  }, [user?.name]);
+
   useEffect(() => {
     if (formState.generationMethod === 'Manual' && formState.topik && formState.mataPelajaran) {
       if (formState.topik !== lastLoadedTopicRef.current) {
