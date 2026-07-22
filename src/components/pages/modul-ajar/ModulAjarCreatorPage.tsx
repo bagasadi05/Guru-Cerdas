@@ -156,22 +156,28 @@ const ModulAjarCreatorPage: React.FC = () => {
         ...bp,
         tujuanPembelajaran: formState.manualTujuanPembelajaran
           ? formState.manualTujuanPembelajaran.split('\n').filter(line => line.trim() !== '')
-          : bp?.tujuan_pembelajaran || [],
-        pemahamanBermakna: bp?.pemahaman_bermakna || [],
+          : (bp?.tujuan_pembelajaran && Array.isArray(bp.tujuan_pembelajaran) && bp.tujuan_pembelajaran.length > 0
+              ? bp.tujuan_pembelajaran
+              : [`Peserta didik dapat memahami dan menerapkan konsep dasar ${formState.topik || formState.mataPelajaran}.`]),
+        pemahamanBermakna: bp?.pemahaman_bermakna && Array.isArray(bp.pemahaman_bermakna) && bp.pemahaman_bermakna.length > 0
+          ? bp.pemahaman_bermakna
+          : [`Pemahaman tentang ${formState.topik || formState.mataPelajaran} membantu peserta didik menyelesaikan masalah dalam kehidupan sehari-hari.`],
         pertanyaanPemantik: formState.manualPertanyaanPemantik
           ? formState.manualPertanyaanPemantik.split('\n').filter(line => line.trim() !== '')
-          : bp?.pertanyaan_pemantik || [],
-        lkpdTugas: formState.manualLkpdTugas || bp?.lkpd_tugas || '',
-        soalEvaluasi: formState.manualSoalEvaluasi || bp?.soal_evaluasi || '',
-        kegiatanPendahuluan: `Guru membuka kelas dengan salam, memeriksa kehadiran, menyampaikan apersepsi, dan tujuan pembelajaran terkait ${formState.topik}.`,
+          : (bp?.pertanyaan_pemantik && Array.isArray(bp.pertanyaan_pemantik) && bp.pertanyaan_pemantik.length > 0
+              ? bp.pertanyaan_pemantik
+              : [`Apa yang kamu ketahui tentang ${formState.topik || formState.mataPelajaran}?`]),
+        lkpdTugas: formState.manualLkpdTugas || bp?.lkpd_tugas || `Lakukan pengamatan dan diskusikan bersama kelompok mengenai ${formState.topik || formState.mataPelajaran}.`,
+        soalEvaluasi: formState.manualSoalEvaluasi || bp?.soal_evaluasi || `1. Jelaskan secara singkat pemahamanmu mengenai ${formState.topik || formState.mataPelajaran}!`,
+        kegiatanPendahuluan: `Guru membuka kelas dengan salam, memeriksa kehadiran, menyampaikan apersepsi, dan tujuan pembelajaran terkait ${formState.topik || formState.mataPelajaran}.`,
         kegiatanInti: sintaksIntiHtml,
         kegiatanPenutup: `Guru membimbing refleksi pembelajaran, menyimpulkan materi, dan menutup dengan doa.`,
         asesmenSikap: 'Observasi sikap peserta didik selama pembelajaran',
         asesmenKeterampilan: 'Penilaian unjuk kerja/proyek presentasi',
         asesmenPengetahuan: 'Tes tertulis/lisan di akhir materi',
-        pengayaan: bp?.pengayaan || [],
-        remedial: bp?.remedial || [],
-        daftarPustaka: bp?.daftar_pustaka || [],
+        pengayaan: bp?.pengayaan || [`Pelajari materi pengayaan tingkat lanjut mengenai ${formState.topik || formState.mataPelajaran}.`],
+        remedial: bp?.remedial || [`Bimbingan perorangan dan latihan soal ulang terkait materi dasar ${formState.topik || formState.mataPelajaran}.`],
+        daftarPustaka: bp?.daftar_pustaka || [`Buku Panduan Guru ${formState.mataPelajaran} Kelas ${formState.kelas} Kemendikbudristek.`],
       };
 
       const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;

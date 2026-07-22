@@ -12,14 +12,26 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
       .trim();
   };
 
-  const listToHtml = (list: string[]) => {
-    if (!list || list.length === 0) return '<li>-</li>';
-    return list.map(item => `<li>${sanitize(item)}</li>`).join('');
+  const listToHtml = (list: any) => {
+    if (!list) return '<li>-</li>';
+    if (typeof list === 'string') {
+      const arr = list.split('\n').filter(item => item.trim() !== '');
+      return arr.length > 0 ? arr.map(item => `<li>${sanitize(item)}</li>`).join('') : `<li>${sanitize(list)}</li>`;
+    }
+    if (!Array.isArray(list)) return `<li>${sanitize(String(list))}</li>`;
+    if (list.length === 0) return '<li>-</li>';
+    return list.map(item => `<li>${sanitize(typeof item === 'string' ? item : String(item))}</li>`).join('');
   };
 
-  const listToNumberedHtml = (list: string[]) => {
-    if (!list || list.length === 0) return '<li>-</li>';
-    return list.map(item => `<li>${sanitize(item)}</li>`).join('');
+  const listToNumberedHtml = (list: any) => {
+    if (!list) return '<li>-</li>';
+    if (typeof list === 'string') {
+      const arr = list.split('\n').filter(item => item.trim() !== '');
+      return arr.length > 0 ? arr.map(item => `<li>${sanitize(item)}</li>`).join('') : `<li>${sanitize(list)}</li>`;
+    }
+    if (!Array.isArray(list)) return `<li>${sanitize(String(list))}</li>`;
+    if (list.length === 0) return '<li>-</li>';
+    return list.map(item => `<li>${sanitize(typeof item === 'string' ? item : String(item))}</li>`).join('');
   };
 
   const intiToHtml = (steps: any[]) => {
