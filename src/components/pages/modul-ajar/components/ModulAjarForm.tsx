@@ -193,6 +193,8 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                             onChange('curriculumApproach', approach);
                             if (approach === 'Berbasis Cinta') {
                               onChange('isKbcIntegrated', true);
+                            } else {
+                              onChange('isKbcIntegrated', false);
                             }
                           }}
                           className={`p-3 rounded-xl border text-xs sm:text-sm font-bold transition-all ${
@@ -208,7 +210,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   {/* KBC Integrated Options */}
-                  {(formState.curriculumApproach === 'Berbasis Cinta' || formState.isKbcIntegrated) && (
+                  {formState.curriculumApproach === 'Berbasis Cinta' && (
                     <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
