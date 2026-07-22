@@ -34,8 +34,10 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
     return list.map(item => `<li>${sanitize(typeof item === 'string' ? item : String(item))}</li>`).join('');
   };
 
-  const intiToHtml = (steps: any[]) => {
-    if (!steps || steps.length === 0) return '<div>-</div>';
+  const intiToHtml = (steps: any) => {
+    if (!steps) return '<div>-</div>';
+    if (typeof steps === 'string') return steps;
+    if (!Array.isArray(steps) || steps.length === 0) return '<div>-</div>';
     return steps.map((s, idx) => {
       const faseRaw = s.fase || s.nama_fase || '';
       // Clean prefix if starts with "Langkah X:"

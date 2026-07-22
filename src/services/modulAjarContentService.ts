@@ -93,11 +93,35 @@ export const modulAjarContentService = {
     const { data, error } = await supabase
       .from('ref_boilerplate_topik')
       .select('topik')
-      .eq('mata_pelajaran', normMapel)
+      .ilike('mata_pelajaran', `%${normMapel}%`)
       .eq('is_verified', true);
       
-    if (error || !data) return [];
-    return Array.from(new Set(data.map(d => d.topik)));
+    if (!error && data && data.length > 0) {
+      return Array.from(new Set(data.map(d => d.topik)));
+    }
+
+    // Fallback topic recommendations if DB is unmigrated or loading
+    const FALLBACK_RECOMMENDATIONS: Record<string, string[]> = {
+      'matematika': ['penjumlahan', 'pengurangan', 'perkalian', 'pembagian', 'pecahan'],
+      'bahasa indonesia': ['kosa kata baru', 'kalimat efektif', 'karangan narasi', 'puisi anak'],
+      'ipas': ['fotosintesis', 'wujud zat', 'panca indra', 'ekosistem', 'gaya dan gerak'],
+      'pendidikan pancasila': ['simbol pancasila', 'hak dan kewajiban', 'musyawarah', 'bhinneka tunggal ika'],
+      'bahasa inggris': ['greetings', 'family and friends', 'numbers', 'daily activities'],
+      'bahasa jawa': ['unggah ungguh basa', 'tembang dolanan', 'aksara jawa'],
+      'akidah akhlak': ['asmaul husna', 'adab orang tua dan guru', 'akhlak terpuji'],
+      'al-qur\'an hadis': ['surah pendek', 'hadis kebersihan', 'tajwid dasar'],
+      'fikih': ['wudhu dan tayamum', 'shalat fardhu', 'puasa ramadhan'],
+      'sejarah kebudayaan islam': ['kisah nabi muhammad saw', 'walisongo'],
+      'bahasa arab': ['perkenalan', 'peralatan sekolah'],
+      'tik': ['pengenalan komputer', 'etika berinternet']
+    };
+
+    for (const [key, topics] of Object.entries(FALLBACK_RECOMMENDATIONS)) {
+      if (key.includes(normMapel) || normMapel.includes(key)) {
+        return topics;
+      }
+    }
+    return [];
   },
 
   // 1b. Get Boilerplate Topik (Exact match first, then partial)
