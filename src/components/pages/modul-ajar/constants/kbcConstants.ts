@@ -5,6 +5,10 @@ export interface ModelKbc {
   syntax: string[];
 }
 
+/**
+ * @deprecated Digunakan hanya sebagai fallback offline jika database belum terhubung.
+ * Sumber utama model KBC membaca dari tabel `ref_model_pembelajaran` via `useLearningModels()`.
+ */
 export const MODEL_PEMBELAJARAN_KBC: ModelKbc[] = [
   {
     name: 'Project Based Learning (PjBL - FIDS)',

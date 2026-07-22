@@ -1,6 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { modulAjarContentService } from '../../../../services/modulAjarContentService';
 
+export const useLearningModels = () => {
+  return useQuery({
+    queryKey: ['modulAjarLearningModels'],
+    queryFn: () => modulAjarContentService.getLearningModels(),
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours
+  });
+};
+
 export const useTopikRecommendations = (mapel: string) => {
   return useQuery({
     queryKey: ['modulAjarTopikRecommendations', mapel],

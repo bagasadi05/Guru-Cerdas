@@ -62,7 +62,29 @@ export interface RefBankTpIktp {
   is_verified: boolean;
 }
 
+export interface RefModelPembelajaran {
+  id: string;
+  nama_model: string;
+  sintaks_inti: string[];
+  kategori: string;
+  sumber: string;
+  kelebihan: string[];
+  kekurangan: string[];
+  cocok_untuk: string[];
+  ref_sintaks_kegiatan?: RefSintaksKegiatan[];
+}
+
 export const modulAjarContentService = {
+  // 0. Get Learning Models from DB
+  async getLearningModels(): Promise<RefModelPembelajaran[]> {
+    const { data, error } = await supabase
+      .from('ref_model_pembelajaran')
+      .select('*, ref_sintaks_kegiatan(*)')
+      .order('nama_model', { ascending: true });
+      
+    if (error || !data) return [];
+    return data as unknown as RefModelPembelajaran[];
+  },
   // 1a. Get Topik Recommendations
   async getTopikRecommendations(mapel: string): Promise<string[]> {
     const normMapel = mapel.toLowerCase().trim();

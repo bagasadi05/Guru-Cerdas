@@ -17,6 +17,10 @@ export interface LearningModelItem {
   cocokUntukJenjang?: string[];
 }
 
+/**
+ * @deprecated Digunakan hanya sebagai fallback offline jika database belum terhubung.
+ * Sumber utama model pembelajaran harus membaca dari tabel `ref_model_pembelajaran` via `useLearningModels()`.
+ */
 export const LEARNING_MODELS: LearningModelItem[] = [
   // --- HAKIKAT & MASALAH (HOTS) ---
   {

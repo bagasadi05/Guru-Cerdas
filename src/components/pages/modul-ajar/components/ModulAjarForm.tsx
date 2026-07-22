@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ChevronLeft, ChevronRight, Heart, CheckCircle2, AlertTriangle, Compass } from 'lucide-react';
 import { FormState, RubrikRow } from '../types';
-import { useTopikRecommendations, useRubrikTemplates, useTemaKbc, useMateriInsersiMulti } from '../hooks/useModulAjarQueries';
+import { useTopikRecommendations, useRubrikTemplates, useTemaKbc, useMateriInsersiMulti, useLearningModels } from '../hooks/useModulAjarQueries';
 import { PANCA_CINTA_TOPICS_FALLBACK, MATERI_INSERSI_FALLBACK } from '../constants/kbcConstants';
 import { LEARNING_MODELS, ENNIS_IKTP_BANK, ModelCategory } from '../constants/learningModels';
 
@@ -19,6 +19,7 @@ interface ModulAjarFormProps {
   isLoadingModels: boolean;
   queueStatus: string;
   onGenerate: () => void;
+  boilerplateMissingBanner?: string | null;
 }
 
 export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
@@ -33,8 +34,11 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   models: _models,
   isLoadingModels: _isLoadingModels,
   queueStatus,
-  onGenerate
+  onGenerate,
+  boilerplateMissingBanner
 }) => {
+  const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
+
   const [activeCategoryTab, setActiveCategoryTab] = React.useState<ModelCategory>('hots');
   const PROFIL_OPTIONS = ['Beriman & Bertakwa', 'Berkebinekaan Global', 'Bergotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
   const METODE_OPTIONS = ['Ceramah', 'Diskusi', 'Tanya Jawab', 'Demonstrasi', 'Eksperimen', 'Proyek', 'Role Playing', 'Penugasan'];
@@ -44,6 +48,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   const { data: rubrikPresentasi = [] } = useRubrikTemplates('presentasi');
   const { data: rubrikSikap = [] } = useRubrikTemplates('sikap');
   
+  const { data: dbModels = [] } = useLearningModels();
   const { data: temaKbcData = [] } = useTemaKbc();
   const { data: materiInsersiData = [] } = useMateriInsersiMulti(formState.temaKbc);
 
@@ -149,7 +154,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {[
                         { id: 'Manual', label: '⚡ Database (Non-AI)', desc: 'Penyusunan instan dari Bank Data & Template (Sangat Cepat & Ringan)' },
-                        { id: 'AI', label: '✨ Generatif AI', desc: 'Disusun otomatis oleh AI (Perlu Koneksi)' }
+                        ...(isAiEnabled ? [{ id: 'AI', label: '✨ Generatif AI', desc: 'Disusun otomatis oleh AI (Perlu Koneksi)' }] : [])
                       ].map(method => (
                         <button
                           key={method.id}
@@ -422,6 +427,13 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                             {rec}
                           </button>
                         ))}
+                      </div>
+                    )}
+
+                    {boilerplateMissingBanner && (
+                      <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+                        <span>{boilerplateMissingBanner}</span>
                       </div>
                     )}
                   </div>

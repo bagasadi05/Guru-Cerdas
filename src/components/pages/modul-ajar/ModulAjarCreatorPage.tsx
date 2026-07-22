@@ -75,6 +75,8 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   }, [user?.name]);
 
+  const [boilerplateMissingBanner, setBoilerplateMissingBanner] = useState<string | null>(null);
+
   useEffect(() => {
     if (formState.generationMethod === 'Manual' && formState.topik && formState.mataPelajaran) {
       if (formState.topik !== lastLoadedTopicRef.current) {
@@ -83,6 +85,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         const loadBoilerplate = async () => {
           const bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
           if (bp) {
+            setBoilerplateMissingBanner(null);
             setFormState(prev => ({
               ...prev,
               manualTujuanPembelajaran: Array.isArray(bp.tujuan_pembelajaran) ? bp.tujuan_pembelajaran.join('\n') : '',
@@ -90,10 +93,21 @@ const ModulAjarCreatorPage: React.FC = () => {
               manualLkpdTugas: bp.lkpd_tugas || '',
               manualSoalEvaluasi: bp.soal_evaluasi || ''
             }));
+          } else {
+            setBoilerplateMissingBanner('Bank konten untuk topik ini belum tersedia — isi manual atau minta admin menambahkan');
+            setFormState(prev => ({
+              ...prev,
+              manualTujuanPembelajaran: '',
+              manualPertanyaanPemantik: '',
+              manualLkpdTugas: '',
+              manualSoalEvaluasi: ''
+            }));
           }
         };
         loadBoilerplate();
       }
+    } else {
+      setBoilerplateMissingBanner(null);
     }
   }, [formState.generationMethod, formState.topik, formState.mataPelajaran, formState.kelas, formState.fase]);
 
@@ -113,13 +127,9 @@ const ModulAjarCreatorPage: React.FC = () => {
       .catch(err => console.error('Failed to load logo_sekolah.png:', err));
   }, []);
 
-  // Initialize queue hook
-  const {
-    queueStatus,
-    queuePosition,
-    activeQueueUser,
-    startQueueAndGenerate,
-  } = useModulAjarQueue(
+  // Initialize queue hook only if AI feature flag is ON
+  const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
+  const queueHookResult = useModulAjarQueue(
     formState,
     user,
     setGeneratedDocument,
@@ -129,6 +139,11 @@ const ModulAjarCreatorPage: React.FC = () => {
     logoBase64
   );
 
+  const queueStatus = isAiEnabled ? queueHookResult.queueStatus : 'idle';
+  const queuePosition = isAiEnabled ? queueHookResult.queuePosition : 0;
+  const activeQueueUser = isAiEnabled ? queueHookResult.activeQueueUser : null;
+  const startQueueAndGenerate = isAiEnabled ? queueHookResult.startQueueAndGenerate : () => {};
+
   const generateManualModulAjar = async () => {
     if (!formState.mataPelajaran || !formState.topik) {
       alert('Mata Pelajaran dan Topik/Materi wajib diisi.');
@@ -136,48 +151,69 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
 
     try {
-      const selectedModelObj = models.find(m => m.nama_model === formState.modelPembelajaran);
-
       const bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
 
-      let sintaksIntiHtml = `Aktivitas inti sesuai model ${formState.modelPembelajaran}`;
-      if (selectedModelObj?.id) {
-        const sintaksList = await modulAjarContentService.getSintaksKegiatan(selectedModelObj.id, {
-          topik: formState.topik,
-          mapel: formState.mataPelajaran,
-          kelas: formState.kelas
+      let modelIdToUse = formState.selectedModelId;
+      const selectedModelObj = models.find(m => m.id === modelIdToUse || m.nama_model === formState.modelPembelajaran);
+      if (selectedModelObj) {
+        modelIdToUse = selectedModelObj.id;
+      }
+
+      const sintaksList = modelIdToUse
+        ? await modulAjarContentService.getSintaksKegiatan(modelIdToUse, {
+            topik: formState.topik,
+            mapel: formState.mataPelajaran,
+            kelas: formState.kelas
+          })
+        : [];
+
+      if (!sintaksList || sintaksList.length === 0) {
+        alert('Sintaks kegiatan untuk model pembelajaran terpilih belum tersedia di database — silakan pilih model lain atau minta admin menambahkan.');
+        return;
+      }
+
+      const sintaksIntiHtml = sintaksList.map(s => `<b>${s.nama_langkah}</b><br/>- <b>Guru:</b> ${s.kegiatan_guru}<br/>- <b>Siswa:</b> ${s.kegiatan_siswa}`).join('<br/><br/>');
+
+      let tujuanPembelajaranList: string[] = formState.manualTujuanPembelajaran
+        ? formState.manualTujuanPembelajaran.split('\n').filter(line => line.trim() !== '')
+        : (bp?.tujuan_pembelajaran && Array.isArray(bp.tujuan_pembelajaran) ? bp.tujuan_pembelajaran : []);
+
+      if (formState.isKbcIntegrated && formState.materiInsersi) {
+        const frasa = formState.materiInsersi.trim();
+        tujuanPembelajaranList = tujuanPembelajaranList.map(tp => {
+          const cleaned = tp.replace(/\.$/, '');
+          return `${cleaned} (${frasa}).`;
         });
-        if (sintaksList.length > 0) {
-          sintaksIntiHtml = sintaksList.map(s => `<b>${s.nama_langkah}</b><br/>- Guru: ${s.kegiatan_guru}<br/>- Siswa: ${s.kegiatan_siswa}`).join('<br/><br/>');
-        }
+      }
+
+      let pendahuluanText = `Guru membuka kelas dengan salam, memeriksa kehadiran, menyampaikan apersepsi, dan tujuan pembelajaran terkait ${formState.topik || formState.mataPelajaran}.`;
+      let penutupText = `Guru membimbing refleksi pembelajaran, menyimpulkan materi, dan menutup dengan doa.`;
+      let sikapText = 'Observasi sikap peserta didik selama pembelajaran';
+
+      if (formState.isKbcIntegrated) {
+        pendahuluanText = `Guru membuka kelas dengan salam ramah, meminta salah seorang peserta didik memimpin doa pembuka (Basmalah & doa menuntut ilmu), memeriksa kehadiran, menyampaikan apersepsi, serta tujuan pembelajaran bernilai cinta.`;
+        penutupText = `Guru bersama peserta didik melakukan refleksi atas pembelajaran dan nilai-nilai cinta yang dipelajari, menyimpulkan materi, kemudian menutup kelas dengan doa Hamdalah, doa kaffaratul majelis, dan salam penutup.`;
+        sikapText = 'Observasi sikap spiritual (rasa syukur, kecintaan pada ilmu & ciptaan Allah Swt.) dan sikap sosial (kasih sayang, toleransi, empati) selama pembelajaran.';
       }
 
       const manualData = {
         ...bp,
-        tujuanPembelajaran: formState.manualTujuanPembelajaran
-          ? formState.manualTujuanPembelajaran.split('\n').filter(line => line.trim() !== '')
-          : (bp?.tujuan_pembelajaran && Array.isArray(bp.tujuan_pembelajaran) && bp.tujuan_pembelajaran.length > 0
-              ? bp.tujuan_pembelajaran
-              : [`Peserta didik dapat memahami dan menerapkan konsep dasar ${formState.topik || formState.mataPelajaran}.`]),
-        pemahamanBermakna: bp?.pemahaman_bermakna && Array.isArray(bp.pemahaman_bermakna) && bp.pemahaman_bermakna.length > 0
-          ? bp.pemahaman_bermakna
-          : [`Pemahaman tentang ${formState.topik || formState.mataPelajaran} membantu peserta didik menyelesaikan masalah dalam kehidupan sehari-hari.`],
+        tujuanPembelajaran: tujuanPembelajaranList,
+        pemahamanBermakna: bp?.pemahaman_bermakna && Array.isArray(bp.pemahaman_bermakna) ? bp.pemahaman_bermakna : [],
         pertanyaanPemantik: formState.manualPertanyaanPemantik
           ? formState.manualPertanyaanPemantik.split('\n').filter(line => line.trim() !== '')
-          : (bp?.pertanyaan_pemantik && Array.isArray(bp.pertanyaan_pemantik) && bp.pertanyaan_pemantik.length > 0
-              ? bp.pertanyaan_pemantik
-              : [`Apa yang kamu ketahui tentang ${formState.topik || formState.mataPelajaran}?`]),
-        lkpdTugas: formState.manualLkpdTugas || bp?.lkpd_tugas || `Lakukan pengamatan dan diskusikan bersama kelompok mengenai ${formState.topik || formState.mataPelajaran}.`,
-        soalEvaluasi: formState.manualSoalEvaluasi || bp?.soal_evaluasi || `1. Jelaskan secara singkat pemahamanmu mengenai ${formState.topik || formState.mataPelajaran}!`,
-        kegiatanPendahuluan: `Guru membuka kelas dengan salam, memeriksa kehadiran, menyampaikan apersepsi, dan tujuan pembelajaran terkait ${formState.topik || formState.mataPelajaran}.`,
+          : (bp?.pertanyaan_pemantik && Array.isArray(bp.pertanyaan_pemantik) ? bp.pertanyaan_pemantik : []),
+        lkpdTugas: formState.manualLkpdTugas || bp?.lkpd_tugas || '',
+        soalEvaluasi: formState.manualSoalEvaluasi || bp?.soal_evaluasi || '',
+        kegiatanPendahuluan: pendahuluanText,
         kegiatanInti: sintaksIntiHtml,
-        kegiatanPenutup: `Guru membimbing refleksi pembelajaran, menyimpulkan materi, dan menutup dengan doa.`,
-        asesmenSikap: 'Observasi sikap peserta didik selama pembelajaran',
+        kegiatanPenutup: penutupText,
+        asesmenSikap: sikapText,
         asesmenKeterampilan: 'Penilaian unjuk kerja/proyek presentasi',
         asesmenPengetahuan: 'Tes tertulis/lisan di akhir materi',
-        pengayaan: bp?.pengayaan || [`Pelajari materi pengayaan tingkat lanjut mengenai ${formState.topik || formState.mataPelajaran}.`],
-        remedial: bp?.remedial || [`Bimbingan perorangan dan latihan soal ulang terkait materi dasar ${formState.topik || formState.mataPelajaran}.`],
-        daftarPustaka: bp?.daftar_pustaka || [`Buku Panduan Guru ${formState.mataPelajaran} Kelas ${formState.kelas} Kemendikbudristek.`],
+        pengayaan: bp?.pengayaan && Array.isArray(bp.pengayaan) ? bp.pengayaan : [],
+        remedial: bp?.remedial && Array.isArray(bp.remedial) ? bp.remedial : [],
+        daftarPustaka: bp?.daftar_pustaka && Array.isArray(bp.daftar_pustaka) ? bp.daftar_pustaka : [],
       };
 
       const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
@@ -187,6 +223,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         user_id: user?.id,
         document_type: formState.documentType,
         curriculum_approach: formState.curriculumApproach,
+        generation_method: formState.generationMethod || 'Manual',
         identity: {
           kelas: formState.kelas,
           fase: formState.fase,
@@ -204,10 +241,12 @@ const ModulAjarCreatorPage: React.FC = () => {
           model: formState.modelPembelajaran,
           metode: formState.metodePembelajaran,
           alokasi: { pendahuluan: formState.alokasiPendahuluan, inti: formState.alokasiInti, penutup: formState.alokasiPenutup },
-          rubrik: formState.rubrikAsesmen as any
+          rubrik: formState.rubrikAsesmen as any,
+          temaKbc: formState.temaKbc,
+          materiInsersi: formState.materiInsersi
         },
         generated_content: htmlTemplate
-      });
+      } as any);
 
       setGeneratedDocument(htmlTemplate);
       fetchHistory();
@@ -321,8 +360,8 @@ const ModulAjarCreatorPage: React.FC = () => {
       if (data && data.deskripsi_cp) {
         handleInputChange('capaianPembelajaran', data.deskripsi_cp);
       } else {
-        const standardCP = `Peserta didik mampu memahami dan menerapkan konsep dasar ${formState.mataPelajaran} pada tingkat Fase ${formState.fase} sesuai dengan pedoman Kurikulum ${formState.curriculumApproach}. Peserta didik juga diharapkan dapat memecahkan masalah sederhana terkait ${formState.topik} dalam kehidupan sehari-hari.`;
-        handleInputChange('capaianPembelajaran', standardCP);
+        handleInputChange('capaianPembelajaran', '');
+        alert('Capaian Pembelajaran (CP) untuk mata pelajaran dan fase ini belum tersedia di database — silakan isi manual atau minta admin menambahkan.');
       }
     } catch (err) {
       console.error('Gagal mengambil CP:', err);
@@ -493,6 +532,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         isLoadingModels={isLoadingModels}
         queueStatus={queueStatus}
         onGenerate={handleGenerate}
+        boilerplateMissingBanner={boilerplateMissingBanner}
       />
 
       {/* Preview / History Column */}
