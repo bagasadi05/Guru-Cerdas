@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ChevronLeft, ChevronRight, Heart, CheckCircle2, AlertTriangle, Compass } from 'lucide-react';
 import { FormState, RubrikRow } from '../types';
 import { useTopikRecommendations, useRubrikTemplates, useTemaKbc, useMateriInsersiMulti } from '../hooks/useModulAjarQueries';
+import { PANCA_CINTA_TOPICS_FALLBACK, MATERI_INSERSI_FALLBACK } from '../constants/kbcConstants';
 import { LEARNING_MODELS, ENNIS_IKTP_BANK, ModelCategory } from '../constants/learningModels';
 
 interface ModulAjarFormProps {
@@ -45,6 +46,11 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   
   const { data: temaKbcData = [] } = useTemaKbc();
   const { data: materiInsersiData = [] } = useMateriInsersiMulti(formState.temaKbc);
+
+  const topicsToDisplay = temaKbcData.length > 0 ? temaKbcData : PANCA_CINTA_TOPICS_FALLBACK;
+  const materiToDisplay = materiInsersiData.length > 0 
+    ? materiInsersiData.map(m => m.konten)
+    : formState.temaKbc.flatMap(id => MATERI_INSERSI_FALLBACK[id] || []);
 
   const adjustPendahuluan = (newVal: number) => {
     const total = formState.jpPerPertemuan * formState.durasiPerJp;
@@ -230,7 +236,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           Topik Panca Cinta (Pilih 1-2 Topik Wajib)
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {temaKbcData.map(topic => {
+                          {topicsToDisplay.map(topic => {
                             const isSelected = formState.temaKbc.includes(topic.id);
                             return (
                               <button
@@ -260,8 +266,8 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                   )}
                                 </div>
                                 <div>
-                                  <div className="font-bold">{topic.nama_tema}</div>
-                                  <div className={`text-[10px] mt-0.5 line-clamp-2 ${isSelected ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'}`}>
+                                  <div className="font-bold text-xs">{topic.nama_tema}</div>
+                                  <div className={`text-[11px] mt-0.5 line-clamp-2 ${isSelected ? 'text-emerald-100' : 'text-slate-400 dark:text-slate-500'}`}>
                                     {topic.deskripsi}
                                   </div>
                                 </div>
@@ -280,18 +286,18 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                         {/* Preset Suggestions */}
                         {formState.temaKbc.length > 0 && (
                           <div className="mb-2 space-y-1">
-                            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium block">
-                              Preset Insersi dari Kemenag (Klik untuk memilih):
+                            <span className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold block">
+                              Preset Insersi dari Kemenag (Klik + untuk memilih otomatis):
                             </span>
                             <div className="flex flex-wrap gap-1.5">
-                              {materiInsersiData.map((materi, idx) => (
+                              {materiToDisplay.map((kontenText, idx) => (
                                 <button
                                   key={idx}
                                   type="button"
-                                  onClick={() => onChange('materiInsersi', materi.konten)}
-                                  className="px-2 py-1 bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800 hover:border-emerald-500 rounded text-[11px] text-emerald-800 dark:text-emerald-300 font-medium text-left transition-colors"
+                                  onClick={() => onChange('materiInsersi', kontenText)}
+                                  className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800 hover:border-emerald-500 rounded-lg text-xs text-emerald-800 dark:text-emerald-300 font-medium text-left transition-colors shadow-2xs"
                                 >
-                                  + {materi.konten}
+                                  + {kontenText}
                                 </button>
                               ))}
                             </div>

@@ -62,6 +62,62 @@ export const MODEL_PEMBELAJARAN_KBC: ModelKbc[] = [
   }
 ];
 
+export const PANCA_CINTA_TOPICS_FALLBACK = [
+  {
+    id: 'cinta_allah_rasul',
+    nama_tema: 'Cinta Allah Swt. dan Rasul-Nya',
+    deskripsi: 'Mengenal sifat jamaliyah Allah & ibadah atas dasar cinta, bukan paksaan.'
+  },
+  {
+    id: 'cinta_ilmu',
+    nama_tema: 'Cinta Ilmu',
+    deskripsi: 'Ilmu sebagai jalan membuka keagungan penciptaan & sarana kebermanfaatan.'
+  },
+  {
+    id: 'cinta_lingkungan',
+    nama_tema: 'Cinta Lingkungan',
+    deskripsi: 'Alam sebagai manifestasi cinta Allah & Rahmatan lil \'alamin.'
+  },
+  {
+    id: 'cinta_diri_sesama',
+    nama_tema: 'Cinta Diri dan Sesama',
+    deskripsi: 'Self-compassion, Social Emotional Learning (SEL), & kesetaraan manusia.'
+  },
+  {
+    id: 'cinta_tanah_air',
+    nama_tema: 'Cinta Tanah Air',
+    deskripsi: 'Cinta tanah air sebagai bagian dari iman (Hubbul Wathan minal Iman).'
+  }
+];
+
+export const MATERI_INSERSI_FALLBACK: Record<string, string[]> = {
+  cinta_allah_rasul: [
+    'Internalisasi Asmaul Husna (Ar-Rahman, Ar-Rahim, Al-Latif) dalam pembelajaran',
+    'Ibadah sebagai wujud rasa syukur dan cinta kepada Allah Swt.',
+    'Meneladani sifat kasih sayang dan akhlak Sirah Nabawiyah Rasulullah'
+  ],
+  cinta_ilmu: [
+    'Adab menuntut ilmu (tawakal, tekun, yakin, dan syukur)',
+    'Penalaran kritis dan literasi sebagai wujud adab intelektual',
+    'Hormat dan tawadhu kepada guru serta sumber ilmu'
+  ],
+  cinta_lingkungan: [
+    'Prinsip Rahmatan lil \'alamin dan kepedulian terhadap ekosistem',
+    'Larangan berbuat fasad (merusak alam) - QS. Ar-Rum: 41',
+    'Hemat energi dan sumber daya air (larangan ishraf)'
+  ],
+  cinta_diri_sesama: [
+    'Self-compassion, kesadaran emosional, dan resiliensi diri',
+    'Ukhuwah Islamiyah, Ukhuwah Insaniyah, dan empati sosial',
+    'Budaya tasamuh (toleransi) dan syura (musyawarah)'
+  ],
+  cinta_tanah_air: [
+    'Prinsip Hubbul Wathan minal Iman (Cinta Tanah Air bagian dari Iman)',
+    'Ukhuwah Wathaniyah dan persatuan dalam keberagaman (QS. Al-Hujurat: 13)',
+    'Menghormati simbol negara dan budaya luhur bangsa'
+  ]
+};
+
 export const KBC_VALIDATION_CHECKLIST = [
   'Tema Panca Cinta dipilih (1-2) dan relevan dengan materi pokok',
   'Materi insersi tercantum dan muncul di langkah pembelajaran',
