@@ -84,17 +84,29 @@ export const modulAjarContentService = {
     const normTopik = topik.toLowerCase().trim();
 
     let query = supabase.from('ref_boilerplate_topik').select('*').eq('mata_pelajaran', normMapel).eq('topik', normTopik);
-    if (fase) query = query.eq('fase', fase);
+    if (fase) {
+      query = query.or(`fase.eq.${fase},fase.is.null`);
+    }
 
-    const { data: exactMatch } = await query.maybeSingle();
-    if (exactMatch) return exactMatch as RefBoilerplateTopik;
+    const { data: exactMatches } = await query;
+    if (exactMatches && exactMatches.length > 0) {
+      const specificMatch = exactMatches.find((item: any) => item.fase === fase);
+      return (specificMatch || exactMatches[0]) as RefBoilerplateTopik;
+    }
 
     // Fallback ilike
     let fallbackQuery = supabase.from('ref_boilerplate_topik').select('*').ilike('mata_pelajaran', `%${normMapel}%`).ilike('topik', `%${normTopik}%`);
-    if (fase) fallbackQuery = fallbackQuery.eq('fase', fase);
+    if (fase) {
+      fallbackQuery = fallbackQuery.or(`fase.eq.${fase},fase.is.null`);
+    }
 
-    const { data: partialMatch } = await fallbackQuery.limit(1).maybeSingle();
-    return (partialMatch as RefBoilerplateTopik) || null;
+    const { data: partialMatches } = await fallbackQuery;
+    if (partialMatches && partialMatches.length > 0) {
+      const specificPartialMatch = partialMatches.find((item: any) => item.fase === fase);
+      return (specificPartialMatch || partialMatches[0]) as RefBoilerplateTopik;
+    }
+
+    return null;
   },
 
   // 2. Get Sintaks Kegiatan with Interpolation
