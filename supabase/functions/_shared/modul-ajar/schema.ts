@@ -1,17 +1,29 @@
 import { z } from 'npm:zod';
 
-// Validator deterministik: Tolak jika mengandung placeholder atau teks generik
+// Validator deterministik: Tolak jika mengandung placeholder atau teks generik/pengulangan
 const noPlaceholderString = z.string().superRefine((val, ctx) => {
-  if (val.includes('{') || val.includes('}')) {
+  if (val.includes('{') || val.includes('}') || val.includes('[') || val.includes(']')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'String contains placeholder braces',
+      message: 'String contains placeholder brackets or braces like [Isi ...] or {Placeholder}',
     });
   }
-  if (val.toLowerCase().includes('siswa siswa')) {
+  if (/\b(todo|tbd|placeholder|isi di sini|nama sekolah|nama guru)\b/i.test(val)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'String contains duplicate words like "siswa siswa"',
+      message: 'String contains generic placeholder phrase',
+    });
+  }
+  if (/\b(\w+)\s+\1\b/i.test(val)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'String contains duplicate consecutive words',
+    });
+  }
+  if (val.trim().length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'String cannot be empty',
     });
   }
 });
@@ -35,8 +47,8 @@ export const ModulAjarPaketBSchema = z.object({
   lkpdTugas: noPlaceholderString,
   asesmenPengetahuan: noPlaceholderString,
   asesmenKeterampilan: noPlaceholderString,
-  soalEvaluasi: noPlaceholderString,
-  pedomanJawaban: noPlaceholderString,
+  soalEvaluasi: z.array(noPlaceholderString).min(1).max(10),
+  pedomanJawaban: z.array(noPlaceholderString).min(1).max(10),
 });
 
 export const ModulAjarFullSchema = ModulAjarPaketASchema.merge(ModulAjarPaketBSchema);
