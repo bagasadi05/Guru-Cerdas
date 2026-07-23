@@ -15,6 +15,7 @@ export interface RefBoilerplateTopik {
   daftar_pustaka: string[];
   is_verified: boolean;
   sumber_regulasi: string | null;
+  konten_json?: any;
 }
 
 export interface RefSintaksKegiatan {
@@ -72,6 +73,39 @@ export interface RefModelPembelajaran {
   kekurangan: string[];
   cocok_untuk: string[];
   ref_sintaks_kegiatan?: RefSintaksKegiatan[];
+}
+
+function unpackBoilerplate(item: any): RefBoilerplateTopik | null {
+  if (!item) return null;
+  const result = { ...item };
+  if (item.konten_json && typeof item.konten_json === 'object') {
+    const ai = item.konten_json;
+    if (!result.tujuan_pembelajaran || (Array.isArray(result.tujuan_pembelajaran) && result.tujuan_pembelajaran.length === 0)) {
+      result.tujuan_pembelajaran = ai.tujuanPembelajaran || [];
+    }
+    if (!result.pemahaman_bermakna || (Array.isArray(result.pemahaman_bermakna) && result.pemahaman_bermakna.length === 0)) {
+      result.pemahaman_bermakna = ai.pemahamanBermakna || [];
+    }
+    if (!result.pertanyaan_pemantik || (Array.isArray(result.pertanyaan_pemantik) && result.pertanyaan_pemantik.length === 0)) {
+      result.pertanyaan_pemantik = ai.pertanyaanPemantik || [];
+    }
+    if (!result.lkpd_tugas || result.lkpd_tugas.trim() === '') {
+      result.lkpd_tugas = ai.lkpdTugas || '';
+    }
+    if (!result.soal_evaluasi || result.soal_evaluasi.trim() === '') {
+      result.soal_evaluasi = Array.isArray(ai.soalEvaluasi) ? ai.soalEvaluasi.join('\n') : (ai.soalEvaluasi || '');
+    }
+    if (!result.pengayaan || (Array.isArray(result.pengayaan) && result.pengayaan.length === 0)) {
+      result.pengayaan = ai.pengayaan || [];
+    }
+    if (!result.remedial || (Array.isArray(result.remedial) && result.remedial.length === 0)) {
+      result.remedial = ai.remedial || [];
+    }
+    if (!result.daftar_pustaka || (Array.isArray(result.daftar_pustaka) && result.daftar_pustaka.length === 0)) {
+      result.daftar_pustaka = ai.daftarPustaka || [];
+    }
+  }
+  return result as RefBoilerplateTopik;
 }
 
 export const modulAjarContentService = {
@@ -137,7 +171,7 @@ export const modulAjarContentService = {
     const { data: exactMatches } = await query;
     if (exactMatches && exactMatches.length > 0) {
       const specificMatch = exactMatches.find((item: any) => item.fase === fase);
-      return (specificMatch || exactMatches[0]) as RefBoilerplateTopik;
+      return unpackBoilerplate(specificMatch || exactMatches[0]);
     }
 
     // Fallback ilike
@@ -149,7 +183,7 @@ export const modulAjarContentService = {
     const { data: partialMatches } = await fallbackQuery;
     if (partialMatches && partialMatches.length > 0) {
       const specificPartialMatch = partialMatches.find((item: any) => item.fase === fase);
-      return (specificPartialMatch || partialMatches[0]) as RefBoilerplateTopik;
+      return unpackBoilerplate(specificPartialMatch || partialMatches[0]);
     }
 
     return null;

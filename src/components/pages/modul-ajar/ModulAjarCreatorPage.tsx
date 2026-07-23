@@ -183,7 +183,25 @@ const ModulAjarCreatorPage: React.FC = () => {
 
       let tujuanPembelajaranList: string[] = formState.manualTujuanPembelajaran
         ? formState.manualTujuanPembelajaran.split('\n').filter(line => line.trim() !== '')
-        : (bp?.tujuan_pembelajaran && Array.isArray(bp.tujuan_pembelajaran) ? bp.tujuan_pembelajaran : []);
+        : (bp?.tujuan_pembelajaran && Array.isArray(bp.tujuan_pembelajaran) && bp.tujuan_pembelajaran.length > 0
+            ? bp.tujuan_pembelajaran
+            : [`Peserta didik dapat memahami dan menguasai materi ${formState.topik || formState.mataPelajaran} dengan baik.`]);
+
+      let pemahamanBermaknaList: string[] = (bp?.pemahaman_bermakna && Array.isArray(bp.pemahaman_bermakna) && bp.pemahaman_bermakna.length > 0)
+        ? bp.pemahaman_bermakna
+        : [`Peserta didik dapat memahami konsep dasar ${formState.topik || formState.mataPelajaran} dan menerapkannya dalam kehidupan sehari-hari.`];
+
+      let pertanyaanPemantikList: string[] = formState.manualPertanyaanPemantik
+        ? formState.manualPertanyaanPemantik.split('\n').filter(line => line.trim() !== '')
+        : (bp?.pertanyaan_pemantik && Array.isArray(bp.pertanyaan_pemantik) && bp.pertanyaan_pemantik.length > 0
+            ? bp.pertanyaan_pemantik
+            : [
+                `Bagaimana kita memanfaatkan ${formState.topik || formState.mataPelajaran} dalam kegiatan sehari-hari?`,
+                `Mengapa penting bagi kita untuk mempelajari ${formState.topik || formState.mataPelajaran}?`
+              ]);
+
+      let lkpdText = formState.manualLkpdTugas || bp?.lkpd_tugas || `Tugas Mandiri/Kelompok: Eksplorasi dan latihan penerapan materi ${formState.topik || formState.mataPelajaran}.`;
+      let evaluasiText = formState.manualSoalEvaluasi || bp?.soal_evaluasi || `1. Sebutkan konsep utama dari ${formState.topik || formState.mataPelajaran}!\n2. Berikan contoh penerapan ${formState.topik || formState.mataPelajaran} dalam kehidupan sehari-hari!`;
 
       if (formState.isKbcIntegrated && formState.materiInsersi) {
         const frasa = formState.materiInsersi.trim();
@@ -206,21 +224,19 @@ const ModulAjarCreatorPage: React.FC = () => {
       const manualData = {
         ...bp,
         tujuanPembelajaran: tujuanPembelajaranList,
-        pemahamanBermakna: bp?.pemahaman_bermakna && Array.isArray(bp.pemahaman_bermakna) ? bp.pemahaman_bermakna : [],
-        pertanyaanPemantik: formState.manualPertanyaanPemantik
-          ? formState.manualPertanyaanPemantik.split('\n').filter(line => line.trim() !== '')
-          : (bp?.pertanyaan_pemantik && Array.isArray(bp.pertanyaan_pemantik) ? bp.pertanyaan_pemantik : []),
-        lkpdTugas: formState.manualLkpdTugas || bp?.lkpd_tugas || '',
-        soalEvaluasi: formState.manualSoalEvaluasi || bp?.soal_evaluasi || '',
+        pemahamanBermakna: pemahamanBermaknaList,
+        pertanyaanPemantik: pertanyaanPemantikList,
+        lkpdTugas: lkpdText,
+        soalEvaluasi: evaluasiText,
         kegiatanPendahuluan: pendahuluanText,
         kegiatanInti: sintaksIntiHtml,
         kegiatanPenutup: penutupText,
         asesmenSikap: sikapText,
         asesmenKeterampilan: 'Penilaian unjuk kerja/proyek presentasi',
         asesmenPengetahuan: 'Tes tertulis/lisan di akhir materi',
-        pengayaan: bp?.pengayaan && Array.isArray(bp.pengayaan) ? bp.pengayaan : [],
-        remedial: bp?.remedial && Array.isArray(bp.remedial) ? bp.remedial : [],
-        daftarPustaka: bp?.daftar_pustaka && Array.isArray(bp.daftar_pustaka) ? bp.daftar_pustaka : [],
+        pengayaan: bp?.pengayaan && Array.isArray(bp.pengayaan) && bp.pengayaan.length > 0 ? bp.pengayaan : [`Pendalaman materi ${formState.topik || formState.mataPelajaran} secara mandiri.`],
+        remedial: bp?.remedial && Array.isArray(bp.remedial) && bp.remedial.length > 0 ? bp.remedial : [`Bimbingan individual dan penugasan ulang materi ${formState.topik || formState.mataPelajaran}.`],
+        daftarPustaka: bp?.daftar_pustaka && Array.isArray(bp.daftar_pustaka) && bp.daftar_pustaka.length > 0 ? bp.daftar_pustaka : [`Buku Panduan Guru & Siswa ${formState.mataPelajaran} Kelas ${formState.kelas}, Kemendikbudristek.`],
       };
 
       const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
@@ -256,6 +272,13 @@ const ModulAjarCreatorPage: React.FC = () => {
       } as any);
 
       setGeneratedDocument(htmlTemplate);
+      setFormState(prev => ({
+        ...prev,
+        manualTujuanPembelajaran: tujuanPembelajaranList.join('\n'),
+        manualPertanyaanPemantik: pertanyaanPemantikList.join('\n'),
+        manualLkpdTugas: lkpdText,
+        manualSoalEvaluasi: evaluasiText
+      }));
       fetchHistory();
       alert('Draf Modul Ajar berhasil disusun secara manual! Anda dapat mengedit isinya secara bebas pada panel pratinjau.');
 

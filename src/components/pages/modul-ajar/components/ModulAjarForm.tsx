@@ -991,30 +991,26 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                     </button>
                   </div>
 
-                  {formState.generationMethod === 'Manual' && (
-                    <>
-                      <div>
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Tugas LKPD (Lembar Kerja Peserta Didik)</label>
-                        <textarea 
-                          value={formState.manualLkpdTugas}
-                          onChange={(e) => onChange('manualLkpdTugas', e.target.value)}
-                          rows={4}
-                          className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
-                          placeholder="Masukkan tugas/kegiatan kelompok atau mandiri..."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Soal Evaluasi Pengetahuan</label>
-                        <textarea 
-                          value={formState.manualSoalEvaluasi}
-                          onChange={(e) => onChange('manualSoalEvaluasi', e.target.value)}
-                          rows={4}
-                          className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
-                          placeholder="Masukkan butir-butir pertanyaan evaluasi..."
-                        />
-                      </div>
-                    </>
-                  )}
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Tugas LKPD (Lembar Kerja Peserta Didik)</label>
+                    <textarea 
+                      value={formState.manualLkpdTugas}
+                      onChange={(e) => onChange('manualLkpdTugas', e.target.value)}
+                      rows={4}
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                      placeholder="Masukkan tugas/kegiatan kelompok atau mandiri..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Soal Evaluasi Pengetahuan</label>
+                    <textarea 
+                      value={formState.manualSoalEvaluasi}
+                      onChange={(e) => onChange('manualSoalEvaluasi', e.target.value)}
+                      rows={4}
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                      placeholder="Masukkan butir-butir pertanyaan evaluasi..."
+                    />
+                  </div>
                 </div>
               </div>
             )}
