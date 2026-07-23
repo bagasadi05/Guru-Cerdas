@@ -6,7 +6,9 @@ export class OpenRouterAdapter implements AIProviderAdapter {
   private models: string[];
 
   constructor() {
-    this.apiKey = Deno.env.get('OPENROUTER_API_KEY') || '';
+    const keysEnv = Deno.env.get('OPENROUTER_API_KEY') || '';
+    const keysArray = keysEnv.split(',').map(k => k.trim()).filter(k => k);
+    this.apiKey = keysArray.length > 0 ? keysArray[Math.floor(Math.random() * keysArray.length)] : '';
     const modelsStr = Deno.env.get('OPENROUTER_MODELS') || 'google/gemini-flash-1.5';
     this.models = modelsStr.split(',').map(s => s.trim()).filter(Boolean);
   }

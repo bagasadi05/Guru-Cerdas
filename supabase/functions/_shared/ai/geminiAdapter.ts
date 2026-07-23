@@ -6,7 +6,9 @@ export class GeminiAdapter implements AIProviderAdapter {
   private model: string;
 
   constructor() {
-    this.apiKey = Deno.env.get('GEMINI_API_KEY') || '';
+    const keysEnv = Deno.env.get('GEMINI_API_KEY') || '';
+    const keysArray = keysEnv.split(',').map(k => k.trim()).filter(k => k);
+    this.apiKey = keysArray.length > 0 ? keysArray[Math.floor(Math.random() * keysArray.length)] : '';
     this.model = Deno.env.get('GEMINI_MODEL') || 'gemini-1.5-flash';
   }
 
