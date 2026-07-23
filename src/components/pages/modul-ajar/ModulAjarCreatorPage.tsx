@@ -317,6 +317,13 @@ const ModulAjarCreatorPage: React.FC = () => {
     } as any);
 
     setGeneratedDocument(htmlTemplate);
+    setFormState(prev => ({
+      ...prev,
+      manualTujuanPembelajaran: Array.isArray(draftData.tujuanPembelajaran) ? draftData.tujuanPembelajaran.join('\n') : (draftData.tujuanPembelajaran || ''),
+      manualPertanyaanPemantik: Array.isArray(draftData.pertanyaanPemantik) ? draftData.pertanyaanPemantik.join('\n') : (draftData.pertanyaanPemantik || ''),
+      manualLkpdTugas: draftData.lkpdTugas || '',
+      manualSoalEvaluasi: draftData.soalEvaluasi || ''
+    }));
     fetchHistory();
   };
 
