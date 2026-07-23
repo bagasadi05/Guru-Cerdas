@@ -259,6 +259,38 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_content_job_requests: {
+        Row: {
+          id: string
+          job_id: string
+          requested_by: string
+          request_fingerprint: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          job_id: string
+          requested_by: string
+          request_fingerprint: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          job_id?: string
+          requested_by?: string
+          request_fingerprint?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_content_job_requests_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "ai_content_jobs"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       ai_content_jobs: {
         Row: {
           id: string

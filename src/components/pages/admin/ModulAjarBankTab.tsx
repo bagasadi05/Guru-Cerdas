@@ -221,10 +221,20 @@ export const ModulAjarBankTab: React.FC = () => {
   const handleCancelAiJob = async (jobId: string) => {
     if (!window.confirm('Batalkan job AI ini?')) return;
     try {
-      await supabase.from('ai_content_jobs').update({ status: 'cancelled' }).eq('id', jobId);
+      await supabase.rpc('cancel_modul_ajar_ai_job' as any, { p_job_id: jobId });
       fetchAiJobs();
     } catch (e: any) {
       console.error('Failed to cancel job:', e);
+    }
+  };
+
+  const handleRetryAiJob = async (jobId: string) => {
+    if (!window.confirm('Ulangi pemrosesan job AI ini?')) return;
+    try {
+      await supabase.rpc('retry_modul_ajar_ai_job' as any, { p_job_id: jobId });
+      fetchAiJobs();
+    } catch (e: any) {
+      console.error('Failed to retry job:', e);
     }
   };
 
@@ -402,9 +412,14 @@ export const ModulAjarBankTab: React.FC = () => {
                     <td className="p-2 text-red-500 max-w-[150px] truncate" title={job.error_detail}>{job.error_detail || '-'}</td>
                     <td className="p-2 text-slate-500">{new Date(job.created_at).toLocaleTimeString()}</td>
                     <td className="p-2 text-right">
-                      {['pending', 'processing', 'retry_wait'].includes(job.status) && (
-                        <button onClick={() => handleCancelAiJob(job.id)} className="text-red-500 hover:text-red-700 font-bold">Batal</button>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {['pending', 'processing', 'retry_wait'].includes(job.status) && (
+                          <button onClick={() => handleCancelAiJob(job.id)} className="text-red-500 hover:text-red-700 font-bold">Batal</button>
+                        )}
+                        {['failed', 'cancelled'].includes(job.status) && (
+                          <button onClick={() => handleRetryAiJob(job.id)} className="text-indigo-500 hover:text-indigo-700 font-bold">Coba Lagi</button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
