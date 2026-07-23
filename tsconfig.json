@@ -33,6 +33,7 @@
     "."
   ],
   "exclude": [
-    "supabase"
+    "supabase",
+    "tests"
   ]
 }
