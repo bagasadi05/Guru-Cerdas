@@ -6,6 +6,7 @@ import { supabase } from '../../../services/supabase';
 import { FormState } from './types';
 import { useModulAjarAiJob } from './hooks/useModulAjarAiJob';
 import { buildHtmlTemplate, extractStudentHtml } from './utils/template';
+import { resolveLearningSyntax } from './utils/syntaxResolver';
 import { modulAjarContentService } from '../../../services/modulAjarContentService';
 import { ModulAjarForm } from './components/ModulAjarForm';
 import { ModulAjarHistory } from './components/ModulAjarHistory';
@@ -131,11 +132,13 @@ const ModulAjarCreatorPage: React.FC = () => {
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
   const queueHookResult = useModulAjarAiJob(
     formState,
-    async (successMsg) => {
-      // Re-trigger manual generation to read from cache and construct HTML locally
-      await generateManualModulAjar();
+    async (resultJson, successMsg) => {
+      if (resultJson) {
+        await renderPrivateDraftAiModulAjar(resultJson);
+      } else {
+        await generateManualModulAjar();
+      }
       fetchHistory();
-      alert(successMsg);
     },
     (errMsg) => {
       alert(`AI Error: ${errMsg}`);
@@ -170,12 +173,13 @@ const ModulAjarCreatorPage: React.FC = () => {
           })
         : [];
 
-      if (!sintaksList || sintaksList.length === 0) {
-        alert('Sintaks kegiatan untuk model pembelajaran terpilih belum tersedia di database — silakan pilih model lain atau minta admin menambahkan.');
-        return;
-      }
+      const resolvedSyntax = resolveLearningSyntax(
+        sintaksList,
+        selectedModelObj?.sintaks_inti,
+        formState.modelPembelajaran
+      );
 
-      const sintaksIntiHtml = sintaksList.map(s => `<b>${s.nama_langkah}</b><br/>- <b>Guru:</b> ${s.kegiatan_guru}<br/>- <b>Siswa:</b> ${s.kegiatan_siswa}`).join('<br/><br/>');
+      const sintaksIntiHtml = resolvedSyntax.steps.map(s => `<b>${s.name}</b><br/>- <b>Guru:</b> ${s.teacherActivity}<br/>- <b>Siswa:</b> ${s.studentActivity}`).join('<br/><br/>');
 
       let tujuanPembelajaranList: string[] = formState.manualTujuanPembelajaran
         ? formState.manualTujuanPembelajaran.split('\n').filter(line => line.trim() !== '')
@@ -259,6 +263,89 @@ const ModulAjarCreatorPage: React.FC = () => {
       console.error(err);
       alert(`Gagal menyusun modul ajar secara manual: ${err.message}`);
     }
+  };
+
+  const renderPrivateDraftAiModulAjar = async (aiOutput: any) => {
+    const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
+    const resolvedSyntax = aiOutput._resolvedSyntax || resolveLearningSyntax([], [], formState.modelPembelajaran);
+    const sintaksIntiHtml = resolvedSyntax.steps.map((s: any) => `<b>${s.name}</b><br/>- <b>Guru:</b> ${s.teacherActivity}<br/>- <b>Siswa:</b> ${s.studentActivity}`).join('<br/><br/>');
+
+    const draftData = {
+      tujuanPembelajaran: aiOutput.tujuanPembelajaran || [],
+      pemahamanBermakna: aiOutput.pemahamanBermakna || [],
+      pertanyaanPemantik: aiOutput.pertanyaanPemantik || [],
+      lkpdTugas: aiOutput.lkpdTugas || '',
+      soalEvaluasi: Array.isArray(aiOutput.soalEvaluasi) ? aiOutput.soalEvaluasi.join('\n') : (aiOutput.soalEvaluasi || ''),
+      kegiatanPendahuluan: `Guru membuka kelas dengan salam, apersepsi, dan menyampaikan tujuan pembelajaran terkait ${formState.topik || formState.mataPelajaran}.`,
+      kegiatanInti: sintaksIntiHtml,
+      kegiatanPenutup: `Guru membimbing refleksi pembelajaran dan menutup kelas dengan doa.`,
+      asesmenSikap: 'Observasi sikap peserta didik selama pembelajaran',
+      asesmenKeterampilan: aiOutput.asesmenKeterampilan || 'Penilaian unjuk kerja/proyek presentasi',
+      asesmenPengetahuan: aiOutput.asesmenPengetahuan || 'Tes tertulis/lisan di akhir materi',
+      pengayaan: aiOutput.pengayaan || [],
+      remedial: aiOutput.remedial || [],
+      daftarPustaka: aiOutput.daftarPustaka || []
+    };
+
+    const htmlTemplate = buildHtmlTemplate(formState, draftData, totalJP, logoBase64);
+
+    await supabase.from('lesson_plans').insert({
+      user_id: user?.id,
+      document_type: formState.documentType,
+      curriculum_approach: formState.curriculumApproach,
+      generation_method: 'AI',
+      identity: {
+        kelas: formState.kelas,
+        fase: formState.fase,
+        mapel: formState.mataPelajaran,
+        topik: formState.topik,
+        tahun: formState.tahunAjaran,
+        semester: formState.semester,
+        guru: formState.guru
+      },
+      components: {
+        target: formState.targetPeserta,
+        cp: formState.capaianPembelajaran,
+        profil: formState.profilPelajar,
+        waktu: { pertemuan: formState.jumlahPertemuan, jp: formState.jpPerPertemuan, durasi: formState.durasiPerJp },
+        model: formState.modelPembelajaran,
+        metode: formState.metodePembelajaran,
+        alokasi: { pendahuluan: formState.alokasiPendahuluan, inti: formState.alokasiInti, penutup: formState.alokasiPenutup },
+        rubrik: formState.rubrikAsesmen as any
+      },
+      generated_content: htmlTemplate
+    });
+
+    setGeneratedDocument({
+      htmlContent: htmlTemplate,
+      studentHtmlContent: extractStudentHtml(htmlTemplate),
+      components: {
+        identity: {
+          sekolah: 'MADRASAH ALIYAH NEGERI (MAN) DEMAK',
+          mapel: formState.mataPelajaran,
+          kelas: formState.kelas,
+          fase: formState.fase,
+          tahunAjaran: formState.tahunAjaran,
+          semester: formState.semester,
+          guru: formState.guru,
+          topik: formState.topik
+        },
+        alokasiWaktu: { pertemuan: formState.jumlahPertemuan, jpPerPertemuan: formState.jpPerPertemuan, durasiPerJp: formState.durasiPerJp, totalJp: totalJP },
+        profilPelajar: formState.profilPelajar,
+        capaianPembelajaran: formState.capaianPembelajaran,
+        tujuanPembelajaran: draftData.tujuanPembelajaran,
+        pemahamanBermakna: draftData.pemahamanBermakna,
+        pertanyaanPemantik: draftData.pertanyaanPemantik,
+        kegiatanPembelajaran: { pendahuluan: draftData.kegiatanPendahuluan, inti: draftData.kegiatanInti, penutup: draftData.kegiatanPenutup },
+        asesmen: { sikap: draftData.asesmenSikap, pengetahuan: draftData.asesmenPengetahuan, keterampilan: draftData.asesmenKeterampilan, rubrik: formState.rubrikAsesmen as any },
+        lkpdTugas: draftData.lkpdTugas,
+        soalEvaluasi: draftData.soalEvaluasi,
+        pengayaanRemedial: { pengayaan: draftData.pengayaan, remedial: draftData.remedial },
+        daftarPustaka: draftData.daftarPustaka
+      }
+    });
+
+    setIsGenerated(true);
   };
 
   const handleGenerate = () => {
