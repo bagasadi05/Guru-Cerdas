@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../services/supabase';
-import { Loader2, Plus, Edit2, Trash2, Search, X, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, Search, X, CheckCircle2, XCircle, Sparkles, Activity, RefreshCw } from 'lucide-react';
 
 interface BoilerplateFormState {
   id?: string;
@@ -16,6 +16,7 @@ interface BoilerplateFormState {
   remedial: string; // multiline
   daftar_pustaka: string; // multiline
   is_verified: boolean;
+  content_status?: string;
   sumber_regulasi: string;
 }
 
@@ -32,141 +33,70 @@ const emptyFormState: BoilerplateFormState = {
   remedial: '',
   daftar_pustaka: '',
   is_verified: true,
+  content_status: 'verified',
   sumber_regulasi: ''
 };
-
-const DEFAULT_BANK_DATA_FALLBACK = [
-  {
-    id: 'f1',
-    mata_pelajaran: 'matematika',
-    topik: 'penjumlahan',
-    fase: 'A',
-    tujuan_pembelajaran: ['Peserta didik dapat memahami konsep penjumlahan bilangan cacah hingga 100 menggunakan alat peraga.'],
-    pemahaman_bermakna: ['Kemampuan menjumlahkan membantu kita menghitung total barang belanjaan.'],
-    pertanyaan_pemantik: ['Jika kamu memiliki 5 pensil dan temanmu memberikan 3 pensil lagi, berapa pensilmu sekarang?'],
-    lkpd_tugas: 'Petunjuk Kerja Kelompok:\n1. Ambil 10 stik es krim.\n2. Gabungkan 4 stik merah dan 6 stik hijau.\n3. Tulis kalimat matematikanya!',
-    soal_evaluasi: '1. Hitunglah 34 + 25 = ...\n2. Ibu membeli 12 jeruk, ayah membeli 15 jeruk. Berapakah jumlah seluruh jeruk?',
-    pengayaan: ['Diberikan materi bacaan yang lebih mendalam.'],
-    remedial: ['Diberikan bimbingan terfokus.'],
-    daftar_pustaka: ['Buku Panduan Guru Matematika Kelas 1'],
-    is_verified: true,
-    sumber_regulasi: 'Kemenag / Kemendikbudristek 2025'
-  },
-  {
-    id: 'f2',
-    mata_pelajaran: 'matematika',
-    topik: 'pengurangan',
-    fase: 'A',
-    tujuan_pembelajaran: ['Peserta didik dapat memahami konsep pengurangan sebagai mengambil atau memisahkan benda.'],
-    pemahaman_bermakna: ['Pengurangan membantu kita menghitung sisa barang dan kembalian uang.'],
-    pertanyaan_pemantik: ['Jika kamu punya 8 kue dan dimakan 3 kue, berapa sisa kuemu?'],
-    lkpd_tugas: 'Petunjuk Kerja: Ambil 15 manik-manik, pisahkan 6 buah ke wadah lain, hitung sisanya!',
-    soal_evaluasi: '1. Hitunglah 18 - 7 = ...\n2. Budi memiliki 15 balon, lalu pecah 4 balon. Berapa balon utuh?',
-    pengayaan: ['Latihan pengurangan angka ratusan.'],
-    remedial: ['Bimbingan peragaan benda konkret.'],
-    daftar_pustaka: ['Buku Panduan Guru Matematika SD Kelas 1'],
-    is_verified: true,
-    sumber_regulasi: 'Kemenag 2025'
-  },
-  {
-    id: 'f3',
-    mata_pelajaran: 'matematika',
-    topik: 'perkalian',
-    fase: 'B',
-    tujuan_pembelajaran: ['Peserta didik dapat memahami perkalian sebagai penjumlahan berulang.'],
-    pemahaman_bermakna: ['Perkalian mempermudah kita menghitung benda dalam jumlah kelompok yang sama.'],
-    pertanyaan_pemantik: ['Ada 3 kotak pensil, masing-masing berisi 5 pensil. Bagaimana menghitungnya secara cepat?'],
-    lkpd_tugas: 'Aktivitas Diskusi: Masukkan 3 kelereng ke dalam 4 wadah, tuliskan bentuk penjumlahan berulangnya!',
-    soal_evaluasi: '1. Ubah ke perkalian: 4 + 4 + 4 + 4 = ...\n2. Hitunglah 8 x 7 = ...',
-    pengayaan: ['Tugas analisis cerita perkalian.'],
-    remedial: ['Bimbingan terfokus perkalian dasar.'],
-    daftar_pustaka: ['Buku Siswa Matematika Kelas 3'],
-    is_verified: true,
-    sumber_regulasi: 'Kemenag 2025'
-  },
-  {
-    id: 'f4',
-    mata_pelajaran: 'ipas',
-    topik: 'fotosintesis',
-    fase: 'B',
-    tujuan_pembelajaran: ['Peserta didik dapat mengidentifikasi bahan-bahan yang diperlukan tumbuhan untuk fotosintesis.'],
-    pemahaman_bermakna: ['Tumbuhan adalah produsen makanan di bumi yang menghasilkan oksigen.'],
-    pertanyaan_pemantik: ['Bagaimana tumbuhan bisa makan padahal tidak punya mulut?'],
-    lkpd_tugas: 'Eksperimen Sederhana: Letakkan Pot A di area terang dan Pot B di tempat gelap, amati perbedaannya!',
-    soal_evaluasi: '1. Sebutkan 4 bahan utama fotosintesis!\n2. Gas apa yang dilepaskan saat fotosintesis?',
-    pengayaan: ['Analisis kasus proses fotosintesis.'],
-    remedial: ['Bimbingan pengamatan tanaman.'],
-    daftar_pustaka: ['Buku IPAS SD Kelas 4'],
-    is_verified: true,
-    sumber_regulasi: 'Kemendikbudristek'
-  },
-  {
-    id: 'f5',
-    mata_pelajaran: 'bahasa indonesia',
-    topik: 'kosa kata baru',
-    fase: 'A',
-    tujuan_pembelajaran: ['Peserta didik dapat menemukan kosa kata baru dari cerita yang dibacakan.'],
-    pemahaman_bermakna: ['Kosa kata yang kaya mempermudah menyampaikan pikiran dan perasaan.'],
-    pertanyaan_pemantik: ['Kata apa yang baru pertama kali kamu dengar dari cerita tadi?'],
-    lkpd_tugas: 'Lingkari 3 kata sulit dari cerita, cari artinya, lalu buat 1 kalimat baru!',
-    soal_evaluasi: '1. Apakah arti kata Tawadhu?\n2. Buat kalimat dari kata Rajin!',
-    pengayaan: ['Kamus mini bergambar.'],
-    remedial: ['Membaca nyaring bersama guru.'],
-    daftar_pustaka: ['Buku Bahasa Indonesia Kelas 2'],
-    is_verified: true,
-    sumber_regulasi: 'Kemenag 2025'
-  },
-  {
-    id: 'f6',
-    mata_pelajaran: 'akidah akhlak',
-    topik: 'asmaul husna',
-    fase: 'A',
-    tujuan_pembelajaran: ['Peserta didik mengenal arti Asmaul Husna (Ar-Rahman, Ar-Rahim).'],
-    pemahaman_bermakna: ['Mengenal Asmaul Husna menumbuhkan rasa cinta kepada Allah Swt.'],
-    pertanyaan_pemantik: ['Apakah arti dari Ar-Rahman dan Ar-Rahim?'],
-    lkpd_tugas: 'Warnai kaligrafi Ar-Rahman dan tuliskan 2 perbuatan kasih sayang hari ini!',
-    soal_evaluasi: '1. Sebutkan arti Ar-Rahman!\n2. Bagaimana sikap kasih sayang kepada teman?',
-    pengayaan: ['Menghafal 10 Asmaul Husna.'],
-    remedial: ['Bimbingan membaca hafalan.'],
-    daftar_pustaka: ['Buku Akidah Akhlak MI Kelas 1'],
-    is_verified: true,
-    sumber_regulasi: 'Kemenag 2025'
-  }
-];
 
 export const ModulAjarBankTab: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'semua' | 'verified' | 'draft_ai' | 'draft_manual'>('semua');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formState, setFormState] = useState<BoilerplateFormState>(emptyFormState);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [editingItemMetadata, setEditingItemMetadata] = useState<any>(null);
+
+  // AI Queue State
+  const [aiJobs, setAiJobs] = useState<any[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState(false);
 
   useEffect(() => {
     fetchData();
+    fetchAiJobs();
   }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data: result, error } = await supabase
+      const { data: result, error } = await (supabase as any)
         .from('ref_boilerplate_topik')
         .select('*')
         .order('mata_pelajaran', { ascending: true });
       
-      if (!error && result && result.length > 0) {
+      if (!error && result) {
         setData(result);
-      } else {
-        setData(DEFAULT_BANK_DATA_FALLBACK);
       }
     } catch (e: any) {
       console.error(e);
-      setData(DEFAULT_BANK_DATA_FALLBACK);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAiJobs = async () => {
+    setLoadingJobs(true);
+    try {
+      const { data: jobs, error } = await (supabase as any)
+        .from('ai_content_jobs')
+        .select(`
+          id, status, request_fingerprint, attempt_count, 
+          created_at, error_detail, provider
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (!error && jobs) {
+        setAiJobs(jobs);
+      }
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setLoadingJobs(false);
     }
   };
 
@@ -174,55 +104,68 @@ export const ModulAjarBankTab: React.FC = () => {
     setEditingId(null);
     setFormState(emptyFormState);
     setFormError(null);
+    setEditingItemMetadata(null);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (item: any) => {
     setEditingId(item.id);
+    
+    // Map AI JSON if it's a draft_ai and it has raw JSON that hasn't been flattened yet
+    let draft = { ...item };
+    if (item.content_status === 'draft_ai' && item.konten_json) {
+      const ai = item.konten_json;
+      draft.tujuan_pembelajaran = ai.tujuanPembelajaran || [];
+      draft.pemahaman_bermakna = ai.pemahamanBermakna || [];
+      draft.pertanyaan_pemantik = ai.pertanyaanPemantik || [];
+      draft.lkpd_tugas = ai.lkpdTugas || '';
+      draft.soal_evaluasi = ai.soalEvaluasi || '';
+      draft.pengayaan = ai.pengayaan || [];
+      draft.remedial = ai.remedial || [];
+    }
+
+    setEditingItemMetadata({
+      provider: item.generated_by_provider,
+      latency: item.generation_metadata?.latency_ms,
+      tokens: item.generation_metadata?.output_tokens,
+      version: item.prompt_version,
+      rawJson: item.konten_json
+    });
+
     setFormState({
       id: item.id,
-      mata_pelajaran: item.mata_pelajaran || '',
-      topik: item.topik || '',
-      fase: item.fase || '',
-      tujuan_pembelajaran: Array.isArray(item.tujuan_pembelajaran) ? item.tujuan_pembelajaran.join('\n') : '',
-      pemahaman_bermakna: Array.isArray(item.pemahaman_bermakna) ? item.pemahaman_bermakna.join('\n') : '',
-      pertanyaan_pemantik: Array.isArray(item.pertanyaan_pemantik) ? item.pertanyaan_pemantik.join('\n') : '',
-      lkpd_tugas: item.lkpd_tugas || '',
-      soal_evaluasi: item.soal_evaluasi || '',
-      pengayaan: Array.isArray(item.pengayaan) ? item.pengayaan.join('\n') : '',
-      remedial: Array.isArray(item.remedial) ? item.remedial.join('\n') : '',
-      daftar_pustaka: Array.isArray(item.daftar_pustaka) ? item.daftar_pustaka.join('\n') : '',
-      is_verified: item.is_verified ?? true,
-      sumber_regulasi: item.sumber_regulasi || ''
+      mata_pelajaran: draft.mata_pelajaran || '',
+      topik: draft.topik || '',
+      fase: draft.fase || '',
+      tujuan_pembelajaran: Array.isArray(draft.tujuan_pembelajaran) ? draft.tujuan_pembelajaran.join('\n') : (draft.tujuan_pembelajaran || ''),
+      pemahaman_bermakna: Array.isArray(draft.pemahaman_bermakna) ? draft.pemahaman_bermakna.join('\n') : (draft.pemahaman_bermakna || ''),
+      pertanyaan_pemantik: Array.isArray(draft.pertanyaan_pemantik) ? draft.pertanyaan_pemantik.join('\n') : (draft.pertanyaan_pemantik || ''),
+      lkpd_tugas: draft.lkpd_tugas || '',
+      soal_evaluasi: draft.soal_evaluasi || '',
+      pengayaan: Array.isArray(draft.pengayaan) ? draft.pengayaan.join('\n') : (draft.pengayaan || ''),
+      remedial: Array.isArray(draft.remedial) ? draft.remedial.join('\n') : (draft.remedial || ''),
+      daftar_pustaka: Array.isArray(draft.daftar_pustaka) ? draft.daftar_pustaka.join('\n') : (draft.daftar_pustaka || ''),
+      is_verified: draft.is_verified ?? true,
+      content_status: draft.content_status || 'draft_manual',
+      sumber_regulasi: draft.sumber_regulasi || ''
     });
     setFormError(null);
     setIsModalOpen(true);
   };
 
-  const handleSave = async () => {
+  const executeSave = async (forcePublish: boolean = false) => {
     setFormError(null);
 
-    // Normalisasi
     const normMapel = formState.mata_pelajaran.toLowerCase().trim();
     const normTopik = formState.topik.toLowerCase().trim();
 
-    // Validasi field wajib
-    if (!normMapel) {
-      setFormError('Mata Pelajaran wajib diisi.');
-      return;
-    }
-    if (!normTopik) {
-      setFormError('Topik wajib diisi.');
-      return;
-    }
-    if (!formState.lkpd_tugas.trim()) {
-      setFormError('LKPD & Tugas wajib diisi.');
-      return;
-    }
-    if (!formState.soal_evaluasi.trim()) {
-      setFormError('Soal Evaluasi wajib diisi.');
-      return;
-    }
+    if (!normMapel) { setFormError('Mata Pelajaran wajib diisi.'); return; }
+    if (!normTopik) { setFormError('Topik wajib diisi.'); return; }
+    if (!formState.lkpd_tugas.trim()) { setFormError('LKPD & Tugas wajib diisi.'); return; }
+    if (!formState.soal_evaluasi.trim()) { setFormError('Soal Evaluasi wajib diisi.'); return; }
+
+    const isVerified = forcePublish || formState.is_verified;
+    const newStatus = forcePublish ? 'verified' : formState.content_status;
 
     const payload = {
       mata_pelajaran: normMapel,
@@ -236,39 +179,38 @@ export const ModulAjarBankTab: React.FC = () => {
       pengayaan: formState.pengayaan.split('\n').filter(s => s.trim()),
       remedial: formState.remedial.split('\n').filter(s => s.trim()),
       daftar_pustaka: formState.daftar_pustaka.split('\n').filter(s => s.trim()),
-      is_verified: formState.is_verified,
+      is_verified: isVerified,
+      content_status: newStatus,
       sumber_regulasi: formState.sumber_regulasi.trim() || null
     };
 
     setSubmitting(true);
+    if (forcePublish) setIsPublishing(true);
+
     try {
       if (editingId) {
-        await supabase.from('ref_boilerplate_topik').update(payload).eq('id', editingId);
+        await (supabase as any).from('ref_boilerplate_topik').update(payload).eq('id', editingId);
         setData(prev => prev.map(item => item.id === editingId ? { ...item, ...payload } : item));
       } else {
-        const newItem = { id: 'custom-' + Date.now(), ...payload };
-        await supabase.from('ref_boilerplate_topik').insert([payload]);
-        setData(prev => [newItem, ...prev]);
+        const { data: inserted, error } = await (supabase as any).from('ref_boilerplate_topik').insert([payload]).select('*').single();
+        if (inserted) {
+          setData(prev => [inserted, ...prev]);
+        }
       }
       setIsModalOpen(false);
     } catch (e: any) {
-      console.error('Gagal menyimpan ke server, memperbarui state lokal:', e);
-      if (editingId) {
-        setData(prev => prev.map(item => item.id === editingId ? { ...item, ...payload } : item));
-      } else {
-        const newItem = { id: 'custom-' + Date.now(), ...payload };
-        setData(prev => [newItem, ...prev]);
-      }
-      setIsModalOpen(false);
+      console.error('Gagal menyimpan ke server:', e);
+      setFormError(e.message || 'Gagal menyimpan data.');
     } finally {
       setSubmitting(false);
+      setIsPublishing(false);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Yakin ingin menghapus topik ini?')) return;
     try {
-      await supabase.from('ref_boilerplate_topik').delete().eq('id', id);
+      await (supabase as any).from('ref_boilerplate_topik').delete().eq('id', id);
     } catch (e: any) {
       console.error('Gagal menghapus dari server:', e);
     } finally {
@@ -276,100 +218,226 @@ export const ModulAjarBankTab: React.FC = () => {
     }
   };
 
-  const filteredData = data.filter(d => 
-    (d.mata_pelajaran?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
-    (d.topik?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-  );
+  const handleCancelAiJob = async (jobId: string) => {
+    if (!window.confirm('Batalkan job AI ini?')) return;
+    try {
+      await (supabase as any).from('ai_content_jobs').update({ status: 'cancelled' }).eq('id', jobId);
+      fetchAiJobs();
+    } catch (e: any) {
+      console.error('Failed to cancel job:', e);
+    }
+  };
+
+  let filteredData = data;
+  if (statusFilter !== 'semua') {
+    filteredData = filteredData.filter(d => d.content_status === statusFilter || (statusFilter === 'verified' && d.is_verified));
+  }
+  if (searchTerm) {
+    filteredData = filteredData.filter(d => 
+      (d.mata_pelajaran?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
+      (d.topik?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    );
+  }
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            Bank Konten Modul Ajar
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Kelola template topik, LKPD, soal evaluasi, dan rekomendasi modul ajar.
-          </p>
-        </div>
-        
-        <div className="flex gap-2">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Cari mapel / topik..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm w-56 focus:ring-2 focus:ring-indigo-500"
-            />
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+    <div className="space-y-6 pb-20">
+      
+      {/* Table Topik & Templates */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              Bank Konten Modul Ajar
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Kelola dan tinjau (review) draf Modul Ajar AI.
+            </p>
           </div>
-          <button
-            onClick={handleOpenCreate}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Tambah Topik
+          
+          <div className="flex gap-2 items-center flex-wrap">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+              {[
+                { id: 'semua', label: 'Semua' },
+                { id: 'verified', label: 'Terverifikasi' },
+                { id: 'draft_ai', label: 'Draft AI' },
+                { id: 'draft_manual', label: 'Draft Manual' }
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setStatusFilter(f.id as any)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                    statusFilter === f.id 
+                    ? 'bg-white text-indigo-600 dark:bg-slate-700 dark:text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Cari mapel / topik..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm w-48 focus:ring-2 focus:ring-indigo-500"
+              />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            </div>
+            <button
+              onClick={handleOpenCreate}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Manual
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300">
+              <tr>
+                <th className="p-3 font-semibold rounded-tl-lg">Topik & Mapel</th>
+                <th className="p-3 font-semibold">Fase</th>
+                <th className="p-3 font-semibold">Status Konten</th>
+                <th className="p-3 font-semibold rounded-tr-lg w-28 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+              {loading ? (
+                <tr><td colSpan={4} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-500" /></td></tr>
+              ) : filteredData.length === 0 ? (
+                <tr><td colSpan={4} className="p-8 text-center text-slate-500">Tidak ada data.</td></tr>
+              ) : (
+                filteredData.map((row) => (
+                  <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 group transition-colors">
+                    <td className="p-3">
+                      <div className="font-bold text-slate-800 dark:text-slate-100 capitalize">{row.topik}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 font-medium capitalize mt-0.5">{row.mata_pelajaran}</div>
+                    </td>
+                    <td className="p-3 text-slate-600 dark:text-slate-300 font-semibold">{row.fase ? `Fase ${row.fase}` : 'Semua'}</td>
+                    <td className="p-3">
+                      {row.content_status === 'verified' || row.is_verified ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Terverifikasi
+                        </span>
+                      ) : row.content_status === 'draft_ai' ? (
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+                            <Sparkles className="w-3 h-3" /> Review AI
+                          </span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium ml-1">
+                            {row.generated_by_provider || 'Auto'} • {row.generation_metadata?.latency_ms ? `${(row.generation_metadata.latency_ms/1000).toFixed(1)}s` : '-'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                          <XCircle className="w-3.5 h-3.5" /> Draf Manual
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <button onClick={() => handleOpenEdit(row)} className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 font-bold text-xs px-3 transition-colors">
+                          {row.content_status === 'draft_ai' ? 'Review & Terbitkan' : 'Edit'}
+                        </button>
+                        <button onClick={() => handleDelete(row.id)} className="p-1.5 text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 rounded-lg hover:bg-red-100 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* AI Queue Monitor Table */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-indigo-500" />
+            AI Background Jobs (Monitor)
+          </h3>
+          <button onClick={fetchAiJobs} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+            <RefreshCw className={`w-4 h-4 ${loadingJobs ? 'animate-spin' : ''}`} />
           </button>
         </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
+              <tr>
+                <th className="p-2">Fingerprint (Topik)</th>
+                <th className="p-2">Status</th>
+                <th className="p-2">Provider</th>
+                <th className="p-2">Error Detail</th>
+                <th className="p-2">Dibuat</th>
+                <th className="p-2 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+              {aiJobs.length === 0 ? (
+                <tr><td colSpan={6} className="p-4 text-center text-slate-500">Antrian kosong.</td></tr>
+              ) : (
+                aiJobs.map(job => (
+                  <tr key={job.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20">
+                    <td className="p-2 font-mono text-[10px] text-slate-600 dark:text-slate-400 max-w-[150px] truncate" title={job.request_fingerprint}>
+                      {job.request_fingerprint}
+                    </td>
+                    <td className="p-2">
+                      <span className={`px-2 py-0.5 rounded-full font-bold ${
+                        job.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                        job.status === 'failed' ? 'bg-red-100 text-red-700' :
+                        job.status === 'cancelled' ? 'bg-slate-200 text-slate-600' :
+                        'bg-amber-100 text-amber-700'
+                      }`}>
+                        {job.status}
+                      </span>
+                    </td>
+                    <td className="p-2 font-semibold text-slate-700 dark:text-slate-300">{job.provider || '-'}</td>
+                    <td className="p-2 text-red-500 max-w-[150px] truncate" title={job.error_detail}>{job.error_detail || '-'}</td>
+                    <td className="p-2 text-slate-500">{new Date(job.created_at).toLocaleTimeString()}</td>
+                    <td className="p-2 text-right">
+                      {['pending', 'processing', 'retry_wait'].includes(job.status) && (
+                        <button onClick={() => handleCancelAiJob(job.id)} className="text-red-500 hover:text-red-700 font-bold">Batal</button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300">
-            <tr>
-              <th className="p-3 font-semibold rounded-tl-lg">Mata Pelajaran</th>
-              <th className="p-3 font-semibold">Topik</th>
-              <th className="p-3 font-semibold">Fase</th>
-              <th className="p-3 font-semibold">Status Verifikasi</th>
-              <th className="p-3 font-semibold rounded-tr-lg w-28 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
-            {loading ? (
-              <tr><td colSpan={5} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-500" /></td></tr>
-            ) : filteredData.length === 0 ? (
-              <tr><td colSpan={5} className="p-8 text-center text-slate-500">Tidak ada data topik.</td></tr>
-            ) : (
-              filteredData.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 group">
-                  <td className="p-3 text-slate-700 dark:text-slate-300 font-medium capitalize">{row.mata_pelajaran}</td>
-                  <td className="p-3 text-slate-700 dark:text-slate-300 font-semibold capitalize">{row.topik}</td>
-                  <td className="p-3 text-slate-500 dark:text-slate-400">{row.fase ? `Fase ${row.fase}` : 'Semua Fase (NULL)'}</td>
-                  <td className="p-3">
-                    {row.is_verified ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Terverifikasi
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
-                        <XCircle className="w-3.5 h-3.5" /> Belum Verifikasi
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    <div className="flex items-center justify-center gap-2">
-                      <button onClick={() => handleOpenEdit(row)} className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-lg hover:bg-indigo-100"><Edit2 className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => handleDelete(row.id)} className="p-1.5 text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 rounded-lg hover:bg-red-100"><Trash2 className="w-3.5 h-3.5" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Modal Edit / Create */}
+      {/* Modal Edit / Create / Review */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 my-8">
-            <div className="flex items-center justify-between border-b pb-3 mb-4 dark:border-slate-800">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                {editingId ? 'Edit Topik Modul Ajar' : 'Tambah Topik Modul Ajar Baru'}
-              </h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-4xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 my-8">
+            <div className="flex items-center justify-between border-b pb-4 mb-4 dark:border-slate-800">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  {formState.content_status === 'draft_ai' ? (
+                    <><Sparkles className="w-5 h-5 text-amber-500" /> Tinjau & Verifikasi Draft AI</>
+                  ) : editingId ? (
+                    'Edit Topik Modul Ajar'
+                  ) : (
+                    'Tambah Topik Modul Ajar Baru'
+                  )}
+                </h3>
+                {editingItemMetadata && formState.content_status === 'draft_ai' && (
+                  <p className="text-xs text-slate-500 mt-1 font-medium flex gap-3">
+                    <span>Provider: <strong className="text-indigo-500">{editingItemMetadata.provider}</strong></span>
+                    <span>Waktu Proses: <strong>{editingItemMetadata.latency ? (editingItemMetadata.latency/1000).toFixed(2)+'s' : '-'}</strong></span>
+                  </p>
+                )}
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <X className="w-5 h-5 text-slate-600 dark:text-slate-300" />
               </button>
             </div>
 
@@ -379,163 +447,174 @@ export const ModulAjarBankTab: React.FC = () => {
               </div>
             )}
 
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1 text-sm">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Mata Pelajaran *</label>
-                  <input
-                    type="text"
-                    placeholder="misal: matematika"
-                    value={formState.mata_pelajaran}
-                    onChange={e => setFormState({...formState, mata_pelajaran: e.target.value})}
-                    className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                  />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 max-h-[65vh] overflow-y-auto pr-2 text-sm pb-4 custom-scrollbar">
+              
+              {/* Kolom Kiri: Indentitas & Capaian */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 uppercase tracking-wider">Mata Pelajaran *</label>
+                    <input
+                      type="text"
+                      value={formState.mata_pelajaran}
+                      onChange={e => setFormState({...formState, mata_pelajaran: e.target.value})}
+                      className="w-full p-2.5 border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 uppercase tracking-wider">Fase</label>
+                    <input
+                      type="text"
+                      value={formState.fase}
+                      onChange={e => setFormState({...formState, fase: e.target.value})}
+                      className="w-full p-2.5 border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white uppercase font-bold text-center"
+                      maxLength={1}
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Topik *</label>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 uppercase tracking-wider">Topik *</label>
                   <input
                     type="text"
-                    placeholder="misal: penjumlahan"
                     value={formState.topik}
                     onChange={e => setFormState({...formState, topik: e.target.value})}
-                    className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    className="w-full p-2.5 border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white font-bold"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Fase</label>
-                  <select
-                    value={formState.fase}
-                    onChange={e => setFormState({...formState, fase: e.target.value})}
-                    className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                  >
-                    <option value="">Semua Fase (NULL)</option>
-                    <option value="A">Fase A</option>
-                    <option value="B">Fase B</option>
-                    <option value="C">Fase C</option>
-                    <option value="D">Fase D</option>
-                    <option value="E">Fase E</option>
-                    <option value="F">Fase F</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Tujuan Pembelajaran (Satu per baris)</label>
-                <textarea
-                  rows={3}
-                  placeholder="Peserta didik dapat..."
-                  value={formState.tujuan_pembelajaran}
-                  onChange={e => setFormState({...formState, tujuan_pembelajaran: e.target.value})}
-                  className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Pemahaman Bermakna (Satu per baris)</label>
-                <textarea
-                  rows={2}
-                  placeholder="Kemampuan menjumlahkan membantu..."
-                  value={formState.pemahaman_bermakna}
-                  onChange={e => setFormState({...formState, pemahaman_bermakna: e.target.value})}
-                  className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Pertanyaan Pemantik (Satu per baris)</label>
-                <textarea
-                  rows={2}
-                  placeholder="Bagaimana cara..."
-                  value={formState.pertanyaan_pemantik}
-                  onChange={e => setFormState({...formState, pertanyaan_pemantik: e.target.value})}
-                  className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">LKPD & Tugas *</label>
-                <textarea
-                  rows={3}
-                  placeholder="Petunjuk Kerja..."
-                  value={formState.lkpd_tugas}
-                  onChange={e => setFormState({...formState, lkpd_tugas: e.target.value})}
-                  className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Soal Evaluasi *</label>
-                <textarea
-                  rows={3}
-                  placeholder="1. Hitunglah..."
-                  value={formState.soal_evaluasi}
-                  onChange={e => setFormState({...formState, soal_evaluasi: e.target.value})}
-                  className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Pengayaan (Satu per baris)</label>
+                  <label className="block text-[11px] font-bold text-indigo-700 dark:text-indigo-300 mb-1 flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/30 p-1.5 rounded-t-lg border-b border-indigo-100 dark:border-indigo-900/50">
+                    Tujuan Pembelajaran (1 Baris per TP)
+                  </label>
                   <textarea
-                    rows={2}
-                    value={formState.pengayaan}
-                    onChange={e => setFormState({...formState, pengayaan: e.target.value})}
-                    className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    rows={4}
+                    value={formState.tujuan_pembelajaran}
+                    onChange={e => setFormState({...formState, tujuan_pembelajaran: e.target.value})}
+                    className="w-full p-2.5 border border-slate-200 rounded-b-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Remedial (Satu per baris)</label>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Pemahaman Bermakna</label>
                   <textarea
-                    rows={2}
-                    value={formState.remedial}
-                    onChange={e => setFormState({...formState, remedial: e.target.value})}
-                    className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    rows={3}
+                    value={formState.pemahaman_bermakna}
+                    onChange={e => setFormState({...formState, pemahaman_bermakna: e.target.value})}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Pertanyaan Pemantik</label>
+                  <textarea
+                    rows={3}
+                    value={formState.pertanyaan_pemantik}
+                    onChange={e => setFormState({...formState, pertanyaan_pemantik: e.target.value})}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Daftar Pustaka (Satu per baris)</label>
-                <textarea
-                  rows={2}
-                  value={formState.daftar_pustaka}
-                  onChange={e => setFormState({...formState, daftar_pustaka: e.target.value})}
-                  className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                />
+              {/* Kolom Kanan: Tugas, Evaluasi, Tindak Lanjut */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-emerald-700 dark:text-emerald-300 mb-1 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 p-1.5 rounded-t-lg border-b border-emerald-100 dark:border-emerald-900/50">
+                    LKPD / Tugas Praktik *
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formState.lkpd_tugas}
+                    onChange={e => setFormState({...formState, lkpd_tugas: e.target.value})}
+                    className="w-full p-2.5 border border-slate-200 rounded-b-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-emerald-700 dark:text-emerald-300 mb-1 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 p-1.5 rounded-t-lg border-b border-emerald-100 dark:border-emerald-900/50">
+                    Soal Evaluasi *
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formState.soal_evaluasi}
+                    onChange={e => setFormState({...formState, soal_evaluasi: e.target.value})}
+                    className="w-full p-2.5 border border-slate-200 rounded-b-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Pengayaan</label>
+                    <textarea
+                      rows={3}
+                      value={formState.pengayaan}
+                      onChange={e => setFormState({...formState, pengayaan: e.target.value})}
+                      className="w-full p-2.5 border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Remedial</label>
+                    <textarea
+                      rows={3}
+                      value={formState.remedial}
+                      onChange={e => setFormState({...formState, remedial: e.target.value})}
+                      className="w-full p-2.5 border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Sumber / Regulasi</label>
+                  <input
+                    type="text"
+                    value={formState.sumber_regulasi}
+                    onChange={e => setFormState({...formState, sumber_regulasi: e.target.value})}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white text-xs"
+                    placeholder="Contoh: Kemenag 2025"
+                  />
+                </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                <div>
-                  <span className="font-bold text-xs text-slate-800 dark:text-slate-200 block">Status Terverifikasi</span>
-                  <span className="text-[11px] text-slate-500">Topik terverifikasi akan langsung muncul di rekomendasi guru.</span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={formState.is_verified}
-                  onChange={e => setFormState({...formState, is_verified: e.target.checked})}
-                  className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
-                />
-              </div>
             </div>
 
-            <div className="flex justify-end gap-2 border-t pt-4 mt-4 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 border rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={submitting}
-                className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 flex items-center gap-2"
-              >
-                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Simpan
-              </button>
+            <div className="flex justify-between items-center border-t pt-5 mt-2 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                {formState.content_status === 'draft_ai' && (
+                   <span className="text-xs text-slate-500 font-medium">Draft ini membutuhkan verifikasi sebelum diterbitkan.</span>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Batal
+                </button>
+                
+                {formState.content_status !== 'verified' && (
+                  <button
+                    type="button"
+                    onClick={() => executeSave(false)}
+                    disabled={submitting || isPublishing}
+                    className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
+                  >
+                    {(submitting && !isPublishing) ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    Simpan (Draft)
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => executeSave(true)}
+                  disabled={submitting || isPublishing}
+                  className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-sm shadow-emerald-500/20 transition-all flex items-center gap-2"
+                >
+                  {(isPublishing) ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  Verifikasi & Terbitkan
+                </button>
+              </div>
             </div>
           </div>
         </div>
