@@ -4,7 +4,7 @@ import { BookOpen, History, Copy, Printer, FileText, Clock } from 'lucide-react'
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
 import { FormState } from './types';
-import { useModulAjarQueue } from './hooks/useModulAjarQueue';
+import { useModulAjarAiJob } from './hooks/useModulAjarAiJob';
 import { buildHtmlTemplate, extractStudentHtml } from './utils/template';
 import { modulAjarContentService } from '../../../services/modulAjarContentService';
 import { ModulAjarForm } from './components/ModulAjarForm';
@@ -129,20 +129,23 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   // Initialize queue hook only if AI feature flag is ON
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
-  const queueHookResult = useModulAjarQueue(
+  const queueHookResult = useModulAjarAiJob(
     formState,
-    user,
-    setGeneratedDocument,
-    () => {
+    async (successMsg) => {
+      // Re-trigger manual generation to read from cache and construct HTML locally
+      await generateManualModulAjar();
       fetchHistory();
+      alert(successMsg);
     },
-    logoBase64
+    (errMsg) => {
+      alert(`AI Error: ${errMsg}`);
+    }
   );
 
-  const queueStatus = isAiEnabled ? queueHookResult.queueStatus : 'idle';
-  const queuePosition = isAiEnabled ? queueHookResult.queuePosition : 0;
-  const activeQueueUser = isAiEnabled ? queueHookResult.activeQueueUser : null;
-  const startQueueAndGenerate = isAiEnabled ? queueHookResult.startQueueAndGenerate : () => {};
+  const queueStatus = isAiEnabled ? queueHookResult.jobStatus : 'idle';
+  const queuePosition = 0; // Backend handles positioning, UI just shows processing
+  const activeQueueUser = null; // Backend handles active users privately
+  const startQueueAndGenerate = isAiEnabled ? queueHookResult.startJob : () => {};
 
   const generateManualModulAjar = async () => {
     if (!formState.mataPelajaran || !formState.topik) {
@@ -628,12 +631,9 @@ const ModulAjarCreatorPage: React.FC = () => {
 
                     <div className="space-y-1.5">
                       <h3 className="font-bold text-slate-800 dark:text-white">Antrian Pemrosesan AI</h3>
-                      {queueStatus === 'pending' ? (
+                      {queueStatus === 'pending' || queueStatus === 'retry_wait' ? (
                         <>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">Posisi Antrian Anda: <strong className="text-indigo-600 dark:text-indigo-400">#{queuePosition}</strong></p>
-                          {activeQueueUser && (
-                            <p className="text-xs text-slate-400">Sedang diproses untuk: <strong>{activeQueueUser}</strong></p>
-                          )}
+                          <p className="text-sm text-slate-500 dark:text-slate-400">Permintaan dikirim ke server. Harap tunggu...</p>
                         </>
                       ) : (
                         <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold animate-pulse">Menghubungi AI... Sedang menulis perangkat ajar Anda.</p>
