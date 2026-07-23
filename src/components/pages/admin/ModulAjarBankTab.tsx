@@ -63,7 +63,7 @@ export const ModulAjarBankTab: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data: result, error } = await (supabase as any)
+      const { data: result, error } = await supabase
         .from('ref_boilerplate_topik')
         .select('*')
         .order('mata_pelajaran', { ascending: true });
@@ -81,7 +81,7 @@ export const ModulAjarBankTab: React.FC = () => {
   const fetchAiJobs = async () => {
     setLoadingJobs(true);
     try {
-      const { data: jobs, error } = await (supabase as any)
+      const { data: jobs, error } = await supabase
         .from('ai_content_jobs')
         .select(`
           id, status, request_fingerprint, attempt_count, 
@@ -189,10 +189,10 @@ export const ModulAjarBankTab: React.FC = () => {
 
     try {
       if (editingId) {
-        await (supabase as any).from('ref_boilerplate_topik').update(payload).eq('id', editingId);
+        await supabase.from('ref_boilerplate_topik').update(payload).eq('id', editingId);
         setData(prev => prev.map(item => item.id === editingId ? { ...item, ...payload } : item));
       } else {
-        const { data: inserted, error } = await (supabase as any).from('ref_boilerplate_topik').insert([payload]).select('*').single();
+        const { data: inserted, error } = await supabase.from('ref_boilerplate_topik').insert([payload]).select('*').single();
         if (inserted) {
           setData(prev => [inserted, ...prev]);
         }
@@ -210,7 +210,7 @@ export const ModulAjarBankTab: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Yakin ingin menghapus topik ini?')) return;
     try {
-      await (supabase as any).from('ref_boilerplate_topik').delete().eq('id', id);
+      await supabase.from('ref_boilerplate_topik').delete().eq('id', id);
     } catch (e: any) {
       console.error('Gagal menghapus dari server:', e);
     } finally {
@@ -221,7 +221,7 @@ export const ModulAjarBankTab: React.FC = () => {
   const handleCancelAiJob = async (jobId: string) => {
     if (!window.confirm('Batalkan job AI ini?')) return;
     try {
-      await (supabase as any).from('ai_content_jobs').update({ status: 'cancelled' }).eq('id', jobId);
+      await supabase.from('ai_content_jobs').update({ status: 'cancelled' }).eq('id', jobId);
       fetchAiJobs();
     } catch (e: any) {
       console.error('Failed to cancel job:', e);

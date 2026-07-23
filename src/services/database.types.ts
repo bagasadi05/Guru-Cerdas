@@ -182,6 +182,18 @@ export type Database = {
           daftar_pustaka: Json
           is_verified: boolean | null
           sumber_regulasi: string | null
+          konten_json: Json | null
+          ai_dynamic_content: Json | null
+          request_fingerprint: string | null
+          content_status: string
+          generated_by_provider: string | null
+          generated_by_model: string | null
+          prompt_version: string | null
+          content_version: number
+          reviewed_by: string | null
+          reviewed_at: string | null
+          quality_score: number | null
+          generation_metadata: Json
           created_at: string | null
           updated_at: string | null
         }
@@ -193,13 +205,25 @@ export type Database = {
           tujuan_pembelajaran?: Json
           pemahaman_bermakna?: Json
           pertanyaan_pemantik?: Json
-          lkpd_tugas: string
-          soal_evaluasi: string
+          lkpd_tugas?: string
+          soal_evaluasi?: string
           pengayaan?: Json
           remedial?: Json
           daftar_pustaka?: Json
           is_verified?: boolean | null
           sumber_regulasi?: string | null
+          konten_json?: Json | null
+          ai_dynamic_content?: Json | null
+          request_fingerprint?: string | null
+          content_status?: string
+          generated_by_provider?: string | null
+          generated_by_model?: string | null
+          prompt_version?: string | null
+          content_version?: number
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          quality_score?: number | null
+          generation_metadata?: Json
           created_at?: string | null
           updated_at?: string | null
         }
@@ -218,10 +242,150 @@ export type Database = {
           daftar_pustaka?: Json
           is_verified?: boolean | null
           sumber_regulasi?: string | null
+          konten_json?: Json | null
+          ai_dynamic_content?: Json | null
+          request_fingerprint?: string | null
+          content_status?: string
+          generated_by_provider?: string | null
+          generated_by_model?: string | null
+          prompt_version?: string | null
+          content_version?: number
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          quality_score?: number | null
+          generation_metadata?: Json
           created_at?: string | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      ai_content_jobs: {
+        Row: {
+          id: string
+          requested_by: string
+          request_fingerprint: string
+          status: string
+          input_json: Json
+          result_json: Json | null
+          attempt_count: number
+          max_attempts: number
+          next_retry_at: string | null
+          locked_at: string | null
+          locked_by: string | null
+          provider: string | null
+          model: string | null
+          error_code: string | null
+          error_detail: string | null
+          created_at: string
+          updated_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          requested_by: string
+          request_fingerprint: string
+          status?: string
+          input_json: Json
+          result_json?: Json | null
+          attempt_count?: number
+          max_attempts?: number
+          next_retry_at?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          provider?: string | null
+          model?: string | null
+          error_code?: string | null
+          error_detail?: string | null
+          created_at?: string
+          updated_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          requested_by?: string
+          request_fingerprint?: string
+          status?: string
+          input_json?: Json
+          result_json?: Json | null
+          attempt_count?: number
+          max_attempts?: number
+          next_retry_at?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          provider?: string | null
+          model?: string | null
+          error_code?: string | null
+          error_detail?: string | null
+          created_at?: string
+          updated_at?: string
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
+      ai_generation_attempts: {
+        Row: {
+          id: string
+          job_id: string
+          attempt_number: number
+          provider: string
+          model: string | null
+          started_at: string
+          finished_at: string | null
+          latency_ms: number | null
+          http_status: number | null
+          input_tokens: number | null
+          output_tokens: number | null
+          cached_tokens: number | null
+          error_category: string | null
+          error_detail: string | null
+          provider_request_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          job_id: string
+          attempt_number: number
+          provider: string
+          model?: string | null
+          started_at?: string
+          finished_at?: string | null
+          latency_ms?: number | null
+          http_status?: number | null
+          input_tokens?: number | null
+          output_tokens?: number | null
+          cached_tokens?: number | null
+          error_category?: string | null
+          error_detail?: string | null
+          provider_request_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          job_id?: string
+          attempt_number?: number
+          provider?: string
+          model?: string | null
+          started_at?: string
+          finished_at?: string | null
+          latency_ms?: number | null
+          http_status?: number | null
+          input_tokens?: number | null
+          output_tokens?: number | null
+          cached_tokens?: number | null
+          error_category?: string | null
+          error_detail?: string | null
+          provider_request_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_generation_attempts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "ai_content_jobs"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       ref_rubrik_template: {
         Row: {

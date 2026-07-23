@@ -18,11 +18,11 @@ export const modulAjarAiService = {
    * Cek apakah fingerprint sudah ada di cache (ref_boilerplate_topik)
    */
   async checkCacheHit(fingerprint: string): Promise<boolean> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('ref_boilerplate_topik')
       .select('id')
       .eq('request_fingerprint', fingerprint)
-      .in('content_status', ['draft_ai', 'draft_manual', 'verified'])
+      .eq('content_status', 'verified')
       .maybeSingle();
 
     if (error) {
@@ -36,7 +36,7 @@ export const modulAjarAiService = {
    * Mengantrekan job baru via RPC, dan me-return job object-nya
    */
   async enqueueJob({ requestFingerprint, inputJson }: EnqueueAiJobParams): Promise<AiJobStatus | null> {
-    const { data, error } = await (supabase as any).rpc('enqueue_modul_ajar_ai_job', {
+    const { data, error } = await supabase.rpc('enqueue_modul_ajar_ai_job' as any, {
       p_input_json: inputJson,
       p_request_fingerprint: requestFingerprint,
     });
@@ -76,7 +76,7 @@ export const modulAjarAiService = {
    * Mengambil status terbaru job dari database
    */
   async getJobStatus(jobId: string): Promise<AiJobStatus | null> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('ai_content_jobs')
       .select('id, status, error_code, error_detail, result_json')
       .eq('id', jobId)
@@ -93,7 +93,7 @@ export const modulAjarAiService = {
    * Mencari job aktif (pending, processing, retry_wait) yang terikat dengan fingerprint ini
    */
   async getActiveJobByFingerprint(fingerprint: string): Promise<AiJobStatus | null> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('ai_content_jobs')
       .select('id, status, error_code, error_detail, result_json')
       .eq('request_fingerprint', fingerprint)
