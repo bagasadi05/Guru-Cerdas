@@ -162,3 +162,5 @@ lcov-report/
 
 # Local data files
 data/
+
+graphify-out/
