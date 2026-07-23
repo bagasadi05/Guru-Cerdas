@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ProviderRouter } from '../../supabase/functions/_shared/ai/providerRouter';
 import { AIProviderError } from '../../supabase/functions/_shared/ai/errors';

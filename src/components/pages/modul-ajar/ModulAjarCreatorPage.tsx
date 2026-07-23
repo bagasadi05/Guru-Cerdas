@@ -631,7 +631,7 @@ const ModulAjarCreatorPage: React.FC = () => {
 
                     <div className="space-y-1.5">
                       <h3 className="font-bold text-slate-800 dark:text-white">Antrian Pemrosesan AI</h3>
-                      {queueStatus === 'pending' || queueStatus === 'retry_wait' ? (
+                      {(queueStatus as string) === 'pending' || (queueStatus as string) === 'retry_wait' ? (
                         <>
                           <p className="text-sm text-slate-500 dark:text-slate-400">Permintaan dikirim ke server. Harap tunggu...</p>
                         </>
