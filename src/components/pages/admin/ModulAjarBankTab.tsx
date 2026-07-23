@@ -167,6 +167,17 @@ export const ModulAjarBankTab: React.FC = () => {
     const isVerified = forcePublish || formState.is_verified;
     const newStatus = forcePublish ? 'verified' : formState.content_status;
 
+    // Strict Publication Validation for Admin
+    if (forcePublish) {
+      const fullText = `${formState.tujuan_pembelajaran} ${formState.lkpd_tugas} ${formState.soal_evaluasi}`;
+      if (/\[|\{|\}|\]|todo|tbd|placeholder|isi di sini|nama sekolah/i.test(fullText)) {
+        setFormError('Gagal mempublikasikan: Konten masih mengandung placeholder atau simbol kurung [ / { / TODO.');
+        return;
+      }
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+
     const payload = {
       mata_pelajaran: normMapel,
       topik: normTopik,
@@ -181,7 +192,9 @@ export const ModulAjarBankTab: React.FC = () => {
       daftar_pustaka: formState.daftar_pustaka.split('\n').filter(s => s.trim()),
       is_verified: isVerified,
       content_status: newStatus,
-      sumber_regulasi: formState.sumber_regulasi.trim() || null
+      sumber_regulasi: formState.sumber_regulasi.trim() || null,
+      reviewed_by: user?.id || null,
+      reviewed_at: new Date().toISOString()
     };
 
     setSubmitting(true);
@@ -270,7 +283,10 @@ export const ModulAjarBankTab: React.FC = () => {
                 { id: 'semua', label: 'Semua' },
                 { id: 'verified', label: 'Terverifikasi' },
                 { id: 'draft_ai', label: 'Draft AI' },
-                { id: 'draft_manual', label: 'Draft Manual' }
+                { id: 'draft_manual', label: 'Draft Manual' },
+                { id: 'in_review', label: 'In Review' },
+                { id: 'rejected', label: 'Ditolak' },
+                { id: 'deprecated', label: 'Deprecated' }
               ].map(f => (
                 <button
                   key={f.id}
