@@ -39,5 +39,8 @@ export const ModulAjarPaketBSchema = z.object({
   pedomanJawaban: noPlaceholderString,
 });
 
+export const ModulAjarFullSchema = ModulAjarPaketASchema.merge(ModulAjarPaketBSchema);
+
 export type ModulAjarPaketA = z.infer<typeof ModulAjarPaketASchema>;
 export type ModulAjarPaketB = z.infer<typeof ModulAjarPaketBSchema>;
+export type ModulAjarFull = z.infer<typeof ModulAjarFullSchema>;
