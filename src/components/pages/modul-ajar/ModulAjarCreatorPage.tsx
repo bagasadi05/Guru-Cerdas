@@ -314,38 +314,10 @@ const ModulAjarCreatorPage: React.FC = () => {
         rubrik: formState.rubrikAsesmen as any
       },
       generated_content: htmlTemplate
-    });
+    } as any);
 
-    setGeneratedDocument({
-      htmlContent: htmlTemplate,
-      studentHtmlContent: extractStudentHtml(htmlTemplate),
-      components: {
-        identity: {
-          sekolah: 'MADRASAH ALIYAH NEGERI (MAN) DEMAK',
-          mapel: formState.mataPelajaran,
-          kelas: formState.kelas,
-          fase: formState.fase,
-          tahunAjaran: formState.tahunAjaran,
-          semester: formState.semester,
-          guru: formState.guru,
-          topik: formState.topik
-        },
-        alokasiWaktu: { pertemuan: formState.jumlahPertemuan, jpPerPertemuan: formState.jpPerPertemuan, durasiPerJp: formState.durasiPerJp, totalJp: totalJP },
-        profilPelajar: formState.profilPelajar,
-        capaianPembelajaran: formState.capaianPembelajaran,
-        tujuanPembelajaran: draftData.tujuanPembelajaran,
-        pemahamanBermakna: draftData.pemahamanBermakna,
-        pertanyaanPemantik: draftData.pertanyaanPemantik,
-        kegiatanPembelajaran: { pendahuluan: draftData.kegiatanPendahuluan, inti: draftData.kegiatanInti, penutup: draftData.kegiatanPenutup },
-        asesmen: { sikap: draftData.asesmenSikap, pengetahuan: draftData.asesmenPengetahuan, keterampilan: draftData.asesmenKeterampilan, rubrik: formState.rubrikAsesmen as any },
-        lkpdTugas: draftData.lkpdTugas,
-        soalEvaluasi: draftData.soalEvaluasi,
-        pengayaanRemedial: { pengayaan: draftData.pengayaan, remedial: draftData.remedial },
-        daftarPustaka: draftData.daftarPustaka
-      }
-    });
-
-    setIsGenerated(true);
+    setGeneratedDocument(htmlTemplate);
+    fetchHistory();
   };
 
   const handleGenerate = () => {
