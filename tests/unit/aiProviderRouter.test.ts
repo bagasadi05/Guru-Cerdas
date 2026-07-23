@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ProviderRouter } from '../../supabase/functions/_shared/ai/providerRouter';
 import { AIProviderError } from '../../supabase/functions/_shared/ai/errors';
@@ -8,6 +7,8 @@ const mockZodSchema = z.object({
   success: z.boolean(),
   message: z.string(),
 });
+
+type MockResponse = z.infer<typeof mockZodSchema>;
 
 describe('FASE 3 - AI Provider Router', () => {
   let router: ProviderRouter;
@@ -48,7 +49,7 @@ describe('FASE 3 - AI Provider Router', () => {
       })
     });
 
-    const result = await router.routeAIRequest({
+    const result = await router.routeAIRequest<MockResponse>({
       systemInstruction: 'sys',
       prompt: 'user',
       jsonSchema: {},
@@ -80,7 +81,7 @@ describe('FASE 3 - AI Provider Router', () => {
       })
     });
 
-    const result = await router.routeAIRequest({
+    const result = await router.routeAIRequest<MockResponse>({
       systemInstruction: 'sys',
       prompt: 'user',
       jsonSchema: {},
@@ -102,7 +103,7 @@ describe('FASE 3 - AI Provider Router', () => {
       text: async () => 'Unauthorized API Key'
     });
 
-    await expect(router.routeAIRequest({
+    await expect(router.routeAIRequest<MockResponse>({
       systemInstruction: 'sys',
       prompt: 'user',
       jsonSchema: {},
@@ -110,15 +111,13 @@ describe('FASE 3 - AI Provider Router', () => {
     })).rejects.toThrowError(AIProviderError);
 
     try {
-      await router.routeAIRequest({
+      await router.routeAIRequest<MockResponse>({
         systemInstruction: 'sys', prompt: 'user', jsonSchema: {}, zodSchema: mockZodSchema
       });
     } catch (e: any) {
       expect(e.code).toBe('unauthorized');
     }
 
-    // Since it fails fast, OpenRouter should not be called
-    // Wait, the first reject counts as 1 call, the second call in try-catch counts as 1. Total 2 calls to Gemini.
     expect(fetchMock).toHaveBeenCalledTimes(2); 
     expect(fetchMock.mock.calls[0][0]).toContain('generativelanguage.googleapis.com');
     expect(fetchMock.mock.calls[1][0]).toContain('generativelanguage.googleapis.com');
@@ -132,7 +131,7 @@ describe('FASE 3 - AI Provider Router', () => {
       })
     });
 
-    await expect(router.routeAIRequest({
+    await expect(router.routeAIRequest<MockResponse>({
       systemInstruction: 'sys',
       prompt: 'user',
       jsonSchema: {},
