@@ -20,6 +20,9 @@ interface ModulAjarFormProps {
   queueStatus: string;
   onGenerate: () => void;
   boilerplateMissingBanner?: string | null;
+  onAiFillField?: (field: string) => void;
+  fieldLoading?: Record<string, boolean>;
+  isAiGenerating?: boolean;
 }
 
 export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
@@ -35,9 +38,32 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   isLoadingModels: _isLoadingModels,
   queueStatus,
   onGenerate,
-  boilerplateMissingBanner
+  boilerplateMissingBanner,
+  onAiFillField,
+  fieldLoading = {},
+  isAiGenerating
 }) => {
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
+
+  const AiButton = ({ field, label }: { field: string; label?: string }) => {
+    if (!onAiFillField) return null;
+    const loading = fieldLoading[field];
+    return (
+      <button
+        type="button"
+        onClick={() => onAiFillField(field)}
+        disabled={loading}
+        className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+      >
+        {loading ? (
+          <span className="inline-block w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <Sparkles className="w-3.5 h-3.5" />
+        )}
+        {label || (loading ? 'Memproses...' : 'AI')}
+      </button>
+    );
+  };
 
   const [activeCategoryTab, setActiveCategoryTab] = React.useState<ModelCategory>('hots');
   const PROFIL_OPTIONS = ['Beriman & Bertakwa', 'Berkebinekaan Global', 'Bergotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
@@ -461,8 +487,11 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Kompetensi Awal (Prasyarat)</label>
-                    <textarea 
+                    <div className="flex justify-between items-end mb-1">
+                      <label className="block text-xs text-slate-500 dark:text-slate-400">Kompetensi Awal (Prasyarat)</label>
+                      <AiButton field="kompetensiAwal" label="Isi AI" />
+                    </div>
+                    <textarea
                       value={formState.kompetensiAwal}
                       onChange={(e) => onChange('kompetensiAwal', e.target.value)}
                       rows={3}
@@ -473,7 +502,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
                   <div>
                     <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Sarana, Prasarana & Media</label>
-                    <textarea 
+                    <textarea
                       value={formState.saranaPrasarana}
                       onChange={(e) => onChange('saranaPrasarana', e.target.value)}
                       rows={3}
@@ -494,15 +523,18 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   <div>
                     <div className="flex justify-between items-end mb-1.5">
                       <label className="block text-xs text-slate-500 dark:text-slate-400">Capaian Pembelajaran (CP)</label>
-                      <button 
-                        type="button"
-                        onClick={onGenerateCP}
-                        disabled={isGeneratingCP || !formState.mataPelajaran}
-                        className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        {isGeneratingCP ? 'Mencari...' : 'Ambil CP Database'}
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={onGenerateCP}
+                          disabled={isGeneratingCP || !formState.mataPelajaran}
+                          className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          {isGeneratingCP ? 'Mencari...' : 'Ambil CP Database'}
+                        </button>
+                        <AiButton field="capaianPembelajaran" label="Generate AI" />
+                      </div>
                     </div>
                     <textarea 
                       value={formState.capaianPembelajaran}
@@ -535,8 +567,11 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   {formState.generationMethod === 'Manual' && (
                     <>
                       <div>
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Tujuan Pembelajaran (Satu per baris)</label>
-                        <textarea 
+                        <div className="flex justify-between items-end mb-1">
+                          <label className="block text-xs text-slate-500 dark:text-slate-400">Tujuan Pembelajaran (Satu per baris)</label>
+                          <AiButton field="manualTujuanPembelajaran" label="Isi AI" />
+                        </div>
+                        <textarea
                           value={formState.manualTujuanPembelajaran}
                           onChange={(e) => onChange('manualTujuanPembelajaran', e.target.value)}
                           rows={4}
@@ -582,8 +617,11 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Pertanyaan Pemantik (Satu per baris)</label>
-                        <textarea 
+                        <div className="flex justify-between items-end mb-1">
+                          <label className="block text-xs text-slate-500 dark:text-slate-400">Pertanyaan Pemantik (Satu per baris)</label>
+                          <AiButton field="manualPertanyaanPemantik" label="Isi AI" />
+                        </div>
+                        <textarea
                           value={formState.manualPertanyaanPemantik}
                           onChange={(e) => onChange('manualPertanyaanPemantik', e.target.value)}
                           rows={4}
@@ -992,8 +1030,11 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Tugas LKPD (Lembar Kerja Peserta Didik)</label>
-                    <textarea 
+                    <div className="flex justify-between items-end mb-1">
+                      <label className="block text-xs text-slate-500 dark:text-slate-400">Tugas LKPD (Lembar Kerja Peserta Didik)</label>
+                      <AiButton field="manualLkpdTugas" label="Buat AI" />
+                    </div>
+                    <textarea
                       value={formState.manualLkpdTugas}
                       onChange={(e) => onChange('manualLkpdTugas', e.target.value)}
                       rows={4}
@@ -1002,8 +1043,11 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Soal Evaluasi Pengetahuan</label>
-                    <textarea 
+                    <div className="flex justify-between items-end mb-1">
+                      <label className="block text-xs text-slate-500 dark:text-slate-400">Soal Evaluasi Pengetahuan</label>
+                      <AiButton field="manualSoalEvaluasi" label="Buat AI" />
+                    </div>
+                    <textarea
                       value={formState.manualSoalEvaluasi}
                       onChange={(e) => onChange('manualSoalEvaluasi', e.target.value)}
                       rows={4}
@@ -1046,7 +1090,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
           <button
             type="button"
             onClick={onGenerate}
-            disabled={queueStatus === 'pending' || queueStatus === 'processing' || !formState.mataPelajaran || !formState.topik}
+            disabled={queueStatus === 'pending' || queueStatus === 'processing' || isAiGenerating || !formState.mataPelajaran || !formState.topik}
             className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-emerald-500 hover:from-indigo-600 hover:to-emerald-600 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50"
           >
             <Sparkles className="w-4 h-4" />

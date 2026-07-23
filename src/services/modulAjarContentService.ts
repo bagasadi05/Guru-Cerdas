@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { normalizeSoalEvaluasi } from './modulAjarAiGenerator';
 
 export interface RefBoilerplateTopik {
   id: string;
@@ -93,7 +94,7 @@ function unpackBoilerplate(item: any): RefBoilerplateTopik | null {
       result.lkpd_tugas = ai.lkpdTugas || '';
     }
     if (!result.soal_evaluasi || result.soal_evaluasi.trim() === '') {
-      result.soal_evaluasi = Array.isArray(ai.soalEvaluasi) ? ai.soalEvaluasi.join('\n') : (ai.soalEvaluasi || '');
+      result.soal_evaluasi = normalizeSoalEvaluasi(ai.soalEvaluasi);
     }
     if (!result.pengayaan || (Array.isArray(result.pengayaan) && result.pengayaan.length === 0)) {
       result.pengayaan = ai.pengayaan || [];

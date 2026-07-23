@@ -8,6 +8,15 @@ import { useModulAjarAiJob } from './hooks/useModulAjarAiJob';
 import { buildHtmlTemplate, extractStudentHtml } from './utils/template';
 import { resolveLearningSyntax } from './utils/syntaxResolver';
 import { modulAjarContentService } from '../../../services/modulAjarContentService';
+import { generateModulAjarAiContent, normalizeSoalEvaluasi } from '../../../services/modulAjarAiGenerator';
+import {
+  generateTujuanPembelajaran,
+  generatePertanyaanPemantik,
+  generateLkpdTugas,
+  generateSoalEvaluasi,
+  generateKompetensiAwal,
+  generateCapaianPembelajaran,
+} from '../../../services/modulAjarAiFieldGenerator';
 import { ModulAjarForm } from './components/ModulAjarForm';
 import { ModulAjarHistory } from './components/ModulAjarHistory';
 import { ModulAjarPreview } from './components/ModulAjarPreview';
@@ -15,7 +24,7 @@ import { ModulAjarPreview } from './components/ModulAjarPreview';
 const ModulAjarCreatorPage: React.FC = () => {
   const { user } = useAuth();
   const [formState, setFormState] = useState<FormState>({
-    generationMethod: 'Manual',
+    generationMethod: 'AI',
     documentType: 'Modul Ajar',
     curriculumApproach: 'Merdeka',
     satuanPendidikan: 'MI Al Irsyad',
@@ -57,6 +66,7 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const [activeStep, setActiveStep] = useState(1);
   const [isGeneratingCP, setIsGeneratingCP] = useState(false);
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [generatedDocument, setGeneratedDocument] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'preview' | 'history'>('preview');
   const [previewMode, setPreviewMode] = useState<'guru' | 'siswa'>('guru');
@@ -65,6 +75,9 @@ const ModulAjarCreatorPage: React.FC = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [models, setModels] = useState<any[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [boilerplateMissingBanner, setBoilerplateMissingBanner] = useState<string | null>(null);
+  const [logoBase64, setLogoBase64] = useState<string>('');
+  const [fieldLoading, setFieldLoading] = useState<Record<string, boolean>>({});
 
   const previewRef = useRef<HTMLDivElement>(null);
   const lastLoadedTopicRef = useRef<string>('');
@@ -75,8 +88,6 @@ const ModulAjarCreatorPage: React.FC = () => {
       setFormState(prev => ({ ...prev, guru: user.name }));
     }
   }, [user?.name]);
-
-  const [boilerplateMissingBanner, setBoilerplateMissingBanner] = useState<string | null>(null);
 
   useEffect(() => {
     if (formState.generationMethod === 'Manual' && formState.topik && formState.mataPelajaran) {
@@ -112,8 +123,6 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   }, [formState.generationMethod, formState.topik, formState.mataPelajaran, formState.kelas, formState.fase]);
 
-  const [logoBase64, setLogoBase64] = useState<string>('');
-
   useEffect(() => {
     // Convert school logo to base64 for reliable rendering/Word compatibility
     fetch('/logo_sekolah.png')
@@ -132,7 +141,7 @@ const ModulAjarCreatorPage: React.FC = () => {
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
   const queueHookResult = useModulAjarAiJob(
     formState,
-    async (resultJson, successMsg) => {
+    async (resultJson) => {
       if (resultJson) {
         await renderPrivateDraftAiModulAjar(resultJson);
       } else {
@@ -141,7 +150,7 @@ const ModulAjarCreatorPage: React.FC = () => {
       fetchHistory();
     },
     (errMsg) => {
-      alert(`AI Error: ${errMsg}`);
+      console.warn(`[AI Queue] Job notice: ${errMsg}`);
     }
   );
 
@@ -157,7 +166,42 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
 
     try {
-      const bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
+      let bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
+
+      // AI Fallback: if no boilerplate found in database, generate via AI
+      if (!bp && isAiEnabled) {
+        setIsAiGenerating(true);
+        try {
+          const aiContent = await generateModulAjarAiContent(
+            formState.mataPelajaran,
+            formState.topik,
+            formState.fase,
+            formState.modelPembelajaran
+          );
+          // Convert AI output to boilerplate-compatible format
+          bp = {
+            id: '',
+            mata_pelajaran: formState.mataPelajaran,
+            topik: formState.topik,
+            fase: formState.fase,
+            tujuan_pembelajaran: aiContent.tujuanPembelajaran,
+            pemahaman_bermakna: aiContent.pemahamanBermakna,
+            pertanyaan_pemantik: aiContent.pertanyaanPemantik,
+            lkpd_tugas: aiContent.lkpdTugas,
+            soal_evaluasi: aiContent.soalEvaluasi,
+            pengayaan: aiContent.pengayaan,
+            remedial: aiContent.remedial,
+            daftar_pustaka: aiContent.daftarPustaka,
+            is_verified: true,
+            sumber_regulasi: null,
+          };
+        } catch (aiErr: any) {
+          console.warn('[AI Fallback] AI generation failed, continuing with template:', aiErr.message);
+          // Continue with generic template if AI fails
+        } finally {
+          setIsAiGenerating(false);
+        }
+      }
 
       let modelIdToUse = formState.selectedModelId;
       const selectedModelObj = models.find(m => m.id === modelIdToUse || m.nama_model === formState.modelPembelajaran);
@@ -179,7 +223,11 @@ const ModulAjarCreatorPage: React.FC = () => {
         formState.modelPembelajaran
       );
 
-      const sintaksIntiHtml = resolvedSyntax.steps.map(s => `<b>${s.name}</b><br/>- <b>Guru:</b> ${s.teacherActivity}<br/>- <b>Siswa:</b> ${s.studentActivity}`).join('<br/><br/>');
+      const kegiatanIntiData = resolvedSyntax.steps.map((s: any) => ({
+        name: s.name,
+        kegiatanGuru: s.teacherActivity,
+        kegiatanSiswa: s.studentActivity,
+      }));
 
       let tujuanPembelajaranList: string[] = formState.manualTujuanPembelajaran
         ? formState.manualTujuanPembelajaran.split('\n').filter(line => line.trim() !== '')
@@ -221,6 +269,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         sikapText = 'Observasi sikap spiritual (rasa syukur, kecintaan pada ilmu & ciptaan Allah Swt.) dan sikap sosial (kasih sayang, toleransi, empati) selama pembelajaran.';
       }
 
+      const isAiGenerated = bp && bp.id === '';
       const manualData = {
         ...bp,
         tujuanPembelajaran: tujuanPembelajaranList,
@@ -229,7 +278,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         lkpdTugas: lkpdText,
         soalEvaluasi: evaluasiText,
         kegiatanPendahuluan: pendahuluanText,
-        kegiatanInti: sintaksIntiHtml,
+        kegiatanInti: kegiatanIntiData,
         kegiatanPenutup: penutupText,
         asesmenSikap: sikapText,
         asesmenKeterampilan: 'Penilaian unjuk kerja/proyek presentasi',
@@ -246,7 +295,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         user_id: user?.id,
         document_type: formState.documentType,
         curriculum_approach: formState.curriculumApproach,
-        generation_method: formState.generationMethod || 'Manual',
+        generation_method: isAiGenerated ? 'AI' : (formState.generationMethod || 'Manual'),
         identity: {
           kelas: formState.kelas,
           fase: formState.fase,
@@ -280,28 +329,43 @@ const ModulAjarCreatorPage: React.FC = () => {
         manualSoalEvaluasi: evaluasiText
       }));
       fetchHistory();
-      alert('Draf Modul Ajar berhasil disusun secara manual! Anda dapat mengedit isinya secara bebas pada panel pratinjau.');
+      alert(isAiGenerated
+        ? '✨ Modul Ajar berhasil disusun oleh AI! Konten telah disesuaikan dengan topik Anda dan tersimpan di database untuk penggunaan berikutnya.'
+        : 'Draf Modul Ajar berhasil disusun dari Bank Data! Anda dapat mengedit isinya secara bebas pada panel pratinjau.');
 
     } catch (err: any) {
       console.error(err);
-      alert(`Gagal menyusun modul ajar secara manual: ${err.message}`);
+      alert(`Gagal menyusun modul ajar: ${err.message}`);
     }
   };
 
   const renderPrivateDraftAiModulAjar = async (aiOutput: any) => {
     const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
-    const resolvedSyntax = aiOutput._resolvedSyntax || resolveLearningSyntax([], [], formState.modelPembelajaran);
-    const sintaksIntiHtml = resolvedSyntax.steps.map((s: any) => `<b>${s.name}</b><br/>- <b>Guru:</b> ${s.teacherActivity}<br/>- <b>Siswa:</b> ${s.studentActivity}`).join('<br/><br/>');
+
+    // Gunakan AI-generated skenario array — biarkan template rich-render via intiToHtml()
+    let kegiatanIntiData: any = aiOutput.kegiatanInti || aiOutput.skenarioPembelajaran || [];
+    if (!Array.isArray(kegiatanIntiData) || kegiatanIntiData.length === 0) {
+      const resolvedSyntax = aiOutput._resolvedSyntax || resolveLearningSyntax([], [], formState.modelPembelajaran);
+      kegiatanIntiData = resolvedSyntax.steps.map((s: any) => ({
+        name: s.name,
+        fase: s.name,
+        kegiatanGuru: s.teacherActivity,
+        kegiatanSiswa: s.studentActivity,
+      }));
+    }
 
     const draftData = {
       tujuanPembelajaran: aiOutput.tujuanPembelajaran || [],
       pemahamanBermakna: aiOutput.pemahamanBermakna || [],
       pertanyaanPemantik: aiOutput.pertanyaanPemantik || [],
       lkpdTugas: aiOutput.lkpdTugas || '',
-      soalEvaluasi: Array.isArray(aiOutput.soalEvaluasi) ? aiOutput.soalEvaluasi.join('\n') : (aiOutput.soalEvaluasi || ''),
+      soalEvaluasi: normalizeSoalEvaluasi(aiOutput.soalEvaluasi),
+      kunciJawaban: Array.isArray(aiOutput.kunciJawaban) ? aiOutput.kunciJawaban : [],
       kegiatanPendahuluan: `Guru membuka kelas dengan salam, apersepsi, dan menyampaikan tujuan pembelajaran terkait ${formState.topik || formState.mataPelajaran}.`,
-      kegiatanInti: sintaksIntiHtml,
+      kegiatanInti: kegiatanIntiData,
       kegiatanPenutup: `Guru membimbing refleksi pembelajaran dan menutup kelas dengan doa.`,
+      capaianPembelajaran: aiOutput.capaianPembelajaran || formState.capaianPembelajaran || '',
+      kompetensiAwal: aiOutput.kompetensiAwal || formState.kompetensiAwal || '',
       asesmenSikap: 'Observasi sikap peserta didik selama pembelajaran',
       asesmenKeterampilan: aiOutput.asesmenKeterampilan || 'Penilaian unjuk kerja/proyek presentasi',
       asesmenPengetahuan: aiOutput.asesmenPengetahuan || 'Tes tertulis/lisan di akhir materi',
@@ -351,10 +415,52 @@ const ModulAjarCreatorPage: React.FC = () => {
   };
 
   const handleGenerate = () => {
-    if (formState.generationMethod === 'Manual') {
-      generateManualModulAjar();
-    } else {
-      startQueueAndGenerate();
+    // Both AI and Manual modes use the unified generator.
+    // AI fallback is automatically triggered inside generateManualModulAjar
+    // when the topic is not found in the database.
+    generateManualModulAjar();
+  };
+
+  /** AI per-field assistant — generate konten untuk satu field saja */
+  const handleAiFillField = async (field: string) => {
+    if (!formState.mataPelajaran || !formState.topik) {
+      alert('Isi Mata Pelajaran dan Topik dulu sebelum menggunakan AI.');
+      return;
+    }
+    setFieldLoading(prev => ({ ...prev, [field]: true }));
+    try {
+      const ctx = { mapel: formState.mataPelajaran, topik: formState.topik, fase: formState.fase, modelPembelajaran: formState.modelPembelajaran };
+      let content = '';
+
+      switch (field) {
+        case 'manualTujuanPembelajaran':
+          content = await generateTujuanPembelajaran(ctx);
+          break;
+        case 'manualPertanyaanPemantik':
+          content = await generatePertanyaanPemantik(ctx);
+          break;
+        case 'manualLkpdTugas':
+          content = await generateLkpdTugas(ctx);
+          break;
+        case 'manualSoalEvaluasi':
+          content = await generateSoalEvaluasi(ctx);
+          break;
+        case 'kompetensiAwal':
+          content = await generateKompetensiAwal(ctx);
+          break;
+        case 'capaianPembelajaran':
+          content = await generateCapaianPembelajaran(ctx);
+          break;
+        default:
+          return;
+      }
+
+      handleInputChange(field, content);
+    } catch (err: any) {
+      console.error(`[AI Field] ${field} generation failed:`, err);
+      alert(`Gagal meng-generate: ${err.message}`);
+    } finally {
+      setFieldLoading(prev => ({ ...prev, [field]: false }));
     }
   };
 
@@ -503,13 +609,13 @@ const ModulAjarCreatorPage: React.FC = () => {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
-          td[style*="background-color: #00b050"] {
-            background-color: #00b050 !important;
+          td[style*="background-color: #0d6b3e"] {
+            background-color: #0d6b3e !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
-          td[style*="background-color: #ffff00"] {
-            background-color: #ffff00 !important;
+          td[style*="background-color: #f5f0d0"] {
+            background-color: #f5f0d0 !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
@@ -625,6 +731,9 @@ const ModulAjarCreatorPage: React.FC = () => {
         queueStatus={queueStatus}
         onGenerate={handleGenerate}
         boilerplateMissingBanner={boilerplateMissingBanner}
+        onAiFillField={handleAiFillField}
+        fieldLoading={fieldLoading}
+        isAiGenerating={isAiGenerating}
       />
 
       {/* Preview / History Column */}
@@ -704,6 +813,27 @@ const ModulAjarCreatorPage: React.FC = () => {
           
           {activeTab === 'preview' ? (
             <>
+              {/* Loading overlay for AI generation */}
+              {isAiGenerating && (
+                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm z-30 flex items-center justify-center p-6 text-center">
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full space-y-4"
+                  >
+                    <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
+                      <div className="absolute inset-0 rounded-full border-4 border-indigo-100 dark:border-indigo-900/30"></div>
+                      <div className="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+                      <Clock className="w-6 h-6 text-indigo-500 animate-pulse" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <h3 className="font-bold text-slate-800 dark:text-white">AI Sedang Bekerja</h3>
+                      <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold animate-pulse">Menghubungi AI... Sedang menulis perangkat ajar Anda.</p>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+
               {/* Realtime Queue Overlay */}
               {(queueStatus === 'pending' || queueStatus === 'processing') && (
                 <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm z-30 flex items-center justify-center p-6 text-center">

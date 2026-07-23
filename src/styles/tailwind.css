@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Low-end device performance ──────────────────────────────────
+   When .reduce-motion is present on <html> (auto-detected by
+   useReducedMotion hook on low-spec devices), kill ALL CSS
+   transitions and animations globally. This makes framer-motion
+   components render instantly (opacity jumps to 1) and eliminates
+   janky animation frames on weak GPUs. */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ── Content visibility for long documents ────────────────────────
+   Browser skips rendering off-screen sections until scrolled into
+   view. Dramatically improves initial paint for long pages. */
+[data-section] {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 600px;
+}

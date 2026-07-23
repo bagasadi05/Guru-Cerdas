@@ -63,6 +63,7 @@ export default defineConfig(({ mode }) => {
             'assets/js/vendor-utils-*.js',
             'assets/js/vendor-icons-*.js',
             'assets/js/vendor-supabase-*.js',
+            'assets/js/vendor-forms-*.js',
             'assets/js/workbox-window*.js',
             'logo.svg',
             'pwa-192x192.png',
@@ -99,9 +100,7 @@ export default defineConfig(({ mode }) => {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             // UI libraries
             'vendor-ui': ['framer-motion', '@tanstack/react-query'],
-            // Charts
-            'vendor-charts': ['recharts'],
-            // PDF/Excel export libs
+            // PDF/Excel export libs — lazy-loaded on demand
             'vendor-export': ['jspdf', 'jspdf-autotable', 'html2canvas', 'exceljs'],
             // Utility libraries
             'vendor-utils': ['zod', 'date-fns'],
@@ -109,8 +108,7 @@ export default defineConfig(({ mode }) => {
             'vendor-icons': ['lucide-react'],
             // Supabase
             'vendor-supabase': ['@supabase/supabase-js'],
-            // Sentry
-            'vendor-sentry': ['@sentry/react'],
+            // Sentry — dynamically imported via import() in index.tsx, no manual chunk needed
             // Forms
             'vendor-forms': ['react-hook-form', '@hookform/resolvers'],
           },

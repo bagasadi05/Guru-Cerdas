@@ -26,26 +26,6 @@ export function useModulAjarAiJob(
     });
   };
 
-  // Recover active job on page load or when form identifiers change
-  useEffect(() => {
-    const fingerprint = getFingerprint();
-    if (!fingerprint) return;
-
-    let isMounted = true;
-    (async () => {
-      try {
-        const activeJob = await modulAjarAiService.getActiveJobByFingerprint(fingerprint);
-        if (activeJob && isMounted) {
-          setCurrentJobId(activeJob.id);
-          setJobStatus(activeJob.status as QueueStatus);
-        }
-      } catch (e) {
-        console.warn('Error recovering job:', e);
-      }
-    })();
-
-    return () => { isMounted = false; };
-  }, [formState.mataPelajaran, formState.fase, formState.topik, formState.selectedModelId]);
 
   const startJob = async () => {
     if (isSubmitting || jobStatus === 'pending' || jobStatus === 'processing') return; // Prevent double-click

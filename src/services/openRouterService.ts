@@ -1,22 +1,21 @@
-// In production, calls go through the serverless proxy at /api/openrouter (same domain).
-// VITE_OPENROUTER_PROXY_URL can override this (e.g. for staging/custom domains).
-// In local dev, falls back to VITE_OPENROUTER_API_KEY for direct calls.
+import { logger } from './logger';
+
+// Gemini (primary — langsung dari client, gratis & cepat)
+const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
+const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash';
+
+// OpenRouter (fallback)
 const OPENROUTER_PROXY_URL = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
 const DEV_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
 const IS_DEV = import.meta.env.DEV === true;
-import { logger } from './logger';
 const OPENROUTER_DIRECT_URL = 'https://openrouter.ai/api/v1/chat/completions';
-// Default to same-domain proxy — works on Vercel without any env var needed
 const DEFAULT_PROXY = '/api/openrouter';
 
-// Primary reasoning model + free fallbacks
 const CUSTOM_MODEL = import.meta.env.VITE_AI_MODEL || '';
-
 const FALLBACK_MODELS = CUSTOM_MODEL ? [CUSTOM_MODEL] : [
-    'tencent/hy3:free',
-    'google/gemma-2-9b-it:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'meta-llama/llama-3.1-8b-instruct:free',
+    'auto',
+    'openai/gpt-4o-mini',
 ];
 
 export interface OpenRouterMessage {
@@ -34,24 +33,86 @@ export interface OpenRouterResponse {
 }
 
 /**
- * Generates content using the OpenRouter API with robust fallback and retry logic.
- * 
- * @param messages The conversation history to send to the model.
- * @param useReasoning Whether to enable reasoning capabilities (if supported by the model).
- * @returns The full response object from OpenRouter.
+ * Generates content — tries Gemini (direct) first, falls back to OpenRouter.
  */
 export async function generateOpenRouterContent(
     messages: OpenRouterMessage[],
     useReasoning: boolean = true
 ): Promise<OpenRouterResponse> {
+    // 1. Try Gemini directly if key is available
+    if (GEMINI_KEY) {
+        try {
+            const result = await callGemini(messages);
+            logger.info(`[AI] Gemini success`, 'AI');
+            return result;
+        } catch (err: any) {
+            logger.warn(`[AI] Gemini failed, falling back to OpenRouter: ${err.message}`, 'AI');
+        }
+    }
+
+    // 2. Fallback: OpenRouter
+    return callOpenRouter(messages, useReasoning);
+}
+
+/**
+ * Call Gemini API directly. Returns OpenRouterResponse-compatible shape.
+ */
+async function callGemini(messages: OpenRouterMessage[]): Promise<OpenRouterResponse> {
+    const url = `${GEMINI_ENDPOINT}/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`;
+
+    // Convert OpenRouter messages → Gemini contents
+    const contents = messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content || '' }],
+        }));
+
+    const systemInstruction = messages.find(m => m.role === 'system')?.content;
+
+    const body: Record<string, any> = {
+        contents,
+        generationConfig: { temperature: 0.7 },
+    };
+    if (systemInstruction) {
+        body.systemInstruction = { parts: [{ text: systemInstruction }] };
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Gemini API ${response.status}: ${text}`);
+    }
+
+    const data = await response.json();
+    const geminiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    return {
+        choices: [{ message: { role: 'assistant', content: geminiText } }],
+    } as OpenRouterResponse;
+}
+
+/**
+ * Call OpenRouter API with fallback model list.
+ */
+async function callOpenRouter(
+    messages: OpenRouterMessage[],
+    useReasoning: boolean
+): Promise<OpenRouterResponse> {
     if (IS_DEV && !DEV_API_KEY && !OPENROUTER_PROXY_URL) {
         throw new Error("Set VITE_OPENROUTER_API_KEY in .env for local dev, or VITE_OPENROUTER_PROXY_URL for proxy mode.");
     }
 
-    // Resolve endpoint + headers:
-    // 1. Explicit proxy URL (env var override)
-    // 2. Dev direct call with API key
-    // 3. Default same-domain proxy /api/openrouter (production Vercel)
     const endpoint = OPENROUTER_PROXY_URL || (IS_DEV && DEV_API_KEY ? OPENROUTER_DIRECT_URL : DEFAULT_PROXY);
     const authHeaders: Record<string, string> = DEV_API_KEY
         ? { "Authorization": `Bearer ${DEV_API_KEY}` }
@@ -59,17 +120,10 @@ export async function generateOpenRouterContent(
 
     let lastError: Error | null = null;
 
-    // Iterate through models
     for (const model of FALLBACK_MODELS) {
         try {
-            // Attempt to call API with current model
-            // Add a small retry loop for the SAME model in case of temporary glitches (non-429)
-            // But for 429, we usually want to switch models fast unless we want to wait huge delay.
-            // Here we just try each model once per call to keep UI responsive, 
-            // relying on the model switch availability effectively acting as retries.
-
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s hard timeout
+            const timeoutId = setTimeout(() => controller.abort(), 35000);
 
             const response = await fetch(endpoint, {
                 method: "POST",
@@ -81,7 +135,6 @@ export async function generateOpenRouterContent(
                 body: JSON.stringify({
                     model: model,
                     messages: messages,
-                    // Enable reasoning for primary model; fallbacks may ignore it gracefully
                     ...(useReasoning ? { reasoning: { enabled: true } } : {}),
                     temperature: 0.7,
                 }),
@@ -92,47 +145,37 @@ export async function generateOpenRouterContent(
 
             if (response.status === 429) {
                 const errorText = await response.text();
-                logger.warn(`Model ${model} rate limited (429). Switch to next model.`, 'OpenRouter', { errorText });
+                logger.warn(`Model ${model} rate limited (429).`, 'OpenRouter', { errorText });
                 lastError = new Error(`Rate limit exceeded for ${model}`);
-                
-                // If it's our proxy's rate limit, all subsequent calls will fail too, so break immediately.
                 if (errorText.includes('Rate limit exceeded') && !errorText.includes('openrouter')) {
-                    throw new Error("Anda telah mencapai batas wawasan AI. Silakan tunggu beberapa saat (1 menit) sebelum mencoba lagi.");
+                    throw new Error("Batas wawasan AI tercapai. Tunggu 1 menit.");
                 }
-
-                // Add a small delay (1.5 seconds) before trying the next model to avoid hitting burst limits again
                 await new Promise(resolve => setTimeout(resolve, 1500));
                 continue;
             }
 
             if (!response.ok) {
                 const errorText = await response.text();
-                // If 5xx error, also try next model
                 if (response.status >= 500) {
-                    logger.warn(`Model ${model} server error (${response.status}). Switch to next model.`, 'OpenRouter');
+                    logger.warn(`Model ${model} 5xx.`, 'OpenRouter');
                     lastError = new Error(`Server error ${response.status} from ${model}`);
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     continue;
                 }
-                throw new Error(`OpenRouter API Error (${model}): ${response.status} ${response.statusText} - ${errorText}`);
+                throw new Error(`OpenRouter Error (${model}): ${response.status} - ${errorText}`);
             }
 
-            // If success, return immediately
             return await response.json();
 
         } catch (error: unknown) {
             logger.warn(`Failed with model ${model}:`, 'OpenRouter', error);
             lastError = error instanceof Error ? error : new Error(String(error));
-            // If it's a timeout or network error, continue to next model
             if (lastError.name === 'AbortError' || lastError.message.includes('fetch')) {
                 continue;
             }
-            // If it's a critical application error (like invalid key), maybe stop? 
-            // But generally safer to try all.
         }
     }
 
-    // If we're here, all models failed
     logger.error("All AI models failed.", lastError || 'OpenRouter', lastError);
     throw new Error("Layanan AI sedang sibuk atau tidak tersedia. Silakan coba beberapa saat lagi.");
 }

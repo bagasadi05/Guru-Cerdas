@@ -1,13 +1,16 @@
 import { FormState } from '../types';
+import { normalizeSoalEvaluasi } from '../../../../services/modulAjarAiGenerator';
 
 export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: number, logoBase64: string): string => {
   // Helper to sanitize markdown markers like **, *, __ and convert to HTML or clean up
-  const sanitize = (text: string): string => {
+  const sanitize = (text: any): string => {
     if (!text) return '';
+    if (typeof text !== 'string') text = String(text);
     return text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **bold** to <strong>
       .replace(/\*(.*?)\*/g, '<em>$1</em>') // Convert *italic* to <em>
       .replace(/\*\*/g, '') // Clean any stray double asterisks
+      .replace(/^[-*]\s+/gm, '• ') // Convert markdown list dash/star to bullet char
       .replace(/❖/g, '-') // Replace unicode diamonds which break in MS Word
       .trim();
   };
@@ -39,7 +42,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
     if (typeof steps === 'string') return steps;
     if (!Array.isArray(steps) || steps.length === 0) return '<div>-</div>';
     return steps.map((s, idx) => {
-      const faseRaw = s.fase || s.nama_fase || '';
+      const faseRaw = s.fase || s.nama_fase || s.name || '';
       // Clean prefix if starts with "Langkah X:"
       const cleanedFase = faseRaw.replace(/^langkah\s*\d+\s*:\s*/i, '').trim();
       
@@ -88,6 +91,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
   // Helper to split evaluation questions and add write-in dotted lines
   const formatEvaluasiContent = (text: string): string => {
     if (!text) return '<p>-</p>';
+    text = normalizeSoalEvaluasi(text);
     const cleaned = sanitize(text);
     // Split by number patterns like 1. , 2. , 3. or newlines
     let questions = cleaned.split(/(?=\d+\.\s)/g);
@@ -116,7 +120,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
     <div style="font-family: 'Times New Roman', Times, serif; line-height: 1.5; color: #000000; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
 
       <!-- COVER PAGE -->
-      <div style="text-align: center; margin-bottom: 20px; page-break-after: always; clear: both;">
+      <div style="text-align: center; margin-bottom: 20px; page-break-after: always; clear: both; content-visibility: auto;">
         <div style="padding-top: 10px;">
           <h1 style="font-size: 16pt; margin: 0; font-weight: bold; font-family: 'Times New Roman';">PERANGKAT PEMBELAJARAN</h1>
           <h1 style="font-size: 16pt; margin: 5px 0 0 0; font-weight: bold; font-family: 'Times New Roman';">KURIKULUM MERDEKA</h1>
@@ -166,11 +170,11 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         
         <!-- INFORMASI UMUM -->
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #00b050; color: #ffffff; padding: 10px; font-weight: bold; border: 2px solid #000000; font-size: 12pt; text-align: center;">INFORMASI UMUM</td>
+          <td style="background-color: #0d6b3e; color: #ffffff; padding: 10px; font-weight: bold; border: 2px solid #000000; font-size: 12pt; text-align: center;">INFORMASI UMUM</td>
         </tr>
         
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">A. IDENTITAS MODUL</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">A. IDENTITAS MODUL</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000;">
@@ -191,7 +195,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         </tr>
 
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">B. CAPAIAN PEMBELAJARAN (CP)</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">B. CAPAIAN PEMBELAJARAN (CP)</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000; text-align: justify; line-height: 1.5;">
@@ -200,7 +204,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         </tr>
 
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">C. KOMPETENSI AWAL & PROFIL PELAJAR PANCASILA</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">C. KOMPETENSI AWAL & PROFIL PELAJAR PANCASILA</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000;">
@@ -227,7 +231,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         </tr>
 
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">D. PENDEKATAN & MODEL PEMBELAJARAN</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">D. PENDEKATAN & MODEL PEMBELAJARAN</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000;">
@@ -241,11 +245,11 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
 
         <!-- KOMPONEN INTI -->
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #00b050; color: #ffffff; padding: 10px; font-weight: bold; border: 2px solid #000000; font-size: 12pt; text-align: center;">KOMPONEN INTI</td>
+          <td style="background-color: #0d6b3e; color: #ffffff; padding: 10px; font-weight: bold; border: 2px solid #000000; font-size: 12pt; text-align: center;">KOMPONEN INTI</td>
         </tr>
 
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">A. TUJUAN PEMBELAJARAN</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">A. TUJUAN PEMBELAJARAN</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000;">
@@ -256,7 +260,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         </tr>
 
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">B. PEMAHAMAN BERMAKNA</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">B. PEMAHAMAN BERMAKNA</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000;">
@@ -267,7 +271,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         </tr>
 
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">C. PERTANYAAN PEMANTIK</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">C. PERTANYAAN PEMANTIK</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000;">
@@ -278,7 +282,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         </tr>
 
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">D. SKENARIO KEGIATAN PEMBELAJARAN</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">D. SKENARIO KEGIATAN PEMBELAJARAN</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000;">
@@ -307,7 +311,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         </tr>
 
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">E. RANCANGAN ASESMEN</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">E. RANCANGAN ASESMEN</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000;">
@@ -364,7 +368,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         ` : ''}
 
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">F. KEGIATAN PENGAYAAN DAN REMEDIAL</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">F. KEGIATAN PENGAYAAN DAN REMEDIAL</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000;">
@@ -385,11 +389,11 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
 
         <!-- LAMPIRAN SECTION -->
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #00b050; color: #ffffff; padding: 10px; font-weight: bold; border: 2px solid #000000; font-size: 12pt; text-align: center;">LAMPIRAN PERANGKAT AJAR</td>
+          <td style="background-color: #0d6b3e; color: #ffffff; padding: 10px; font-weight: bold; border: 2px solid #000000; font-size: 12pt; text-align: center;">LAMPIRAN PERANGKAT AJAR</td>
         </tr>
         
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">A. LEMBAR KERJA PESERTA DIDIK (LKPD) & LEMBAR EVALUASI</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">A. LEMBAR KERJA PESERTA DIDIK (LKPD) & LEMBAR EVALUASI</td>
         </tr>
         <tr>
           <td style="padding: 15px; border: 1px solid #000000;">
@@ -424,7 +428,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
             </div>
 
             <!-- EXCELLENT EVALUATION SHEET -->
-            <div style="border: 2px dashed #000000; padding: 20px; border-radius: 8px; page-break-inside: avoid;">
+            <div style="border: 2px dashed #000000; padding: 20px; border-radius: 8px; page-break-before: always; page-break-inside: avoid;">
               <h3 style="text-align: center; margin: 0 0 15px 0; font-size: 12pt; font-weight: bold; text-decoration: underline;">LEMBAR EVALUASI PENGETAHUAN</h3>
               
               <!-- Student Header Block -->
@@ -441,11 +445,21 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
               </div>
             </div>
 
+            <!-- KUNCI JAWABAN — only rendered in teacher document -->
+            ${data.kunciJawaban && Array.isArray(data.kunciJawaban) && data.kunciJawaban.length > 0 ? `
+            <div style="margin-top: 15px; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #cccccc; border-radius: 4px; page-break-inside: avoid;">
+              <p style="margin: 0 0 6px 0; font-weight: bold; font-size: 10pt;">KUNCI JAWABAN</p>
+              <ol style="margin: 0; padding-left: 20px; font-size: 10pt; line-height: 1.6;">
+                ${data.kunciJawaban.map((k: string) => `<li>${sanitize(k)}</li>`).join('')}
+              </ol>
+            </div>
+            ` : ''}
+
           </td>
         </tr>
         
         <tr style="page-break-inside: avoid;">
-          <td style="background-color: #ffff00; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">B. DAFTAR PUSTAKA & REFERENSI</td>
+          <td style="background-color: #f5f0d0; color: #000000; padding: 8px; font-weight: bold; border: 1px solid #000000;">B. DAFTAR PUSTAKA & REFERENSI</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #000000; font-size: 11pt; line-height: 1.5;">
@@ -510,6 +524,7 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
 
   const formatEvaluasiContent = (text: string): string => {
     if (!text) return '<p>-</p>';
+    text = normalizeSoalEvaluasi(text);
     const cleaned = sanitize(text);
     let questions = cleaned.split(/(?=\d+\.\s)/g);
     if (questions.length <= 1) {

@@ -59,16 +59,18 @@ export const modulAjarAiService = {
 
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/modul-ajar-ai-worker`;
       
-      // Fire and forget (jangan di-await jika kita tak ingin memblokir UI)
+      // Fire and forget (catch network/CORS error gracefully)
       fetch(url, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         }
-      }).catch(e => console.warn('Worker trigger warning:', e));
-    } catch (e) {
-      console.warn('Worker trigger warning:', e);
+      }).catch(() => {
+        // Edge function worker optional trigger; background worker or fallback will handle queue
+      });
+    } catch {
+      // Ignored
     }
   },
 

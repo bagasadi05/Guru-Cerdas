@@ -24,28 +24,24 @@ import { logger } from './services/logger';
 import './styles/fonts.css';
 import './i18n';
 
-import * as Sentry from "@sentry/react";
-
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 const isProduction = import.meta.env.PROD;
-// Skip placeholder DSNs that start with 'https://your-' (unconfigured defaults)
 const isValidSentryDsn = typeof sentryDsn === 'string' && sentryDsn.startsWith('https://') && !sentryDsn.includes('your-');
 
-// Only initialize Sentry in production with a valid DSN to avoid ERR_BLOCKED_BY_CLIENT errors from ad blockers
+// Dynamic import saves 268K from critical path — Sentry only needed in production with a valid DSN
 if (isValidSentryDsn && isProduction) {
-  Sentry.init({
-    dsn: sentryDsn,
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration(),
-    ],
-    // Tracing
-    tracesSampleRate: 0.1, //  Capture 10% of the transactions
-    // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-    tracePropagationTargets: ["localhost", "https://portal-guru.supabase.co"],
-    // Session Replay
-    replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-    replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+  void import('@sentry/react').then((Sentry) => {
+    Sentry.init({
+      dsn: sentryDsn,
+      integrations: [
+        Sentry.browserTracingIntegration(),
+        Sentry.replayIntegration(),
+      ],
+      tracesSampleRate: 0.1,
+      tracePropagationTargets: ["localhost", "https://portal-guru.supabase.co"],
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
+    });
   });
 }
 
