@@ -21,6 +21,7 @@ import { UploadProgressProvider } from './ui/PerformanceIndicators';
 import { UndoToastProvider } from './ui/UndoToast';
 import { KeyboardShortcutsProvider } from './advanced-features/KeyboardShortcutsProvider';
 import ErrorBoundary from './ErrorBoundary';
+import { AnimationProvider } from './AnimationProvider';
 import { initQueryPersistence } from '../services/queryClient';
 
 interface AppProvidersProps {
@@ -60,7 +61,9 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
                         <UploadProgressProvider>
                           <UndoToastProvider>
                             <KeyboardShortcutsProvider>
-                              {children}
+                              <AnimationProvider>
+                                {children}
+                              </AnimationProvider>
                             </KeyboardShortcutsProvider>
                           </UndoToastProvider>
                         </UploadProgressProvider>

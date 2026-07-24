@@ -209,8 +209,18 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
 
     // Calculate popup position to stay within viewport
     const getPopupStyle = (): React.CSSProperties => {
-        if (!targetRect) {
-            return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
+        if (isMobile || !targetRect) {
+            return {
+                position: 'fixed',
+                bottom: '76px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 'calc(100vw - 32px)',
+                maxWidth: '380px',
+                zIndex: 10000,
+            };
         }
 
         const popupWidth = 360;
@@ -237,7 +247,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
         // Clamp vertical position
         top = Math.max(padding, Math.min(top, viewportHeight - popupHeight - padding));
 
-        return { top, left };
+        return { position: 'absolute', top, left, width: '360px', zIndex: 10000 };
     };
 
     return createPortal(
@@ -248,37 +258,37 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
             {/* Spotlight on current element */}
             {targetRect && (
                 <div
-                    className="absolute rounded-xl ring-4 ring-indigo-500 ring-offset-4 ring-offset-transparent shadow-[0_0_0_9999px_rgba(15,23,42,0.85)] transition-all duration-500 ease-out"
+                    className="fixed rounded-xl ring-4 ring-indigo-500 ring-offset-4 ring-offset-transparent shadow-[0_0_0_9999px_rgba(15,23,42,0.85)] transition-all duration-500 ease-out pointer-events-none z-[9999]"
                     style={{
-                        top: targetRect.top - 8,
-                        left: targetRect.left - 8,
-                        width: targetRect.width + 16,
-                        height: targetRect.height + 16,
+                        top: targetRect.top - 6,
+                        left: targetRect.left - 6,
+                        width: targetRect.width + 12,
+                        height: targetRect.height + 12,
                     }}
                 />
             )}
 
             {/* Tour popup */}
             <div
-                className="absolute bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700 p-6 w-[360px] transition-all duration-500 ease-out animate-fade-in"
+                className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700/80 p-5 sm:p-6 transition-all duration-300 ease-out animate-fade-in"
                 style={getPopupStyle()}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 shrink-0">
                             {step.icon}
                         </div>
-                        <div>
-                            <h3 className="font-bold text-slate-800 dark:text-white text-base">{step.title}</h3>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className="min-w-0">
+                            <h3 className="font-bold text-slate-800 dark:text-white text-sm sm:text-base truncate">{step.title}</h3>
+                            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                                 {currentStep + 1} / {tourSteps.length}
                             </span>
                         </div>
                     </div>
                     <button type="button"
                         onClick={handleSkip}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
                         aria-label="Lewati tutorial"
                     >
                         <XIcon className="w-4 h-4" />
@@ -286,7 +296,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                 </div>
 
                 {/* Content */}
-                <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
                     {step.description}
                 </p>
 
@@ -322,17 +332,17 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                 </div>
 
                 {/* Step dots - clickable */}
-                <div className="flex gap-1 mb-4 flex-wrap justify-center">
+                <div className="flex gap-1.5 mb-4 flex-wrap justify-center max-h-12 overflow-hidden">
                     {tourSteps.map((_, index) => (
                         <button type="button"
                             key={index}
                             onClick={() => handleGoTo(index)}
-                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            className={`h-2 rounded-full transition-all duration-300 ${
                                 index === currentStep
-                                    ? 'bg-indigo-500 w-4'
+                                    ? 'bg-indigo-500 w-5'
                                     : index < currentStep
-                                    ? 'bg-indigo-300 dark:bg-indigo-700'
-                                    : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                    ? 'bg-indigo-300 dark:bg-indigo-700 w-2'
+                                    : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 w-2'
                             }`}
                             aria-label={`Langkah ${index + 1}: ${tourSteps[index].title}`}
                         />
@@ -344,7 +354,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                     <button type="button"
                         onClick={handlePrev}
                         disabled={currentStep === 0}
-                        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <ChevronLeftIcon className="w-4 h-4" />
                         Kembali
@@ -371,17 +381,17 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
 
             {/* Welcome message for first step */}
             {currentStep === 0 && (
-                <div className="absolute top-8 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-bounce">
-                    <SparklesIcon className="w-5 h-5" />
-                    <span className="font-bold text-sm sm:text-base">Kenali Semua Menu Portal Guru!</span>
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-full shadow-2xl flex items-center gap-2 sm:gap-3 max-w-[calc(100vw-32px)] z-[10001] animate-bounce">
+                    <SparklesIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-amber-300" />
+                    <span className="font-bold text-xs sm:text-base tracking-wide text-center truncate">Kenali Semua Menu Portal Guru!</span>
                 </div>
             )}
 
             {/* Completion celebration for last step */}
             {isLastStep && (
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
-                    <RocketIcon className="w-5 h-5" />
-                    <span className="font-bold text-sm">Anda sudah mengenal semua menu!</span>
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-full shadow-2xl flex items-center gap-2 sm:gap-3 max-w-[calc(100vw-32px)] z-[10001]">
+                    <RocketIcon className="w-5 h-5 shrink-0" />
+                    <span className="font-bold text-xs sm:text-sm text-center">Anda sudah mengenal semua menu!</span>
                 </div>
             )}
         </div>,

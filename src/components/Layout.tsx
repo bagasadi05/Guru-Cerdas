@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from './ui/PageTransition';
 import { supabase } from '../services/supabase';
-import GreetingRobot from './GreetingRobot';
 import { useOnboarding, OnboardingTour } from './ui/OnboardingTour';
 import { InteractiveTutorialProvider, TutorialPicker } from './ui/InteractiveTutorial';
 import { SearchTrigger } from './SearchTrigger';
@@ -102,12 +101,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return false;
   });
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const [showGreeting, setShowGreeting] = useState(() => {
-    if (typeof sessionStorage !== 'undefined') {
-      return !sessionStorage.getItem('greeted');
-    }
-    return false;
-  });
 
   // Track screen size for mobile navbar visibility using matchMedia (perfect sync with CSS)
   useEffect(() => {
@@ -139,12 +132,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // Mobile state updated
   }, [isMobile]);
 
-  const handleGreetingEnd = () => {
-    setShowGreeting(false);
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem('greeted', 'true');
-    }
-  };
+
 
   const location = useLocation();
 
@@ -169,10 +157,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[100px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-slate-500/5 rounded-full blur-[100px]"></div>
       </div>
-
-      {showGreeting && user && (
-        <GreetingRobot userName={user.name} onAnimationEnd={handleGreetingEnd} />
-      )}
 
       {/* Onboarding Tour managed globally via TourProvider */}
 

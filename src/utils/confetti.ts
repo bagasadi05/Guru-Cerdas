@@ -29,7 +29,7 @@ function runConfetti(callback: (confetti: Confetti) => void): void {
 }
 
 /**
- * Check if reduced motion is enabled
+ * Check if reduced motion is enabled or device is low-performance
  */
 function shouldSkipConfetti(): boolean {
     if (typeof document === 'undefined') return true;

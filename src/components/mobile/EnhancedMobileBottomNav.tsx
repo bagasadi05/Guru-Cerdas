@@ -60,9 +60,9 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
   return (
     <nav
       className="mobile-bottom-nav fixed bottom-0 left-0 right-0 w-full z-30
-                bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl
-                border-t border-slate-200/50 dark:border-slate-700/50 
-                shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
+                bg-white dark:bg-slate-900
+                border-t border-slate-200 dark:border-slate-800 
+                shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.4)]"
       style={{
         minHeight: '64px',
         paddingBottom: 'env(safe-area-inset-bottom)',

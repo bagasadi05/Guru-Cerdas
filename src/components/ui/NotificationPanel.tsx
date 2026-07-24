@@ -147,7 +147,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
 
             {/* Notification Panel */}
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-fade-in">
+                <div className="absolute right-0 top-full mt-2 w-[calc(100vw-32px)] sm:w-96 max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-fade-in">
                     {/* Header */}
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <h3 className="font-semibold text-gray-900 dark:text-white">Notifikasi</h3>

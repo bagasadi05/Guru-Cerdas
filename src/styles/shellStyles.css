@@ -5,33 +5,65 @@
  */
 
 /* ============================================
-   GLASSMORPHISM UTILITIES
+   PERFORMANCE OPTIMIZATION OVERRIDES
+   Disables heavy GPU backdrop-blur rendering & continuous animations across the app.
+   ============================================ */
+
+[class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Ensure mobile bottom navigation and sidebars are 100% solid opaque */
+.mobile-bottom-nav {
+  background-color: #ffffff !important;
+}
+
+.dark .mobile-bottom-nav {
+  background-color: #0f172a !important;
+}
+
+:root:not(.dark) .bg-white\/70,
+:root:not(.dark) .bg-white\/80,
+:root:not(.dark) .bg-white\/90,
+:root:not(.dark) .bg-white\/95,
+:root:not(.dark) .bg-white\/98 {
+  background-color: #ffffff !important;
+}
+
+.dark [class*="dark:bg-slate-900"],
+.dark [class*="dark:bg-slate-800"] {
+  background-color: #0f172a !important;
+}
+
+/* ============================================
+   GLASSMORPHISM UTILITIES (HIGH PERFORMANCE)
    ============================================ */
 
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .dark .glass {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .dark .glass-card {
-  background: rgba(30, 41, 59, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 /* ============================================
@@ -78,24 +110,24 @@
    ============================================ */
 
 .login-card {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.96);
   border-radius: 24px;
   padding: 40px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   width: 100%;
   max-width: 420px;
   position: relative;
   z-index: 10;
-  animation: form-entry 1s ease-out;
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  animation: form-entry 0.4s ease-out;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .dark .login-card {
-  background: rgba(31, 41, 55, 0.6);
+  background: rgba(30, 41, 59, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
 }
 
 @keyframes form-entry {
@@ -344,9 +376,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background-color: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background-color: rgba(30, 41, 59, 0.98);
 }
 
 .striped-table tbody tr:nth-child(even) {
@@ -354,7 +384,7 @@
 }
 
 /* ============================================
-   COSMIC AURORA BACKGROUND
+   COSMIC AURORA BACKGROUND (HIGH PERFORMANCE)
    ============================================ */
 
 .cosmic-bg {
@@ -369,35 +399,32 @@
 .cosmic-bg::after {
   content: '';
   position: absolute;
-  width: 1000px;
-  height: 1000px;
+  width: 500px;
+  height: 500px;
   border-radius: 50%;
-  filter: blur(100px);
-  will-change: transform;
   z-index: 0;
   pointer-events: none;
+  opacity: 0.15;
 }
 
 .cosmic-bg::before {
-  top: 20%;
-  left: 30%;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.2), transparent 60%);
-  animation: aurora-glow 25s infinite linear alternate;
+  top: -100px;
+  left: 20%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.2), transparent 70%);
 }
 
 .cosmic-bg::after {
-  top: 60%;
-  left: 70%;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.15), transparent 60%);
-  animation: aurora-glow 35s infinite linear alternate-reverse;
+  bottom: -100px;
+  right: 20%;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.2), transparent 70%);
 }
 
 .dark .cosmic-bg::before {
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.3), transparent 60%);
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.25), transparent 70%);
 }
 
 .dark .cosmic-bg::after {
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.2), transparent 60%);
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.2), transparent 70%);
 }
 
 #root {
@@ -437,7 +464,7 @@
 .schedule-card-jumat   { border-left-color: #f43f5e; }
 
 /* ============================================
-   HOLOGRAPHIC ORB (Login/Role/Tasks pages)
+   HOLOGRAPHIC ORB (LIGHTWEIGHT STATIC GRADIENT)
    ============================================ */
 
 .holographic-orb-container {
@@ -452,27 +479,18 @@
 .holographic-orb {
   position: relative;
   width: 100%; height: 100%;
-  transform-style: preserve-3d;
-  animation: orb-rotate 30s infinite linear;
-}
-
-@keyframes orb-rotate {
-  from { transform: rotateY(0deg) rotateX(10deg); }
-  to   { transform: rotateY(360deg) rotateX(10deg); }
 }
 
 .orb-glow {
   position: absolute;
   top: 50%; left: 50%;
-  width: 150%; height: 150%;
+  width: 120%; height: 120%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(167, 139, 250, 0.2) 0%, rgba(167, 139, 250, 0) 60%);
-  filter: blur(20px);
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 70%);
 }
 
 .dark .orb-glow {
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.4) 0%, rgba(124, 58, 237, 0) 60%);
-  filter: blur(30px);
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.25) 0%, transparent 70%);
 }
 
 .orb-core {
@@ -480,14 +498,9 @@
   width: 100%; height: 100%;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), transparent 50%),
-    radial-gradient(circle at 70% 80%, rgba(129, 140, 248, 0.5), transparent 60%);
-  animation: core-pulse 8s infinite ease-in-out alternate;
-  opacity: 0.6;
-}
-
-@keyframes core-pulse {
-  to { transform: scale(1.05); opacity: 0.8; }
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 60%),
+    radial-gradient(circle at 70% 80%, rgba(129, 140, 248, 0.4), transparent 70%);
+  opacity: 0.5;
 }
 
 .orb-ring {
@@ -496,33 +509,21 @@
   width: 100%; height: 100%;
   border: 1px solid;
   border-radius: 50%;
-  opacity: 0.3;
+  opacity: 0.25;
 }
 
 .orb-ring-1 {
   border-color: #818cf8;
   transform: rotateX(70deg) scale(1.1);
-  animation: ring-spin-1 12s infinite linear;
 }
 
 .orb-ring-2 {
   border-color: #60a5fa;
   transform: rotateY(70deg) scale(1.2);
-  animation: ring-spin-2 15s infinite linear reverse;
-}
-
-@keyframes ring-spin-1 {
-  from { transform: rotateZ(0deg) rotateX(70deg) scale(1.1); }
-  to   { transform: rotateZ(360deg) rotateX(70deg) scale(1.1); }
-}
-
-@keyframes ring-spin-2 {
-  from { transform: rotateZ(0deg) rotateY(70deg) scale(1.2); }
-  to   { transform: rotateZ(360deg) rotateY(70deg) scale(1.2); }
 }
 
 /* ============================================
-   MODAL GLOW BORDER
+   MODAL GLOW BORDER (HIGH PERFORMANCE)
    ============================================ */
 
 .modal-glow-border {
@@ -535,14 +536,7 @@
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   border-radius: 18px;
-  border: 1px solid transparent;
-  background: conic-gradient(from var(--angle), #8b5cf6, #3b82f6, #ec4899, #8b5cf6) border-box;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  animation: border-spin 4s linear infinite;
-  opacity: 0.8;
+  border: 1px solid rgba(139, 92, 246, 0.3);
   pointer-events: none;
 }
 

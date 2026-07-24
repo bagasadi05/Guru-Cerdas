@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useSound } from '../../hooks/useSound';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { componentStyles } from '../../styles/designTokens';
+import { useIsLowPerformanceDevice } from '../../hooks/useReducedMotion';
 
 interface Ripple {
   x: number;
@@ -20,6 +21,7 @@ let rippleId = 0;
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'default', children, onClick, ...props }, ref) => {
     const { playClick } = useSound();
+    const isLowPerf = useIsLowPerformanceDevice();
     const [ripples, setRipples] = useState<Ripple[]>([]);
 
     const baseClasses = "relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 ease-out min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed transform-gpu active:scale-[0.98]";

@@ -77,22 +77,19 @@ const JurnalMengajarPage: React.FC = () => {
     schedule_id?: string;
   } | undefined>(undefined);
 
-  // 1) Active classes (for filter dropdown).
+  // 1) Active classes (all active classes in the school for journal entry & filter).
   const { data: classes = [] } = useQuery<ClassOption[]>({
-    queryKey: ['classes', 'active_for_journal_filter', user?.id],
+    queryKey: ['classes', 'active_for_journal_filter'],
     queryFn: async () => {
-      if (!user) return [];
       const { data, error } = await supabase
         .from('classes')
         .select('id, name')
         .is('deleted_at', null)
         .eq('is_archived', false)
-        .eq('user_id', user.id)
         .order('name');
       if (error) throw error;
       return (data || []) as ClassOption[];
     },
-    enabled: !!user,
   });
 
   // 2) Journals.

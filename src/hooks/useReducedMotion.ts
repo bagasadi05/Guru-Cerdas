@@ -124,7 +124,25 @@ export function useReducedMotion() {
     const setReducedMotion = useCallback((value: boolean) => {
         setUserPreference(value);
         localStorage.setItem(REDUCED_MOTION_KEY, String(value));
+        if (!value) {
+            document.documentElement.classList.remove('reduce-motion');
+        } else {
+            document.documentElement.classList.add('reduce-motion');
+        }
     }, []);
+
+    // Helper to get optimized animation props for external use
+    const getOptimizedAnimationProps = useCallback(() => {
+        if (shouldReduceMotion) {
+            return {
+                initial: { opacity: 1 },
+                animate: { opacity: 1 },
+                exit: { opacity: 1 },
+                transition: { duration: 0 }
+            };
+        }
+        return {};
+    }, [shouldReduceMotion]);
 
     const resetToSystemPreference = useCallback(() => {
         setUserPreference(null);

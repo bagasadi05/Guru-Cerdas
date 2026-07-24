@@ -89,33 +89,38 @@ export const useSound = () => {
 
     // Success feedback with sound and haptic
     const playSuccess = useCallback(() => {
+        if (isLowPerf) { hapticSuccess(); return; }
         playSuccessSound();
         hapticSuccess();
-    }, []);
+    }, [isLowPerf]);
 
     // Error feedback with sound and haptic
     const playError = useCallback(() => {
+        if (isLowPerf) { hapticError(); return; }
         playErrorSound();
         hapticError();
-    }, []);
+    }, [isLowPerf]);
 
     // Notification sound (ding-dong) with haptic
     const playNotification = useCallback(() => {
+        if (isLowPerf) { hapticMedium(); return; }
         playNotificationSound();
         hapticMedium();
-    }, []);
+    }, [isLowPerf]);
 
     // Message received sound with haptic
     const playMessage = useCallback(() => {
+        if (isLowPerf) { hapticLight(); return; }
         playMessageSound();
         hapticLight();
-    }, []);
+    }, [isLowPerf]);
 
     // Reminder sound with haptic
     const playReminder = useCallback(() => {
+        if (isLowPerf) { hapticHeavy(); return; }
         playReminderSound();
         hapticHeavy();
-    }, []);
+    }, [isLowPerf]);
 
     return {
         playClick,
