@@ -4,26 +4,11 @@ import { ClassRow, StudentRow, AcademicRecordRow, ViolationRow } from '../types'
 import { useAuth } from '../../../../hooks/useAuth';
 import { getAssignedSubjects, TeacherClassAssignmentRow } from '../../../../services/teacherAssignments';
 import { dedupeAcademicRecords } from '../../../../utils/academicRecordUtils';
+import { SUBJECTS, mergeSubjectLists } from '../../../../constants/subjects';
 
-const DEFAULT_SUBJECT_OPTIONS = [
-    'TQA',
-    'Bahasa Indonesia',
-    'Matematika',
-    'IPAS',
-    'Pancasila',
-    'Akidah',
-    'Fikih',
-    'Bahasa Arab',
-    'Bahasa Jawa',
-    'Bahasa Inggris',
-    "Qur'an Hadits",
-    'SKI',
-    'PJOK',
-    'TIK',
-    'Seni Budaya',
-    'Pramuka',
-    'Ekstra'
-];
+// Dulu daftar ini disalin manual di sini. Salinannya sempat melenceng dari
+// src/constants/subjects.ts dan jadi salah satu sumber beda nama mapel.
+const DEFAULT_SUBJECT_OPTIONS = SUBJECTS;
 
 export const useMassInputData = (selectedClass: string, subject?: string, assessmentName?: string, mode?: string, semesterId?: string) => {
     const { user } = useAuth();
@@ -100,8 +85,9 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             if (!user) return [];
             const assignedSubjects = getAssignedSubjects(teacherAssignments, selectedClass || null, semesterId || null);
             
-            // Always include the default subjects, but put assigned subjects first, and remove duplicates
-            const combinedSubjects = Array.from(new Set([...assignedSubjects, ...DEFAULT_SUBJECT_OPTIONS]));
+            // Mapel dari penugasan guru adalah teks bebas, jadi dikanonikkan
+            // dulu supaya tidak muncul dua kali dengan ejaan berbeda.
+            const combinedSubjects = mergeSubjectLists(assignedSubjects, DEFAULT_SUBJECT_OPTIONS);
             
             if (combinedSubjects.length > 0) {
                 return combinedSubjects;

@@ -3,6 +3,7 @@ import { BookOpen, Loader2, Plus, Trash2, UserCheck, UserPlus, Users } from 'luc
 import { supabase } from '../../../services/supabase';
 import { useToast } from '../../../hooks/useToast';
 import { normalizeSubjectName, TeacherClassAssignmentRow } from '../../../services/teacherAssignments';
+import { SUBJECTS, toCanonicalSubject } from '../../../constants/subjects';
 
 type TeacherOption = {
     user_id: string;
@@ -27,25 +28,9 @@ type SemesterOption = {
 
 type AssignmentRole = 'homeroom' | 'subject_teacher' | 'assistant';
 
-const DEFAULT_SUBJECT_OPTIONS = [
-    'TQA',
-    'Bahasa Indonesia',
-    'Matematika',
-    'IPAS',
-    'Pancasila',
-    'Akidah',
-    'Fikih',
-    'Bahasa Arab',
-    'Bahasa Jawa',
-    'Bahasa Inggris',
-    "Qur'an Hadits",
-    'SKI',
-    'PJOK',
-    'TIK',
-    'Seni Budaya',
-    'Pramuka',
-    'Ekstra'
-];
+// Dulu daftar ini disalin manual di sini. Salinannya sempat melenceng dari
+// src/constants/subjects.ts dan jadi salah satu sumber beda nama mapel.
+const DEFAULT_SUBJECT_OPTIONS = SUBJECTS;
 
 const getRoleLabel = (role: AssignmentRole) => {
     if (role === 'homeroom') return 'Wali Kelas';
@@ -250,10 +235,13 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
             return;
         }
 
-        const trimmedSubject = subjectName.trim();
+        // Kolom "Mapel lain" adalah input bebas, jadi hasilnya dikanonikkan
+        // dulu ("MATE" -> "Matematika") supaya tidak lahir varian nama baru.
+        // Nama yang benar-benar baru tetap lolos apa adanya.
+        const trimmedSubject = toCanonicalSubject(subjectName);
         const subjectNames = Array.from(new Map(
             [...selectedSubjects, trimmedSubject]
-                .map((subject) => subject.trim())
+                .map((subject) => toCanonicalSubject(subject))
                 .filter(Boolean)
                 .map((subject) => [normalizeSubjectName(subject), subject])
         ).values());

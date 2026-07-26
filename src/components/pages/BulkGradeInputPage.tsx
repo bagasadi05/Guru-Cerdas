@@ -23,7 +23,7 @@ import { EmptyGradesConfirmation, SaveSuccessModal, ClearAllConfirmation } from 
 import { useSemester } from '../../contexts/SemesterContext';
 import { SemesterLockedBanner } from '../ui/SemesterSelector';
 import { getAssignmentsForClass, getAssignedSubjects, hasHomeroomAssignment, TeacherClassAssignmentRow } from '../../services/teacherAssignments';
-import { SUBJECTS } from '../../constants/subjects';
+import { SUBJECTS, mergeSubjectLists, toCanonicalSubject } from '../../constants/subjects';
 import { AIPasteModal } from './bulk-grade-input/components/AIPasteModal';
 import { SettingsCard } from './bulk-grade-input/components/SettingsCard';
 import { StatsPanel } from './bulk-grade-input/components/StatsPanel';
@@ -245,19 +245,17 @@ const BulkGradeInputPage: React.FC = () => {
         setIsScoresDirty(false);
     }, [students, existingGrades]);
 
-    const lastContextKey = useRef<string>('');
+    const [lastContextKey, setLastContextKey] = useState<string>('');
     const contextKey = `${selectedClass}-${selectedSubject}-${assessmentName}-${selectedSemester}`;
 
-    useEffect(() => {
-        // Initialize grades ONLY when context changes AND data is available.
-        // This prevents any accidental resets when data refetches in the background.
-        if (students && existingGrades !== undefined) {
-            if (lastContextKey.current !== contextKey) {
-                initializeGrades();
-                lastContextKey.current = contextKey;
-            }
-        }
-    }, [students, existingGrades, contextKey, initializeGrades]);
+    // Initialize grades ONLY when context changes AND data is available.
+    // This prevents any accidental resets when data refetches in the background.
+    // Adjusted during render so the freshly loaded grades are committed in the
+    // same pass, instead of flashing the previous class's scores for one frame.
+    if (students && existingGrades !== undefined && lastContextKey !== contextKey) {
+        setLastContextKey(contextKey);
+        initializeGrades();
+    }
 
     // Warn before unload if there are unsaved changes
     useEffect(() => {
@@ -309,9 +307,12 @@ const BulkGradeInputPage: React.FC = () => {
         if (activeClassRecord?.user_id === user.id) return true;
         return hasHomeroomAssignment(teacherAssignments, selectedClass || null, selectedSemester || null);
     }, [activeClassRecord?.user_id, selectedClass, selectedSemester, teacherAssignments, user, isAdmin]);
+    // Nama mapel dari penugasan guru adalah teks bebas, jadi dikanonikkan dulu
+    // supaya "MATEMATIKA" tidak muncul berdampingan dengan "Matematika" dan
+    // memecah nilai jadi dua kelompok yang tidak saling terbaca.
     const availableSubjects = useMemo(() => {
         const defaultSubjectsToUse = canUseDefaultSubjects ? SUBJECTS : [];
-        return Array.from(new Set([...assignedSubjects, ...defaultSubjectsToUse]));
+        return mergeSubjectLists(assignedSubjects, defaultSubjectsToUse);
     }, [assignedSubjects, canUseDefaultSubjects]);
 
     // Filter kelas hanya yang diampu guru (punya assignment ATAU adalah wali kelas)
@@ -644,7 +645,8 @@ const BulkGradeInputPage: React.FC = () => {
         const draft = restoreDraft();
         if (draft) {
             setGrades(draft.grades || []);
-            setSelectedSubject(draft.selectedSubject || availableSubjects[0] || SUBJECTS[0]);
+            // Draft lama bisa menyimpan nama mapel versi sebelum normalisasi.
+            setSelectedSubject(toCanonicalSubject(draft.selectedSubject) || availableSubjects[0] || SUBJECTS[0]);
             setAssessmentName(draft.assessmentName || 'Ulangan Harian');
             setIsScoresDirty(true);
             toast.success('Draft berhasil dipulihkan');
