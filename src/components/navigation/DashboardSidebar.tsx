@@ -1,34 +1,32 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../ui/MotionComponents';
 import { LogoutIcon } from '../Icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useSound } from '../../hooks/useSound';
 import { getDashboardNavSections } from './dashboardMenuConfig';
+import { EASY_MODE_PATHS } from './menuRegistry';
 import { useAccessibility } from '../ui/AccessibilityFeatures';
 
 interface DashboardSidebarProps {
   isAdmin: boolean;
-  isHomeroomTeacher: boolean;
   onLinkClick?: () => void;
 }
 
-const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, isHomeroomTeacher, onLinkClick }) => {
+const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, userRole } = useAuth();
   const { playClick } = useSound();
   const { isEasyMode } = useAccessibility();
-  const navSections = getDashboardNavSections(isAdmin, userRole, isHomeroomTeacher, isEasyMode);
+  const navSections = useMemo(
+    () => getDashboardNavSections({ isAdmin, role: userRole }),
+    [isAdmin, userRole],
+  );
   const [showAllEasyMenu, setShowAllEasyMenu] = useState(false);
 
-  const easyModePaths = useMemo(() => new Set([
-    '/dashboard',
-    '/input-massal',
-    '/siswa',
-    '/absensi',
-  ]), []);
+  const easyModePaths = EASY_MODE_PATHS;
 
   const isOutsideEasyMenu = navSections.some((section) =>
     section.items.some((item) =>
@@ -151,14 +149,14 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, isHomeroom
                       {({ isActive }) => (
                         <>
                           {isActive && (
-                            <motion.div
+                            <MotionDiv
                               layoutId="activeSidebarPill"
                               className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-emerald-600 z-0"
                               transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                             />
                           )}
                           {isActive && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/50 rounded-r-full blur-[1px]"></div>
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/50 rounded-r-full blur-[1px]" />
                           )}
                           <item.icon
                             className={`w-5 h-5 relative z-10 transition-transform duration-300 ${isActive ? 'scale-110 text-white' : 'group-hover:scale-110 group-hover:text-emerald-600 dark:group-hover:text-emerald-400'}`}

@@ -4,7 +4,7 @@ describe('FASE 1 - Modul Ajar AI Pipeline Migration SQL Contracts', () => {
   it('should sync content_status to is_verified when content_status is verified', () => {
     const syncStatus = (content_status: string, is_verified: boolean) => {
       let nextVerified = is_verified;
-      let nextStatus = content_status;
+      const nextStatus = content_status;
 
       if (content_status === 'verified') {
         nextVerified = true;
@@ -52,7 +52,7 @@ describe('FASE 1 - Modul Ajar AI Pipeline Migration SQL Contracts', () => {
 
     const jobs: Job[] = [];
 
-    const enqueueJob = (fingerprint: string, userId: string): Job => {
+    const enqueueJob = (fingerprint: string, _userId: string): Job => {
       const activeJob = jobs.find(
         (j) => j.fingerprint === fingerprint && ['pending', 'processing', 'retry_wait'].includes(j.status)
       );

@@ -33,12 +33,12 @@ const writeStoredKkm = (userId: string, value: number | undefined) => {
 const normalizeSettings = (data: {
     user_id: string;
     school_name: string | null;
-    updated_at?: string;
+    updated_at?: string | null;
 }): UserSettings => ({
     user_id: data.user_id,
     school_name: data.school_name || DEFAULT_SCHOOL_NAME,
     kkm: readStoredKkm(data.user_id),
-    updated_at: data.updated_at,
+    updated_at: data.updated_at ?? undefined,
 });
 
 export const useUserSettings = () => {

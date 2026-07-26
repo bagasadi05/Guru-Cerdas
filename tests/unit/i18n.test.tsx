@@ -57,11 +57,6 @@ describe('I18n Context', () => {
             expect(result.current.translate).toBeInstanceOf(Function);
         });
 
-        it('provides formatRelativeTime function', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.formatRelativeTime).toBeInstanceOf(Function);
-        });
-
         it('provides formatDate function', () => {
             const { result } = renderHook(() => useI18n(), { wrapper });
             expect(result.current.formatDate).toBeInstanceOf(Function);
@@ -82,8 +77,8 @@ describe('I18n Context', () => {
     describe('translate function', () => {
         it('translates by dot path', () => {
             const { result } = renderHook(() => useI18n(), { wrapper });
-            const translated = result.current.translate('common.save');
-            expect(translated).toBe('Simpan'); // Indonesian default
+            const translated = result.current.translate('common.cancel');
+            expect(translated).toBe('Batal'); // Indonesian default
         });
 
         it('returns English when language is en', () => {
@@ -93,43 +88,14 @@ describe('I18n Context', () => {
                 result.current.setLanguage('en');
             });
 
-            const translated = result.current.translate('common.save');
-            expect(translated).toBe('Save');
+            const translated = result.current.translate('common.cancel');
+            expect(translated).toBe('Cancel');
         });
 
         it('returns path if translation not found', () => {
             const { result } = renderHook(() => useI18n(), { wrapper });
             const translated = result.current.translate('nonexistent.path');
             expect(translated).toBe('nonexistent.path');
-        });
-
-        it('replaces parameters in translation', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            const translated = result.current.translate('validation.minLength', { min: 8 });
-            expect(translated).toContain('8');
-        });
-    });
-
-    describe('formatRelativeTime function', () => {
-        it('formats recent time as just now', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            const now = new Date();
-            const formatted = result.current.formatRelativeTime(now);
-            expect(formatted).toBe('Baru saja'); // Indonesian
-        });
-
-        it('formats minutes ago', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-            const formatted = result.current.formatRelativeTime(fiveMinutesAgo);
-            expect(formatted).toContain('5');
-        });
-
-        it('formats hours ago', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-            const formatted = result.current.formatRelativeTime(twoHoursAgo);
-            expect(formatted).toContain('2');
         });
     });
 
@@ -157,80 +123,54 @@ describe('I18n Context', () => {
         });
     });
 
+    // The catalogue is scoped to the strings the app actually renders: the four
+    // dashboard widgets plus ErrorBoundary. These assertions guard that scope —
+    // if a section disappears, a live consumer breaks.
     describe('Translations structure', () => {
         it('has common translations', () => {
             const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.t.common.save).toBeDefined();
             expect(result.current.t.common.cancel).toBeDefined();
-            expect(result.current.t.common.delete).toBeDefined();
+            expect(result.current.t.common.all).toBeDefined();
         });
 
-        it('has nav translations', () => {
+        it('has nav translations used by ErrorBoundary', () => {
             const { result } = renderHook(() => useI18n(), { wrapper });
             expect(result.current.t.nav.dashboard).toBeDefined();
-            expect(result.current.t.nav.attendance).toBeDefined();
-            expect(result.current.t.nav.students).toBeDefined();
         });
 
-        it('has auth translations', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.t.auth.login).toBeDefined();
-            expect(result.current.t.auth.logout).toBeDefined();
-            expect(result.current.t.auth.email).toBeDefined();
-        });
-
-        it('has attendance translations', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.t.attendance.present).toBeDefined();
-            expect(result.current.t.attendance.absent).toBeDefined();
-        });
-
-        it('has students translations', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.t.students.addStudent).toBeDefined();
-            expect(result.current.t.students.deleteStudent).toBeDefined();
-        });
-
-        it('has tasks translations', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.t.tasks.pending).toBeDefined();
-            expect(result.current.t.tasks.completed).toBeDefined();
-        });
-
-        it('has schedule translations', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.t.schedule.monday).toBeDefined();
-            expect(result.current.t.schedule.friday).toBeDefined();
-        });
-
-        it('has settings translations', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.t.settings.darkMode).toBeDefined();
-            expect(result.current.t.settings.lightMode).toBeDefined();
-        });
-
-        it('has validation translations', () => {
-            const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.t.validation.required).toBeDefined();
-            expect(result.current.t.validation.email).toBeDefined();
-        });
-
-        it('has errors translations', () => {
+        it('has errors translations used by ErrorBoundary', () => {
             const { result } = renderHook(() => useI18n(), { wrapper });
             expect(result.current.t.errors.general).toBeDefined();
-            expect(result.current.t.errors.network).toBeDefined();
+            expect(result.current.t.errors.tryAgain).toBeDefined();
+            expect(result.current.t.errors.contactSupport).toBeDefined();
         });
 
-        it('has time translations', () => {
+        it('has every greeting variant DashboardGreeting indexes into', () => {
             const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.t.time.today).toBeDefined();
-            expect(result.current.t.time.yesterday).toBeDefined();
+            // DashboardGreeting picks these by computed key, so a missing one
+            // fails silently at runtime rather than at compile time.
+            expect(result.current.t.dashboard.greetingMorning).toBeDefined();
+            expect(result.current.t.dashboard.greetingAfternoon).toBeDefined();
+            expect(result.current.t.dashboard.greetingEvening).toBeDefined();
+            expect(result.current.t.dashboard.greetingNight).toBeDefined();
         });
 
-        it('has parentPortal translations', () => {
+        it('has dashboard translations for the grade audit widget', () => {
             const { result } = renderHook(() => useI18n(), { wrapper });
-            expect(result.current.t.parentPortal.title).toBeDefined();
-            expect(result.current.t.parentPortal.welcome).toBeDefined();
+            expect(result.current.t.dashboard.gradeAuditTitle).toBeDefined();
+            expect(result.current.t.dashboard.completionProgress).toBeDefined();
+            expect(result.current.t.dashboard.allGraded).toBeDefined();
+        });
+
+        it('keeps Indonesian and English catalogues in sync', () => {
+            const { result } = renderHook(() => useI18n(), { wrapper });
+            const idKeys = JSON.stringify(mapShape(result.current.t));
+
+            act(() => {
+                result.current.setLanguage('en');
+            });
+
+            expect(JSON.stringify(mapShape(result.current.t))).toBe(idKeys);
         });
     });
 
@@ -262,3 +202,13 @@ describe('I18n Context', () => {
         });
     });
 });
+
+/** Key names only, so two catalogues can be compared without their values. */
+function mapShape(obj: unknown): unknown {
+    if (obj === null || typeof obj !== 'object') return typeof obj;
+    return Object.fromEntries(
+        Object.entries(obj as Record<string, unknown>)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([key, value]) => [key, mapShape(value)])
+    );
+}

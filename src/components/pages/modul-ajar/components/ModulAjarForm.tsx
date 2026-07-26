@@ -1,10 +1,44 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MotionDiv, AnimatePresence } from '../../../ui/MotionComponents';
 import { Sparkles, ChevronLeft, ChevronRight, Heart, CheckCircle2, AlertTriangle, Compass } from 'lucide-react';
 import { FormState, RubrikRow } from '../types';
 import { useTopikRecommendations, useRubrikTemplates, useTemaKbc, useMateriInsersiMulti, useLearningModels } from '../hooks/useModulAjarQueries';
 import { PANCA_CINTA_TOPICS_FALLBACK, MATERI_INSERSI_FALLBACK } from '../constants/kbcConstants';
 import { LEARNING_MODELS, ENNIS_IKTP_BANK, ModelCategory } from '../constants/learningModels';
+
+interface AiButtonProps {
+  field: string;
+  label?: string;
+  onAiFillField?: (field: string) => void;
+  fieldLoading: Record<string, boolean>;
+}
+
+/**
+ * Inline "fill this field with AI" trigger.
+ *
+ * Declared at module scope so React keeps the same component identity across
+ * renders of the form. Defining it inside the form body would remount every
+ * button on each keystroke and drop its state.
+ */
+const AiButton: React.FC<AiButtonProps> = ({ field, label, onAiFillField, fieldLoading }) => {
+  if (!onAiFillField) return null;
+  const loading = fieldLoading[field];
+  return (
+    <button
+      type="button"
+      onClick={() => onAiFillField(field)}
+      disabled={loading}
+      className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+    >
+      {loading ? (
+        <span className="inline-block w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+      ) : (
+        <Sparkles className="w-3.5 h-3.5" />
+      )}
+      {label || (loading ? 'Memproses...' : 'AI')}
+    </button>
+  );
+};
 
 interface ModulAjarFormProps {
   formState: FormState;
@@ -45,25 +79,8 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 }) => {
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
 
-  const AiButton = ({ field, label }: { field: string; label?: string }) => {
-    if (!onAiFillField) return null;
-    const loading = fieldLoading[field];
-    return (
-      <button
-        type="button"
-        onClick={() => onAiFillField(field)}
-        disabled={loading}
-        className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-      >
-        {loading ? (
-          <span className="inline-block w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <Sparkles className="w-3.5 h-3.5" />
-        )}
-        {label || (loading ? 'Memproses...' : 'AI')}
-      </button>
-    );
-  };
+  // Shared wiring for every inline AI trigger in this form.
+  const aiProps = { onAiFillField, fieldLoading };
 
   const [activeCategoryTab, setActiveCategoryTab] = React.useState<ModelCategory>('hots');
   const PROFIL_OPTIONS = ['Beriman & Bertakwa', 'Berkebinekaan Global', 'Bergotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
@@ -74,7 +91,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   const { data: rubrikPresentasi = [] } = useRubrikTemplates('presentasi');
   const { data: rubrikSikap = [] } = useRubrikTemplates('sikap');
   
-  const { data: dbModels = [] } = useLearningModels();
+  useLearningModels();
   const { data: temaKbcData = [] } = useTemaKbc();
   const { data: materiInsersiData = [] } = useMateriInsersiMulti(formState.temaKbc);
 
@@ -159,7 +176,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
       <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 scrollbar-hide">
         <AnimatePresence mode="wait">
-          <motion.div
+          <MotionDiv
             key={activeStep}
             initial={{ opacity: 0, x: 15 }}
             animate={{ opacity: 1, x: 0 }}
@@ -489,7 +506,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   <div>
                     <div className="flex justify-between items-end mb-1">
                       <label className="block text-xs text-slate-500 dark:text-slate-400">Kompetensi Awal (Prasyarat)</label>
-                      <AiButton field="kompetensiAwal" label="Isi AI" />
+                      <AiButton field="kompetensiAwal" label="Isi AI" {...aiProps} />
                     </div>
                     <textarea
                       value={formState.kompetensiAwal}
@@ -533,7 +550,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           <Sparkles className="w-3.5 h-3.5" />
                           {isGeneratingCP ? 'Mencari...' : 'Ambil CP Database'}
                         </button>
-                        <AiButton field="capaianPembelajaran" label="Generate AI" />
+                        <AiButton field="capaianPembelajaran" label="Generate AI" {...aiProps} />
                       </div>
                     </div>
                     <textarea 
@@ -569,7 +586,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       <div>
                         <div className="flex justify-between items-end mb-1">
                           <label className="block text-xs text-slate-500 dark:text-slate-400">Tujuan Pembelajaran (Satu per baris)</label>
-                          <AiButton field="manualTujuanPembelajaran" label="Isi AI" />
+                          <AiButton field="manualTujuanPembelajaran" label="Isi AI" {...aiProps} />
                         </div>
                         <textarea
                           value={formState.manualTujuanPembelajaran}
@@ -619,7 +636,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       <div>
                         <div className="flex justify-between items-end mb-1">
                           <label className="block text-xs text-slate-500 dark:text-slate-400">Pertanyaan Pemantik (Satu per baris)</label>
-                          <AiButton field="manualPertanyaanPemantik" label="Isi AI" />
+                          <AiButton field="manualPertanyaanPemantik" label="Isi AI" {...aiProps} />
                         </div>
                         <textarea
                           value={formState.manualPertanyaanPemantik}
@@ -1032,7 +1049,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   <div>
                     <div className="flex justify-between items-end mb-1">
                       <label className="block text-xs text-slate-500 dark:text-slate-400">Tugas LKPD (Lembar Kerja Peserta Didik)</label>
-                      <AiButton field="manualLkpdTugas" label="Buat AI" />
+                      <AiButton field="manualLkpdTugas" label="Buat AI" {...aiProps} />
                     </div>
                     <textarea
                       value={formState.manualLkpdTugas}
@@ -1045,7 +1062,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   <div>
                     <div className="flex justify-between items-end mb-1">
                       <label className="block text-xs text-slate-500 dark:text-slate-400">Soal Evaluasi Pengetahuan</label>
-                      <AiButton field="manualSoalEvaluasi" label="Buat AI" />
+                      <AiButton field="manualSoalEvaluasi" label="Buat AI" {...aiProps} />
                     </div>
                     <textarea
                       value={formState.manualSoalEvaluasi}
@@ -1058,7 +1075,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                 </div>
               </div>
             )}
-          </motion.div>
+          </MotionDiv>
         </AnimatePresence>
       </div>
 

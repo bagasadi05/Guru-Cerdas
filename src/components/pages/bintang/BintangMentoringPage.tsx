@@ -9,7 +9,11 @@ import { PlusCircle, Search } from 'lucide-react';
 import { Modal } from '../../ui/Modal';
 import { useToast } from '../../../hooks/useToast';
 
-export const BintangMentoringPage: React.FC = () => {
+interface BintangMentoringPageProps {
+    preselectedClass?: string;
+}
+
+export const BintangMentoringPage: React.FC<BintangMentoringPageProps> = ({ preselectedClass }) => {
     const { user } = useAuth();
     const toast = useToast();
     
@@ -20,7 +24,12 @@ export const BintangMentoringPage: React.FC = () => {
 
     // Form state
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedClass, setSelectedClass] = useState('');
+    const [selectedClass, setSelectedClass] = useState(preselectedClass || '');
+    
+    // Sync preselectedClass to modal's class selector
+    useEffect(() => {
+        if (preselectedClass) setSelectedClass(preselectedClass);
+    }, [preselectedClass]);
     const [targetType, setTargetType] = useState<'all' | 'specific'>('all');
     const [studentsInClass, setStudentsInClass] = useState<Array<{id: string; name: string}>>([]);
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);

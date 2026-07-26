@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../ui/MotionComponents';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Calendar, FileText, Plus, RefreshCw, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -48,7 +48,7 @@ const formatIdDate = (dateStr: string): string => {
 };
 
 const JurnalMengajarPage: React.FC = () => {
-  const { user, userRole } = useAuth();
+  const { userRole } = useAuth();
   const [filters, setFilters] = useState<TeachingJournalFilters>({});
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -240,7 +240,7 @@ const JurnalMengajarPage: React.FC = () => {
         </TabsList>
 
         <TabsContent value="jurnal-harian" className="space-y-6">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-6">
+          <MotionDiv initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-6">
           
           {/* Modern Filter Section */}
           <div className="relative group rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5">
@@ -527,11 +527,11 @@ const JurnalMengajarPage: React.FC = () => {
               </div>
             )}
           </section>
-          </motion.div>
+          </MotionDiv>
         </TabsContent>
 
         <TabsContent value="rekap">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <MotionDiv initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           {isGlobalRole && (
             <div className="flex items-center gap-2 mb-4 bg-indigo-50 dark:bg-indigo-900/20 px-4 py-3 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
               <label className="text-sm font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer flex items-center gap-2 w-full">
@@ -554,7 +554,7 @@ const JurnalMengajarPage: React.FC = () => {
           >
             <JournalRekapPanel filters={{ ...queryFilters, allTeachers: showAllTeachers }} />
           </React.Suspense>
-          </motion.div>
+          </MotionDiv>
         </TabsContent>
       </Tabs>
       )}

@@ -26,7 +26,7 @@ export const ExtracurricularDetailView: React.FC<ExtracurricularDetailViewProps>
     return (
         <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-500">
             {/* Header Hero */}
-            <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 rounded-3xl p-6 sm:p-8 mb-6 overflow-hidden shadow-xl">
+            <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 rounded-2xl sm:rounded-3xl p-5 sm:p-8 mb-6 overflow-hidden shadow-xl">
                 {/* Decorative Elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-orange-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
@@ -40,9 +40,9 @@ export const ExtracurricularDetailView: React.FC<ExtracurricularDetailViewProps>
                         Kembali ke Daftar
                     </button>
 
-                    <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
-                            <span className="text-3xl sm:text-4xl font-bold text-white uppercase">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
+                            <span className="text-2xl sm:text-4xl font-bold text-white uppercase">
                                 {extracurricular.name.substring(0, 2)}
                             </span>
                         </div>
@@ -57,17 +57,17 @@ export const ExtracurricularDetailView: React.FC<ExtracurricularDetailViewProps>
                                 {extracurricular.description || 'Tidak ada deskripsi.'}
                             </p>
                             
-                            <div className="flex flex-wrap gap-4 text-sm text-slate-300">
-                                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
-                                    <Clock className="w-4 h-4 text-amber-400" />
+                            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-slate-300">
+                                <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 px-2.5 sm:px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
+                                    <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
                                     <span>{extracurricular.schedule_day || '-'}, {extracurricular.schedule_time || '-'}</span>
                                 </div>
-                                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
-                                    <UserCog className="w-4 h-4 text-amber-400" />
+                                <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 px-2.5 sm:px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
+                                    <UserCog className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
                                     <span>{extracurricular.coach_name || 'Belum ada pembina'}</span>
                                 </div>
-                                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
-                                    <Users className="w-4 h-4 text-amber-400" />
+                                <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 px-2.5 sm:px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
+                                    <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
                                     <span>Maks. {extracurricular.max_participants} peserta</span>
                                 </div>
                             </div>
@@ -106,7 +106,7 @@ export const ExtracurricularDetailView: React.FC<ExtracurricularDetailViewProps>
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 min-h-0 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-6">
+            <div className="flex-1 min-h-0 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-800 shadow-sm p-3 sm:p-6">
                 {children(activeTab)}
             </div>
         </div>

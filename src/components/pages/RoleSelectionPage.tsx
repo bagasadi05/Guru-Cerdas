@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../ui/MotionComponents';
 import { useAuth } from '../../hooks/useAuth';
 import { GraduationCapIcon, UsersIcon } from '../Icons';
 import { pageVariants } from '../../utils/animations';
@@ -26,7 +26,7 @@ const RoleSelectionPage: React.FC = () => {
     }
 
     return (
-        <motion.div
+        <MotionDiv
             variants={pageVariants}
             initial="initial"
             animate="animate"
@@ -90,7 +90,7 @@ const RoleSelectionPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </MotionDiv>
     );
 };
 

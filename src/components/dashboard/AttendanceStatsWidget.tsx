@@ -129,7 +129,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
             const sakit = classAttendance.filter(a => a.status === 'Sakit').length;
             const izin = classAttendance.filter(a => a.status === 'Izin').length;
             const alpha = classAttendance.filter(a => a.status === 'Alpha').length;
-            const total = classAttendance.length;
+            const total = classStudentIds.length;
             const percentage = total > 0 ? (hadir / total) * 100 : 0;
 
             // Calculate trend
@@ -139,7 +139,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                     classStudentIds.includes(a.student_id)
                 );
                 const yesterdayHadir = yesterdayClassAttendance.filter(a => a.status === 'Hadir').length;
-                const yesterdayTotal = yesterdayClassAttendance.length;
+                const yesterdayTotal = classStudentIds.length;
                 const yesterdayPercentage = yesterdayTotal > 0 ? (yesterdayHadir / yesterdayTotal) * 100 : 0;
 
                 if (percentage > yesterdayPercentage + 5) trend = 'up';
@@ -166,7 +166,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
         const totalSakit = classStats.reduce((sum, c) => sum + c.sakit, 0);
         const totalIzin = classStats.reduce((sum, c) => sum + c.izin, 0);
         const totalAlpha = classStats.reduce((sum, c) => sum + c.alpha, 0);
-        const total = totalHadir + totalSakit + totalIzin + totalAlpha;
+        const total = classStats.reduce((sum, c) => sum + c.total, 0);
         const percentage = total > 0 ? (totalHadir / total) * 100 : 0;
 
         return { hadir: totalHadir, sakit: totalSakit, izin: totalIzin, alpha: totalAlpha, total, percentage };

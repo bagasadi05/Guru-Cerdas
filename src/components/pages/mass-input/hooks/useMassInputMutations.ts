@@ -72,7 +72,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         mode, selectedClass, quizInfo, subjectGradeInfo, scores, validationErrors,
         existingGrades, selectedStudentIds, selectedViolationCode, violationDate, violationNotes,
         studentsData, noteMethod, templateNote, pasteData,
-        gradedCount, filteredExistingGrades, classes,
+        gradedCount, classes,
         setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirtyRef, clearSubjectGradeDraft,
     } = params;
 

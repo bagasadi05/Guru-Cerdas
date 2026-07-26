@@ -51,15 +51,9 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
 
     // Fetch classes
     const { data: classes = [] } = useQuery({
-        queryKey: ['classes', 'mine_extracurricular', user?.id],
+        queryKey: ['classes', 'all_active', user?.id],
         queryFn: async () => {
-            const { data, error } = await supabase
-                .from('classes')
-                .select('*')
-                .eq('user_id', user!.id)
-                .is('deleted_at', null)
-                .eq('is_archived', false)
-                .order('name');
+            const { data, error } = await supabase.rpc('get_active_classes');
             if (error) throw error;
             return (data || []) as Class[];
         },
@@ -78,22 +72,17 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
 
     // Fetch students based on selected class
     const { data: students = [] } = useQuery({
-        queryKey: ['students', user?.id, selectedClassId],
+        queryKey: ['students', 'all_active', user?.id, selectedClassId],
         queryFn: async () => {
-            let query = supabase
-                .from('students')
-                .select('*')
-                .is('deleted_at', null)
-                .eq('user_id', user!.id)
-                .order('name');
-
-            if (selectedClassId) {
-                query = query.eq('class_id', selectedClassId);
-            }
-
-            const { data, error } = await query;
+            const { data, error } = await supabase.rpc('get_student_directory');
             if (error) throw error;
-            return data as Student[];
+            
+            const allStudents = (data || []) as unknown as Student[];
+            
+            if (selectedClassId) {
+                return allStudents.filter(s => s.class_id === selectedClassId);
+            }
+            return allStudents;
         },
         enabled: !!user,
     });

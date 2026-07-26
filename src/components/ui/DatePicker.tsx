@@ -98,8 +98,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-amber-500 dark:hover:border-amber-500 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-amber-500/20"
             >
-                <CalendarIcon className="w-4 h-4 text-slate-400" />
-                <span className={`flex-1 text-sm ${value ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
+                <CalendarIcon className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className={`flex-1 text-sm whitespace-nowrap truncate ${value ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
                     {formatDisplayValue()}
                 </span>
                 {value && (
@@ -120,7 +120,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         className="fixed inset-0 z-40"
                         onClick={() => setIsOpen(false)}
                     />
-                    <div className={`absolute top-full mt-2 z-50 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-4 min-w-[300px] ${align === 'right' ? 'right-0' : 'left-0'}`}>
+                    <div className={`
+                        absolute top-full mt-2 z-50 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-4 w-[320px] max-w-[calc(100vw-32px)]
+                        ${align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left'}
+                    `}>
 
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4">

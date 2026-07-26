@@ -3,7 +3,7 @@
 
 import React, { useState, lazy, Suspense } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../ui/MotionComponents';
 import { useTour } from '../OnboardingHelp';
 import AnalyticsPageSkeleton from '../skeletons/AnalyticsPageSkeleton';
 import AnalyticsExportModal from './analytics/AnalyticsExportModal';
@@ -164,7 +164,7 @@ const AnalyticsPage: React.FC = () => {
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 scale-95 hover:scale-100'}`}
                     >
                         {activeTab === tab.id && (
-                            <motion.div
+                            <MotionDiv
                                 layoutId="activeAnalyticsTab"
                                 className="absolute inset-0 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all shadow-sm z-0"
                                 transition={{ type: 'spring', stiffness: 380, damping: 30 }}

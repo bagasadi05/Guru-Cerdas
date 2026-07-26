@@ -133,8 +133,8 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="lg:hidden mt-1">
-                                                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                    <div className="lg:hidden mt-1 shrink-0 ml-3">
+                                                        <span className={`inline-flex whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-semibold ${
                                                             isEnrolled 
                                                                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50' 
                                                                 : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'

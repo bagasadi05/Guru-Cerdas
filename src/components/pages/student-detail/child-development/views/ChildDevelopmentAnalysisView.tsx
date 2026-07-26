@@ -25,7 +25,7 @@ import {
 import { useSemester } from '../../../../../contexts/SemesterContext';
 import { useMemo } from 'react';
 import { getJsPDF, getAutoTable } from '../../../../../utils/dynamicImports';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MotionDiv, MotionSpan, AnimatePresence } from '../../../../ui/MotionComponents';
 import { duration as motionDuration } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { addPdfHeader, ensureLogosLoaded } from '../../../../../utils/pdfHeaderUtils';
@@ -2277,7 +2277,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
             {/* Overall Growth narrative summary */}
             {comparativeAnalysis.summary.overallComparison && (
-              <motion.div
+              <MotionDiv
                 initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base }}
@@ -2291,7 +2291,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                   {comparativeAnalysis.summary.overallComparison}
                 </p>
-              </motion.div>
+              </MotionDiv>
             )}
 
             {/* Side-by-side Analysis */}
@@ -2692,20 +2692,20 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           className="rounded-full shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-bold px-6 py-5 flex items-center gap-2 hover:bg-slate-50 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
         >
           {isDetailsExpanded ? 'Sembunyikan Detail Analisis' : 'Lihat Detail Analisis AI & Grafik Radar'}
-          <motion.span
+          <MotionSpan
             animate={{ rotate: isDetailsExpanded ? 180 : 0 }}
             transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.fast }}
             className="inline-block"
           >
             ↓
-          </motion.span>
+          </MotionSpan>
         </Button>
       </div>
 
       {/* Accordion Collapsible Detail Content */}
       <AnimatePresence>
         {isDetailsExpanded && (
-          <motion.div
+          <MotionDiv
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -2831,7 +2831,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 </div>
               </div>
             </div>
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
 

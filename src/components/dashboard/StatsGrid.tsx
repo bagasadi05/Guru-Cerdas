@@ -9,7 +9,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../ui/MotionComponents';
 import {
     ArrowRightIcon,
     UsersIcon,
@@ -176,14 +176,14 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
     ];
 
     return (
-        <motion.div
+        <MotionDiv
             className={`grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6`}
             variants={staggerContainerVariants}
             initial="initial"
             animate="animate"
         >
             {stats.map((stat, index) => (
-                <motion.div
+                <MotionDiv
                     key={stat.label}
                     variants={statsCardVariants}
                     whileHover="hover"
@@ -252,9 +252,9 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                             </div>
                         </div>
                     </Link>
-                </motion.div>
+                </MotionDiv>
             ))}
-        </motion.div>
+        </MotionDiv>
     );
 };
 

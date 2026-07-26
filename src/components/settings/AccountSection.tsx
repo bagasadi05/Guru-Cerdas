@@ -46,7 +46,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({ onLogout }) => {
     };
 
     const handleDeleteAccount = async () => {
-        const { error } = await supabase.rpc('delete_user_account', {});
+        const { error } = await supabase.rpc('delete_user_account');
         if (error) {
             toast.error(`Gagal menghapus akun: ${error.message}`);
         } else {

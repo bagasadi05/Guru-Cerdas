@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../ui/MotionComponents';
 import { supabase } from '../../services/supabase';
 import { pageVariants } from '../../utils/animations';
 import { authSecurity } from '../../services/AuthSecurityService';
@@ -125,7 +125,7 @@ const PortalLoginPage: React.FC = () => {
     const handleBlur = () => document.body.setAttribute('data-focused', 'false');
 
     return (
-        <motion.div
+        <MotionDiv
             variants={pageVariants}
             initial="initial"
             animate="animate"
@@ -244,7 +244,7 @@ const PortalLoginPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </MotionDiv>
     );
 };
 

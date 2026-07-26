@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../../../ui/MotionComponents';
 import { BookOpen } from 'lucide-react';
 
 interface ModulAjarPreviewProps {
@@ -16,7 +16,7 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
   return (
     <>
       {generatedDocument ? (
-        <motion.div 
+        <MotionDiv 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           ref={previewRef}

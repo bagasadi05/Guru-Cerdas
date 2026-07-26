@@ -6,7 +6,8 @@
  */
 
 import React, { useState, useEffect, memo, ReactNode } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { MotionDiv, AnimatePresence } from '../ui/MotionComponents';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { ChevronDown } from 'lucide-react';
 import { duration as motionDuration } from '../../styles/motion';
 
@@ -34,7 +35,7 @@ const CollapsibleSectionBase: React.FC<CollapsibleSectionProps> = ({
 }) => {
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
     const [isMobile, setIsMobile] = useState(false);
-    const shouldReduceMotion = useReducedMotion();
+    const { shouldReduceMotion } = useReducedMotion();
 
     // Check for mobile viewport
     useEffect(() => {
@@ -74,19 +75,19 @@ const CollapsibleSectionBase: React.FC<CollapsibleSectionProps> = ({
                         {title}
                     </h3>
                 </div>
-                <motion.div
+                <MotionDiv
                     animate={{ rotate: isExpanded ? 180 : 0 }}
                     transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.fast }}
                     className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                     <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400" />
-                </motion.div>
+                </MotionDiv>
             </button>
 
             {/* Content */}
             <AnimatePresence initial={false}>
                 {isExpanded && (
-                    <motion.div
+                    <MotionDiv
                         id={`section-content-${title.replace(/\s+/g, '-').toLowerCase()}`}
                         initial={shouldReduceMotion ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
@@ -97,7 +98,7 @@ const CollapsibleSectionBase: React.FC<CollapsibleSectionProps> = ({
                         <div className={`p-4 sm:p-5 pt-0 ${contentClassName}`}>
                             {children}
                         </div>
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
 

@@ -21,6 +21,10 @@ interface AppUser {
   school_name?: string;
   /** URL to the user's avatar image */
   avatarUrl: string;
+  /** User's gender if available */
+  gender?: string;
+  /** Optional title override */
+  title?: string;
 }
 
 /**

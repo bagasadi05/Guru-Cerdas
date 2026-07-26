@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, MotionDiv } from './MotionComponents';
 import { Button } from './Button';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { easing } from '../../styles/motion';
@@ -96,7 +96,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -107,7 +107,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
           aria-modal="true"
           onClick={onClose}
         >
-          <motion.div
+          <MotionDiv
             ref={modalRef as React.RefObject<HTMLDivElement>}
             initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 20 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }}
@@ -144,8 +144,8 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             {children}
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </MotionDiv>
+    </MotionDiv>
   )}
 </AnimatePresence>,
     document.body

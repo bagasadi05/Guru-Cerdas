@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowRightIcon } from '../../../../Icons';
 import { MarkdownText } from '../../../../ui/MarkdownText';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MotionSpan, MotionDiv, AnimatePresence } from '../../../../ui/MotionComponents';
 import { duration as motionDuration } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
@@ -95,19 +95,19 @@ export const ActionableRecommendation: React.FC<{
           className="mt-3 text-sm text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1.5 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
         >
           {isExpanded ? 'Sembunyikan' : 'Lihat Langkah'}
-          <motion.span
+          <MotionSpan
             animate={{ rotate: isExpanded ? 90 : 0 }}
             transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.fast }}
           >
             <ArrowRightIcon className="w-3.5 h-3.5" />
-          </motion.span>
+          </MotionSpan>
         </button>
       </div>
 
       {/* Expandable action steps */}
       <AnimatePresence>
         {isExpanded && (
-          <motion.div
+          <MotionDiv
             initial={shouldReduceMotion ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={shouldReduceMotion ? { height: 0, opacity: 0 } : { height: 0, opacity: 0 }}
@@ -127,7 +127,7 @@ export const ActionableRecommendation: React.FC<{
                 ))}
               </ol>
             </div>
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
     </div>

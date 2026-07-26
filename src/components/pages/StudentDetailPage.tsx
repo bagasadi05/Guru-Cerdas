@@ -508,7 +508,7 @@ const StudentDetailPage = () => {
                                             student: {
                                                 id: student.id,
                                                 name: student.name,
-                                                age: student.date_of_birth ? (() => { const dob = new Date(student.date_of_birth); const today = new Date(); let age = today.getFullYear() - dob.getFullYear(); const m = today.getMonth() - dob.getMonth(); if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--; return age; })() : 12,
+                                                age: (student as any).date_of_birth ? (() => { const dob = new Date((student as any).date_of_birth); const today = new Date(); let age = today.getFullYear() - dob.getFullYear(); const m = today.getMonth() - dob.getMonth(); if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--; return age; })() : 12,
                                                 class: student.classes?.name
                                             },
                                             academicRecords: filteredAcademicRecords.map((r) => ({

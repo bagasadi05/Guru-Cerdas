@@ -9,7 +9,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
-import { Skeleton } from '../ui/Skeleton';
 import { MarkdownText } from '../ui/MarkdownText';
 import { CheckCircleIcon, AlertTriangleIcon, SparklesIcon } from '../Icons';
 import { useAIInsights } from '../../hooks/useAIInsights';

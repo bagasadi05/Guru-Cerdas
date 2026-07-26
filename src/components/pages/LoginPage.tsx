@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../ui/MotionComponents';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../hooks/useAuth';
@@ -126,7 +126,7 @@ const LoginPage: React.FC = () => {
 
     return (
         <>
-            <motion.div
+            <MotionDiv
                 variants={pageVariants}
                 initial="initial"
                 animate="animate"
@@ -325,7 +325,7 @@ const LoginPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </motion.div>
+            </MotionDiv>
 
             <Modal title="Lupa Password" isOpen={isForgotModalOpen} onClose={() => setIsForgotModalOpen(false)}>
                 <form onSubmit={handleForgotPassword} className="space-y-4">

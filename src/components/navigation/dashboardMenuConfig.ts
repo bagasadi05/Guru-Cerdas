@@ -1,15 +1,13 @@
 import React from 'react';
 import {
-  HomeIcon,
-  UsersIcon,
-  CalendarIcon,
-  ClipboardIcon,
-  SettingsIcon,
-  CheckSquareIcon,
-  ClipboardPenIcon,
-  BookOpenIcon,
-} from '../Icons';
-import { Trash2, History, BarChart3, ShieldCheck, Trophy, Archive, Star } from 'lucide-react';
+  MENU_ENTRIES,
+  SECTION_LABELS,
+  SECTION_ORDER,
+  isEntryVisible,
+  isLeadershipRole,
+  type MenuAudience,
+  type MenuSectionId,
+} from './menuRegistry';
 
 export interface DashboardMenuItem {
   href: string;
@@ -23,111 +21,35 @@ export interface DashboardMenuSection {
   items: DashboardMenuItem[];
 }
 
-const adminMenuItem: DashboardMenuItem = { href: '/admin', label: 'Panel Admin', icon: ShieldCheck };
+/**
+ * Leadership does not teach a class, so grading is not their daily entry point.
+ * The mobile bottom bar has always reflected that by giving them Analitik in
+ * place of Input Penilaian; the sidebar now matches. Nothing is hidden — the
+ * grading screens stay reachable further down the same menu.
+ */
+const promoteForLeadership = (sectionId: MenuSectionId, href: string): MenuSectionId =>
+  href === '/analytics' ? 'primary' : sectionId;
 
-const baseNavSections: DashboardMenuSection[] = [
-  {
-    id: 'primary',
-    label: 'Menu Utama',
-    items: [
-      { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
-      { href: '/input-massal', label: 'Input Penilaian', icon: ClipboardPenIcon },
-      { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
-      { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
-    ],
-  },
-  {
-    id: 'academic',
-    label: 'Akademik',
-    items: [
-      { href: '/jadwal', label: 'Jadwal & Jurnal', icon: CalendarIcon },
-      { href: '/modul-ajar', label: 'Modul Ajar', icon: BookOpenIcon },
-      { href: '/tugas', label: 'Penugasan', icon: CheckSquareIcon },
-      { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
-    ],
-  },
-  {
-    id: 'insights',
-    label: 'Analitik & Kegiatan',
-    items: [
-      { href: '/analytics', label: 'Analitik Akademik', icon: BarChart3 },
-      { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
-    ],
-  },
-  {
-    id: 'bintang',
-    label: 'Program BINTANG',
-    items: [
-      { href: '/bintang', label: 'Program Bintang', icon: Star },
-    ],
-  },
-  {
-    id: 'system',
-    label: 'Sistem & Maintenance',
-    items: [
-      { href: '/pemulihan', label: 'Pemulihan & Audit', icon: Trash2 },
-      { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
-    ],
-  },
-];
+/**
+ * Sections for the desktop sidebar, ordered as SECTION_ORDER declares.
+ * Empty sections are dropped so leadership never sees a bare heading.
+ */
+export const getDashboardNavSections = (audience: MenuAudience): DashboardMenuSection[] => {
+  const leadership = isLeadershipRole(audience.role);
 
-const baseMoreMenuItems: DashboardMenuItem[] = [
-  { href: '/siswa', label: 'Data Siswa', icon: UsersIcon },
-  { href: '/jadwal', label: 'Jadwal & Jurnal', icon: CalendarIcon },
-  { href: '/modul-ajar', label: 'Modul Ajar', icon: BookOpenIcon },
-  { href: '/tugas', label: 'Penugasan', icon: CheckSquareIcon },
-  { href: '/brankas', label: 'Arsip Kelas', icon: Archive },
-  { href: '/input-massal', label: 'Input Penilaian', icon: ClipboardPenIcon },
-  { href: '/ekstrakurikuler', label: 'Ekstrakurikuler', icon: Trophy },
-  { href: '/analytics', label: 'Analitik Akademik', icon: BarChart3 },
-  { href: '/bintang', label: 'Program Bintang', icon: Star },
-  { href: '/pemulihan', label: 'Pemulihan & Audit', icon: Trash2 },
-  { href: '/pengaturan', label: 'Pengaturan Sistem', icon: SettingsIcon },
-];
-
-export const getDashboardNavSections = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false, _isEasyMode: boolean = false): DashboardMenuSection[] => {
-
-  let sections = baseNavSections.map((section) => ({
-    ...section,
-    items: [...section.items],
-  }));
-
-  if (!isAdmin && !isHomeroomTeacher) {
-    sections = sections.filter(section => section.id !== 'bintang');
-  }
-
-
-
-  if (!isAdmin) {
-    return sections;
-  }
-
-  const systemSection = sections.find((section) => section.id === 'system');
-  if (systemSection) {
-    systemSection.items.push(adminMenuItem);
-    return sections;
-  }
-
-  sections.push({
-    id: 'system',
-    label: 'Sistem',
-    items: [adminMenuItem],
-  });
-  return sections;
+  return SECTION_ORDER.map((sectionId) => ({
+    id: sectionId,
+    label: SECTION_LABELS[sectionId],
+    items: MENU_ENTRIES.filter(
+      (entry) =>
+        isEntryVisible(entry, audience) &&
+        (leadership ? promoteForLeadership(entry.section, entry.href) : entry.section) === sectionId,
+    ).map(({ href, label, icon }) => ({ href, label, icon })),
+  })).filter((section) => section.items.length > 0);
 };
 
-export const getDashboardMoreMenuItems = (isAdmin: boolean, role?: string | null, isHomeroomTeacher: boolean = false, _isEasyMode: boolean = false): DashboardMenuItem[] => {
-
-  let items = [...baseMoreMenuItems];
-  
-  if (!isAdmin && !isHomeroomTeacher) {
-    items = items.filter(item => item.href !== '/bintang');
-  }
-  
-
-
-  if (!isAdmin) {
-    return items;
-  }
-  return [...items, adminMenuItem];
-};
+/** Items for the mobile "more" bottom sheet, in that sheet's own order. */
+export const getDashboardMoreMenuItems = (audience: MenuAudience): DashboardMenuItem[] =>
+  MENU_ENTRIES.filter((entry) => entry.moreOrder !== undefined && isEntryVisible(entry, audience))
+    .sort((a, b) => (a.moreOrder ?? 0) - (b.moreOrder ?? 0))
+    .map(({ href, label, icon }) => ({ href, label, icon }));

@@ -43,20 +43,15 @@ const SettingsPage = lazy(() => import('@/components/pages/SettingsPage'));
 const TasksPage = lazy(() => import('@/components/pages/TasksPage'));
 const ReportPage = lazy(() => import('@/components/pages/ReportPage'));
 const MassInputPage = lazy(() => import('@/components/pages/MassInputPage'));
-const BulkGradeInputPage = lazy(() => import('@/components/pages/BulkGradeInputPage'));
 const PortalLoginPage = lazy(() => import('@/components/pages/PortalLoginPage'));
-const GradeAdjustmentPage = lazy(() => import('@/components/pages/GradeAdjustmentPage'));
 // FIX: The lazy import for ParentPortalPage was failing because the component is a named export, not a default one.
 // The import has been updated to correctly resolve the named export for React.lazy.
 const ParentPortalPage = lazy(() => import('@/components/pages/ParentPortalPage').then(module => ({ default: module.ParentPortalPage })));
-const TrashPage = lazy(() => import('@/components/pages/TrashPage'));
-const ActionHistoryPage = lazy(() => import('@/components/pages/ActionHistoryPage'));
 const AnalyticsPage = lazy(() => import('@/components/pages/AnalyticsPage'));
 const AdminPage = lazy(() => import('@/components/pages/AdminPage'));
 const ExtracurricularPage = lazy(() => import('@/components/pages/ExtracurricularPage'));
 const NotFoundPage = lazy(() => import('@/components/pages/NotFoundPage'));
 const BrankasPage = lazy(() => import('@/components/pages/BrankasPage'));
-const JurnalMengajarPage = lazy(() => import('@/components/pages/JurnalMengajarPage'));
 const PemulihanPage = lazy(() => import('@/components/pages/PemulihanPage'));
 
 const BintangDashboardPage = lazy(() => import('@/components/pages/bintang/BintangDashboardPage'));
@@ -79,13 +74,6 @@ const AppLoadingScreen = () => (
 const PrivateRoutes = () => {
   const { session, loading } = useAuth();
 
-  React.useEffect(() => {
-    console.log('[PrivateRoutes] mounted!');
-    return () => console.log('[PrivateRoutes] unmounted!');
-  }, []);
-
-  console.log('[PrivateRoutes] render:', { hasSession: !!session, loading });
-
   if (loading) {
     return <AppLoadingScreen />;
   }
@@ -97,6 +85,23 @@ const PrivateRoutes = () => {
   ) : (
     <Navigate to="/guru-login" replace />
   );
+};
+
+/**
+ * Gates admin-only routes before their chunk is requested.
+ *
+ * AdminPage already redirects non-admins, but only after React.lazy has pulled
+ * down its ~100KB bundle. Checking here keeps that off the wire entirely.
+ * This is a UX guard, not the security boundary — RLS on the server is.
+ */
+const AdminRoutes = () => {
+  const { isAdmin, loading } = useAuth();
+
+  if (loading) {
+    return <AppLoadingScreen />;
+  }
+
+  return isAdmin ? <Outlet /> : <Navigate to="/dashboard" replace />;
 };
 
 const loadingSpinner = <AppLoadingScreen />;
@@ -193,7 +198,10 @@ function AppContent() {
               <Route path="/pemulihan" element={<AsyncErrorBoundary context="PemulihanPage"><PemulihanPage /></AsyncErrorBoundary>} />
               <Route path="/bintang" element={<AsyncErrorBoundary context="BintangDashboardPage"><BintangDashboardPage /></AsyncErrorBoundary>} />
               <Route path="/modul-ajar" element={<AsyncErrorBoundary context="ModulAjarCreatorPage"><ModulAjarCreatorPage /></AsyncErrorBoundary>} />
-              <Route path="/admin" element={<AsyncErrorBoundary context="AdminPage"><AdminPage /></AsyncErrorBoundary>} />
+
+              <Route element={<AdminRoutes />}>
+                <Route path="/admin" element={<AsyncErrorBoundary context="AdminPage"><AdminPage /></AsyncErrorBoundary>} />
+              </Route>
             </Route>
 
             {/* Report page has no main layout */}

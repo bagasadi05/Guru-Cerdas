@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../ui/MotionComponents';
 import { useRef } from 'react';
 import { staggerContainerVariants, staggerItemVariants } from '../../utils/animations';
 import { triggerSubtleConfetti } from '../../utils/confetti';
@@ -255,7 +255,7 @@ const SchedulePage: React.FC = () => {
     });
 
     const handleOpenAddModal = (day?: string) => {
-        setFormData({ day: day || selectedDay || 'Senin', start_time: '08:00', end_time: '09:30', subject: '', class_id: '' });
+        setFormData({ day: (day || selectedDay || 'Senin') as 'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat' | 'Sabtu' | 'Minggu', start_time: '08:00', end_time: '09:30', subject: '', class_id: '' });
         setModalState({ isOpen: true, mode: 'add', data: null });
         setErrors({});
     };
@@ -515,12 +515,12 @@ const SchedulePage: React.FC = () => {
                                     </Button>
                                 </div>
                             ) : (
-                                <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
+                                <MotionDiv className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
                                     variants={staggerContainerVariants} initial="initial" animate="animate">
                                     {currentDaySchedule.map((item, index) => {
                                         const status = getScheduleStatus(item, currentTime);
                                         return (
-                                            <motion.div key={item.id} variants={staggerItemVariants} custom={index}>
+                                            <MotionDiv key={item.id} variants={staggerItemVariants} custom={index}>
                                                 <ScheduleCard
                                                     item={item}
                                                     classNameLabel={item.class_id ? classNameMap.get(item.class_id) : undefined}
@@ -535,10 +535,10 @@ const SchedulePage: React.FC = () => {
                                                     getDuration={getDuration}
                                                     onIsiJurnal={handleIsiJurnal}
                                                 />
-                                            </motion.div>
+                                            </MotionDiv>
                                         );
                                     })}
-                                </motion.div>
+                                </MotionDiv>
                             )}
                         </>
                     )}

@@ -1,6 +1,5 @@
 import { supabase } from './supabase';
 import { logger } from './logger';
-import { AcademicYearRow, SemesterRow } from '../types';
 
 /**
  * Helper to determine current academic year name and active semester based on date.
@@ -35,10 +34,10 @@ export function getCurrentAcademicTerm(date: Date = new Date()) {
  */
 export async function autoInitializeSemesters(userId: string): Promise<boolean> {
     try {
-        const { academicYearName, semesterType, semesterNumber } = getCurrentAcademicTerm();
+        const { academicYearName, semesterType } = getCurrentAcademicTerm();
         
         // 1. Check/Create Academic Year
-        let { data: academicYear, error: ayError } = await supabase
+        const { data: existingAcademicYear, error: ayError } = await supabase
             .from('academic_years')
             .select('*')
             .eq('name', academicYearName)
@@ -49,6 +48,9 @@ export async function autoInitializeSemesters(userId: string): Promise<boolean> 
             logger.error('Error fetching academic year in AutoPilot', ayError as Error, undefined, 'SemesterAutoPilot');
             return false;
         }
+
+        // Reassigned below when the academic year has to be created first.
+        let academicYear = existingAcademicYear;
 
         if (!academicYear) {
             // Need to create academic year

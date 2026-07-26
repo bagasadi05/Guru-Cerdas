@@ -1,12 +1,5 @@
-import {
-  HomeIcon,
-  ClipboardIcon,
-  CalendarIcon,
-  CheckSquareIcon,
-  UsersIcon,
-  BarChart3Icon,
-  ClipboardPenIcon,
-} from '../Icons';
+import React from 'react';
+import { MENU_ENTRIES, isLeadershipRole } from '../navigation/menuRegistry';
 
 export interface MobileNavItem {
   href: string;
@@ -14,20 +7,18 @@ export interface MobileNavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-// Main 4 items for mobile bottom nav
+/**
+ * The 4 items pinned to the mobile bottom bar, derived from the shared menu
+ * registry so the bar can never drift from the sidebar it belongs to.
+ */
 export const getMobileNavItems = (role?: string | null): MobileNavItem[] => {
-  if (role === 'kepala_madrasah' || role === 'waka_kesiswaan') {
-    return [
-      { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
-      { href: '/siswa', label: 'Siswa', icon: UsersIcon },
-      { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
-      { href: '/analytics', label: 'Analitik', icon: BarChart3Icon },
-    ];
-  }
-  return [
-    { href: '/dashboard', label: 'Beranda', icon: HomeIcon },
-    { href: '/input-massal', label: 'Penilaian', icon: ClipboardPenIcon },
-    { href: '/siswa', label: 'Siswa', icon: UsersIcon },
-    { href: '/absensi', label: 'Absensi', icon: ClipboardIcon },
-  ];
+  const audience = isLeadershipRole(role) ? 'leadership' : 'teacher';
+
+  return MENU_ENTRIES.filter((entry) => entry.bar?.[audience] !== undefined)
+    .sort((a, b) => (a.bar?.[audience] ?? 0) - (b.bar?.[audience] ?? 0))
+    .map((entry) => ({
+      href: entry.href,
+      label: entry.barLabel ?? entry.label,
+      icon: entry.barIcon ?? entry.icon,
+    }));
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
+import { MotionDiv, MotionSpan, MotionP } from '../ui/MotionComponents';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { easing } from '../../styles/motion';
 
 const AUTO_REDIRECT_SECONDS = 15;
@@ -21,7 +22,7 @@ const PARTICLES_STATIC_DATA = [
 const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(AUTO_REDIRECT_SECONDS);
-  const shouldReduceMotion = useReducedMotion();
+  const { shouldReduceMotion } = useReducedMotion();
 
   useEffect(() => {
     if (countdown <= 0) {
@@ -34,14 +35,14 @@ const NotFoundPage: React.FC = () => {
 
   return (
     <div className="min-h-screen cosmic-bg flex items-center justify-center p-6">
-      <motion.div
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 30 }}
+      <MotionDiv
+        initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: shouldReduceMotion ? 0 : 0.6, ease: 'easeOut' }}
         className="text-center max-w-md w-full"
       >
         {/* Animated 404 Illustration */}
-        <motion.div
+        <MotionDiv
           className="relative mx-auto mb-8 w-48 h-48"
           initial={shouldReduceMotion ? { scale: 1 } : { scale: 0.8 }}
           animate={{ scale: 1 }}
@@ -50,17 +51,17 @@ const NotFoundPage: React.FC = () => {
           {/* Glowing circle background */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500/20 to-violet-500/20 dark:from-indigo-500/30 dark:to-violet-500/30 animate-pulse" />
           <div className="absolute inset-3 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/50 dark:to-violet-900/50 flex items-center justify-center">
-            <motion.span
+            <MotionSpan
               className="text-6xl font-black bg-gradient-to-br from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent"
               animate={shouldReduceMotion ? { rotateY: 0 } : { rotateY: [0, 10, -10, 0] }}
               transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: Infinity, repeatDelay: 2 }}
             >
               404
-            </motion.span>
+            </MotionSpan>
           </div>
           {/* Floating particles */}
           {PARTICLES_STATIC_DATA.map((p, i) => (
-            <motion.div
+            <MotionDiv
               key={i}
               className="absolute w-2 h-2 rounded-full bg-indigo-400/40 dark:bg-indigo-400/60"
               style={{
@@ -78,28 +79,23 @@ const NotFoundPage: React.FC = () => {
               }}
             />
           ))}
-        </motion.div>
+        </MotionDiv>
 
         {/* Text Content */}
-        <motion.h1
-          className="text-2xl font-bold text-slate-900 dark:text-white mb-3"
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+          Halaman Tidak Ditemukan
+        </h1>
+        <MotionP
+          className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          Halaman Tidak Ditemukan
-        </motion.h1>
-        <motion.p
-          className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
           Maaf, halaman yang Anda cari tidak ada atau telah dipindahkan.
-        </motion.p>
+        </MotionP>
 
         {/* Action Buttons */}
-        <motion.div
+        <MotionDiv
           className="flex flex-col sm:flex-row gap-3 justify-center mb-6"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -123,14 +119,14 @@ const NotFoundPage: React.FC = () => {
             </svg>
             Kembali
           </button>
-        </motion.div>
+        </MotionDiv>
 
         {/* Auto-redirect countdown */}
-        <motion.div
+        <MotionDiv
           className="text-sm text-slate-400 dark:text-slate-500"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.6 }}
         >
           <div className="flex items-center justify-center gap-2">
             <div className="relative w-8 h-8">
@@ -157,8 +153,8 @@ const NotFoundPage: React.FC = () => {
             </div>
             <span>Redirect otomatis ke dashboard</span>
           </div>
-        </motion.div>
-      </motion.div>
+        </MotionDiv>
+      </MotionDiv>
     </div>
   );
 };

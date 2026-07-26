@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { violationList, type BintangAspect } from './violations.data';
-import type { 
-  BintangMentoringInsert, 
+import type {
+  BintangMentoringInsert,
   BintangDailyObservationInsert,
   BintangEvaluationInsert
 } from '../types/database';
@@ -24,10 +24,10 @@ export interface BintangScoreThreshold {
  * Applied per-aspect: each aspect tallies its own violation points independently.
  */
 export const BINTANG_THRESHOLDS: BintangScoreThreshold[] = [
-  { grade: 'A', label: 'Sangat Baik', maxPoints: 0,  color: 'emerald' },
-  { grade: 'B', label: 'Baik',        maxPoints: 10, color: 'blue' },
-  { grade: 'C', label: 'Cukup',       maxPoints: 20, color: 'amber' },
-  { grade: 'D', label: 'Kurang',      maxPoints: Infinity, color: 'rose' },
+  { grade: 'A', label: 'Sangat Baik', maxPoints: 0, color: 'emerald' },
+  { grade: 'B', label: 'Baik', maxPoints: 10, color: 'blue' },
+  { grade: 'C', label: 'Cukup', maxPoints: 20, color: 'amber' },
+  { grade: 'D', label: 'Kurang', maxPoints: Infinity, color: 'rose' },
 ];
 
 /** Convert total violation points for one aspect into a BINTANG letter grade. */
@@ -62,8 +62,11 @@ export interface AspectPointsSummary {
   KERAPIAN: { points: number; count: number; grade: BintangGrade };
 }
 
-/** Calculate per-aspect violation points from an array of violation rows. */
-export function calculateAspectPoints(violations: Array<{ description: string; points: number }>): AspectPointsSummary {
+/** Calculate per-aspect violation points and apply optional keaktifan (quiz points) offsets. */
+export function calculateAspectPoints(
+  violations: Array<{ description: string; points: number }>,
+  quizPointsTotal: number = 0
+): AspectPointsSummary {
   const summary: AspectPointsSummary = {
     ADAB: { points: 0, count: 0, grade: 'A' },
     KEDISIPLINAN: { points: 0, count: 0, grade: 'A' },
@@ -76,10 +79,24 @@ export function calculateAspectPoints(violations: Array<{ description: string; p
     summary[aspect].count += 1;
   }
 
-  // Compute grades
-  summary.ADAB.grade = pointsToGrade(summary.ADAB.points);
-  summary.KEDISIPLINAN.grade = pointsToGrade(summary.KEDISIPLINAN.points);
-  summary.KERAPIAN.grade = pointsToGrade(summary.KERAPIAN.points);
+  // Deduct/offset violation points using poin keaktifan
+  let remainingBonus = quizPointsTotal;
+
+  const adabDeduction = Math.min(summary.ADAB.points, remainingBonus);
+  const netAdabPoints = summary.ADAB.points - adabDeduction;
+  remainingBonus -= adabDeduction;
+
+  const kedisDeduction = Math.min(summary.KEDISIPLINAN.points, remainingBonus);
+  const netKedisPoints = summary.KEDISIPLINAN.points - kedisDeduction;
+  remainingBonus -= kedisDeduction;
+
+  const kerapianDeduction = Math.min(summary.KERAPIAN.points, remainingBonus);
+  const netKerapianPoints = summary.KERAPIAN.points - kerapianDeduction;
+
+  // Compute final grades based on net points after keaktifan bonus offsets
+  summary.ADAB.grade = pointsToGrade(netAdabPoints);
+  summary.KEDISIPLINAN.grade = pointsToGrade(netKedisPoints);
+  summary.KERAPIAN.grade = pointsToGrade(netKerapianPoints);
 
   return summary;
 }
@@ -127,7 +144,7 @@ export const bintangService = {
       .from('bintang_mentoring_logs')
       .insert(logs)
       .select();
-      
+
     if (error) throw error;
     return data;
   },
@@ -150,14 +167,14 @@ export const bintangService = {
       if (studentIds) {
         query = query.in('student_id', studentIds);
       }
-      
+
       if (month) {
         const startDate = `${month}-01`;
         const [year, monthNum] = month.split('-');
         const nextMonthNum = parseInt(monthNum) === 12 ? 1 : parseInt(monthNum) + 1;
         const nextYear = parseInt(monthNum) === 12 ? parseInt(year) + 1 : parseInt(year);
         const endDate = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
-        
+
         query = query.gte('date', startDate).lt('date', endDate);
       }
 
@@ -179,7 +196,7 @@ export const bintangService = {
       .insert(observation)
       .select()
       .single();
-      
+
     if (error) throw error;
     return data;
   },
@@ -275,7 +292,7 @@ export const bintangService = {
         .select('*')
         .in('student_id', studentIds)
         .eq('month', month);
-        
+
       if (error) {
         console.warn('bintangService.getMonthlyEvaluations error:', error);
         return [];
@@ -286,18 +303,18 @@ export const bintangService = {
       return [];
     }
   },
-  
+
   async getStudentEvaluations(studentId: string, isPublishedOnly: boolean = true) {
     try {
       let query = supabase
         .from('bintang_monthly_evaluations')
         .select('*')
         .eq('student_id', studentId);
-        
+
       if (isPublishedOnly) {
         query = query.eq('is_published', true);
       }
-      
+
       const { data, error } = await query.order('month', { ascending: false });
       if (error) {
         console.warn('bintangService.getStudentEvaluations error:', error);
@@ -317,7 +334,7 @@ export const bintangService = {
       .upsert(evaluation, { onConflict: 'student_id, month' })
       .select()
       .single();
-      
+
     if (error) throw error;
     return data;
   },
@@ -332,21 +349,21 @@ export const bintangService = {
     if (error) throw error;
     return data;
   },
-  
+
   async publishEvaluations(classId: string, month: string) {
-     // First, fetch the evaluations for this class and month
-     const evaluations = await this.getMonthlyEvaluations(classId, month);
-     if (!evaluations || evaluations.length === 0) return [];
-     
-     const evaluationIds = evaluations.map(e => e.id);
-     
-     const { data, error } = await supabase
-       .from('bintang_monthly_evaluations')
-       .update({ is_published: true })
-       .in('id', evaluationIds)
-       .select();
-       
-     if (error) throw error;
-     return data;
+    // First, fetch the evaluations for this class and month
+    const evaluations = await this.getMonthlyEvaluations(classId, month);
+    if (!evaluations || evaluations.length === 0) return [];
+
+    const evaluationIds = evaluations.map(e => e.id);
+
+    const { data, error } = await supabase
+      .from('bintang_monthly_evaluations')
+      .update({ is_published: true })
+      .in('id', evaluationIds)
+      .select();
+
+    if (error) throw error;
+    return data;
   }
 };

@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Users, 
-  Calendar, 
   AlertTriangle, 
   UserX, 
   ChevronRight, 
@@ -17,16 +15,9 @@ interface DashboardSummaryCardsProps {
 
 export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ data }) => {
   const navigate = useNavigate();
-  const { students = [], tasks = [], classes = [], weeklyAttendance = [], violations = [] } = data || {};
+  const { students = [], tasks = [], classes = [], violations = [] } = data || {};
 
-  // 1. Kehadiran Minggu Ini
-  const avgPresent = useMemo(() => {
-    if (!weeklyAttendance || weeklyAttendance.length === 0) return 0;
-    const sum = weeklyAttendance.reduce((acc, curr) => acc + curr.present_percentage, 0);
-    return Math.round(sum / weeklyAttendance.length);
-  }, [weeklyAttendance]);
 
-  const notHadir = 100 - avgPresent;
 
   // 2. Kelas Perlu Perhatian
   const classesNeedAttention = useMemo(() => {
@@ -78,41 +69,6 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
 
     return items;
   }, [classes, students, data, tasks]);
-
-  // 3. Tugas Terdekat
-  const upcomingTasks = useMemo(() => {
-    if (!tasks || tasks.length === 0) return [];
-    return tasks.slice(0, 3).map(task => {
-      let deadlineLabel = 'Segera';
-      let isToday = false;
-      
-      if (task.due_date) {
-        const now = new Date();
-        const due = new Date(task.due_date);
-        const diffTime = due.getTime() - now.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 0) {
-          deadlineLabel = 'Hari ini';
-          isToday = true;
-        } else if (diffDays === 1) {
-          deadlineLabel = 'Besok';
-          isToday = true;
-        } else if (diffDays > 1) {
-          deadlineLabel = `${diffDays} hari lagi`;
-        } else {
-          deadlineLabel = 'Terlambat';
-          isToday = true;
-        }
-      }
-      
-      return {
-        title: task.title,
-        dueDate: deadlineLabel,
-        isUrgent: isToday
-      };
-    });
-  }, [tasks]);
 
   // 4. Siswa Prioritas
   const priorityStudents = useMemo(() => {

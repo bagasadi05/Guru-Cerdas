@@ -1,4 +1,4 @@
-import { Variants } from 'framer-motion';
+import type { Variants } from '../components/ui/MotionComponents';
 
 // Detect low-end device once (synchronous, set by useReducedMotion hook)
 const isReduced = () =>

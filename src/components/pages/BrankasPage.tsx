@@ -31,7 +31,7 @@ import {
 import { triggerSubtleConfetti } from '../../utils/confetti';
 import { useSemester } from '../../contexts/SemesterContext';
 import { getStudentAvatar } from '../../utils/avatarUtils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, MotionDiv } from '../ui/MotionComponents';
 
 interface Student {
   id: string;
@@ -405,7 +405,7 @@ const BrankasPage: React.FC = () => {
 
       {/* Detail Mode (Read-only Historical Viewer) */}
       {detailClass ? (
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -656,11 +656,11 @@ const BrankasPage: React.FC = () => {
             </div>
           </div>
           </Card>
-        </motion.div>
+        </MotionDiv>
       ) : (
         /* Grid list of classes based on active tab */
         <AnimatePresence mode="wait">
-          <motion.div
+          <MotionDiv
             key={activeTab}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -703,7 +703,7 @@ const BrankasPage: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {displayedClasses.map((cls, index) => (
-                  <motion.div
+                  <MotionDiv
                     key={cls.id}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -788,11 +788,11 @@ const BrankasPage: React.FC = () => {
                         )}
                       </div>
                     </CardInteractive>
-                  </motion.div>
+                  </MotionDiv>
                 ))}
               </div>
             )}
-          </motion.div>
+          </MotionDiv>
         </AnimatePresence>
       )}
 

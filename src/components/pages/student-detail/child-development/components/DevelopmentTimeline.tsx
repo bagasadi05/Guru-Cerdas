@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, Variants } from 'framer-motion';
+import { MotionLi, type Variants } from '../../../../ui/MotionComponents';
 import { ClockIcon, CalendarIcon } from '../../../../Icons';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
@@ -59,7 +59,7 @@ const TimelineSection: React.FC<{
     {/* Target items */}
     <ul className="space-y-2.5 mb-6">
       {targets.map((target, idx) => (
-        <motion.li
+        <MotionLi
           key={idx}
           custom={idx + indexOffset}
           variants={itemVariants}
@@ -72,7 +72,7 @@ const TimelineSection: React.FC<{
           <span className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-snug">
             {target}
           </span>
-        </motion.li>
+        </MotionLi>
       ))}
 
       {/* Empty-state fallback */}

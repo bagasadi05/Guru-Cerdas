@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../services/supabase';
-import { Loader2, Plus, Edit2, Trash2, Search, X, CheckCircle2, XCircle, Sparkles, Activity, RefreshCw } from 'lucide-react';
+import { Loader2, Plus, Trash2, Search, X, CheckCircle2, XCircle, Sparkles, Activity, RefreshCw } from 'lucide-react';
 
 interface BoilerplateFormState {
   id?: string;
@@ -112,7 +112,7 @@ export const ModulAjarBankTab: React.FC = () => {
     setEditingId(item.id);
     
     // Map AI JSON if it's a draft_ai and it has raw JSON that hasn't been flattened yet
-    let draft = { ...item };
+    const draft = { ...item };
     if (item.content_status === 'draft_ai' && item.konten_json) {
       const ai = item.konten_json;
       draft.tujuan_pembelajaran = ai.tujuanPembelajaran || [];
@@ -202,10 +202,14 @@ export const ModulAjarBankTab: React.FC = () => {
 
     try {
       if (editingId) {
-        await supabase.from('ref_boilerplate_topik').update(payload).eq('id', editingId);
+        // Supabase resolves with { error } instead of throwing, so surface it
+        // explicitly — otherwise a failed write looks like a success.
+        const { error } = await supabase.from('ref_boilerplate_topik').update(payload).eq('id', editingId);
+        if (error) throw error;
         setData(prev => prev.map(item => item.id === editingId ? { ...item, ...payload } : item));
       } else {
         const { data: inserted, error } = await supabase.from('ref_boilerplate_topik').insert([payload]).select('*').single();
+        if (error) throw error;
         if (inserted) {
           setData(prev => [inserted, ...prev]);
         }

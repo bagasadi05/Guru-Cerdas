@@ -1,0 +1,3002 @@
+{
+  "Kelas 1A": [
+    {
+      "name": "ABIZARD DZIKRA MAKARIM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALMIRA WIJAYA TUNGGADEWI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALVARO AZRI SAPUTRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ANNASYA SHAHIA ARKADEWI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AQMAR AL BAIHAQI WIDITAMA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSENIO RAZAN ZAWADHI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSYNAYA SHIMA KAYLA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ATHAR GIBRAN ARASTYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AUDREY KEYZIA ALTHAFUNISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "DANEEN MIKAYLA DHERADISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "DZAKY IBRAHIM MUBARAK",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ELMEERA FARADIBA KHANZA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "FEISYA ARUNA BYO PRIATNA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ILHAM DZAKY ADINDRA ZAINUDDIN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "JUNA SHIFAN RAFISQY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KAMAYELNO HAWWARIAJI CAHYADI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KANESA MERBAWANI SETIADIN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "LEICA ADZKIYA GHANIA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD HANIF YASIR",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD JAVA ALDEBARAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAPATO WIJAYA SAGARMATHA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "QUEENELLA AERZTERIZTAMA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ROGER XAVIER RHISTONIA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SHABIRA NAFA PUTRI HABIBAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SULTHAN ALFARIZQI MUHAMMAD",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SYAFIQA ALESHA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "WAHYU FAISAL HAFIDZ",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ZUNAIRA AZZAHRA ZHAFRANI",
+      "gender": "Perempuan"
+    }
+  ],
+  "Kelas 1B": [
+    {
+      "name": "AINAYYA YUMNA QONITA DEWANTORO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AISYAH ALNAIRA SAFWANA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALESHA KAINA ADHISTY",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALVARO PUTRA WIRATAMA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ANANDA RAKA AL BARRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ANSELLIO KHAWA AS SIDDIQ",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARANKA MYLO NATTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSYAD HAIDAR WIJAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AYARA KARUNA WIMALA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "BIMA KHAIRUL ANNAM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "CLEMIRA ARETHA NISTRIANTO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ENZY ALSHAMEYZEA KUSUMA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "GHIBRAN ASWINDRA AKHMAL PRAWIRO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAMDAN MAVENDRA RASTRATAMA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KANAYA MAYZURA ALMASHYRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MALIK FAREZA MAHADHANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MELVIANO DANENDRA ABRISAM SAPUTRO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD ATHARRAYHAN ALFARIZQY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAYAKA TSURAYYA PRAMESWARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "PRISCYA SHAZIVA SYUHAR",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QUINSHA QALESYA ANDRIANTO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "R. AIRLANGGA SATRIYA WARDHANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAFIF AHMAD KARIM ABDILLAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "REKSA SHAKEEL NARENDRA NUGRAHA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SAAFIA LUBNA ASTRANTO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SAM AL RIZWAN SAYIDINA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ZEHAN SAHWAHITA PRAMANA PUTRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Total Siswa",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 1C": [
+    {
+      "name": "AKLEEMA SANTIKA ALFATHUNNISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARFAYRA MAUZA ALMAHYRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARJUNA RIMBA RAKABUMI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AURISTELA KYRA ZANA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AZHEL ZAFRAN ZAYDAN PRASETYO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AZZAM RAYHAN AGUSTAMA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BIMA SAKTI PUTRA WIDJAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "CAZKA KEANO HARTAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FAISAL IBRAHIM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "INDIRA NOVA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "JENNA RUBYA MEHRU KINANDIRA VELLAGO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KANAYA AMEERA ADJI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KENZIE GIBRAN ALFAREZEL",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KIMBERLY AGHNIA KHAILEENA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD ARSLAN FATIH ABDILLAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD FATHAN AL ZAFRAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD HASHIN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD ZAYDAN ATHAILLAH YUNAS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAUFALYN ALESHA RABBANI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NOANDRA SATRIA MUTTAQIEN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RADITYA KEVIN MAULANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAFKA KAISAN FIRDAUSI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SARAH ALTHAFUNNISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SHELMA ARINDRA MEIDINA SACHI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SHENARA ELSHANUM ANDAIRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SHOFIYYAH ALFATHUNNISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "UFUQU SYAUQI ABDILLAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Total Siswa",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 2A": [
+    {
+      "name": "L/P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADZRIEL FALAH ALFARIZQI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALTHAFARO MIRZA SANJAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSYILA PRAMESWARI SETIAWAN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AYRA SABRIA ALMAHYRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AZKA ELZEIN FAEYZA HARIYANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BIANCA GANTARI ATMANEGARA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "HAIKAL ARRAHMAN RIYANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HANNAN IMAM ABDURRAHMAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HILYA SALMA AISHA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KAJEN BESUS SETIADIN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KHAIRA SHIFA RANDITA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MARYAM RUSYDAN AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MIKAYLA AZZALEA PAMUJI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MIKHAYLA ANINDYA ZAHIRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MOZELLE VECHIA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD AL FATIH RAFARDHAN FALAQ",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD ARFAN ATHALLA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD YAHYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NADHIF AL JABBAR JULIANTOKO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAIRA FARZANA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NARARYA MAHAPRANA JANITRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RACHMATULLOH BAGUS WIJAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RADITYA KRISHNA PUTRA SIGIT",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RUMAISHA SHALIHA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SANIY AR RAYYAN SILALAHI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "TULUNGAGUNG, 29 Oktober 2018",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SHABIRA SHANEEN HIDAJAYA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SYAKILA NUNANESIA WIJAYA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "TYAGA MAGANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Narain Arrafif Avanoska",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 2B": [
+    {
+      "name": "BULAN :\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AIRLANGGA DZAKY ADIANSYAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ATHAFARIZ RAFIF NARENDRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AULIAN RASYA ATTALLAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AYANNA ALFARIZQA HASMORO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BIANCA SHAQUEEN HUMAIRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DHATU SHEA KALA WASTI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "EL RHEA LOVANDRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FAREZKY ABRISAM WINASIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HANANIA AIRISSYIFA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "HAYDAR GUSTA WISTARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HIKARI AZZALEA SELLA TURSICA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KAMILA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KEYSA PUTRI ARMANDA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KHADIJA RAYYAMADINA WIJAYANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MARSA INARA ATMARINI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MARYAM ZAILA ZAHWA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MIKALA MEDINA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD ADZRIEL KHAIZURAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD FATHAN ALFAHREZI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RAFAZKA ANDIKA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAFASYA HIESKAPUTRI SUSILO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NATTA PUTRA WICAKSANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAYRA LAKEISHA CALYSTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NUR BUSSAINA HANUM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "QUINZHA PUTRI ANGGRAINI WIBOWO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAFARDHAN KANAKA GUMILANG",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAZIQ AMADA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SYAFIA AZZAHRA MALIKA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ZAVIER AUSHAF ARDANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Ayu Kurniawati, S. Pd.",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADELLIA ROSALINA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ANGGA DZYAR RAUSAN FIKRI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ASHYFA QORY SYAQEENA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AZZAM FARIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BAGINDA KAY KHAN LAKSMANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BRIAN TSAQIF EKI PRAYATA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BRIELLYAN KEANO BINTANG RAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "CALISTA ALAYA WIDYATMOKO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "CAMELIA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FATUR ALDIANO MURJOKO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAFIZ RIZKY IRAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HASAN FIKRI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HUSAM NABIL SUNGKAR",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "JAWAD ATTAQIEY KARIMULLAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KENAN GASTIASHH ABHYASA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "LEUAN AURELLIN KEYZAHRA ALVARETTA SETIAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD AKMAL",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD ALIF ALFATIH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NADHIF AMMARTIKA RAMADHAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAYLA PUTRI ZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RADHITYA KUMARA WIDI PAMBAYUN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAISYA FITRIA  PRAMESWARI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "REVALINO KENZIE PRADANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Rr. ALISHA NAJWA KANABILA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "VIOLA SYAHVIRA PERMATASARI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "YASLAM FARIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FATIMAH NIMAH ADZKIYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "LINTAR RAFAN ISLAMI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAYHAN ARKA WIRATAMA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "GIANKUMARA RIFFAT MAHARDIKA FARANSYAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MILATUS SA'DIYYAH, S.Pd.",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 2C": [
+    {
+      "name": "AL-IRSYAD AL-ISLAMIYYAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Jl. Diponegoro No. 112 B",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Jl. Merapi No 06 Kel. Pangongangan Kec. Manguharjo",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "L = 1",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "P = 16",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPr><w:tblW w:w=\"5000\" w:type=\"pct\"/><w:tblLook w:val=\"0000\" w:firstRow=\"0\" w:lastRow=\"0\" w:firstColumn=\"0\" w:lastColumn=\"0\" w:noHBand=\"0\" w:noVBand=\"0\"/></w:tblPr><w:tblGrid><w:gridCol w:w=\"603\"/><w:gridCol w:w=\"6056\"/><w:gridCol w:w=\"2969\"/></w:tblGrid><w:tr w14:paraId=\"0CAA3F59\"><w:trPr><w:trHeight w:val=\"567\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:shd w:val=\"clear\" w:color=\"000000\" w:fill=\"ffff00\"/><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"29FFF1EA\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:b/><w:bCs/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:b/><w:bCs/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>NO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"7A4CEBD5\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>1",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"7400348D\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>ADIFA ARINU",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SALAMAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"46ECEDE6\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"6DE746A8\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>2",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"5C8E88F3\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>ADREENA SHEZA KHALISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"6328BE19\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"1A3B1C31\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>3",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"68B538D9\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>AHDA MAUZA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"0B52CDC1\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"1DAE5C3F\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>4",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"4515AB6A\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>AISHA DIANDRA PRAMESTI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"6B5DD9C5\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"4616CB20\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>5",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"737B57F3\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>ALFARIZQI ZAYDAN SISWANDI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"5DE9F080\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"3962B7EF\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>6",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"1B372045\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>ALMAHYRA SHANUM HIDAYAT",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"2CDDC5BE\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"09553953\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>7",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"2584E1EC\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>ALSYAKILA GRIZEL NUGRAHA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"75DBDA1F\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"0CAD17F7\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>8",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"677D22C3\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>AQILLA FARIZA MUFIA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"46AB9058\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"68683B72\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>9",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"01BD6B85\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>AQILA TSURAYYA ACHMAD",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"5AD27E65\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"53D965C3\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>10",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"5621C95F\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>ARSYA SAKINA DARIKH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"6937320D\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"50C7CD68\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>11",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"1C2001CC\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>AZKA NARENDRA PUTRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"12F1C1FC\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"53BF42D6\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>12",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"6B73DD7D\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>BUMI BARAMERU SAHERTIAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"5704E4C4\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"4C70095A\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>13",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"0123A86D\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>CEISYA ISMAHENNA SHAQEENA ASHAD",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"50011232\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"02933B9F\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>14",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"6562E839\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>FATIH ADNAN NUGROHO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"1E73CC05\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"0C76952D\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>15",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"3C458BEE\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>FATTAH AZZAMI AHMAD",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"53160639\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"16BA1F12\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>16",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"7D46AC02\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>GLADYSA RUBY AZKADINA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"1B41CAF4\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"1F1064A3\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>17",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"52F17C68\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>JOVAN JANITRA PRAMUDI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"153E8EA8\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"7ED7F087\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>1",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"3D336181\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>KHAYRA AYONA ADZKIYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"77307271\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"4E6A3B5C\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>1",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"5C74285D\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>M RIDWAN PUTRA HABIBURROHMAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"6F3D5FDC\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"50DF5AB9\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>20",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"23A85A41\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t xml:space=\"preserve\">MUHAMMAD AZMI AL GHAZALI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"0C9B2A6F\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"1CA89E38\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>2",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"0BCA96ED\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>MUHAMMAD HAIKAL ALTHAFAREZKI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"760CA7A2\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"2060B4A1\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>2",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"38FE59C2\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>MUHAMMAD KEENAN SETIAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"10C63614\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Arial\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"12E396E0\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>2",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"401FCBC4\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>MYEISHA SHAZIA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"1ED9077B\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"412DA1FD\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>2",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"0EAC3597\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>NAILA AYUDIA CHRISTANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"7F908AB0\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"24F5D124\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>2",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"05651179\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>QUEENZY ADVINCA LOVABI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"115BF5B3\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"25ED179E\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>2",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"13AFBD4D\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>RAZKA FAUZAN KAMIL",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"57FDEF97\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"1BACDAD5\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>2",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"5153CC95\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>SEANDITO RIYANTARA ABDILLAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"16DC5A9B\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"147E8C53\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>2",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"55D9FA75\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>SHAKEELA BETHARI WAHYU ARRAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"266A3E16\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"2D4663C1\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>2",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"006DBBAF\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>ZAFRAN ARTANABIL",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"0CC5D084\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>L",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tblPrEx></w:tblPrEx><w:trPr><w:trHeight w:val=\"300\" w:hRule=\"atLeast\"/></w:trPr><w:tc><w:tcPr><w:tcW w:w=\"313\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:noWrap/><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"08FB446D\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Calibri\" w:cs=\"Calibri\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Calibri\"/><w:color w:val=\"000000\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>30",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"3145\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders><w:vAlign w:val=\"center\"/></w:tcPr><w:p w14:paraId=\"2A7CACC7\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>ZIANKA MAFAZA ELSHANUM PRADIPTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "<w:tcPr><w:tcW w:w=\"1542\" w:type=\"pct\"/><w:tcBorders><w:top w:val=\"nil\"/><w:left w:val=\"nil\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/></w:tcBorders></w:tcPr><w:p w14:paraId=\"0BFD1FB5\"><w:pPr><w:pStyle w:val=\"style0\"/><w:spacing w:after=\"0\" w:lineRule=\"auto\" w:line=\"240\"/><w:jc w:val=\"center\"/><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:ascii=\"Tahoma\" w:cs=\"Tahoma\" w:eastAsia=\"Times New Roman\" w:hAnsi=\"Tahoma\"/><w:color w:val=\"000000\"/><w:sz w:val=\"20\"/><w:szCs w:val=\"20\"/><w:lang w:val=\"en-US\"/></w:rPr><w:t>P",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 3C": [
+    {
+      "name": "ABIZARD AUSHAF ALFATIH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ABYAN ALFARIZI KURNIAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AL BARRA MAHARAJA YUDIANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AL FAIZ REYHAN PRANADIPTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALYSSA SABHIRA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AQILLA FARIZA MUFIA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARBI GAISHAN PAHLEVI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARJUNA BINTANG GIRISYAWARDHANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSHEILA KHAYLILA ALRAEN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARSYILA RIZA SUNGKAR",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARSYILA SABIYA RAESHA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ATTHAYA BILAL MA'ARIF",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AULIA ALMIRA ZAQISYA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AULIYA YASMIN KUSUMA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AURISTELLA DEVIANDRA AIDA RAMADHANI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AZRIL HENDRO RAMADHIAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAFIDZAN AL FATIH MAULANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "JUNA AL FAATIH SABILILLAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KIRANA KHAIRUNNISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KURNIA EL KAFF FAEYZA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MAHIRA ERVI NADHIFA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD UWAIS ZAGY AL QORNY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NEIVA ALMAHYRA WARDANA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "PRINCESSA NAZNEEN SHAZIA ERGIANSYAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAJENDRA RIHMECCA ALKHARIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAKI ZADA ZAYN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SHAFEEA AERILYN YONNA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SULTHAN ARRASYID SAKHI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "UWAIS AL QARNI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "WILDAN ATHAYA FATTAN PRAWIRO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ZAHWA RADITYA PUTRI ARDANI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "L = 17;  P = 14",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 4A": [
+    {
+      "name": "Panggilan",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Abiyasa Mannaf Wira Dewantoro",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Ahmad Abizar Nazril Asraf",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Alfathan Abiya Utomo",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Alika Naila Putri",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Alisha Kinarian",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Andrusha Nagata El Fauzi",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Annisa Aila Lauryan",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Athalla Aska Brillian Erwanto",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Bilqis Alvira Christanto",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Dzakira Luthfia Hartati",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Fairel Alinzky Adyatama",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Gibran Avisenna Darikh",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Keanu Satrio Nugroho",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Kei Syera Joshinta",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Kenzie Yafiq Hamizan Cahyono",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Kuntum Khoiro Ummah",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Lavanya Makaila Havie",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Magani Abyaksa Kartiko",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Mahendra Zabran Irawan",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Manggaladipa Yoganata",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Muh Ghani Birawa Atmaputra",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Nafia Salsabila As Syifa",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Nathania Aurora Wira Pelangi",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Queenlya Anggraini Febri Vallenza",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Rasyid Akmal Prasetya",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Satrio Muhammad Athoillah",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Shevahira Firdausi",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Tyasayu Santika Adiadjana",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Zakariya Dahlan Apriyudi",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Zhahirah Alena Windono",
+      "gender": "Perempuan"
+    }
+  ],
+  "Kelas 4B": [
+    {
+      "name": "BULAN :\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ACINTYA HAFIDZAH PARAMUSITA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ADZKIYA NAFI'AH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AIFRIZA AQILLA SHAFANA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AINAYYA ZAHRA WIJAYANTI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AISYA FAIHA PUTRI NADZIFI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALESHA NUHA PUTRI PRANATA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALTHAF MAULANA SHIDQI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSYILA MEDINA NAYYARA NAFISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AVEIRO KURNIA BRATADIKARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DZAKI ILHAM PRABOWO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DZULFIKAR JALALUDIN AKBAR",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "EL FATIH RAZIQ ABBASY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ELSHANUM PUTRI KELDISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "FABIAN ARSAKHA WINASIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FAWWAZ BIKRY ABQORY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "GENDIS PRAMESTI SARBIHANA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "HARUMI AZRINA ISWAHYUNI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KENZO GASTIASHH ABHYASA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KINARAYU EI PANCANAKA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD ABRISYAM AR RAFIF",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RAFIF YUSRO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RASYID IBRAHIM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RAYYAN ALFATIH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAJULA RAMADHANIA FITRI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NEANDRO RAFARDHANI YUDAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "QIANDRA ASHALINA ZAZAKI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "REYNAND AMMAR ADHYASTHA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SAKA BUMI YUSUF",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "YURIKA WINKEY ZAHIRAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "IRENE SARASWATY B., S. S.",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 4C": [
+    {
+      "name": "ABDULLAH AZZAM AL KHALIFI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADIBA KHANZA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AHLAM DYFI ZULFADLY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALESHA ZAHRA PRIAMBODO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALFARO ACHIERA LUCKY SETIAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALFATIH ALFARIZKI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ANNISA NAYFA ADZKIA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARSENKA ENZO NATTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ASSYABIA RAMIRA PANUNTUN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "BELLVANIA ALLMEERA AZKADINA SYAHIRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ELMIRA YASMINE MAHESWARI DAELA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "FIDELYO ARKANANTA ABQARY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAYDAR ARYASATYA AVERUSY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KAYYISAH NAIRA ALIYA HANUN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KEENAN AL GHAISAN BASKARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KHALIFA SAHZY PRIMAJAYA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KIYOSHI CATRA BASWARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "LUNA KAMILA TSABITHA SAKHI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD AKMAL ADHYASTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RAYYAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD ZAYN SETIAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAILA DEA ARDININGRUM",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NAWRA RAMADHANIA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QAISAR RASYAD AL AISY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAFIF MUHAMMAD SAKHA AL ARKHAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAYYAN YAZID ABIYASA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SAKHA ATHAR KANSA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SHAQUEENA AINAYYATULLAILY KHALIQA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ZIZI FARADIBA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "PA : 16                            PI : 13",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 5A": [
+    {
+      "name": "BULAN :  JULI 2025",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "L/P",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADITYA RAMADHAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AGHNISA SHIDQIA CHEVANI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALBY NAUVAL DAY ABIYYU",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ANDHYANEZZA IRSIA PRAMAJATI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AQILA KHAIRUNNISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "BIMA PUTRA LAKSONO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DANENDRA BISMA A.R",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ELFATHAN PASHA R",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ELMIRRA MARSHA JIVANYA KRISNA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "EZAAR REVANZA WIBOWO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FARAH ADINDA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "HANIF MAZHUD ABDUL GHANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KAYLA NISA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KHAYLILA PERMATASARI USODO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MAHESWARI NALINI MILENA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "M.IMAM AQIL YUSUF HABIBI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NADHIF YAFI' AL FATIH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAUVAL MUHSIN ALI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAYLA MUTIARANI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NIKI PRAVITASARI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAFFA ARYA DANISWARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SHEIRA MIKAELA ZAENA  N",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SYAFIRA ALMAIRA GUNAWAN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QUROTUL FITRIANI, S.Hum, S.Pd",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  AGUSTUS 2025",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Februari",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  SEPTEMBER 2025",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "bayar foto",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KELAHIRAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Nisn",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AFIQA BELLVANIA ORLYN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AVELTA GUZTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FADIGA ILHAM EZA UNTARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FAEZYA PASHA ASWANGGA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FAKHRU RENDRA ADHYAKSA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HISYAM AHMAD GHAZANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "JIHAN KHANSA SHAFIRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KARIN FARIDAH PRAMESWARI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KHANZA ALMAYRA WIBISONO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MAHESA PUTRA IRAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MARYAM FAIHANAH RAUDHATUL JANNAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MOHAMMAD AKHTAR HAIDAR",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD FARID FARHAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD IRSYADUR RIFQI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NURAISYAH FALIHAH ATHA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAFARDHAN AHZA ARGANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAFIF ZAAHIRULHAQ ISTANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "L    = 10",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "P   =  7",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "JMLH = 17",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  OKTOBER 2025",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  NOVEMBER 2025",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  DESEMBER 2025",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  JANUARI 2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  FEBRUARI 2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  MARET 2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  APRIL 2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  MEIL 2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAPORT",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALIKA VEIVI RACHINDESWARI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Andini Chubbi Nur Amam",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARDIA PUTRA RIZKI PRIHARTANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Arvin Muammar S",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Brilliant Olivia Radhischa Ramadhani Kuswanto",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "CELENA ALIFA ELYSIA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ERYTA FADHEELA MAHESWARI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "EVAN CHANDRA VIDIARTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FEBRINA KHAIRA ASANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FEIRA  TRIANA ARSITA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FELISHA SALSABILA AZ ZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "Galang Zhorif Putra Sugeng",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Gunawan Wibisono",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAIDAR MALIK AHSANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAKA FARRAS FARRELY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KHANZA AQILLA EKO SYAFARANI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MAJENDRA  ARJUNA  ARSAVIN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Mirza Musyaffa Atmayuanto",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD AXEL WIBISONO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD HABIB SYAHRONI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "OMAR KHALFANI  REAGAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RIFKY KURNIAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Rizka Rahma Hamidah",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Salsabila Amanda Putri Prayogo",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Wedar Sakti Wening Angkasa",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Zahra Syavila Alifatunnisa",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "Zenita Martha Putri  Wulandari",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BULAN :  JUNI 2026",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 5B": [
+    {
+      "name": "BULAN :\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADAM MIRZA ALMAHFUZI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADZHIYYA ALSHAQUEENA AISYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AFREEN NANDA ELFIRA SETIAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALKHALIFI ANURADHA SEMESTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AMIRA SHAKINA AZALEA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ANINDITA KEYSA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARINTA INARA ATALYSSA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AZRIEL AL AZZAM RANGGAWUNI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "CHAYRA HANANIA FIRMANSYAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "FATIH ZAIDAN AL AZZAM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FIGO ALIV EL GIBRAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "GYTHA INARA TIFFANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAZMI FIKRI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HUMAISHA KHANZARA ARDANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KANAYA ADIFIA SHEZAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KRISNATAN RAIS ARKHAM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMAD ALANO AMMAR RASYID",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RADJENDRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NABILA SHALIHA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QAILA NAZIFA ZAREENA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RENGGANIS MAHYA WIJANARKO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RIZTYA MALIKA ARSYAH HANIF",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RR. SALSABILA ATSILAH WINNAURA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SHAFIA HASNA FAIHANNISA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SHAFIRA DARMA SETIYO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SUFYAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SYAFIQ SATRIA PRAYUDA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "UMAR",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ANWARUL MUNIROH, M. PD",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SEPTEMBER",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADZKIYA NAFI'AH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALFARO ACHIERA LUCKY SETIAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALFATHAN ABIYA UTOMO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALFATIH ALFARIZKI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALISHA KINARIAN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARINA MANASIKANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSYILA MEDINA NAYYARA NAFISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ASSYABIA RAMIRA PANUNTUN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ATHALLA ASKA BRILLIAN ERWANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DZAKI ILHAM PRABOWO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ELSHANUM PUTRI KELDISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "FABIAN ARSAKHA WINASIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FAWWAZ BIKRY ABQORY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "GIBRAN AVISENNA DARIKH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAYDAR ARYASATYA AVERUSY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KEI SYERA JOSHINTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "LAVANYA MAKAILA HAVIE",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "LUNA KAMILA TSABITHA SAKHI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUH GHANI BIRAWA ATMAPUTRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD ABRISYAM AR RAFIF",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAWRA RAMADHANIA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NEANDRO RAFARDHANI YUDAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "QIANDRA ASHALINA ZAZAKI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QUEENLYA ANGGRAINI FEBRI VALLENZA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAFIF MUHAMMAD SAKHA AL ARKHAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAYYAN YAZID ABIYASA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SHAKA DAFYAN WIJAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ZAKARIYA DAHLAN APRIYUDI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ZHAHIRAH ALENA WINDONO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUZDALIFAH CAHYA NINGRUM, S. Pd",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FEBRUARI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AISYAH AQILLA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ANINDHITA NEYSA BELLVANIA SAPUTRO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSYANENDRA ABHIRAMA SHAKTI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AYUNDRA ASHA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "BONDAN MAHESA ZAFRAN SYAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DZAKY RIFAI RAFANDRA MUTTAQIN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FABRIZIO ABRIZAM PANUNTUN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAFIZHA WANDA BADI NASUTION",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HANZAL AL FATIH RACHMAN (IYOO)",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HASNA AKIKO ISWAHYUNI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "LATHIFA HAFIZHAH AL FATIH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RAFFASYA ALFARIZQI PRADIPTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NABILAH SAFIRA KHAIRUNNISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NADHIRA NUSAIBAH PUTRI ISPRIONO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NAUFAL ADLAN RAIHAN ALIYAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "PUTRA SADA ALGHIFARI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "QUEENA SHAQILA AAFI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "R. REY ARSY MAHINDRAJAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAFFANDRA ABINAYA ALEXI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAKHA PRAWIRA DHANANJAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "TRISTYAN RIANI QANITA AZZAHRA",
+      "gender": "Perempuan"
+    }
+  ],
+  "Kelas 5C": [
+    {
+      "name": ": PUTRI NUR ANGGRAINI, S.Pd",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NO.",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AFFAN JULIAN ALFARIZI YUSUF",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AISYAH AQILLA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALIFYA AZZAHRA KHAIRUNNISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ANDRIANO HAMIZAN PANDYA WARDANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARKHA FAYYADH SISWANDI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSALAN ZIO SOLHIDAR ASKARI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSYAD ZHAFRAN ABQARI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ATHALLA GIBRAN DWIKA PUTRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AYSHA AZZAHRA THAMRIN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "BELLVANIA AZZAHRA NISTRIANTO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "BHAGAWANTA ALFARIZQI PRADITA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BONDAN MAHESA ZAFRAN SYAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HASNA AKIKO ISWAHYUNI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KAYSHA AZIZA INDITA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KHANZA ARSYILA DARMAWAN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MIKHAYLA ADRIEN CLARETTA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD MUSA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RAFFASYA ALFARIZQI PRADIPTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NABILA SAFIRA KHAIRUNNISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NADHIRA NUSAIBAH PUTRI ISPRIONO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NADINE RIZKY DEFRIAN AKHYAR",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NAJWA AISYAH PUSPITA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "NAUFAL ADLAN RAIHAN ALIYAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "PUTRA SADA ALGHIFARI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "R. REY ARSY MAHINDRAJAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RADITYA SENA NUGRAHA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAFARDHAN DHAFIR NURWANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "REVALENA AURELLY PUTRI WARDHANA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RR. AIMILIONAMORA ADHITAMA RAYA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": ": 14 SISWI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": ": 15 SISWA",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 5D": [
+    {
+      "name": "PAGUYUBAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADEEVA MYEISHA INARA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AIDAN SYAHM ALKHALIFI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AKAR DANISH IBRAHIMO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AMIRA EMBUN RAMADHAYU",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ANINDHITA NEYSA BELLVANIA SAPUTRO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARJUNA PUTRA WIDJAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSYANENDRA ABHIRAMA SHAKTI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AYSSHA HUMAIRA ZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "JANGAN DEKAT QILA, LOKER BANYAK SAMPAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AZZAHRA RAHMA ZAHIRA ANINDITA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MATA MINUS MINTA DEKAT DENGAN PAPAN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "CLARISHA BILQIS AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "DZAKY RIFAI RAFANDRA MUTTAQIN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DZIKRI AHZATIKA ATAULAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ELSA AMALIA MUMTAZAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ERLANGGA KIANNOUZADIRA VELLAGO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FABRIZIO ABRIZAM PANUNTUN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "GHANDY BIMO SILALAHI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAFIZHA WANDA BADI NASUTION",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "HANZAL AL FATIH RACHMAN (IYO)",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KINANTI YUSKI DIANDRA DEWI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MIKAIL KEMI ASSAUQI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD ALFARO PUTRATAMA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD FAIZ ABDUL GHANIE",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NABILAH FAHIRA KHAIRUNNISA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "QUEENA SHAQILA AAFI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAFANDA NAZIFA RAHADIAN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAFFANDRA ABINAYA ALEXI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAKHA PRAWIRA DHANANJAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "TRISTYAN RIANI QANITA AZZAHRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RERATA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HANZAL AL FATIH RACHMAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AYUNDRA ASHA AZZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "CARRISA ADELIA RACHMANI",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 6A": [
+    {
+      "name": "ABIMANYU DIRGANTARA PUTRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADITYA NAUFAL DARY ABIYYU",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALESHA RAHEEL NIKEISHA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ANINDITA KAISA ZAHRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ARADHEA FIFALDI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BALQIS NABILAH AHZA PUTRI PRIBADI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "CALLISTA SEAN WIJATMOKO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "DAFFA ADHIYATSA MAHARDIKA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DANISH FAUSTA ARGANTA DHARU",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KHALID AHMED ODYSEY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RANGGA FAJAR BHUANA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAILLA IFFTITAH BUTSAINA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NASYARIFA DIANDRA MAHESWARI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RADJA THAN ARUNK SHAKA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RENO ALFREDA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SAFIYA NAILA JASMINE",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ZAHRA ZAHIDAH ATMAYUANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ZIDANE BINTANG MAULANA",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 6B": [
+    {
+      "name": "ALI AVANILLA BAHADD",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALISSA FATHIN AZ-ZAHRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALYSSA ARDHANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AMELIYA PUTRI SHOLECHAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSHAD AS-SHIDDIQ SURYAWANGSA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSHAKA DANISH RAYHAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARSYAD ANNAFI SETIYONO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ATHA PUTRA IRANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DANISWARA ALIF ANARGYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DIPA KHALIFATULLAH ZAHABI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "EARLYTA ARSYFA SALSABILA RIANTO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FARREL AKBAR RAHARJA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HANS OCTAVILLO FAEYZA SAPUTRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KEANDRA SASKARA RACHMAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "LIONEL ALTHAFFITO EL KEYNANDO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "PRATAMA APTA BASWARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAFALINO KHALIEF RAHENALBY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SHAFAA ASIILAH AYU ANGGARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "YASMIN HISANAH ZHARIFAH",
+      "gender": "Laki-laki"
+    }
+  ],
+  "Kelas 6C": [
+    {
+      "name": "Nisn",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ADELINA DIANDRA WIJAYA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AHNAF HAIDAR FAHMI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AKMA SHAKILA KHAIRINA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ALI AUNNILLA BAHADJ",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALVARO CALYA ZIGGY FAUSTAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AMALIA PUTRI ANJANI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AMARANGGANA KINNARA PRASETYO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "ANOM ANANTA PUTRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AZFAR PUTRA YURI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AZKIYA NAFISA NUGROHO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "AZZAHRA RAFANDA ZHAFIRAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "BELAID MUHAMMAD ABD EL RAOUF",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "BILQIS ZHARUFA HAWIN AFIQAH",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "DE ATTAR ALFAREZ FERDIAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FATHAN ARSYANENDRA PURNOMO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HAGIA SOPHIA NAIRA RACHMAN",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "INA AMINATUS ZAHRO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "IRFAN NISMARA SETIAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KAYLA PRAMUDITA AZALIA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KEANU ABIDZAR RACHMAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "KEISHA LARASATI RAHARDIYANTO",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "KHANSA AQILA QOTRUNNADA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MICHELLA AMAIRA RAHMANI KUSUMA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MIKHAEELA ALLESSANDRA SYAHIRA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "MUHAMMAD DASTAN AL-KHALEF ANDI MAKMUR",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NUR SYIFA KUSUMA AYU",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RAFLI HABIBULLAH GHANI PRASOJO",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "REVANO NAUVAL PRATAMA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RUBY ALIYA DEWINA MARYAM",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SAFIA PARAMITA MADINA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "SHAIRA HASNA AZKADINA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "TALITA HASNA KHUMAIRA",
+      "gender": "Perempuan"
+    }
+  ],
+  "Kelas 6D": [
+    {
+      "name": "BULAN : JANUARI 2026",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ABBAS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALUNA KAYLA KHANZA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ALYA AZ ZAHRA SALEH BAHADJ",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ARJUNA ALGHIFARY IBRAHIM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ASHILLA ALMAHYRA SHANUM",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ASMA KALILA AZ-ZAHRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "AURORA SHAFIRA BILQIS",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DANISH ARAYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "DINAR KHOIRUNNISAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "FATIMAH ROHIMA HANIFA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "GEOVANI ARYA TIASTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "HUSEIN FIKRI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "JACINDA FATHIYYA BAHIRA PUTRI",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "JADDA JAYYID ZIDANE",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "LAVIOLA CANTIQA NAURA QUEEN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD AHNAF ALFARIZQY",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD DONY AL-FATIH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "MUHAMMAD RADEVA ALANO KHALFANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NARARYA ARDI PRADIPTA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "NAURA ALYA MAHIRA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "QAISHA AZZAHRA KUMARA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "QISYA HUMAIRA MARWAH",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "QUEENA AURANISSA ANNAFI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RAISA AZKAZAKIYA KUSUMA",
+      "gender": "Perempuan"
+    },
+    {
+      "name": "RASYA BIMA ALKHALIFI RAMADHAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "REIKI ARSA SAVIAN ALTEZZA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "RIFQY ARKANA SAHITYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SHAKILLA HANANIA IRAWAN",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "SYANALA KANIA AYUNDA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "TIVANIA KAYLA RAMADHANI",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "VANESSA ANGEL ANASTASYA",
+      "gender": "Laki-laki"
+    },
+    {
+      "name": "ZIVANNA VALLERIE JASMINE",
+      "gender": "Laki-laki"
+    }
+  ]
+}

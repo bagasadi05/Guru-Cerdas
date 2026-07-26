@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 
 import { useAuth } from '../../hooks/useAuth';
 import { useScheduleNotifications } from '../../hooks/useScheduleNotifications';
@@ -26,21 +26,28 @@ import { WelcomeEmptyState } from '../EmptyStates';
 import { AIInsightWidget } from '../dashboard/AIInsightWidget';
 import StatsGrid from '../dashboard/StatsGrid';
 import DashboardPageSkeleton from '../skeletons/DashboardPageSkeleton';
+import { CardSkeleton } from '../skeletons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import DashboardGreeting from '../dashboard/DashboardGreeting';
 import SemesterTransitionBanner from '../dashboard/SemesterTransitionBanner';
 import GradeAuditWidget from '../dashboard/GradeAuditWidget';
 import ScheduleTimeline from '../dashboard/ScheduleTimeline';
 import FloatingActionButton from '../ui/FloatingActionButton';
-import AttendanceStatsWidget from '../dashboard/AttendanceStatsWidget';
-import { ClassAnalyticsSection } from '../dashboard/ClassAnalyticsSection';
 import { LeaderboardCard } from '../gamification/LeaderboardCard';
 import TodayActionPanel from '../dashboard/TodayActionPanel';
-import { DashboardSummaryCards, WallOfFameWidget } from '../dashboard';
-import ActivityFeedWidget from '../dashboard/ActivityFeedWidget';
-import ParentMessagesWidget from '../dashboard/ParentMessagesWidget';
-import { SchoolViolationsWidget } from '../dashboard/SchoolViolationsWidget';
-import { SchoolAttendanceWidget } from '../dashboard/SchoolAttendanceWidget';
+import { DashboardSummaryCards } from '../dashboard';
+// Below-the-fold and role-gated widgets load on demand. The school-wide ones
+// in particular were downloaded by every teacher despite only ever rendering
+// for leadership.
+import {
+  LazyAttendanceStatsWidget,
+  LazyClassAnalyticsSection,
+  LazyActivityFeedWidget,
+  LazyParentMessagesWidget,
+  LazySchoolAttendanceWidget,
+  LazySchoolViolationsWidget,
+  LazyWallOfFameWidget,
+} from '../dashboard/LazyWidgets';
 import { transformToGameData } from '../../services/gamificationService';
 import { ErrorState } from '../ui/ErrorState';
 import { useGlobalSearch } from '../GlobalSearchContext';
@@ -91,7 +98,7 @@ const DashboardPage: React.FC = () => {
   // Sync schedule with Service Worker for notifications
   useScheduleNotifications(user?.id);
 
-  const { studentsMissingGrade } = useGradeAudit({ data });
+  useGradeAudit({ data });
 
   // Activity feed (reminders + timeline) from existing hook
   const { activeReminders, activities: recentActivities, dismissReminder: handleDismissReminder } = useDashboardActivities(
@@ -179,6 +186,31 @@ const DashboardPage: React.FC = () => {
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
+      {data && data.students.length > 0 && Math.max(data.students.length - (data.dailyAttendanceSummary?.total || 0), 0) > 0 && (
+        <div className="p-5 rounded-3xl bg-rose-50/90 dark:bg-rose-950/20 backdrop-blur-xl border border-rose-200/80 dark:border-rose-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_8px_30px_rgb(243,24,96,0.06)] animate-fade-in transition-all hover:shadow-[0_8px_30px_rgb(243,24,96,0.12)]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center shrink-0">
+              <AlertTriangleIcon className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+            </div>
+            <div>
+              <h4 className="font-bold text-rose-800 dark:text-rose-400 text-sm">
+                Tunggakan Absensi Hari Ini
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                Ada {Math.max(data.students.length - (data.dailyAttendanceSummary?.total || 0), 0)} siswa yang belum dicatat kehadirannya hari ini.
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => navigate('/absensi')}
+            size="sm"
+            className="w-full sm:w-auto shrink-0 bg-rose-600 hover:bg-rose-700 text-white rounded-xl"
+          >
+            Isi Sekarang
+          </Button>
+        </div>
+      )}
+
       {journalStatus && journalStatus.unfilled > 0 && (
         <div className="p-5 rounded-3xl bg-amber-50/90 dark:bg-amber-950/20 backdrop-blur-xl border border-amber-200/80 dark:border-amber-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_8px_30px_rgb(245,158,11,0.06)] animate-fade-in transition-all hover:shadow-[0_8px_30px_rgb(245,158,11,0.12)]">
           <div className="flex items-center gap-3">
@@ -214,8 +246,12 @@ const DashboardPage: React.FC = () => {
             <section className="space-y-6 mt-6">
               <SectionHeading>Analitik Tingkat Sekolah</SectionHeading>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <SchoolAttendanceWidget />
-                <SchoolViolationsWidget />
+                <Suspense fallback={<CardSkeleton />}>
+                  <LazySchoolAttendanceWidget />
+                </Suspense>
+                <Suspense fallback={<CardSkeleton />}>
+                  <LazySchoolViolationsWidget />
+                </Suspense>
               </div>
             </section>
           )}
@@ -249,7 +285,9 @@ const DashboardPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Attendance Chart */}
               <div className="flex flex-col">
-                <AttendanceStatsWidget weeklyData={weeklyAttendance} />
+                <Suspense fallback={<CardSkeleton />}>
+                  <LazyAttendanceStatsWidget weeklyData={weeklyAttendance} />
+                </Suspense>
               </div>
 
               {/* Grade Audit */}
@@ -265,12 +303,14 @@ const DashboardPage: React.FC = () => {
 
               {/* Class Analytics */}
               {data.classes.length > 0 && (
-                <ClassAnalyticsSection
-                  classes={data.classes}
-                  students={data.students}
-                  academicRecords={data.academicRecords}
-                  attendanceRecords={[]}
-                />
+                <Suspense fallback={<CardSkeleton />}>
+                  <LazyClassAnalyticsSection
+                    classes={data.classes}
+                    students={data.students}
+                    academicRecords={data.academicRecords}
+                    attendanceRecords={[]}
+                  />
+                </Suspense>
               )}
             </section>
           )}
@@ -369,18 +409,24 @@ const DashboardPage: React.FC = () => {
           </div>
 
           {/* Wall of Fame Widget */}
-          <WallOfFameWidget data={data} />
+          <Suspense fallback={<CardSkeleton />}>
+            <LazyWallOfFameWidget data={data} />
+          </Suspense>
 
           {/* Parent Messages Widget */}
-          <ParentMessagesWidget />
+          <Suspense fallback={<CardSkeleton />}>
+            <LazyParentMessagesWidget />
+          </Suspense>
 
           {/* Activity Feed (Reminders + Timeline) — personal/teacher-centric, hidden for leadership */}
           {!isGlobalRole && (
-            <ActivityFeedWidget
-              reminders={activeReminders}
-              activities={recentActivities}
-              onDismissReminder={handleDismissReminder}
-            />
+            <Suspense fallback={<CardSkeleton />}>
+              <LazyActivityFeedWidget
+                reminders={activeReminders}
+                activities={recentActivities}
+                onDismissReminder={handleDismissReminder}
+              />
+            </Suspense>
           )}
         </div>
       </div>

@@ -3,6 +3,7 @@ import { supabase } from '../../services/supabase';
 import { softDelete } from '../../services/SoftDeleteService';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
+import { logger } from '../../services/logger';
 import { Button } from '../ui/Button';
 import { CardTitle, CardDescription } from '../ui/Card';
 import { PlusIcon, TrashIcon, CheckCircleIcon, LockIcon, CalendarIcon, ChevronDownIcon, ChevronRightIcon, AlertCircleIcon } from 'lucide-react';
@@ -30,7 +31,8 @@ export const SemesterManagement: React.FC = () => {
     const fetchData = React.useCallback(async () => {
         if (!user || !user.id) return;
         setLoading(true);
-        console.log('Fetching academic data for user:', user.id);
+        // The user id used to be printed straight to the console here.
+        logger.debug('Fetching academic data', 'SemesterManagement');
 
         // Safety timeout to prevent infinite loading
         const timeoutId = setTimeout(() => {

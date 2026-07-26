@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { MotionTr } from '../ui/MotionComponents';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -174,7 +174,7 @@ export const TindakLanjutPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                   {filteredViolations.map((v, index) => (
-                    <motion.tr 
+                    <MotionTr 
                       key={v.id} 
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -215,7 +215,7 @@ export const TindakLanjutPage: React.FC = () => {
                           Tindak Lanjuti
                         </Button>
                       </td>
-                    </motion.tr>
+                    </MotionTr>
                   ))}
                 </tbody>
               </table>

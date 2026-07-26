@@ -22,7 +22,6 @@ import { logger } from './services/logger';
 
 // Import local fonts for offline support
 import './styles/fonts.css';
-import './i18n';
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 const isProduction = import.meta.env.PROD;

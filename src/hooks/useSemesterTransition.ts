@@ -255,7 +255,7 @@ export function useSemesterTransition(): SemesterTransitionState {
             // Activate the next semester via RPC
             const { error } = await supabase.rpc('activate_semester', {
                 p_semester_id: target.semester.id,
-                p_year_id: target.semester.academic_year_id,
+                p_year_id: target.semester.academic_year_id ?? '',
             });
 
             if (error) throw error;

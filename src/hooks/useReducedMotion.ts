@@ -10,6 +10,15 @@ const LOW_PERF_MODE_KEY = 'portal_guru_low_perf_mode';
 const DEVICE_CHECK_KEY = 'portal_guru_device_checked';
 
 /**
+ * Easy Mode's live state, as carried by the root element. AccessibilityProvider
+ * writes it, and index.html sets it before first paint.
+ */
+function readEasyModeAttribute(): boolean {
+    if (typeof document === 'undefined') return false;
+    return document.documentElement.getAttribute('data-easy-mode') === 'true';
+}
+
+/**
  * Detect if device is low performance based on hardware specs
  */
 function detectLowPerformanceDevice(): boolean {
@@ -93,6 +102,20 @@ export function useReducedMotion() {
         return stored !== null ? stored === 'true' : null;
     });
 
+    // Easy Mode implies calm motion. Its CSS already flattens transitions, but
+    // Framer Motion animates in JS and ignores CSS durations entirely — without
+    // this the sidebar pill, page transitions and AnimatePresence kept moving.
+    // Read from the DOM attribute rather than the context so this hook stays
+    // usable outside AccessibilityProvider.
+    const [isEasyMode, setIsEasyMode] = useState(() => readEasyModeAttribute());
+
+    useEffect(() => {
+        const root = document.documentElement;
+        const observer = new MutationObserver(() => setIsEasyMode(readEasyModeAttribute()));
+        observer.observe(root, { attributes: true, attributeFilter: ['data-easy-mode'] });
+        return () => observer.disconnect();
+    }, []);
+
     // Listen for OS preference changes
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -106,20 +129,24 @@ export function useReducedMotion() {
 
     // Apply/remove reduce-motion class based on current state
     useEffect(() => {
-        const shouldReduce = userPreference !== null ? userPreference : (prefersReducedMotion || autoLowPerfMode);
+        const shouldReduce = isEasyMode
+            || (userPreference !== null ? userPreference : (prefersReducedMotion || autoLowPerfMode));
 
         if (shouldReduce) {
             document.documentElement.classList.add('reduce-motion');
         } else {
             document.documentElement.classList.remove('reduce-motion');
         }
-    }, [userPreference, prefersReducedMotion, autoLowPerfMode]);
+    }, [isEasyMode, userPreference, prefersReducedMotion, autoLowPerfMode]);
 
-    // Final decision: user preference > auto detection > OS preference
+    // Final decision: Easy Mode > user preference > auto detection > OS preference.
+    // Easy Mode outranks the manual toggle: someone who turned it on is asking
+    // for a calmer screen, whatever they picked earlier.
     const shouldReduceMotion = useMemo(() => {
+        if (isEasyMode) return true;
         if (userPreference !== null) return userPreference;
         return prefersReducedMotion || autoLowPerfMode;
-    }, [userPreference, prefersReducedMotion, autoLowPerfMode]);
+    }, [isEasyMode, userPreference, prefersReducedMotion, autoLowPerfMode]);
 
     const setReducedMotion = useCallback((value: boolean) => {
         setUserPreference(value);
@@ -132,18 +159,6 @@ export function useReducedMotion() {
     }, []);
 
     // Helper to get optimized animation props for external use
-    const getOptimizedAnimationProps = useCallback(() => {
-        if (shouldReduceMotion) {
-            return {
-                initial: { opacity: 1 },
-                animate: { opacity: 1 },
-                exit: { opacity: 1 },
-                transition: { duration: 0 }
-            };
-        }
-        return {};
-    }, [shouldReduceMotion]);
-
     const resetToSystemPreference = useCallback(() => {
         setUserPreference(null);
         localStorage.removeItem(REDUCED_MOTION_KEY);

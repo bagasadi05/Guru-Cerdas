@@ -66,24 +66,26 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                     <button type="button"
                         onClick={onExportPDF}
                         disabled={enrollments.length === 0}
-                        className="flex items-center justify-center w-10 h-10 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-3 h-10 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 transition-colors disabled:opacity-50"
                         title="Export Rekap Bulanan PDF"
                     >
-                        <FileText className="w-5 h-5" />
+                        <FileText className="w-4 h-4" />
+                        <span className="text-sm font-medium">PDF</span>
                     </button>
                     <button type="button"
                         onClick={onExportExcel}
                         disabled={enrollments.length === 0}
-                        className="flex items-center justify-center w-10 h-10 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-200 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-3 h-10 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-200 transition-colors disabled:opacity-50"
                         title="Export Rekap Bulanan Excel"
                     >
-                        <FileSpreadsheet className="w-5 h-5" />
+                        <FileSpreadsheet className="w-4 h-4" />
+                        <span className="text-sm font-medium">Excel</span>
                     </button>
-                    <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1" />
+                    <div className="hidden sm:block h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1" />
                     <DatePicker
                         value={selectedDate}
                         onChange={(date) => onDateChange(date)}
-                        className="min-w-[160px]"
+                        className="w-full sm:w-auto sm:min-w-[160px] mt-1 sm:mt-0"
                         align="right"
                     />
                 </div>
@@ -123,46 +125,51 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                     </div>
 
                     {/* Bulk Actions */}
-                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 mt-3 sm:mt-0">
-                        <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 mr-2 hidden sm:inline col-span-2">Tandai Semua:</span>
-                        {[
-                            { label: 'Hadir', status: 'Hadir', icon: CheckSquare, color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40', border: 'border-emerald-200 dark:border-emerald-800/50' },
-                            { label: 'Sakit', status: 'Sakit', icon: Activity, color: 'text-sky-700 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-900/20 hover:bg-sky-100 dark:hover:bg-sky-900/40', border: 'border-sky-200 dark:border-sky-800/50' },
-                            { label: 'Izin', status: 'Izin', icon: Info, color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40', border: 'border-amber-200 dark:border-amber-800/50' },
-                            { label: 'Libur', status: 'Libur', icon: CalendarOff, color: 'text-purple-700 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40', border: 'border-purple-200 dark:border-purple-800/50' },
-                        ].map((btn) => (
-                            <button type="button"
-                                key={btn.status}
-                                onClick={() => onMarkAll(btn.status)}
-                                className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-medium rounded-lg border transition-colors ${btn.bg} ${btn.color} ${btn.border}`}
-                            >
-                                <btn.icon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                                {btn.label}
-                            </button>
-                        ))}
+                    <div className="flex flex-col gap-2 mt-4 lg:mt-0">
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tandai Semua:</span>
+                        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+                            {[
+                                { label: 'Hadir', status: 'Hadir', icon: CheckSquare, color: 'text-white', bg: 'bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700', border: 'border-transparent shadow-sm shadow-emerald-500/20' },
+                                { label: 'Sakit', status: 'Sakit', icon: Activity, color: 'text-white', bg: 'bg-sky-500 hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-700', border: 'border-transparent shadow-sm shadow-sky-500/20' },
+                                { label: 'Izin', status: 'Izin', icon: Info, color: 'text-white', bg: 'bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700', border: 'border-transparent shadow-sm shadow-amber-500/20' },
+                                { label: 'Libur', status: 'Libur', icon: CalendarOff, color: 'text-white', bg: 'bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700', border: 'border-transparent shadow-sm shadow-purple-500/20' },
+                            ].map((btn) => (
+                                <button type="button"
+                                    key={btn.status}
+                                    onClick={() => onMarkAll(btn.status)}
+                                    className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-medium rounded-lg border transition-all hover:-translate-y-0.5 active:translate-y-0 ${btn.bg} ${btn.color} ${btn.border}`}
+                                >
+                                    <btn.icon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                                    {btn.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
                 {/* Statistics Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                    {[
-                        { label: 'Hadir', key: 'Hadir', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50/50 dark:bg-emerald-900/10' },
-                        { label: 'Sakit', key: 'Sakit', color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-50/50 dark:bg-sky-900/10' },
-                        { label: 'Izin', key: 'Izin', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50/50 dark:bg-amber-900/10' },
-                        { label: 'Alpha', key: 'Alpha', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50/50 dark:bg-rose-900/10' },
-                        { label: 'Libur', key: 'Libur', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50/50 dark:bg-purple-900/10' },
-                    ].map((stat, idx) => {
-                        const count = enrollments.reduce((acc, curr) => {
-                            const key = `${curr.participantType}:${curr.participantId}`;
-                            return mergedAttendance[key] === stat.key ? acc + 1 : acc;
-                        }, 0);
-                        return (
-                            <div key={stat.key} className={`rounded-xl p-3 border border-slate-100 dark:border-slate-800 ${stat.bg} flex flex-col items-center justify-center ${idx === 0 ? 'col-span-2 sm:col-span-1' : ''}`}>
-                                <p className={`text-xxs font-bold tracking-wider ${stat.color} uppercase mb-1`}>{stat.label}</p>
-                                <p className={`text-2xl font-black ${stat.color}`}>{count}</p>
-                            </div>
-                        );
-                    })}
+                <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-700/50">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-3">Statistik Kehadiran:</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        {[
+                            { label: 'Hadir', key: 'Hadir', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-slate-50 dark:bg-slate-900/50', border: 'border-emerald-200 dark:border-emerald-900/50' },
+                            { label: 'Sakit', key: 'Sakit', color: 'text-sky-600 dark:text-sky-400', bg: 'bg-slate-50 dark:bg-slate-900/50', border: 'border-sky-200 dark:border-sky-900/50' },
+                            { label: 'Izin', key: 'Izin', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-slate-50 dark:bg-slate-900/50', border: 'border-amber-200 dark:border-amber-900/50' },
+                            { label: 'Alpha', key: 'Alpha', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-slate-50 dark:bg-slate-900/50', border: 'border-rose-200 dark:border-rose-900/50' },
+                            { label: 'Libur', key: 'Libur', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-slate-50 dark:bg-slate-900/50', border: 'border-purple-200 dark:border-purple-900/50' },
+                        ].map((stat, idx) => {
+                            const count = enrollments.reduce((acc, curr) => {
+                                const key = `${curr.participantType}:${curr.participantId}`;
+                                return mergedAttendance[key] === stat.key ? acc + 1 : acc;
+                            }, 0);
+                            return (
+                                <div key={stat.key} className={`rounded-xl p-3 border-l-4 border-y-0 border-r-0 sm:border-l-0 sm:border-t-4 ${stat.border} ${stat.bg} flex flex-col items-center justify-center ${idx === 0 ? 'col-span-2 sm:col-span-1' : ''}`}>
+                                    <p className={`text-xxs font-bold tracking-wider ${stat.color} uppercase mb-1`}>{stat.label}</p>
+                                    <p className={`text-2xl font-black ${stat.color}`}>{count}</p>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 

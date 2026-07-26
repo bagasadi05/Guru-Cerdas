@@ -54,7 +54,7 @@ export const useTodayJournalStatus = (today: string) => {
         .from('schedules')
         .select('*')
         .eq('user_id', userId)
-        .eq('day', dayName)
+        .eq('day', dayName as 'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat' | 'Sabtu' | 'Minggu')
         .order('start_time');
 
       if (error) throw error;

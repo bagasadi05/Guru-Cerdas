@@ -1,9 +1,8 @@
 # Documentation CI/CD Workflow
-# 
+#
 # This workflow:
 # 1. Validates documentation on every PR
 # 2. Generates and deploys docs on merge to main
-# 3. Deploys Storybook for component documentation
 
 name: Documentation
 
@@ -14,15 +13,13 @@ on:
       - 'docs/**'
       - 'src/**/*.ts'
       - 'src/**/*.tsx'
-      - '.storybook/**'
-      - 'scripts/validate-docs.js'
+      - 'scripts/validate-docs.cjs'
   pull_request:
     branches: [main, develop]
     paths:
       - 'docs/**'
       - 'src/**/*.ts'
       - 'src/**/*.tsx'
-      - '.storybook/**'
 
 jobs:
   # Job 1: Validate documentation
@@ -43,7 +40,7 @@ jobs:
         run: npm ci
 
       - name: Run documentation validation
-        run: node scripts/validate-docs.js
+        run: node scripts/validate-docs.cjs
 
       - name: Check TypeScript compilation
         run: npx tsc --noEmit
@@ -80,46 +77,7 @@ jobs:
           path: docs/api/generated
           retention-days: 7
 
-  # Job 3: Build and deploy Storybook
-  storybook:
-    name: Build Storybook
-    runs-on: ubuntu-latest
-    needs: validate
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Storybook
-        run: npm run build-storybook
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
-
-      - name: Upload Storybook artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: storybook
-          path: storybook-static
-          retention-days: 7
-
-      # Optional: Deploy to GitHub Pages
-      # - name: Deploy to GitHub Pages
-      #   uses: peaceiris/actions-gh-pages@v3
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     publish_dir: ./storybook-static
-      #     destination_dir: storybook
-
-  # Job 4: Documentation coverage report
+  # Job 3: Documentation coverage report
   coverage:
     name: Documentation Coverage
     runs-on: ubuntu-latest
@@ -207,7 +165,7 @@ jobs:
               body: body
             });
 
-  # Job 5: Link check
+  # Job 4: Link check
   link-check:
     name: Check Links
     runs-on: ubuntu-latest

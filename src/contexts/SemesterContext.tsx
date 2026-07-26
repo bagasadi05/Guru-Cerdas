@@ -109,7 +109,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
                 const { data: yearData, error: yearError } = await supabase
                     .from('academic_years')
                     .select('*')
-                    .eq('id', semesterData.academic_year_id)
+                    .eq('id', semesterData.academic_year_id ?? '')
                     .is('deleted_at', null)
                     .maybeSingle();
 

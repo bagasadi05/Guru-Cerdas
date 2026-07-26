@@ -89,14 +89,138 @@ html[data-font-size="x-large"] .text-sm {
 }
 
 /* Mode mudah keeps every feature available while making the interface calmer and easier to target. */
+
+/* Sits after the data-font-size rules above so it wins on equal specificity. */
 html[data-easy-mode="true"] {
     scroll-behavior: auto;
 }
 
+/* Easy Mode raises the floor to 18px — the layout is built around a 16px root
+   and every rem-based padding, gap and card grows with it, so a bigger jump
+   turns the page into a stack of overflowing boxes.
+   It must never *lower* the size, so the large (18px) and x-large (20px) tiers
+   are left exactly as the user set them. */
+html[data-easy-mode="true"]:not([data-font-size="large"]):not([data-font-size="x-large"]) {
+    font-size: 18px;
+}
+
+/* Tailwind's small type stays small even as the root grows, and that is exactly
+   where labels stop being readable. Lift the bottom of the scale. */
+html[data-easy-mode="true"] .text-xs {
+    font-size: 0.9rem;
+}
+
+html[data-easy-mode="true"] .text-sm {
+    font-size: 1rem;
+}
+
+html[data-easy-mode="true"] .text-xxs,
+html[data-easy-mode="true"] .text-\[10px\] {
+    font-size: 0.85rem;
+}
+
+/* 44px is the WCAG floor for the general population. Hands that tremble need
+   more, and a wider target costs nothing on a phone-sized screen. */
 html[data-easy-mode="true"] button,
 html[data-easy-mode="true"] a,
 html[data-easy-mode="true"] [role="button"] {
+    min-height: 56px;
+}
+
+html[data-easy-mode="true"] button,
+html[data-easy-mode="true"] [role="button"] {
+    min-width: 56px;
+}
+
+/* The header holds seven controls. At 56px each they total more than a 375px
+   screen and the row breaks onto three lines, costing more usable space than
+   the larger targets gain. It keeps the 44px WCAG floor instead. */
+html[data-easy-mode="true"] header button,
+html[data-easy-mode="true"] header a,
+html[data-easy-mode="true"] header [role="button"] {
+    min-width: 44px;
     min-height: 44px;
+}
+
+/* Reveal labels that are hidden only because the viewport is narrow. An
+   icon with no word next to it is the single most common thing older teachers
+   report being unable to identify. Scoped to controls so decorative
+   responsive content elsewhere is left alone. */
+html[data-easy-mode="true"] button .hidden.sm\:inline,
+html[data-easy-mode="true"] [role="button"] .hidden.sm\:inline,
+html[data-easy-mode="true"] a .hidden.sm\:inline {
+    display: inline !important;
+}
+
+html[data-easy-mode="true"] button .hidden.sm\:block,
+html[data-easy-mode="true"] [role="button"] .hidden.sm\:block,
+html[data-easy-mode="true"] a .hidden.sm\:block {
+    display: block !important;
+}
+
+html[data-easy-mode="true"] button .hidden.sm\:inline-flex,
+html[data-easy-mode="true"] [role="button"] .hidden.sm\:inline-flex,
+html[data-easy-mode="true"] a .hidden.sm\:inline-flex {
+    display: inline-flex !important;
+}
+
+html[data-easy-mode="true"] button .hidden.sm\:inline-block,
+html[data-easy-mode="true"] [role="button"] .hidden.sm\:inline-block,
+html[data-easy-mode="true"] a .hidden.sm\:inline-block {
+    display: inline-block !important;
+}
+
+/* A revealed label must stay on one line. Letting it wrap inside a cramped
+   toolbar button turns it into a column of single characters. */
+html[data-easy-mode="true"] button .hidden.sm\:inline,
+html[data-easy-mode="true"] button .hidden.sm\:block,
+html[data-easy-mode="true"] button .hidden.sm\:inline-flex,
+html[data-easy-mode="true"] button .hidden.sm\:inline-block,
+html[data-easy-mode="true"] [role="button"] .hidden.sm\:inline,
+html[data-easy-mode="true"] [role="button"] .hidden.sm\:block,
+html[data-easy-mode="true"] a .hidden.sm\:inline,
+html[data-easy-mode="true"] a .hidden.sm\:block {
+    white-space: nowrap;
+}
+
+/* Buttons grow to fit their newly visible label instead of being squeezed. */
+html[data-easy-mode="true"] button,
+html[data-easy-mode="true"] [role="button"] {
+    height: auto;
+    flex-shrink: 0;
+}
+
+/* …but not in the header or the bottom bar. Those are fixed-height rows of
+   four or more controls; revealing every label there pushed the toolbar onto
+   three lines and ate a third of the screen. Their icons carry an aria-label
+   already, so nothing is lost for a screen reader. */
+/* The [class*="sm:"] part is not decoration: it lifts these above the reveal
+   rules, which carry two class selectors of their own. */
+html[data-easy-mode="true"] header button .hidden[class*="sm:"],
+html[data-easy-mode="true"] header a .hidden[class*="sm:"],
+html[data-easy-mode="true"] nav button .hidden[class*="sm:"],
+html[data-easy-mode="true"] nav a .hidden[class*="sm:"],
+html[data-easy-mode="true"] [role="navigation"] button .hidden[class*="sm:"],
+html[data-easy-mode="true"] [role="navigation"] a .hidden[class*="sm:"] {
+    display: none !important;
+}
+
+/* Larger type makes these rows slightly taller; let them grow rather than clip
+   their labels. */
+html[data-easy-mode="true"] header {
+    height: auto;
+    min-height: 4rem;
+}
+
+/* The bottom bar is pinned to 64px and its labels ship with a 0.75rem line
+   box. Once those labels grow they get sheared off at the screen edge, so the
+   bar and its line height both need room. */
+html[data-easy-mode="true"] .mobile-bottom-nav {
+    min-height: 76px;
+}
+
+html[data-easy-mode="true"] .mobile-bottom-nav .leading-3 {
+    line-height: 1.2;
 }
 
 html[data-easy-mode="true"] .easy-mode-decorative {
@@ -194,17 +318,17 @@ textarea:focus-visible {
     color: #00ffff;
 }
 
-/* Better hover states in high contrast */
-.high-contrast button:hover,
-.high-contrast a:hover {
-    background-color: #ffff00;
-    color: #000;
-}
-
-.dark.high-contrast button:hover,
-.dark.high-contrast a:hover {
-    background-color: #ffff00;
-    color: #000;
+/* Better hover states in high contrast.
+   Gated on real hover: on a touch screen :hover sticks after a tap, which left
+   every button the user had just pressed glowing yellow. */
+@media (hover: hover) and (pointer: fine) {
+    .high-contrast button:hover,
+    .high-contrast a:hover,
+    .dark.high-contrast button:hover,
+    .dark.high-contrast a:hover {
+        background-color: #ffff00;
+        color: #000;
+    }
 }
 
 /* ============================================

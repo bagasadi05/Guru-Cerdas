@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { MotionDiv, MotionSpan } from '../../../../ui/MotionComponents';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
@@ -103,7 +103,7 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
                 {/* Bar container */}
                 <div className="relative flex-1 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden">
                   {/* Animated fill */}
-                  <motion.div
+                  <MotionDiv
                     className={`
                       h-full rounded-lg bg-gradient-to-r
                       ${getBarGradient(clampedScore)}
@@ -120,7 +120,7 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
 
                   {/* Score label — inside or outside the bar */}
                   {showScoreInside ? (
-                    <motion.span
+                    <MotionSpan
                       className="absolute inset-y-0 flex items-center text-xs font-bold text-white drop-shadow-sm"
                       style={{ right: `calc(100% - ${barWidth} + 8px)` }}
                       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
@@ -128,9 +128,9 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
                       transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, delay: 0.1 * idx + 0.5 }}
                     >
                       {average}
-                    </motion.span>
+                    </MotionSpan>
                   ) : (
-                    <motion.span
+                    <MotionSpan
                       className="absolute inset-y-0 flex items-center text-xs font-bold text-slate-600 dark:text-slate-300"
                       style={{ left: `calc(${barWidth} + 6px)` }}
                       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
@@ -138,7 +138,7 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
                       transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, delay: 0.1 * idx + 0.5 }}
                     >
                       {average}
-                    </motion.span>
+                    </MotionSpan>
                   )}
                 </div>
               </div>

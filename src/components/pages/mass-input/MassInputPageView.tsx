@@ -119,7 +119,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
         isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
         selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors,
-        existingGrades, filteredExistingGrades,
+        existingGrades,
         summaryText, gradedCount, setScores, setSelectedStudentIds,
         isExporting, exportProgress, handleSubmit, isSubmitDisabled, submitButtonTooltip,
         isSubmitting, isDeleting, studentsData, existingViolations, isLoadingViolations,

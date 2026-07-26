@@ -48,7 +48,7 @@ async function cacheToBank(ctx: FieldContext, partial: Record<string, any>): Pro
     if (existing) {
       await supabase.from('ref_boilerplate_topik').update(merged).eq('id', existing.id);
     } else {
-      await supabase.from('ref_boilerplate_topik').insert(merged);
+      await supabase.from('ref_boilerplate_topik').insert(merged as any);
     }
   } catch (e) {
     // Non-blocking — jangan gagalkan UI kalau cache gagal

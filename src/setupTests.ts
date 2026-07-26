@@ -58,6 +58,12 @@ vi.mock('./services/supabase', () => ({
     }
 }));
 
+// JSDOM does not implement scrollIntoView. Components that scroll a selected
+// item into view would otherwise throw during effect flush.
+if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
+    Element.prototype.scrollIntoView = vi.fn();
+}
+
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
     writable: true,

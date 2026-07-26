@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../ui/MotionComponents';
 import { useSound } from '../../hooks/useSound';
 import { useHaptic } from '../../hooks/useHaptic';
 import { MoreHorizontalIcon } from '../Icons';
@@ -80,7 +80,7 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
           >
             {/* Active Indicator Bar */}
             {isActive && (
-              <motion.div
+              <MotionDiv
                 initial={{ scaleY: 0 }}
                 animate={{ scaleY: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
@@ -132,7 +132,7 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
       >
         {/* Active Indicator Bar */}
         {isMoreMenuHighlighted && (
-          <motion.div
+          <MotionDiv
             initial={{ scaleY: 0 }}
             animate={{ scaleY: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
@@ -142,7 +142,7 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
         )}
 
         {/* Icon with rotation */}
-        <motion.div
+        <MotionDiv
           animate={{
             rotate: isMoreMenuOpen ? 90 : 0,
           }}
@@ -159,7 +159,7 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
                 : 'text-slate-600 dark:text-slate-400 group-hover:scale-110'
             }`}
           />
-        </motion.div>
+        </MotionDiv>
 
         {/* Tooltip */}
         <div

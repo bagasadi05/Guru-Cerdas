@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, Variants } from 'framer-motion';
+import { MotionDiv, type Variants } from '../../../../ui/MotionComponents';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
@@ -77,14 +77,14 @@ export const QuickInsightStrip: React.FC<QuickInsightStripProps> = ({
   const values: Record<string, string> = { superpower, challenge, homeTip };
 
   return (
-    <motion.div
+    <MotionDiv
       variants={containerVariants}
       initial="hidden"
       animate="visible"
       className="grid grid-cols-1 md:grid-cols-3 gap-3"
     >
       {INSIGHT_CONFIG.map((cfg) => (
-        <motion.div
+        <MotionDiv
           key={cfg.key}
           variants={cardVariants}
           className={[
@@ -115,8 +115,8 @@ export const QuickInsightStrip: React.FC<QuickInsightStripProps> = ({
               {values[cfg.key]}
             </p>
           </div>
-        </motion.div>
+        </MotionDiv>
       ))}
-    </motion.div>
+    </MotionDiv>
   );
 };

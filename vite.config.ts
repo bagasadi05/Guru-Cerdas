@@ -59,7 +59,7 @@ export default defineConfig(({ mode }) => {
             'assets/fonts/*.{woff,woff2}',
             'assets/js/index-*.js',
             'assets/js/vendor-react-*.js',
-            'assets/js/vendor-ui-*.js',
+            'assets/js/vendor-query-*.js',
             'assets/js/vendor-utils-*.js',
             'assets/js/vendor-icons-*.js',
             'assets/js/vendor-supabase-*.js',
@@ -96,22 +96,38 @@ export default defineConfig(({ mode }) => {
         output: {
           // Manual chunk splitting for better caching
           manualChunks: {
-            // Vendor chunks - core React
+            // ── Core React (always needed on every page) ──
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            // UI libraries
-            'vendor-ui': ['framer-motion', '@tanstack/react-query'],
-            // PDF/Excel export libs — lazy-loaded on demand
-            'vendor-export': ['jspdf', 'jspdf-autotable', 'html2canvas', 'exceljs'],
-            // Utility libraries
+
+            // ── Query / data layer ──
+            'vendor-query': ['@tanstack/react-query'],
+
+            // ── Animation — separated so low-end devices can skip it ──
+            'vendor-framer': ['framer-motion'],
+
+            // ── Export libs — each dynamically imported independently ──
+            // Each library gets its own chunk so user only pays for what
+            // they actually use. NO shared "vendor-export" grouping — that
+            // would force-load ALL export libs even when just one is imported.
+            'vendor-pdf': ['jspdf', 'jspdf-autotable'],
+            'vendor-canvas': ['html2canvas'],
+            'vendor-excel': ['exceljs'],
+
+            // ── Utilities ──
             'vendor-utils': ['zod', 'date-fns'],
-            // Icons (heavy)
+
+            // ── Icons (very heavy, ~200KB+) ──
             'vendor-icons': ['lucide-react'],
-            // Supabase
+
+            // ── Supabase ──
             'vendor-supabase': ['@supabase/supabase-js'],
-            // Sentry — dynamically imported via import() in index.tsx, no manual chunk needed
-            // Forms
+
+            // ── Forms ──
             'vendor-forms': ['react-hook-form', '@hookform/resolvers'],
           },
+          // Ensure any dynamic import() gets its own chunk instead of
+          // being inlined into the importing module's chunk
+          inlineDynamicImports: false,
           // Asset naming for cache busting
           assetFileNames: (assetInfo) => {
             const info = assetInfo.name?.split('.') || [];
@@ -128,8 +144,10 @@ export default defineConfig(({ mode }) => {
           entryFileNames: 'assets/js/[name]-[hash].js',
         },
       },
-      // Chunk size warning limit (increased to accommodate heavy export modules when loading on demand)
-      chunkSizeWarningLimit: 1500,
+      // Chunk size warning limit — strict so we catch regressions early.
+      // Export libraries (jspdf, exceljs) can push individual chunks past
+      // this when loaded, but the initial-load chunks should stay well under.
+      chunkSizeWarningLimit: 500,
       // Minification options
       minify: 'terser',
       terserOptions: {
@@ -139,7 +157,9 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    // Optimize dependencies
+    // Optimize dependencies — only eagerly pre-bundle what's needed
+    // on initial page load. Export libraries (jspdf, exceljs, html2canvas)
+    // are dynamically imported on demand and will be pre-bundled lazily.
     optimizeDeps: {
       include: [
         'react',
@@ -149,10 +169,6 @@ export default defineConfig(({ mode }) => {
         '@tanstack/react-query',
         'framer-motion',
         'lucide-react',
-        'recharts',
-        'exceljs',
-        'jspdf',
-        'jspdf-autotable',
         'zod',
         'date-fns',
         'react-hook-form',

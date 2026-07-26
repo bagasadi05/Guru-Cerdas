@@ -61,7 +61,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     mode, isConfigOpen, setIsConfigOpen, selectedClass, setSelectedClass, classes, isLoadingClasses,
     quizInfo, setQuizInfo, subjectGradeInfo, setSubjectGradeInfo, isCustomSubject, setIsCustomSubject,
     uniqueSubjects, selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
-    violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote, assessmentNames,
+    violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,
     pasteData, setPasteData, isParsing, handleAiParse, isOnline, onOpenImport,
     bypassDuplicateGuard, setBypassDuplicateGuard,
     handleSubmit, isSubmitDisabled, isSubmitting, submitButtonTooltip

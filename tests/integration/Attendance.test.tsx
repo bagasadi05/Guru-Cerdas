@@ -9,7 +9,7 @@ import { AuthContext } from '../../src/hooks/useAuth';
 import { ToastProvider } from '../../src/hooks/useToast';
 
 // Mock Supabase
-let mockAttendance: any[] = [];
+const mockAttendance: any[] = [];
 
 vi.mock('../../src/services/supabase', () => ({
     supabase: {
@@ -153,13 +153,32 @@ describe('AttendancePage Integration', () => {
     }, 15000);
 
     it('marks every unmarked student as present without losing the local selection', async () => {
+        // Seed one saved record so the class is only partially marked. Without
+        // this the "auto-Hadir" path in useAttendance fires on an empty result
+        // set, marks everyone present, and the button never renders — the test
+        // would only pass by winning a race against that effect.
+        mockAttendance.push({
+            id: 'att-1',
+            student_id: '1',
+            status: 'Izin',
+            notes: '',
+            official_status: null,
+            teacher_id: 'test-user',
+        });
+
         renderPage();
 
-        const markRestButton = await screen.findByRole('button', { name: /Tandai Sisa Hadir \(2\)/i });
+        // Wait for the roster before querying the button. Going straight to
+        // findByRole races the students query against its 1s default timeout.
+        expect(await screen.findByText('Budi')).toBeInTheDocument();
+        expect(await screen.findByText('Siti')).toBeInTheDocument();
+
+        // Budi is already marked, so only Siti remains.
+        const markRestButton = await screen.findByRole('button', { name: /Tandai Sisa Hadir \(1\)/i });
         fireEvent.click(markRestButton);
 
         await waitFor(() => {
             expect(screen.queryByRole('button', { name: /Tandai Sisa Hadir/i })).not.toBeInTheDocument();
         });
-    });
+    }, 15000);
 });

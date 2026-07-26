@@ -93,6 +93,28 @@
       document.documentElement.classList.remove('dark');
     }
 
+    // Accessibility settings, applied before first paint for the same reason as
+    // the theme above. These are set again by AccessibilityProvider once React
+    // mounts; without this pass a teacher who needs 18px text reads 16px text
+    // at low contrast for the first few hundred milliseconds of every visit.
+    try {
+      var root = document.documentElement;
+      var easyMode = localStorage.getItem('isEasyMode') === 'true';
+      // Easy Mode sizes text through its own CSS rules, so the saved font size
+      // is applied unconditionally and never overwritten here.
+      root.setAttribute('data-easy-mode', String(easyMode));
+      root.setAttribute('data-font-size', localStorage.getItem('fontSize') || 'normal');
+      if (easyMode || localStorage.getItem('highContrastMode') === 'true') {
+        root.classList.add('high-contrast');
+      }
+      // Easy Mode implies calm motion, matching useReducedMotion's precedence.
+      if (easyMode || localStorage.getItem('reducedMotion') === 'true' || localStorage.getItem('portal_guru_reduced_motion') === 'true') {
+        root.classList.add('reduce-motion');
+      }
+    } catch (e) {
+      // localStorage can throw in private mode; defaults are fine.
+    }
+
     // Prevent double-tap zoom (improves tap responsiveness without blocking accessibility zoom)
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function (event) {

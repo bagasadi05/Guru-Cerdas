@@ -52,3 +52,33 @@ export const LazyParentMessagesWidget = lazy(() =>
 export const LazyActivityFeedWidget = lazy(() =>
   import('./ActivityFeedWidget')
 );
+
+/**
+ * Lazy-loaded school-wide attendance widget.
+ * Only leadership roles render this, so classroom teachers never fetch it.
+ */
+export const LazySchoolAttendanceWidget = lazy(() =>
+  import('./SchoolAttendanceWidget').then((module) => ({
+    default: module.SchoolAttendanceWidget,
+  }))
+);
+
+/**
+ * Lazy-loaded school-wide violations widget.
+ * Only leadership roles render this, so classroom teachers never fetch it.
+ */
+export const LazySchoolViolationsWidget = lazy(() =>
+  import('./SchoolViolationsWidget').then((module) => ({
+    default: module.SchoolViolationsWidget,
+  }))
+);
+
+/**
+ * Lazy-loaded Wall of Fame widget.
+ * Sits well below the fold on every viewport.
+ */
+export const LazyWallOfFameWidget = lazy(() =>
+  import('./WallOfFameWidget').then((module) => ({
+    default: module.WallOfFameWidget,
+  }))
+);

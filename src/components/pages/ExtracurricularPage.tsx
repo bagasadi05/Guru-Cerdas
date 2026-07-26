@@ -369,7 +369,7 @@ const ExtracurricularPage: React.FC = () => {
 
     // ==================== RENDER ====================
     return (
-        <div className="min-h-screen h-full flex flex-col overflow-auto pb-6 px-1">
+        <div className="min-h-screen h-full flex flex-col overflow-auto pb-6 px-4 md:px-6">
             
             {/* Top Navigation Bar / Context Switcher */}
             {!selectedExtracurricularId && (
@@ -475,7 +475,7 @@ const ExtracurricularPage: React.FC = () => {
                             setFormData({
                                 name: e.name, category: e.category || '', description: e.description || '',
                                 schedule_day: e.schedule_day || '', schedule_time: e.schedule_time || '',
-                                coach_name: e.coach_name || '', max_participants: e.max_participants, is_active: e.is_active,
+                                coach_name: e.coach_name || '', max_participants: e.max_participants ?? 30, is_active: e.is_active ?? true,
                             });
                         } else {
                             setEditingExtracurricular(null);

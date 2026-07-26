@@ -243,22 +243,12 @@ export const useStudentsPageActions = ({
     const avatarUrl = getStudentAvatar(null, genderSelection, undefined, name);
 
     if (studentModalMode === 'add') {
-      const className = classes.find((item) => item.id === classId)?.name || '';
       addStudent({
         name,
         class_id: classId,
         user_id: userId,
         gender: genderSelection,
         avatar_url: avatarUrl,
-        address: '',
-        class: className,
-        contact: '',
-        date_of_birth: new Date().toISOString().split('T')[0],
-        email: '',
-        guardian_name: '',
-        nis: '',
-        nisn: '',
-        photo_url: avatarUrl,
       });
       return;
     }

@@ -3,7 +3,7 @@
  * Provides reusable animation variants and components for the application
  */
 
-import { Variants } from 'framer-motion';
+import type { Variants } from '../components/ui/MotionComponents';
 import { duration as motionDuration, easing, fadeIn, slideUp, scaleIn, staggerContainer } from '../styles/motion';
 
 // Page transition animations

@@ -6,7 +6,7 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { TrendingUp, Download, Info, Calendar, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MotionDiv, AnimatePresence } from '../ui/MotionComponents';
 
 interface AttendanceData {
     day: string;
@@ -134,7 +134,7 @@ const InteractiveAttendanceChartBase: React.FC<InteractiveAttendanceChartProps> 
                         </button>
                         <AnimatePresence>
                             {showRangeDropdown && (
-                                <motion.div
+                                <MotionDiv
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
@@ -149,7 +149,7 @@ const InteractiveAttendanceChartBase: React.FC<InteractiveAttendanceChartProps> 
                                             {rangeLabels[range]}
                                         </button>
                                     ))}
-                                </motion.div>
+                                </MotionDiv>
                             )}
                         </AnimatePresence>
                     </div>

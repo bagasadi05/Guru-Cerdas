@@ -5,7 +5,8 @@ const SEARCH_HISTORY_KEY = 'portal_guru_search_history';
 const MAX_HISTORY = 10;
 
 const useSearchHistory = () => {
-    const [history, setHistory] = useState(() => {
+    // Only the setter is used — history is persisted to localStorage, never read back into the UI.
+    const [, setHistory] = useState(() => {
         if (typeof window === 'undefined') return [];
         try {
             return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]') as Array<{ query: string }>;

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Button } from './Button';
-import { HTMLMotionProps } from 'framer-motion';
+import type { HTMLMotionProps } from './MotionComponents';
 
 interface LoadingButtonProps extends HTMLMotionProps<"button"> {
     isLoading?: boolean;

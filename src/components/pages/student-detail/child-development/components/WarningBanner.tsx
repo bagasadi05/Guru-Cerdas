@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MotionSpan, MotionDiv, AnimatePresence } from '../../../../ui/MotionComponents';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { AlertCircleIcon, ChevronDownIcon } from '../../../../Icons';
@@ -60,19 +60,19 @@ export const WarningBanner: React.FC<WarningBannerProps> = ({
           <span className="text-xs font-medium text-rose-500 dark:text-rose-400 hidden sm:inline">
             {isExpanded ? 'Sembunyikan' : 'Lihat Detail'}
           </span>
-          <motion.span
+          <MotionSpan
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, ease: easing.easeOut }}
           >
             <ChevronDownIcon className="w-4 h-4 text-rose-400 dark:text-rose-500" />
-          </motion.span>
+          </MotionSpan>
         </div>
       </button>
 
       {/* ── Expanded warning list ──────────────────────────────────────── */}
       <AnimatePresence initial={false}>
         {isExpanded && (
-          <motion.div
+          <MotionDiv
             key="warning-content"
             initial={shouldReduceMotion ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -93,7 +93,7 @@ export const WarningBanner: React.FC<WarningBannerProps> = ({
                 ))}
               </ul>
             </div>
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
     </div>

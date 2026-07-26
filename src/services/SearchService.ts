@@ -254,14 +254,16 @@ const searchSchedules = async (
 
     return schedules
         .map(schedule => {
-            const searchableText = `${schedule.subject} ${(schedule.classes as { name: string } | null)?.name || ''} ${dayLabels[schedule.day] || schedule.day}`;
+            const classesData = schedule.classes as { name: string }[] | null;
+            const className = classesData?.[0]?.name || '';
+            const searchableText = `${schedule.subject} ${className} ${dayLabels[schedule.day] || schedule.day}`;
             const relevance = calculateRelevance(query, searchableText, options.fuzzy);
 
             return {
                 id: schedule.id,
                 type: 'schedules' as SearchEntityType,
                 title: schedule.subject,
-                subtitle: `${dayLabels[schedule.day] || schedule.day} • ${(schedule.classes as { name: string } | null)?.name || ''}`,
+                subtitle: `${dayLabels[schedule.day] || schedule.day} • ${className}`,
                 description: `${schedule.start_time} - ${schedule.end_time}`,
                 metadata: { day: schedule.day, classId: schedule.class_id },
                 relevance,

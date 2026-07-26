@@ -204,9 +204,20 @@ export const useAttendance = () => {
 
         initialSyncRef.current = true;
         if (!localDirtyRef.current) {
-            setAttendanceRecords(existingAttendance || {});
+            const records = existingAttendance || {};
+            if (Object.keys(records).length === 0 && students && students.length > 0) {
+                // Option 2: Auto-Hadir (Asumsi Positif)
+                const autoFilled: Record<string, AttendanceRecord> = {};
+                students.forEach(student => {
+                    autoFilled[student.id] = { id: undefined, status: AttendanceStatus.Hadir, note: '' };
+                });
+                setAttendanceRecords(autoFilled);
+                localDirtyRef.current = true; // Mark as dirty so the Save button becomes active
+            } else {
+                setAttendanceRecords(records);
+            }
         }
-    }, [existingAttendance, hasLoadedAttendance]);
+    }, [existingAttendance, hasLoadedAttendance, students]);
 
     const calendarRange = useMemo(() => {
         const [year, monthNum] = calendarMonth.split('-').map(Number);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { MotionCircle, MotionSpan } from '../../../../ui/MotionComponents';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
@@ -84,7 +84,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
           />
 
           {/* Animated progress arc */}
-          <motion.circle
+          <MotionCircle
             cx={center}
             cy={center}
             r={radius}
@@ -106,7 +106,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
 
         {/* Center score number */}
         {showScore && (
-          <motion.span
+          <MotionSpan
             className={`absolute inset-0 flex items-center justify-center font-bold ${text}`}
             style={{ fontSize: size * 0.28 }}
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
@@ -114,7 +114,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.slow, delay: 0.4 }}
           >
             {Math.round(clampedScore)}
-          </motion.span>
+          </MotionSpan>
         )}
       </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../../ui/MotionComponents';
 import { BookOpen, History, Copy, Printer, FileText, Clock } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
@@ -155,9 +155,6 @@ const ModulAjarCreatorPage: React.FC = () => {
   );
 
   const queueStatus = isAiEnabled ? queueHookResult.jobStatus : 'idle';
-  const queuePosition = 0; // Backend handles positioning, UI just shows processing
-  const activeQueueUser = null; // Backend handles active users privately
-  const startQueueAndGenerate = isAiEnabled ? queueHookResult.startJob : () => {};
 
   const generateManualModulAjar = async () => {
     if (!formState.mataPelajaran || !formState.topik) {
@@ -235,11 +232,11 @@ const ModulAjarCreatorPage: React.FC = () => {
             ? bp.tujuan_pembelajaran
             : [`Peserta didik dapat memahami dan menguasai materi ${formState.topik || formState.mataPelajaran} dengan baik.`]);
 
-      let pemahamanBermaknaList: string[] = (bp?.pemahaman_bermakna && Array.isArray(bp.pemahaman_bermakna) && bp.pemahaman_bermakna.length > 0)
+      const pemahamanBermaknaList: string[] = (bp?.pemahaman_bermakna && Array.isArray(bp.pemahaman_bermakna) && bp.pemahaman_bermakna.length > 0)
         ? bp.pemahaman_bermakna
         : [`Peserta didik dapat memahami konsep dasar ${formState.topik || formState.mataPelajaran} dan menerapkannya dalam kehidupan sehari-hari.`];
 
-      let pertanyaanPemantikList: string[] = formState.manualPertanyaanPemantik
+      const pertanyaanPemantikList: string[] = formState.manualPertanyaanPemantik
         ? formState.manualPertanyaanPemantik.split('\n').filter(line => line.trim() !== '')
         : (bp?.pertanyaan_pemantik && Array.isArray(bp.pertanyaan_pemantik) && bp.pertanyaan_pemantik.length > 0
             ? bp.pertanyaan_pemantik
@@ -248,8 +245,8 @@ const ModulAjarCreatorPage: React.FC = () => {
                 `Mengapa penting bagi kita untuk mempelajari ${formState.topik || formState.mataPelajaran}?`
               ]);
 
-      let lkpdText = formState.manualLkpdTugas || bp?.lkpd_tugas || `Tugas Mandiri/Kelompok: Eksplorasi dan latihan penerapan materi ${formState.topik || formState.mataPelajaran}.`;
-      let evaluasiText = formState.manualSoalEvaluasi || bp?.soal_evaluasi || `1. Sebutkan konsep utama dari ${formState.topik || formState.mataPelajaran}!\n2. Berikan contoh penerapan ${formState.topik || formState.mataPelajaran} dalam kehidupan sehari-hari!`;
+      const lkpdText = formState.manualLkpdTugas || bp?.lkpd_tugas || `Tugas Mandiri/Kelompok: Eksplorasi dan latihan penerapan materi ${formState.topik || formState.mataPelajaran}.`;
+      const evaluasiText = formState.manualSoalEvaluasi || bp?.soal_evaluasi || `1. Sebutkan konsep utama dari ${formState.topik || formState.mataPelajaran}!\n2. Berikan contoh penerapan ${formState.topik || formState.mataPelajaran} dalam kehidupan sehari-hari!`;
 
       if (formState.isKbcIntegrated && formState.materiInsersi) {
         const frasa = formState.materiInsersi.trim();
@@ -816,7 +813,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               {/* Loading overlay for AI generation */}
               {isAiGenerating && (
                 <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm z-30 flex items-center justify-center p-6 text-center">
-                  <motion.div
+                  <MotionDiv
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full space-y-4"
@@ -830,14 +827,14 @@ const ModulAjarCreatorPage: React.FC = () => {
                       <h3 className="font-bold text-slate-800 dark:text-white">AI Sedang Bekerja</h3>
                       <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold animate-pulse">Menghubungi AI... Sedang menulis perangkat ajar Anda.</p>
                     </div>
-                  </motion.div>
+                  </MotionDiv>
                 </div>
               )}
 
               {/* Realtime Queue Overlay */}
               {(queueStatus === 'pending' || queueStatus === 'processing') && (
                 <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm z-30 flex items-center justify-center p-6 text-center">
-                  <motion.div 
+                  <MotionDiv 
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full space-y-4"
@@ -858,7 +855,7 @@ const ModulAjarCreatorPage: React.FC = () => {
                         <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold animate-pulse">Menghubungi AI... Sedang menulis perangkat ajar Anda.</p>
                       )}
                     </div>
-                  </motion.div>
+                  </MotionDiv>
                 </div>
               )}
 

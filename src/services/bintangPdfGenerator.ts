@@ -50,7 +50,8 @@ export const generateBintangReportPdf = async (
     monthName: string,
     printDate: string,
     user: AppUser | null,
-    options?: { schoolName?: string; academicYear?: string; semesterName?: string }
+    options?: { schoolName?: string; academicYear?: string; semesterName?: string },
+    onProgress?: (current: number, total: number) => void
 ) => {
     await ensureBintangLogosLoaded();
     const { default: autoTable } = await getAutoTable();
@@ -65,10 +66,14 @@ export const generateBintangReportPdf = async (
     const BORDER = [203, 213, 225] as [number, number, number]; // slate-300
     const BG_LIGHT = [248, 250, 252] as [number, number, number]; // slate-50
 
-    for (let i = 0; i < reports.length; i++) {
+    const totalReports = reports.length;
+    for (let i = 0; i < totalReports; i++) {
         if (i > 0) {
             doc.addPage();
         }
+
+        // Report progress before generating each student's page
+        onProgress?.(i + 1, totalReports);
 
         const report = reports[i];
         
@@ -93,8 +98,9 @@ export const generateBintangReportPdf = async (
         
         currentY += 5;
 
-        // 3. Student Info Box
-        const infoBoxHeight = 18;
+        // 3. Student Info Box — hide NIS/NISN row if both are empty
+        const hasNisNisn = !!(report.student.nis || report.student.nisn);
+        const infoBoxHeight = hasNisNisn ? 18 : 13;
         doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
         doc.setFillColor(BG_LIGHT[0], BG_LIGHT[1], BG_LIGHT[2]);
         doc.roundedRect(margin, currentY, pageWidth - (margin * 2), infoBoxHeight, 2, 2, 'FD');
@@ -144,23 +150,35 @@ export const generateBintangReportPdf = async (
 
         lineY += lineSpacing;
 
-        // Row 3
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-        doc.text("NIS/NISN", col1X, lineY);
-        doc.text(":", col1X + 25, lineY);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        const nisNisn = `${report.student.nis || '-'} / ${report.student.nisn || '-'}`;
-        doc.text(nisNisn, col1X + 28, lineY);
+        // Row 3 — NIS/NISN only if data exists
+        if (hasNisNisn) {
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+            doc.text("NIS/NISN", col1X, lineY);
+            doc.text(":", col1X + 25, lineY);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
+            const nisPart = report.student.nis || '(tidak ada)';
+            const nisnPart = report.student.nisn || '(tidak ada)';
+            doc.text(nisPart + " / " + nisnPart, col1X + 28, lineY);
 
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-        doc.text("Periode", col2X, lineY);
-        doc.text(":", col2X + 25, lineY);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        doc.text((monthName || '').toUpperCase(), col2X + 28, lineY);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+            doc.text("Periode", col2X, lineY);
+            doc.text(":", col2X + 25, lineY);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
+            doc.text((monthName || '').toUpperCase(), col2X + 28, lineY);
+        } else {
+            // Without NIS/NISN row, Periode moves to the left column
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+            doc.text("Periode", col1X, lineY);
+            doc.text(":", col1X + 25, lineY);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
+            doc.text((monthName || '').toUpperCase(), col1X + 28, lineY);
+        }
 
         currentY += infoBoxHeight + 5;
 
@@ -244,9 +262,10 @@ export const generateBintangReportPdf = async (
             doc.setFont('helvetica', 'italic');
             doc.setFontSize(9);
             doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-            doc.text("Alhamdulillah, Ananda tidak memiliki catatan poin pelanggaran pada bulan ini.", margin + 5, currentY + 7.5);
+            doc.text("Tidak terdapat catatan pelanggaran yang perlu dilaporkan untuk bulan ini. Ananda telah menunjukkan perilaku yang baik dan sesuai dengan ketentuan yang berlaku.", margin + 5, currentY + 7.5);
             currentY += 12;
         } else {
+            const totalPoin = report.violations.reduce((sum, v) => sum + (v.points || 0), 0);
             const viosData = report.violations.map((v: { date: string; description: string; points: number }, idx: number) => {
                 const vDate = new Date(v.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
                 return [
@@ -256,6 +275,9 @@ export const generateBintangReportPdf = async (
                     v.points?.toString() || '0'
                 ];
             });
+
+            // Add TOTAL row
+            viosData.push(['', 'TOTAL', `${report.violations.length} pelanggaran`, totalPoin.toString()]);
 
             autoTable(doc, {
                 startY: currentY,
@@ -283,6 +305,16 @@ export const generateBintangReportPdf = async (
                     1: { halign: 'center', cellWidth: 30 },
                     2: { cellWidth: 'auto' },
                     3: { halign: 'center', cellWidth: 15, fontStyle: 'bold', textColor: [225, 29, 72] }
+                },
+                didParseCell: (data: any) => {
+                    // Highlight TOTAL row with amber background
+                    if (data.row.index === data.table.body.length - 1) {
+                        data.cell.styles.fillColor = [254, 243, 199]; // amber-100
+                        data.cell.styles.fontStyle = 'bold';
+                        if (data.column.index === 3) {
+                            data.cell.styles.textColor = [180, 83, 9]; // amber-700
+                        }
+                    }
                 },
                 didDrawPage: (data: { cursor?: { y: number } | null }) => {
                     currentY = data.cursor?.y || currentY;
@@ -426,8 +458,8 @@ export const generateBintangReportPdf = async (
         
         currentY += notesBoxHeight + 5;
 
-        // 7. Signatures
-        checkPageBreak(35);
+        // 7. Signatures — need 50mm for header (7mm) + box (40mm) + gap
+        checkPageBreak(50);
         
         doc.setFillColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
         doc.roundedRect(margin, currentY, pageWidth - (margin * 2), 7, 2, 2, 'F');
@@ -491,18 +523,49 @@ export const generateBintangReportPdf = async (
         doc.line(teacherLineX - (textWidth / 2) - 2, currentY + 36, teacherLineX + (textWidth / 2) + 2, currentY + 36);
 
     }
+
+    // ── Page numbers (footer on every page) ──────────────────────────────────
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+
+        // Separator line
+        doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+        doc.setLineWidth(0.3);
+        doc.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
+
+        // Page number on the right
+        doc.text(
+            `Halaman ${i} dari ${pageCount}`,
+            pageWidth - margin,
+            pageHeight - 7,
+            { align: 'right' }
+        );
+
+        // App name on the left
+        doc.text(
+            'Portal Guru — Program BINTANG',
+            margin,
+            pageHeight - 7
+        );
+    }
 };
 
 export const downloadBintangReportAction = async ({
     studentId,
     classId,
     month,
-    user
+    user,
+    onProgress
 }: {
     studentId?: string;
     classId?: string;
     month: string;
     user: AppUser | null;
+    onProgress?: (current: number, total: number) => void;
 }) => {
     if (!studentId && !classId) return;
 
@@ -554,7 +617,6 @@ export const downloadBintangReportAction = async ({
         const evals = await bintangService.getStudentEvaluations(student.id, false);
         const currentEval = evals.find(e => e.month === month);
         const vios = await bintangService.getViolationsForStudent(student.id, month);
-        const aspects = calculateAspectPoints(vios);
 
         // Fetch quiz points (keaktifan) for the month
         // month is in YYYY-MM format, so we use string matching on quiz_date
@@ -570,6 +632,9 @@ export const downloadBintangReportAction = async ({
         if (qpError) {
             console.error('Error fetching quiz points:', qpError);
         }
+
+        const totalQuizPoints = (qpData || []).reduce((acc: number, curr: any) => acc + (curr.points || 0), 0);
+        const aspects = calculateAspectPoints(vios, totalQuizPoints);
 
         reports.push({
             student,
@@ -597,7 +662,7 @@ export const downloadBintangReportAction = async ({
         schoolName: undefined, // Will use default from addPdfHeader
         academicYear,
         semesterName
-    });
+    }, onProgress);
     
     const fileName = classId 
         ? `Rapor_Bintang_Kelas_${reports[0]?.student?.classes?.name || classId}_${monthName.replace(/\s+/g, '_')}.pdf`

@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { MotionSpan } from '../../../../ui/MotionComponents';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 
@@ -31,23 +31,23 @@ export const PeriodComparison: React.FC<{
     <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow duration-300">
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">{label}</p>
       <div className="flex items-end gap-2.5">
-        <motion.span
+        <MotionSpan
           initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, ease: easing.easeOut }}
           className="text-2xl font-bold text-slate-800 dark:text-white"
         >
           {currentAvg}
-        </motion.span>
+        </MotionSpan>
         {previousAvg > 0 && (
-          <motion.span
+          <MotionSpan
             initial={shouldReduceMotion ? { opacity: 0 } : { x: -8, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.base, delay: 0.15 }}
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${trendColor} ${trendBg}`}
           >
             {isImproved ? '↑' : isDeclined ? '↓' : '→'} {Math.abs(Number(percentChange))}%
-          </motion.span>
+          </MotionSpan>
         )}
       </div>
       {previousAvg > 0 && (

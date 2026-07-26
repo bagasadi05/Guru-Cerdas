@@ -276,9 +276,9 @@ const AdminPage: React.FC = () => {
             if (activeResult.error) throw activeResult.error;
             if (deletedResult.error) throw deletedResult.error;
 
-            setUsers(activeResult.data || []);
+            setUsers((activeResult.data || []) as UserRoleRecord[]);
             setUserTotal(activeResult.count || 0);
-            setDeletedUsers(deletedResult.data || []);
+            setDeletedUsers((deletedResult.data || []) as UserRoleRecord[]);
             setDeletedTotal(deletedResult.count || 0);
         } catch (err: unknown) {
             setError((err as Error).message);

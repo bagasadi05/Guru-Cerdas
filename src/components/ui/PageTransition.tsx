@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../ui/MotionComponents';
 import { duration as motionDuration, easing } from '../../styles/motion';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 
@@ -17,7 +17,7 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
   const { shouldReduceMotion } = useReducedMotion();
 
   return (
-    <motion.div
+    <MotionDiv
       key={transitionKey}
       initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -28,7 +28,7 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
       className={className}
     >
       {children}
-    </motion.div>
+    </MotionDiv>
   );
 };
 

@@ -1,8 +1,11 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useSound } from '../../hooks/useSound';
 import { useHaptic } from '../../hooks/useHaptic';
 import { useAuth } from '../../hooks/useAuth';
+import { useAccessibility } from '../ui/AccessibilityFeatures';
+import { EASY_MODE_PATHS } from '../navigation/menuRegistry';
 import { LogOutIcon } from 'lucide-react';
 
 interface MoreMenuItem {
@@ -31,12 +34,35 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
   const { playClick } = useSound();
   const { triggerHaptic } = useHaptic();
   const { logout } = useAuth();
+  const { isEasyMode } = useAccessibility();
   const sheetRef = useRef<HTMLDivElement>(null);
+  const [showAllEasyMenu, setShowAllEasyMenu] = useState(false);
 
   // Check if current path is active
   const isPathActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
+
+  // Easy Mode trims this sheet the same way it trims the desktop sidebar.
+  // Without this, Easy Mode simplified navigation on desktop only — and most
+  // teachers are on a phone.
+  const isOutsideEasyMenu = items.some(
+    (item) => !EASY_MODE_PATHS.has(item.href) && isPathActive(item.href),
+  );
+
+  const displayedItems = useMemo(() => {
+    if (!isEasyMode || showAllEasyMenu || isOutsideEasyMenu) return items;
+    return items.filter((item) => EASY_MODE_PATHS.has(item.href));
+  }, [items, isEasyMode, showAllEasyMenu, isOutsideEasyMenu]);
+
+  // Collapse back to the short list once the sheet is dismissed, so the next
+  // open starts simple again. Adjusted during render rather than in an effect
+  // to avoid an extra render pass on every open/close.
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+    if (!isOpen) setShowAllEasyMenu(false);
+  }
 
   // Close handler - memoized to prevent stale closure
   const handleClose = useCallback(() => {
@@ -148,7 +174,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
           style={{ maxHeight: 'calc(85vh - 300px)' }}
         >
           <div className="grid grid-cols-2 gap-3">
-            {items.map((item) => {
+            {displayedItems.map((item) => {
               const isActive = isPathActive(item.href);
               return (
                 <button
@@ -197,6 +223,23 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
               );
             })}
           </div>
+
+          {/* Escape hatch: Easy Mode hides menus, it must never strand them. */}
+          {isEasyMode && !isOutsideEasyMenu && (
+            <button
+              type="button"
+              onClick={() => {
+                playClick();
+                triggerHaptic('light');
+                setShowAllEasyMenu((isShown) => !isShown);
+              }}
+              className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
+              aria-expanded={showAllEasyMenu}
+            >
+              {showAllEasyMenu ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showAllEasyMenu ? 'Tampilkan menu utama' : 'Tampilkan semua menu'}
+            </button>
+          )}
         </div>
 
         {/* Logout & Close Buttons */}

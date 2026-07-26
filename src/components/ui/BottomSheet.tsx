@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, MotionDiv } from './MotionComponents';
 import { XCircleIcon } from '../Icons';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { duration, easing } from '../../styles/motion';
@@ -87,7 +87,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, ti
             {isOpen && (
                 <div className="fixed inset-0 z-[10000] flex items-end justify-center sm:items-center">
                     {/* Backdrop */}
-                    <motion.div
+                    <MotionDiv
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -98,7 +98,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, ti
                     />
 
                     {/* Sheet Content */}
-                    <motion.div
+                    <MotionDiv
                         ref={sheetRef}
                         tabIndex={-1}
                         role="dialog"
@@ -136,7 +136,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, ti
                         <div className="overflow-y-auto p-4 sm:p-6 pb-12 sm:pb-6">
                             {children}
                         </div>
-                    </motion.div>
+                    </MotionDiv>
                 </div>
             )}
         </AnimatePresence>,

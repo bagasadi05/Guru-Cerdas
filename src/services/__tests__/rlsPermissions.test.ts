@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 describe('RLS Permissions Check for ref_* tables', () => {
   it('user with role "guru" is prevented from INSERT/UPDATE/DELETE on ref_* tables', async () => {

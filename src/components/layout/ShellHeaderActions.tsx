@@ -39,8 +39,11 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
                 title={isEasyMode ? 'Nonaktifkan Mode Mudah' : 'Aktifkan Mode Mudah'}
             >
                 <Eye className="w-5 h-5" />
+                {/* The pressed state is already carried by the colour and
+                    aria-pressed, so the label stays short — it has to fit a
+                    375px header once Easy Mode reveals every label. */}
                 <span className="text-sm font-medium hidden sm:block">
-                    {isEasyMode ? 'Mode Mudah aktif' : 'Mode Mudah'}
+                    Mode Mudah
                 </span>
             </button>
 

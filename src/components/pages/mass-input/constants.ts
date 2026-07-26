@@ -1,4 +1,4 @@
-import { GraduationCapIcon, XCircleIcon, CheckSquareIcon, ShieldAlertIcon, PrinterIcon, FileTextIcon, DownloadIcon, SparklesIcon } from '../../Icons';
+import { GraduationCapIcon, CheckSquareIcon, ShieldAlertIcon, PrinterIcon, FileTextIcon, DownloadIcon } from '../../Icons';
 import { InputMode } from './types';
 
 export const inputCards: { mode: InputMode; title: string; description: string; icon: React.FC<{ className?: string }> }[] = [

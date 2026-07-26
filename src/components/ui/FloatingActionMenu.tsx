@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MotionDiv, MotionButton, AnimatePresence } from './MotionComponents';
 import { Plus, X } from 'lucide-react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { duration as motionDuration, easing } from '../../styles/motion';
@@ -39,7 +39,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
       {/* Action Items */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <MotionDiv
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
@@ -47,7 +47,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
             className="flex flex-col gap-3 mb-4"
           >
             {actions.map((action, index) => (
-              <motion.button
+              <MotionButton
                 key={index}
                 initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0, opacity: 0 }}
                 animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
@@ -68,14 +68,14 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                 <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
                   {action.label}
                 </span>
-              </motion.button>
+              </MotionButton>
             ))}
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
 
       {/* Main FAB Button */}
-      <motion.button
+      <MotionButton
         whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
         whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
@@ -85,7 +85,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <motion.div
+        <MotionDiv
           animate={shouldReduceMotion ? {} : { rotate: isOpen ? 45 : 0 }}
           transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.fast }}
         >
@@ -94,13 +94,13 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
           ) : (
             <Plus className="w-6 h-6 text-white" />
           )}
-        </motion.div>
-      </motion.button>
+        </MotionDiv>
+      </MotionButton>
 
       {/* Backdrop when open */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

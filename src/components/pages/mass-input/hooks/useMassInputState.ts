@@ -41,8 +41,8 @@ export function useMassInputState() {
     const [step, setStep] = useState<Step>(() => initialDraft?.step || 1);
     const [mode, setMode] = useState<InputMode | null>(() => initialDraft?.mode || null);
     const [selectedClass, setSelectedClass] = useState(() => initialDraft?.selectedClass || '');
-    const prevClassRef = useRef(selectedClass);
-    const prevModeRef = useRef(mode);
+    const [prevClass, setPrevClass] = useState(selectedClass);
+    const [prevMode, setPrevMode] = useState(mode);
     const [quizInfo, setQuizInfo] = useState({ name: '', subject: '', date: new Date().toISOString().slice(0, 10) });
     const [subjectGradeInfo, setSubjectGradeInfo] = useState(() => initialDraft?.subjectGradeInfo || { subject: '', assessment_name: '', notes: '', semester: '' });
     const [scores, setScores] = useState<Record<string, string>>(() => initialDraft?.scores || {});
@@ -106,27 +106,32 @@ export function useMassInputState() {
         }
     }, [location.state?.prefill, navigate, location.pathname]);
 
-    // Reset student selection / scores when class changes
-    useEffect(() => {
-        if (prevClassRef.current !== selectedClass) {
-            setSelectedStudentIds(new Set());
-            setScores({});
-            setSearchTerm('');
-            setStudentFilter('all');
-            setBypassDuplicateGuard(false);
-            isScoresDirty.current = false;
-            prevClassRef.current = selectedClass;
-        }
-    }, [selectedClass]);
+    // Reset student selection / scores when class changes.
+    // Adjusted during render rather than in an effect: React re-renders with
+    // the corrected state before painting, so the stale selection is never
+    // shown and no extra commit is wasted.
+    if (prevClass !== selectedClass) {
+        setPrevClass(selectedClass);
+        setSelectedStudentIds(new Set());
+        setScores({});
+        setSearchTerm('');
+        setStudentFilter('all');
+        setBypassDuplicateGuard(false);
+    }
 
     // Reset filter when mode changes
+    if (prevMode !== mode) {
+        setPrevMode(mode);
+        setStudentFilter('all');
+        setBypassDuplicateGuard(false);
+    }
+
+    // The dirty flag is a ref, so it cannot be written during render. Clearing
+    // it here keeps it in step with the score reset above, and still runs
+    // before the autosave effect below reads it.
     useEffect(() => {
-        if (prevModeRef.current !== mode) {
-            setStudentFilter('all');
-            setBypassDuplicateGuard(false);
-            prevModeRef.current = mode;
-        }
-    }, [mode]);
+        isScoresDirty.current = false;
+    }, [selectedClass]);
 
     // Auto-save draft when values change
     useEffect(() => {

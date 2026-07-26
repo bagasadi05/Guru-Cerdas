@@ -11,9 +11,8 @@ import { SkipLinks } from './AccessibilityComponents';
 import { UploadProgressIndicator } from './ui/PerformanceIndicators';
 import { useParentMessageNotifications } from '../hooks/useParentMessageNotifications';
 import PullToRefresh from './ui/PullToRefresh';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { setNavigationInProgress } from '../utils/navigationState';
-import { useAccessibility } from './ui/AccessibilityFeatures';
 
 // Enhanced Mobile Navigation Components
 import { useOrientation } from '../hooks/useOrientation';
@@ -30,7 +29,6 @@ import { ShellHeaderActions } from './layout/ShellHeaderActions';
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, userRole } = useAuth();
   const { showTour, endTour } = useOnboarding();
-  const { isEasyMode } = useAccessibility();
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
@@ -56,26 +54,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return () => document.removeEventListener('open-tutorial-picker', handleOpenTutorial);
   }, []);
 
-  const { data: teacherAssignments = [] } = useQuery({
-    queryKey: ['teacher_assignments', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase
-        .from('teacher_class_assignments')
-        .select('*')
-        .eq('teacher_user_id', user.id);
-      return data || [];
-    },
-    enabled: !!user,
-  });
-
-  const isHomeroomTeacher = useMemo(() => {
-    return teacherAssignments.some((a: any) => a.assignment_role === 'homeroom');
-  }, [teacherAssignments]);
-
   const dynamicMoreMenuItems = useMemo(() => {
-    return getDashboardMoreMenuItems(isAdmin, userRole, isHomeroomTeacher, isEasyMode);
-  }, [isAdmin, userRole, isHomeroomTeacher, isEasyMode]);
+    return getDashboardMoreMenuItems({ isAdmin, role: userRole });
+  }, [isAdmin, userRole]);
 
   const dynamicMobileNavItems = useMemo(() => {
     return getMobileNavItems(userRole);
@@ -121,11 +102,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       mediaQuery.addListener(checkMobile);
       return () => mediaQuery.removeListener(checkMobile);
     }
-  }, []);
-
-  useEffect(() => {
-    console.log('[Layout] mounted!');
-    return () => console.log('[Layout] unmounted!');
   }, []);
 
   useEffect(() => {
@@ -175,10 +151,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         role="navigation"
         aria-label="Main navigation"
       >
-        <DashboardSidebar 
-          isAdmin={isAdmin} 
-          isHomeroomTeacher={isHomeroomTeacher}
-          onLinkClick={() => setIsMobileSidebarOpen(false)} 
+        <DashboardSidebar
+          isAdmin={isAdmin}
+          onLinkClick={() => setIsMobileSidebarOpen(false)}
         />
       </div>
 

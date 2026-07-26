@@ -174,11 +174,14 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                     .eq('user_id', userId)
                     .eq('quiz_date', vars.data.quiz_date)
                     .eq('quiz_name', vars.data.quiz_name)
-                    .eq('subject', vars.data.subject)
                     .gte('created_at', getDuplicateGuardWindowIso())
                     .is('deleted_at', null)
                     .order('created_at', { ascending: false })
                     .limit(1);
+
+                existingQuery = vars.data.subject != null
+                    ? existingQuery.eq('subject', vars.data.subject)
+                    : existingQuery.is('subject', null);
 
                 existingQuery = vars.data.semester_id
                     ? existingQuery.eq('semester_id', vars.data.semester_id)

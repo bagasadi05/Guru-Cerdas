@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MotionDiv, AnimatePresence } from '../ui/MotionComponents';
 import { CalendarCheckIcon, ArrowRightIcon, XIcon, Loader2Icon } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useSemesterTransition } from '../../hooks/useSemesterTransition';
@@ -33,7 +33,7 @@ const SemesterTransitionBanner: React.FC = () => {
     return (
         <AnimatePresence>
             {(needsTransition || isCreating) && (
-                <motion.div
+                <MotionDiv
                     initial={{ opacity: 0, y: -20, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -20, scale: 0.98 }}
@@ -121,7 +121,7 @@ const SemesterTransitionBanner: React.FC = () => {
                             )}
                         </div>
                     </div>
-                </motion.div>
+                </MotionDiv>
             )}
         </AnimatePresence>
     );

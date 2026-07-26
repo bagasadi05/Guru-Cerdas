@@ -3,6 +3,7 @@ import { Button } from './ui/Button';
 import { DownloadCloudIcon } from './Icons';
 import { Share, PlusSquare, X } from 'lucide-react';
 import { isIOSPWAInstalled } from '../utils/pushSubscription';
+import { logger } from '../services/logger';
 
 // This is a browser event type, so we declare it for TypeScript
 interface BeforeInstallPromptEvent extends Event {
@@ -64,11 +65,12 @@ const PwaPrompt: React.FC = () => {
     installPromptEvent.prompt();
     // Wait for the user to respond to the prompt
     installPromptEvent.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
-      }
+      logger.info(
+        choiceResult.outcome === 'accepted'
+          ? 'User accepted the install prompt'
+          : 'User dismissed the install prompt',
+        'PwaPrompt',
+      );
       setInstallPromptEvent(null);
       setIsVisible(false);
     });

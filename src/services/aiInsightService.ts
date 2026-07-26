@@ -41,11 +41,6 @@ export interface DashboardDataForAI {
   dailyAttendanceSummary: { present: number; total: number };
 }
 
-interface StoredInsight {
-  date: string; // YYYY-MM-DD format
-  insight: AIInsight;
-}
-
 // =============================================================================
 // CONSTANTS
 // =============================================================================

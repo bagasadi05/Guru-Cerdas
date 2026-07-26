@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { MotionDiv } from '../../../../ui/MotionComponents';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { ScoreRing } from './ScoreRing';
@@ -61,7 +61,7 @@ export const GlanceHeroCard: React.FC<GlanceHeroCardProps> = ({
   const { shouldReduceMotion } = useReducedMotion();
 
   return (
-    <motion.div
+    <MotionDiv
       initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.slow, ease: easing.easeOut }}
@@ -83,7 +83,7 @@ export const GlanceHeroCard: React.FC<GlanceHeroCardProps> = ({
         {/* ───── Top row: ring + student info ───── */}
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
           {/* Score Ring */}
-          <motion.div
+          <MotionDiv
             initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.slow, delay: 0.1 }}
@@ -95,7 +95,7 @@ export const GlanceHeroCard: React.FC<GlanceHeroCardProps> = ({
               strokeWidth={10}
               label="Skor Keseluruhan"
             />
-          </motion.div>
+          </MotionDiv>
 
           {/* Student metadata column */}
           <div className="flex-1 min-w-0 text-center sm:text-left">
@@ -178,6 +178,6 @@ export const GlanceHeroCard: React.FC<GlanceHeroCardProps> = ({
           </Button>
         </div>
       </div>
-    </motion.div>
+    </MotionDiv>
   );
 };

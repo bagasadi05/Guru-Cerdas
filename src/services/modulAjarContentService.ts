@@ -212,7 +212,7 @@ export const modulAjarContentService = {
 
   // 3. Get Rubrik Templates
   async getRubrikTemplates(kategori: string): Promise<RefRubrikTemplate[]> {
-    const { data, error } = await supabase.from('ref_rubrik_template').select('*').eq('kategori', kategori).order('urutan', { ascending: true });
+    const { data, error } = await (supabase as any).from('ref_rubrik_template').select('*').eq('kategori', kategori).order('urutan', { ascending: true });
     if (error || !data) return [];
     return data as RefRubrikTemplate[];
   },
@@ -221,20 +221,20 @@ export const modulAjarContentService = {
   async getTemaKbc(): Promise<RefTemaKbc[]> {
     const { data, error } = await supabase.from('ref_tema_kbc').select('*').order('urutan', { ascending: true });
     if (error || !data) return [];
-    return data as RefTemaKbc[];
+    return data as unknown as RefTemaKbc[];
   },
 
   // 5. Get Materi Insersi by Tema
   async getMateriInsersi(temaId: string): Promise<RefMateriInsersi[]> {
     const { data, error } = await supabase.from('ref_materi_insersi').select('*').eq('tema_id', temaId);
     if (error || !data) return [];
-    return data as RefMateriInsersi[];
+    return data as unknown as RefMateriInsersi[];
   },
 
   // 6. Get Bank TP & IKTP
   async getBankTp(cpId: string): Promise<RefBankTpIktp[]> {
-    const { data, error } = await supabase.from('ref_bank_tp_iktp').select('*').eq('cp_id', cpId);
+    const { data, error } = await (supabase as any).from('ref_bank_tp_iktp').select('*').eq('cp_id', cpId);
     if (error || !data) return [];
-    return data as RefBankTpIktp[];
+    return data as unknown as RefBankTpIktp[];
   }
 };

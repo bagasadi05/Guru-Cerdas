@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { MotionDiv, MotionCircle } from '../../../../ui/MotionComponents';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { CheckIcon } from '../../../../Icons';
@@ -88,7 +88,7 @@ const ScoreRing: React.FC<{
           stroke={trackColorDark}
         />
         {/* Progress arc */}
-        <motion.circle
+        <MotionCircle
           cx={size / 2}
           cy={size / 2}
           r={radius}
@@ -124,7 +124,7 @@ export const DevelopmentScoreCard: React.FC<DevelopmentScoreCardProps> = ({
   const { shouldReduceMotion } = useReducedMotion();
 
   return (
-    <motion.div
+    <MotionDiv
       initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={shouldReduceMotion ? { duration: 0 } : { duration: motionDuration.slow, ease: easing.easeOut }}
@@ -195,6 +195,6 @@ export const DevelopmentScoreCard: React.FC<DevelopmentScoreCardProps> = ({
           </ul>
         )}
       </div>
-    </motion.div>
+    </MotionDiv>
   );
 };

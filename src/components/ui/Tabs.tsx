@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { motion } from 'framer-motion';
+import { MotionDiv } from './MotionComponents';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { duration as motionDuration, easing } from '../../styles/motion';
 
@@ -136,7 +136,7 @@ export const TabsContent: React.FC<{ children: React.ReactNode, value: string, c
   if (!isActive) return null;
 
   return (
-    <motion.div
+    <MotionDiv
       key={value}
       role="tabpanel"
       id={`tabs-panel-${value}`}
@@ -151,6 +151,6 @@ export const TabsContent: React.FC<{ children: React.ReactNode, value: string, c
       style={style}
     >
       {children}
-    </motion.div>
+    </MotionDiv>
   );
 };

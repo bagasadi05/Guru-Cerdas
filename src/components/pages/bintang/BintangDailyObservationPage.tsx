@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Select } from '../../ui/Select';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
 import { CustomDropdown } from '../../ui/CustomDropdown';
@@ -29,14 +28,14 @@ const aspectLabels: Record<string, string> = {
     KERAPIAN: 'Kerapian',
 };
 
-export const BintangDailyObservationPage: React.FC = () => {
+interface BintangDailyObservationPageProps {
+    selectedClass: string;
+    selectedMonth: string;
+}
+
+export const BintangDailyObservationPage: React.FC<BintangDailyObservationPageProps> = ({ selectedClass, selectedMonth }) => {
     const { user } = useAuth();
     const toast = useToast();
-    
-    const [classes, setClasses] = useState<Array<{id: string; name: string}>>([]);
-    const [selectedClass, setSelectedClass] = useState('');
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
     const [violations, setViolations] = useState<Array<{
         id: string; student_id: string; description: string; points: number;
@@ -52,14 +51,6 @@ export const BintangDailyObservationPage: React.FC = () => {
     const [obsNotes, setObsNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [studentsInClass, setStudentsInClass] = useState<Array<{id: string; name: string}>>([]);
-
-    useEffect(() => {
-        const fetchClasses = async () => {
-            const { data } = await supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false);
-            if (data) setClasses(data);
-        };
-        fetchClasses();
-    }, []);
 
     useEffect(() => {
         if (selectedClass) {
@@ -147,36 +138,15 @@ export const BintangDailyObservationPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800">
-                <div className="flex flex-1 gap-3 max-w-xl w-full">
-                    <div className="flex-1 max-w-xs">
-                        <Select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
-                            <option value="">Pilih Kelas</option>
-                            {classes.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </Select>
-                    </div>
-                    <div className="flex-1 max-w-xs">
-                        <Select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
-                            {Array.from({length: 6}).map((_, i) => {
-                                const d = new Date();
-                                d.setMonth(d.getMonth() - i);
-                                const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                                const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-                                return <option key={val} value={val}>{label}</option>
-                            })}
-                        </Select>
-                    </div>
-                </div>
-                {selectedClass && (
-                    <Button onClick={() => setIsObservationModalOpen(true)} className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+            {/* Header — no duplicate class/month filters, using shared state from parent */}
+            {selectedClass && (
+                <div className="flex items-center justify-end pb-4">
+                    <Button onClick={() => setIsObservationModalOpen(true)} className="flex items-center gap-2">
                         <PlusCircle size={20} />
-                        <span className="hidden sm:inline">Observasi Harian</span>
+                        <span>Observasi Harian</span>
                     </Button>
-                )}
-            </div>
+                </div>
+            )}
 
             {!selectedClass ? (
                 <div className="text-center py-16 text-slate-500 dark:text-slate-400">

@@ -60,41 +60,35 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
         return false;
     });
 
+    // Single owner of the high-contrast class. Easy Mode raises contrast too,
+    // but only the explicit toggle is persisted — otherwise turning Easy Mode
+    // off would leave the user's own preference rewritten.
     useEffect(() => {
-        if (highContrastMode) {
-            document.documentElement.classList.add('high-contrast');
-        } else {
-            document.documentElement.classList.remove('high-contrast');
-        }
+        document.documentElement.classList.toggle('high-contrast', highContrastMode || isEasyMode);
         localStorage.setItem('highContrastMode', String(highContrastMode));
-    }, [highContrastMode]);
+    }, [highContrastMode, isEasyMode]);
 
+    // Easy Mode implies calm motion, so this effect must account for it — it
+    // shares the reduce-motion class with useReducedMotion, and without this
+    // it would strip the class that Easy Mode had just applied.
+    // Only the explicit toggle is persisted.
     useEffect(() => {
-        if (reducedMotion) {
-            document.documentElement.classList.add('reduce-motion');
-        } else {
-            document.documentElement.classList.remove('reduce-motion');
-        }
+        document.documentElement.classList.toggle('reduce-motion', reducedMotion || isEasyMode);
         localStorage.setItem('reducedMotion', String(reducedMotion));
-    }, [reducedMotion]);
+    }, [reducedMotion, isEasyMode]);
 
     useEffect(() => {
         document.documentElement.setAttribute('data-font-size', fontSize);
         localStorage.setItem('fontSize', fontSize);
     }, [fontSize]);
 
+    // Easy Mode only publishes its own flag. Text size is handled by the
+    // data-easy-mode CSS rules rather than by overwriting data-font-size, so the
+    // user's chosen size survives switching Easy Mode on and off.
     useEffect(() => {
         localStorage.setItem('isEasyMode', String(isEasyMode));
         document.documentElement.setAttribute('data-easy-mode', String(isEasyMode));
-        if (isEasyMode) {
-            document.documentElement.classList.add('high-contrast');
-            document.documentElement.setAttribute('data-font-size', 'large');
-        } else if (!highContrastMode) {
-            // Restore previous settings if easy mode turned off
-            document.documentElement.classList.remove('high-contrast');
-            document.documentElement.setAttribute('data-font-size', fontSize);
-        }
-    }, [isEasyMode, highContrastMode, fontSize]);
+    }, [isEasyMode]);
 
     const toggleHighContrast = () => setHighContrastMode(prev => !prev);
     const toggleReducedMotion = () => setReducedMotion(prev => !prev);

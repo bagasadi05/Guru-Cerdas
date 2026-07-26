@@ -83,7 +83,7 @@ describe('FASE 2 - Modul Ajar AI Zod Schemas', () => {
     const result = ModulAjarPaketASchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues.some(i => i.message.includes('duplicate words'))).toBe(true);
+      expect(result.error.issues.some(i => i.message.includes('duplicate consecutive words'))).toBe(true);
     }
   });
 
