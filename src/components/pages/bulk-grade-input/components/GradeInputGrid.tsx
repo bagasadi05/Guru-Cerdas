@@ -5,12 +5,8 @@ import { EmptyState } from '../../../ui/EmptyState';
 import { Skeleton } from '../../../ui/Skeleton';
 import { VirtualList } from '../../../ui/VirtualList';
 import { SearchIcon, CheckCircleIcon } from '../../../Icons';
-
-interface GradeEntry {
-    studentId: string;
-    studentName: string;
-    score: number | '';
-}
+// Dulu tipe ini disalin di sini dan sempat melenceng dari definisi aslinya.
+import type { GradeEntry } from '../../../../utils/gradeValidator';
 
 interface GradeInputGridProps {
     grades: GradeEntry[];

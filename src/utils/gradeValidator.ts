@@ -4,7 +4,13 @@
 export interface GradeEntry {
     studentId: string;
     studentName: string;
-    score: number | '';
+    /**
+     * Nilai siswa. Bertipe string selama guru masih mengetik, supaya bentuk
+     * setengah jadi seperti "77." atau "77," tidak terpotong di tengah jalan.
+     * Dinormalisasi jadi number saat input kehilangan fokus. String kosong
+     * berarti belum diisi.
+     */
+    score: number | string;
 }
 
 export interface ExistingGrade {
@@ -203,7 +209,7 @@ export const validateGrades = (
  * Get color class for grade value based on validation status
  */
 export const getGradeColorClass = (
-    score: number | '',
+    score: number | string,
     options: { kkm?: number; existingScore?: number } = {}
 ): { border: string; bg: string; text: string } => {
     const { kkm = DEFAULT_KKM, existingScore } = options;

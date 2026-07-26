@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { exportGradesToExcel } from '../../utils/gradeExporter';
 import { Database } from '../../services/database.types';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { useDebounce } from '../../hooks/useDebounce';
 import { useGridNavigation } from '../../hooks/useGridNavigation';
 import { useAutosave } from '../../hooks/useAutosave';
 import { validateGrades, getGradeColorClass, calculateGradeStats, GradeEntry } from '../../utils/gradeValidator';
@@ -72,6 +73,11 @@ const BulkGradeInputPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [isScoresDirty, setIsScoresDirty] = useState(false);
 
+    // "Nama Penilaian" adalah input teks bebas. Tanpa debounce, setiap huruf
+    // yang diketik memicu satu request Supabase sekaligus me-reset formulir.
+    const debouncedAssessmentName = useDebounce(assessmentName, 600);
+    const isAssessmentNamePending = assessmentName !== debouncedAssessmentName;
+
     // Default to active semester when it loads
     useEffect(() => {
         if (activeSemester && !selectedSemester) {
@@ -98,17 +104,16 @@ const BulkGradeInputPage: React.FC = () => {
     // Check if selected semester is locked
     const semesterLocked = selectedSemester ? isSemesterLocked(selectedSemester) : false;
 
-    // Refs for input navigation
-    const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
-
     // Grid navigation
+    //
+    // onEnter sengaja tidak dioper: perilaku bawaan useGridNavigation adalah
+    // focusItem(index + 1), yang memakai ref hasil registerRef -- indeksnya
+    // sama dengan urutan baris yang terlihat. Versi lama menimpanya dengan
+    // grades[index + 1], mencampur indeks daftar terfilter dengan array penuh,
+    // sehingga Enter melompat ke siswa yang salah saat pencarian aktif.
     const { registerRef, handleKeyDown: handleGridKeyDown } = useGridNavigation<HTMLInputElement>(
         grades.length,
         {
-            onEnter: (index) => {
-                const nextInput = inputRefs.current.get(grades[index + 1]?.studentId);
-                nextInput?.focus();
-            },
             onEscape: () => {
                 if (document.activeElement instanceof HTMLElement) {
                     document.activeElement.blur();
@@ -118,7 +123,7 @@ const BulkGradeInputPage: React.FC = () => {
     );
 
     // Autosave
-    const autosaveKey = `bulk-grade-${selectedClass}-${selectedSubject}-${assessmentName}-${selectedSemester}`;
+    const autosaveKey = `bulk-grade-${selectedClass}-${selectedSubject}-${debouncedAssessmentName}-${selectedSemester}`;
     const { hasDraft, restoreDraft, clearDraft, lastSaved, getTimeSinceLastSave } = useAutosave({
         key: autosaveKey,
         data: { grades, selectedSubject, assessmentName, selectedSemester },
@@ -208,14 +213,14 @@ const BulkGradeInputPage: React.FC = () => {
 
     // Check for existing grades (filtered by semester and subject+assessment)
     const { data: existingGrades, error: existingGradesError, isError: isExistingGradesError, refetch: refetchExistingGrades } = useQuery({
-        queryKey: ['existingGrades', selectedClass, selectedSubject, assessmentName, selectedSemester],
+        queryKey: ['existingGrades', selectedClass, selectedSubject, debouncedAssessmentName, selectedSemester],
         queryFn: async () => {
             if (!students) return [];
             let query = supabase
                 .from('academic_records')
                 .select('id, student_id, user_id, subject, assessment_name, score, notes, semester_id, created_at, version')
                 .eq('subject', selectedSubject)
-                .eq('assessment_name', assessmentName)
+                .eq('assessment_name', debouncedAssessmentName)
                 .in('student_id', students.map(s => s.id))
                 .is('deleted_at', null);
 
@@ -246,15 +251,25 @@ const BulkGradeInputPage: React.FC = () => {
     }, [students, existingGrades]);
 
     const [lastContextKey, setLastContextKey] = useState<string>('');
-    const contextKey = `${selectedClass}-${selectedSubject}-${assessmentName}-${selectedSemester}`;
+    // Kelas/mapel/semester menentukan DAFTAR SISWA dan kumpulan nilainya.
+    // Nama penilaian hanya label -- dipisah supaya bisa diperlakukan berbeda.
+    const rosterKey = `${selectedClass}-${selectedSubject}-${selectedSemester}`;
+    const contextKey = `${rosterKey}-${debouncedAssessmentName}`;
 
     // Initialize grades ONLY when context changes AND data is available.
     // This prevents any accidental resets when data refetches in the background.
     // Adjusted during render so the freshly loaded grades are committed in the
     // same pass, instead of flashing the previous class's scores for one frame.
     if (students && existingGrades !== undefined && lastContextKey !== contextKey) {
+        // Kalau yang berubah cuma nama penilaian sementara guru masih punya
+        // nilai yang belum disimpan, jangan timpa dengan data dari database.
+        // Guru sedang memberi judul pada nilai yang BARU saja diketik --
+        // sebelumnya ini menghapus seluruh isi formulir tanpa peringatan.
+        const onlyAssessmentChanged = lastContextKey.startsWith(`${rosterKey}-`);
         setLastContextKey(contextKey);
-        initializeGrades();
+        if (!(onlyAssessmentChanged && isScoresDirty)) {
+            initializeGrades();
+        }
     }
 
     // Warn before unload if there are unsaved changes
@@ -473,12 +488,12 @@ const BulkGradeInputPage: React.FC = () => {
             
             // Invalidate and immediately set the cache data
             queryClient.setQueryData(
-                ['existingGrades', selectedClass, selectedSubject, assessmentName, selectedSemester],
+                ['existingGrades', selectedClass, selectedSubject, debouncedAssessmentName, selectedSemester],
                 data.verificationRows
             );
 
             queryClient.invalidateQueries({
-                queryKey: ['existingGrades', selectedClass, selectedSubject, assessmentName, selectedSemester]
+                queryKey: ['existingGrades', selectedClass, selectedSubject, debouncedAssessmentName, selectedSemester]
             });
             queryClient.invalidateQueries({ queryKey: ['studentGrades'], exact: false });
             queryClient.invalidateQueries({ queryKey: ['reportData'], exact: false });
@@ -522,22 +537,32 @@ const BulkGradeInputPage: React.FC = () => {
         },
     });
 
+    /**
+     * Ubah teks input jadi angka 0-100 dengan maksimal 2 desimal.
+     * Koma diterima sebagai pemisah desimal (kebiasaan penulisan Indonesia).
+     */
+    const normalizeScoreInput = (value: number | string): number | '' => {
+        if (value === '') return '';
+        const num = parseFloat(String(value).replace(',', '.'));
+        if (!Number.isFinite(num)) return '';
+        const rounded = Math.round(num * 100) / 100;
+        return Math.min(100, Math.max(0, rounded));
+    };
+
+    // Selama mengetik, teks disimpan apa adanya. Kalau di-parseFloat tiap
+    // ketikan, "77." langsung jadi 77 dan titiknya tertelan -- akibatnya nilai
+    // desimal seperti 77.5 mustahil diketik. Pembulatan dan clamp 0-100 baru
+    // dijalankan saat input kehilangan fokus (lihat handleScoreBlur).
     const handleScoreChange = useCallback((studentId: string, value: string) => {
         setIsScoresDirty(true);
-        if (value === '') {
-            setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: '' } : g));
-            return;
-        }
+        const sanitized = value.replace(/[^0-9.,]/g, '');
+        setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: sanitized } : g));
+    }, []);
 
-        const num = parseFloat(value);
-        if (!isNaN(num)) {
-            // Round to maximum of 2 decimal places to comply with gradeValidator
-            const rounded = Math.round(num * 100) / 100;
-            const clamped = Math.min(100, Math.max(0, rounded));
-            setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: clamped } : g));
-        } else {
-            setGrades(prev => prev.map(g => g.studentId === studentId ? { ...g, score: '' } : g));
-        }
+    const handleScoreBlur = useCallback((studentId: string) => {
+        setGrades(prev => prev.map(g => (
+            g.studentId === studentId ? { ...g, score: normalizeScoreInput(g.score) } : g
+        )));
     }, []);
 
     const handleSaveAll = () => {
@@ -657,45 +682,52 @@ const BulkGradeInputPage: React.FC = () => {
     const filledCount = grades.filter(g => g.score !== '').length;
 
     // Handle Paste from Excel
-    const handlePaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>, startIndex: number) => {
+    //
+    // Tempelan diisikan menurut urutan baris YANG TERLIHAT guru, bukan urutan
+    // array `grades` yang asli. Sebelumnya keduanya dicampur: index datang dari
+    // daftar terfilter tapi dipakai untuk mengindeks array penuh, sehingga saat
+    // kolom pencarian aktif nilai mendarat di siswa yang sama sekali berbeda.
+    const handlePaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>, startStudentId: string) => {
         const pasteData = e.clipboardData.getData('text');
         if (!pasteData) return;
 
         // Split by newline and filter out empty rows
         const rows = pasteData.split(/\r?\n/).filter(row => row.trim() !== '');
-        
+
         // Only intercept if there's more than one row pasted
         if (rows.length > 1) {
             e.preventDefault();
-            
-            setGrades(prev => {
-                const newGrades = [...prev];
-                let pasteCount = 0;
-                
-                for (let i = 0; i < rows.length; i++) {
-                    const targetIndex = startIndex + i;
-                    if (targetIndex < newGrades.length) {
-                        // Replace comma with dot for standard decimal parsing
-                        const normalizedRow = rows[i].trim().replace(',', '.');
-                        // Find first matching floating point or integer number
-                        const match = normalizedRow.match(/[-+]?[0-9]*\.?[0-9]+/);
-                        if (match) {
-                            const parsedValue = parseFloat(match[0]);
-                            if (!isNaN(parsedValue)) {
-                                const rounded = Math.round(parsedValue * 100) / 100;
-                                newGrades[targetIndex].score = Math.min(100, Math.max(0, rounded));
-                                pasteCount++;
-                            }
-                        }
-                    }
-                }
-                
-                toast.success(`${pasteCount} nilai diterapkan ke formulir. Klik ‘Simpan Semua Nilai’ untuk menyimpannya ke database.`);
-                setIsScoresDirty(true);
-                return newGrades;
+
+            const visibleIds = filteredGrades.map(g => g.studentId);
+            const startPos = visibleIds.indexOf(startStudentId);
+            if (startPos === -1) return;
+
+            const pastedScores = new Map<string, number>();
+            rows.forEach((row, i) => {
+                const targetId = visibleIds[startPos + i];
+                if (!targetId) return;
+                // Replace comma with dot for standard decimal parsing
+                const normalizedRow = row.trim().replace(',', '.');
+                // Find first matching floating point or integer number
+                const match = normalizedRow.match(/[-+]?[0-9]*\.?[0-9]+/);
+                if (!match) return;
+                const parsedValue = parseFloat(match[0]);
+                if (isNaN(parsedValue)) return;
+                const rounded = Math.round(parsedValue * 100) / 100;
+                pastedScores.set(targetId, Math.min(100, Math.max(0, rounded)));
             });
+
+            // Objek baru per baris, bukan mutasi objek milik state sebelumnya.
+            setGrades(prev => prev.map(g => (
+                pastedScores.has(g.studentId) ? { ...g, score: pastedScores.get(g.studentId)! } : g
+            )));
+
+            // Efek samping ditaruh di luar updater -- di dalam updater, React
+            // StrictMode menjalankannya dua kali dan toast muncul dobel.
+            setIsScoresDirty(true);
+            toast.success(`${pastedScores.size} nilai diterapkan ke formulir. Klik ‘Simpan Semua Nilai’ untuk menyimpannya ke database.`);
         }
-    }, [toast]);
+    }, [toast, filteredGrades]);
 
     const handleClearAllClick = () => {
         const filled = grades.filter(g => g.score !== '').length;
@@ -757,17 +789,17 @@ const BulkGradeInputPage: React.FC = () => {
 
                 <div className="relative">
                     <Input
-                        ref={(el) => {
-                            if (el) inputRefs.current.set(g.studentId, el);
-                            registerRef(index, el);
-                        }}
+                        ref={(el) => registerRef(index, el)}
                         type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
+                        // "decimal" memunculkan tombol titik di keypad ponsel.
+                        // Sebelumnya "numeric" + pattern [0-9]* melarang desimal,
+                        // padahal nilai seperti 77.5 memang dipakai.
+                        inputMode="decimal"
                         value={g.score}
                         onChange={(e) => handleScoreChange(g.studentId, e.target.value)}
+                        onBlur={() => handleScoreBlur(g.studentId)}
                         onKeyDown={(e) => handleGridKeyDown(e, index)}
-                        onPaste={(e) => handlePaste(e, index)}
+                        onPaste={(e) => handlePaste(e, g.studentId)}
                         placeholder="0-100"
                         aria-label={`Nilai untuk ${g.studentName}`}
                         className={`w-24 text-center ${g.score !== '' ? colorClass.border : ''}`}
@@ -780,7 +812,7 @@ const BulkGradeInputPage: React.FC = () => {
                 </div>
             </div>
         );
-    }, [existingGrades, kkm, handleGridKeyDown, registerRef, handlePaste, handleScoreChange]);
+    }, [existingGrades, kkm, handleGridKeyDown, registerRef, handlePaste, handleScoreChange, handleScoreBlur]);
 
     return (
         <div className="min-h-full bg-gray-50 dark:bg-gray-950 p-4 md:p-6 pb-24 lg:pb-8">
@@ -939,7 +971,10 @@ const BulkGradeInputPage: React.FC = () => {
                         </Button>
                         <Button
                             onClick={handleSaveAll}
-                            disabled={saveMutation.isPending || filledCount === 0 || semesterLocked || !selectedSemester || availableSubjects.length === 0 || isExistingGradesError}
+                            // isAssessmentNamePending: cegah simpan selama debounce
+                            // nama penilaian belum settle, supaya daftar nilai lama
+                            // yang dipakai sebagai acuan update tidak ketinggalan.
+                            disabled={saveMutation.isPending || filledCount === 0 || semesterLocked || !selectedSemester || availableSubjects.length === 0 || isExistingGradesError || isAssessmentNamePending}
                             className="flex-1 h-14 text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {saveMutation.isPending ? (
