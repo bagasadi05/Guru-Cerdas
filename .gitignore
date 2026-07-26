@@ -164,3 +164,6 @@ lcov-report/
 data/
 
 graphify-out/
+
+# Database lokal tool eksternal - jangan pernah masuk repo (14 MB binari)
+.freebuff/
