@@ -4,6 +4,7 @@ import { bintangService } from '../../../../services/bintangService';
 import { downloadBintangReportAction } from '../../../../services/bintangPdfGenerator';
 import { exportBintangToExcel } from '../../../../services/bintangExcelExport';
 import { generateAutoNote, generateHomeroomNote } from '../bintangConstants';
+import { supabase } from '../../../../services/supabase';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -319,13 +320,11 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             const semesterName = monthSemester === '1' ? 'Ganjil' : 'Genap';
 
             // Fetch class name
-            const { data: classData } = await import('../../../../services/supabase').then(m =>
-                m.supabase
-                    .from('classes')
-                    .select('name')
-                    .eq('id', selectedClass)
-                    .maybeSingle()
-            );
+            const { data: classData } = await supabase
+                .from('classes')
+                .select('name')
+                .eq('id', selectedClass)
+                .maybeSingle();
             const className = classData?.name || selectedClass;
 
             const startDate = `${selectedMonth}-01`;
@@ -337,24 +336,21 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             const [viosData, quizData] = await Promise.all([
                 bintangService.getViolationsForClass(selectedClass, selectedMonth),
                 (async () => {
-                    const { data: classStudents } = await import('../../../../services/supabase').then(m => 
-                        m.supabase
-                            .from('students')
-                            .select('id')
-                            .eq('class_id', selectedClass)
-                            .is('deleted_at', null)
-                    );
+                    const { data: classStudents } = await supabase
+                        .from('students')
+                        .select('id')
+                        .eq('class_id', selectedClass)
+                        .is('deleted_at', null);
+                    
                     const studentIds = (classStudents || []).map((s: any) => s.id);
                     if (studentIds.length === 0) return [];
-                    const { data, error } = await import('../../../../services/supabase').then(m =>
-                        m.supabase
-                            .from('quiz_points')
-                            .select('*')
-                            .in('student_id', studentIds)
-                            .gte('quiz_date', startDate)
-                            .lt('quiz_date', endDate)
-                            .is('deleted_at', null)
-                    );
+                    const { data, error } = await supabase
+                        .from('quiz_points')
+                        .select('*')
+                        .in('student_id', studentIds)
+                        .gte('quiz_date', startDate)
+                        .lt('quiz_date', endDate)
+                        .is('deleted_at', null);
                     if (error) {
                         console.warn('Error fetching quiz_points for export:', error);
                     }

@@ -7,7 +7,7 @@
  * @module exportUtils
  */
 
-import { getXLSX } from './dynamicImports';
+import { getXLSX, getExcelJS } from './dynamicImports';
 
 /**
  * Type definitions for export utilities
@@ -147,7 +147,7 @@ export const exportToExcel = async (data: ExportRow[], fileName: string, sheetNa
  * @since 2.0.0
  */
 export const exportAttendanceToExcel = async (
-    classData: { name: string; students: ExportStudent[] },
+    classesData: { name: string; students: ExportStudent[] }[],
     attendanceData: ExportAttendanceRecord[],
     monthName: string,
     year: number,
@@ -156,83 +156,157 @@ export const exportAttendanceToExcel = async (
     fileName: string,
     schoolName: string = 'MI AL IRSYAD KOTA MADIUN'
 ) => {
-    const XLSX = await getXLSX();
-    const totalColumns = 2 + daysInMonth + 4;
-    const summaryStartCol = 2 + daysInMonth + 1;
-    const rows: (string | number)[][] = [
-        [schoolName.toUpperCase()],
-        [`DAFTAR HADIR KELAS ${classData.name}`],
-        [`TAHUN PELAJARAN ${year}/${year + 1}`],
-        [],
-        ['NO / NAMA', '', `BULAN: ${monthName.toUpperCase()}`],
-    ];
+    const ExcelJS = await getExcelJS();
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = schoolName;
 
-    const headerRow: (string | number)[] = ['NO', 'NAMA'];
-    for (let day = 1; day <= 31; day++) {
-        headerRow.push(day <= daysInMonth ? String(day) : '');
-    }
-    headerRow.push('S', 'I', 'A', 'H');
-    rows.push(headerRow);
+    for (const classData of classesData) {
+        const cleanSheetName = `Kelas ${classData.name}`.replace(/[\\/?*:[\]]/g, '').slice(0, 31);
+        const ws = workbook.addWorksheet(cleanSheetName || 'Absensi');
 
-    classData.students.forEach((student, index) => {
-        const rowData: (string | number)[] = [index + 1, student.name];
-        let s = 0, i = 0, a = 0, h = 0;
+        // Styles
+        const borderAll = {
+            top: { style: 'thin' }, left: { style: 'thin' },
+            bottom: { style: 'thin' }, right: { style: 'thin' }
+        } as Partial<import('exceljs').Borders>;
+        const fontBold = { bold: true, size: 11, name: 'Arial' };
+        const fontHeader = { bold: true, size: 14, name: 'Arial', color: { argb: 'FFFFFFFF' } };
 
-        for (let d = 1; d <= 31; d++) {
-            if (d <= daysInMonth) {
+        const totalColumns = 2 + daysInMonth + 4;
+        const summaryStartCol = 2 + daysInMonth + 1;
+
+        // Title Rows
+        ws.mergeCells(1, 1, 1, totalColumns);
+        const titleRow1 = ws.getCell(1, 1);
+        titleRow1.value = schoolName.toUpperCase();
+        titleRow1.font = fontHeader;
+        titleRow1.alignment = { horizontal: 'center', vertical: 'middle' };
+        titleRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF073642' } }; 
+
+        ws.mergeCells(2, 1, 2, totalColumns);
+        const titleRow2 = ws.getCell(2, 1);
+        titleRow2.value = `DAFTAR HADIR KELAS ${classData.name}`;
+        titleRow2.font = fontBold;
+        titleRow2.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws.mergeCells(3, 1, 3, totalColumns);
+        const titleRow3 = ws.getCell(3, 1);
+        titleRow3.value = `TAHUN PELAJARAN ${year}/${year + 1}`;
+        titleRow3.font = fontBold;
+        titleRow3.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        // Empty row
+        ws.addRow([]);
+
+        // Month Header
+        ws.mergeCells(5, 1, 5, 2);
+        ws.getCell(5, 1).value = 'NO / NAMA';
+        ws.getCell(5, 1).font = fontBold;
+        
+        ws.mergeCells(5, 3, 5, 2 + daysInMonth);
+        const monthCell = ws.getCell(5, 3);
+        monthCell.value = `BULAN: ${monthName.toUpperCase()}`;
+        monthCell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        monthCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEA580C' } }; // Orange
+        monthCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws.mergeCells(5, summaryStartCol, 5, summaryStartCol + 3);
+        const summaryHeader = ws.getCell(5, summaryStartCol);
+        summaryHeader.value = 'JUMLAH';
+        summaryHeader.font = fontBold;
+        summaryHeader.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        // Columns Header
+        const headerRow = ws.getRow(6);
+        headerRow.getCell(1).value = 'NO';
+        headerRow.getCell(2).value = 'NAMA';
+        for (let day = 1; day <= daysInMonth; day++) {
+            headerRow.getCell(2 + day).value = day;
+        }
+        headerRow.getCell(summaryStartCol).value = 'S';
+        headerRow.getCell(summaryStartCol + 1).value = 'I';
+        headerRow.getCell(summaryStartCol + 2).value = 'A';
+        headerRow.getCell(summaryStartCol + 3).value = 'H';
+
+        headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            if (colNumber <= totalColumns) {
+                cell.font = fontBold;
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCBD5E1' } }; 
+                cell.border = borderAll;
+            }
+        });
+
+        // Set column widths
+        ws.getColumn(1).width = 5; // NO
+        ws.getColumn(2).width = 30; // NAMA
+        for (let day = 1; day <= daysInMonth; day++) {
+            ws.getColumn(2 + day).width = 4;
+        }
+        for (let i = 0; i < 4; i++) {
+            ws.getColumn(summaryStartCol + i).width = 5;
+        }
+
+        // Data Rows
+        classData.students.forEach((student, index) => {
+            const row = ws.addRow([]);
+            row.getCell(1).value = index + 1;
+            row.getCell(1).alignment = { horizontal: 'center' };
+            
+            row.getCell(2).value = student.name;
+            
+            let s = 0, i = 0, a = 0, h = 0;
+
+            for (let d = 1; d <= daysInMonth; d++) {
                 const dateStr = `${year}-${String(monthIndex).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                 const record = attendanceData.find((att) => att.student_id === student.id && att.date === dateStr);
 
+                const cell = row.getCell(2 + d);
+                cell.alignment = { horizontal: 'center' };
                 if (record) {
                     const statusMap: Record<string, string> = { 'Hadir': 'H', 'Sakit': 'S', 'Izin': 'I', 'Alpha': 'A' };
-                    const code = statusMap[record.status] || '-';
-                    rowData.push(code);
+                    cell.value = statusMap[record.status] || '-';
 
-                    if (record.status === 'Hadir') h++;
-                    else if (record.status === 'Sakit') s++;
-                    else if (record.status === 'Izin') i++;
-                    else if (record.status === 'Alpha') a++;
-                } else {
-                    rowData.push('');
+                    if (record.status === 'Hadir') { h++; cell.font = { color: { argb: 'FF16A34A' }, bold: true }; }
+                    else if (record.status === 'Sakit') { s++; cell.font = { color: { argb: 'FFCA8A04' }, bold: true }; }
+                    else if (record.status === 'Izin') { i++; cell.font = { color: { argb: 'FF2563EB' }, bold: true }; }
+                    else if (record.status === 'Alpha') { a++; cell.font = { color: { argb: 'FFDC2626' }, bold: true }; }
                 }
-            } else {
-                rowData.push('');
             }
-        }
 
-        rowData.push(s, i, a, h);
-        rows.push(rowData);
-    });
+            row.getCell(summaryStartCol).value = s;
+            row.getCell(summaryStartCol + 1).value = i;
+            row.getCell(summaryStartCol + 2).value = a;
+            row.getCell(summaryStartCol + 3).value = h;
+            
+            // Alternating row color and borders
+            const fillColor = index % 2 !== 0 ? 'FFF8FAFC' : 'FFFFFFFF'; // slate-50 and white
+            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                if (colNumber <= totalColumns) {
+                    cell.border = borderAll;
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+                    if (colNumber >= summaryStartCol) {
+                        cell.alignment = { horizontal: 'center' };
+                    }
+                }
+            });
+        });
 
-    rows.push([]);
-    rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', `Madiun, ............... ${year}`]);
-    rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', `Wali Kelas ${classData.name}`]);
-    rows.push([]);
-    rows.push([]);
-    rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '(_________________)']);
+        // Signatures
+        const lastRow = classData.students.length + 6;
+        ws.getCell(lastRow + 2, totalColumns - 4).value = `Madiun, ............... ${year}`;
+        ws.getCell(lastRow + 3, totalColumns - 4).value = `Wali Kelas ${classData.name}`;
+        ws.getCell(lastRow + 6, totalColumns - 4).value = '(_________________)';
+    }
 
-    const worksheet = XLSX.utils.aoa_to_sheet(rows);
-    worksheet['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: totalColumns - 1 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: totalColumns - 1 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: totalColumns - 1 } },
-        { s: { r: 4, c: 0 }, e: { r: 4, c: 1 } },
-        { s: { r: 4, c: 2 }, e: { r: 4, c: 1 + daysInMonth } },
-        { s: { r: 4, c: summaryStartCol - 1 }, e: { r: 4, c: summaryStartCol + 2 } },
-    ];
-    worksheet['!cols'] = [
-        { wch: 5 },
-        { wch: 30 },
-        ...Array.from({ length: 31 }, () => ({ wch: 3 })),
-        { wch: 5 },
-        { wch: 5 },
-        { wch: 5 },
-        { wch: 5 },
-    ];
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Absensi');
-    await XLSX.writeFile(workbook, fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
 };
 
 /**
@@ -525,68 +599,111 @@ export const exportClassSummaryToExcel = async (
  * @since 2.0.0
  */
 export const exportSemesterAttendanceToExcel = async (
-    classData: { name: string; students: ExportStudent[] },
+    classesData: { name: string; students: ExportStudent[] }[],
     attendanceData: ExportAttendanceRecord[],
     semesterName: string,
     fileName: string,
     schoolName: string = 'MI AL IRSYAD KOTA MADIUN'
 ) => {
-    const XLSX = await getXLSX();
-    const totalColumns = 7; // No, Nama, H, S, I, A, % Kehadiran
-    const rows: (string | number)[][] = [
-        [schoolName.toUpperCase()],
-        [`REKAPITULASI KEHADIRAN SISWA - KELAS ${classData.name}`],
-        [`SEMESTER: ${semesterName.toUpperCase()}`],
-        [],
-        ['NO', 'NAMA SISWA', 'HADIR (H)', 'SAKIT (S)', 'IZIN (I)', 'ALPHA (A)', 'PERSENTASE (%)'],
-    ];
+    const ExcelJS = await getExcelJS();
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = schoolName;
 
-    classData.students.forEach((student, index) => {
-        const studentAttendance = attendanceData.filter((a) => a.student_id === student.id);
-        const h = studentAttendance.filter((a) => a.status === 'Hadir').length;
-        const s = studentAttendance.filter((a) => a.status === 'Sakit').length;
-        const i = studentAttendance.filter((a) => a.status === 'Izin').length;
-        const a = studentAttendance.filter((a) => a.status === 'Alpha').length;
-        const total = h + s + i + a;
-        const percentage = total > 0 ? Math.round((h / total) * 100) : 0;
+    for (const classData of classesData) {
+        const cleanSheetName = `Kelas ${classData.name}`.replace(/[\\/?*:[\]]/g, '').slice(0, 31);
+        const ws = workbook.addWorksheet(cleanSheetName || 'Rekap Kehadiran Semester');
 
-        rows.push([
-            index + 1,
-            student.name,
-            h,
-            s,
-            i,
-            a,
-            `${percentage}%`
-        ]);
-    });
+        const totalColumns = 7;
+        
+        // Styles
+        const borderAll = {
+            top: { style: 'thin' }, left: { style: 'thin' },
+            bottom: { style: 'thin' }, right: { style: 'thin' }
+        } as Partial<import('exceljs').Borders>;
+        const fontBold = { bold: true, size: 11, name: 'Arial' };
+        const fontHeader = { bold: true, size: 14, name: 'Arial', color: { argb: 'FFFFFFFF' } };
 
-    // Signatures
-    rows.push([]);
-    rows.push(['', '', '', '', '', '', `Madiun, ............... ${new Date().getFullYear()}`]);
-    rows.push(['', '', '', '', '', '', `Wali Kelas ${classData.name}`]);
-    rows.push([]);
-    rows.push([]);
-    rows.push(['', '', '', '', '', '', '(_________________)']);
+        ws.mergeCells(1, 1, 1, totalColumns);
+        const titleRow1 = ws.getCell(1, 1);
+        titleRow1.value = schoolName.toUpperCase();
+        titleRow1.font = fontHeader;
+        titleRow1.alignment = { horizontal: 'center', vertical: 'middle' };
+        titleRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF073642' } }; 
 
-    const worksheet = XLSX.utils.aoa_to_sheet(rows);
-    worksheet['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: totalColumns - 1 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: totalColumns - 1 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: totalColumns - 1 } },
-    ];
-    worksheet['!cols'] = [
-        { wch: 5 },   // No
-        { wch: 30 },  // Nama Siswa
-        { wch: 12 },  // Hadir (H)
-        { wch: 12 },  // Sakit (S)
-        { wch: 12 },  // Izin (I)
-        { wch: 12 },  // Alpha (A)
-        { wch: 18 },  // Persentase (%)
-    ];
+        ws.mergeCells(2, 1, 2, totalColumns);
+        const titleRow2 = ws.getCell(2, 1);
+        titleRow2.value = `REKAPITULASI KEHADIRAN SISWA - KELAS ${classData.name}`;
+        titleRow2.font = fontBold;
+        titleRow2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Rekap Kehadiran Semester');
-    await XLSX.writeFile(workbook, fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`);
+        ws.mergeCells(3, 1, 3, totalColumns);
+        const titleRow3 = ws.getCell(3, 1);
+        titleRow3.value = `SEMESTER: ${semesterName.toUpperCase()}`;
+        titleRow3.font = fontBold;
+        titleRow3.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws.addRow([]);
+
+        const headerRow = ws.getRow(5);
+        headerRow.values = ['NO', 'NAMA SISWA', 'HADIR (H)', 'SAKIT (S)', 'IZIN (I)', 'ALPHA (A)', 'PERSENTASE (%)'];
+        headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            if (colNumber <= totalColumns) {
+                cell.font = fontBold;
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCBD5E1' } };
+                cell.border = borderAll;
+            }
+        });
+
+        ws.getColumn(1).width = 5;
+        ws.getColumn(2).width = 30;
+        ws.getColumn(3).width = 12;
+        ws.getColumn(4).width = 12;
+        ws.getColumn(5).width = 12;
+        ws.getColumn(6).width = 12;
+        ws.getColumn(7).width = 18;
+
+        classData.students.forEach((student, index) => {
+            const studentAttendance = attendanceData.filter((a) => a.student_id === student.id);
+            const h = studentAttendance.filter((a) => a.status === 'Hadir').length;
+            const s = studentAttendance.filter((a) => a.status === 'Sakit').length;
+            const i = studentAttendance.filter((a) => a.status === 'Izin').length;
+            const a = studentAttendance.filter((a) => a.status === 'Alpha').length;
+            const total = h + s + i + a;
+            const percentage = total > 0 ? Math.round((h / total) * 100) : 0;
+
+            const row = ws.addRow([
+                index + 1,
+                student.name,
+                h, s, i, a,
+                `${percentage}%`
+            ]);
+
+            const fillColor = index % 2 !== 0 ? 'FFF8FAFC' : 'FFFFFFFF';
+            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                if (colNumber <= totalColumns) {
+                    cell.border = borderAll;
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+                    if (colNumber === 1 || colNumber >= 3) {
+                        cell.alignment = { horizontal: 'center' };
+                    }
+                }
+            });
+        });
+
+        const lastRow = classData.students.length + 5;
+        ws.getCell(lastRow + 2, totalColumns - 2).value = `Madiun, ............... ${new Date().getFullYear()}`;
+        ws.getCell(lastRow + 3, totalColumns - 2).value = `Wali Kelas ${classData.name}`;
+        ws.getCell(lastRow + 6, totalColumns - 2).value = '(_________________)';
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
 };
 

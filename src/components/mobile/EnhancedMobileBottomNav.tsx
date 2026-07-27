@@ -4,6 +4,7 @@ import { MoreHorizontalIcon } from '../Icons';
 import { useSound } from '../../hooks/useSound';
 import { useHaptic } from '../../hooks/useHaptic';
 import { MobileNavItem } from './mobileNavConfig';
+import { preloadRoute } from '../../App';
 
 interface MoreMenuItem {
   href: string;
@@ -77,6 +78,7 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
             key={item.href}
             to={item.href}
             end={item.href === '/dashboard'}
+            onTouchStart={() => preloadRoute(item.href)}
             onClick={handleNavClick}
             className="flex flex-col items-center justify-center gap-1 
                       relative touch-manipulation focus-visible:outline-none 

@@ -8,6 +8,7 @@ import { useSound } from '../../hooks/useSound';
 import { getDashboardNavSections } from './dashboardMenuConfig';
 import { EASY_MODE_PATHS } from './menuRegistry';
 import { useAccessibility } from '../ui/AccessibilityFeatures';
+import { preloadRoute } from '../../App';
 
 interface DashboardSidebarProps {
   isAdmin: boolean;
@@ -134,6 +135,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
                       key={item.href}
                       to={item.href}
                       end={item.href === '/dashboard'}
+                      onMouseEnter={() => preloadRoute(item.href)}
                       onClick={() => {
                         playClick();
                         if (onLinkClick) onLinkClick();

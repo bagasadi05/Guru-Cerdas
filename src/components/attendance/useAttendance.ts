@@ -13,6 +13,7 @@ import { type TeacherClassAssignmentRow } from '../../services/teacherAssignment
 import { AttendanceRecord, AttendanceStatus, AttendanceInsert, AiAnalysis, StudentRow, ClassRow, AttendanceRow } from '../../types';
 import { statusOptions } from '../../constants';
 import { getAutoTable, getJsPDF, getXLSX } from '../../utils/dynamicImports';
+import { exportAttendanceToExcel, exportSemesterAttendanceToExcel } from '../../utils/exportUtils';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../utils/confetti';
 import { type AttendanceViewMode } from './attendanceMenuConfig';
@@ -205,10 +206,17 @@ export const useAttendance = () => {
         initialSyncRef.current = true;
         if (!localDirtyRef.current) {
             const records = existingAttendance || {};
-            // Students start unmarked — teacher must manually set each status.
-            // The "Tandai Sisa Hadir" button and Quick Actions template are
-            // available as helpers when needed.
-            setAttendanceRecords(records);
+            if (Object.keys(records).length === 0 && students && students.length > 0) {
+                // Option 2: Auto-Hadir (Asumsi Positif)
+                const autoFilled: Record<string, AttendanceRecord> = {};
+                students.forEach(student => {
+                    autoFilled[student.id] = { id: undefined, status: AttendanceStatus.Hadir, note: '' };
+                });
+                setAttendanceRecords(autoFilled);
+                localDirtyRef.current = true; // Mark as dirty so the Save button becomes active
+            } else {
+                setAttendanceRecords(records);
+            }
         }
     }, [existingAttendance, hasLoadedAttendance, students]);
 
@@ -763,6 +771,7 @@ export const useAttendance = () => {
                 await ensureLogosLoaded();
                 const [year, monthNum] = exportMonth.split('-').map(Number);
                 const daysInMonth = new Date(year, monthNum, 0).getDate();
+                const _monthName = new Date(year, monthNum - 1).toLocaleString('id-ID', { month: 'long' });
 
                 const { default: jsPDF } = await getJsPDF();
                 const { default: autoTable } = await getAutoTable();
@@ -775,19 +784,16 @@ export const useAttendance = () => {
                     if (!isFirstClass) doc.addPage('landscape');
                     isFirstClass = false;
 
-                    // Clean class name — DB may already include "Kelas" prefix
-                    const rawName = classData.name.toUpperCase();
-                    const cleanClassName = rawName.startsWith('KELAS ') ? rawName : `KELAS ${rawName}`;
-                    const titleText = `REKAPITULASI KEHADIRAN SISWA - ${cleanClassName}`;
-                    const subText = `${exportTitle.toUpperCase()} • ${schoolName || '-'}`;
+                    const titleText = `REKAPITULASI KEHADIRAN SISWA - KELAS ${classData.name.toUpperCase()}`;
+                    const subText = `${exportTitle.toUpperCase()} • KKM: ${schoolName || '-'}`;
                     const headerY = addPdfHeader(doc, { schoolName, orientation: 'landscape' });
-                    const pw = doc.internal.pageSize.getWidth();
+                    const pageWidthHeader = doc.internal.pageSize.getWidth();
                     doc.setFontSize(12);
                     doc.setFont('helvetica', 'bold');
-                    doc.text(titleText, pw / 2, headerY, { align: 'center' });
+                    doc.text(titleText, pageWidthHeader / 2, headerY, { align: 'center' });
                     doc.setFontSize(9);
                     doc.setFont('helvetica', 'normal');
-                    doc.text(subText, pw / 2, headerY + 5, { align: 'center' });
+                    doc.text(subText, pageWidthHeader / 2, headerY + 5, { align: 'center' });
 
                     const attendanceMap = new Map<string, Map<string, AttendanceStatus>>();
                     attendance.forEach((r: AttendanceRow) => {
@@ -831,26 +837,14 @@ export const useAttendance = () => {
                         return rowData;
                     });
 
-                    const tableStartY = headerY + 10;
                     autoTable(doc, {
                         head: [headers],
                         body: rows,
-                        startY: tableStartY,
+                        startY: 38,
                         styles: { fontSize: 7, cellPadding: 1, halign: 'center' },
                         columnStyles: { 1: { halign: 'left', fontStyle: 'bold' } },
                         headStyles: { fillColor: [79, 70, 229] },
-                        didDrawPage: (data) => {
-                            // Redraw class name header on continued pages
-                            if (data.pageNumber > 1) {
-                                doc.setFontSize(10);
-                                doc.setFont('helvetica', 'bold');
-                                doc.setTextColor(7, 54, 66);
-                                doc.text(`${cleanClassName} (LANJUTAN)`, pageWidth / 2, 14, { align: 'center' });
-                                doc.setDrawColor(203, 213, 225);
-                                doc.line(14, 18, pageWidth - 14, 18);
-                                doc.setTextColor(0, 0, 0);
-                            }
-                            // Footer
+                        didDrawPage: (_data) => {
                             doc.setFontSize(8);
                             doc.setTextColor(100);
                             doc.text(`Dicetak dari ${schoolName} pada ${new Date().toLocaleDateString('id-ID')}`, 14, pageHeight - 10);
@@ -874,19 +868,16 @@ export const useAttendance = () => {
                     if (!isFirstClass) doc.addPage();
                     isFirstClass = false;
 
-                    // Clean class name — DB may already include "Kelas" prefix
-                    const rawName = classData.name.toUpperCase();
-                    const cleanClassName = rawName.startsWith('KELAS ') ? rawName : `KELAS ${rawName}`;
-                    const titleText = `RINGKASAN ABSENSI SEMESTER - ${cleanClassName}`;
+                    const titleText = `RINGKASAN ABSENSI SEMESTER - KELAS ${classData.name.toUpperCase()}`;
                     const subText = `${exportTitle.toUpperCase()} • ${schoolName || '-'}`;
                     const headerY = addPdfHeader(doc, { schoolName, orientation: 'portrait' });
-                    const pw = doc.internal.pageSize.getWidth();
+                    const pageWidthHeader2 = doc.internal.pageSize.getWidth();
                     doc.setFontSize(12);
                     doc.setFont('helvetica', 'bold');
-                    doc.text(titleText, pw / 2, headerY, { align: 'center' });
+                    doc.text(titleText, pageWidthHeader2 / 2, headerY, { align: 'center' });
                     doc.setFontSize(9);
                     doc.setFont('helvetica', 'normal');
-                    doc.text(subText, pw / 2, headerY + 5, { align: 'center' });
+                    doc.text(subText, pageWidthHeader2 / 2, headerY + 5, { align: 'center' });
 
                     const attendanceMap = new Map<string, { h: number, s: number, i: number, a: number }>();
                     attendance.forEach((r: AttendanceRow) => {
@@ -915,26 +906,14 @@ export const useAttendance = () => {
                         ];
                     });
 
-                    const tableStartY = headerY + 10;
                     autoTable(doc, {
                         head: [headers],
                         body: rows,
-                        startY: tableStartY,
+                        startY: 38,
                         styles: { fontSize: 9, cellPadding: 2, halign: 'center' },
                         columnStyles: { 1: { halign: 'left', fontStyle: 'bold' } },
                         headStyles: { fillColor: [79, 70, 229] },
-                        didDrawPage: (data) => {
-                            // Redraw class name header on continued pages
-                            if (data.pageNumber > 1) {
-                                doc.setFontSize(10);
-                                doc.setFont('helvetica', 'bold');
-                                doc.setTextColor(7, 54, 66);
-                                doc.text(`${cleanClassName} (LANJUTAN)`, pageWidth / 2, 14, { align: 'center' });
-                                doc.setDrawColor(203, 213, 225);
-                                doc.line(14, 18, pageWidth - 14, 18);
-                                doc.setTextColor(0, 0, 0);
-                            }
-                            // Footer
+                        didDrawPage: (_data) => {
                             doc.setFontSize(8);
                             doc.setTextColor(100);
                             doc.text(`Dicetak dari ${schoolName} pada ${new Date().toLocaleDateString('id-ID')}`, 14, pageHeight - 10);
@@ -946,72 +925,32 @@ export const useAttendance = () => {
                 doc.save(`Laporan_Absensi_Semester_${exportSemesterId}.pdf`);
                 toast.success("Laporan PDF berhasil diunduh!");
             } else if (format === 'excel') {
-                const XLSX = await getXLSX();
-                const wb = XLSX.utils.book_new();
-                const currentYear = new Date().getFullYear();
-
-                for (const classData of studentsByClass) {
-                    // Build rows as array-of-arrays for full control
-                    const rows: (string | number)[][] = [];
-                    const totalCols = 7; // NO, NAMA, H, S, I, A, %
-
-                    // ── Title block ──
-                    rows.push([(schoolName || 'MI AL IRSYAD KOTA MADIUN').toUpperCase()]);
-                    rows.push([exportPeriod === 'monthly' ? 'LAPORAN ABSENSI BULANAN' : 'REKAPITULASI ABSENSI SEMESTER']);
-                    rows.push([exportTitle.toUpperCase()]);
-                    rows.push([`KELAS: ${classData.name.toUpperCase()}`]);
-                    rows.push([]); // spacer
-
-                    // ── Header row ──
-                    rows.push(['NO', 'NAMA SISWA', 'HADIR (H)', 'SAKIT (S)', 'IZIN (I)', 'ALPHA (A)', 'PERSENTASE (%)']);
-
-                    // ── Data rows ──
-                    classData.students.forEach((student: StudentRow, index: number) => {
-                        const stdAtt = attendance.filter((r: AttendanceRow) => r.student_id === student.id);
-                        const h = stdAtt.filter(r => r.status === 'Hadir').length;
-                        const s = stdAtt.filter(r => r.status === 'Sakit').length;
-                        const izin = stdAtt.filter(r => r.status === 'Izin').length;
-                        const a = stdAtt.filter(r => r.status === 'Alpha').length;
-                        const total = h + s + izin + a;
-                        const pct = total > 0 ? `${Math.round((h / total) * 100)}%` : '100%';
-                        rows.push([index + 1, student.name, h, s, izin, a, pct]);
-                    });
-
-                    // ── Signature footer ──
-                    rows.push([]);
-                    rows.push(['', '', '', '', '', '', `Madiun, ............... ${currentYear}`]);
-                    rows.push(['', '', '', '', '', '', `Wali Kelas ${classData.name}`]);
-                    rows.push([]);
-                    rows.push([]);
-                    rows.push(['', '', '', '', '', '', '(_________________)']);
-
-                    const ws = XLSX.utils.aoa_to_sheet(rows);
-
-                    // ── Merged cells for title block ──
-                    ws['!merges'] = [
-                        { s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } },
-                        { s: { r: 1, c: 0 }, e: { r: 1, c: totalCols - 1 } },
-                        { s: { r: 2, c: 0 }, e: { r: 2, c: totalCols - 1 } },
-                        { s: { r: 3, c: 0 }, e: { r: 3, c: totalCols - 1 } },
-                    ];
-
-                    // ── Proportional column widths ──
-                    ws['!cols'] = [
-                        { wch: 5 },   // NO
-                        { wch: 38 },  // Nama Siswa
-                        { wch: 14 },  // Hadir (H)
-                        { wch: 14 },  // Sakit (S)
-                        { wch: 12 },  // Izin (I)
-                        { wch: 12 },  // Alpha (A)
-                        { wch: 20 },  // Persentase (%)
-                    ];
-
-                    const cleanSheetName = `Kelas ${classData.name}`.replace(/[\\/?*:[\]]/g, '').slice(0, 31);
-                    XLSX.utils.book_append_sheet(wb, ws, cleanSheetName);
+                if (exportPeriod === 'monthly') {
+                    const year = parseInt(exportMonth.slice(0, 4), 10);
+                    const monthNum = parseInt(exportMonth.slice(5, 7), 10);
+                    const daysInMonth = new Date(year, monthNum, 0).getDate();
+                    const monthName = new Date(year, monthNum - 1).toLocaleString('id-ID', { month: 'long' });
+                    
+                    await exportAttendanceToExcel(
+                        studentsByClass,
+                        attendance,
+                        monthName,
+                        year,
+                        monthNum,
+                        daysInMonth,
+                        `Laporan_Absensi_Bulanan_${exportMonth}`,
+                        schoolName || 'MI AL IRSYAD KOTA MADIUN'
+                    );
+                } else {
+                    await exportSemesterAttendanceToExcel(
+                        studentsByClass,
+                        attendance,
+                        exportTitle,
+                        `Laporan_Absensi_Semester_${exportSemesterId}`,
+                        schoolName || 'MI AL IRSYAD KOTA MADIUN'
+                    );
                 }
-
-                await XLSX.writeFile(wb, `Laporan_Absensi_${exportPeriod === 'monthly' ? exportMonth : 'Semester'}.xlsx`);
-                toast.success('Laporan Excel berhasil diunduh!');
+                toast.success("Laporan Excel berhasil diunduh!");
             }
         } catch (err: unknown) {
             toast.error(`Gagal mengekspor laporan: ${err instanceof Error ? err.message : String(err)}`);

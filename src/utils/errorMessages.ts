@@ -124,14 +124,14 @@ export const parseError = (error: unknown): ActionableError => {
     if (error instanceof Error) {
         const message = error.message.toLowerCase();
 
-        // Network errors
-        if (message.includes('network') || message.includes('fetch') || message.includes('connection')) {
-            return errorMessages.NETWORK_ERROR;
-        }
-
         // Timeout
         if (message.includes('timeout') || message.includes('timed out')) {
             return errorMessages.TIMEOUT;
+        }
+
+        // Network errors
+        if (message.includes('network') || message.includes('fetch') || message.includes('connection')) {
+            return errorMessages.NETWORK_ERROR;
         }
 
         // Auth errors
