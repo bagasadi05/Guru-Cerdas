@@ -47,6 +47,23 @@ interface BintangExcelOptions {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+const formatDate = (dateStr?: string | null): string => {
+    if (!dateStr) return '-';
+    const cleanStr = dateStr.split('T')[0];
+    const parts = cleanStr.split('-');
+    if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('id-ID');
+};
+
+const parseTimestamp = (dateStr?: string | null): number => {
+    if (!dateStr) return 0;
+    const t = new Date(dateStr).getTime();
+    return isNaN(t) ? 0 : t;
+};
+
 const getStudentName = (studentId: string, students: Array<{ id: string; name: string }>): string =>
     students.find(s => s.id === studentId)?.name || 'Tidak Diketahui';
 
@@ -73,32 +90,40 @@ const getGradeColorLabel = (grade: BintangGrade): string => {
  */
 export const exportBintangToExcel = async (options: BintangExcelOptions): Promise<void> => {
     const {
-        className, schoolName, monthName, academicYear, semesterName,
-        students, violations, quizPoints, evaluations,
-    } = options;
+        className = 'Kelas',
+        schoolName = 'LAPORAN PROGRAM BINTANG',
+        monthName = '',
+        academicYear = '',
+        semesterName = '',
+        students = [],
+        violations = [],
+        quizPoints = [],
+        evaluations = [],
+    } = options || {};
 
     const XLSX = await getXLSX();
     const wb = XLSX.utils.book_new();
     const exportDate = new Date().toLocaleDateString('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric',
     });
+
     // ── Build per-student summaries ──────────────────────────────────────────
-    const studentSummaries: StudentSummary[] = students.map(student => {
-        const studentVios = violations.filter(v => v.student_id === student.id);
-        const rawPoints = studentVios.map(v => ({ description: v.description, points: v.points }));
-        const studentQP = quizPoints.filter(q => q.student_id === student.id);
-        const totalQP = studentQP.reduce((sum, q) => sum + (q.points || 0), 0);
+    const studentSummaries: StudentSummary[] = (students || []).map(student => {
+        const studentVios = (violations || []).filter(v => v && v.student_id === student.id);
+        const rawPoints = studentVios.map(v => ({ description: v.description || '', points: Number(v.points) || 0 }));
+        const studentQP = (quizPoints || []).filter(q => q && q.student_id === student.id);
+        const totalQP = studentQP.reduce((sum, q) => sum + (Number(q.points) || 0), 0);
         const aspects = calculateAspectPoints(rawPoints, totalQP);
 
-        const evalRecord = evaluations.find(e => e.student_id === student.id);
+        const evalRecord = (evaluations || []).find(e => e && e.student_id === student.id);
         let evalStatus: StudentSummary['evaluationStatus'] = 'Auto';
         if (evalRecord?.is_published) evalStatus = 'Published';
         else if (evalRecord) evalStatus = 'Draft';
 
         return {
             id: student.id,
-            name: student.name,
-            totalViolationPoints: studentVios.reduce((s, v) => s + v.points, 0),
+            name: student.name || 'Siswa',
+            totalViolationPoints: studentVios.reduce((s, v) => s + (Number(v.points) || 0), 0),
             totalViolations: studentVios.length,
             aspects,
             keaktifanPoints: totalQP,
@@ -111,9 +136,9 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
     // SHEET 1: Rekap Kelas
     // ═══════════════════════════════════════════════════════════════════════
     const rekapRows: (string | number)[][] = [
-        [schoolName.toUpperCase()],
+        [(schoolName || '').toUpperCase()],
         ['LAPORAN PROGRAM BINTANG (Bina Tertib dan Tanggung Jawab)'],
-        [className.toUpperCase()],
+        [(className || '').toUpperCase()],
         [`Periode: ${monthName} | Semester ${semesterName} TA ${academicYear}`],
         [`Tanggal Export: ${exportDate}`],
         [],
@@ -186,7 +211,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
     // SHEET 2: Rincian Pelanggaran
     // ═══════════════════════════════════════════════════════════════════════
     const viosRows: (string | number)[][] = [
-        [schoolName.toUpperCase()],
+        [(schoolName || '').toUpperCase()],
         ['RINCIAN PELANGGARAN - PROGRAM BINTANG'],
         [`Kelas: ${className} | Periode: ${monthName}`],
         [`Tanggal Export: ${exportDate}`],
@@ -194,30 +219,30 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         ['No', 'Tanggal', 'Nama Siswa', 'Deskripsi Pelanggaran', 'Aspek BINTANG', 'Poin', 'Severity'],
     ];
 
-    const sortedViolations = [...violations].sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    const sortedViolations = [...(violations || [])].sort(
+        (a, b) => parseTimestamp(a?.date) - parseTimestamp(b?.date)
     );
 
     sortedViolations.forEach((v, idx) => {
         const studentName = v.students?.name || getStudentName(v.student_id, students);
-        const aspectLabel = getAspectLabel(v.description);
+        const aspectLabel = getAspectLabel(v.description || '');
         const severityLabel = v.severity
             ? (v.severity.charAt(0).toUpperCase() + v.severity.slice(1))
             : '-';
 
         viosRows.push([
             idx + 1,
-            new Date(v.date).toLocaleDateString('id-ID'),
+            formatDate(v.date),
             studentName,
-            v.description,
+            v.description || '-',
             aspectLabel,
-            v.points,
+            Number(v.points) || 0,
             severityLabel,
         ]);
     });
 
     viosRows.push([]);
-    const totalViosPoints = violations.reduce((s, v) => s + v.points, 0);
+    const totalViosPoints = (violations || []).reduce((s, v) => s + (Number(v?.points) || 0), 0);
     viosRows.push(['', '', '', `TOTAL`, '', totalViosPoints, '']);
 
     const wsVios = XLSX.utils.aoa_to_sheet(viosRows);
@@ -242,7 +267,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
     // SHEET 3: Rincian Poin Keaktifan
     // ═══════════════════════════════════════════════════════════════════════
     const qpRows: (string | number)[][] = [
-        [schoolName.toUpperCase()],
+        [(schoolName || '').toUpperCase()],
         ['RINCIAN POIN KEAKTIFAN - PROGRAM BINTANG'],
         [`Kelas: ${className} | Periode: ${monthName}`],
         [`Tanggal Export: ${exportDate}`],
@@ -250,8 +275,8 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         ['No', 'Tanggal', 'Nama Siswa', 'Aktivitas', 'Tipe', 'Poin'],
     ];
 
-    const sortedQP = [...quizPoints].sort(
-        (a, b) => new Date(b.quiz_date).getTime() - new Date(a.quiz_date).getTime()
+    const sortedQP = [...(quizPoints || [])].sort(
+        (a, b) => parseTimestamp(b?.quiz_date) - parseTimestamp(a?.quiz_date)
     );
 
     sortedQP.forEach((q, idx) => {
@@ -260,16 +285,16 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
 
         qpRows.push([
             idx + 1,
-            new Date(q.quiz_date).toLocaleDateString('id-ID'),
+            formatDate(q.quiz_date),
             studentName,
             q.quiz_name || '-',
             activityType,
-            q.points,
+            Number(q.points) || 0,
         ]);
     });
 
     qpRows.push([]);
-    const totalQPPoints = quizPoints.reduce((s, q) => s + (q.points || 0), 0);
+    const totalQPPoints = (quizPoints || []).reduce((s, q) => s + (Number(q?.points) || 0), 0);
     qpRows.push(['', '', '', `TOTAL`, '', totalQPPoints]);
 
     const wsQP = XLSX.utils.aoa_to_sheet(qpRows);
@@ -290,7 +315,9 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
     XLSX.utils.book_append_sheet(wb, wsQP, 'Poin Keaktifan');
 
     // ── Save ─────────────────────────────────────────────────────────────────
-    const cleanMonth = monthName.replace(/[^a-zA-Z0-9]/g, '_');
-    const fileName = `BINTANG_${className.replace(/\s+/g, '_')}_${cleanMonth}.xlsx`;
+    const safeClassName = (className || 'Kelas').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+    const cleanMonth = (monthName || 'Bulan').replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `BINTANG_${safeClassName}_${cleanMonth}.xlsx`;
     await XLSX.writeFile(wb, fileName);
 };
+

@@ -4,7 +4,7 @@ import { Card } from '../../ui/Card';
 import { useAuth } from '../../../hooks/useAuth';
 import { bintangService, calculateAspectPoints, type AspectPointsSummary, type BintangGrade } from '../../../services/bintangService';
 import { supabase } from '../../../services/supabase';
-import { Send, FileText, CheckCircle, Zap, Info, Printer } from 'lucide-react';
+import { Send, FileText, CheckCircle, Zap, Info, Printer, FileSpreadsheet } from 'lucide-react';
 import { Modal } from '../../ui/Modal';
 import { useToast } from '../../../hooks/useToast';
 import { useConfirmation } from '../../ui/ConfirmationDialog';
@@ -115,6 +115,19 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
                         >
                             <Zap size={14} />
                             <span>{evalHook.isGenerating ? 'Proses...' : 'Generate'}<span className="hidden sm:inline"> Semua</span></span>
+                        </Button>
+                        <Button
+                            onClick={evalHook.handleExportExcel}
+                            disabled={evalHook.isExportingExcel || students.length === 0}
+                            variant="outline"
+                            className="flex-1 sm:flex-none border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center justify-center gap-1 text-xs sm:text-sm h-10 px-2 sm:px-3.5 whitespace-nowrap font-medium"
+                        >
+                            {evalHook.isExportingExcel ? (
+                                <span className="animate-spin inline-block w-3.5 h-3.5 border-[2px] border-current border-t-transparent rounded-full" />
+                            ) : (
+                                <FileSpreadsheet size={14} />
+                            )}
+                            <span>{evalHook.isExportingExcel ? 'Proses...' : 'Export Excel'}</span>
                         </Button>
                         <Button
                             onClick={evalHook.handleDownloadClassPdf}

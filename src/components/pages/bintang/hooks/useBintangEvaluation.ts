@@ -298,16 +298,23 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
     }, [selectedClass, selectedMonth, user, toast]);
 
     const handleExportExcel = useCallback(async () => {
-        if (!selectedClass || students.length === 0) {
+        if (!selectedClass || !students || students.length === 0) {
             toast.error('Tidak ada data untuk diexport');
+            return;
+        }
+        if (!selectedMonth) {
+            toast.error('Pilih bulan terlebih dahulu');
             return;
         }
         setIsExportingExcel(true);
         try {
-            const monthDate = new Date(`${selectedMonth}-01`);
+            const parts = selectedMonth.split('-');
+            const year = parseInt(parts[0], 10) || new Date().getFullYear();
+            const monthNum = parseInt(parts[1], 10) || (new Date().getMonth() + 1);
+            const monthDate = new Date(year, monthNum - 1, 1);
             const monthName = monthDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-            const monthSemester = monthDate.getMonth() >= 6 ? '1' : '2';
-            const monthAcadYearStart = monthSemester === '1' ? monthDate.getFullYear() : monthDate.getFullYear() - 1;
+            const monthSemester = monthNum >= 7 ? '1' : '2';
+            const monthAcadYearStart = monthSemester === '1' ? year : year - 1;
             const academicYear = `${monthAcadYearStart}/${monthAcadYearStart + 1}`;
             const semesterName = monthSemester === '1' ? 'Ganjil' : 'Genap';
 
@@ -320,6 +327,11 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     .maybeSingle()
             );
             const className = classData?.name || selectedClass;
+
+            const startDate = `${selectedMonth}-01`;
+            const nextMonthNum = monthNum === 12 ? 1 : monthNum + 1;
+            const nextYear = monthNum === 12 ? year + 1 : year;
+            const endDate = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
 
             // Fetch violations & quiz points directly for export completeness
             const [viosData, quizData] = await Promise.all([
@@ -334,15 +346,18 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     );
                     const studentIds = (classStudents || []).map((s: any) => s.id);
                     if (studentIds.length === 0) return [];
-                    const lastDay = new Date(parseInt(selectedMonth.split('-')[0]), parseInt(selectedMonth.split('-')[1]), 0).getDate();
-                    const { data } = await import('../../../../services/supabase').then(m =>
+                    const { data, error } = await import('../../../../services/supabase').then(m =>
                         m.supabase
                             .from('quiz_points')
                             .select('*')
                             .in('student_id', studentIds)
-                            .gte('quiz_date', `${selectedMonth}-01`)
-                            .lte('quiz_date', `${selectedMonth}-${lastDay}`)
+                            .gte('quiz_date', startDate)
+                            .lt('quiz_date', endDate)
+                            .is('deleted_at', null)
                     );
+                    if (error) {
+                        console.warn('Error fetching quiz_points for export:', error);
+                    }
                     return data || [];
                 })(),
             ]);
