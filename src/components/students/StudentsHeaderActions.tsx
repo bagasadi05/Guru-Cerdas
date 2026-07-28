@@ -20,11 +20,11 @@ interface StudentsHeaderActionsProps {
 }
 
 const outlineActionClasses =
-  'h-11 px-3 sm:px-4 rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-600 shadow-sm font-semibold text-xs sm:text-sm flex items-center justify-center';
+  'h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white shadow-sm font-semibold text-xs sm:text-sm flex items-center justify-center transition-all';
 const primaryActionClasses =
-  'h-11 px-4 rounded-xl shadow-md shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white border-none font-semibold text-xs sm:text-sm flex items-center justify-center';
+  'h-10 px-3 sm:px-4 rounded-lg shadow-sm text-xs sm:text-sm flex items-center justify-center';
 const overflowTriggerClasses =
-  'h-11 w-11 p-0 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition-all';
+  'h-10 w-10 p-0 rounded-lg flex items-center justify-center bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 shadow-sm transition-all';
 
 const renderActionButton = (
   action: StudentsHeaderAction,

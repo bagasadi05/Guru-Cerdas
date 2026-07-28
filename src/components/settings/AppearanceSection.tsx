@@ -6,6 +6,7 @@ import { SunIcon, MoonIcon, CheckCircleIcon, RefreshCwIcon, SparklesIcon, Contra
 import { Button } from '../ui/Button';
 import { Switch } from '../ui/Switch';
 import { SettingsCard } from './SettingsCard';
+import { triggerPwaInstall } from '../PwaPrompt';
 
 const AppearanceSection: React.FC = () => {
     const { theme, setTheme } = useTheme();
@@ -182,6 +183,7 @@ const AppearanceSection: React.FC = () => {
                     </div>
                 </CardContent>
             </SettingsCard>
+
         </div>
     );
 };

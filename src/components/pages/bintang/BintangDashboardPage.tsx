@@ -479,89 +479,98 @@ const BintangDashboardPage: React.FC = () => {
                     {/* ══════════════════════════════════════════════════════════
                         3. ACTION BAR — tiered by role
                        ══════════════════════════════════════════════════════════ */}
-                    <div className="flex flex-wrap items-center gap-2">
-                        {/* Walas-only: Generate, Cetak, Publikasi */}
-                        {isWalas && (
-                            <Button
-                                onClick={() => evalHook.handleGenerateAll(getAspectSummary)}
-                                disabled={evalHook.isGenerating || students.length === 0}
-                                variant="outline"
-                                className="flex items-center gap-1.5 text-sm h-10 px-3 font-medium"
-                            >
-                                <Zap size={16} />
-                                <span>{evalHook.isGenerating ? 'Proses...' : 'Generate Semua'}</span>
-                            </Button>
-                        )}
-                        {/* Semua guru: Poin Keaktifan */}
-                        <Button
-                            onClick={() => setIsKeaktifanModalOpen(true)}
-                            variant="outline"
-                            className="flex items-center gap-1.5 text-sm h-10 px-3 font-medium bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
-                        >
-                            <Sparkles size={16} />
-                            <span>+ Poin Keaktifan</span>
-                        </Button>
-                        {/* Semua guru: Observasi */}
-                        <Button
-                            onClick={() => setIsObservationModalOpen(true)}
-                            variant="outline"
-                            className="flex items-center gap-1.5 text-sm h-10 px-3 font-medium"
-                        >
-                            <Eye size={16} />
-                            <span>Observasi</span>
-                        </Button>
-                        {/* Walas-only: Catat Pembinaan */}
-                        {isWalas && (
-                            <Button
-                                onClick={openMentoringModal}
-                                variant="outline"
-                                className="flex items-center gap-1.5 text-sm h-10 px-3 font-medium"
-                            >
-                                <PlusCircle size={16} />
-                                <span>Catat Pembinaan</span>
-                            </Button>
-                        )}
-                        {/* Walas-only: Cetak Kelas */}
-                        {isWalas && (
-                            <Button
-                                onClick={evalHook.handleDownloadClassPdf}
-                                disabled={evalHook.isDownloadingClass || !selectedClass}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 text-sm h-10 px-3 font-medium"
-                            >
-                                {evalHook.isDownloadingClass ? (
-                                    <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
-                                ) : (
-                                    <Printer size={16} />
+                    <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        
+                        {/* Kiri: Input Data & Pencatatan */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex items-center p-1 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
+                                <Button
+                                    onClick={() => setIsKeaktifanModalOpen(true)}
+                                    variant="ghost"
+                                    className="flex items-center gap-1.5 text-sm h-9 px-3 font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg"
+                                >
+                                    <Sparkles size={16} />
+                                    <span>+ Poin Keaktifan</span>
+                                </Button>
+                                <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" />
+                                <Button
+                                    onClick={() => setIsObservationModalOpen(true)}
+                                    variant="ghost"
+                                    className="flex items-center gap-1.5 text-sm h-9 px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
+                                >
+                                    <Eye size={16} />
+                                    <span>Observasi</span>
+                                </Button>
+                                {isWalas && (
+                                    <>
+                                        <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" />
+                                        <Button
+                                            onClick={openMentoringModal}
+                                            variant="ghost"
+                                            className="flex items-center gap-1.5 text-sm h-9 px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
+                                        >
+                                            <PlusCircle size={16} />
+                                            <span>Catat Pembinaan</span>
+                                        </Button>
+                                    </>
                                 )}
-                                <span>{evalHook.isDownloadingClass ? 'Proses...' : 'Cetak Kelas'}</span>
-                            </Button>
-                        )}
-                        {/* Walas-only: Export Excel */}
+                            </div>
+
+                            {/* Laporan & Export */}
+                            {isWalas && (
+                                <div className="flex items-center p-1 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
+                                    <Button
+                                        onClick={evalHook.handleDownloadClassPdf}
+                                        disabled={evalHook.isDownloadingClass || !selectedClass}
+                                        variant="ghost"
+                                        className="flex items-center gap-1.5 text-sm h-9 px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
+                                    >
+                                        {evalHook.isDownloadingClass ? (
+                                            <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
+                                        ) : (
+                                            <Printer size={16} />
+                                        )}
+                                        <span className="hidden sm:inline">{evalHook.isDownloadingClass ? 'Proses...' : 'Cetak Kelas'}</span>
+                                    </Button>
+                                    <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" />
+                                    <Button
+                                        onClick={evalHook.handleExportExcel}
+                                        disabled={evalHook.isExportingExcel || students.length === 0}
+                                        variant="ghost"
+                                        className="flex items-center gap-1.5 text-sm h-9 px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
+                                    >
+                                        {evalHook.isExportingExcel ? (
+                                            <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
+                                        ) : (
+                                            <FileSpreadsheet size={16} />
+                                        )}
+                                        <span className="hidden sm:inline">{evalHook.isExportingExcel ? 'Proses...' : 'Export Excel'}</span>
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Kanan: Evaluasi Bulanan */}
                         {isWalas && (
-                            <Button
-                                onClick={evalHook.handleExportExcel}
-                                disabled={evalHook.isExportingExcel || students.length === 0}
-                                variant="outline"
-                                className="flex items-center gap-1.5 text-sm h-10 px-3 font-medium border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                            >
-                                {evalHook.isExportingExcel ? (
-                                    <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
-                                ) : (
-                                    <FileSpreadsheet size={16} />
-                                )}
-                                <span>{evalHook.isExportingExcel ? 'Proses...' : 'Export Excel'}</span>
-                            </Button>
-                        )}
-                        {/* Walas-only: Publikasi */}
-                        {isWalas && (
-                            <Button
-                                onClick={evalHook.handlePublish}
-                                disabled={evaluations.length === 0 || evalHook.isPublishing}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 text-sm h-10 px-3 font-medium"
-                            >
-                                <Send size={16} />
-                                <span>Publikasi</span>
-                            </Button>
+                            <div className="flex items-center gap-2 w-full md:w-auto mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200 dark:border-slate-800">
+                                <Button
+                                    onClick={() => evalHook.handleGenerateAll(getAspectSummary)}
+                                    disabled={evalHook.isGenerating || students.length === 0}
+                                    variant="outline"
+                                    className="flex-1 md:flex-none justify-center items-center gap-1.5 text-sm h-10 px-4 font-medium border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-xl"
+                                >
+                                    <Zap size={16} />
+                                    <span>{evalHook.isGenerating ? 'Proses...' : 'Generate Semua'}</span>
+                                </Button>
+                                <Button
+                                    onClick={evalHook.handlePublish}
+                                    disabled={evaluations.length === 0 || evalHook.isPublishing}
+                                    className="flex-1 md:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-indigo-500/20"
+                                >
+                                    <Send size={16} />
+                                    <span>Publikasi</span>
+                                </Button>
+                            </div>
                         )}
                     </div>
 

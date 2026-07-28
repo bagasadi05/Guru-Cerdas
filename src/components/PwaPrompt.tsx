@@ -32,8 +32,14 @@ const PwaPrompt: React.FC = () => {
   });
 
   useEffect(() => {
+    // 0. Force show prompt if URL has ?pwa=true parameter (useful for testing/preview)
+    if (typeof window !== 'undefined' && window.location.search.includes('pwa=true')) {
+      sessionStorage.removeItem('pwa-prompt-dismissed');
+      setIsVisible(true);
+    }
+
     // 1. Check if user dismissed prompt previously
-    if (sessionStorage.getItem('pwa-prompt-dismissed')) {
+    if (sessionStorage.getItem('pwa-prompt-dismissed') && !window.location.search.includes('pwa=true')) {
       return;
     }
 
@@ -43,17 +49,24 @@ const PwaPrompt: React.FC = () => {
       return; // Do not register beforeinstallprompt on iOS
     }
 
-    // 3. Android/Chrome native prompt
+    // 3. Android/Chrome native prompt & custom trigger event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setInstallPromptEvent(e as BeforeInstallPromptEvent);
       setIsVisible(true);
     };
 
+    const handleForceShow = () => {
+      sessionStorage.removeItem('pwa-prompt-dismissed');
+      setIsVisible(true);
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('show-pwa-prompt', handleForceShow);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('show-pwa-prompt', handleForceShow);
     };
   }, []);
 
@@ -86,57 +99,101 @@ const PwaPrompt: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-20 lg:bottom-4 left-4 right-4 lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-lg z-popover animate-slide-up">
-      <div className="bg-gradient-to-r from-sky-600 to-blue-600 dark:from-purple-600 dark:to-blue-600 backdrop-blur-xl text-white rounded-2xl shadow-[0_10px_40px_rgba(2,132,199,0.3)] dark:shadow-[0_10px_40px_rgba(147,51,234,0.3)] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 border border-white/20">
-        
-        {/* iOS Prompt Variant */}
+    <div className="fixed inset-0 z-popover flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-slide-down">
+    <div className="w-full sm:w-[520px] max-w-full">
+      <div className="relative overflow-hidden bg-slate-900/95 dark:bg-slate-900/95 backdrop-blur-xl text-white rounded-2xl p-3.5 sm:p-4.5 border border-slate-700/80 shadow-[0_20px_50px_rgba(0,0,0,0.6)] ring-1 ring-white/10">
+        {/* Subtle background ambient glow */}
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-teal-500/15 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Top right close button */}
+        <button
+          type="button"
+          onClick={handleDismiss}
+          className="absolute top-2.5 right-2.5 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors z-10"
+          aria-label="Tutup"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
         {isIOSPrompt ? (
-          <div className="flex flex-col w-full">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <DownloadCloudIcon className="w-6 h-6"/>
-                </div>
-                <div>
-                  <p className="font-bold text-base">Install Aplikasi Portal Guru</p>
-                  <p className="text-xs text-white/90 mt-0.5">Agar bekerja offline tanpa Safari</p>
-                </div>
+          /* iOS Prompt Variant */
+          <div className="flex flex-col gap-3 pr-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+                <DownloadCloudIcon className="w-5 h-5 text-white" />
               </div>
-              <button type="button" onClick={handleDismiss} className="p-1 rounded-full hover:bg-white/20 transition-colors">
-                <X className="w-5 h-5 text-white/80" />
-              </button>
+              <div>
+                <h4 className="font-bold text-xs sm:text-base text-white tracking-tight flex items-center gap-2">
+                  Install Portal Guru
+                  <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">PWA</span>
+                </h4>
+                <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-snug">
+                  Akses super cepat & bekerja offline tanpa Safari
+                </p>
+              </div>
             </div>
-            
-            <div className="bg-black/20 rounded-xl p-3 mt-2 text-sm text-white flex items-center gap-2">
-              <span>Tap ikon</span> 
-              <Share className="w-4 h-4 mx-0.5 text-sky-200" /> 
-              <span>(Share) di bawah layar, lalu pilih</span>
-              <PlusSquare className="w-4 h-4 mx-0.5 text-sky-200" />
-              <span className="font-semibold">Add to Home Screen</span>
+
+            <div className="bg-slate-800/90 rounded-xl p-2.5 sm:p-3 text-[11px] sm:text-xs text-slate-200 border border-slate-700/60 flex items-center flex-wrap gap-1.5 leading-relaxed">
+              <span>1. Tap ikon</span>
+              <span className="inline-flex items-center gap-1 bg-slate-700/80 px-1.5 py-0.5 rounded text-emerald-400 font-medium">
+                <Share className="w-3.5 h-3.5" /> Share
+              </span>
+              <span>2. Pilih</span>
+              <span className="inline-flex items-center gap-1 bg-slate-700/80 px-1.5 py-0.5 rounded text-white font-medium">
+                <PlusSquare className="w-3.5 h-3.5 text-emerald-400" /> Add to Home Screen
+              </span>
             </div>
           </div>
         ) : (
-          /* Android / Native Prompt Variant */
-          <>
-            <div className="flex items-center gap-3 flex-1 w-full">
-              <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                <DownloadCloudIcon className="w-6 h-6"/>
+          /* Android / Desktop Native Prompt Variant */
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pr-6 sm:pr-5">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 shrink-0">
+                <DownloadCloudIcon className="w-5 h-5 text-white" />
               </div>
-              <div className="flex-grow min-w-0 pr-4">
-                <p className="font-bold text-base leading-tight">Install Aplikasi Portal Guru</p>
-                <p className="text-xs sm:text-sm text-white/90 mt-1 leading-snug">Akses super cepat, bekerja offline, notifikasi instan</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h4 className="font-bold text-xs sm:text-base text-white tracking-tight leading-snug">Install Aplikasi Portal</h4>
+                  <span className="text-[9px] sm:text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 leading-none shrink-0">PWA</span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-tight truncate sm:whitespace-normal">
+                  Akses cepat, kerja offline, & notifikasi instan.
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                <Button size="sm" variant="ghost" onClick={handleDismiss} className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 text-white border-white/20">Nanti</Button>
-                <Button size="sm" onClick={handleInstallClick} className="flex-1 sm:flex-none bg-white text-sky-600 dark:text-purple-600 hover:bg-white/90 font-semibold shadow-md">Install</Button>
-            </div>
-          </>
-        )}
 
+            <div className="flex items-center justify-end gap-2 shrink-0 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-slate-800/80">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleDismiss}
+                className="text-xs text-slate-300 hover:text-white hover:bg-slate-800/70 px-3 py-1.5 sm:py-2 rounded-xl font-medium"
+              >
+                Nanti
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleInstallClick}
+                className="text-xs font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-lg shadow-emerald-500/20 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl transition-all duration-200 active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+              >
+                <DownloadCloudIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Install
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
+    </div>
   );
+};
+
+export const triggerPwaInstall = () => {
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('pwa-prompt-dismissed');
+    window.dispatchEvent(new Event('show-pwa-prompt'));
+  }
 };
 
 export default PwaPrompt;

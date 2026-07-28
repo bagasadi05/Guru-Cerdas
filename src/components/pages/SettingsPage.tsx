@@ -8,9 +8,10 @@ import IntegrationsSection from '../settings/IntegrationsSection';
 import AccountSection from '../settings/AccountSection';
 import DataManagementSection from '../settings/DataManagementSection';
 import { SemesterManagement } from '../settings/SemesterManagement';
+import { PwaSection } from '../settings/PwaSection';
 import { SettingsPageSkeleton } from '../skeletons/PageSkeletons';
 
-import { Search, Sparkles, ArrowRight, Settings } from 'lucide-react';
+import { Search, Sparkles, ArrowRight, Settings, Smartphone } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
     const { logout, loading } = useAuth();
@@ -22,6 +23,7 @@ const SettingsPage: React.FC = () => {
     const navItems = [
         { id: 'profile', label: 'Profil', icon: UserCircleIcon },
         { id: 'appearance', label: 'Tampilan', icon: PaletteIcon },
+        { id: 'pwa', label: 'Aplikasi PWA', icon: Smartphone },
         { id: 'academic', label: 'Akademik', icon: GraduationCapIcon },
         { id: 'notifications', label: 'Notifikasi', icon: BellIcon },
         { id: 'integrations', label: 'Integrasi', icon: LinkIcon },
@@ -42,6 +44,12 @@ const SettingsPage: React.FC = () => {
                 glow: 'shadow-indigo-500/25',
                 hover: 'hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/5',
                 text: 'text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+            };
+            case 'pwa': return {
+                gradient: 'from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500',
+                glow: 'shadow-emerald-500/25',
+                hover: 'hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/5',
+                text: 'text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
             };
             case 'academic': return {
                 gradient: 'from-blue-600 to-cyan-600 dark:from-blue-500 dark:to-cyan-500',
@@ -94,6 +102,8 @@ const SettingsPage: React.FC = () => {
         { query: 'kontras', tab: 'appearance', title: 'Kontras Tinggi', desc: 'Tingkatkan keterbacaan warna teks bagi gangguan penglihatan.' },
         { query: 'animasi', tab: 'appearance', title: 'Kurangi Gerakan / Animasi', desc: 'Matikan animasi transisi untuk performa perangkat hemat daya.' },
         { query: 'tutorial', tab: 'appearance', title: 'Mulai Ulang Panduan / Onboarding', desc: 'Reset pemandu interaktif untuk mempelajari kembali fitur-fitur.' },
+        { query: 'pwa', tab: 'pwa', title: 'Install Aplikasi PWA', desc: 'Pasang aplikasi di layar utama perangkat untuk akses offline.' },
+        { query: 'install', tab: 'pwa', title: 'Install Aplikasi PWA', desc: 'Pasang aplikasi di layar utama perangkat untuk akses offline.' },
         
         { query: 'profil', tab: 'profile', title: 'Informasi Profil & Avatar', desc: 'Perbarui nama lengkap, foto profil, NIP, atau biodata guru.' },
         { query: 'avatar', tab: 'profile', title: 'Foto Profil / Avatar', desc: 'Unggah foto pribadi atau gunakan avatar kustom.' },
@@ -123,6 +133,7 @@ const SettingsPage: React.FC = () => {
         switch (activeTab) {
             case 'profile': return <ProfileSection />;
             case 'appearance': return <AppearanceSection />;
+            case 'pwa': return <PwaSection />;
             case 'academic': return <SemesterManagement />;
             case 'notifications': return <NotificationsSection />;
             case 'integrations': return <IntegrationsSection />;

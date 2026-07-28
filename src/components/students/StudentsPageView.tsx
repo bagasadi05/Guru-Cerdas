@@ -146,10 +146,12 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
 }) => {
   return (
     <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white font-serif">Manajemen Siswa</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <h1 className="text-3xl font-bold tracking-tight font-serif mb-2 text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
+            Manajemen Siswa
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
             {classSection.canManageActiveClass
               ? 'Kelola data siswa, kelas, dan kode akses.'
               : 'Mode baca untuk kelas yang ditugaskan. Detail siswa tetap bisa dibuka tanpa mengubah data master.'}

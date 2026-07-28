@@ -159,15 +159,40 @@ function isModelAllowed(model: string | undefined): boolean {
   if (!model) return false;
   if (model.endsWith(':free')) return true;
   const whitelist = [
+    /* ── Google Gemma ──────────────────────────────────── */
     'google/gemma-4-31b-it:free',
     'google/gemma-4-31b-it',
     'google/gemma-4-26b-a4b-it:free',
     'google/gemma-4-26b-a4b-it',
+    'google/gemini-2.0-flash-001',
+    'google/gemini-2.0-flash-lite-001',
+
+    /* ── Meta Llama ───────────────────────────────────── */
     'meta-llama/llama-3.3-70b-instruct:free',
     'meta-llama/llama-3.3-70b-instruct',
     'meta-llama/llama-3.2-3b-instruct:free',
     'meta-llama/llama-3.2-3b-instruct',
+    'meta-llama/llama-4-scout:free',
+    'meta-llama/llama-4-scout',
+
+    /* ── Mistral ──────────────────────────────────────── */
+    'mistralai/mistral-nemo:free',
+    'mistralai/mistral-7b-instruct:free',
+
+    /* ── Microsoft ────────────────────────────────────── */
+    'microsoft/phi-4-mini-instruct:free',
+
+    /* ── Qwen ─────────────────────────────────────────── */
+    'qwen/qwen2.5-7b-instruct:free',
+    'qwen/qwen2.5-72b-instruct:free',
+
+    /* ── DeepSeek ─────────────────────────────────────── */
+    'deepseek/deepseek-chat:free',
+    'deepseek/deepseek-r1:free',
+    'deepseek/deepseek-r1-distill-llama-70b:free',
   ];
+  // Allow all :free models automatically
+  if (model.endsWith(':free')) return true;
   return whitelist.includes(model);
 }
 

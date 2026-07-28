@@ -1,4 +1,5 @@
 import { generateOpenRouterJson } from '../services/openRouterService';
+import { getBackoffDelay, isRateLimitError, isTransientError } from './aiConfig';
 
 export interface StudentNoteInput {
   studentId: string;
@@ -7,9 +8,14 @@ export interface StudentNoteInput {
 }
 
 interface BatchOptions {
+  /** Jumlah siswa per batch (default: 3 — lebih kecil untuk hindari rate limit) */
   batchSize?: number;
+  /** Delay awal antar batch (default: 3000ms) */
   delayMs?: number;
+  /** Maksimal retry per batch (default: 4) */
   maxRetries?: number;
+  /** Adaptif: auto-small batch jika banyak error (default: true) */
+  adaptive?: boolean;
 }
 
 const sleep = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
@@ -27,15 +33,23 @@ export async function generateTeacherNotesBatched(
   onProgress?: (done: number, total: number) => void,
   opts: BatchOptions = {}
 ): Promise<Map<string, string>> {
-  const batchSize = opts.batchSize ?? 5;
-  const delayMs = opts.delayMs ?? 2500;
+  const initialBatchSize = opts.batchSize ?? 3;
+  const initialDelay = opts.delayMs ?? 3000;
   const maxRetries = opts.maxRetries ?? 4;
+  const adaptive = opts.adaptive ?? true;
+
+  // Adaptive state: turunkan batch size jika banyak error
+  let consecutiveErrors = 0;
+  let currentBatchSize = initialBatchSize;
+  let currentDelay = initialDelay;
 
   const notes = new Map<string, string>();
   const batches: StudentNoteInput[][] = [];
-  for (let i = 0; i < students.length; i += batchSize) {
-    batches.push(students.slice(i, i + batchSize));
+  for (let i = 0; i < students.length; i += currentBatchSize) {
+    batches.push(students.slice(i, i + currentBatchSize));
   }
+
+  let totalProcessed = 0;
 
   for (let b = 0; b < batches.length; b++) {
     const batch = batches[b];
@@ -53,14 +67,32 @@ export async function generateTeacherNotesBatched(
           if (note) notes.set(item.studentId, note);
         });
         ok = true;
+        if (adaptive) {
+          consecutiveErrors = Math.max(0, consecutiveErrors - 1);
+          if (consecutiveErrors === 0 && currentBatchSize < initialBatchSize) {
+            currentBatchSize = Math.min(initialBatchSize, currentBatchSize + 1);
+          }
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        const isRate = /429|sibuk|tidak tersedia|too many|rate/i.test(msg);
-        if (attempt >= maxRetries) {
-          console.warn('Batch catatan AI ' + (b + 1) + '/' + batches.length + ' gagal: ' + msg);
+        const isRate = isRateLimitError(err);
+        const isTransient = isTransientError(err);
+
+        if (adaptive && isRate) {
+          consecutiveErrors++;
+          if (consecutiveErrors >= 2) {
+            currentBatchSize = Math.max(1, Math.floor(currentBatchSize / 2));
+            currentDelay = Math.min(10000, currentDelay * 1.5);
+          }
+        }
+
+        if (attempt >= maxRetries || !isTransient) {
+          console.warn('[aiBatch] Batch ' + (b + 1) + '/' + batches.length + ' gagal setelah ' + attempt + ' percobaan: ' + msg);
           break;
         }
-        await sleep((isRate ? 5000 : 1500) * Math.pow(2, attempt - 1));
+
+        const delay = getBackoffDelay(attempt, isRate ? 5000 : 1500);
+        await sleep(delay);
       }
     }
 
@@ -70,8 +102,12 @@ export async function generateTeacherNotesBatched(
       }
     });
 
-    if (onProgress) onProgress(Math.min((b + 1) * batchSize, students.length), students.length);
-    if (b < batches.length - 1) await sleep(delayMs);
+    totalProcessed += batch.length;
+    if (onProgress) onProgress(totalProcessed, students.length);
+
+    if (b < batches.length - 1) {
+      await sleep(currentDelay);
+    }
   }
 
   return notes;
