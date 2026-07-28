@@ -1,15 +1,4 @@
-/**
- * Service for exporting BINTANG (Bina Tertib dan Tanggung Jawab) data to Excel.
- *
- * Generates a multi-sheet workbook with:
- * 1. Rekap Kelas — per-student summary with violation points, grades, and keaktifan points
- * 2. Rincian Pelanggaran — all violations for the class month
- * 3. Rincian Poin Keaktifan — all quiz/keaktifan points for the class month
- *
- * @module services/bintangExcelExport
- */
-
-import { getXLSX } from '../utils/dynamicImports';
+import { getExcelJS } from '../utils/dynamicImports';
 import { getAspectForViolation, calculateAspectPoints, type AspectPointsSummary, type BintangGrade } from './bintangService';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -80,14 +69,6 @@ const getGradeColorLabel = (grade: BintangGrade): string => {
 
 // ─── Main Export Function ───────────────────────────────────────────────────
 
-/**
- * Export BINTANG data to a multi-sheet Excel workbook.
- *
- * Sheet layout:
- * 1. **Rekap Kelas** — header → student rows (name, points, grades, keaktifan, status)
- * 2. **Pelanggaran** — header → violation detail rows with date, student, aspect
- * 3. **Keaktifan** — header → quiz/keaktifan rows with date, student, activity, type
- */
 export const exportBintangToExcel = async (options: BintangExcelOptions): Promise<void> => {
     const {
         className = 'Kelas',
@@ -101,11 +82,32 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         evaluations = [],
     } = options || {};
 
-    const XLSX = await getXLSX();
-    const wb = XLSX.utils.book_new();
+    const ExcelJS = await getExcelJS();
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = schoolName;
+
     const exportDate = new Date().toLocaleDateString('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric',
     });
+
+    const borderAll = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+    } as Partial<import('exceljs').Borders>;
+    const fontBold = { bold: true, size: 11, name: 'Arial' };
+    const fontHeader = { bold: true, size: 14, name: 'Arial', color: { argb: 'FFFFFFFF' } };
+    
+    // Helper to style header row
+    const styleHeaderRow = (row: import('exceljs').Row, totalCols: number) => {
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            if (colNumber <= totalCols) {
+                cell.font = fontBold;
+                cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCBD5E1' } };
+                cell.border = borderAll;
+            }
+        });
+    };
 
     // ── Build per-student summaries ──────────────────────────────────────────
     const studentSummaries: StudentSummary[] = (students || []).map(student => {
@@ -135,24 +137,64 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
     // ═══════════════════════════════════════════════════════════════════════
     // SHEET 1: Rekap Kelas
     // ═══════════════════════════════════════════════════════════════════════
-    const rekapRows: (string | number)[][] = [
-        [(schoolName || '').toUpperCase()],
-        ['LAPORAN PROGRAM BINTANG (Bina Tertib dan Tanggung Jawab)'],
-        [(className || '').toUpperCase()],
-        [`Periode: ${monthName} | Semester ${semesterName} TA ${academicYear}`],
-        [`Tanggal Export: ${exportDate}`],
-        [],
-        [
-            'No', 'Nama Siswa', 'Total Poin Pelanggaran', 'Jumlah Pelanggaran',
-            'Adab (Poin)', 'Adab (Grade)', 'Disiplin (Poin)', 'Disiplin (Grade)',
-            'Rapi (Poin)', 'Rapi (Grade)',
-            'Poin Keaktifan', 'Frekuensi Keaktifan',
-            'Status Evaluasi',
-        ],
-    ];
+    const wsRekap = workbook.addWorksheet('Rekap Kelas');
+    const totalColsRekap = 13;
+    
+    wsRekap.mergeCells(1, 1, 1, totalColsRekap);
+    const title1Rekap = wsRekap.getCell(1, 1);
+    title1Rekap.value = (schoolName || '').toUpperCase();
+    title1Rekap.font = fontHeader;
+    title1Rekap.alignment = { horizontal: 'center', vertical: 'middle' };
+    title1Rekap.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF073642' } }; 
+
+    wsRekap.mergeCells(2, 1, 2, totalColsRekap);
+    const title2Rekap = wsRekap.getCell(2, 1);
+    title2Rekap.value = 'LAPORAN PROGRAM BINTANG (Bina Tertib dan Tanggung Jawab)';
+    title2Rekap.font = fontBold;
+    title2Rekap.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    wsRekap.mergeCells(3, 1, 3, totalColsRekap);
+    const title3Rekap = wsRekap.getCell(3, 1);
+    title3Rekap.value = `KELAS: ${(className || '').toUpperCase()}`;
+    title3Rekap.font = fontBold;
+    title3Rekap.alignment = { horizontal: 'center', vertical: 'middle' };
+    
+    wsRekap.mergeCells(4, 1, 4, totalColsRekap);
+    wsRekap.getCell(4, 1).value = `Periode: ${monthName} | Semester ${semesterName} TA ${academicYear}`;
+    wsRekap.getCell(4, 1).alignment = { horizontal: 'center' };
+
+    wsRekap.mergeCells(5, 1, 5, totalColsRekap);
+    wsRekap.getCell(5, 1).value = `Tanggal Export: ${exportDate}`;
+    wsRekap.getCell(5, 1).alignment = { horizontal: 'center' };
+
+    wsRekap.addRow([]);
+
+    const headerRekap = wsRekap.addRow([
+        'No', 'Nama Siswa', 'Total Poin Pelanggaran', 'Jumlah Pelanggaran',
+        'Adab (Poin)', 'Adab (Grade)', 'Disiplin (Poin)', 'Disiplin (Grade)',
+        'Rapi (Poin)', 'Rapi (Grade)',
+        'Poin Keaktifan', 'Frekuensi Keaktifan',
+        'Status Evaluasi'
+    ]);
+    styleHeaderRow(headerRekap, totalColsRekap);
+
+    // Set widths
+    wsRekap.getColumn(1).width = 5;
+    wsRekap.getColumn(2).width = 45;
+    wsRekap.getColumn(3).width = 15;
+    wsRekap.getColumn(4).width = 15;
+    wsRekap.getColumn(5).width = 15;
+    wsRekap.getColumn(6).width = 20;
+    wsRekap.getColumn(7).width = 15;
+    wsRekap.getColumn(8).width = 20;
+    wsRekap.getColumn(9).width = 15;
+    wsRekap.getColumn(10).width = 20;
+    wsRekap.getColumn(11).width = 15;
+    wsRekap.getColumn(12).width = 15;
+    wsRekap.getColumn(13).width = 18;
 
     studentSummaries.forEach((s, idx) => {
-        rekapRows.push([
+        const row = wsRekap.addRow([
             idx + 1,
             s.name,
             s.totalViolationPoints,
@@ -164,11 +206,30 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
             s.keaktifanCount,
             s.evaluationStatus,
         ]);
+        
+        const fillColor = idx % 2 !== 0 ? 'FFF8FAFC' : 'FFFFFFFF';
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            if (colNumber <= totalColsRekap) {
+                cell.border = borderAll;
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+                if (colNumber === 1 || colNumber >= 3) {
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                }
+                
+                // Colorize grades
+                if ([6, 8, 10].includes(colNumber)) {
+                    const gradeVal = cell.value?.toString() || '';
+                    if (gradeVal.startsWith('A')) cell.font = { color: { argb: 'FF16A34A' }, bold: true };
+                    else if (gradeVal.startsWith('B')) cell.font = { color: { argb: 'FF2563EB' }, bold: true };
+                    else if (gradeVal.startsWith('C')) cell.font = { color: { argb: 'FFCA8A04' }, bold: true };
+                    else if (gradeVal.startsWith('D')) cell.font = { color: { argb: 'FFDC2626' }, bold: true };
+                }
+            }
+        });
     });
 
-    // Summary row
-    rekapRows.push([]);
-    rekapRows.push([
+    wsRekap.addRow([]);
+    const summaryRow = wsRekap.addRow([
         '', 'TOTAL KELAS',
         studentSummaries.reduce((s, st) => s + st.totalViolationPoints, 0),
         studentSummaries.reduce((s, st) => s + st.totalViolations, 0),
@@ -178,46 +239,61 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         studentSummaries.reduce((s, st) => s + st.keaktifanPoints, 0),
         studentSummaries.reduce((s, st) => s + st.keaktifanCount, 0), '',
     ]);
-    rekapRows.push([]);
-    rekapRows.push(['Keterangan Grade:']);
-    rekapRows.push(['A = 0 poin (Sangat Baik)', 'B = 1-10 poin (Baik)', 'C = 11-20 poin (Cukup)', 'D = >20 poin (Kurang)']);
+    summaryRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        if (colNumber <= totalColsRekap) {
+            cell.font = fontBold;
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+            cell.border = borderAll;
+            if (colNumber >= 3) cell.alignment = { horizontal: 'center' };
+        }
+    });
 
-    const wsRekap = XLSX.utils.aoa_to_sheet(rekapRows);
-    wsRekap['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 12 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 12 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 12 } },
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 12 } },
-        { s: { r: 4, c: 0 }, e: { r: 4, c: 12 } },
-    ];
-    wsRekap['!cols'] = [
-        { wch: 4 },   // No
-        { wch: 25 },  // Nama Siswa
-        { wch: 10 },  // Total Poin
-        { wch: 10 },  // Jumlah
-        { wch: 12 },  // Adab Poin
-        { wch: 18 },  // Adab Grade
-        { wch: 14 },  // Disiplin Poin
-        { wch: 20 },  // Disiplin Grade
-        { wch: 12 },  // Rapi Poin
-        { wch: 16 },  // Rapi Grade
-        { wch: 14 },  // Poin Keaktifan
-        { wch: 14 },  // Frekuensi
-        { wch: 16 },  // Status
-    ];
-    XLSX.utils.book_append_sheet(wb, wsRekap, 'Rekap Kelas');
+    wsRekap.addRow([]);
+    wsRekap.addRow(['Keterangan Grade:']).font = fontBold;
+    wsRekap.addRow(['A = 0 poin (Sangat Baik)']);
+    wsRekap.addRow(['B = 1-10 poin (Baik)']);
+    wsRekap.addRow(['C = 11-20 poin (Cukup)']);
+    wsRekap.addRow(['D = >20 poin (Kurang)']);
 
     // ═══════════════════════════════════════════════════════════════════════
     // SHEET 2: Rincian Pelanggaran
     // ═══════════════════════════════════════════════════════════════════════
-    const viosRows: (string | number)[][] = [
-        [(schoolName || '').toUpperCase()],
-        ['RINCIAN PELANGGARAN - PROGRAM BINTANG'],
-        [`Kelas: ${className} | Periode: ${monthName}`],
-        [`Tanggal Export: ${exportDate}`],
-        [],
-        ['No', 'Tanggal', 'Nama Siswa', 'Deskripsi Pelanggaran', 'Aspek BINTANG', 'Poin', 'Severity'],
-    ];
+    const wsVios = workbook.addWorksheet('Pelanggaran');
+    const totalColsVios = 7;
+    
+    wsVios.mergeCells(1, 1, 1, totalColsVios);
+    const title1Vios = wsVios.getCell(1, 1);
+    title1Vios.value = (schoolName || '').toUpperCase();
+    title1Vios.font = fontHeader;
+    title1Vios.alignment = { horizontal: 'center', vertical: 'middle' };
+    title1Vios.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF073642' } }; 
+
+    wsVios.mergeCells(2, 1, 2, totalColsVios);
+    const title2Vios = wsVios.getCell(2, 1);
+    title2Vios.value = 'RINCIAN PELANGGARAN - PROGRAM BINTANG';
+    title2Vios.font = fontBold;
+    title2Vios.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    wsVios.mergeCells(3, 1, 3, totalColsVios);
+    wsVios.getCell(3, 1).value = `Kelas: ${className} | Periode: ${monthName}`;
+    wsVios.getCell(3, 1).alignment = { horizontal: 'center' };
+
+    wsVios.mergeCells(4, 1, 4, totalColsVios);
+    wsVios.getCell(4, 1).value = `Tanggal Export: ${exportDate}`;
+    wsVios.getCell(4, 1).alignment = { horizontal: 'center' };
+
+    wsVios.addRow([]);
+
+    const headerVios = wsVios.addRow(['No', 'Tanggal', 'Nama Siswa', 'Deskripsi Pelanggaran', 'Aspek BINTANG', 'Poin', 'Severity']);
+    styleHeaderRow(headerVios, totalColsVios);
+
+    wsVios.getColumn(1).width = 5;
+    wsVios.getColumn(2).width = 15;
+    wsVios.getColumn(3).width = 45;
+    wsVios.getColumn(4).width = 45;
+    wsVios.getColumn(5).width = 20;
+    wsVios.getColumn(6).width = 10;
+    wsVios.getColumn(7).width = 15;
 
     const sortedViolations = [...(violations || [])].sort(
         (a, b) => parseTimestamp(a?.date) - parseTimestamp(b?.date)
@@ -230,7 +306,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
             ? (v.severity.charAt(0).toUpperCase() + v.severity.slice(1))
             : '-';
 
-        viosRows.push([
+        const row = wsVios.addRow([
             idx + 1,
             formatDate(v.date),
             studentName,
@@ -239,41 +315,73 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
             Number(v.points) || 0,
             severityLabel,
         ]);
+        
+        const fillColor = idx % 2 !== 0 ? 'FFF8FAFC' : 'FFFFFFFF';
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            if (colNumber <= totalColsVios) {
+                cell.border = borderAll;
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+                if (colNumber === 1 || colNumber === 2 || colNumber === 5 || colNumber === 6 || colNumber === 7) {
+                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                } else {
+                    cell.alignment = { vertical: 'middle', wrapText: true };
+                }
+                
+                if (colNumber === 6) cell.font = { color: { argb: 'FFDC2626' }, bold: true };
+            }
+        });
     });
 
-    viosRows.push([]);
+    wsVios.addRow([]);
     const totalViosPoints = (violations || []).reduce((s, v) => s + (Number(v?.points) || 0), 0);
-    viosRows.push(['', '', '', `TOTAL`, '', totalViosPoints, '']);
-
-    const wsVios = XLSX.utils.aoa_to_sheet(viosRows);
-    wsVios['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 6 } },
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 6 } },
-    ];
-    wsVios['!cols'] = [
-        { wch: 4 },   // No
-        { wch: 14 },  // Tanggal
-        { wch: 25 },  // Nama Siswa
-        { wch: 40 },  // Deskripsi
-        { wch: 16 },  // Aspek
-        { wch: 8 },   // Poin
-        { wch: 14 },  // Severity
-    ];
-    XLSX.utils.book_append_sheet(wb, wsVios, 'Pelanggaran');
+    const summaryVios = wsVios.addRow(['', '', '', `TOTAL`, '', totalViosPoints, '']);
+    summaryVios.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        if (colNumber <= totalColsVios && (colNumber === 4 || colNumber === 6)) {
+            cell.font = fontBold;
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+            cell.border = borderAll;
+            cell.alignment = { horizontal: 'center' };
+        }
+    });
 
     // ═══════════════════════════════════════════════════════════════════════
     // SHEET 3: Rincian Poin Keaktifan
     // ═══════════════════════════════════════════════════════════════════════
-    const qpRows: (string | number)[][] = [
-        [(schoolName || '').toUpperCase()],
-        ['RINCIAN POIN KEAKTIFAN - PROGRAM BINTANG'],
-        [`Kelas: ${className} | Periode: ${monthName}`],
-        [`Tanggal Export: ${exportDate}`],
-        [],
-        ['No', 'Tanggal', 'Nama Siswa', 'Aktivitas', 'Tipe', 'Poin'],
-    ];
+    const wsQP = workbook.addWorksheet('Poin Keaktifan');
+    const totalColsQP = 6;
+    
+    wsQP.mergeCells(1, 1, 1, totalColsQP);
+    const title1QP = wsQP.getCell(1, 1);
+    title1QP.value = (schoolName || '').toUpperCase();
+    title1QP.font = fontHeader;
+    title1QP.alignment = { horizontal: 'center', vertical: 'middle' };
+    title1QP.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF073642' } }; 
+
+    wsQP.mergeCells(2, 1, 2, totalColsQP);
+    const title2QP = wsQP.getCell(2, 1);
+    title2QP.value = 'RINCIAN POIN KEAKTIFAN - PROGRAM BINTANG';
+    title2QP.font = fontBold;
+    title2QP.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    wsQP.mergeCells(3, 1, 3, totalColsQP);
+    wsQP.getCell(3, 1).value = `Kelas: ${className} | Periode: ${monthName}`;
+    wsQP.getCell(3, 1).alignment = { horizontal: 'center' };
+
+    wsQP.mergeCells(4, 1, 4, totalColsQP);
+    wsQP.getCell(4, 1).value = `Tanggal Export: ${exportDate}`;
+    wsQP.getCell(4, 1).alignment = { horizontal: 'center' };
+
+    wsQP.addRow([]);
+
+    const headerQP = wsQP.addRow(['No', 'Tanggal', 'Nama Siswa', 'Aktivitas', 'Tipe', 'Poin']);
+    styleHeaderRow(headerQP, totalColsQP);
+
+    wsQP.getColumn(1).width = 5;
+    wsQP.getColumn(2).width = 15;
+    wsQP.getColumn(3).width = 45;
+    wsQP.getColumn(4).width = 40;
+    wsQP.getColumn(5).width = 45;
+    wsQP.getColumn(6).width = 10;
 
     const sortedQP = [...(quizPoints || [])].sort(
         (a, b) => parseTimestamp(b?.quiz_date) - parseTimestamp(a?.quiz_date)
@@ -283,7 +391,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         const studentName = getStudentName(q.student_id, students);
         const activityType = q.subject != null ? `📚 ${q.subject} (Akademik)` : '⚡ Keaktifan Umum';
 
-        qpRows.push([
+        const row = wsQP.addRow([
             idx + 1,
             formatDate(q.quiz_date),
             studentName,
@@ -291,33 +399,46 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
             activityType,
             Number(q.points) || 0,
         ]);
+        
+        const fillColor = idx % 2 !== 0 ? 'FFF8FAFC' : 'FFFFFFFF';
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            if (colNumber <= totalColsQP) {
+                cell.border = borderAll;
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+                if (colNumber === 1 || colNumber === 2 || colNumber === 6) {
+                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                } else {
+                    cell.alignment = { vertical: 'middle', wrapText: true };
+                }
+                
+                if (colNumber === 6) cell.font = { color: { argb: 'FF16A34A' }, bold: true };
+            }
+        });
     });
 
-    qpRows.push([]);
+    wsQP.addRow([]);
     const totalQPPoints = (quizPoints || []).reduce((s, q) => s + (Number(q?.points) || 0), 0);
-    qpRows.push(['', '', '', `TOTAL`, '', totalQPPoints]);
-
-    const wsQP = XLSX.utils.aoa_to_sheet(qpRows);
-    wsQP['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 5 } },
-    ];
-    wsQP['!cols'] = [
-        { wch: 4 },   // No
-        { wch: 14 },  // Tanggal
-        { wch: 25 },  // Nama Siswa
-        { wch: 35 },  // Aktivitas
-        { wch: 28 },  // Tipe
-        { wch: 8 },   // Poin
-    ];
-    XLSX.utils.book_append_sheet(wb, wsQP, 'Poin Keaktifan');
+    const summaryQP = wsQP.addRow(['', '', '', `TOTAL`, '', totalQPPoints]);
+    summaryQP.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        if (colNumber <= totalColsQP && (colNumber === 4 || colNumber === 6)) {
+            cell.font = fontBold;
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+            cell.border = borderAll;
+            cell.alignment = { horizontal: 'center' };
+        }
+    });
 
     // ── Save ─────────────────────────────────────────────────────────────────
     const safeClassName = (className || 'Kelas').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
     const cleanMonth = (monthName || 'Bulan').replace(/[^a-zA-Z0-9]/g, '_');
     const fileName = `BINTANG_${safeClassName}_${cleanMonth}.xlsx`;
-    await XLSX.writeFile(wb, fileName);
+    
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(url);
 };
-

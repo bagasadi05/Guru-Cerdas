@@ -2,14 +2,13 @@ import React from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
 import { SemesterSelector } from '../ui/SemesterSelector';
-
 
 interface ClassData {
     id: string;
     name: string;
 }
+
 interface AttendanceExportModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -18,14 +17,13 @@ interface AttendanceExportModalProps {
     exportMonth: string;
     setExportMonth: (month: string) => void;
     classes?: ClassData[];
-    selectedExportClass: string;
-    setSelectedExportClass: (classId: string) => void;
+    selectedExportClasses: string[];
+    setSelectedExportClasses: (classIds: string[]) => void;
     exportPeriod: 'monthly' | 'semester';
     setExportPeriod: (period: 'monthly' | 'semester') => void;
     exportSemesterId: string | null;
     setExportSemesterId: (id: string | null) => void;
 }
-
 
 export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
     isOpen,
@@ -35,33 +33,80 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
     exportMonth,
     setExportMonth,
     classes = [],
-    selectedExportClass,
-    setSelectedExportClass,
+    selectedExportClasses,
+    setSelectedExportClasses,
     exportPeriod,
     setExportPeriod,
     exportSemesterId,
     setExportSemesterId
 }) => {
 
+    const isAllSelected = selectedExportClasses.length === 0;
+
+    const toggleClass = (classId: string, checked: boolean) => {
+        if (isAllSelected) {
+            if (!checked) {
+                setSelectedExportClasses(classes.filter(c => c.id !== classId).map(c => c.id));
+            }
+        } else {
+            if (checked) {
+                const currentSelection = selectedExportClasses.filter(id => id !== '_none_');
+                const newSelection = [...currentSelection, classId];
+                if (newSelection.length === classes.length) {
+                    setSelectedExportClasses([]); // Means all
+                } else {
+                    setSelectedExportClasses(newSelection);
+                }
+            } else {
+                const newSelection = selectedExportClasses.filter(id => id !== classId);
+                if (newSelection.length === 0) {
+                    setSelectedExportClasses(['_none_']); 
+                } else {
+                    setSelectedExportClasses(newSelection);
+                }
+            }
+        }
+    };
+
+    const isClassSelected = (classId: string) => {
+        if (isAllSelected) return true;
+        return selectedExportClasses.includes(classId);
+    };
+
     return (
         <Modal title="Export Laporan Absensi" isOpen={isOpen} onClose={onClose}>
             <div className="space-y-4">
                 <p className="text-sm text-slate-600 dark:text-slate-400">Pilih kelas dan bulan untuk mengekspor laporan absensi.</p>
 
-                {/* Class Filter */}
+                {/* Class Filter (Multi-select) */}
                 <div>
-                    <label htmlFor="export-class" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Pilih Kelas</label>
-                    <Select
-                        id="export-class"
-                        value={selectedExportClass}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedExportClass(e.target.value)}
-                        className="h-12"
-                    >
-                        <option value="all">📚 Semua Kelas</option>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Pilih Kelas</label>
+                    <div className="max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-md p-2 space-y-1 bg-white dark:bg-slate-900">
+                        <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded transition-colors">
+                            <input
+                                type="checkbox"
+                                checked={isAllSelected}
+                                onChange={(e) => {
+                                    if (e.target.checked) setSelectedExportClasses([]);
+                                    else setSelectedExportClasses(['_none_']);
+                                }}
+                                className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                            />
+                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Semua Kelas</span>
+                        </label>
+                        <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
                         {classes.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
+                            <label key={c.id} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded transition-colors ml-2">
+                                <input
+                                    type="checkbox"
+                                    checked={isClassSelected(c.id)}
+                                    onChange={(e) => toggleClass(c.id, e.target.checked)}
+                                    className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                                />
+                                <span className="text-sm text-slate-600 dark:text-slate-400">{c.name}</span>
+                            </label>
                         ))}
-                    </Select>
+                    </div>
                 </div>
 
                 {/* Period Type Selection */}
@@ -102,10 +147,10 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
 
                 <div className="flex justify-end gap-3 pt-4">
                     <Button type="button" variant="ghost" onClick={onClose} disabled={isExporting}>Batal</Button>
-                    <Button type="button" variant="outline" onClick={() => onExport('excel')} disabled={isExporting} className="border-emerald-500 text-emerald-600 hover:bg-emerald-50">
+                    <Button type="button" variant="outline" onClick={() => onExport('excel')} disabled={isExporting || selectedExportClasses.includes('_none_')} className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50">
                         {isExporting ? '...' : 'Excel (.xlsx)'}
                     </Button>
-                    <Button type="button" onClick={() => onExport('pdf')} disabled={isExporting} className="bg-rose-600 hover:bg-rose-700 text-white">
+                    <Button type="button" onClick={() => onExport('pdf')} disabled={isExporting || selectedExportClasses.includes('_none_')} className="bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50">
                         {isExporting ? 'Mengekspor...' : 'PDF (.pdf)'}
                     </Button>
                 </div>

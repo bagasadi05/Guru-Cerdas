@@ -82,6 +82,18 @@ export const getDefaultAvatar = (gender?: string | null, studentId?: string): st
 };
 
 /**
+ * Get optimized avatar URL using a global proxy to save data
+ */
+const getOptimizedUrl = (url: string): string => {
+    // Only optimize real absolute URLs (not data URIs)
+    if (url && url.startsWith('http')) {
+        // Compress to 96x96, 60% quality, cover fit
+        return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=96&h=96&fit=cover&q=60`;
+    }
+    return url;
+};
+
+/**
  * Get student avatar URL with fallback to gendered default
  * @param avatarUrl - Student's custom avatar URL
  * @param gender - Student's gender
@@ -98,9 +110,9 @@ export const getStudentAvatar = (
         return createLocalAvatar({ gender, seed: studentId || studentName, name: studentName || studentId });
     }
 
-    // If has custom avatar and not empty, use it
+    // If has custom avatar and not empty, use it (optimized for data saving)
     if (avatarUrl && avatarUrl.trim() !== '') {
-        return avatarUrl;
+        return getOptimizedUrl(avatarUrl);
     }
 
     // Otherwise use gendered default avatar

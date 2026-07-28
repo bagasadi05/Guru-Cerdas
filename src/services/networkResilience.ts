@@ -331,6 +331,11 @@ class NetworkResilienceService {
 
         // Check if we should retry
         if (attempt < retries && retryCondition(lastError, attempt)) {
+          // [PATCH] Fail fast if we know we are offline so the UI doesn't hang for 15-20 seconds!
+          if (!navigator.onLine && (lastError.name === 'TypeError' || lastError.message.includes('fetch'))) {
+            break;
+          }
+
           const delay = this.calculateRetryDelay(attempt, retryDelay, maxRetryDelay, exponentialBackoff);
 
           logger.warn(`Request failed, retrying in ${delay}ms`, 'NetworkResilience', {

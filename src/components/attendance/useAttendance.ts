@@ -12,7 +12,7 @@ import { queryKeys } from '../../lib/queryKeys';
 import { type TeacherClassAssignmentRow } from '../../services/teacherAssignments';
 import { AttendanceRecord, AttendanceStatus, AttendanceInsert, AiAnalysis, StudentRow, ClassRow, AttendanceRow } from '../../types';
 import { statusOptions } from '../../constants';
-import { getAutoTable, getJsPDF, getXLSX } from '../../utils/dynamicImports';
+import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
 import { exportAttendanceToExcel, exportSemesterAttendanceToExcel } from '../../utils/exportUtils';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../utils/confetti';
@@ -72,7 +72,7 @@ export const useAttendance = () => {
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportMonth, setExportMonth] = useState(new Date().toISOString().slice(0, 7));
-    const [selectedExportClass, setSelectedExportClass] = useState<string>('all');
+    const [selectedExportClasses, setSelectedExportClasses] = useState<string[]>([]);
     const [exportPeriod, setExportPeriod] = useState<'monthly' | 'semester'>('monthly');
     const [exportSemesterId, setExportSemesterId] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
@@ -696,9 +696,9 @@ export const useAttendance = () => {
             endDate = semester.end_date;
         }
 
-        const exportClasses = selectedExportClass === 'all'
+        const exportClasses = selectedExportClasses.length === 0
             ? attendanceClasses
-            : attendanceClasses.filter((classRow) => classRow.id === selectedExportClass);
+            : attendanceClasses.filter((classRow) => selectedExportClasses.includes(classRow.id));
 
         if (exportClasses.length === 0) {
             return { students: [], attendance: [], classes: [] };
@@ -763,8 +763,8 @@ export const useAttendance = () => {
                 students: students.filter((s: StudentRow) => s.class_id === c.id).sort((a: StudentRow, b: StudentRow) => a.name.localeCompare(b.name))
             })).filter((c) => c.students.length > 0);
 
-            if (selectedExportClass !== 'all') {
-                studentsByClass = studentsByClass.filter((c: ClassRow) => c.id === selectedExportClass);
+            if (selectedExportClasses.length > 0) {
+                studentsByClass = studentsByClass.filter((c: ClassRow) => selectedExportClasses.includes(c.id));
             }
 
             if (exportPeriod === 'monthly' && format === 'pdf') {
@@ -1028,8 +1028,8 @@ Berikan analisis dalam format JSON murni yang sesuai dengan schema TypeScript:
         setIsExportModalOpen,
         exportMonth,
         setExportMonth,
-        selectedExportClass,
-        setSelectedExportClass,
+        selectedExportClasses,
+        setSelectedExportClasses,
         exportPeriod,
         setExportPeriod,
         exportSemesterId,

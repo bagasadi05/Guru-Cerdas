@@ -60,8 +60,8 @@ const AttendancePage: React.FC = () => {
         setIsExportModalOpen,
         exportMonth,
         setExportMonth,
-        selectedExportClass,
-        setSelectedExportClass,
+        selectedExportClasses,
+        setSelectedExportClasses,
         exportPeriod,
         setExportPeriod,
         exportSemesterId,
@@ -368,8 +368,8 @@ const AttendancePage: React.FC = () => {
                         exportMonth={exportMonth}
                         setExportMonth={setExportMonth}
                         classes={attendanceClasses}
-                        selectedExportClass={selectedExportClass}
-                        setSelectedExportClass={setSelectedExportClass}
+                        selectedExportClasses={selectedExportClasses}
+                        setSelectedExportClasses={setSelectedExportClasses}
                         exportPeriod={exportPeriod}
                         setExportPeriod={setExportPeriod}
                         exportSemesterId={exportSemesterId}

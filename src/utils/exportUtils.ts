@@ -161,7 +161,7 @@ export const exportAttendanceToExcel = async (
     workbook.creator = schoolName;
 
     for (const classData of classesData) {
-        const cleanSheetName = `Kelas ${classData.name}`.replace(/[\\/?*:[\]]/g, '').slice(0, 31);
+        const cleanSheetName = classData.name.replace(/[\\/?*:[\\]]/g, '').slice(0, 31);
         const ws = workbook.addWorksheet(cleanSheetName || 'Absensi');
 
         // Styles
@@ -169,8 +169,8 @@ export const exportAttendanceToExcel = async (
             top: { style: 'thin' }, left: { style: 'thin' },
             bottom: { style: 'thin' }, right: { style: 'thin' }
         } as Partial<import('exceljs').Borders>;
-        const fontBold = { bold: true, size: 11, name: 'Arial' };
         const fontHeader = { bold: true, size: 14, name: 'Arial', color: { argb: 'FFFFFFFF' } };
+        const fontTitle = { bold: true, size: 12, name: 'Arial' };
 
         const totalColumns = 2 + daysInMonth + 4;
         const summaryStartCol = 2 + daysInMonth + 1;
@@ -181,65 +181,75 @@ export const exportAttendanceToExcel = async (
         titleRow1.value = schoolName.toUpperCase();
         titleRow1.font = fontHeader;
         titleRow1.alignment = { horizontal: 'center', vertical: 'middle' };
-        titleRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF073642' } }; 
+        titleRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
 
         ws.mergeCells(2, 1, 2, totalColumns);
         const titleRow2 = ws.getCell(2, 1);
-        titleRow2.value = `DAFTAR HADIR KELAS ${classData.name}`;
-        titleRow2.font = fontBold;
+        titleRow2.value = `DAFTAR HADIR ${classData.name.toUpperCase().includes('KELAS') ? classData.name.toUpperCase() : 'KELAS ' + classData.name.toUpperCase()}`;
+        titleRow2.font = fontTitle;
         titleRow2.alignment = { horizontal: 'center', vertical: 'middle' };
 
         ws.mergeCells(3, 1, 3, totalColumns);
         const titleRow3 = ws.getCell(3, 1);
-        titleRow3.value = `TAHUN PELAJARAN ${year}/${year + 1}`;
-        titleRow3.font = fontBold;
+        titleRow3.value = `BULAN: ${monthName.toUpperCase()} - TAHUN PELAJARAN ${year}/${year + 1}`;
+        titleRow3.font = fontTitle;
         titleRow3.alignment = { horizontal: 'center', vertical: 'middle' };
 
-        // Empty row
         ws.addRow([]);
 
-        // Month Header
-        ws.mergeCells(5, 1, 5, 2);
-        ws.getCell(5, 1).value = 'NO / NAMA';
-        ws.getCell(5, 1).font = fontBold;
+        // Headers
+        ws.mergeCells(5, 1, 6, 1);
+        const noCell = ws.getCell(5, 1);
+        noCell.value = 'NO';
         
+        ws.mergeCells(5, 2, 6, 2);
+        const namaCell = ws.getCell(5, 2);
+        namaCell.value = 'NAMA LENGKAP';
+
         ws.mergeCells(5, 3, 5, 2 + daysInMonth);
-        const monthCell = ws.getCell(5, 3);
-        monthCell.value = `BULAN: ${monthName.toUpperCase()}`;
-        monthCell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        monthCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEA580C' } }; // Orange
-        monthCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        const tglCell = ws.getCell(5, 3);
+        tglCell.value = 'TANGGAL';
+        tglCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF59E0B' } };
 
         ws.mergeCells(5, summaryStartCol, 5, summaryStartCol + 3);
         const summaryHeader = ws.getCell(5, summaryStartCol);
         summaryHeader.value = 'JUMLAH';
-        summaryHeader.font = fontBold;
-        summaryHeader.alignment = { horizontal: 'center', vertical: 'middle' };
+        summaryHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0284C7' } };
 
-        // Columns Header
-        const headerRow = ws.getRow(6);
-        headerRow.getCell(1).value = 'NO';
-        headerRow.getCell(2).value = 'NAMA';
+        const subHeaderRow = ws.getRow(6);
         for (let day = 1; day <= daysInMonth; day++) {
-            headerRow.getCell(2 + day).value = day;
+            subHeaderRow.getCell(2 + day).value = day;
         }
-        headerRow.getCell(summaryStartCol).value = 'S';
-        headerRow.getCell(summaryStartCol + 1).value = 'I';
-        headerRow.getCell(summaryStartCol + 2).value = 'A';
-        headerRow.getCell(summaryStartCol + 3).value = 'H';
+        subHeaderRow.getCell(summaryStartCol).value = 'S';
+        subHeaderRow.getCell(summaryStartCol + 1).value = 'I';
+        subHeaderRow.getCell(summaryStartCol + 2).value = 'A';
+        subHeaderRow.getCell(summaryStartCol + 3).value = 'H';
 
-        headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        const headerRow5 = ws.getRow(5);
+        headerRow5.eachCell({ includeEmpty: true }, (cell, colNumber) => {
             if (colNumber <= totalColumns) {
-                cell.font = fontBold;
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
                 cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCBD5E1' } }; 
                 cell.border = borderAll;
+                if (colNumber <= 2) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
             }
         });
 
-        // Set column widths
-        ws.getColumn(1).width = 5; // NO
-        ws.getColumn(2).width = 30; // NAMA
+        subHeaderRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            if (colNumber <= totalColumns) {
+                cell.font = { bold: true, color: { argb: (colNumber <= 2) ? 'FFFFFFFF' : 'FF0F172A' } };
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                cell.border = borderAll;
+                if (colNumber > 2 && colNumber < summaryStartCol) {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDE68A' } };
+                } else if (colNumber >= summaryStartCol) {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBAE6FD' } };
+                }
+            }
+        });
+
+        ws.getColumn(1).width = 5;
+        ws.getColumn(2).width = 40;
         for (let day = 1; day <= daysInMonth; day++) {
             ws.getColumn(2 + day).width = 4;
         }
@@ -247,13 +257,14 @@ export const exportAttendanceToExcel = async (
             ws.getColumn(summaryStartCol + i).width = 5;
         }
 
-        // Data Rows
+        ws.views = [ { state: 'frozen', xSplit: 2, ySplit: 6, topLeftCell: 'C7' } ];
+
         classData.students.forEach((student, index) => {
             const row = ws.addRow([]);
             row.getCell(1).value = index + 1;
-            row.getCell(1).alignment = { horizontal: 'center' };
-            
-            row.getCell(2).value = student.name;
+            row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+            row.getCell(2).value = ` ${student.name}`;
+            row.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
             
             let s = 0, i = 0, a = 0, h = 0;
 
@@ -262,15 +273,14 @@ export const exportAttendanceToExcel = async (
                 const record = attendanceData.find((att) => att.student_id === student.id && att.date === dateStr);
 
                 const cell = row.getCell(2 + d);
-                cell.alignment = { horizontal: 'center' };
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
                 if (record) {
-                    const statusMap: Record<string, string> = { 'Hadir': 'H', 'Sakit': 'S', 'Izin': 'I', 'Alpha': 'A' };
-                    cell.value = statusMap[record.status] || '-';
-
-                    if (record.status === 'Hadir') { h++; cell.font = { color: { argb: 'FF16A34A' }, bold: true }; }
-                    else if (record.status === 'Sakit') { s++; cell.font = { color: { argb: 'FFCA8A04' }, bold: true }; }
-                    else if (record.status === 'Izin') { i++; cell.font = { color: { argb: 'FF2563EB' }, bold: true }; }
-                    else if (record.status === 'Alpha') { a++; cell.font = { color: { argb: 'FFDC2626' }, bold: true }; }
+                    if (record.status === 'Hadir') { h++; cell.value = 'H'; cell.font = { color: { argb: 'FF15803D' }, bold: true }; }
+                    else if (record.status === 'Sakit') { s++; cell.value = 'S'; cell.font = { color: { argb: 'FFB45309' }, bold: true }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } }; }
+                    else if (record.status === 'Izin') { i++; cell.value = 'I'; cell.font = { color: { argb: 'FF1D4ED8' }, bold: true }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDBEAFE' } }; }
+                    else if (record.status === 'Alpha') { a++; cell.value = 'A'; cell.font = { color: { argb: 'FFB91C1C' }, bold: true }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }; }
+                } else {
+                    cell.value = '';
                 }
             }
 
@@ -279,20 +289,21 @@ export const exportAttendanceToExcel = async (
             row.getCell(summaryStartCol + 2).value = a;
             row.getCell(summaryStartCol + 3).value = h;
             
-            // Alternating row color and borders
-            const fillColor = index % 2 !== 0 ? 'FFF8FAFC' : 'FFFFFFFF'; // slate-50 and white
+            const fillColor = index % 2 !== 0 ? 'FFF8FAFC' : 'FFFFFFFF';
             row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                 if (colNumber <= totalColumns) {
                     cell.border = borderAll;
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+                    if (!cell.fill) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+                    }
                     if (colNumber >= summaryStartCol) {
-                        cell.alignment = { horizontal: 'center' };
+                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                        cell.font = { bold: true };
                     }
                 }
             });
         });
 
-        // Signatures
         const lastRow = classData.students.length + 6;
         ws.getCell(lastRow + 2, totalColumns - 4).value = `Madiun, ............... ${year}`;
         ws.getCell(lastRow + 3, totalColumns - 4).value = `Wali Kelas ${classData.name}`;
@@ -610,58 +621,61 @@ export const exportSemesterAttendanceToExcel = async (
     workbook.creator = schoolName;
 
     for (const classData of classesData) {
-        const cleanSheetName = `Kelas ${classData.name}`.replace(/[\\/?*:[\]]/g, '').slice(0, 31);
-        const ws = workbook.addWorksheet(cleanSheetName || 'Rekap Kehadiran Semester');
+        const cleanSheetName = classData.name.replace(/[\\/?*:[\\]]/g, '').slice(0, 31);
+        const ws = workbook.addWorksheet(cleanSheetName || 'Rekap Semester');
 
         const totalColumns = 7;
         
-        // Styles
         const borderAll = {
             top: { style: 'thin' }, left: { style: 'thin' },
             bottom: { style: 'thin' }, right: { style: 'thin' }
         } as Partial<import('exceljs').Borders>;
-        const fontBold = { bold: true, size: 11, name: 'Arial' };
         const fontHeader = { bold: true, size: 14, name: 'Arial', color: { argb: 'FFFFFFFF' } };
+        const fontTitle = { bold: true, size: 12, name: 'Arial' };
 
         ws.mergeCells(1, 1, 1, totalColumns);
         const titleRow1 = ws.getCell(1, 1);
         titleRow1.value = schoolName.toUpperCase();
         titleRow1.font = fontHeader;
         titleRow1.alignment = { horizontal: 'center', vertical: 'middle' };
-        titleRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF073642' } }; 
+        titleRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
 
         ws.mergeCells(2, 1, 2, totalColumns);
         const titleRow2 = ws.getCell(2, 1);
-        titleRow2.value = `REKAPITULASI KEHADIRAN SISWA - KELAS ${classData.name}`;
-        titleRow2.font = fontBold;
+        titleRow2.value = `REKAPITULASI KEHADIRAN SISWA - ${classData.name.toUpperCase().includes('KELAS') ? classData.name.toUpperCase() : 'KELAS ' + classData.name.toUpperCase()}`;
+        titleRow2.font = fontTitle;
         titleRow2.alignment = { horizontal: 'center', vertical: 'middle' };
 
         ws.mergeCells(3, 1, 3, totalColumns);
         const titleRow3 = ws.getCell(3, 1);
         titleRow3.value = `SEMESTER: ${semesterName.toUpperCase()}`;
-        titleRow3.font = fontBold;
+        titleRow3.font = fontTitle;
         titleRow3.alignment = { horizontal: 'center', vertical: 'middle' };
 
         ws.addRow([]);
 
         const headerRow = ws.getRow(5);
-        headerRow.values = ['NO', 'NAMA SISWA', 'HADIR (H)', 'SAKIT (S)', 'IZIN (I)', 'ALPHA (A)', 'PERSENTASE (%)'];
+        headerRow.values = ['NO', 'NAMA LENGKAP', 'HADIR (H)', 'SAKIT (S)', 'IZIN (I)', 'ALPHA (A)', 'PERSENTASE (%)'];
         headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
             if (colNumber <= totalColumns) {
-                cell.font = fontBold;
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
                 cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCBD5E1' } };
+                if (colNumber <= 2) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+                else if (colNumber === 7) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0284C7' } };
+                else cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF59E0B' } };
                 cell.border = borderAll;
             }
         });
 
         ws.getColumn(1).width = 5;
-        ws.getColumn(2).width = 30;
+        ws.getColumn(2).width = 40;
         ws.getColumn(3).width = 12;
         ws.getColumn(4).width = 12;
         ws.getColumn(5).width = 12;
         ws.getColumn(6).width = 12;
         ws.getColumn(7).width = 18;
+        
+        ws.views = [ { state: 'frozen', xSplit: 2, ySplit: 5, topLeftCell: 'C6' } ];
 
         classData.students.forEach((student, index) => {
             const studentAttendance = attendanceData.filter((a) => a.student_id === student.id);
@@ -674,7 +688,7 @@ export const exportSemesterAttendanceToExcel = async (
 
             const row = ws.addRow([
                 index + 1,
-                student.name,
+                ` ${student.name}`,
                 h, s, i, a,
                 `${percentage}%`
             ]);
@@ -685,7 +699,10 @@ export const exportSemesterAttendanceToExcel = async (
                     cell.border = borderAll;
                     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
                     if (colNumber === 1 || colNumber >= 3) {
-                        cell.alignment = { horizontal: 'center' };
+                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                        if (colNumber >= 3) cell.font = { bold: true };
+                    } else {
+                        cell.alignment = { horizontal: 'left', vertical: 'middle' };
                     }
                 }
             });

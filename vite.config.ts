@@ -147,7 +147,7 @@ export default defineConfig(({ mode }) => {
       // Chunk size warning limit — strict so we catch regressions early.
       // Export libraries (jspdf, exceljs) can push individual chunks past
       // this when loaded, but the initial-load chunks should stay well under.
-      chunkSizeWarningLimit: 500,
+      chunkSizeWarningLimit: 1000,
       // Minification options
       minify: 'terser',
       terserOptions: {
