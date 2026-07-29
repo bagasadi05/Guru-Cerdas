@@ -35,7 +35,8 @@ const PwaPrompt: React.FC = () => {
     // 0. Force show prompt if URL has ?pwa=true parameter (useful for testing/preview)
     if (typeof window !== 'undefined' && window.location.search.includes('pwa=true')) {
       sessionStorage.removeItem('pwa-prompt-dismissed');
-      setIsVisible(true);
+      // Wrap in setTimeout to avoid 'setState synchronously in effect' lint rule
+      setTimeout(() => setIsVisible(true), 0);
     }
 
     // 1. Check if user dismissed prompt previously

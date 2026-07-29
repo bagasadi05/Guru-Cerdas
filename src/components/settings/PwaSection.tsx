@@ -4,7 +4,7 @@ import { Button } from '../ui/Button';
 import { SettingsCard } from './SettingsCard';
 import { triggerPwaInstall } from '../PwaPrompt';
 import { DownloadCloudIcon } from '../Icons';
-import { Smartphone, Zap, WifiOff, Bell, Share, PlusSquare, CheckCircle2 } from 'lucide-react';
+import { Smartphone, Zap, WifiOff, Bell, Share, PlusSquare } from 'lucide-react';
 
 export const PwaSection: React.FC = () => {
     return (

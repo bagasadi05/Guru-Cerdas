@@ -177,7 +177,7 @@ function buildCacheKey(prompt: string, systemInstruction?: string): string {
 /**
  * Coba ambil dari cache. Return undefined jika miss atau expired.
  */
-export function getCachedResponse<T>(prompt: string, category?: CacheCategory): T | undefined {
+export function getCachedResponse<T>(prompt: string): T | undefined {
   const key = buildCacheKey(prompt);
   const entry = responseCache.get(key);
 

@@ -3,7 +3,6 @@ import {
   pickNextGeminiKey,
   pickNextOpenRouterKey,
   getGeminiKeyCount,
-  getOpenRouterKeyCount,
   isCircuitAllowed,
   recordCircuitSuccess,
   recordCircuitFailure,
@@ -12,7 +11,6 @@ import {
   getBackoffDelay,
   isRateLimitError,
   isTransientError,
-  getRateLimitMessage,
 } from '../utils/aiConfig';
 
 // ─── Environment ──────────────────────────────────────────────────
