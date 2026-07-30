@@ -1,6 +1,6 @@
 # 🗺️ Portal Guru - Roadmap 2026
 
-**Last Updated:** January 24, 2026  
+**Last Updated:** August 2, 2026  
 **Version:** 1.0.0
 
 ## 🎯 Vision Statement
@@ -18,9 +18,9 @@ Menjadikan Portal Guru sebagai platform manajemen sekolah #1 di Indonesia dengan
 
 | Quarter | Focus Area | Status | Completion |
 |---------|-----------|--------|------------|
-| Q1 2026 | Foundation & Stability | 🟡 In Progress | 35% |
-| Q2 2026 | Mobile & Performance | 🔵 Planned | 0% |
-| Q3 2026 | AI & Collaboration | 🔵 Planned | 0% |
+| Q1 2026 | Foundation & Stability | ✅ Completed | 100% |
+| Q2 2026 | Mobile & Performance | 🟡 In Progress | 65% |
+| Q3 2026 | AI & Collaboration | 🔵 In Progress | 25% |
 | Q4 2026 | Scale & Enterprise | 🔵 Planned | 0% |
 
 ---
@@ -134,15 +134,18 @@ Menjadikan Portal Guru sebagai platform manajemen sekolah #1 di Indonesia dengan
 ### Week 5-6: Security & Stability
 
 #### ✅ Phase 1.5: Security Hardening
-- [ ] Implement rate limiting (API routes)
-- [ ] XSS protection for all user inputs
-- [ ] CSRF token implementation
-- [ ] Secure session management
-  - [ ] Refresh token rotation
-  - [ ] Session timeout with warning
-  - [ ] Multi-device session management
-- [ ] Audit log for sensitive actions
-- [ ] Security headers configuration
+- [x] Implement rate limiting (API routes)
+- [x] XSS protection for all user inputs (DOMPurify)
+- [x] CSRF token implementation
+- [x] Secure session management
+  - [x] Session timeout with warning
+  - [x] Remember-me (7 days) & default (30 min)
+  - [x] Account lockout (5 failed attempts → 15 min)
+- [x] Password complexity validation
+- [x] Audit log for sensitive actions
+- [x] Security headers configuration (CSP, HSTS, X-Frame-Options, etc.)
+- [x] Server-side API proxy with origin validation
+- [x] Rate limiting dual-layer (client localStorage + server Redis/in-memory)
 
 **Deliverables:**
 - Security audit report
@@ -352,7 +355,39 @@ Menjadikan Portal Guru sebagai platform manajemen sekolah #1 di Indonesia dengan
 **Theme:** "Smart & Connected"  
 **Goal:** AI-powered insights, real-time collaboration, teacher community
 
-### Month 1: AI Features
+### Month 1-2: Leadership & Analytics (Completed)
+
+#### ✅ Phase 3.0: Leadership Batch (f18)
+
+**Status: ✅ COMPLETED — July 2026**
+
+_Fitur peran pimpinan (kepala madrasah, waka kesiswaan, admin) untuk mengawasi
+dan menganalisis data seluruh madrasah._
+
+**Backend (RLS & Database):**
+- [x] Fungsi helper `public.is_leadership(uuid)` untuk cek role pimpinan
+- [x] RLS policy SELECT lintas-guru untuk 15+ tabel operasional
+- [x] RLS policy UPDATE/DELETE untuk `violations` oleh pimpinan
+- [x] RLS policy INSERT untuk `audit_logs` (tracking aksi sensitif)
+- [x] Audit trail dengan tabel `audit_logs`
+- [x] RLS ditambahkan ke `ai_generation_attempts` & `ref_subject_alias` (penutup celah)
+- [x] **52/52 public tables — 100% RLS aktif** (terverifikasi 2 Aug 2026)
+
+**Frontend (UI/UX):**
+- [x] `ClassComparisonTab` — perbandingan performa antar kelas (hanya untuk leadership)
+- [x] `SmartInsightsPanel` — panel wawasan cerdas untuk pimpinan
+- [x] Analytics data scoping — pimpinan lihat data sekolah-wide (bukan hanya kelas sendiri)
+- [x] Navigasi adaptif — menu & mobile nav menyesuaikan peran (`isLeadershipRole()`)
+- [x] Tab "Perbandingan Kelas" muncul otomatis untuk role pimpinan
+
+**Commit terkait:**
+- `20260626120000_leadership_read_rls.sql` — RLS SELECT
+- `20260626180000_violations_leadership_modify.sql` — RLS UPDATE/DELETE
+- `20260802000000_fix_rls_ai_generation_attempts_and_ref_subject_alias.sql` — RLS gap fix
+
+---
+
+### Month 2: AI Features
 
 #### Phase 3.1: Predictive Analytics
 - [ ] Student risk prediction model
@@ -378,7 +413,7 @@ Menjadikan Portal Guru sebagai platform manajemen sekolah #1 di Indonesia dengan
 
 ---
 
-### Month 2: Collaboration Platform
+### Month 3: Collaboration Platform
 
 #### Phase 3.3: Real-time Collaboration
 - [ ] Multi-user grade input
@@ -404,7 +439,7 @@ Menjadikan Portal Guru sebagai platform manajemen sekolah #1 di Indonesia dengan
 
 ---
 
-### Month 3: Parent Portal V2
+### Month 3-4: Parent Portal V2
 
 #### Phase 3.5: Enhanced Parent Features
 - [ ] Push notifications

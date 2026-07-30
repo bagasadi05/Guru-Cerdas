@@ -15,10 +15,10 @@ interface InsightCardData {
 }
 
 const SEV: Record<string, { ring: string; bg: string; text: string; iconText: string }> = {
-    high: { ring: 'border-red-200 dark:border-red-900/50', bg: 'bg-red-50 dark:bg-red-950/30', text: 'text-red-700 dark:text-red-300', iconText: 'text-red-500' },
-    warning: { ring: 'border-amber-200 dark:border-amber-900/50', bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-700 dark:text-amber-300', iconText: 'text-amber-500' },
-    info: { ring: 'border-blue-200 dark:border-blue-900/50', bg: 'bg-blue-50 dark:bg-blue-950/30', text: 'text-blue-700 dark:text-blue-300', iconText: 'text-blue-500' },
-    good: { ring: 'border-green-200 dark:border-green-900/50', bg: 'bg-green-50 dark:bg-green-950/30', text: 'text-green-700 dark:text-green-300', iconText: 'text-green-500' },
+    high: { ring: 'border-red-200 dark:border-red-500/20', bg: 'bg-red-50 dark:bg-red-500/10', text: 'text-red-700 dark:text-red-300', iconText: 'text-red-500' },
+    warning: { ring: 'border-amber-200 dark:border-amber-500/20', bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300', iconText: 'text-amber-500' },
+    info: { ring: 'border-blue-200 dark:border-blue-500/20', bg: 'bg-blue-50 dark:bg-blue-500/10', text: 'text-blue-700 dark:text-blue-300', iconText: 'text-blue-500' },
+    good: { ring: 'border-green-200 dark:border-green-500/20', bg: 'bg-green-50 dark:bg-green-500/10', text: 'text-green-700 dark:text-green-300', iconText: 'text-green-500' },
 };
 
 const SmartInsightsPanel: React.FC = () => {

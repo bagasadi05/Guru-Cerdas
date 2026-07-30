@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StudentRow, AttendanceRecord, AttendanceStatus } from '../../types';
 import { statusOptions } from '../../constants';
 import { InfoIcon, PencilIcon, Share2Icon } from '../Icons';
+import { CheckSquare, Square } from 'lucide-react';
 import { createWhatsAppLink, generateAttendanceMessage } from '../../utils/whatsappUtils';
 import { getStudentAvatar } from '../../utils/avatarUtils';
 
@@ -9,38 +10,88 @@ interface AttendanceListProps {
     students: StudentRow[];
     attendanceRecords: Record<string, AttendanceRecord>;
     selectedDate: string;
+    selectedStudents: Set<string>;
     onStatusChange: (studentId: string, status: AttendanceStatus) => void;
     onNoteClick: (studentId: string, currentNote: string) => void;
+    onToggleSelect: (studentId: string) => void;
+    onSelectAll: () => void;
     highlightedStudentId?: string | null;
 }
 
-export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attendanceRecords, selectedDate, onStatusChange, onNoteClick, highlightedStudentId }) => {
+export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attendanceRecords, selectedDate, selectedStudents, onStatusChange, onNoteClick, onToggleSelect, onSelectAll, highlightedStudentId }) => {
     const formattedDate = new Date(`${selectedDate}T00:00:00`).toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
     });
 
+    const allSelected = useMemo(() => {
+        return students.length > 0 && students.every(s => selectedStudents.has(s.id));
+    }, [students, selectedStudents]);
+
     return (
         <div className="space-y-2 lg:space-y-3">
+            {/* Select All Header */}
+            <div className="flex items-center justify-between px-1 pb-1">
+                <button type="button"
+                    onClick={onSelectAll}
+                    className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                >
+                    {allSelected ? (
+                        <CheckSquare className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                        <Square className="w-4 h-4" />
+                    )}
+                    {allSelected ? 'Batal Pilih Semua' : `Pilih Semua (${students.length})`}
+                </button>
+                {selectedStudents.size > 0 && (
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-full border border-emerald-200/50 dark:border-emerald-800">
+                        {selectedStudents.size} terpilih
+                    </span>
+                )}
+            </div>
+
             {students.map((student, index) => {
                 const record = attendanceRecords[student.id];
+                const isSelected = selectedStudents.has(student.id);
 
                 return (
                     <div
                         key={student.id}
                         id={`student-${student.id}`}
                         className={`
-                            attendance-student-card group flex flex-col p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900/60 sm:backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)]
+                            attendance-student-card group flex flex-col p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900/60 sm:backdrop-blur-xl border shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)]
                             sm:hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] sm:hover:border-emerald-500/20 dark:sm:hover:border-emerald-500/30 sm:hover:-translate-y-0.5
                             transition-colors sm:transition-all duration-200 card-interactive
                             ${highlightedStudentId === student.id ? 'ring-2 ring-emerald-500' : ''}
+                            ${isSelected
+                                ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/10'
+                                : 'border-slate-200/80 dark:border-white/10'
+                            }
                         `}
                         style={{ contentVisibility: 'auto', containIntrinsicSize: '220px' }}
                     >
                         {/* 1. Student Info (Top Row) */}
-                        <div className="flex items-center gap-4 min-w-0">
-                            <span className="hidden lg:block text-slate-300 dark:text-slate-600 font-bold font-mono w-8 text-right flex-shrink-0 text-sm">{index + 1}</span>
+                        <div className="flex items-center gap-3 min-w-0">
+                            {/* Checkbox */}
+                            <button type="button"
+                                onClick={() => onToggleSelect(student.id)}
+                                className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center transition-all
+                                    ${isSelected
+                                        ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600'
+                                    }
+                                `}
+                                aria-label={isSelected ? `Batalkan pilihan ${student.name}` : `Pilih ${student.name}`}
+                            >
+                                {isSelected ? (
+                                    <CheckSquare className="w-4 h-4" />
+                                ) : (
+                                    <Square className="w-3.5 h-3.5" />
+                                )}
+                            </button>
+
+                            <span className="hidden lg:block text-slate-300 dark:text-slate-600 font-bold font-mono w-6 text-right flex-shrink-0 text-sm">{index + 1}</span>
                             <div className="relative">
                                 <img
                                     src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name)}

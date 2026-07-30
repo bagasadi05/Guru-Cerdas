@@ -16,6 +16,7 @@ import { Skeleton } from '../ui/Skeleton';
 interface TodayActionPanelProps {
     data: DashboardQueryData | null | undefined;
     isLoading?: boolean;
+    isCombined?: boolean;
 }
 
 type ActionTone = 'danger' | 'warning' | 'info' | 'success';
@@ -65,7 +66,7 @@ const getLatestGradeDrops = (data: DashboardQueryData) => {
         .sort((a, b) => b.drop - a.drop);
 };
 
-export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoading }) => {
+export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoading, isCombined }) => {
     const navigate = useNavigate();
     const { t } = useI18n();
     
@@ -153,7 +154,7 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
 
     if (isLoading) {
         return (
-            <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+            <div className={isCombined ? "" : "overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900"}>
                 <div className="p-5 border-b border-slate-200/70 dark:border-slate-700/60">
                     <Skeleton className="h-4 w-24 mb-3" />
                     <Skeleton className="h-6 w-48 mb-1" />
@@ -168,15 +169,13 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
                         </div>
                     ))}
                 </div>
-            </section>
+            </div>
         );
     }
 
     return (
-        <section className={`overflow-hidden rounded-3xl border bg-white shadow-sm dark:bg-slate-900 ${
-            'border-slate-200/70 dark:border-slate-700/60'
-        }`}>
-            <div className="flex flex-col gap-3 border-b border-slate-200/70 bg-[linear-gradient(135deg,#ecfdf5_0%,#ffffff_55%,#f8fafc_100%)] p-5 dark:border-slate-700/60 dark:bg-[linear-gradient(135deg,rgba(6,78,59,0.3)_0%,rgba(15,23,42,0.9)_100%)] sm:flex-row sm:items-center sm:justify-between">
+        <div className={isCombined ? "" : "overflow-hidden rounded-3xl border bg-white shadow-sm dark:bg-slate-900 border-slate-200/70 dark:border-slate-700/60"}>
+            <div className={`flex flex-col gap-3 border-b border-slate-200/70 bg-[linear-gradient(135deg,#ecfdf5_0%,#ffffff_55%,#f8fafc_100%)] p-5 dark:border-slate-700/60 dark:bg-[linear-gradient(135deg,rgba(6,78,59,0.3)_0%,rgba(15,23,42,0.9)_100%)] sm:flex-row sm:items-center sm:justify-between`}>
                 <div>
                     <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200">
                         <BellIcon className="h-3.5 w-3.5" />
@@ -211,7 +210,7 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
                     </button>
                 ))}
             </div>
-        </section>
+        </div>
     );
 };
 

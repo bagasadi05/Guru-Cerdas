@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useDeferredValue, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, wasLastResponseQueued } from '../../services/supabase';
-import { generateOpenRouterJson } from '../../services/openRouterService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
@@ -10,13 +9,13 @@ import { useUserSettings } from '../../hooks/useUserSettings';
 import { useSemester } from '../../contexts/SemesterContext';
 import { queryKeys } from '../../lib/queryKeys';
 import { type TeacherClassAssignmentRow } from '../../services/teacherAssignments';
-import { AttendanceRecord, AttendanceStatus, AttendanceInsert, AiAnalysis, StudentRow, ClassRow, AttendanceRow } from '../../types';
+import { AttendanceRecord, AttendanceStatus, AttendanceInsert, StudentRow, ClassRow, AttendanceRow } from '../../types';
 import { statusOptions } from '../../constants';
-import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
-import { exportAttendanceToExcel, exportSemesterAttendanceToExcel } from '../../utils/exportUtils';
-import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../utils/confetti';
 import { type AttendanceViewMode } from './attendanceMenuConfig';
+import { useAttendanceStreaks } from './useAttendanceStreaks';
+import { useAttendanceAI } from './useAttendanceAI';
+import { useAttendanceExport } from './useAttendanceExport';
 
 export const useAttendance = () => {
     const { user, isAdmin } = useAuth();
@@ -70,26 +69,10 @@ export const useAttendance = () => {
     const deferredSearchQuery = useDeferredValue(searchQuery);
     const [viewMode, setViewMode] = useState<AttendanceViewMode>('list');
 
-    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-    const [exportMonth, setExportMonth] = useState(new Date().toISOString().slice(0, 7));
-    const [selectedExportClasses, setSelectedExportClasses] = useState<string[]>([]);
-    const [exportPeriod, setExportPeriod] = useState<'monthly' | 'semester'>('monthly');
-    const [exportSemesterId, setExportSemesterId] = useState<string | null>(null);
-    const [isExporting, setIsExporting] = useState(false);
-
-    useEffect(() => {
-        if (activeSemester && !exportSemesterId) {
-            setExportSemesterId(activeSemester.id);
-        }
-    }, [activeSemester, exportSemesterId]);
-
     useEffect(() => {
         setCalendarMonth(selectedDate.slice(0, 7));
     }, [selectedDate]);
 
-    const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-    const [aiAnalysisResult, setAiAnalysisResult] = useState<AiAnalysis | null>(null);
-    const [isAiLoading, setIsAiLoading] = useState(false);
     const [isResetModalOpen, setIsResetModalOpen] = useState(false);
     const [isSaveConfirmOpen, setIsSaveConfirmOpen] = useState(false);
 
@@ -206,17 +189,7 @@ export const useAttendance = () => {
         initialSyncRef.current = true;
         if (!localDirtyRef.current) {
             const records = existingAttendance || {};
-            if (Object.keys(records).length === 0 && students && students.length > 0) {
-                // Option 2: Auto-Hadir (Asumsi Positif)
-                const autoFilled: Record<string, AttendanceRecord> = {};
-                students.forEach(student => {
-                    autoFilled[student.id] = { id: undefined, status: AttendanceStatus.Hadir, note: '' };
-                });
-                setAttendanceRecords(autoFilled);
-                localDirtyRef.current = true; // Mark as dirty so the Save button becomes active
-            } else {
-                setAttendanceRecords(records);
-            }
+            setAttendanceRecords(records);
         }
     }, [existingAttendance, hasLoadedAttendance, students]);
 
@@ -384,6 +357,22 @@ export const useAttendance = () => {
         });
     }, [calendarAttendance]);
 
+    const isHomeroom = useMemo(() => {
+        if (!selectedClass || teacherAssignments.length === 0) return false;
+        return teacherAssignments.some(a => a.class_id === selectedClass && a.assignment_role === 'homeroom');
+    }, [selectedClass, teacherAssignments]);
+
+    // === Sub-hooks ===
+    const {
+        attendanceStreaks,
+        attendanceHistory,
+    } = useAttendanceStreaks(user, students, selectedDate, selectedSemester, selectedClass);
+
+    const aiApi = useAttendanceAI(selectedClass, students, attendanceHistory);
+
+    // Export hook needs attendanceClasses, so we call it after it's defined
+    const exportApi = useAttendanceExport(user, attendanceClasses, semesters, activeSemester);
+
     const handleSaveNote = () => {
         if (selectedStudents.size === 0) return;
         if (isSaving) {
@@ -439,111 +428,6 @@ export const useAttendance = () => {
         // Trigger save directly
         performSave();
     };
-
-    const streakRange = useMemo(() => {
-        if (selectedSemester) {
-            return { start: selectedSemester.start_date, end: selectedSemester.end_date };
-        }
-        const end = selectedDate;
-        const startDate = new Date(`${selectedDate}T00:00:00`);
-        startDate.setDate(startDate.getDate() - 30);
-        const start = startDate.toISOString().split('T')[0];
-        return { start, end };
-    }, [selectedDate, selectedSemester]);
-
-    const { data: attendanceHistory = [] } = useQuery({
-        queryKey: ['attendanceHistory', user?.id, selectedClass, streakRange.start, streakRange.end],
-        queryFn: async () => {
-            if (!user || !students || students.length === 0) return [];
-            const { data, error } = await supabase
-                .from('attendance')
-                .select('student_id, date, status')
-                .gte('date', streakRange.start)
-                .lte('date', streakRange.end)
-                .in('student_id', students.map(student => student.id))
-                .is('deleted_at', null);
-            if (error) throw error;
-            return (data || []) as unknown as AttendanceRow[];
-        },
-        enabled: !!user && !!students && students.length > 0,
-    });
-
-    // Calculate attendance streaks with real historical data
-    const attendanceStreaks = useMemo(() => {
-        if (!students || students.length === 0 || attendanceHistory.length === 0) return [];
-
-        const recordsByStudent = new Map<string, AttendanceRow[]>();
-        attendanceHistory.forEach((record: AttendanceRow) => {
-            const list = recordsByStudent.get(record.student_id) || [];
-            list.push(record);
-            recordsByStudent.set(record.student_id, list);
-        });
-
-        const parseDate = (dateStr: string) => new Date(`${dateStr}T00:00:00`);
-        const dateKey = (date: Date) => date.toISOString().split('T')[0];
-
-        return students
-            .map((student) => {
-                const records = recordsByStudent.get(student.id) || [];
-                if (records.length === 0) return null;
-
-                records.sort((a, b) => a.date.localeCompare(b.date));
-
-                const total = records.length;
-                const presentCount = records.filter(record => record.status === AttendanceStatus.Hadir).length;
-                const attendanceRate = total > 0 ? (presentCount / total) * 100 : 0;
-
-                let longestStreak = 0;
-                let currentRun = 0;
-                let prevDate: Date | null = null;
-                let prevWasPresent = false;
-
-                records.forEach((record) => {
-                    const currentDate = parseDate(record.date);
-                    const isPresent = record.status === AttendanceStatus.Hadir;
-                    const isConsecutive = prevDate
-                        ? (currentDate.getTime() - prevDate.getTime()) / 86400000 === 1
-                        : false;
-
-                    if (isPresent) {
-                        if (prevWasPresent && isConsecutive) {
-                            currentRun += 1;
-                        } else {
-                            currentRun = 1;
-                        }
-                        longestStreak = Math.max(longestStreak, currentRun);
-                    } else {
-                        currentRun = 0;
-                    }
-
-                    prevDate = currentDate;
-                    prevWasPresent = isPresent;
-                });
-
-                const statusByDate = new Map<string, AttendanceStatus>();
-                records.forEach((record) => {
-                    statusByDate.set(record.date, record.status as AttendanceStatus);
-                });
-
-                let currentStreak = 0;
-                const cursor = parseDate(selectedDate);
-                while (true) {
-                    const status = statusByDate.get(dateKey(cursor));
-                    if (status !== AttendanceStatus.Hadir) break;
-                    currentStreak += 1;
-                    cursor.setDate(cursor.getDate() - 1);
-                }
-
-                return {
-                    studentId: student.id,
-                    studentName: student.name,
-                    currentStreak,
-                    longestStreak,
-                    attendanceRate,
-                };
-            })
-            .filter((streak): streak is NonNullable<typeof streak> => Boolean(streak));
-    }, [attendanceHistory, selectedDate, students]);
 
     // Handle template application
     const handleApplyTemplate = (template: { defaultStatus: AttendanceStatus, applyToAll: boolean }) => {
@@ -681,320 +565,8 @@ export const useAttendance = () => {
         performSave();
     };
 
-    const fetchAttendanceDataForExport = async () => {
-        if (!user) return null;
-        let startDate, endDate;
-
-        if (exportPeriod === 'monthly') {
-            const [year, monthNum] = exportMonth.split('-').map(Number);
-            startDate = `${year}-${String(monthNum).padStart(2, '0')}-01`;
-            endDate = `${year}-${String(monthNum).padStart(2, '0')}-${String(new Date(year, monthNum, 0).getDate()).padStart(2, '0')}`;
-        } else {
-            const semester = semesters.find(s => s.id === exportSemesterId);
-            if (!semester) throw new Error('Semester tidak valid');
-            startDate = semester.start_date;
-            endDate = semester.end_date;
-        }
-
-        const exportClasses = selectedExportClasses.length === 0
-            ? attendanceClasses
-            : attendanceClasses.filter((classRow) => selectedExportClasses.includes(classRow.id));
-
-        if (exportClasses.length === 0) {
-            return { students: [], attendance: [], classes: [] };
-        }
-
-        const classIds = exportClasses.map((classRow) => classRow.id);
-
-        const [studentsRes, attendanceRes] = await Promise.all([
-            supabase
-                .from('students')
-                .select('id, name, class_id, user_id')
-                .in('class_id', classIds)
-                .is('deleted_at', null)
-                .range(0, 1999),
-            supabase
-                .from('attendance')
-                .select('student_id, date, status')
-                .gte('date', startDate)
-                .lte('date', endDate)
-                .is('deleted_at', null)
-                .range(0, 9999),
-        ]);
-
-        if (studentsRes.error || attendanceRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
-
-        const classRows = exportClasses;
-        const studentRows = (studentsRes.data || []) as unknown as StudentRow[];
-        const attendanceRows = (attendanceRes.data || []) as unknown as AttendanceRow[];
-        const classMap = new Map(classRows.map(c => [c.id, { name: c.name }]));
-        const studentsWithClasses = studentRows.map((s: StudentRow) => ({
-            ...s,
-            classes: s.class_id ? (classMap.get(s.class_id) || null) : null
-        }));
-
-        return { students: studentsWithClasses, attendance: attendanceRows, classes: classRows };
-    };
-
     const handleExport = async (format: 'pdf' | 'excel') => {
-        setIsExporting(true);
-        toast.info(`Membuat laporan ${format.toUpperCase()}...`);
-        try {
-            const data = await fetchAttendanceDataForExport();
-            if (!data || !data.students || data.students.length === 0) {
-                toast.warning("Tidak ada data untuk periode yang dipilih.");
-                return;
-            }
-
-            const { students, attendance, classes } = data;
-
-            let exportTitle = '';
-            if (exportPeriod === 'monthly') {
-                const [year, monthNum] = exportMonth.split('-').map(Number);
-                const monthName = new Date(year, monthNum - 1).toLocaleString('id-ID', { month: 'long' });
-                exportTitle = `Absensi ${monthName} ${year}`;
-            } else {
-                const semester = semesters.find(s => s.id === exportSemesterId);
-                exportTitle = `Absensi Semester ${semester?.semester_number === 1 ? 'Ganjil' : 'Genap'} ${semester?.academic_years?.name || ''}`;
-            }
-
-            let studentsByClass = classes.map((c: ClassRow) => ({
-                ...c,
-                students: students.filter((s: StudentRow) => s.class_id === c.id).sort((a: StudentRow, b: StudentRow) => a.name.localeCompare(b.name))
-            })).filter((c) => c.students.length > 0);
-
-            if (selectedExportClasses.length > 0) {
-                studentsByClass = studentsByClass.filter((c: ClassRow) => selectedExportClasses.includes(c.id));
-            }
-
-            if (exportPeriod === 'monthly' && format === 'pdf') {
-                await ensureLogosLoaded();
-                const [year, monthNum] = exportMonth.split('-').map(Number);
-                const daysInMonth = new Date(year, monthNum, 0).getDate();
-                const _monthName = new Date(year, monthNum - 1).toLocaleString('id-ID', { month: 'long' });
-
-                const { default: jsPDF } = await getJsPDF();
-                const { default: autoTable } = await getAutoTable();
-                const doc = new jsPDF({ orientation: 'landscape' });
-                const pageHeight = doc.internal.pageSize.getHeight();
-                const pageWidth = doc.internal.pageSize.getWidth();
-                let isFirstClass = true;
-
-                for (const classData of studentsByClass) {
-                    if (!isFirstClass) doc.addPage('landscape');
-                    isFirstClass = false;
-
-                    const titleText = `REKAPITULASI KEHADIRAN SISWA - KELAS ${classData.name.toUpperCase()}`;
-                    const subText = `${exportTitle.toUpperCase()} • KKM: ${schoolName || '-'}`;
-                    const headerY = addPdfHeader(doc, { schoolName, orientation: 'landscape' });
-                    const pageWidthHeader = doc.internal.pageSize.getWidth();
-                    doc.setFontSize(12);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text(titleText, pageWidthHeader / 2, headerY, { align: 'center' });
-                    doc.setFontSize(9);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(subText, pageWidthHeader / 2, headerY + 5, { align: 'center' });
-
-                    const attendanceMap = new Map<string, Map<string, AttendanceStatus>>();
-                    attendance.forEach((r: AttendanceRow) => {
-                        const stdMap = attendanceMap.get(r.student_id) || new Map<string, AttendanceStatus>();
-                        stdMap.set(r.date, r.status as AttendanceStatus);
-                        attendanceMap.set(r.student_id, stdMap);
-                    });
-
-                    const headers = ['No', 'Nama Siswa'];
-                    for (let day = 1; day <= daysInMonth; day++) {
-                        headers.push(String(day));
-                    }
-                    headers.push('H', 'S', 'I', 'A');
-
-                    const rows = classData.students.map((student: StudentRow, index: number) => {
-                        const stdMap = attendanceMap.get(student.id);
-                        const rowData: string[] = [String(index + 1), student.name];
-                        let h = 0, s = 0, izin = 0, a = 0;
-
-                        for (let day = 1; day <= daysInMonth; day++) {
-                            const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                            const status = stdMap?.get(dateStr);
-                            if (status === 'Hadir') {
-                                rowData.push('✓');
-                                h++;
-                            } else if (status === 'Sakit') {
-                                rowData.push('S');
-                                s++;
-                            } else if (status === 'Izin') {
-                                rowData.push('I');
-                                izin++;
-                            } else if (status === 'Alpha') {
-                                rowData.push('A');
-                                a++;
-                            } else {
-                                rowData.push('-');
-                            }
-                        }
-
-                        rowData.push(String(h), String(s), String(izin), String(a));
-                        return rowData;
-                    });
-
-                    autoTable(doc, {
-                        head: [headers],
-                        body: rows,
-                        startY: 38,
-                        styles: { fontSize: 7, cellPadding: 1, halign: 'center' },
-                        columnStyles: { 1: { halign: 'left', fontStyle: 'bold' } },
-                        headStyles: { fillColor: [79, 70, 229] },
-                        didDrawPage: (_data) => {
-                            doc.setFontSize(8);
-                            doc.setTextColor(100);
-                            doc.text(`Dicetak dari ${schoolName} pada ${new Date().toLocaleDateString('id-ID')}`, 14, pageHeight - 10);
-                            doc.text(`Halaman ${doc.internal.pages.length - 1}`, pageWidth - 25, pageHeight - 10);
-                        }
-                    });
-                }
-
-                doc.save(`Laporan_Absensi_Bulanan_${exportMonth}.pdf`);
-                toast.success("Laporan PDF berhasil diunduh!");
-            } else if (exportPeriod === 'semester' && format === 'pdf') {
-                await ensureLogosLoaded();
-                const { default: jsPDF } = await getJsPDF();
-                const { default: autoTable } = await getAutoTable();
-                const doc = new jsPDF();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                const pageWidth = doc.internal.pageSize.getWidth();
-                let isFirstClass = true;
-
-                for (const classData of studentsByClass) {
-                    if (!isFirstClass) doc.addPage();
-                    isFirstClass = false;
-
-                    const titleText = `RINGKASAN ABSENSI SEMESTER - KELAS ${classData.name.toUpperCase()}`;
-                    const subText = `${exportTitle.toUpperCase()} • ${schoolName || '-'}`;
-                    const headerY = addPdfHeader(doc, { schoolName, orientation: 'portrait' });
-                    const pageWidthHeader2 = doc.internal.pageSize.getWidth();
-                    doc.setFontSize(12);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text(titleText, pageWidthHeader2 / 2, headerY, { align: 'center' });
-                    doc.setFontSize(9);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(subText, pageWidthHeader2 / 2, headerY + 5, { align: 'center' });
-
-                    const attendanceMap = new Map<string, { h: number, s: number, i: number, a: number }>();
-                    attendance.forEach((r: AttendanceRow) => {
-                        const current = attendanceMap.get(r.student_id) || { h: 0, s: 0, i: 0, a: 0 };
-                        if (r.status === 'Hadir') current.h++;
-                        else if (r.status === 'Sakit') current.s++;
-                        else if (r.status === 'Izin') current.i++;
-                        else if (r.status === 'Alpha') current.a++;
-                        attendanceMap.set(r.student_id, current);
-                    });
-
-                    const headers = ['No', 'Nama Siswa', 'Hadir (H)', 'Sakit (S)', 'Izin (I)', 'Alpha (A)', 'Persentase'];
-                    const rows = classData.students.map((student: StudentRow, index: number) => {
-                        const counts = attendanceMap.get(student.id) || { h: 0, s: 0, i: 0, a: 0 };
-                        const totalDays = counts.h + counts.s + counts.i + counts.a;
-                        const percent = totalDays > 0 ? `${Math.round((counts.h / totalDays) * 100)}%` : '100%';
-
-                        return [
-                            String(index + 1),
-                            student.name,
-                            String(counts.h),
-                            String(counts.s),
-                            String(counts.i),
-                            String(counts.a),
-                            percent
-                        ];
-                    });
-
-                    autoTable(doc, {
-                        head: [headers],
-                        body: rows,
-                        startY: 38,
-                        styles: { fontSize: 9, cellPadding: 2, halign: 'center' },
-                        columnStyles: { 1: { halign: 'left', fontStyle: 'bold' } },
-                        headStyles: { fillColor: [79, 70, 229] },
-                        didDrawPage: (_data) => {
-                            doc.setFontSize(8);
-                            doc.setTextColor(100);
-                            doc.text(`Dicetak dari ${schoolName} pada ${new Date().toLocaleDateString('id-ID')}`, 14, pageHeight - 10);
-                            doc.text(`Halaman ${doc.internal.pages.length - 1}`, pageWidth - 25, pageHeight - 10);
-                        }
-                    });
-                }
-
-                doc.save(`Laporan_Absensi_Semester_${exportSemesterId}.pdf`);
-                toast.success("Laporan PDF berhasil diunduh!");
-            } else if (format === 'excel') {
-                if (exportPeriod === 'monthly') {
-                    const year = parseInt(exportMonth.slice(0, 4), 10);
-                    const monthNum = parseInt(exportMonth.slice(5, 7), 10);
-                    const daysInMonth = new Date(year, monthNum, 0).getDate();
-                    const monthName = new Date(year, monthNum - 1).toLocaleString('id-ID', { month: 'long' });
-                    
-                    await exportAttendanceToExcel(
-                        studentsByClass,
-                        attendance,
-                        monthName,
-                        year,
-                        monthNum,
-                        daysInMonth,
-                        `Laporan_Absensi_Bulanan_${exportMonth}`,
-                        schoolName || 'MI AL IRSYAD KOTA MADIUN'
-                    );
-                } else {
-                    await exportSemesterAttendanceToExcel(
-                        studentsByClass,
-                        attendance,
-                        exportTitle,
-                        `Laporan_Absensi_Semester_${exportSemesterId}`,
-                        schoolName || 'MI AL IRSYAD KOTA MADIUN'
-                    );
-                }
-                toast.success("Laporan Excel berhasil diunduh!");
-            }
-        } catch (err: unknown) {
-            toast.error(`Gagal mengekspor laporan: ${err instanceof Error ? err.message : String(err)}`);
-        } finally {
-            setIsExporting(false);
-            setIsExportOpen(false);
-        }
-    };
-
-    const setIsExportOpen = (open: boolean) => {
-        setIsExportModalOpen(open);
-    };
-
-    const handleAnalyzeAttendance = async () => {
-        if (!selectedClass || !students || students.length === 0) return;
-        setIsAiLoading(true);
-        setIsAiModalOpen(true);
-        setAiAnalysisResult(null);
-
-        try {
-            const historyText = attendanceHistory
-                .map((r: AttendanceRow) => `${r.date}: Student ID ${r.student_id} is ${r.status}`)
-                .join('\n');
-
-            const prompt = `Lakukan analisis data kehadiran historis untuk Kelas ${selectedClass} berikut:
-Daftar Siswa: ${students.map(s => `ID: ${s.id}, Nama: ${s.name}`).join('; ')}
-Data Riwayat Absensi:
-${historyText || 'Tidak ada riwayat absensi.'}
-
-Berikan analisis dalam format JSON murni yang sesuai dengan schema TypeScript:
-{
-  "perfect_attendance": ["nama siswa yang hadir sempurna"],
-  "frequent_absentees": [{"student_name": "nama", "absent_days": jumlah_hari}],
-  "pattern_warnings": [{"pattern_description": "deskripsi pola", "implicated_students": ["nama siswa"]}]
-}`;
-
-            const jsonData = await generateOpenRouterJson<AiAnalysis>(prompt);
-            setAiAnalysisResult(jsonData);
-        } catch (err: unknown) {
-            toast.error("Gagal menganalisis data. Coba lagi dalam beberapa saat.");
-            console.error(err);
-        } finally {
-            setIsAiLoading(false);
-        }
+        await exportApi.handleExport(format, schoolName);
     };
 
     return {
@@ -1024,21 +596,8 @@ Berikan analisis dalam format JSON murni yang sesuai dengan schema TypeScript:
         setSearchQuery,
         viewMode,
         setViewMode,
-        isExportModalOpen,
-        setIsExportModalOpen,
-        exportMonth,
-        setExportMonth,
-        selectedExportClasses,
-        setSelectedExportClasses,
-        exportPeriod,
-        setExportPeriod,
-        exportSemesterId,
-        setExportSemesterId,
-        isExporting,
-        isAiModalOpen,
-        setIsAiModalOpen,
-        aiAnalysisResult,
-        isAiLoading,
+        ...exportApi,
+        ...aiApi,
         isResetModalOpen,
         setIsResetModalOpen,
         classes,
@@ -1070,8 +629,8 @@ Berikan analisis dalam format JSON murni yang sesuai dengan schema TypeScript:
         isSaveConfirmOpen,
         setIsSaveConfirmOpen,
         handleExport,
-        handleAnalyzeAttendance,
         isOnline,
+        isHomeroom,
     };
 };
 export default useAttendance;

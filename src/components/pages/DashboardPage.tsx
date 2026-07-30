@@ -44,8 +44,8 @@ import {
   LazyClassAnalyticsSection,
   LazyActivityFeedWidget,
   LazyParentMessagesWidget,
-  LazySchoolAttendanceWidget,
-  LazySchoolViolationsWidget,
+  LazySchoolStatsGrid,
+  LazySmartInsightsPanel,
   LazyWallOfFameWidget,
 } from '../dashboard/LazyWidgets';
 import { transformToGameData } from '../../services/gamificationService';
@@ -187,7 +187,7 @@ const DashboardPage: React.FC = () => {
       />
 
       {data && data.students.length > 0 && Math.max(data.students.length - (data.dailyAttendanceSummary?.total || 0), 0) > 0 && (
-        <div className="p-5 rounded-3xl bg-rose-50/90 dark:bg-rose-950/20 backdrop-blur-xl border border-rose-200/80 dark:border-rose-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_8px_30px_rgb(243,24,96,0.06)] animate-fade-in transition-all hover:shadow-[0_8px_30px_rgb(243,24,96,0.12)]">
+        <div className="p-5 rounded-3xl bg-rose-50/90 dark:bg-rose-500/10 backdrop-blur-xl border border-rose-200/80 dark:border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_8px_30px_rgb(243,24,96,0.06)] animate-fade-in transition-all hover:shadow-[0_8px_30px_rgb(243,24,96,0.12)]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center shrink-0">
               <AlertTriangleIcon className="w-5 h-5 text-rose-600 dark:text-rose-400" />
@@ -204,7 +204,7 @@ const DashboardPage: React.FC = () => {
           <Button
             onClick={() => navigate('/absensi')}
             size="sm"
-            className="w-full sm:w-auto shrink-0 bg-rose-600 hover:bg-rose-700 text-white rounded-xl"
+            className="w-full sm:w-auto shrink-0 !bg-rose-600 hover:!bg-rose-700 text-white rounded-xl"
           >
             Isi Sekarang
           </Button>
@@ -212,7 +212,7 @@ const DashboardPage: React.FC = () => {
       )}
 
       {journalStatus && journalStatus.unfilled > 0 && (
-        <div className="p-5 rounded-3xl bg-amber-50/90 dark:bg-amber-950/20 backdrop-blur-xl border border-amber-200/80 dark:border-amber-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_8px_30px_rgb(245,158,11,0.06)] animate-fade-in transition-all hover:shadow-[0_8px_30px_rgb(245,158,11,0.12)]">
+        <div className="p-5 rounded-3xl bg-amber-50/90 dark:bg-amber-500/10 backdrop-blur-xl border border-amber-200/80 dark:border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_8px_30px_rgb(245,158,11,0.06)] animate-fade-in transition-all hover:shadow-[0_8px_30px_rgb(245,158,11,0.12)]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
               <BookOpenIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
@@ -229,7 +229,7 @@ const DashboardPage: React.FC = () => {
           <Button
             onClick={() => navigate('/jurnal')}
             size="sm"
-            className="w-full sm:w-auto shrink-0 bg-amber-600 hover:bg-amber-700 text-white rounded-xl"
+            className="w-full sm:w-auto shrink-0 !bg-amber-600 hover:!bg-amber-700 text-white rounded-xl"
           >
             Isi Sekarang
           </Button>
@@ -239,24 +239,37 @@ const DashboardPage: React.FC = () => {
       <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6">
         {/* Left Column Part 1 */}
         <div className={`space-y-3 sm:space-y-4 order-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9 lg:col-start-1' : 'lg:col-span-12'}`}>
-          {/* Stats Section */}
-          <section data-tutorial="dashboard-stats">{data && <StatsGrid data={data} currentTime={currentTime} />}</section>
-
-          {isGlobalRole && (
-            <section className="space-y-6 mt-6">
-              <SectionHeading>Analitik Tingkat Sekolah</SectionHeading>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Suspense fallback={<CardSkeleton />}>
-                  <LazySchoolAttendanceWidget />
-                </Suspense>
-                <Suspense fallback={<CardSkeleton />}>
-                  <LazySchoolViolationsWidget />
-                </Suspense>
-              </div>
+          {/* School-Wide Stats (Leadership) */}
+          {isGlobalRole ? (
+            <section className="mb-2">
+              <Suspense fallback={<CardSkeleton />}>
+                <LazySchoolStatsGrid />
+              </Suspense>
+            </section>
+          ) : (
+            <section data-tutorial="dashboard-stats">
+              {data && <StatsGrid data={data} currentTime={currentTime} />}
             </section>
           )}
 
-          <TodayActionPanel data={data} isLoading={isLoading} />
+          {/* Combined Wawasan & Action Panel */}
+          {isGlobalRole ? (
+            <section className="space-y-4 mt-6">
+              <SectionHeading>Wawasan & Tindakan Prioritas</SectionHeading>
+              <div className="overflow-hidden rounded-3xl border border-slate-200/70 dark:border-slate-700/60 bg-white dark:bg-slate-900 shadow-sm flex flex-col">
+                <div className="p-5 border-b border-slate-200/70 dark:border-slate-700/60 bg-slate-50/30 dark:bg-slate-800/10 [&>div]:mb-0">
+                  <Suspense fallback={<CardSkeleton />}>
+                    <LazySmartInsightsPanel />
+                  </Suspense>
+                </div>
+                <div className="flex-1">
+                  <TodayActionPanel data={data} isLoading={isLoading} isCombined={true} />
+                </div>
+              </div>
+            </section>
+          ) : (
+            <TodayActionPanel data={data} isLoading={isLoading} />
+          )}
           {/* Operational Section */}
           <section className="space-y-4">
             {/* AI Insight Widget */}
@@ -333,7 +346,7 @@ const DashboardPage: React.FC = () => {
           )}
 
           {/* Summary Alerts Grid */}
-          {data && (
+          {data && !isGlobalRole && (
             <section className="space-y-4">
               <SectionHeading animate>Informasi & Tindakan Prioritas</SectionHeading>
               <DashboardSummaryCards data={data} />

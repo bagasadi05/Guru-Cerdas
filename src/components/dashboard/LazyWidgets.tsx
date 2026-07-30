@@ -82,3 +82,21 @@ export const LazyWallOfFameWidget = lazy(() =>
     default: module.WallOfFameWidget,
   }))
 );
+
+/**
+ * Lazy-loaded Smart Insights Panel.
+ * Only leadership roles render this on the dashboard (school-wide analytics).
+ */
+export const LazySmartInsightsPanel = lazy(() =>
+  import('../pages/analytics/SmartInsightsPanel')
+);
+
+/**
+ * Lazy-loaded School Stats Grid.
+ * Leadership-only widget showing school-wide metrics (students, classes,
+ * teachers, attendance). Replaces the teacher-centric StatsGrid for
+ * kepala_madrasah / waka_kesiswaan / admin.
+ */
+export const LazySchoolStatsGrid = lazy(() =>
+  import('./SchoolStatsGrid')
+);

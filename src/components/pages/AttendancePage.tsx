@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState } from 'react';
+import React, { lazy, Suspense, useState, useCallback } from 'react';
 import { AttendancePageSkeleton } from '../skeletons/PageSkeletons';
 import { SemesterSelector } from '../ui/SemesterSelector';
 import {
@@ -9,8 +9,10 @@ import {
     InfoIcon,
     UsersIcon,
     RotateCcw,
-    AlertTriangle
+    AlertTriangle,
+    XIcon
 } from 'lucide-react';
+import { statusOptions } from '../../constants';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
@@ -29,6 +31,7 @@ import { AttendanceQuickActionsBar } from '../attendance/AttendanceQuickActionsB
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
 import { AttendanceStreakIndicator } from '../attendance/AttendanceStreakIndicator';
+import { AttendanceOfficialPanel } from '../attendance/AttendanceOfficialPanel';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { BarChart3 } from 'lucide-react';
 
@@ -45,6 +48,7 @@ const AttendancePage: React.FC = () => {
         setSelectedDate,
         setCalendarMonth,
         attendanceRecords,
+        selectedStudents,
         setSelectedStudents,
         isDatePickerOpen,
         setDatePickerOpen,
@@ -101,8 +105,32 @@ const AttendancePage: React.FC = () => {
         handleExport,
         handleAnalyzeAttendance,
         isOnline,
+        isHomeroom,
     } = useAttendance();
     const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
+
+    const handleToggleSelect = useCallback((studentId: string) => {
+        setSelectedStudents(prev => {
+            const next = new Set(prev);
+            if (next.has(studentId)) next.delete(studentId);
+            else next.add(studentId);
+            return next;
+        });
+    }, [setSelectedStudents]);
+
+    const handleSelectAll = useCallback(() => {
+        setSelectedStudents(prev => {
+            const allSelected = filteredStudents.every(s => prev.has(s.id));
+            if (allSelected) return new Set();
+            return new Set(filteredStudents.map(s => s.id));
+        });
+    }, [filteredStudents, setSelectedStudents]);
+
+    const handleBatchStatusChange = useCallback((status: string) => {
+        const ids = Array.from(selectedStudents);
+        ids.forEach(id => handleStatusChange(id, status as import('../../types').AttendanceStatus));
+        setSelectedStudents(new Set());
+    }, [selectedStudents, handleStatusChange, setSelectedStudents]);
 
     // Keep the selected class and page controls visible while its students load.
     // Replacing the whole page with a skeleton here made each class change look
@@ -203,7 +231,7 @@ const AttendancePage: React.FC = () => {
                     />
                 )}
 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 px-1">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 px-1">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
                         <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2 tracking-wide">
                             Direktori Peserta Didik
@@ -233,6 +261,43 @@ const AttendancePage: React.FC = () => {
                         )}
                     </div>
                 </div>
+
+                {/* Batch Action Bar — appears when students are selected */}
+                {selectedStudents.size > 0 && viewMode === 'list' && (
+                    <div className="mb-4 p-3 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl shadow-lg shadow-emerald-500/25 flex flex-col sm:flex-row sm:items-center gap-3 animate-fade-in">
+                        <div className="flex items-center gap-2 text-white flex-shrink-0">
+                            <span className="font-bold text-sm">{selectedStudents.size} siswa dipilih</span>
+                            <button type="button"
+                                onClick={() => setSelectedStudents(new Set())}
+                                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                                aria-label="Batal pilih semua"
+                            >
+                                <XIcon className="w-4 h-4 text-white" />
+                            </button>
+                        </div>
+                        <div className="flex-1 flex flex-wrap gap-1.5">
+                            {statusOptions.map(opt => {
+                                let btnStyle = 'bg-white/20 hover:bg-white/30 text-white border border-white/20';
+                                if (opt.value === 'Hadir') btnStyle = 'bg-white text-emerald-700 hover:bg-emerald-50 font-bold shadow-sm';
+                                else if (opt.value === 'Sakit') btnStyle = 'bg-white/20 hover:bg-white/30 text-white border border-white/20';
+                                else if (opt.value === 'Izin') btnStyle = 'bg-white/20 hover:bg-white/30 text-white border border-white/20';
+                                else if (opt.value === 'Alpha') btnStyle = 'bg-white/20 hover:bg-white/30 text-white border border-white/20';
+                                else if (opt.value === 'Libur') btnStyle = 'bg-white/20 hover:bg-white/30 text-white border border-white/20';
+
+                                return (
+                                    <button type="button"
+                                        key={opt.value}
+                                        onClick={() => handleBatchStatusChange(opt.value)}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${btnStyle}`}
+                                    >
+                                        <opt.icon className="w-3.5 h-3.5" />
+                                        {opt.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 <div className="space-y-3">
                     {isLoadingStudents ? (
@@ -267,6 +332,7 @@ const AttendancePage: React.FC = () => {
                             students={filteredStudents}
                             attendanceRecords={attendanceRecords}
                             selectedDate={selectedDate}
+                            selectedStudents={selectedStudents}
                             onStatusChange={handleStatusChange}
                             highlightedStudentId={highlightedStudentId}
                             onNoteClick={(studentId, currentNote) => {
@@ -274,6 +340,8 @@ const AttendancePage: React.FC = () => {
                                 setSelectedStudents(new Set([studentId]));
                                 setIsNoteModalOpen(true);
                             }}
+                            onToggleSelect={handleToggleSelect}
+                            onSelectAll={handleSelectAll}
                         />
                     )}
                 </div>
@@ -317,6 +385,18 @@ const AttendancePage: React.FC = () => {
                                 />
                             )}
                         </CollapsibleSection>
+
+                        {/* Panel Wali Kelas — only for homeroom teachers */}
+                        {isHomeroom && (
+                            <div className="mt-6">
+                                <AttendanceOfficialPanel
+                                    students={students}
+                                    attendanceRecords={attendanceRecords}
+                                    selectedDate={selectedDate}
+                                    isHomeroom={isHomeroom}
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
             </main>
