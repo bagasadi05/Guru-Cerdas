@@ -69,11 +69,11 @@ export const useExcelParser = () => {
             const sheet = workbook.Sheets[sheetName];
 
             // Convert to JSON
-            const jsonData: any[][] = XLSX.utils.sheet_to_json(sheet, {
+            const jsonData = XLSX.utils.sheet_to_json(sheet, {
                 header: 1,
                 defval: '',
                 blankrows: false,
-            });
+            }) as unknown[][];
 
             if (jsonData.length === 0) {
                 throw new Error('File kosong');
@@ -100,7 +100,7 @@ export const useExcelParser = () => {
                             ...(col.key === 'notes' ? ['catatan', 'notes', 'keterangan', 'remarks'] : []),
                         ];
 
-                        const rowValuesLower = row.map((v: any) => String(v ?? '').toLowerCase().trim());
+                        const rowValuesLower = row.map((v) => String(v ?? '').toLowerCase().trim());
                         const hasMatch = rowValuesLower.some((val: string) => 
                             patterns.includes(val) || 
                             patterns.some(p => val.includes(p) || p.includes(val))
@@ -123,7 +123,7 @@ export const useExcelParser = () => {
             }
 
             // Get headers (first row after skip)
-            const headers = (jsonData[detectedSkipRows] || []).map((h: any) => String(h).trim());
+            const headers = (jsonData[detectedSkipRows] || []).map((h) => String(h).trim());
 
             // Get data rows
             const dataRows = jsonData.slice(detectedSkipRows + 1, detectedSkipRows + 1 + maxRows);
@@ -133,7 +133,8 @@ export const useExcelParser = () => {
                 const obj: ParsedRow = {};
                 headers.forEach((header, index) => {
                     if (header) {
-                        let value = row[index] ?? '';
+                        const rawValue = row[index] ?? '';
+                        let value: string | number = rawValue as string | number;
                         // Normalize comma decimal to dot if it is a string representing a decimal
                         if (typeof value === 'string' && value.trim() !== '') {
                             const normalized = value.trim().replace(',', '.');
@@ -170,8 +171,8 @@ export const useExcelParser = () => {
                 errors,
                 totalRows: parsedData.length,
             };
-        } catch (err: any) {
-            const errorMessage = err.message || 'Gagal membaca file';
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Gagal membaca file';
             setError(errorMessage);
             return {
                 data: [],

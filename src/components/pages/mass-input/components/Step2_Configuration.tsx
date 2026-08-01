@@ -120,27 +120,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                             />
                         </div>
 
-                        {(mode === 'quiz' || mode === 'violation') && (
-                            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-4 flex items-start gap-3 transition-all hover:shadow-md">
-                                <div className="mt-0.5">
-                                    <input
-                                        type="checkbox"
-                                        id="bypass-duplicate"
-                                        checked={bypassDuplicateGuard}
-                                        onChange={(e) => setBypassDuplicateGuard(e.target.checked)}
-                                        className="w-5 h-5 rounded border-amber-300 dark:border-amber-500/50 text-amber-600 focus:ring-amber-500 dark:focus:ring-amber-500/50 bg-white dark:bg-amber-900/20 cursor-pointer transition-colors"
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <label htmlFor="bypass-duplicate" className="text-sm font-bold text-amber-900 dark:text-amber-200 cursor-pointer block mb-1">
-                                        Izinkan Input Ganda (Bypass Proteksi)
-                                    </label>
-                                    <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
-                                        Centang ini jika Anda sengaja ingin memasukkan data yang sama untuk siswa dalam waktu berdekatan. Secara default, sistem memblokir input duplikat dalam 10 menit terakhir untuk mencegah klik ganda.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
+
 
                         {mode === 'quiz' && (
                             <>

@@ -14,7 +14,10 @@ vi.mock('../../src/services/supabase', () => ({
             signUp: vi.fn(),
             signOut: vi.fn(),
         }
-    }
+    },
+    // useAuth.tsx meng-import ini dari supabase — tanpanya Vitest melempar
+    // saat path token-refresh dijalankan (time-bomb laten).
+    clearStaleAuthTokens: vi.fn(),
 }));
 
 describe('useToast Hook', () => {

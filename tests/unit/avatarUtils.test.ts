@@ -17,9 +17,12 @@ describe('avatarUtils', () => {
         expect(resolved).not.toContain('i.pravatar.cc');
     });
 
-    it('keeps uploaded custom avatar URLs', () => {
+    it('keeps uploaded custom avatar URLs (via low-res proxy)', () => {
         const uploadedUrl = 'https://fddvcyqbfqydvsfujcxd.supabase.co/storage/v1/object/public/avatars/student.png';
 
-        expect(getStudentAvatar(uploadedUrl, 'Perempuan', 'student-2', 'Aisyah')).toBe(uploadedUrl);
+        // Custom avatars are routed through getOptimizedUrl (weserv.nl 96x96 proxy)
+        const expected = `https://images.weserv.nl/?url=${encodeURIComponent(uploadedUrl)}&w=96&h=96&fit=cover&q=60`;
+
+        expect(getStudentAvatar(uploadedUrl, 'Perempuan', 'student-2', 'Aisyah')).toBe(expected);
     });
 });

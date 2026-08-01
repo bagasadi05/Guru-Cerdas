@@ -43,7 +43,7 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
             }
         };
         fetchEvals();
-    }, [studentId]);
+    }, [studentId, toast]);
 
     // Filter violations for the selected month
     const monthlyViolations = violations.filter(v => v.date?.startsWith(selectedMonth));

@@ -160,14 +160,13 @@ const CACHE_TTL = {
 type CacheCategory = keyof typeof CACHE_TTL;
 
 /**
- * Generate cache key dari prompt dan system instruction.
+ * Generate cache key dari prompt.
  */
-function buildCacheKey(prompt: string, systemInstruction?: string): string {
+export function buildCacheKey(prompt: string): string {
   // Hash sederhana — cukup untuk mencegah duplikasi prompt identik
   let hash = 0;
-  const str = systemInstruction ? `${systemInstruction}|${prompt}` : prompt;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
+  for (let i = 0; i < prompt.length; i++) {
+    const char = prompt.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash |= 0; // Convert to 32bit integer
   }

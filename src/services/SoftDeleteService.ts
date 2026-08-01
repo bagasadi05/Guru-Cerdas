@@ -7,6 +7,7 @@
 
 import { supabase } from './supabase';
 import { logger } from './logger';
+import type { Database } from './database.types';
 
 export type SoftDeleteEntity = 'students' | 'classes' | 'attendance' | 'violations' | 'quiz_points' | 'academic_records' | 'tasks'
     | 'reports' | 'schedules' | 'communications' | 'homework' | 'extracurriculars'
@@ -30,8 +31,28 @@ export interface DeletedItem {
     entity: SoftDeleteEntity;
     deletedAt: string;
     daysRemaining: number;
-    data: Record<string, any>;
+    data: Record<string, unknown>;
 }
+
+// Loose query builder shape for dynamic (entity-driven) table access.
+// The Supabase client is strictly typed per-table, so we narrow to the
+// generic chaining surface actually used by this service.
+type AnyRow = Record<string, unknown>;
+type QueryResult = { data: AnyRow[] | null; error: { message: string } | null };
+
+interface SoftDeleteQuery extends PromiseLike<QueryResult> {
+    update(values: AnyRow): SoftDeleteQuery;
+    delete(): SoftDeleteQuery;
+    select(columns: string): SoftDeleteQuery;
+    eq(column: string, value: unknown): SoftDeleteQuery;
+    in(column: string, values: unknown[]): SoftDeleteQuery;
+    not(column: string, operator: unknown, value: unknown): SoftDeleteQuery;
+    order(column: string, options: { ascending: boolean }): SoftDeleteQuery;
+    lt(column: string, value: string): SoftDeleteQuery;
+}
+
+const tableQuery = (entity: SoftDeleteEntity): SoftDeleteQuery =>
+    supabase.from(entity as keyof Database['public']['Tables']) as unknown as SoftDeleteQuery;
 
 /**
  * Soft delete a record by setting deleted_at timestamp
@@ -43,9 +64,8 @@ export async function softDelete(
     try {
         const deletedAt = new Date().toISOString();
 
-        const { error } = await (supabase
-            .from(entity as any) as any)
-            .update({ deleted_at: deletedAt } as never)
+        const { error } = await tableQuery(entity)
+            .update({ deleted_at: deletedAt })
             .eq('id', id);
 
         if (error) throw error;
@@ -69,9 +89,8 @@ export async function softDeleteBulk(
     try {
         const deletedAt = new Date().toISOString();
 
-        const { error } = await (supabase
-            .from(entity as any) as any)
-            .update({ deleted_at: deletedAt } as never)
+        const { error } = await tableQuery(entity)
+            .update({ deleted_at: deletedAt })
             .in('id', ids);
 
         if (error) throw error;
@@ -93,9 +112,8 @@ export async function restore(
     id: string
 ): Promise<RestoreResult> {
     try {
-        const { error } = await (supabase
-            .from(entity as any) as any)
-            .update({ deleted_at: null } as never)
+        const { error } = await tableQuery(entity)
+            .update({ deleted_at: null })
             .eq('id', id);
 
         if (error) throw error;
@@ -117,9 +135,8 @@ export async function restoreBulk(
     ids: string[]
 ): Promise<RestoreResult> {
     try {
-        const { error } = await (supabase
-            .from(entity as any) as any)
-            .update({ deleted_at: null } as never)
+        const { error } = await tableQuery(entity)
+            .update({ deleted_at: null })
             .in('id', ids);
 
         if (error) throw error;
@@ -141,8 +158,7 @@ export async function permanentDelete(
     id: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        const { error } = await (supabase
-            .from(entity as any) as any)
+        const { error } = await tableQuery(entity)
             .delete()
             .eq('id', id);
 
@@ -165,8 +181,7 @@ export async function getDeletedItems(
     userId: string
 ): Promise<DeletedItem[]> {
     try {
-        const { data, error } = await (supabase
-            .from(entity as any) as any)
+        const { data, error } = await tableQuery(entity)
             .select('*')
             .eq('user_id', userId)
             .not('deleted_at', 'is', null)
@@ -178,16 +193,16 @@ export async function getDeletedItems(
         const RETENTION_DAYS = 30;
 
         return (data || [])
-            .filter((item: any) => (item as any).deleted_at !== null)
-            .map((item: any) => {
-                const deletedAt = new Date((item as any).deleted_at!);
+            .filter((item) => item.deleted_at !== null)
+            .map((item) => {
+                const deletedAt = new Date(item.deleted_at as string);
                 const daysSinceDelete = Math.floor((now.getTime() - deletedAt.getTime()) / (1000 * 60 * 60 * 24));
                 const daysRemaining = Math.max(0, RETENTION_DAYS - daysSinceDelete);
 
                 return {
-                    id: (item as any).id,
+                    id: item.id as string,
                     entity,
-                    deletedAt: (item as any).deleted_at as string,
+                    deletedAt: item.deleted_at as string,
                     daysRemaining,
                     data: item,
                 };
@@ -246,13 +261,12 @@ export async function cleanupExpired(): Promise<{
         for (const entity of entities) {
             // First get items to delete (deleted_at < cutoff means they were deleted more than 30 days ago)
             // lt() filter on a date column automatically excludes null values
-            const { data: itemsToDelete, error: selectError } = await (supabase
-                .from(entity as any) as any)
+            const { data: itemsToDelete, error: selectError } = await tableQuery(entity)
                 .select('id')
                 .lt('deleted_at', cutoffISO);
 
             if (selectError) {
-                logger.error(`Failed to query ${entity}`, selectError);
+                logger.error(`Failed to query ${entity}`, new Error(selectError.message || 'Query failed'));
                 continue;
             }
 
@@ -261,14 +275,13 @@ export async function cleanupExpired(): Promise<{
             }
 
             // Delete them by ID
-            const ids = itemsToDelete.map((item: any) => (item as any).id);
-            const { error: deleteError } = await (supabase
-                .from(entity as any) as any)
+            const ids = itemsToDelete.map((item) => item.id as string);
+            const { error: deleteError } = await tableQuery(entity)
                 .delete()
                 .in('id', ids);
 
             if (deleteError) {
-                logger.error(`Failed to delete ${entity}`, deleteError);
+                logger.error(`Failed to delete ${entity}`, new Error(deleteError.message || 'Delete failed'));
                 continue;
             }
 

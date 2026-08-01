@@ -53,6 +53,11 @@ vi.mock('../../src/services/supabase', () => ({
             generateContent: vi.fn(),
         },
     },
+    // useAuth.tsx & useAttendance.ts meng-import ini dari supabase — tanpanya
+    // Vitest melempar saat path token-refresh/offline-queue dijalankan
+    // (time-bomb laten).
+    clearStaleAuthTokens: vi.fn(),
+    wasLastResponseQueued: vi.fn(() => false),
 }));
 
 // Mock useOfflineStatus

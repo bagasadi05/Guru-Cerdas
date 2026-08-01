@@ -77,7 +77,7 @@ export function useSemesterTransition(): SemesterTransitionState {
         const endDate = new Date(activeSemester.end_date);
         endDate.setHours(23, 59, 59, 999);
         return today > endDate;
-    }, [activeSemester]);
+    }, [activeSemester, isAdmin]);
 
     // ──────────────────────────────────────────────────────────
     // 2. Find the next semester from existing data

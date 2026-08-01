@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';import { Star, ClipboardCheck, BarChart3, AlertTriangle,
     Sparkles, Zap, Send, FileText, CheckCircle, PlusCircle, Info, Printer,
     ChevronDown, Search, TrendingUp, Eye, Users, Gift, FileSpreadsheet
@@ -127,38 +127,7 @@ const BintangDashboardPage: React.FC = () => {
         fetchClasses();
     }, []);
 
-    useEffect(() => {
-        if (selectedClass && selectedMonth) {
-            fetchAllData();
-        } else {
-            setStudents([]);
-            setViolations([]);
-            setEvaluations([]);
-            setMentoringLogs([]);
-        }
-    }, [selectedClass, selectedMonth]);
-
-    // Fetch students for mentoring modal class selection
-    useEffect(() => {
-        if (mentoringClass) {
-            const fetchStudents = async () => {
-                const { data } = await supabase
-                    .from('students')
-                    .select('id, name')
-                    .eq('class_id', mentoringClass)
-                    .is('deleted_at', null)
-                    .order('name');
-                setMentoringStudentsInClass(data || []);
-                setMentoringSelectedStudents([]);
-            };
-            fetchStudents();
-        } else {
-            setMentoringStudentsInClass([]);
-            setMentoringSelectedStudents([]);
-        }
-    }, [mentoringClass]);
-
-    const fetchAllData = async () => {
+    const fetchAllData = useCallback(async () => {
         setIsLoading(true);
         try {
             const [studentsRes, evalsData, viosData, logsData] = await Promise.all([
@@ -197,7 +166,40 @@ const BintangDashboardPage: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedClass, selectedMonth]);
+
+    useEffect(() => {
+        if (selectedClass && selectedMonth) {
+            fetchAllData();
+        } else {
+            setStudents([]);
+            setViolations([]);
+            setEvaluations([]);
+            setMentoringLogs([]);
+        }
+    }, [selectedClass, selectedMonth, fetchAllData]);
+
+    // Fetch students for mentoring modal class selection
+    useEffect(() => {
+        if (mentoringClass) {
+            const fetchStudents = async () => {
+                const { data } = await supabase
+                    .from('students')
+                    .select('id, name')
+                    .eq('class_id', mentoringClass)
+                    .is('deleted_at', null)
+                    .order('name');
+                setMentoringStudentsInClass(data || []);
+                setMentoringSelectedStudents([]);
+            };
+            fetchStudents();
+        } else {
+            setMentoringStudentsInClass([]);
+            setMentoringSelectedStudents([]);
+        }
+    }, [mentoringClass]);
+
+
 
     // ── Computed data ────────────────────────────────────────────────────────
 

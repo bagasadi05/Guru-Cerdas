@@ -44,7 +44,10 @@ vi.mock('../../src/services/supabase', () => ({
                 data: { subscription: { unsubscribe: vi.fn() } }
             }))
         }
-    }
+    },
+    // useAuth.tsx meng-import ini dari supabase — tanpanya Vitest melempar
+    // saat path token-refresh dijalankan (time-bomb laten).
+    clearStaleAuthTokens: vi.fn(),
 }));
 
 // Lazy import pages to work with mocks

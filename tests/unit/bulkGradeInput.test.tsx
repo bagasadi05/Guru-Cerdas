@@ -30,9 +30,11 @@ vi.mock('react-router-dom', async (importOriginal) => {
     };
 });
 
-// Mock export utilities
+// Mock export utilities — UnifiedGradeAdjustmentModal meng-import
+// exportGradesWithTemplate juga (time-bomb laten tanpa ini).
 vi.mock('../../src/utils/gradeExporter', () => ({
     exportGradesToExcel: vi.fn(),
+    exportGradesWithTemplate: vi.fn(),
 }));
 
 // Mock CustomDropdown to render a native select for easy testing
@@ -112,6 +114,9 @@ vi.mock('../../src/services/supabase', () => {
                 return makeFilterChain([], null);
             }),
         },
+        // useAuth.tsx meng-import ini dari supabase — tanpanya Vitest melempar
+        // saat path token-refresh dijalankan (time-bomb laten).
+        clearStaleAuthTokens: vi.fn(),
     };
 });
 

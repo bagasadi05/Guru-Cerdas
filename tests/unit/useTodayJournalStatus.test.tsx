@@ -33,6 +33,9 @@ vi.mock('../../src/services/supabase', () => ({
   supabase: {
     from: (table: string) => mockSupabaseFrom(table),
   },
+  // useAuth.tsx meng-import ini dari supabase — tanpanya Vitest melempar
+  // saat path token-refresh dijalankan (time-bomb laten).
+  clearStaleAuthTokens: vi.fn(),
 }));
 
 const createWrapper = (user = { id: 'teacher-123', name: 'Test Teacher' }) => {

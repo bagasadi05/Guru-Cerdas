@@ -387,6 +387,44 @@ dan menganalisis data seluruh madrasah._
 
 ---
 
+### Test Suite Hardening — Stale Mock Elimination (Completed)
+
+**Status: ✅ COMPLETED — July 2026**
+
+_Pembersihan 3 test stale + mock latent bertahan 2 komit, dan script audit
+otomatis yang kini memindai SEMUA modul — terbukti menemukan 11 time-bomb
+laten tambahan yang tersembunyi di chain import dalam._
+
+**Akar masalah (ditemukan via `git log -S`):** komit yang menukar library export
+(`getXLSX` → `getExcelJS` di `src/utils/dynamicImports`) tidak pernah menaikkan
+`vi.mock` di test-nya, sehingga mock jadi stale tanpa disadari.
+
+**Perilaku Vitest 4 yang jadi dasar audit (diverifikasi empiris):** import named
+export yang hilang dari mock memberi `undefined` TANPA error; Vitest baru melempar
+`No "X" export is defined on the mock` saat fungsi itu benar-benar dipanggil.
+Artinya mock yang tidak lengkap = **time-bomb laten** — test hijau sampai path
+kode dijalankan (persis kasus exportUtils yang bertahan 2 komit).
+
+- [x] `bintangExcelExport.test.ts` — mock diupdate `getXLSX` → `getExcelJS` (service pindah library di komit `658b424e`); stub `URL.createObjectURL`/`revokeObjectURL` + `document.createElement('a')` untuk jsdom; fix risiko infinite recursion di spy
+- [x] `avatarUtils.test.ts` — assertion custom avatar diupdate ke output `getOptimizedUrl` (proxy low-res weserv.nl, komit `658b424e`)
+- [x] `exportUtils.test.ts` — mock latent `getExcelJS` ditambahkan (stale sejak `b06340f2`, tersembunyi 2 komit karena path tak tereksekusi) + 2 test baru untuk `exportAttendanceToExcel` (path exceljs kini terlindungi)
+- [x] `scripts/audit-stale-mocks.cjs` + `npm run audit:mocks` — **digeneralisasi dari hanya dynamicImports ke SEMUA modul yang di-mock** (local + package): resolve konsumen via BFS maks `--depth` 3 level transitif (skip modul yang dirinya dimock di test yang sama, aman terhadap siklus import, inline `import { type A }` tidak dihitung), skenario partial/automock/spread-top-level dilewati (anti false positive); exit 1 = stale (CI-ready); terverifikasi dengan 10 probe sintetis
+- [x] **11 time-bomb laten ditemukan & diperbaiki** (mock tidak menyediakan fungsi yang di-import modul nyata di chain dalam):
+  - `clearStaleAuthTokens` (di-import `useAuth.tsx`) ditambahkan ke 9 mock supabase: `hooks.test.tsx`, `useTodayJournalStatus.test.tsx`, `Attendance.test.tsx`, `AttendancePage.test.tsx`, `DashboardPage.test.tsx`, `StudentsPage.test.tsx`, `StudentsPageExtended.test.tsx`, `TasksPage.test.tsx`, `bulkGradeInput.test.tsx`
+  - `wasLastResponseQueued` (di-import `useAttendance.ts`) → `Attendance.test.tsx`
+  - `exportGradesWithTemplate` (di-import `UnifiedGradeAdjustmentModal`) → `bulkGradeInput.test.tsx`
+
+**Hasil verifikasi:**
+- Test suite: 1597 → **1599/1599 lulus** (sebelumnya 3 test stale gagal); 10 file terkait 90/90 lulus setelah fix
+- `tsc --noEmit` bersih · ESLint 0 problem · `audit:mocks` **BERSIH exit 0** (104 file, 64 mock, kedalaman 3)
+
+**Commit terkait:**
+- `00bf34fa` — fix(bintang): excel export (asal mock stale bintangExcelExport)
+- `658b424e` — fix(avatars): low-res proxy (asal mock stale avatar + perpindahan getExcelJS)
+- `b06340f2` — chore: fix exports (asal mock latent exportUtils)
+
+---
+
 ### Month 2: AI Features
 
 #### Phase 3.1: Predictive Analytics

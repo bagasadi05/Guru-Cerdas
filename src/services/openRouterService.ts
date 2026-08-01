@@ -62,7 +62,7 @@ export async function generateOpenRouterContent(
   useReasoning: boolean = true
 ): Promise<OpenRouterResponse> {
   const cacheKey = buildCacheKeyForMessages(messages);
-  const cached = getCachedResponse<OpenRouterResponse>(cacheKey, 'default');
+  const cached = getCachedResponse<OpenRouterResponse>(cacheKey);
   if (cached) {
     logger.info('[AI] Cache HIT — returning cached response', 'AI');
     return cached;
@@ -327,7 +327,7 @@ export async function generateOpenRouterJson<T>(
 ): Promise<T> {
   // Check cache first
   const cacheCategory = detectCacheCategory(prompt);
-  const cached = getCachedResponse<T>(prompt, cacheCategory);
+  const cached = getCachedResponse<T>(prompt);
   if (cached) return cached;
 
   const messages: OpenRouterMessage[] = [];

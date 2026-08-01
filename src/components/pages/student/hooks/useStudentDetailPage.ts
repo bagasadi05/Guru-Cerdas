@@ -851,9 +851,12 @@ Tulis laporan yang menyentuh hati, memotivasi, dan komprehensif agar orang tua m
         }
     };
 
+    const handleGenerateAiReportRef = useRef(handleGenerateAiReport);
+    handleGenerateAiReportRef.current = handleGenerateAiReport;
+
     useEffect(() => {
         if (modalState.type === 'aiAssistant') {
-            handleGenerateAiReport();
+            handleGenerateAiReportRef.current();
         } else {
             setAiReport('');
             setAiReportError('');

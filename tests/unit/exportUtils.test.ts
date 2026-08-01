@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { exportToExcel } from '../../src/utils/exportUtils';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { exportToExcel, exportAttendanceToExcel } from '../../src/utils/exportUtils';
 
 // Mock dynamic imports module
 const mockXLSX = {
@@ -11,8 +11,39 @@ const mockXLSX = {
     writeFile: vi.fn(),
 };
 
+// Mock getExcelJS (ExcelJS) — used by exportAttendanceToExcel.
+// Minimal surface: Workbook with addWorksheet → worksheet (mergeCells/getCell/addRow/getRow/getColumn),
+// and workbook.xlsx.writeBuffer. Includes a registry so tests can assert on the created workbook.
+const { MockWorkbook, workbookInstances } = vi.hoisted(() => {
+    const makeCell = () => ({ value: null, font: {}, alignment: {}, fill: {}, border: {} });
+    const makeRow = () => ({
+        getCell: vi.fn(() => makeCell()),
+        eachCell: vi.fn(),
+        values: [],
+    });
+    const makeWorksheet = () => ({
+        mergeCells: vi.fn(),
+        getCell: vi.fn(() => makeCell()),
+        addRow: vi.fn(() => makeRow()),
+        getRow: vi.fn(() => makeRow()),
+        getColumn: vi.fn(() => ({ width: 0 })),
+        views: [],
+    });
+    const workbookInstances: { creator: string | null; addWorksheet: ReturnType<typeof vi.fn>; xlsx: { writeBuffer: ReturnType<typeof vi.fn> } }[] = [];
+    const MockWorkbook = class {
+        creator: string | null = null;
+        addWorksheet = vi.fn(() => makeWorksheet());
+        xlsx = { writeBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(0)) };
+        constructor() {
+            workbookInstances.push(this);
+        }
+    };
+    return { MockWorkbook, workbookInstances };
+});
+
 vi.mock('../../src/utils/dynamicImports', () => ({
     getXLSX: vi.fn(() => Promise.resolve(mockXLSX)),
+    getExcelJS: vi.fn(() => Promise.resolve({ Workbook: MockWorkbook })),
 }));
 
 describe('exportToExcel', () => {
@@ -65,5 +96,61 @@ describe('exportToExcel', () => {
         expect(mockXLSX.utils.book_new).not.toHaveBeenCalled();
 
         consoleSpy.mockRestore();
+    });
+});
+
+describe('exportAttendanceToExcel', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        workbookInstances.length = 0;
+
+        // jsdom does not implement URL.createObjectURL / revokeObjectURL
+        vi.stubGlobal('URL', {
+            ...URL,
+            createObjectURL: vi.fn(() => 'blob:fake'),
+            revokeObjectURL: vi.fn(),
+        });
+        // Anchor click triggers jsdom's unimplemented navigation otherwise.
+        // Capture the original first so non-'a' tags don't recurse into the spy.
+        const originalCreateElement = document.createElement.bind(document);
+        const fakeAnchor = { href: '', download: '', click: vi.fn() };
+        vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+            if (tag.toLowerCase() === 'a') return fakeAnchor as unknown as HTMLElement;
+            return originalCreateElement(tag);
+        });
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        workbookInstances.length = 0;
+    });
+
+    it('should export attendance data to excel without throwing (uses getExcelJS)', async () => {
+        const classesData = [{ name: '5A', students: [{ id: 's1', name: 'Ahmad' }] }];
+        const attendanceData = [
+            { student_id: 's1', date: '2026-07-01', status: 'Hadir' },
+            { student_id: 's1', date: '2026-07-02', status: 'Sakit' },
+        ];
+
+        await expect(
+            exportAttendanceToExcel(classesData, attendanceData, 'Juli', 2026, 7, 31, 'attendance-5A-juli-2026')
+        ).resolves.not.toThrow();
+
+        // ExcelJS path exercised: workbook created + worksheet added + buffer written
+        expect(workbookInstances).toHaveLength(1);
+        expect(workbookInstances[0].creator).toBe('MI AL IRSYAD KOTA MADIUN');
+        expect(workbookInstances[0].addWorksheet).toHaveBeenCalledWith('5A');
+        expect(workbookInstances[0].xlsx.writeBuffer).toHaveBeenCalled();
+    });
+
+    it('should handle empty class list gracefully', async () => {
+        await expect(
+            exportAttendanceToExcel([], [], 'Juli', 2026, 7, 31, 'empty')
+        ).resolves.not.toThrow();
+
+        expect(workbookInstances).toHaveLength(1);
+        expect(workbookInstances[0].addWorksheet).not.toHaveBeenCalled();
+        expect(workbookInstances[0].xlsx.writeBuffer).toHaveBeenCalled();
     });
 });

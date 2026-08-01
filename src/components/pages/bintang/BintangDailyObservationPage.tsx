@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
 import { CustomDropdown } from '../../ui/CustomDropdown';
@@ -52,6 +52,18 @@ export const BintangDailyObservationPage: React.FC<BintangDailyObservationPagePr
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [studentsInClass, setStudentsInClass] = useState<Array<{id: string; name: string}>>([]);
 
+    const fetchViolations = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const data = await bintangService.getViolationsForClass(selectedClass, selectedMonth);
+            setViolations(data || []);
+        } catch (error) {
+            console.error('Failed to fetch violations', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [selectedClass, selectedMonth]);
+
     useEffect(() => {
         if (selectedClass) {
             const fetchStudents = async () => {
@@ -73,19 +85,7 @@ export const BintangDailyObservationPage: React.FC<BintangDailyObservationPagePr
         } else {
             setViolations([]);
         }
-    }, [selectedClass, selectedMonth]);
-
-    const fetchViolations = async () => {
-        setIsLoading(true);
-        try {
-            const data = await bintangService.getViolationsForClass(selectedClass, selectedMonth);
-            setViolations(data || []);
-        } catch (error) {
-            console.error('Failed to fetch violations', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, [selectedClass, selectedMonth, fetchViolations]);
 
     const handleObservationSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

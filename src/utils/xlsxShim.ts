@@ -1,5 +1,20 @@
 import { getExcelJS } from './dynamicImports';
 
+// Cell values handled by the shim (mirrors SheetJS-compatible shapes).
+export type CellValue = string | number | Date | boolean | null | undefined;
+export type CellObject = {
+    text?: string;
+    hyperlink?: string;
+    result?: unknown;
+    richText?: Array<{ text: string }>;
+};
+export type RowData = Array<CellValue | CellObject>;
+export type WorksheetCol = { wch?: number };
+export type MergeRange = {
+    s: { r: number; c: number };
+    e: { r: number; c: number };
+};
+
 // A mock Workbook class
 export class WorkbookShim {
     SheetNames: string[] = [];
@@ -8,23 +23,30 @@ export class WorkbookShim {
 
 // A mock Worksheet class
 export class WorksheetShim {
-    rows: any[][] = [];
-    cols: any[] = [];
-    merges: any[] = [];
+    rows: RowData[] = [];
+    cols: WorksheetCol[] = [];
+    merges: MergeRange[] = [];
 
     get ['!cols']() {
         return this.cols;
     }
-    set ['!cols'](value: any[]) {
+    set ['!cols'](value: WorksheetCol[]) {
         this.cols = value;
     }
 
     get ['!merges']() {
         return this.merges;
     }
-    set ['!merges'](value: any[]) {
+    set ['!merges'](value: MergeRange[]) {
         this.merges = value;
     }
+}
+
+export interface SheetToJsonOptions {
+    header?: 1 | 2 | 'A' | 'A,B';
+    blankrows?: boolean;
+    defval?: unknown;
+    raw?: boolean;
 }
 
 // Shim functions
@@ -38,7 +60,7 @@ export const utils = {
         workbook.Sheets[name] = worksheet;
     },
 
-    json_to_sheet(data: any[], _options?: any): WorksheetShim {
+    json_to_sheet(data: Record<string, unknown>[], _options?: { header?: string[] }): WorksheetShim {
         const worksheet = new WorksheetShim();
         if (!data || data.length === 0) return worksheet;
 
@@ -48,19 +70,19 @@ export const utils = {
 
         // Add rows
         for (const item of data) {
-            const row = headers.map(header => item[header]);
+            const row = headers.map(header => item[header]) as RowData;
             worksheet.rows.push(row);
         }
         return worksheet;
     },
 
-    aoa_to_sheet(data: any[][]): WorksheetShim {
+    aoa_to_sheet(data: RowData[]): WorksheetShim {
         const worksheet = new WorksheetShim();
         worksheet.rows = data.map(row => [...row]);
         return worksheet;
     },
 
-    sheet_to_json(worksheet: WorksheetShim, options?: any): any[] {
+    sheet_to_json(worksheet: WorksheetShim, options?: SheetToJsonOptions): unknown[] {
         const headerOption = options?.header;
         if (headerOption === 1) {
             // Return array of arrays
@@ -74,12 +96,12 @@ export const utils = {
         // Return array of objects
         if (worksheet.rows.length === 0) return [];
         const headers = worksheet.rows[0];
-        const result: any[] = [];
+        const result: Record<string, unknown>[] = [];
         for (let i = 1; i < worksheet.rows.length; i++) {
             const row = worksheet.rows[i];
-            const obj: any = {};
+            const obj: Record<string, unknown> = {};
             headers.forEach((header, index) => {
-                obj[header] = row[index] !== undefined ? row[index] : (options?.defval ?? '');
+                obj[String(header)] = row[index] !== undefined ? row[index] : (options?.defval ?? '');
             });
             result.push(obj);
         }
@@ -107,22 +129,22 @@ export const utils = {
 };
 
 // Reads file data asynchronously using exceljs
-export async function read(data: ArrayBuffer | Uint8Array, _options?: any): Promise<WorkbookShim> {
+export async function read(data: ArrayBuffer | Uint8Array, _options?: unknown): Promise<WorkbookShim> {
     const ExcelJS = await getExcelJS();
     const workbook = new ExcelJS.Workbook();
     
     const arrayBuffer = data instanceof Uint8Array ? data.buffer : data;
-    await workbook.xlsx.load(arrayBuffer as any);
+    await workbook.xlsx.load(arrayBuffer as ArrayBuffer);
     
     const shimWorkbook = new WorkbookShim();
     
     workbook.worksheets.forEach(ws => {
         const shimSheet = new WorksheetShim();
-        const rows: any[][] = [];
+        const rows: RowData[] = [];
         
         ws.eachRow({ includeEmpty: true }, (row) => {
             const rowValues = row.values;
-            const values: any[] = [];
+            const values: RowData = [];
             if (Array.isArray(rowValues)) {
                 // exceljs uses 1-based indexing for rowValues
                 // Row values starts at index 1
@@ -131,22 +153,22 @@ export async function read(data: ArrayBuffer | Uint8Array, _options?: any): Prom
                     if (val && typeof val === 'object') {
                         if (val instanceof Date) {
                             values.push(val);
-                        } else if ('richText' in val && Array.isArray((val as any).richText)) {
-                            values.push((val as any).richText.map((rt: any) => rt.text || '').join(''));
+                        } else if ('richText' in val && Array.isArray((val as CellObject).richText)) {
+                            values.push(((val as CellObject).richText || []).map((rt: { text: string }) => rt.text || '').join(''));
                         } else if ('text' in val || 'hyperlink' in val) {
-                            values.push((val as any).text || (val as any).hyperlink);
+                            values.push((val as CellObject).text || (val as CellObject).hyperlink);
                         } else if ('result' in val) {
-                            const result = val.result;
+                            const result = (val as CellObject).result;
                             if (result instanceof Date) {
                                 values.push(result);
                             } else if (result && typeof result === 'object') {
                                 if ('text' in result || 'hyperlink' in result) {
-                                    values.push((result as any).text || (result as any).hyperlink);
+                                    values.push((result as CellObject).text || (result as CellObject).hyperlink);
                                 } else {
                                     values.push(String(result));
                                 }
                             } else {
-                                values.push(result);
+                                values.push(result as CellValue);
                             }
                         } else {
                             values.push(String(val));
@@ -168,7 +190,7 @@ export async function read(data: ArrayBuffer | Uint8Array, _options?: any): Prom
 }
 
 // Writes a workbook to an ArrayBuffer using exceljs (async)
-export async function write(workbook: WorkbookShim, options?: any): Promise<ArrayBuffer> {
+export async function write(workbook: WorkbookShim, options?: { bookType?: string; type?: string }): Promise<ArrayBuffer> {
     const ExcelJS = await getExcelJS();
     const exWorkbook = new ExcelJS.Workbook();
     
@@ -212,7 +234,7 @@ export async function write(workbook: WorkbookShim, options?: any): Promise<Arra
     }
     
     const buffer = await exWorkbook.xlsx.writeBuffer();
-    return buffer as any;
+    return buffer as unknown as ArrayBuffer;
 }
 
 // Write file to trigger download

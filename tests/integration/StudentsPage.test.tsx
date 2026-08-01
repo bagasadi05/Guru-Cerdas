@@ -31,7 +31,10 @@ vi.mock('../../src/services/supabase', () => ({
                 eq: () => Promise.resolve({ error: null })
             })
         })
-    }
+    },
+    // useAuth.tsx meng-import ini dari supabase — tanpanya Vitest melempar
+    // saat path token-refresh dijalankan (time-bomb laten).
+    clearStaleAuthTokens: vi.fn(),
 }));
 
 describe('StudentsPage Integration', () => {

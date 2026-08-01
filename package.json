@@ -18,6 +18,8 @@
     "lint": "eslint .",
     "docs:api": "typedoc",
     "docs:validate": "node scripts/validate-docs.cjs",
+    "audit:mocks": "node scripts/audit-stale-mocks.cjs",
+    "audit:dead": "node scripts/audit-dead-exports.cjs",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",

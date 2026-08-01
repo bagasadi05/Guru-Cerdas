@@ -42,6 +42,22 @@ import { SubjectPerformanceChart } from '../components/SubjectPerformanceChart';
 import { DevelopmentTimeline } from '../components/DevelopmentTimeline';
 import { WarningBanner } from '../components/WarningBanner';
 import { useUserSettings } from '../../../../../hooks/useUserSettings';
+import type { jsPDF } from 'jspdf';
+import type { Database } from '../../../../../services/database.types';
+
+// Typed record shapes for semester comparison data (matching the Supabase schema)
+type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
+type AttendanceRow = Database['public']['Tables']['attendance']['Row'];
+type ViolationRow = Database['public']['Tables']['violations']['Row'];
+type QuizPointRow = Database['public']['Tables']['quiz_points']['Row'];
+
+// Minimal shape of the autoTable cell hook payload we rely on
+// (CellHookData is the real jspdf-autotable type; imported type-only so it adds no runtime cost)
+import type { CellHookData as AutoTableCellData } from 'jspdf-autotable';
+
+// Read the finalY of the last autoTable render (plugin attaches it to the doc at runtime)
+const getTableEndY = (doc: unknown): number =>
+  (doc as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 0;
 
 // Helper function to sanitize text for jsPDF rendering (stripping emojis/unicode >= 256 except bullet U+2022)
 const cleanTextForPDF = (text: string | null | undefined): string => {
@@ -86,7 +102,7 @@ const abbreviateSubject = (subject: string): string => {
 
 // Helper function to draw a clean vector radar chart directly in jsPDF
 const drawRadarChartInPDF = (
-  doc: any,
+  doc: jsPDF,
   x: number,
   y: number,
   size: number,
@@ -185,10 +201,10 @@ const drawRadarChartInPDF = (
 
 interface ChildDevelopmentAnalysisTabProps {
   studentData: ChildDevelopmentData;
-  allAcademicRecords?: any[];
-  allAttendanceRecords?: any[];
-  allViolations?: any[];
-  allQuizPoints?: any[];
+  allAcademicRecords?: AcademicRecordRow[];
+  allAttendanceRecords?: AttendanceRow[];
+  allViolations?: ViolationRow[];
+  allQuizPoints?: QuizPointRow[];
   defaultMode?: 'single' | 'comparative';
   selectedSemesterId?: string | null;
   selectedAcademicYearId?: string | null;
@@ -250,7 +266,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
     if (totalRecords < 4) {
       const avg = totalRecords > 0
-        ? Math.round(records.reduce((a: any, b: any) => a + b.score, 0) / totalRecords)
+        ? Math.round(records.reduce((a, b) => a + b.score, 0) / totalRecords)
         : 0;
       return { currentAvg: avg, previousAvg: 0 };
     }
@@ -259,20 +275,20 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
     const recentRecords = records.slice(midPoint);
     const olderRecords = records.slice(0, midPoint);
 
-    const currentAvg = Math.round(recentRecords.reduce((a: any, b: any) => a + b.score, 0) / recentRecords.length);
-    const previousAvg = Math.round(olderRecords.reduce((a: any, b: any) => a + b.score, 0) / olderRecords.length);
+    const currentAvg = Math.round(recentRecords.reduce((a, b) => a + b.score, 0) / recentRecords.length);
+    const previousAvg = Math.round(olderRecords.reduce((a, b) => a + b.score, 0) / olderRecords.length);
 
     return { currentAvg, previousAvg };
   }, [studentData.academicRecords]);
 
-  const subjects = subjectAverages.map((s: any) => s.subject);
-  const studentScores = subjectAverages.map((s: any) => s.average);
-  const overallAverage = studentScores.length > 0 ? Math.round(studentScores.reduce((a: any, b: any) => a + b, 0) / studentScores.length) : 0;
+  const subjects = subjectAverages.map((s) => s.subject);
+  const studentScores = subjectAverages.map((s) => s.average);
+  const overallAverage = studentScores.length > 0 ? Math.round(studentScores.reduce((a, b) => a + b, 0) / studentScores.length) : 0;
 
   const attendanceRate = useMemo(() => {
     const attendanceRecords = studentData.attendanceRecords || [];
     return attendanceRecords.length > 0
-      ? Math.round((attendanceRecords.filter((a: any) => a.status === 'Hadir').length / attendanceRecords.length) * 100)
+      ? Math.round((attendanceRecords.filter((a) => a.status === 'Hadir').length / attendanceRecords.length) * 100)
       : 100;
   }, [studentData.attendanceRecords]);
 
@@ -300,7 +316,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
   const selectedSemester = useMemo(() => {
     if (!selectedSemesterId) return null;
-    return semesters.find((s: any) => s.id === selectedSemesterId);
+    return semesters.find((s) => s.id === selectedSemesterId);
   }, [semesters, selectedSemesterId]);
 
   const resolvedAcademicYearId = selectedAcademicYearId || selectedSemester?.academic_year_id || activeAcademicYear?.id;
@@ -308,7 +324,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
   // === DYNAMIC GROUPING FOR SEMESTER COMPARISON ===
   const activeYearSemesters = useMemo(() => {
     if (!activeAcademicYear) return [];
-    return semesters.filter((s: any) => s.academic_year_id === activeAcademicYear.id);
+    return semesters.filter((s) => s.academic_year_id === activeAcademicYear.id);
   }, [semesters, activeAcademicYear]);
 
   const sem1 = useMemo(() => {
@@ -362,18 +378,18 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
   // === CALCULATING STATS FOR COMPARISON ===
   const avgScoreSem1 = useMemo(() => {
     if (sem1Academic.length === 0) return 0;
-    return Math.round(sem1Academic.reduce((sum: any, r: any) => sum + r.score, 0) / sem1Academic.length);
+    return Math.round(sem1Academic.reduce((sum, r) => sum + r.score, 0) / sem1Academic.length);
   }, [sem1Academic]);
 
   const avgScoreSem2 = useMemo(() => {
     if (sem2Academic.length === 0) return 0;
-    return Math.round(sem2Academic.reduce((sum: any, r: any) => sum + r.score, 0) / sem2Academic.length);
+    return Math.round(sem2Academic.reduce((sum, r) => sum + r.score, 0) / sem2Academic.length);
   }, [sem2Academic]);
 
   const avgScoreDiff = avgScoreSem2 - avgScoreSem1;
 
   const compAttendanceStats = useMemo(() => {
-    const getStats = (recs: any[]) => {
+    const getStats = (recs: AttendanceRow[]) => {
       const total = recs.length;
       const hadir = recs.filter(r => r.status === 'Hadir').length;
       const sakit = recs.filter(r => r.status === 'Sakit').length;
@@ -389,9 +405,9 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
   }, [sem1Attendance, sem2Attendance]);
 
   const compViolationStats = useMemo(() => {
-    const getStats = (recs: any[]) => {
+    const getStats = (recs: ViolationRow[]) => {
       const count = recs.length;
-      const points = recs.reduce((sum: any, r: any) => sum + (r.points || 0), 0);
+      const points = recs.reduce((sum, r) => sum + (r.points || 0), 0);
       return { count, points };
     };
     return {
@@ -424,23 +440,23 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
   // === DUAL RADAR CHART CALCULATIONS ===
   const compHolisticDimensions = useMemo(() => {
-    const getKeterampilanScore = (records: any[], overallAvg: number) => {
+    const getKeterampilanScore = (records: AcademicRecordRow[], overallAvg: number) => {
       const practicalSubjects = ['pjok', 'seni', 'sbdp', 'prakarya', 'keterampilan', 'seni budaya'];
       const practicalRecords = records.filter(r => {
         const sub = (r.subject || '').toLowerCase();
         return practicalSubjects.some(p => sub.includes(p));
       });
       if (practicalRecords.length > 0) {
-        return Math.round(practicalRecords.reduce((sum: any, r: any) => sum + r.score, 0) / practicalRecords.length);
+        return Math.round(practicalRecords.reduce((sum, r) => sum + r.score, 0) / practicalRecords.length);
       }
       return overallAvg > 0 ? Math.round((overallAvg + 80) / 2) : 80;
     };
 
-    const qPts1 = sem1Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0);
+    const qPts1 = sem1Quizzes.reduce((sum, q) => sum + (q.points || 0), 0);
     const qCount1 = sem1Quizzes.length;
     const keaktifanSem1 = qPts1 > 0 ? Math.min(qPts1 * 5, 100) : Math.min(qCount1 * 15, 100);
 
-    const qPts2 = sem2Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0);
+    const qPts2 = sem2Quizzes.reduce((sum, q) => sum + (q.points || 0), 0);
     const qCount2 = sem2Quizzes.length;
     const keaktifanSem2 = qPts2 > 0 ? Math.min(qPts2 * 5, 100) : Math.min(qCount2 * 15, 100);
 
@@ -478,25 +494,25 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       age: studentData.student.age,
       class: studentData.student.class
     },
-    academicRecords: sem1Academic.map((r: any) => ({
+    academicRecords: sem1Academic.map((r) => ({
       subject: r.subject,
       score: r.score,
-      assessment_name: r.assessment_name,
+      assessment_name: r.assessment_name ?? undefined,
       notes: r.notes
     })),
-    attendanceRecords: sem1Attendance.map((a: any) => ({
+    attendanceRecords: sem1Attendance.map((a) => ({
       status: a.status,
       date: a.date
     })),
-    violations: sem1Violations.map((v: any) => ({
+    violations: sem1Violations.map((v) => ({
       description: v.description,
       points: v.points,
       date: v.date
     })),
-    quizPoints: sem1Quizzes.map((q: any) => ({
-      activity: q.quiz_name || q.activity,
+    quizPoints: sem1Quizzes.map((q) => ({
+      activity: q.quiz_name,
       points: q.points,
-      date: q.quiz_date || q.date
+      date: q.quiz_date
     }))
   }), [studentData.student, sem1Academic, sem1Attendance, sem1Violations, sem1Quizzes]);
 
@@ -507,25 +523,25 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       age: studentData.student.age,
       class: studentData.student.class
     },
-    academicRecords: sem2Academic.map((r: any) => ({
+    academicRecords: sem2Academic.map((r) => ({
       subject: r.subject,
       score: r.score,
-      assessment_name: r.assessment_name,
+      assessment_name: r.assessment_name ?? undefined,
       notes: r.notes
     })),
-    attendanceRecords: sem2Attendance.map((a: any) => ({
+    attendanceRecords: sem2Attendance.map((a) => ({
       status: a.status,
       date: a.date
     })),
-    violations: sem2Violations.map((v: any) => ({
+    violations: sem2Violations.map((v) => ({
       description: v.description,
       points: v.points,
       date: v.date
     })),
-    quizPoints: sem2Quizzes.map((q: any) => ({
-      activity: q.quiz_name || q.activity,
+    quizPoints: sem2Quizzes.map((q) => ({
+      activity: q.quiz_name,
       points: q.points,
-      date: q.quiz_date || q.date
+      date: q.quiz_date
     }))
   }), [studentData.student, sem2Academic, sem2Attendance, sem2Violations, sem2Quizzes]);
 
@@ -589,7 +605,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
         if (dbAnalysis) {
           setAnalysis(dbAnalysis);
-          setGeneratedAt((dbAnalysis as any).generatedAt || null);
+          setGeneratedAt((dbAnalysis as ComprehensiveChildAnalysis & { generatedAt?: string }).generatedAt || null);
           return;
         } else {
           // Reset analysis if not found in db or local storage for this semester
@@ -628,7 +644,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         const dbComp = await getComparativeAnalysisFromDb(studentData.student.id, activeAcademicYear.id);
         if (dbComp) {
           setComparativeAnalysis(dbComp);
-          setCompGeneratedAt((dbComp as any).generatedAt || null);
+          setCompGeneratedAt((dbComp as ComparativeChildAnalysis & { generatedAt?: string }).generatedAt || null);
           return;
         }
       } catch (err) {
@@ -699,7 +715,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
     const violations = studentData.violations || [];
     const totalViolations = violations.length;
     const attendanceRate = attendanceRecords.length > 0
-      ? (attendanceRecords.filter((a: any) => a.status === 'Hadir').length / attendanceRecords.length) * 100
+      ? (attendanceRecords.filter((a) => a.status === 'Hadir').length / attendanceRecords.length) * 100
       : 100;
 
     let affectiveLabel = 'Cukup Disiplin';
@@ -776,7 +792,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         try {
           if (attempt > 0) setRetryCount(attempt);
           result = await generateComprehensiveChildAnalysis(studentData);
-          if (result && (!('error' in result) || (result as any).summary)) break;
+          if (result && (!('error' in result) || result.summary)) break;
         } catch (retryError) {
           if (attempt === maxRetries) throw retryError;
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
@@ -785,7 +801,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       if (!result) throw new Error('Gagal menghasilkan analisis setelah beberapa percobaan.');
 
       const now = new Date().toISOString();
-      (result as any).generatedAt = now;
+      (result as ComprehensiveChildAnalysis & { generatedAt?: string }).generatedAt = now;
       setGeneratedAt(now);
       setAnalysis(result);
 
@@ -864,7 +880,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         },
       });
 
-      y = (doc as any).lastAutoTable.finalY + 6;
+      y = getTableEndY(doc) + 6;
 
       // Divide line
       doc.setDrawColor(226, 232, 240);
@@ -917,14 +933,14 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         alternateRowStyles: { fillColor: [248, 250, 252] }
       });
 
-      y = (doc as any).lastAutoTable.finalY + 6;
+      y = getTableEndY(doc) + 6;
 
       // Attendance Rekap
       const totalAttend = studentData.attendanceRecords.length;
-      const hadir = studentData.attendanceRecords.filter((a: any) => a.status === 'Hadir').length;
-      const sakit = studentData.attendanceRecords.filter((a: any) => a.status === 'Sakit').length;
-      const izin = studentData.attendanceRecords.filter((a: any) => a.status === 'Izin').length;
-      const alpha = studentData.attendanceRecords.filter((a: any) => a.status === 'Alpha').length;
+      const hadir = studentData.attendanceRecords.filter((a) => a.status === 'Hadir').length;
+      const sakit = studentData.attendanceRecords.filter((a) => a.status === 'Sakit').length;
+      const izin = studentData.attendanceRecords.filter((a) => a.status === 'Izin').length;
+      const alpha = studentData.attendanceRecords.filter((a) => a.status === 'Alpha').length;
       const percentage = totalAttend > 0 ? ((hadir / totalAttend) * 100).toFixed(1) : '100';
 
       autoTable(doc, {
@@ -936,7 +952,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         styles: { fontSize: 8.5, cellPadding: 2.5, halign: 'center' },
       });
 
-      y = (doc as any).lastAutoTable.finalY + 8;
+      y = getTableEndY(doc) + 8;
 
       // Draw Academic Performance Radar Chart
       if (subjectAverages.length >= 3) {
@@ -997,7 +1013,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       doc.text('Kekuatan Utama Kognitif:', margin + 3, y);
       y += 4;
       doc.setFont('helvetica', 'normal');
-      analysis.cognitive.strengths.slice(0, 2).forEach((str: any) => {
+      analysis.cognitive.strengths.slice(0, 2).forEach((str) => {
         const lines = doc.splitTextToSize(`- ${cleanTextForPDF(str)}`, pageWidth - margin * 2 - 6);
         doc.text(lines, margin + 5, y);
         y += lines.length * 4.5;
@@ -1028,7 +1044,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       doc.text('Karakter Positif Menonjol:', margin + 3, y);
       y += 4;
       doc.setFont('helvetica', 'normal');
-      analysis.affective.positiveCharacters.slice(0, 2).forEach((char: any) => {
+      analysis.affective.positiveCharacters.slice(0, 2).forEach((char) => {
         const lines = doc.splitTextToSize(`- ${cleanTextForPDF(char)}`, pageWidth - margin * 2 - 6);
         doc.text(lines, margin + 5, y);
         y += lines.length * 4.5;
@@ -1059,7 +1075,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       doc.text('Keterampilan Fisik Terbaik:', margin + 3, y);
       y += 4;
       doc.setFont('helvetica', 'normal');
-      analysis.psychomotor.outstandingSkills.slice(0, 2).forEach((skill: any) => {
+      analysis.psychomotor.outstandingSkills.slice(0, 2).forEach((skill) => {
         const lines = doc.splitTextToSize(`- ${cleanTextForPDF(skill)}`, pageWidth - margin * 2 - 6);
         doc.text(lines, margin + 5, y);
         y += lines.length * 4.5;
@@ -1087,7 +1103,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       y += 4.5;
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
-      analysis.recommendations.homeSupport.slice(0, 3).forEach((support: any, idx: any) => {
+      analysis.recommendations.homeSupport.slice(0, 3).forEach((support, idx) => {
         const lines = doc.splitTextToSize(`${idx + 1}. ${cleanTextForPDF(support)}`, pageWidth - margin * 2 - 4);
         doc.text(lines, margin + 2, y);
         y += lines.length * 4.5;
@@ -1099,8 +1115,8 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         startY: y,
         head: [['Rencana Target 3 Bulan', 'Rencana Target 6 Bulan']],
         body: [[
-          analysis.recommendations.developmentPlan.threeMonths.slice(0, 3).map((t: any) => `• ${cleanTextForPDF(t)}`).join('\n\n'),
-          analysis.recommendations.developmentPlan.sixMonths.slice(0, 3).map((t: any) => `• ${cleanTextForPDF(t)}`).join('\n\n')
+          analysis.recommendations.developmentPlan.threeMonths.slice(0, 3).map((t) => `• ${cleanTextForPDF(t)}`).join('\n\n'),
+          analysis.recommendations.developmentPlan.sixMonths.slice(0, 3).map((t) => `• ${cleanTextForPDF(t)}`).join('\n\n')
         ]],
         theme: 'grid',
         headStyles: { fillColor: [245, 158, 11], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
@@ -1111,7 +1127,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         }
       });
 
-      y = (doc as any).lastAutoTable.finalY + 18;
+      y = getTableEndY(doc) + 18;
 
       // Signature page check
       if (y > 240) {
@@ -1182,7 +1198,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         try {
           if (attempt > 0) setRetryCount(attempt);
           result = await generateComparativeChildAnalysis(childData1, childData2);
-          if (result && (!('error' in result) || (result as any).summary)) break;
+          if (result && (!('error' in result) || result.summary)) break;
         } catch (retryError) {
           if (attempt === maxRetries) throw retryError;
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
@@ -1191,7 +1207,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       if (!result) throw new Error('Gagal menghasilkan analisis perbandingan setelah beberapa percobaan.');
 
       const now = new Date().toISOString();
-      (result as any).generatedAt = now;
+      (result as ComparativeChildAnalysis & { generatedAt?: string }).generatedAt = now;
       setCompGeneratedAt(now);
       setComparativeAnalysis(result);
 
@@ -1273,7 +1289,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         },
       });
 
-      y = (doc as any).lastAutoTable.finalY + 6;
+      y = getTableEndY(doc) + 6;
 
       // Divide line
       doc.setDrawColor(226, 232, 240);
@@ -1314,7 +1330,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           3: { cellWidth: 35, halign: 'center' },
           4: { cellWidth: 40, fontStyle: 'bold' }
         },
-        didParseCell: (data: any) => {
+        didParseCell: (data: AutoTableCellData) => {
           if (data.column.index === 4 && data.cell.section === 'body') {
             const val = data.cell.text[0];
             if (val.startsWith('Naik')) {
@@ -1328,7 +1344,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         }
       });
 
-      y = (doc as any).lastAutoTable.finalY + 8;
+      y = getTableEndY(doc) + 8;
 
       // === SECTION 2: KEHADIRAN & KARAKTER KOMPARATIF ===
       doc.setFontSize(11);
@@ -1359,7 +1375,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           2: { cellWidth: 40, halign: 'center' },
           3: { cellWidth: 45, halign: 'center', fontStyle: 'bold' }
         },
-        didParseCell: (data: any) => {
+        didParseCell: (data: AutoTableCellData) => {
           if (data.column.index === 3 && data.cell.section === 'body') {
             const val = data.cell.text[0];
             const isViolationRow = data.row.index === 5;
@@ -1379,7 +1395,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         }
       });
 
-      y = (doc as any).lastAutoTable.finalY + 8;
+      y = getTableEndY(doc) + 8;
 
       // === SECTION 3: EVALUASI 5 DIMENSI PERKEMBANGAN HOLISTIK ===
       doc.setFontSize(11);
@@ -1419,7 +1435,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           3: { cellWidth: 35, halign: 'center' },
           4: { cellWidth: 35, halign: 'center', fontStyle: 'bold' }
         },
-        didParseCell: (data: any) => {
+        didParseCell: (data: AutoTableCellData) => {
           if (data.column.index === 4 && data.cell.section === 'body') {
             const val = data.cell.text[0];
             if (val.startsWith('+')) {
@@ -1433,7 +1449,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         }
       });
 
-      y = (doc as any).lastAutoTable.finalY + 8;
+      y = getTableEndY(doc) + 8;
 
       if (y > 180) {
         doc.addPage();
@@ -1603,7 +1619,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       doc.text('A. Dukungan Pembelajaran di Rumah (Home Support)', margin, y);
       y += 4;
 
-      const homeSupportRows = comparativeAnalysis.recommendations.homeSupport.map((support: any, idx: any) => [idx + 1, cleanTextForPDF(support)]);
+      const homeSupportRows = comparativeAnalysis.recommendations.homeSupport.map((support, idx) => [idx + 1, cleanTextForPDF(support)]);
       autoTable(doc, {
         startY: y,
         body: homeSupportRows,
@@ -1615,7 +1631,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         }
       });
 
-      y = (doc as any).lastAutoTable.finalY + 6;
+      y = getTableEndY(doc) + 6;
 
       // Stimulation Plan Table
       doc.setFontSize(9.5);
@@ -1643,7 +1659,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         }
       });
 
-      y = (doc as any).lastAutoTable.finalY + 12;
+      y = getTableEndY(doc) + 12;
 
       // Check height for signature
       if (y > pageHeight - 50) {
@@ -1741,7 +1757,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
     // Home support
     const homeSupport = analysis?.recommendations?.homeSupport || [];
-    homeSupport.slice(0, 2).forEach((support: any, idx: any) => {
+    homeSupport.slice(0, 2).forEach((support, idx) => {
       recs.push({
         title: `Dukungan Rumah ${idx + 1}`,
         description: support,
@@ -2167,7 +2183,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                 <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 1</p>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-300">
-                  {sem1Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0)}
+                  {sem1Quizzes.reduce((sum, q) => sum + (q.points || 0), 0)}
                 </p>
                 <p className="text-xxs text-slate-500 mt-2 font-medium">
                   {sem1Quizzes.length} Aktivitas
@@ -2176,7 +2192,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               <div className="bg-slate-50 dark:bg-slate-855 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                 <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 2</p>
                 <p className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
-                  {sem2Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0)}
+                  {sem2Quizzes.reduce((sum, q) => sum + (q.points || 0), 0)}
                 </p>
                 <p className="text-xxs text-slate-500 mt-2 font-medium">
                   {sem2Quizzes.length} Aktivitas
@@ -2184,7 +2200,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               </div>
             </div>
             <div className="mt-3 text-xs text-center font-semibold text-slate-500">
-              {sem2Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0) >= sem1Quizzes.reduce((sum: any, q: any) => sum + (q.points || 0), 0) ? (
+              {sem2Quizzes.reduce((sum, q) => sum + (q.points || 0), 0) >= sem1Quizzes.reduce((sum, q) => sum + (q.points || 0), 0) ? (
                 <span className="text-emerald-600 dark:text-emerald-400">⚡ Partisipasi kuis meningkat / konsisten</span>
               ) : (
                 <span className="text-amber-600 dark:text-amber-500">⚠️ Partisipasi kuis perlu didorong lagi</span>
@@ -2315,7 +2331,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Kekuatan Belajar</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.cognitive.semester1Strengths.map((str: any, idx: any) => (
+                          {comparativeAnalysis.cognitive.semester1Strengths.map((str, idx) => (
                             <li key={idx}>{str}</li>
                           ))}
                         </ul>
@@ -2331,7 +2347,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Kekuatan Belajar</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.cognitive.semester2Strengths.map((str: any, idx: any) => (
+                          {comparativeAnalysis.cognitive.semester2Strengths.map((str, idx) => (
                             <li key={idx}>{str}</li>
                           ))}
                         </ul>
@@ -2369,7 +2385,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Karakter Unggul</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.affective.semester1PositiveCharacters.map((char: any, idx: any) => (
+                          {comparativeAnalysis.affective.semester1PositiveCharacters.map((char, idx) => (
                             <li key={idx}>{char}</li>
                           ))}
                         </ul>
@@ -2385,7 +2401,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Karakter Unggul</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.affective.semester2PositiveCharacters.map((char: any, idx: any) => (
+                          {comparativeAnalysis.affective.semester2PositiveCharacters.map((char, idx) => (
                             <li key={idx}>{char}</li>
                           ))}
                         </ul>
@@ -2423,7 +2439,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Keterampilan Kuat</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.psychomotor.semester1Skills.map((sk: any, idx: any) => (
+                          {comparativeAnalysis.psychomotor.semester1Skills.map((sk, idx) => (
                             <li key={idx}>{sk}</li>
                           ))}
                         </ul>
@@ -2439,7 +2455,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Keterampilan Kuat</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
-                          {comparativeAnalysis.psychomotor.semester2Skills.map((sk: any, idx: any) => (
+                          {comparativeAnalysis.psychomotor.semester2Skills.map((sk, idx) => (
                             <li key={idx}>{sk}</li>
                           ))}
                         </ul>
@@ -2723,7 +2739,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 <p className="text-xs text-slate-500 mb-1 font-medium">Kehadiran Kelas</p>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-green-605 dark:text-green-400">
-                    {studentData.attendanceRecords.filter((a: any) => a.status === 'Hadir').length}
+                    {studentData.attendanceRecords.filter((a) => a.status === 'Hadir').length}
                   </span>
                   <span className="text-sm text-slate-400 font-medium">
                     / {studentData.attendanceRecords.length} hari
@@ -2739,7 +2755,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all p-4 border border-slate-200 dark:border-slate-700">
                 <p className="text-xs text-slate-500 mb-1 font-medium">Pelanggaran</p>
                 <span className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {studentData.violations.reduce((a: any, b: any) => a + b.points, 0)} poin
+                  {studentData.violations.reduce((a, b) => a + b.points, 0)} poin
                 </span>
               </div>
             </div>

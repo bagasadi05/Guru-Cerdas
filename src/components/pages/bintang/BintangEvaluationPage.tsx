@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { useAuth } from '../../../hooks/useAuth';
@@ -49,17 +49,7 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
         selectedClass,
     });
 
-    useEffect(() => {
-        if (selectedClass && selectedMonth) {
-            fetchData();
-        } else {
-            setStudents([]);
-            setEvaluations([]);
-            setViolations([]);
-        }
-    }, [selectedClass, selectedMonth]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
             const { data: studentsData } = await supabase
@@ -80,7 +70,17 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedClass, selectedMonth]);
+
+    useEffect(() => {
+        if (selectedClass && selectedMonth) {
+            fetchData();
+        } else {
+            setStudents([]);
+            setEvaluations([]);
+            setViolations([]);
+        }
+    }, [selectedClass, selectedMonth, fetchData]);
 
     const studentAspectMap = useMemo(() => {
         const map = new Map<string, AspectPointsSummary>();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../../../services/supabase';
 import { bintangService, calculateAspectPoints, BINTANG_THRESHOLDS, type BintangGrade } from '../../../services/bintangService';
 import { CustomDropdown } from '../../ui/CustomDropdown';
@@ -86,16 +86,7 @@ const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) 
         }
     }, [selectedClass]);
 
-    // Fetch historical data
-    useEffect(() => {
-        if (!selectedClass) {
-            setTrendData([]);
-            return;
-        }
-        fetchTrendData();
-    }, [selectedClass, selectedStudent]);
-
-    const fetchTrendData = async () => {
+    const fetchTrendData = useCallback(async () => {
         setIsLoading(true);
         try {
             const months = generatePastMonths(6);
@@ -129,7 +120,16 @@ const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) 
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedClass, selectedStudent]);
+
+    // Fetch historical data
+    useEffect(() => {
+        if (!selectedClass) {
+            setTrendData([]);
+            return;
+        }
+        fetchTrendData();
+    }, [selectedClass, selectedStudent, fetchTrendData]);
 
     // ── Chart computations ────────────────────────────────────────────────
 

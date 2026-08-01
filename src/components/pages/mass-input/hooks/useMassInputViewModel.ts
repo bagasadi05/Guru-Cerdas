@@ -57,7 +57,6 @@ export function useMassInputViewModel() {
         return data.existingGrades.filter(record => record.semester_id === state.subjectGradeInfo.semester);
     }, [data.existingGrades, state.subjectGradeInfo.semester]);
 
-    const studentsWithGrades = useMemo(() => new Set(filteredExistingGrades.map(g => g.student_id)), [filteredExistingGrades]);
     const studentsWithInputScores = useMemo(() => {
         return new Set(Object.entries(state.scores)
             .filter(([, score]) => score.trim() !== '')
@@ -76,7 +75,7 @@ export function useMassInputViewModel() {
         }
         if (state.searchTerm) filtered = filtered.filter(s => s.name.toLowerCase().includes(state.searchTerm.toLowerCase()));
         return filtered;
-    }, [data.studentsData, state.searchTerm, state.studentFilter, studentsWithGrades, studentsWithInputScores, state.selectedStudentIds, state.mode]);
+    }, [data.studentsData, state.searchTerm, state.studentFilter, studentsWithInputScores, state.selectedStudentIds, state.mode]);
 
     const gradedCount = useMemo(() => Object.values(state.scores).filter((s: string) => s && s.trim() !== '').length, [state.scores]);
 

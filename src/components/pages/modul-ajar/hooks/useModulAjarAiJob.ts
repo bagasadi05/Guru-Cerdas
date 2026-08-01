@@ -15,6 +15,7 @@ export function useModulAjarAiJob(
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const pollIntervalRef = useRef<number | null>(null);
+  const pollStatusRef = useRef<() => Promise<void>>(async () => {});
 
   const getFingerprint = () => {
     if (!formState.mataPelajaran || !formState.topik) return '';
@@ -112,6 +113,8 @@ export function useModulAjarAiJob(
     }
   };
 
+  pollStatusRef.current = pollStatus;
+
   const stopPolling = () => {
     if (pollIntervalRef.current) {
       window.clearInterval(pollIntervalRef.current);
@@ -122,7 +125,9 @@ export function useModulAjarAiJob(
   useEffect(() => {
     if (jobStatus === 'pending' || jobStatus === 'processing' || jobStatus === 'retry_wait') {
       if (!pollIntervalRef.current) {
-        pollIntervalRef.current = window.setInterval(pollStatus, 3000);
+        pollIntervalRef.current = window.setInterval(() => {
+          pollStatusRef.current();
+        }, 3000);
       }
     } else {
       stopPolling();

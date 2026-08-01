@@ -12,9 +12,26 @@ import {
     ConflictResolution
 } from '../services/offlineQueue';
 import { supabase } from '../services/supabase';
+import type { Database } from '../services/database.types';
 import { logger } from '../services/logger';
 import { useToast } from './useToast';
 import { beginSyncBypass, endSyncBypass } from '../services/syncBypass';
+
+// Loose query builder shape for dynamic (table-string driven) sync operations.
+type SyncRow = Record<string, unknown>;
+type LooseResult = { data: SyncRow | null; error: { message: string } | null };
+
+interface LooseQueryBuilder {
+    select(columns?: string): LooseQueryBuilder;
+    insert(values: SyncRow): LooseQueryBuilder;
+    update(values: SyncRow): LooseQueryBuilder;
+    delete(): LooseQueryBuilder;
+    eq(column: string, value: unknown): LooseQueryBuilder & PromiseLike<LooseResult>;
+    single(): LooseQueryBuilder & PromiseLike<LooseResult>;
+}
+
+const tableQuery = (table: string): LooseQueryBuilder =>
+    supabase.from(table as keyof Database['public']['Tables']) as unknown as LooseQueryBuilder;
 
 // ============================================
 // OFFLINE SYNC HOOK
@@ -23,7 +40,7 @@ import { beginSyncBypass, endSyncBypass } from '../services/syncBypass';
 interface UseOfflineSyncOptions {
     autoSync?: boolean;
     conflictStrategy?: ConflictResolution;
-    onConflict?: (itemId: string, local: any, server: any) => Promise<any>;
+    onConflict?: (itemId: string, local: SyncRow, server: SyncRow) => Promise<SyncRow & { needsManualResolution?: boolean }>;
     onSyncComplete?: (results: SyncResult[]) => void;
     onError?: (error: Error) => void;
 }
@@ -42,7 +59,7 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
     const [queue, setQueue] = useState<QueueItem[]>([]);
     const [isSyncing, setIsSyncing] = useState(false);
     const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
-    const [conflicts, setConflicts] = useState<{ itemId: string; local: any; server: any }[]>([]);
+    const [conflicts, setConflicts] = useState<{ itemId: string; local: SyncRow; server: SyncRow }[]>([]);
 
     const syncInProgressRef = useRef(false);
 
@@ -76,7 +93,7 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
                         setConflicts(prev => [...prev, {
                             itemId: item.id,
                             local: item.data,
-                            server: result.serverData
+                            server: result.serverData ?? {}
                         }]);
                     }
 
@@ -140,7 +157,7 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
     const addToQueue = useCallback(async (
         type: 'CREATE' | 'UPDATE' | 'DELETE',
         table: string,
-        data: any,
+        data: SyncRow,
         priority?: number
     ): Promise<string> => {
         const id = await offlineQueue.add(type, table, data, priority);
@@ -202,7 +219,7 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
 async function syncItem(
     item: QueueItem,
     conflictStrategy: ConflictResolution,
-    onConflict?: (itemId: string, local: any, server: any) => Promise<any>
+    onConflict?: (itemId: string, local: SyncRow, server: SyncRow) => Promise<SyncRow & { needsManualResolution?: boolean }>
 ): Promise<SyncResult> {
     beginSyncBypass();
     try {
@@ -211,8 +228,8 @@ async function syncItem(
 
         if (!sessionData.session) {
             logger.info('Session is null during hook replay, keeping pending', 'OfflineSync', { id: item.id });
-            const sessionError = new Error('SESSION_NULL');
-            (sessionError as any).code = 'SESSION_NULL';
+            const sessionError = new Error('SESSION_NULL') as Error & { code: string };
+            sessionError.code = 'SESSION_NULL';
             throw sessionError;
         }
 
@@ -223,8 +240,8 @@ async function syncItem(
             const otherUserIds = new Set(queue.map(q => q.userId).filter((uid): uid is string => !!uid));
             if (otherUserIds.size > 0 && !otherUserIds.has(currentUserId!)) {
                 logger.warn('Ambiguous owners for legacy queue item, keeping pending', 'OfflineSync', { id: item.id });
-                const authError = new Error('USER_AMBIGUOUS');
-                (authError as any).code = 'USER_AMBIGUOUS';
+                const authError = new Error('USER_AMBIGUOUS') as Error & { code: string };
+                authError.code = 'USER_AMBIGUOUS';
                 throw authError;
             }
         } else if (item.userId !== currentUserId) {
@@ -233,8 +250,8 @@ async function syncItem(
                 mutationUserId: item.userId, 
                 currentUserId 
             });
-            const authError = new Error('USER_MISMATCH');
-            (authError as any).code = 'USER_MISMATCH';
+            const authError = new Error('USER_MISMATCH') as Error & { code: string };
+            authError.code = 'USER_MISMATCH';
             throw authError;
         }
 
@@ -242,8 +259,7 @@ async function syncItem(
 
         // Check for conflicts (for UPDATE operations)
         if (type === 'UPDATE' && data.id) {
-            const { data: serverData, error: fetchError } = await (supabase
-                .from(table as any) as any)
+            const { data: serverData, error: fetchError } = await tableQuery(table)
                 .select('*')
                 .eq('id', data.id)
                 .single();
@@ -274,36 +290,36 @@ async function syncItem(
         }
 
         // Perform the operation
-        let result: any;
-        let error: any;
+        let result: SyncRow | null = null;
+        let error: { message: string } | null = null;
 
         switch (type) {
             case 'CREATE': {
                 const { id: _, ...createData } = data;
-                ({ data: result, error } = await (supabase
-                    .from(table as any) as any)
+                const res = await tableQuery(table)
                     .insert(createData)
                     .select()
-                    .single());
+                    .single();
+                result = res.data;
+                error = res.error;
                 break;
             }
 
             case 'UPDATE': {
                 const { _localTimestamp, ...updateData } = data;
-                ({ data: result, error } = await (supabase
-                    .from(table as any) as any)
+                const res = await tableQuery(table)
                     .update(updateData)
                     .eq('id', data.id)
                     .select()
-                    .single());
+                    .single();
+                result = res.data;
+                error = res.error;
                 break;
             }
 
             case 'DELETE': {
-                ({ error } = await (supabase
-                    .from(table as any) as any)
-                    .delete()
-                    .eq('id', data.id));
+                const res = await tableQuery(table).delete().eq('id', data.id);
+                error = res.error;
                 result = { deleted: true };
                 break;
             }
@@ -318,7 +334,7 @@ async function syncItem(
         return {
             success: true,
             item,
-            serverData: result
+            serverData: result ?? undefined
         };
     } finally {
         endSyncBypass();

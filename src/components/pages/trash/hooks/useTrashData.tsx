@@ -193,54 +193,65 @@ export const sortOptions: { value: SortOption; label: string }[] = [
     { value: 'name_desc', label: 'Nama Z-A' },
 ];
 
+// Safely read a string field from soft-deleted item payloads.
+const field = (data: Record<string, unknown>, ...keys: string[]): string => {
+    for (const key of keys) {
+        const value = data[key];
+        if (value !== null && value !== undefined && value !== '') {
+            return String(value);
+        }
+    }
+    return '';
+};
+
 // Get display name for an item
 export function getItemDisplayName(item: DeletedItem): string {
     const data = item.data;
     switch (item.entity) {
         case 'students':
-            return data.name || data.nama || 'Siswa';
+            return field(data, 'name', 'nama') || 'Siswa';
         case 'classes':
-            return data.name || data.nama || 'Kelas';
+            return field(data, 'name', 'nama') || 'Kelas';
         case 'attendance':
-            return `Absensi ${data.date || data.tanggal || ''}`;
+            return `Absensi ${field(data, 'date', 'tanggal')}`;
         case 'tasks':
-            return data.title || data.judul || 'Tugas';
+            return field(data, 'title', 'judul') || 'Tugas';
         case 'violations':
-            return data.description || data.jenis || 'Pelanggaran';
+            return field(data, 'description', 'jenis') || 'Pelanggaran';
         case 'quiz_points':
-            return data.activity || data.keterangan || 'Poin';
+            return field(data, 'activity', 'keterangan') || 'Poin';
         case 'academic_records':
-            return data.subject || data.mapel || 'Nilai';
+            return field(data, 'subject', 'mapel') || 'Nilai';
         case 'reports':
-            return data.title || data.judul || 'Laporan';
+            return field(data, 'title', 'judul') || 'Laporan';
         case 'schedules':
-            return `${data.subject || ''} ${data.day || ''}`;
+            return `${field(data, 'subject')} ${field(data, 'day')}`.trim();
         case 'communications':
-            return data.message?.substring(0, 50) || 'Komunikasi';
+            return field(data, 'message').substring(0, 50) || 'Komunikasi';
         case 'homework':
-            return data.title || data.judul || 'PR';
+            return field(data, 'title', 'judul') || 'PR';
         case 'extracurriculars':
-            return data.name || data.nama || 'Ekskul';
+            return field(data, 'name', 'nama') || 'Ekskul';
         case 'student_extracurriculars':
             return 'Anggota Ekskul';
         case 'extracurricular_attendance':
-            return `Absensi ${data.date || ''}`;
+            return `Absensi ${field(data, 'date')}`;
         case 'extracurricular_grades':
-            return `${data.grade || ''} - ${data.student_name || ''}`;
+            return `${field(data, 'grade')} - ${field(data, 'student_name')}`;
         case 'extracurricular_students':
-            return data.name || 'Siswa Ekskul';
+            return field(data, 'name') || 'Siswa Ekskul';
         case 'student_achievements':
-            return data.title || data.judul || 'Prestasi';
+            return field(data, 'title', 'judul') || 'Prestasi';
         case 'student_development_analyses':
             return 'Analisis Perkembangan';
         case 'school_info':
-            return data.school_name || 'Info Sekolah';
+            return field(data, 'school_name') || 'Info Sekolah';
         case 'announcements':
-            return data.title || data.judul || 'Pengumuman';
+            return field(data, 'title', 'judul') || 'Pengumuman';
         case 'academic_years':
-            return data.name || 'Tahun Ajaran';
+            return field(data, 'name') || 'Tahun Ajaran';
         case 'semesters':
-            return data.name || 'Semester';
+            return field(data, 'name') || 'Semester';
         case 'user_settings':
             return 'Pengaturan User';
         default:
@@ -253,39 +264,39 @@ export function getItemSubtitle(item: DeletedItem): string {
     const data = item.data;
     switch (item.entity) {
         case 'students':
-            return data.class_name || data.nis || '';
+            return field(data, 'class_name', 'nis');
         case 'classes':
-            return `${data.student_count || 0} siswa`;
+            return `${field(data, 'student_count') || 0} siswa`;
         case 'attendance':
-            return data.status || '';
+            return field(data, 'status');
         case 'tasks':
-            return data.due_date || data.deadline || '';
+            return field(data, 'due_date', 'deadline');
         case 'violations':
-            return `${data.points || 0} poin`;
+            return `${field(data, 'points') || 0} poin`;
         case 'quiz_points':
-            return `${data.points || 0} poin`;
+            return `${field(data, 'points') || 0} poin`;
         case 'academic_records':
-            return data.assessment_name || data.keterangan || '';
+            return field(data, 'assessment_name', 'keterangan');
         case 'reports':
-            return data.category || '';
+            return field(data, 'category');
         case 'schedules':
-            return `${data.start_time || ''}-${data.end_time || ''}`;
+            return `${field(data, 'start_time')}-${field(data, 'end_time')}`;
         case 'communications':
-            return data.sender || '';
+            return field(data, 'sender');
         case 'homework':
-            return data.subject || '';
+            return field(data, 'subject');
         case 'extracurriculars':
-            return data.category || '';
+            return field(data, 'category');
         case 'student_achievements':
-            return `${data.category || ''} - ${data.level || ''}`;
+            return `${field(data, 'category')} - ${field(data, 'level')}`;
         case 'school_info':
-            return data.school_address || '';
+            return field(data, 'school_address');
         case 'announcements':
-            return data.date || '';
+            return field(data, 'date');
         case 'academic_years':
-            return `${data.start_date || ''} - ${data.end_date || ''}`;
+            return `${field(data, 'start_date')} - ${field(data, 'end_date')}`;
         case 'semesters':
-            return `${data.semester_number || ''}`;
+            return field(data, 'semester_number');
         default:
             return '';
     }
@@ -293,7 +304,7 @@ export function getItemSubtitle(item: DeletedItem): string {
 
 export function getViolationRiskBadge(item: DeletedItem): string | null {
     if (item.entity !== 'violations') return null;
-    const points = Number(item.data?.points ?? 0);
+    const points = Number(field(item.data, 'points') || 0);
     if (Number.isNaN(points)) return null;
     return points >= 50 ? 'Risiko Tinggi' : null;
 }
