@@ -17,12 +17,24 @@ describe('avatarUtils', () => {
         expect(resolved).not.toContain('i.pravatar.cc');
     });
 
-    it('keeps uploaded custom avatar URLs (via low-res proxy)', () => {
-        const uploadedUrl = 'https://fddvcyqbfqydvsfujcxd.supabase.co/storage/v1/object/public/avatars/student.png';
+    it.each([
+        ['sm', 96, 80],
+        ['md', 256, 80],
+        ['lg', 512, 85],
+    ])('proxy URL uses size=%s → w=%d q=%d', (size, w, q) => {
+        const uploadedUrl = 'https://example.com/avatar.jpg';
+        const expected = `https://images.weserv.nl/?url=${encodeURIComponent(uploadedUrl)}&w=${w}&h=${w}&fit=cover&q=${q}`;
+        expect(getStudentAvatar(uploadedUrl, 'Perempuan', 'student-2', 'Aisyah', size as any)).toBe(expected);
+    });
 
-        // Custom avatars are routed through getOptimizedUrl (weserv.nl 96x96 proxy)
-        const expected = `https://images.weserv.nl/?url=${encodeURIComponent(uploadedUrl)}&w=96&h=96&fit=cover&q=60`;
+    it('defaults to md (256px) when no size is passed', () => {
+        const uploadedUrl = 'https://example.com/avatar.jpg';
+        const expected = `https://images.weserv.nl/?url=${encodeURIComponent(uploadedUrl)}&w=256&h=256&fit=cover&q=80`;
+        expect(getStudentAvatar(uploadedUrl)).toBe(expected);
+    });
 
-        expect(getStudentAvatar(uploadedUrl, 'Perempuan', 'student-2', 'Aisyah')).toBe(expected);
+    it('returns original URL for non-http strings (data URIs)', () => {
+        const dataUri = 'data:image/svg+xml;charset=UTF-8,...';
+        expect(getStudentAvatar(dataUri)).toBe(dataUri);
     });
 });

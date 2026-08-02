@@ -291,7 +291,7 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
                     <div className="rounded-[28px] border border-white/12 bg-white/10 p-5 shadow-2xl backdrop-blur-md sm:p-7">
                         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
                             <img
-                                src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name)}
+                                src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name, 'md')}
                                 alt={student.name}
                                 className="h-20 w-20 rounded-[24px] border-4 border-white/20 object-cover shadow-xl bg-slate-200 sm:h-24 sm:w-24"
                             />

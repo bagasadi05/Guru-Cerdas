@@ -202,7 +202,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                         <span className="hidden lg:block text-slate-300 dark:text-slate-600 font-bold font-mono w-8 text-right flex-shrink-0 text-sm">{index + 1}</span>
                                         <div className="relative">
                                             <img
-                                                src={getStudentAvatar(null, null, enrollment.participantId, enrollment.name)}
+                                                src={getStudentAvatar(null, null, enrollment.participantId, enrollment.name, 'sm')}
                                                 alt={enrollment.name}
                                                 loading="lazy"
                                                 decoding="async"

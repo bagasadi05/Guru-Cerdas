@@ -82,29 +82,49 @@ export const getDefaultAvatar = (gender?: string | null, studentId?: string): st
 };
 
 /**
- * Get optimized avatar URL using a global proxy to save data
+ * Ukuran avatar untuk srcset. Gunakan sesuai konteks tampilan:
+ * - 'sm' (96px)  : tabel, grid thumbnail, list, dropdown (avatar kecil)
+ * - 'md' (256px) : header profil, detail siswa, kartu (default)
+ * - 'lg' (512px) : preview besar, cetak (jarang dipakai)
  */
-const getOptimizedUrl = (url: string): string => {
+export type AvatarSize = 'sm' | 'md' | 'lg';
+
+const AVATAR_SIZES: Record<AvatarSize, { w: number; h: number; q: number }> = {
+  sm: { w: 96, h: 96, q: 80 },
+  md: { w: 256, h: 256, q: 80 },
+  lg: { w: 512, h: 512, q: 85 },
+};
+
+/**
+ * Get optimized avatar URL using a global proxy to save data.
+ * @param url - Original image URL
+ * @param size - Target size: 'sm' (96px), 'md' (256px), 'lg' (512px). Default 'md'.
+ */
+const getOptimizedUrl = (url: string, size: AvatarSize = 'md'): string => {
     // Only optimize real absolute URLs (not data URIs)
     if (url && url.startsWith('http')) {
-        // Compress to 96x96, 60% quality, cover fit
-        return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=96&h=96&fit=cover&q=60`;
+        const { w, h, q } = AVATAR_SIZES[size];
+        return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=${w}&h=${h}&fit=cover&q=${q}`;
     }
     return url;
 };
 
 /**
- * Get student avatar URL with fallback to gendered default
+ * Get student avatar URL with fallback to gendered default.
+ * Supports srcset-style sizing: 'sm' (96px) for lists/tables, 'md' (256px) for headers.
  * @param avatarUrl - Student's custom avatar URL
  * @param gender - Student's gender
  * @param studentId - Student ID for unique default avatar
+ * @param studentName - Student name for initials
+ * @param size - Target proxy size: 'sm' | 'md' | 'lg'. Default 'md'.
  * @returns Final avatar URL to display
  */
 export const getStudentAvatar = (
     avatarUrl?: string | null,
     gender?: string | null,
     studentId?: string,
-    studentName?: string
+    studentName?: string,
+    size: AvatarSize = 'md'
 ): string => {
     if (avatarUrl && GENERATED_AVATAR_HOSTS.some((host) => avatarUrl.includes(host))) {
         return createLocalAvatar({ gender, seed: studentId || studentName, name: studentName || studentId });
@@ -112,7 +132,7 @@ export const getStudentAvatar = (
 
     // If has custom avatar and not empty, use it (optimized for data saving)
     if (avatarUrl && avatarUrl.trim() !== '') {
-        return getOptimizedUrl(avatarUrl);
+        return getOptimizedUrl(avatarUrl, size);
     }
 
     // Otherwise use gendered default avatar

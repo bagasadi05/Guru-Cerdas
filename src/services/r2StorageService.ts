@@ -71,31 +71,14 @@ class R2StorageService {
       );
     }
 
-    // --- Client-side image compression for image uploads ---
-    let fileToUpload = file;
-    if (file.type.startsWith('image/') && folder !== 'teaching_journals') {
-      try {
-        const { default: imageCompression } = await import('browser-image-compression');
-        const maxWidth = folder === 'violations' || folder === 'achievement_certificates' ? 1200 : 800;
-        const compressed = await imageCompression(file, {
-          maxSizeMB: folder === 'violations' ? 2 : 1,
-          maxWidthOrHeight: maxWidth,
-          // Running in a worker makes the library load its default jsDelivr
-          // worker script, which is intentionally blocked by the app CSP.
-          useWebWorker: false,
-          initialQuality: 0.8,
-        });
-        fileToUpload = compressed;
-      } catch (e) {
-        console.warn('Image compression failed, uploading original:', e);
-      }
-    }
-
-    // Validate the processed output, not the original camera file. This lets a
-    // photo within the UI limit be resized/compressed before it reaches R2.
-    if (fileToUpload.size > MAX_SIZES[folder]) {
+    // --- Image compression is handled by ImageUploader (canvas resize + crop
+    //     + JPEG quality) before the file reaches this service. Do NOT compress
+    //     again here — double compression degrades quality and the second pass
+    //     can't improve the first.
+    //     Only validate the file size directly.
+    if (file.size > MAX_SIZES[folder]) {
       throw new Error(
-        `File terlalu besar untuk ${folder} setelah dikompresi. Maksimal ${MAX_SIZES[folder] / 1024 / 1024}MB`
+        `File terlalu besar untuk ${folder}. Maksimal ${MAX_SIZES[folder] / 1024 / 1024}MB`
       );
     }
 
@@ -105,7 +88,7 @@ class R2StorageService {
     const uploadBody = new FormData();
     uploadBody.append('action', 'upload');
     uploadBody.append('folder', folder);
-    uploadBody.append('file', fileToUpload, fileToUpload.name);
+    uploadBody.append('file', file, file.name);
 
     const { data, error } = await supabase.functions.invoke<UploadResponse>('r2-storage', {
       body: uploadBody,

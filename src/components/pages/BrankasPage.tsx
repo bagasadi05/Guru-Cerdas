@@ -481,7 +481,7 @@ const BrankasPage: React.FC = () => {
                       }`}
                     >
                       <img
-                        src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name)}
+                        src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name, 'sm')}
                         alt="Avatar"
                         className="w-10 h-10 rounded-xl object-cover border-2 border-white dark:border-white/10"
                       />
@@ -515,7 +515,7 @@ const BrankasPage: React.FC = () => {
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100 dark:border-white/5">
                     <div className="flex items-center gap-3">
                       <img
-                        src={getStudentAvatar(selectedStudent.avatar_url, selectedStudent.gender, selectedStudent.id, selectedStudent.name)}
+                        src={getStudentAvatar(selectedStudent.avatar_url, selectedStudent.gender, selectedStudent.id, selectedStudent.name, 'md')}
                         alt="Avatar"
                         className="w-14 h-14 rounded-2xl object-cover border-2 border-slate-200 dark:border-white/20 shadow-md"
                       />

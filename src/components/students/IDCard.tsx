@@ -37,7 +37,7 @@ export const IDCard: React.FC<IDCardProps> = ({ student, className = 'VII-A', sc
                     {/* Photo */}
                     <div className="w-20 h-24 bg-gray-200 rounded-lg overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
                         <img
-                            src={getStudentAvatar(student.avatar_url, student.gender, student.id)}
+                            src={getStudentAvatar(student.avatar_url, student.gender, student.id, undefined, 'md')}
                             alt={student.name}
                             className="w-full h-full object-cover"
                         />

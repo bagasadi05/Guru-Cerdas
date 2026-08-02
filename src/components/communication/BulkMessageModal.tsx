@@ -254,7 +254,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                                 className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                             />
                                             <img
-                                                src={getStudentAvatar(student.avatar_url, student.gender, student.id)}
+                                                src={getStudentAvatar(student.avatar_url, student.gender, student.id, undefined, 'sm')}
                                                 alt={student.name}
                                                 className="w-8 h-8 rounded-full object-cover"
                                             />

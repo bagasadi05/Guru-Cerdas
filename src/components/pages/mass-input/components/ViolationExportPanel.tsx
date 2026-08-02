@@ -29,7 +29,7 @@ const StudentAvatar: React.FC<{
     studentId?: string;
 }> = ({ name, avatarUrl, gender, studentId }) => {
     const [imgError, setImgError] = useState(false);
-    const resolvedAvatar = getStudentAvatar(avatarUrl, gender, studentId, name);
+    const resolvedAvatar = getStudentAvatar(avatarUrl, gender, studentId, name, 'sm');
 
     return imgError ? (
         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-600 to-brand-700 flex items-center justify-center text-white font-bold text-sm shrink-0">

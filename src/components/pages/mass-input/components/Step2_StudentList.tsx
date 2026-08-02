@@ -233,7 +233,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                 <div className="relative">
                                                                     <div className="absolute inset-0 bg-green-500 blur-md opacity-0 group-hover:opacity-30 transition-opacity rounded-full"></div>
                                                                     <img
-                                                                        src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name)}
+                                                                        src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name, 'sm')}
                                                                         alt={s.name}
                                                                         className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10 relative z-10"
                                                                     />
@@ -336,7 +336,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                             className="w-6 h-6 border-white/30 data-[state=checked]:bg-brand-600 data-[state=checked]:border-brand-500"
                                                         />
                                                     <img
-                                                        src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name)}
+                                                        src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name, 'sm')}
                                                         alt={s.name}
                                                         className="w-14 h-14 rounded-full object-cover ring-2 ring-slate-200 dark:ring-white/20 shadow-md"
                                                     />

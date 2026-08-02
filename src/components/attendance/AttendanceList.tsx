@@ -94,7 +94,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                             <span className="hidden lg:block text-slate-300 dark:text-slate-600 font-bold font-mono w-6 text-right flex-shrink-0 text-sm">{index + 1}</span>
                             <div className="relative">
                                 <img
-                                    src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name)}
+                                    src={getStudentAvatar(student.avatar_url, student.gender, student.id, student.name, 'sm')}
                                     alt={student.name}
                                     loading="lazy"
                                     decoding="async"

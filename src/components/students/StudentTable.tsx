@@ -75,7 +75,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-4">
                                         <img
-                                            src={getStudentAvatar(student.avatar_url, student.gender, student.id)}
+                                            src={getStudentAvatar(student.avatar_url, student.gender, student.id, undefined, 'sm')}
                                             alt=""
                                             loading="lazy"
                                             decoding="async"
@@ -158,8 +158,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                         aria-label={`Menu aksi ${student.name}`}
                     >
                         <div className="relative flex-shrink-0">
-                            <img
-                                src={getStudentAvatar(student.avatar_url, student.gender, student.id)}
+                            <img                                        src={getStudentAvatar(student.avatar_url, student.gender, student.id, undefined, 'sm')}
                                 alt={student.name}
                                 loading="lazy"
                                 decoding="async"

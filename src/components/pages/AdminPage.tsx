@@ -21,6 +21,7 @@ import {
 import { supabase } from '../../services/supabase';
 import { softDelete } from '../../services/SoftDeleteService';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
 
 // Import from admin module
 import {
@@ -64,6 +65,7 @@ const sanitizeSearchTerm = (value: string) => value.replace(/[^\p{L}\p{N}\s@._-]
 
 const AdminPage: React.FC = () => {
     const { user, loading: authLoading } = useAuth();
+    const toast = useToast();
     const navigate = useNavigate();
 
     // Core State
@@ -302,7 +304,11 @@ const AdminPage: React.FC = () => {
             if (error) throw error;
             setAnnouncements(data || []);
         } catch (err) {
+            // Surface RLS/SELECT failures so missing policies are detectable
+            // instead of being silently swallowed.
+            const message = (err as Error)?.message || 'Gagal memuat pengumuman';
             console.error('Announcements fetch error:', err);
+            toast.error(`Gagal memuat pengumuman: ${message}`, { duration: 6000 });
             setAnnouncements([]);
         } finally {
             setAnnouncementsLoading(false);
@@ -577,6 +583,9 @@ const AdminPage: React.FC = () => {
             fetchAnnouncements();
             fetchActivityLogs();
         } catch (err: unknown) {
+            // Keep the visible alert (already surfaced) and log full detail
+            // so RLS/INSERT policy failures are traceable.
+            console.error('Create announcement error:', err);
             alert('Error: ' + (err as Error).message);
         }
     };

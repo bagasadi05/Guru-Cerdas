@@ -47,7 +47,7 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                         <div className="px-3 sm:px-5 pb-4 sm:pb-6 flex flex-col items-center -mt-10 sm:-mt-14">
                             <div className="relative">
                                 <img
-                                    src={getStudentAvatar(student.avatar_url, student.gender, student.id)}
+                                    src={getStudentAvatar(student.avatar_url, student.gender, student.id, undefined, 'md')}
                                     alt={student.name}
                                     loading="lazy"
                                     decoding="async"
