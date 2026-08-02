@@ -32,7 +32,7 @@ const TrashPage: React.FC = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
                 <div className="text-center">
-                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mx-auto" />
+                    <Loader2 className="w-10 h-10 text-brand-500 animate-spin mx-auto" />
                     <p className="mt-4 text-slate-500 dark:text-slate-400">Memuat item yang dihapus...</p>
                 </div>
             </div>
@@ -46,7 +46,7 @@ const TrashPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg shadow-red-500/20">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/20">
                                 <Trash2 className="w-6 h-6 text-white" />
                             </div>
                             <div>

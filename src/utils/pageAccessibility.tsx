@@ -100,7 +100,7 @@ export const SkipToMainContent: React.FC = () => {
     return (
         <a
             href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded-lg focus:shadow-lg"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-brand-600 focus:text-white focus:rounded-lg focus:shadow-lg"
         >
             Lewati ke konten utama
         </a>
@@ -248,8 +248,8 @@ export function AccessibleTable<T>({
                                 className={`
                                     border-b border-slate-100 dark:border-slate-800
                                     ${onRowClick ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50' : ''}
-                                    ${selectedIndex === index ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}
-                                    focus:outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/20
+                                    ${selectedIndex === index ? 'bg-brand-50 dark:bg-brand-900/20' : ''}
+                                    focus:outline-none focus:bg-brand-50 dark:focus:bg-brand-900/20
                                 `}
                             >
                                 {columns.map((col) => (
@@ -325,7 +325,7 @@ export function AccessibleList<T>({
                         }
                     }}
                     className={`
-                        ${onItemClick ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500' : ''}
+                        ${onItemClick ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500' : ''}
                         ${itemClassName}
                     `}
                 >
@@ -395,7 +395,7 @@ export const AccessibleIconButton: React.FC<AccessibleIconButtonProps> = ({
     };
 
     const variantClasses = {
-        default: 'bg-indigo-600 text-white hover:bg-indigo-700',
+        default: 'bg-brand-600 text-white hover:bg-brand-700',
         ghost: 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800',
         outline: 'border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800',
     };
@@ -407,7 +407,7 @@ export const AccessibleIconButton: React.FC<AccessibleIconButtonProps> = ({
             title={label}
             className={`
                 inline-flex items-center justify-center rounded-lg transition-colors
-                focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
                 ${sizeClasses[size]}
                 ${variantClasses[variant]}
                 ${className}
@@ -443,7 +443,7 @@ export const AccessibleLoading: React.FC<AccessibleLoadingProps> = ({
             aria-label={message}
             className={`flex items-center justify-center gap-2 ${className}`}
         >
-            <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
             <span className="text-sm text-slate-600 dark:text-slate-400">{message}</span>
         </div>
     );

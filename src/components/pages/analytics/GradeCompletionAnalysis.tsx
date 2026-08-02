@@ -392,7 +392,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                                 aria-label="Hanya tampilkan Penilaian Harian"
                             />
                             <span
-                                className="w-10 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer-checked:bg-indigo-600 transition-colors"
+                                className="w-10 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer-checked:bg-brand-600 transition-colors"
                                 aria-hidden
                             />
                             <span
@@ -524,8 +524,8 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                                 className={`h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r ${completionPercentage >= 80
                                     ? 'from-emerald-500 to-emerald-600'
                                     : completionPercentage >= 50
-                                        ? 'from-amber-400 to-amber-500'
-                                        : 'from-rose-500 to-rose-600'
+                                        ? 'from-amber-500 to-orange-600'
+                                        : 'from-rose-500 to-red-600'
                                     }`}
                                 style={{ width: `${completionPercentage}%` }}
                             />
@@ -600,7 +600,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="h-7 px-2 text-xs"
+                                                className="min-h-[44px] px-2 text-xs"
                                                 onClick={() => handleOpenInput(items[0].class_id)}
                                             >
                                                 Input untuk kelas ini
@@ -628,7 +628,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                                                             </p>
                                                         )}
                                                 </div>
-                                                <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
+                                                <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
                                                     Belum
                                                 </span>
                                             </li>

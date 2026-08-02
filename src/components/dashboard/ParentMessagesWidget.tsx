@@ -187,7 +187,7 @@ const ParentMessagesWidget: React.FC = () => {
                                                 className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-800 shadow-sm"
                                             />
                                         ) : (
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-700 to-emerald-800 flex items-center justify-center text-white font-bold text-sm">
                                                 {msg.student_name.charAt(0).toUpperCase()}
                                             </div>
                                         )}

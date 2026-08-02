@@ -1,7 +1,7 @@
 import { cleanupOutdatedCaches, precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
 import { clientsClaim } from 'workbox-core';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
-import { NetworkFirst, CacheFirst, StaleWhileRevalidate, NetworkOnly } from 'workbox-strategies';
+import { NetworkFirst, CacheFirst, NetworkOnly } from 'workbox-strategies';
 import { BackgroundSyncPlugin } from 'workbox-background-sync';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
@@ -109,30 +109,18 @@ registerRoute(
     })
 );
 
-// Cache Google Fonts stylesheets
-registerRoute(
-    ({ url }) => url.origin === 'https://fonts.googleapis.com',
-    new StaleWhileRevalidate({
-        cacheName: 'google-fonts-stylesheets',
-    })
-);
-
-// Cache Google Fonts webfont files
-registerRoute(
-    ({ url }) => url.origin === 'https://fonts.gstatic.com',
-    new CacheFirst({
-        cacheName: 'google-fonts-webfonts',
-        plugins: [
-            new CacheableResponsePlugin({
-                statuses: [0, 200],
-            }),
-            new ExpirationPlugin({
-                maxEntries: 30,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-            }),
-        ],
-    })
-);
+// NOTE: Google Fonts CDN cache routes removed — fonts are self-hosted via
+// @fontsource (src/styles/fonts.css) and precached as assets/fonts/*.woff2,
+// so the CDN origins are never requested and these routes were dead code.
+// Clean up the old CDN caches left behind by previous service worker versions.
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        Promise.all([
+            caches.delete('google-fonts-stylesheets'),
+            caches.delete('google-fonts-webfonts'),
+        ])
+    );
+});
 
 // Cache images
 registerRoute(

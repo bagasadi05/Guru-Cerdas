@@ -107,7 +107,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                             </button>
                                         </div>
                                     ) : (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-medium border border-amber-200 dark:border-amber-900/30">
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-xs font-medium border border-amber-200 dark:border-amber-900/30">
                                             <KeyRoundIcon className="w-3 h-3" />
                                             Butuh Kode
                                         </span>

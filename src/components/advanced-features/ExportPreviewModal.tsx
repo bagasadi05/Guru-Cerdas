@@ -85,7 +85,7 @@ export function ExportPreviewModal<T>({
                   onClick={() => setSelectedFormat(format.value)}
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${
                     selectedFormat === format.value
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30'
+                      ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-900/30'
                       : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'
                   }`}
                 >
@@ -105,8 +105,8 @@ export function ExportPreviewModal<T>({
                   onClick={() => toggleColumn(column.key)}
                   className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${
                     selectedColumns.has(column.key)
-                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300'
-                      : 'bg-slate-100 text-slate-500 dark:bg-slate-800'
+                      ? 'bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300'
+                      : 'bg-slate-100 text-slate-600 dark:bg-slate-800'
                   }`}
                 >
                   {selectedColumns.has(column.key) && <Check className="h-3 w-3" />}
@@ -172,7 +172,7 @@ export function ExportPreviewModal<T>({
             <button type="button"
               onClick={handleExport}
               disabled={isExporting || selectedColumns.size === 0}
-              className="flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-white hover:bg-indigo-600 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               Ekspor

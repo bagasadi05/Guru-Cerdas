@@ -180,7 +180,7 @@ For branded/interactive elements:
 | Shade | Hex | Use Case |
 |-------|-----|----------|
 | 50 | `#eef2ff` | Light accent backgrounds |
-| **500** | `#6366f1` | **Accent highlights, links** |
+| **500** | `#179cb9` | **Brand accent (LAGUNA), links** |
 | 600 | `#4f46e5` | Active accent states |
 
 ### Neutral Palette (Slate)

@@ -303,7 +303,7 @@ export const ReportPageSkeleton: React.FC = () => (
             </header>
 
             {/* Preview Content Skeleton */}
-            <main className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center custom-scrollbar bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-950">
+            <main className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center custom-scrollbar bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950">
                 <div className="w-full md:w-[210mm] md:min-h-[297mm] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xl rounded-2xl p-6 md:p-[20mm] border border-slate-200 dark:border-slate-700 space-y-6">
                     {/* Header Letterhead */}
                     <div className="border border-slate-300 dark:border-slate-700 rounded-2xl p-4 md:p-5 flex items-center gap-4">

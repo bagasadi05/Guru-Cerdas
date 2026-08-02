@@ -49,10 +49,10 @@ const NotFoundPage: React.FC = () => {
           transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.2, ...easing.spring }}
         >
           {/* Glowing circle background */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500/20 to-violet-500/20 dark:from-indigo-500/30 dark:to-violet-500/30 animate-pulse" />
-          <div className="absolute inset-3 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/50 dark:to-violet-900/50 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-brand-500/20 to-brand-600/20 dark:from-brand-500/30 dark:to-brand-600/30 animate-pulse" />
+          <div className="absolute inset-3 rounded-full bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/50 dark:to-brand-900/50 flex items-center justify-center">
             <MotionSpan
-              className="text-6xl font-black bg-gradient-to-br from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent"
+              className="text-6xl font-black bg-gradient-to-br from-brand-600 to-brand-700 dark:from-brand-400 dark:to-brand-500 bg-clip-text text-transparent"
               animate={shouldReduceMotion ? { rotateY: 0 } : { rotateY: [0, 10, -10, 0] }}
               transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: Infinity, repeatDelay: 2 }}
             >
@@ -63,7 +63,7 @@ const NotFoundPage: React.FC = () => {
           {PARTICLES_STATIC_DATA.map((p, i) => (
             <MotionDiv
               key={i}
-              className="absolute w-2 h-2 rounded-full bg-indigo-400/40 dark:bg-indigo-400/60"
+              className="absolute w-2 h-2 rounded-full bg-brand-400/40 dark:bg-brand-400/60"
               style={{
                 top: p.top,
                 left: p.left,
@@ -103,7 +103,7 @@ const NotFoundPage: React.FC = () => {
         >
           <button type="button"
             onClick={() => navigate('/dashboard', { replace: true })}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:-translate-y-0.5"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl font-semibold shadow-lg shadow-brand-600/25 hover:shadow-brand-600/40 transition-all duration-300 hover:-translate-y-0.5"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -139,7 +139,7 @@ const NotFoundPage: React.FC = () => {
                 />
                 <circle
                   cx="16" cy="16" r="14"
-                  className="stroke-indigo-500"
+                  className="stroke-brand-500"
                   strokeWidth="2"
                   fill="none"
                   strokeDasharray={`${(countdown / AUTO_REDIRECT_SECONDS) * 88} 88`}
@@ -147,7 +147,7 @@ const NotFoundPage: React.FC = () => {
                   style={{ transition: 'stroke-dasharray 1s linear' }}
                 />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+              <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-brand-600 dark:text-brand-400">
                 {countdown}
               </span>
             </div>

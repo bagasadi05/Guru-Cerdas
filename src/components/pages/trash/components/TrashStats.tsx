@@ -19,12 +19,12 @@ export const TrashStats: React.FC<TrashStatsProps> = ({
             <div
                 onClick={() => setFilterEntity('all')}
                 className={`bg-white dark:bg-slate-800/40 backdrop-blur-sm border rounded-2xl p-4 shadow-sm cursor-pointer transition-all hover:shadow-md ${
-                    filterEntity === 'all' ? 'ring-2 ring-indigo-500 border-indigo-500/50' : 'border-slate-200 dark:border-slate-700/50'
+                    filterEntity === 'all' ? 'ring-2 ring-brand-500 border-brand-500/50' : 'border-slate-200 dark:border-slate-700/50'
                 }`}
             >
                 <div className="flex items-center justify-between">
                     <div className="text-3xl font-bold text-slate-900 dark:text-white">{stats.total}</div>
-                    <Sparkles className="w-5 h-5 text-indigo-500" />
+                    <Sparkles className="w-5 h-5 text-brand-500" />
                 </div>
                 <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">Total Item</div>
             </div>
@@ -34,7 +34,7 @@ export const TrashStats: React.FC<TrashStatsProps> = ({
                     key={key}
                     onClick={() => setFilterEntity(filterEntity === key ? 'all' : key as SoftDeleteEntity)}
                     className={`bg-white dark:bg-slate-800/40 backdrop-blur-sm border rounded-2xl p-4 cursor-pointer transition-all hover:shadow-md ${
-                        filterEntity === key ? `ring-2 ring-indigo-500 ${config.borderColor}` : 'border-slate-200 dark:border-slate-700/50'
+                        filterEntity === key ? `ring-2 ring-brand-500 ${config.borderColor}` : 'border-slate-200 dark:border-slate-700/50'
                     }`}
                 >
                     <div className="flex items-center justify-between">

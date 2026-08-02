@@ -148,7 +148,7 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
     <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-serif mb-2 text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
+          <h1 className="text-3xl font-bold tracking-tight font-serif mb-2 text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-800 dark:from-white dark:to-slate-300">
             Manajemen Siswa
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -168,10 +168,10 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
         {classSection.classes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 sm:py-24 px-4 text-center animate-fade-in bg-white dark:bg-gray-800/50 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
             <div className="relative mb-6">
-              <span className="absolute -top-3 -left-4 w-10 h-10 bg-indigo-100/70 dark:bg-indigo-900/30 rounded-full blur-sm" />
+              <span className="absolute -top-3 -left-4 w-10 h-10 bg-brand-100/70 dark:bg-brand-900/30 rounded-full blur-sm" />
               <span className="absolute -bottom-3 -right-5 w-12 h-12 bg-sky-100/70 dark:bg-sky-900/20 rounded-full blur-sm" />
-              <div className="relative w-20 h-20 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center">
-                <UsersIcon className="w-9 h-9 text-indigo-400 dark:text-indigo-300" />
+              <div className="relative w-20 h-20 bg-brand-50 dark:bg-brand-900/20 rounded-2xl flex items-center justify-center">
+                <UsersIcon className="w-9 h-9 text-brand-400 dark:text-brand-300" />
               </div>
             </div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 font-serif">Belum Ada Kelas</h3>
@@ -180,7 +180,7 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
             </p>
             <Button
               onClick={classModal.onAddClass}
-              className="rounded-xl shadow-lg shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="rounded-xl shadow-lg shadow-brand-600/20 bg-brand-600 hover:bg-brand-700 text-white"
             >
               <PlusIcon className="w-4 h-4 mr-2" /> Buat Kelas Baru
             </Button>

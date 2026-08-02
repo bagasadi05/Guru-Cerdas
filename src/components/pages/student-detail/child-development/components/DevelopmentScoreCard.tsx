@@ -26,7 +26,7 @@ const ASPECT_CONFIG = {
   cognitive: {
     emoji: '🧠',
     title: 'Akademik',
-    gradient: 'from-blue-500 to-cyan-500',
+    gradient: 'from-blue-500 to-cyan-600',
     ringStroke: '#3b82f6',       // blue-500
     ringTrack: '#dbeafe',        // blue-100
     ringTrackDark: '#1e3a5f',    // dark track
@@ -34,7 +34,7 @@ const ASPECT_CONFIG = {
   affective: {
     emoji: '💛',
     title: 'Karakter',
-    gradient: 'from-pink-500 to-rose-500',
+    gradient: 'from-rose-500 to-red-600',
     ringStroke: '#ec4899',       // pink-500
     ringTrack: '#fce7f3',        // pink-100
     ringTrackDark: '#4a1942',    // dark track
@@ -42,7 +42,7 @@ const ASPECT_CONFIG = {
   psychomotor: {
     emoji: '🏃',
     title: 'Keterampilan',
-    gradient: 'from-green-500 to-emerald-500',
+    gradient: 'from-emerald-500 to-emerald-600',
     ringStroke: '#22c55e',       // green-500
     ringTrack: '#dcfce7',        // green-100
     ringTrackDark: '#14532d',    // dark track

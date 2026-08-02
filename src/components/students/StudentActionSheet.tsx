@@ -37,7 +37,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           onClick={onClose}
         >
-          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-700 dark:text-blue-400">
             <EyeIcon className="w-5 h-5" />
           </div>
           <div className="flex-grow">
@@ -54,7 +54,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
               onClose();
             }}
           >
-            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-700 dark:text-amber-400">
               <PencilIcon className="w-5 h-5" />
             </div>
             <div className="flex-grow">
@@ -72,7 +72,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
               onClose();
             }}
           >
-            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
               <KeyRoundIcon className="w-5 h-5" />
             </div>
             <div className="flex-grow">
@@ -110,7 +110,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
               onClose();
             }}
           >
-            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-700 dark:text-red-400 group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
               <TrashIcon className="w-5 h-5" />
             </div>
             <div className="flex-grow">

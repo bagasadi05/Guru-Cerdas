@@ -375,7 +375,7 @@ const ExtracurricularPage: React.FC = () => {
             {!selectedExtracurricularId && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-slate-200 dark:border-slate-800 pb-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
                             <Trophy className="w-6 h-6 text-white" />
                         </div>
                         <div>
@@ -550,7 +550,7 @@ const ExtracurricularPage: React.FC = () => {
                             </div>
                             <div className="pt-2 flex gap-3">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Batal</button>
-                                <button type="submit" disabled={mutations.extracurricularMutation.isPending} className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold hover:opacity-90 transition-opacity">{mutations.extracurricularMutation.isPending ? 'Menyimpan...' : 'Simpan'}</button>
+                                <button type="submit" disabled={mutations.extracurricularMutation.isPending} className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-700 to-orange-800 text-white rounded-xl font-bold hover:opacity-90 transition-opacity">{mutations.extracurricularMutation.isPending ? 'Menyimpan...' : 'Simpan'}</button>
                             </div>
                         </form>
                     </div>

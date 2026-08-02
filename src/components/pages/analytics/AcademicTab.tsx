@@ -17,7 +17,7 @@ const GradeDistributionChart = ({ data, average }: { data: GradeDistribution[]; 
         <div className="relative">
             <div className="flex items-end justify-between mb-6 px-2">
                 <div className="text-center">
-                    <p className="text-4xl font-bold text-indigo-600 dark:text-indigo-400">{average}</p>
+                    <p className="text-4xl font-bold text-brand-600 dark:text-brand-400">{average}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Rata-rata Kelas</p>
                 </div>
                 <div className="text-right">
@@ -78,7 +78,7 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({ gradeStats, classes, s
             <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <GraduationCapIcon className="w-5 h-5 text-indigo-600" />
+                        <GraduationCapIcon className="w-5 h-5 text-brand-600" />
                         Status Akademik (Nilai)
                     </CardTitle>
                 </CardHeader>
@@ -102,7 +102,7 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({ gradeStats, classes, s
             <div className="flex justify-center">
                 <button type="button" 
                     onClick={() => setShowDetails(!showDetails)}
-                    className="flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full hover:bg-indigo-100 transition-colors min-h-[44px] sm:min-h-0"
+                    className="flex items-center gap-2 text-sm font-medium text-brand-600 bg-brand-50 px-4 py-2 rounded-full hover:bg-brand-100 transition-colors min-h-[44px] sm:min-h-0"
                 >
                     {showDetails ? (
                         <><ChevronUpIcon className="w-4 h-4" /> Sembunyikan Detail Lengkap</>

@@ -166,7 +166,7 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
             <div>
                 <label className="block text-sm font-medium mb-1">Bukti Foto (Opsional)</label>
                 {!evidencePreview && !evidenceFile ? (
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:border-brand-500 dark:hover:border-brand-500 transition-colors">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <UploadIcon className="w-8 h-8 mb-2 text-gray-400" />
                             <p className="text-sm text-gray-500 dark:text-gray-400">Klik untuk upload bukti foto</p>

@@ -84,7 +84,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
     return (
         <div className={`w-full ${className}`} ref={containerRef}>
             {label && (
-                <label className="block text-sm font-bold text-indigo-200 tracking-wide uppercase mb-2">
+                <label className="block text-sm font-bold text-brand-200 tracking-wide uppercase mb-2">
                     {label}
                 </label>
             )}
@@ -95,16 +95,16 @@ export const Combobox: React.FC<ComboboxProps> = ({
                     onClick={() => !disabled && setIsOpen(!isOpen)}
                     className={`
                         relative w-full cursor-pointer rounded-xl border bg-white/5 py-3 pl-4 pr-10 text-left shadow-sm transition-all duration-200
-                        ${error ? 'border-red-500 ring-1 ring-red-500' : 'border-white/10 hover:border-indigo-500/50 focus:border-indigo-500'}
+                        ${error ? 'border-red-500 ring-1 ring-red-500' : 'border-white/10 hover:border-brand-500/50 focus:border-brand-500'}
                         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                        ${isOpen ? 'ring-2 ring-indigo-500 border-transparent' : ''}
+                        ${isOpen ? 'ring-2 ring-brand-500 border-transparent' : ''}
                     `}
                 >
                     <span className={`block truncate ${!selectedOption ? 'text-white/30' : 'text-white'}`}>
                         {selectedOption ? selectedOption.label : placeholder}
                     </span>
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <ChevronDownIcon className={`h-5 w-5 text-indigo-300 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+                        <ChevronDownIcon className={`h-5 w-5 text-brand-300 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
                     </span>
                     {selectedOption && !disabled && (
                         <span
@@ -123,12 +123,12 @@ export const Combobox: React.FC<ComboboxProps> = ({
                         <div className="sticky top-0 z-10 border-b border-white/10 bg-[#1a1f3c]/95 p-2 backdrop-blur-md">
                             <div className="relative">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <SearchIcon className="h-4 w-4 text-indigo-400" aria-hidden="true" />
+                                    <SearchIcon className="h-4 w-4 text-brand-400" aria-hidden="true" />
                                 </div>
                                 <input
                                     ref={inputRef}
                                     type="text"
-                                    className="w-full rounded-lg border-0 bg-white/5 py-2 pl-10 pr-4 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full rounded-lg border-0 bg-white/5 py-2 pl-10 pr-4 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-brand-500"
                                     placeholder="Cari..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -151,7 +151,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
                                         key={option.value}
                                         className={`
                                             relative cursor-pointer select-none py-3 pl-10 pr-4 transition-colors duration-150
-                                            ${option.value === value ? 'bg-indigo-600/30 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white'}
+                                            ${option.value === value ? 'bg-brand-600/30 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white'}
                                         `}
                                         onClick={() => handleSelect(option.value)}
                                     >
@@ -160,13 +160,13 @@ export const Combobox: React.FC<ComboboxProps> = ({
                                                 {option.label}
                                             </span>
                                             {option.description && (
-                                                <span className={`block truncate text-xs mt-0.5 ${option.value === value ? 'text-indigo-200' : 'text-gray-500'}`}>
+                                                <span className={`block truncate text-xs mt-0.5 ${option.value === value ? 'text-brand-200' : 'text-gray-500'}`}>
                                                     {option.description}
                                                 </span>
                                             )}
                                         </div>
                                         {option.value === value ? (
-                                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-400">
+                                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-brand-400">
                                                 <CheckIcon className="h-5 w-5" aria-hidden="true" />
                                             </span>
                                         ) : null}

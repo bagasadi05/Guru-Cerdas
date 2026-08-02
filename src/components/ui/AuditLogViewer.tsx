@@ -111,7 +111,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             <div className="space-y-4 max-h-[60vh] overflow-y-auto">
                 {loading ? (
                     <div className="flex items-center justify-center py-8">
-                        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
                     </div>
                 ) : logs.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
@@ -203,13 +203,13 @@ export const ChangelogBadge: React.FC<{
 }> = ({ onClick, changeCount }) => (
     <button type="button"
         onClick={onClick}
-        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 hover:text-indigo-500 
-                   bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 hover:text-brand-500 
+                   bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
     >
         <ClockIcon className="w-3 h-3" />
         Riwayat
         {changeCount !== undefined && changeCount > 0 && (
-            <span className="px-1.5 py-0.5 bg-indigo-500 text-white rounded-full text-xxs">
+            <span className="px-1.5 py-0.5 bg-brand-600 text-white rounded-full text-xxs">
                 {changeCount}
             </span>
         )}

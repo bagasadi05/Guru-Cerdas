@@ -1,5 +1,7 @@
 /* Local font faces trimmed to woff2 to avoid shipping duplicate legacy woff files. */
 
+/* Inter weight-300 face REMOVED (2026-08-01): hanya dipakai via font-light di 2 subtitle header, diganti font-normal — hemat ~23.5 KiB precache (30→29 entri). */
+
 /* inter-latin-400-normal */
 @font-face {
   font-family: 'Inter';
@@ -43,6 +45,15 @@
   font-display: swap;
   font-weight: 800;
   src: url('@fontsource/inter/files/inter-latin-800-normal.woff2') format('woff2');
+}
+
+/* inter-latin-900-normal — used via font-black (e.g. AttendanceSummaryWidget totals) */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 900;
+  src: url('@fontsource/inter/files/inter-latin-900-normal.woff2') format('woff2');
 }
 
 /* tinos-latin-400-normal */

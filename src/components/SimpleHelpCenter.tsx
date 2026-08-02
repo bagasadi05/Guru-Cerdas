@@ -255,8 +255,8 @@ const simpleGuides: SimpleGuide[] = [
         id: 'laporan',
         title: '📊 Cara Cetak Rapot',
         icon: <CheckCircle className="w-8 h-8" />,
-        color: 'text-indigo-600',
-        bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+        color: 'text-brand-600',
+        bgColor: 'bg-brand-50 dark:bg-brand-900/20',
         category: 'dasar',
         keywords: ['rapor', 'cetak', 'laporan', 'pdf', 'print'],
         steps: [
@@ -580,7 +580,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-brand-600 to-brand-700 text-white">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {selectedGuide ? (
@@ -651,7 +651,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     aria-label="Cari panduan"
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 transition-all focus:border-transparent focus:ring-2 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-900"
                                 />
                                 {searchQuery && (
                                     <button type="button"
@@ -671,7 +671,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                         key={tab.id}
                                         onClick={() => setActiveCategory(tab.id)}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeCategory === tab.id
-                                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                                                ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30'
                                                 : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                                             }`}
                                     >
@@ -688,7 +688,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                         onClose();
                                         document.dispatchEvent(new CustomEvent('open-tutorial-picker'));
                                     }}
-                                    className="w-full flex items-center gap-4 p-5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left group border border-indigo-400/20"
+                                    className="w-full flex items-center gap-4 p-5 bg-gradient-to-r from-brand-600 to-brand-700 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left group border border-brand-400/20"
                                 >
                                     <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:bg-white/30 transition-colors shadow-inner">
                                         <GraduationCap className="w-8 h-8 text-white" />
@@ -723,7 +723,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                 <div className="space-y-3">
                                     {activeCategory === 'semua' && (
                                         <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                                            <MessageCircle className="w-5 h-5 text-indigo-500" />
+                                            <MessageCircle className="w-5 h-5 text-brand-500" />
                                             Pertanyaan Umum
                                         </h3>
                                     )}
@@ -751,7 +751,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                     {activeCategory === 'semua' && filteredFaqs.length > 3 && (
                                         <button type="button"
                                             onClick={() => setActiveCategory('faq')}
-                                            className="text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline"
+                                            className="text-brand-600 dark:text-brand-400 text-sm font-medium hover:underline"
                                         >
                                             Lihat semua FAQ →
                                         </button>
@@ -764,7 +764,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                 <div className="space-y-3">
                                     {activeCategory === 'semua' && (
                                         <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                                            <BookOpen className="w-5 h-5 text-indigo-500" />
+                                            <BookOpen className="w-5 h-5 text-brand-500" />
                                             Panduan Lengkap
                                         </h3>
                                     )}
@@ -840,7 +840,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                     <div
                                         key={index}
                                         className={`flex-1 h-3 rounded-full transition-all cursor-pointer ${index <= currentStep
-                                            ? 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                                            ? 'bg-gradient-to-r from-brand-600 to-brand-700'
                                             : 'bg-slate-200 dark:bg-slate-700'
                                             }`}
                                         onClick={() => setCurrentStep(index)}
@@ -882,7 +882,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                     <div className="mt-6">
                                         <button type="button"
                                             onClick={() => setEnlargedImage(selectedGuide.steps[currentStep].image!)}
-                                            className="w-full relative group rounded-2xl overflow-hidden shadow-md border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-all"
+                                            className="w-full relative group rounded-2xl overflow-hidden shadow-md border-2 border-slate-200 dark:border-slate-700 hover:border-brand-500 transition-all"
                                         >
                                             <img
                                                 src={selectedGuide.steps[currentStep].image}
@@ -927,7 +927,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                 {currentStep < selectedGuide.steps.length - 1 ? (
                                     <button type="button"
                                         onClick={handleNextStep}
-                                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 font-semibold text-white shadow-lg transition-colors hover:from-indigo-600 hover:to-purple-600"
+                                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-600 to-brand-700 px-8 py-3 font-semibold text-white shadow-lg transition-colors hover:from-brand-600 hover:to-brand-700"
                                     >
                                         Lanjut
                                         <ChevronRight className="w-5 h-5" />
@@ -935,7 +935,7 @@ export const SimpleHelpCenter: React.FC<SimpleHelpCenterProps> = ({
                                 ) : (
                                     <button type="button"
                                         onClick={handleBack}
-                                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 font-semibold text-white shadow-lg transition-colors hover:from-indigo-600 hover:to-purple-600"
+                                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-600 to-brand-700 px-8 py-3 font-semibold text-white shadow-lg transition-colors hover:from-brand-600 hover:to-brand-700"
                                     >
                                         <Star className="w-5 h-5" />
                                         Selesai
@@ -995,7 +995,7 @@ export const FloatingHelpButton: React.FC<FloatingHelpButtonProps> = ({ onClick 
     return (
         <button type="button"
             onClick={onClick}
-            className="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 z-40 w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-2xl shadow-indigo-500/30 flex items-center justify-center hover:scale-110 transition-transform group"
+            className="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 z-40 w-14 h-14 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-2xl shadow-brand-600/30 flex items-center justify-center hover:scale-110 transition-transform group"
             aria-label="Buka Pusat Bantuan"
         >
             <HelpCircle className="w-7 h-7" />
@@ -1006,7 +1006,7 @@ export const FloatingHelpButton: React.FC<FloatingHelpButtonProps> = ({ onClick 
             </div>
 
             {/* Pulse Animation */}
-            <div className="absolute inset-0 rounded-full bg-indigo-500 animate-ping opacity-20" />
+            <div className="absolute inset-0 rounded-full bg-brand-600 animate-ping opacity-20" />
         </button>
     );
 };

@@ -148,9 +148,9 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
 
                 {/* Horizontal Breadcrumbs Status Bar when Configuration is Collapsed */}
                 {!isConfigOpen && mode !== 'violation_export' && (
-                    <div className="mb-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-3xl border border-indigo-100 bg-white/80 dark:border-slate-800 dark:bg-slate-900/60 backdrop-blur-md animate-fade-in-down shadow-sm">
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-3xl border border-brand-100 bg-white/80 dark:border-slate-800 dark:bg-slate-900/60 backdrop-blur-md animate-fade-in-down shadow-sm">
                         <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
-                            <span className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-550/10 px-3.5 py-1.5 font-extrabold text-indigo-700 dark:text-indigo-300 border border-indigo-200/20 shadow-sm">
+                            <span className="inline-flex items-center gap-1.5 rounded-2xl bg-brand-600/10 px-3.5 py-1.5 font-extrabold text-brand-700 dark:text-brand-300 border border-brand-200/20 shadow-sm">
                                 🏫 Kelas: {classes?.find(c => c.id === selectedClass)?.name || '-'}
                             </span>
                             {mode === 'subject_grade' && subjectGradeInfo.subject && (
@@ -173,7 +173,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                             variant="outline" 
                             size="sm"
                             onClick={() => setIsConfigOpen(true)}
-                            className="rounded-xl border-indigo-200 dark:border-slate-700 text-indigo-650 dark:text-indigo-300 bg-white hover:bg-indigo-50/50 dark:bg-slate-800 hover:dark:bg-slate-700 active:scale-95 transition-all text-xs font-bold"
+                            className="rounded-xl border-brand-200 dark:border-slate-700 text-brand-600 dark:text-brand-300 bg-white hover:bg-brand-50/50 dark:bg-slate-800 hover:dark:bg-slate-700 active:scale-95 transition-all text-xs font-bold"
                         >
                             ⚙️ Ubah Konfigurasi
                         </Button>
@@ -281,7 +281,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                 value={confirmDeleteText}
                                 onChange={e => setConfirmDeleteText(e.target.value)}
                                 placeholder="Ketik HAPUS"
-                                className="w-full px-3 py-2 text-sm border rounded-lg mb-3 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                className="w-full px-3 py-2 text-sm border rounded-lg mb-3 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                             />
                         </div>
                         <div className="flex justify-end gap-2 pt-2">

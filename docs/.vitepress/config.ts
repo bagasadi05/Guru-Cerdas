@@ -51,7 +51,8 @@ export default defineConfig({
                         { text: 'Overview', link: '/architecture/overview' },
                         { text: 'Data Flow', link: '/architecture/data-flow' },
                         { text: 'Security', link: '/architecture/security' },
-                        { text: 'Offline Sync', link: '/architecture/offline-sync' }
+                        { text: 'Offline Sync', link: '/architecture/offline-sync' },
+                        { text: 'Soft Delete Contract', link: '/architecture/soft-delete' }
                     ]
                 }
             ],

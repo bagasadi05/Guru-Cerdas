@@ -73,7 +73,7 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <Card className="w-full max-w-md bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl shadow-2xl border-0 overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="relative p-6 bg-gradient-to-br from-indigo-600 to-violet-700">
+                <div className="relative p-6 bg-gradient-to-br from-brand-600 to-brand-700">
                     <button type="button"
                         onClick={onClose}
                         className="absolute top-4 right-4 p-1 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
@@ -86,12 +86,12 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
                         </div>
                         <div>
                             <h2 className="text-xl font-bold">Export Data Analitik</h2>
-                            <p className="text-indigo-100 text-xs">Unduh laporan dalam format PDF</p>
+                            <p className="text-brand-100 text-xs">Unduh laporan dalam format PDF</p>
                         </div>
                     </div>
 
                     {/* Context Info */}
-                    <div className="flex gap-2 mt-4 text-xs font-medium text-indigo-100">
+                    <div className="flex gap-2 mt-4 text-xs font-medium text-brand-100">
                         <div className="flex items-center gap-1.5 px-2 py-1 bg-white/10 rounded-md">
                             <Users className="w-3.5 h-3.5" />
                             {selectedClassLabel}
@@ -113,7 +113,7 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleSelectAll(!allSelected)}
-                            className="text-xs h-7 px-2"
+                            className="text-xs min-h-[44px] px-2"
                         >
                             {allSelected ? 'Hapus Semua' : 'Pilih Semua'}
                         </Button>
@@ -126,7 +126,7 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
                             checked={options.summary}
                             onChange={() => handleToggle('summary')}
                             icon={Activity}
-                            color="text-indigo-500"
+                            color="text-brand-500"
                         />
                         <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
                         <OptionItem
@@ -159,7 +159,7 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
                             checked={options.tasks}
                             onChange={() => handleToggle('tasks')}
                             icon={ClipboardList}
-                            color="text-violet-500"
+                            color="text-brand-500"
                         />
                         <OptionItem
                             label="Pelanggaran"
@@ -189,7 +189,7 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
                         </Button>
                         <Button
                             onClick={handleExportClick}
-                            className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-lg shadow-indigo-500/25"
+                            className="flex-1 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white shadow-lg shadow-brand-600/25"
                             disabled={!Object.values(options).some(Boolean) || isExporting}
                         >
                             {isExporting ? (
@@ -224,15 +224,15 @@ const OptionItem: React.FC<OptionItemProps> = ({ label, desc, checked, onChange,
     <div
         onClick={onChange}
         className={`flex items-center p-3 rounded-xl border cursor-pointer transition-all duration-200 ${checked
-            ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/50'
-            : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-indigo-100 dark:hover:border-slate-600'
+            ? 'bg-brand-50/50 dark:bg-brand-900/10 border-brand-200 dark:border-brand-800/50'
+            : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-brand-100 dark:hover:border-slate-600'
             }`}
     >
         <div className={`p-2 rounded-lg bg-white dark:bg-slate-700 shadow-sm mr-3 ${color}`}>
             <Icon className="w-4 h-4" />
         </div>
         <div className="flex-1">
-            <h4 className={`text-sm font-medium ${checked ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-700 dark:text-slate-300'}`}>
+            <h4 className={`text-sm font-medium ${checked ? 'text-brand-900 dark:text-brand-100' : 'text-slate-700 dark:text-slate-300'}`}>
                 {label}
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -240,7 +240,7 @@ const OptionItem: React.FC<OptionItemProps> = ({ label, desc, checked, onChange,
             </p>
         </div>
         <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${checked
-            ? 'bg-indigo-500 border-indigo-500'
+            ? 'bg-brand-600 border-brand-500'
             : 'border-slate-300 dark:border-slate-600'
             }`}>
             {checked && <Check className="w-3 h-3 text-white" />}

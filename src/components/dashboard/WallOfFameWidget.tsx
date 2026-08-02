@@ -75,9 +75,9 @@ export const WallOfFameWidget: React.FC<WallOfFameWidgetProps> = ({ data }) => {
             <div className="space-y-2">
               {leaderBoard.map((item, index) => {
                 const colors = [
-                  'bg-yellow-50 dark:bg-yellow-950/20 text-yellow-600 border-yellow-200 dark:border-yellow-900',
+                  'bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 border-yellow-200 dark:border-yellow-900',
                   'bg-slate-100 dark:bg-slate-800 text-slate-600 border-slate-200 dark:border-slate-700',
-                  'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-200 dark:border-amber-900'
+                  'bg-amber-50 dark:bg-amber-900/20 text-amber-700 border-amber-200 dark:border-amber-900'
                 ];
                 return (
                   <div

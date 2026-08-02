@@ -85,17 +85,17 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     }, [mode, flatStudentList.length, focusItem]);
 
     return (
-        <div className="lg:col-span-2 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden shadow-xl shadow-indigo-500/10 animate-fade-in-right">
+        <div className="lg:col-span-2 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden shadow-xl shadow-brand-600/10 animate-fade-in-right">
             {/* Header with Search and Filters */}
             <div className="p-4 sm:p-5 lg:p-6 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 space-y-3 sm:space-y-4 bg-slate-50 dark:bg-slate-800/50 backdrop-blur-md">
                 {/* Search */}
                 <div className="relative w-full group">
-                    <SearchIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 dark:text-indigo-300 absolute top-1/2 left-3 sm:left-4 -translate-y-1/2 transition-colors group-focus-within:text-indigo-500 dark:group-focus-within:text-indigo-400" />
+                    <SearchIcon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600 dark:text-brand-300 absolute top-1/2 left-3 sm:left-4 -translate-y-1/2 transition-colors group-focus-within:text-brand-500 dark:group-focus-within:text-brand-400" />
                     <Input
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         placeholder="Cari nama siswa..."
-                        className="pl-10 sm:pl-12 w-full h-10 sm:h-12 bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm sm:text-base"
+                        className="pl-10 sm:pl-12 w-full h-10 sm:h-12 bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30 focus:ring-brand-500 focus:border-brand-500 transition-all text-sm sm:text-base"
                     />
                 </div>
 
@@ -107,7 +107,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                 type="button"
                                 onClick={handleSubmit}
                                 disabled={isSubmitDisabled || isSubmitting}
-                                className="w-full h-11 font-bold text-xs sm:text-sm bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl shadow-md shadow-emerald-500/15 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]"
+                                className="w-full h-11 font-bold text-xs sm:text-sm bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl shadow-md shadow-emerald-500/15 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]"
                             >
                                 <CheckIcon className="w-4 h-4" />
                                 <span>{isSubmitting ? 'Memproses...' : 'Simpan Data Nilai'}</span>
@@ -117,7 +117,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                             <Button
                                 type="button"
                                 onClick={onShowAdjustment}
-                                className="w-full h-11 font-bold text-xs sm:text-sm bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl shadow-md shadow-indigo-500/15 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]"
+                                className="w-full h-11 font-bold text-xs sm:text-sm bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl shadow-md shadow-brand-600/15 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]"
                             >
                                 <SparklesIcon className="w-4 h-4 text-amber-300" />
                                 <span>Katrol & Pratinjau Nilai</span>
@@ -146,7 +146,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                         <button type="button"
                             onClick={() => setShowStats(!showStats)}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${showStats
-                                ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
+                                ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
                                 : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20 border border-slate-200 dark:border-white/10'
                                 }`}
                         >
@@ -166,8 +166,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
 
             <div className="flex-grow overflow-y-auto p-4 custom-scrollbar">
                 {isLoadingStudents ? (
-                    <div className="flex flex-col items-center justify-center h-64 text-indigo-600 dark:text-indigo-200">
-                        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <div className="flex flex-col items-center justify-center h-64 text-brand-600 dark:text-brand-200">
+                        <div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                         <p>Memuat data siswa...</p>
                     </div>
                 ) : students && students.length > 0 ? (
@@ -213,7 +213,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
                                                         className={`
                                                             group transition-all duration-300 rounded-xl
-                                                            focus-within:bg-indigo-50/70 focus-within:dark:bg-indigo-950/20 focus-within:shadow-md transition-all
+                                                            focus-within:bg-brand-50/70 focus-within:dark:bg-brand-950/20 focus-within:shadow-md transition-all
                                                             ${(isSelected || hasScore)
                                                                 ? 'bg-green-100 dark:bg-green-500/20 shadow-lg shadow-green-500/10 border-transparent'
                                                                 : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 hover:shadow-md border-transparent'
@@ -242,7 +242,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                     <span className={`font-medium text-base ${isSelected || hasScore ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-green-100'}`}>
                                                                         {s.name}
                                                                         {selectedClass === 'all' && classes && (
-                                                                            <span className="ml-2 text-xs text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/50">
+                                                                            <span className="ml-2 text-xs text-brand-500 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-800/50">
                                                                                 {classes.find(c => c.id === s.class_id)?.name || 'Unknown Class'}
                                                                             </span>
                                                                         )}
@@ -282,7 +282,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                     )}
                                                                 </div> :
                                                                 mode === 'academic_print' ?
-                                                                    <span className={`font-bold px-4 py-2 rounded-lg text-sm ${hasGrade ? 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-gray-500 border border-slate-200 dark:border-white/5'}`}>
+                                                                    <span className={`font-bold px-4 py-2 rounded-lg text-sm ${hasGrade ? 'bg-brand-100 dark:bg-brand-500/30 text-brand-700 dark:text-brand-200 border border-brand-200 dark:border-brand-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-500 border border-slate-200 dark:border-white/5'}`}>
                                                                         {hasGrade ? gradeRecord?.score : 'N/A'}
                                                                     </span> :
                                                                     isSelected ?
@@ -321,7 +321,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
                                                 className={`
                                             bg-white dark:bg-slate-800 rounded-2xl p-5 border transition-all duration-300
-                                            focus-within:bg-indigo-50/70 focus-within:dark:bg-indigo-950/20 focus-within:shadow-md transition-all
+                                            focus-within:bg-brand-50/70 focus-within:dark:bg-brand-950/20 focus-within:shadow-md transition-all
                                             ${(isSelected || hasScore)
                                                         ? 'bg-green-50 dark:bg-green-500/20 border-green-300 dark:border-green-500/30 shadow-lg shadow-green-500/10'
                                                         : 'border-slate-200 dark:border-white/10'
@@ -333,7 +333,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         <Checkbox
                                                             checked={isSelected}
                                                             onChange={() => handleStudentSelect(s.id)}
-                                                            className="w-6 h-6 border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                            className="w-6 h-6 border-white/30 data-[state=checked]:bg-brand-600 data-[state=checked]:border-brand-500"
                                                         />
                                                     <img
                                                         src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name)}
@@ -344,13 +344,13 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         <p className="font-bold text-slate-900 dark:text-white text-lg truncate flex items-center gap-2">
                                                             {s.name}
                                                             {selectedClass === 'all' && classes && (
-                                                                <span className="text-xs font-normal text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/50 flex-shrink-0">
+                                                                <span className="text-xs font-normal text-brand-500 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-800/50 flex-shrink-0">
                                                                     {classes.find(c => c.id === s.class_id)?.name || 'Unknown'}
                                                                 </span>
                                                             )}
                                                         </p>
                                                         <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                                                            <span className="text-sm text-slate-500 dark:text-indigo-200/70">No. {globalIndex + 1}</span>
+                                                            <span className="text-sm text-slate-500 dark:text-brand-200/70">No. {globalIndex + 1}</span>
                                                             {mode === 'subject_grade' && hasGrade && (
                                                                 <span className="animate-pulse text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 flex items-center gap-1 w-fit">
                                                                     ⚠️ Nilai Sudah Ada
@@ -363,7 +363,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 {mode === 'subject_grade' ? (
                                                     <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
                                                         <div className="flex items-center gap-3 w-full">
-                                                            <label className="text-xs font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-wider whitespace-nowrap flex-shrink-0">
+                                                            <label className="text-xs font-bold text-brand-600 dark:text-brand-300 uppercase tracking-wider whitespace-nowrap flex-shrink-0">
                                                                 Nilai
                                                             </label>
                                                             <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -379,7 +379,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                     onChange={e => handleScoreChange(s.id, e.target.value)}
                                                                     placeholder=""
                                                                     aria-label={`Nilai untuk ${s.name}`}
-                                                                    className={`w-full min-w-0 flex-1 text-xl font-bold text-center h-12 rounded-xl transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-indigo-500'}`}
+                                                                    className={`w-full min-w-0 flex-1 text-xl font-bold text-center h-12 rounded-xl transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-brand-500'}`}
                                                                 />
                                                                 {scores[s.id] && !validationErrors[s.id] && (
                                                                     <span className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-md whitespace-nowrap flex-shrink-0 ${parseInt(scores[s.id]) >= 75 ? 'bg-emerald-500 text-white' : parseInt(scores[s.id]) >= 60 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'}`}>
@@ -396,14 +396,14 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                     </div>
                                                 ) : mode === 'academic_print' ? (
                                                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
-                                                        <span className="text-sm text-slate-600 dark:text-indigo-200">Nilai Saat Ini</span>
-                                                        <span className={`font-bold px-4 py-2 rounded-xl text-lg ${hasGrade ? 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-white border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/50 border border-slate-200 dark:border-white/5'}`}>
+                                                        <span className="text-sm text-slate-600 dark:text-brand-200">Nilai Saat Ini</span>
+                                                        <span className={`font-bold px-4 py-2 rounded-xl text-lg ${hasGrade ? 'bg-brand-100 dark:bg-brand-500/30 text-brand-700 dark:text-white border border-brand-200 dark:border-brand-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white/50 border border-slate-200 dark:border-white/5'}`}>
                                                             {hasGrade ? gradeRecord?.score : 'N/A'}
                                                         </span>
                                                     </div>
                                                 ) : (
                                                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
-                                                        <span className="text-sm text-slate-600 dark:text-indigo-200">Status</span>
+                                                        <span className="text-sm text-slate-600 dark:text-brand-200">Status</span>
                                                         {isSelected ?
                                                             <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-2 bg-emerald-50 dark:bg-emerald-400/10 px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-400/20">
                                                                 <CheckSquareIcon className="w-4 h-4" />Terpilih
@@ -420,7 +420,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                         </div>
                     </>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-64 text-slate-400 dark:text-indigo-200/60">
+                    <div className="flex flex-col items-center justify-center h-64 text-slate-400 dark:text-brand-200/60">
                         <SearchIcon className="w-12 h-12 mb-4 opacity-50" />
                         <p className="text-lg">Tidak ada siswa ditemukan.</p>
                         <p className="text-sm opacity-70">Coba ubah kata kunci atau filter.</p>

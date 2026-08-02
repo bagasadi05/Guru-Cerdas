@@ -97,7 +97,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
         <>
             <div className="flex h-[68vh] flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900 transition-all duration-300">
                 {/* A. Chat Header */}
-                <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.12),transparent_30%),linear-gradient(135deg,#f5f7ff_0%,#ffffff_60%,#f8fafc_100%)] p-4 dark:border-slate-850 dark:bg-[radial-gradient(circle_at_top_right,rgba(129,140,248,0.1),transparent_32%),linear-gradient(135deg,#1e293b_0%,#0f172a_100%)] sm:p-5">
+                <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_right,rgba(13,126,158,0.12),transparent_30%),linear-gradient(135deg,#f5f7ff_0%,#ffffff_60%,#f8fafc_100%)] p-4 dark:border-slate-850 dark:bg-[radial-gradient(circle_at_top_right,rgba(129,140,248,0.1),transparent_32%),linear-gradient(135deg,#1e293b_0%,#0f172a_100%)] sm:p-5">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center gap-3">
                             <img
@@ -106,7 +106,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                 alt="Guru"
                             />
                             <div>
-                                <p className="text-xxs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-300">Wali Kelas Anda</p>
+                                <p className="text-xxs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-300">Wali Kelas Anda</p>
                                 <h3 className="mt-0.5 text-base font-extrabold text-slate-900 dark:text-white sm:text-lg">{teacher?.full_name || 'Wali Kelas'}</h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Konsultasi perkembangan belajar {student.name}</p>
                             </div>
@@ -170,7 +170,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                     <div className="relative max-w-[72%] group/bubble">
                                         <div className={`p-3.5 rounded-2xl text-sm shadow-sm leading-relaxed ${
                                             isParent 
-                                                ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-tr-sm shadow-emerald-600/5' 
+                                                ? 'bg-gradient-to-br from-emerald-700 to-emerald-800 text-white rounded-tr-sm shadow-emerald-600/5' 
                                                 : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-sm border border-slate-200/40 dark:border-slate-700/40 shadow-slate-900/5'
                                         }`}>
                                             {/* File/Image Attachment */}
@@ -208,7 +208,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                                             <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.message}</p>
                                             
                                             {/* Micro Timestamp & Read Checks */}
-                                            <div className={`flex items-center gap-1.5 text-xxs mt-2 font-bold justify-end ${isParent ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            <div className={`flex items-center gap-1.5 text-xxs mt-2 font-bold justify-end ${isParent ? 'text-brand-200' : 'text-slate-400 dark:text-slate-500'}`}>
                                                 <span>{new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                                                 {isParent && msg.is_read && (
                                                     <span className="text-xxs select-none text-emerald-350">✔✔</span>
@@ -244,8 +244,8 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
 
                                     {/* Parent Avatar */}
                                     {isParent && (
-                                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-100 to-indigo-200 dark:from-indigo-950 dark:to-indigo-900 border border-indigo-200 dark:border-indigo-850 flex items-center justify-center flex-shrink-0 shadow-sm mt-1">
-                                            <UsersIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-350" />
+                                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-brand-600 to-brand-700 dark:from-brand-950 dark:to-brand-900 border border-brand-200 dark:border-brand-800 flex items-center justify-center flex-shrink-0 shadow-sm mt-1">
+                                            <UsersIcon className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
                                         </div>
                                     )}
                                 </div>

@@ -40,10 +40,10 @@ const SettingsPage: React.FC = () => {
                 text: 'text-green-600 dark:text-green-400 border-green-500/20'
             };
             case 'appearance': return {
-                gradient: 'from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500',
-                glow: 'shadow-indigo-500/25',
-                hover: 'hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/5',
-                text: 'text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                gradient: 'from-brand-600 to-brand-700 dark:from-brand-500 dark:to-brand-600',
+                glow: 'shadow-brand-600/25',
+                hover: 'hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-500/5',
+                text: 'text-brand-600 dark:text-brand-400 border-brand-500/20'
             };
             case 'pwa': return {
                 gradient: 'from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500',
@@ -234,7 +234,7 @@ const SettingsPage: React.FC = () => {
                         <span className="text-xxs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">Asisten Cerdas:</span>
                         <button type="button"
                             onClick={() => setActiveTab('appearance')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-indigo-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-brand-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
                             <span>🌓 Mode Gelap/Terang</span>
                         </button>

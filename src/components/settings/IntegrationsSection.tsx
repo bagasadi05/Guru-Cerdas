@@ -113,13 +113,13 @@ const IntegrationsSection: React.FC = () => {
     return (
         <SettingsCard className="overflow-hidden">
             <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Integrasi Eksternal</CardTitle>
+                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Integrasi Eksternal</CardTitle>
                 <CardDescription className="text-base">Hubungkan dan sinkronkan data Anda dengan layanan lain.</CardDescription>
             </CardHeader>
             <CardContent className="pt-8">
                 <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-green-200 dark:hover:border-green-800 transition-colors">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                        <div className="p-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                             <DownloadCloudIcon className="w-6 h-6" />
                         </div>
                         <div>

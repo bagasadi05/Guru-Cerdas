@@ -50,7 +50,7 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-700 dark:text-amber-400">
                             <Trophy className="w-4 h-4" />
                         </div>
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Total Ekskul</p>
@@ -59,7 +59,7 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
                 </div>
                 <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
                             <GraduationCap className="w-4 h-4" />
                         </div>
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ekskul Aktif</p>
@@ -68,7 +68,7 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
                 </div>
                 <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm hover:shadow-md transition-shadow col-span-2 sm:col-span-1">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400">
                             <Calendar className="w-4 h-4" />
                         </div>
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Nonaktif</p>
@@ -128,7 +128,7 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
                         {canAdd && (
                             <button type="button"
                                 onClick={() => onOpenModal()}
-                                className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                                className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-700 to-orange-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all"
                             >
                                 <Plus className="w-5 h-5" />
                                 Tambah Ekskul
@@ -143,12 +143,12 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
                             className="group relative flex flex-col p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700/50 hover:-translate-y-1 transition-all cursor-pointer overflow-hidden"
                         >
                             {/* Decorative background glow */}
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                             <div className="absolute -right-6 -top-6 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-colors" />
 
                             <div className="flex items-start justify-between mb-4 relative z-10">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md shadow-amber-500/20 group-hover:scale-110 transition-transform">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-md shadow-amber-500/20 group-hover:scale-110 transition-transform">
                                         <Trophy className="w-6 h-6 text-white" />
                                     </div>
                                     <div>

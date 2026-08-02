@@ -223,9 +223,9 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
             <div className="space-y-6">
                 {step === 'search' && (
                     <>
-                        <div className="text-center p-6 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
-                            <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <CopyIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                        <div className="text-center p-6 bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/20 dark:to-brand-900/20 rounded-2xl border border-brand-100 dark:border-brand-800/30">
+                            <div className="w-16 h-16 bg-brand-100 dark:bg-brand-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <CopyIcon className="w-8 h-8 text-brand-600 dark:text-brand-400" />
                             </div>
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Import Data Kelas & Siswa</h3>
                             <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -250,7 +250,7 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
                                 <button type="button"
                                     onClick={handleSearch}
                                     disabled={isSearching}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-800/50 transition-colors"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-400 hover:bg-brand-200 dark:hover:bg-brand-800/50 transition-colors"
                                 >
                                     <SearchIcon className="w-4 h-4" />
                                 </button>
@@ -291,7 +291,7 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
                                 <div className="flex gap-2">
                                     <button type="button"
                                         onClick={selectAllClasses}
-                                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                                        className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
                                     >
                                         Pilih Semua
                                     </button>
@@ -310,7 +310,7 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
                                     <label
                                         key={classData.id}
                                         className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${selectedClasses.has(classData.id)
-                                                ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700'
+                                                ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-300 dark:border-brand-700'
                                                 : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
                                             }`}
                                     >
@@ -318,11 +318,11 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
                                             type="checkbox"
                                             checked={selectedClasses.has(classData.id)}
                                             onChange={() => toggleClassSelection(classData.id)}
-                                            className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                            className="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                         />
                                         <div className="flex-grow">
                                             <div className="flex items-center gap-2">
-                                                <GraduationCapIcon className="w-4 h-4 text-indigo-500" />
+                                                <GraduationCapIcon className="w-4 h-4 text-brand-500" />
                                                 <span className="font-semibold text-slate-800 dark:text-white">{classData.name}</span>
                                             </div>
                                         </div>
@@ -357,7 +357,7 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
                             <Button
                                 onClick={handleImport}
                                 disabled={selectedClasses.size === 0}
-                                className="bg-indigo-600 hover:bg-indigo-700"
+                                className="bg-brand-600 hover:bg-brand-700"
                             >
                                 <SparklesIcon className="w-4 h-4 mr-2" />
                                 Import {selectedClasses.size} Kelas
@@ -388,7 +388,7 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
                                     fill="none"
                                     strokeDasharray={`${2 * Math.PI * 36}`}
                                     strokeDashoffset={`${2 * Math.PI * 36 * (1 - importProgress / 100)}`}
-                                    className="text-indigo-600 dark:text-indigo-400 transition-all duration-300"
+                                    className="text-brand-600 dark:text-brand-400 transition-all duration-300"
                                     strokeLinecap="round"
                                 />
                             </svg>

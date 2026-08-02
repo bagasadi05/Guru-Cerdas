@@ -24,7 +24,7 @@ interface BintangTrendChartProps {
 const ASPECT_KEYS: AspectKey[] = ['ADAB', 'KEDISIPLINAN', 'KERAPIAN'];
 
 const ASPECT_COLORS: Record<AspectKey, { stroke: string; area: string; dot: string }> = {
-    ADAB: { stroke: '#6366f1', area: 'rgba(99,102,241,0.08)', dot: '#6366f1' },
+    ADAB: { stroke: '#0d7e9e', area: 'rgba(13,126,158,0.08)', dot: '#0d7e9e' },
     KEDISIPLINAN: { stroke: '#f59e0b', area: 'rgba(245,158,11,0.08)', dot: '#f59e0b' },
     KERAPIAN: { stroke: '#14b8a6', area: 'rgba(20,184,166,0.08)', dot: '#14b8a6' },
 };
@@ -247,7 +247,7 @@ const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) 
                                                 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
                                                 : direction === 'down'
                                                     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                                                    : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                                         }`}>
                                             {direction === 'up' ? <TrendingUp size={12} /> : direction === 'down' ? <TrendingDown size={12} /> : <Minus size={12} />}
                                             <span>{diff !== 0 ? `${diff > 0 ? '+' : ''}${diff}` : '0'}</span>

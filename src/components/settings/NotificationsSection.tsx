@@ -288,7 +288,7 @@ const NotificationsSection: React.FC = () => {
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                            <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-emerald-600 dark:from-sky-400 dark:to-emerald-400">
+                            <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-cyan-600 dark:from-sky-400 dark:to-emerald-400">
                                 Status Sistem Notifikasi
                             </CardTitle>
                             <CardDescription className="text-base">
@@ -351,14 +351,14 @@ const NotificationsSection: React.FC = () => {
             {/* Schedule Notifications */}
             <SettingsCard className="overflow-hidden">
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Preferensi Notifikasi</CardTitle>
+                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Preferensi Notifikasi</CardTitle>
                     <CardDescription className="text-base">Kelola bagaimana Anda menerima pemberitahuan penting.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 sm:pt-8 space-y-3 sm:space-y-4">
                     {/* Push Master Switch */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-green-200 dark:hover:border-green-800 transition-colors">
                         <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="p-2 sm:p-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex-shrink-0">
+                            <div className="p-2 sm:p-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 flex-shrink-0">
                                 <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
                             <div className="min-w-0">
@@ -379,7 +379,7 @@ const NotificationsSection: React.FC = () => {
                     {/* Task Reminders */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-amber-200 dark:hover:border-amber-800 transition-colors">
                         <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="p-2 sm:p-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex-shrink-0">
+                            <div className="p-2 sm:p-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 flex-shrink-0">
                                 <CheckSquareIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
                             <div className="min-w-0">
@@ -423,7 +423,7 @@ const NotificationsSection: React.FC = () => {
                     {/* Attendance Reminders */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-green-200 dark:hover:border-green-800 transition-colors">
                         <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="p-2 sm:p-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex-shrink-0">
+                            <div className="p-2 sm:p-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 flex-shrink-0">
                                 <BellIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
                             <div className="min-w-0">
@@ -443,7 +443,7 @@ const NotificationsSection: React.FC = () => {
             {/* Notification Sound Picker */}
             <SettingsCard className="overflow-hidden">
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
                         Nada Notifikasi
                     </CardTitle>
                     <CardDescription className="text-base">
@@ -453,7 +453,7 @@ const NotificationsSection: React.FC = () => {
                 <CardContent className="pt-6 sm:pt-8 space-y-6">
                     {/* Volume Control */}
                     <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
-                        <div className="p-2 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                        <div className="p-2 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                             {volume > 0.5 ? <Volume2 className="w-5 h-5" /> : <Volume className="w-5 h-5" />}
                         </div>
                         <div className="flex-1">

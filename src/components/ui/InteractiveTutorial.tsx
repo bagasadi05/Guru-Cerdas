@@ -813,7 +813,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
 
     const getActionColor = () => {
         switch (step.action) {
-            case 'click': return 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30';
+            case 'click': return 'text-brand-500 bg-brand-50 dark:bg-brand-900/30';
             case 'observe': return 'text-amber-500 bg-amber-50 dark:bg-amber-900/30';
             case 'interact': return 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30';
             default: return 'text-slate-500 bg-slate-50 dark:bg-slate-900/30';
@@ -916,7 +916,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
                                 left: targetRect.left + targetRect.width / 2 - 12,
                             }}
                         >
-                            <MousePointerClick className="w-6 h-6 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" fill="rgba(99,102,241,0.9)" />
+                            <MousePointerClick className="w-6 h-6 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" fill="rgba(13,126,158,0.9)" />
                         </div>
                     )}
 
@@ -946,7 +946,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
             >
                 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl shadow-black/20 border border-slate-200/80 dark:border-slate-700 overflow-hidden">
                     {/* Header */}
-                    <div className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between">
+                    <div className="px-4 py-2.5 bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
                             <span className="text-sm">{tutorialFlows.find(f => f.title === flowTitle)?.icon || '📖'}</span>
                             <span className="text-white/90 text-xs font-semibold truncate">{flowTitle}</span>
@@ -991,7 +991,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
                         {/* Progress */}
                         <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-3">
                             <div
-                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-700 ease-out"
+                                className="h-full bg-gradient-to-r from-brand-600 to-brand-700 rounded-full transition-all duration-700 ease-out"
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
@@ -1051,7 +1051,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
             {/* Completion celebration */}
             {isLastStep && (
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none">
-                    <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2.5 rounded-full shadow-xl flex items-center gap-2 animate-bounce">
+                    <div className="bg-gradient-to-r from-emerald-700 to-emerald-800 text-white px-5 py-2.5 rounded-full shadow-xl flex items-center gap-2 animate-bounce">
                         <Trophy className="w-4 h-4" />
                         <span className="text-sm font-bold">Langkah terakhir! 🎉</span>
                     </div>
@@ -1104,7 +1104,7 @@ export const TutorialPicker: React.FC<TutorialPickerProps> = ({ isOpen, onClose 
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="p-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                <div className="p-5 bg-gradient-to-r from-brand-600 to-brand-700 text-white">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
@@ -1146,7 +1146,7 @@ export const TutorialPicker: React.FC<TutorialPickerProps> = ({ isOpen, onClose 
                             onClick={() => setFilter(tab)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                 filter === tab
-                                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                                    ? 'bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300'
                                     : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
                             }`}
                         >
@@ -1166,7 +1166,7 @@ export const TutorialPicker: React.FC<TutorialPickerProps> = ({ isOpen, onClose 
                                 className={`w-full flex items-center gap-3 p-3.5 rounded-xl border transition-all text-left group ${
                                     isCompleted
                                         ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10'
-                                        : 'border-slate-100 dark:border-slate-700 hover:border-indigo-200 dark:hover:border-indigo-700 hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                                        : 'border-slate-100 dark:border-slate-700 hover:border-brand-200 dark:hover:border-brand-700 hover:bg-slate-50 dark:hover:bg-slate-700/30'
                                 }`}
                             >
                                 <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
@@ -1185,7 +1185,7 @@ export const TutorialPicker: React.FC<TutorialPickerProps> = ({ isOpen, onClose 
                                             <RotateCcw className="w-2.5 h-2.5" /> Ulangi
                                         </span>
                                     ) : (
-                                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-brand-500 transition-colors" />
                                     )}
                                 </div>
                             </button>

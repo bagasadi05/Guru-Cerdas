@@ -270,8 +270,8 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                             <span className="font-bold text-slate-800 dark:text-white">{stat.className}</span>
                             {showTrend && stat.trend !== 'stable' && (
                                 <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${stat.trend === 'up'
-                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                    : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                    : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                                     }`}>
                                     {stat.trend === 'up' ? <TrendingUpIcon className="w-3 h-3" /> : <TrendingDownIcon className="w-3 h-3" />}
                                 </span>

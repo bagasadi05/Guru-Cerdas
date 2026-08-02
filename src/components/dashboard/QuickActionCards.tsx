@@ -56,7 +56,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
       description: 'Masukkan nilai siswa dengan cepat',
       icon: <TrendingUpIcon />,
       link: '/input-massal',
-      glowColor: 'from-blue-400/20 to-indigo-400/20',
+      glowColor: 'from-blue-400/20 to-blue-600/20',
       iconBg: 'bg-blue-100 dark:bg-blue-500/20',
       iconColor: 'text-blue-600 dark:text-blue-400',
       count: pendingGrades,
@@ -78,10 +78,10 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3 mb-2">
-        <div className="p-2 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20 rounded-xl border border-indigo-500/20">
-          <ClockIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+        <div className="p-2 bg-gradient-to-br from-brand-500/10 to-brand-600/10 dark:from-brand-500/20 dark:to-brand-600/20 rounded-xl border border-brand-500/20">
+          <ClockIcon className="w-5 h-5 text-brand-600 dark:text-brand-400" />
         </div>
-        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-800 dark:from-white dark:to-slate-300">
           Aksi Cepat
         </h2>
       </div>
@@ -114,8 +114,8 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
                     <div
                       className={`relative flex items-center justify-center min-w-[28px] h-7 px-2.5 rounded-full text-xs font-bold text-white shadow-lg ${
                         action.urgent 
-                          ? 'bg-gradient-to-r from-red-500 to-rose-500 shadow-red-500/30' 
-                          : 'bg-gradient-to-r from-blue-500 to-indigo-500 shadow-blue-500/30'
+                          ? 'bg-gradient-to-r from-rose-500 to-red-600 shadow-red-500/30' 
+                          : 'bg-gradient-to-r from-blue-500 to-cyan-600 shadow-blue-500/30'
                       }`}
                     >
                       {action.count}
@@ -125,7 +125,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
               </div>
 
               {/* Title & Description */}
-              <h3 className={`font-bold text-slate-800 dark:text-slate-100 mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300 ${
+              <h3 className={`font-bold text-slate-800 dark:text-slate-100 mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors duration-300 ${
                 'text-lg'
               }`}>
                 {action.title}

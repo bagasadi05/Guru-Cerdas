@@ -31,10 +31,10 @@ export const helpArticles: HelpArticle[] = [
                 <li><strong>3. Tandai Status Kehadiran</strong> 
                     <br/>Untuk setiap siswa, klik tombol status yang sesuai:
                     <ul class="mt-2 text-sm bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                        <li class="flex items-center gap-2 mb-1"><span class="w-6 h-6 flex items-center justify-center bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">H</span> <strong>Hadir</strong> - Siswa ada di kelas</li>
-                        <li class="flex items-center gap-2 mb-1"><span class="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-xs font-bold">I</span> <strong>Izin</strong> - Siswa izin resmi</li>
-                        <li class="flex items-center gap-2 mb-1"><span class="w-6 h-6 flex items-center justify-center bg-amber-100 text-amber-600 rounded-full text-xs font-bold">S</span> <strong>Sakit</strong> - Siswa sakit</li>
-                        <li class="flex items-center gap-2 mb-1"><span class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 rounded-full text-xs font-bold">A</span> <strong>Alpha</strong> - Tanpa keterangan</li>
+                        <li class="flex items-center gap-2 mb-1"><span class="w-6 h-6 flex items-center justify-center bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">H</span> <strong>Hadir</strong> - Siswa ada di kelas</li>
+                        <li class="flex items-center gap-2 mb-1"><span class="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full text-xs font-bold">I</span> <strong>Izin</strong> - Siswa izin resmi</li>
+                        <li class="flex items-center gap-2 mb-1"><span class="w-6 h-6 flex items-center justify-center bg-amber-100 text-amber-700 rounded-full text-xs font-bold">S</span> <strong>Sakit</strong> - Siswa sakit</li>
+                        <li class="flex items-center gap-2 mb-1"><span class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-700 rounded-full text-xs font-bold">A</span> <strong>Alpha</strong> - Tanpa keterangan</li>
                     </ul>
                 </li>
                 
@@ -42,9 +42,9 @@ export const helpArticles: HelpArticle[] = [
                     <br/>Setelah selesai, jangan lupa klik tombol <strong>"Simpan Perubahan Absensi"</strong> di pojok kanan bawah agar data tersimpan.</li>
             </ol>
 
-            <div class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-xl mt-4 border border-indigo-100 dark:border-indigo-800">
-                <h4 class="text-indigo-800 dark:text-indigo-300 font-bold mb-2">Tips Cepat:</h4>
-                <ul class="list-disc pl-4 text-indigo-700 dark:text-indigo-400">
+            <div class="bg-brand-50 dark:bg-brand-900/30 p-4 rounded-xl mt-4 border border-brand-100 dark:border-brand-800">
+                <h4 class="text-brand-800 dark:text-brand-300 font-bold mb-2">Tips Cepat:</h4>
+                <ul class="list-disc pl-4 text-brand-700 dark:text-brand-400">
                     <li>Ingin menandai semua siswa Hadir? Gunakan tombol <strong>"Semua Hadir"</strong> di bagian atas daftar.</li>
                     <li>Salah input? Anda bisa mengubahnya kapan saja dan simpan ulang.</li>
                 </ul>

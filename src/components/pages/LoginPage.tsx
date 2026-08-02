@@ -134,30 +134,30 @@ const LoginPage: React.FC = () => {
                 className="min-h-[100dvh] w-full bg-gray-950 text-gray-100 flex flex-col justify-center relative overflow-x-hidden py-10 lg:py-0"
             >
                 {/* Background effects */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-900/20 via-gray-950 to-gray-950 z-0"></div>
-                <div className="absolute -left-64 top-1/4 w-[800px] h-[800px] bg-primary-600/10 blur-[120px] rounded-full z-0 pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-900/25 via-gray-950 to-gray-950 z-0"></div>
+                <div className="absolute -left-64 top-1/4 w-[800px] h-[800px] bg-brand-500/15 blur-[120px] rounded-full z-0 pointer-events-none"></div>
 
                 <div className="flex flex-col-reverse lg:flex-row items-center lg:items-stretch justify-center w-full max-w-6xl z-10 px-4 sm:px-6 gap-12 lg:gap-20 mx-auto mt-auto mb-auto">
                     
                     {/* Left side text */}
                     <div className="flex-1 flex flex-col justify-center max-w-xl mx-auto lg:mx-0 w-full mt-8 lg:mt-0 text-center lg:text-left">
                         <div className="mb-4 flex flex-col items-center lg:items-start">
-                            <span className="hidden lg:block text-6xl font-serif text-primary-500 leading-none mb-2">"</span>
+                            <span className="hidden lg:block text-6xl font-serif text-brand-400 leading-none mb-2">"</span>
                             <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-white mb-4 lg:mb-6 leading-tight font-display">
                                 Mengajar adalah<br/>
-                                menyalakan <span className="text-primary-500">obor,</span><br/>
-                                bukan <span className="text-primary-500">mengisi bejana.</span>
+                                menyalakan <span className="text-brand-400">obor,</span><br/>
+                                bukan <span className="text-brand-400">mengisi bejana.</span>
                             </h2>
                             <p className="text-gray-400 text-sm lg:text-base mb-6 lg:mb-8 max-w-md leading-relaxed mx-auto lg:mx-0">
                                 Teruslah belajar, berbagi, dan menginspirasi.<br/>
                                 Karena guru hebat, lahir dari semangat<br/>
                                 yang tak pernah berhenti.
                             </p>
-                            <div className="w-12 h-0.5 bg-primary-600/50 mb-8 lg:mb-10 mx-auto lg:mx-0"></div>
+                            <div className="w-12 h-0.5 bg-brand-500/50 mb-8 lg:mb-10 mx-auto lg:mx-0"></div>
                             
                             <div className="flex items-center gap-3 sm:gap-4 bg-gray-900/60 border border-gray-800 p-3 sm:p-4 rounded-2xl backdrop-blur-sm max-w-md text-left w-full sm:w-auto">
-                                <div className="p-2 sm:p-3 bg-primary-950/50 rounded-xl shrink-0">
-                                    <LightbulbIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary-500" />
+                                <div className="p-2 sm:p-3 bg-brand-950/50 rounded-xl shrink-0">
+                                    <LightbulbIcon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-400" />
                                 </div>
                                 <p className="text-[10px] sm:text-xs text-gray-400 leading-relaxed">
                                     Setiap langkah kecil hari ini,<br className="hidden sm:block"/>
@@ -172,7 +172,7 @@ const LoginPage: React.FC = () => {
                         <div className="login-card !m-0 w-full max-w-md !bg-[#151921] !border-gray-800/60 backdrop-blur-xl shadow-2xl relative p-6 sm:p-8">
                             <img src="/logo_sekolah.png" alt="Logo MI Al Irsyad" className="w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-6 object-contain drop-shadow-md" />
                             <h1 className="text-2xl font-bold text-center text-white mb-2 font-display">
-                                <span className="text-primary-500">{isLoginMode ? 'Selamat' : 'Mari'}</span> {isLoginMode ? 'Datang Kembali!' : 'Bergabung!'}
+                                <span className="text-brand-400">{isLoginMode ? 'Selamat' : 'Mari'}</span> {isLoginMode ? 'Datang Kembali!' : 'Bergabung!'}
                             </h1>
                             <p className="text-gray-400 text-sm text-center mb-8">
                                 {isLoginMode ? 'Masuk untuk melanjutkan ke Portal Guru' : 'Satu langkah lagi menuju kelas digital Anda.'}
@@ -189,7 +189,7 @@ const LoginPage: React.FC = () => {
                                             placeholder="Email atau Username (cth: guru1)"
                                             {...registerLogin('email')}
                                             error={errorsLogin.email?.message}
-                                            className="pl-10 bg-gray-900/50 border-gray-700/50 focus:border-primary-500/50 text-white placeholder-gray-500"
+                                            className="pl-10 bg-gray-900/50 border-gray-700/50 focus:border-brand-400/50 text-white placeholder-gray-500"
                                         />
                                     </div>
                                     <div className="form-group-icon relative">
@@ -199,7 +199,7 @@ const LoginPage: React.FC = () => {
                                             placeholder="Password"
                                             {...registerLogin('password')}
                                             error={errorsLogin.password?.message}
-                                            className="pl-10 pr-10 bg-gray-900/50 border-gray-700/50 focus:border-primary-500/50 text-white placeholder-gray-500"
+                                            className="pl-10 pr-10 bg-gray-900/50 border-gray-700/50 focus:border-brand-400/50 text-white placeholder-gray-500"
                                         />
                                         <button
                                             type="button"
@@ -213,15 +213,15 @@ const LoginPage: React.FC = () => {
                                     
                                     <div className="flex items-center justify-between mt-2 mb-2">
                                         <label className="flex items-center gap-2 cursor-pointer group">
-                                            <input type="checkbox" className="rounded border-gray-600 bg-gray-800/50 text-primary-500 focus:ring-primary-500/50 focus:ring-offset-gray-900 cursor-pointer" />
+                                            <input type="checkbox" className="rounded border-gray-600 bg-gray-800/50 text-brand-400 focus:ring-brand-400/50 focus:ring-offset-gray-900 cursor-pointer" />
                                             <span className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">Ingat saya</span>
                                         </label>
-                                        <button type="button" onClick={() => setIsForgotModalOpen(true)} className="text-xs text-primary-400 hover:text-primary-300 transition-colors">
+                                        <button type="button" onClick={() => setIsForgotModalOpen(true)} className="text-xs text-brand-300 hover:text-brand-200 transition-colors">
                                             Lupa password?
                                         </button>
                                     </div>
 
-                                    <button type="submit" className="w-full bg-primary-600 hover:bg-primary-500 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mt-4" disabled={loading}>
+                                    <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mt-4" disabled={loading}>
                                         {loading ? 'Memproses...' : (
                                             <>
                                                 Masuk <ArrowRightIcon className="w-4 h-4" />
@@ -238,7 +238,7 @@ const LoginPage: React.FC = () => {
                                             placeholder="Nama Lengkap"
                                             {...registerSignup('name')}
                                             error={errorsSignup.name?.message}
-                                            className="pl-10 bg-gray-900/50 border-gray-700/50 focus:border-primary-500/50 text-white placeholder-gray-500"
+                                            className="pl-10 bg-gray-900/50 border-gray-700/50 focus:border-brand-400/50 text-white placeholder-gray-500"
                                         />
                                     </div>
                                     <div className="form-group-icon">
@@ -251,7 +251,7 @@ const LoginPage: React.FC = () => {
                                             placeholder="Email"
                                             {...registerSignup('email')}
                                             error={errorsSignup.email?.message}
-                                            className="pl-10 bg-gray-900/50 border-gray-700/50 focus:border-primary-500/50 text-white placeholder-gray-500"
+                                            className="pl-10 bg-gray-900/50 border-gray-700/50 focus:border-brand-400/50 text-white placeholder-gray-500"
                                         />
                                     </div>
                                     <div className="form-group-icon relative">
@@ -261,7 +261,7 @@ const LoginPage: React.FC = () => {
                                             placeholder="Password"
                                             {...registerSignup('password')}
                                             error={errorsSignup.password?.message}
-                                            className="pl-10 pr-10 bg-gray-900/50 border-gray-700/50 focus:border-primary-500/50 text-white placeholder-gray-500"
+                                            className="pl-10 pr-10 bg-gray-900/50 border-gray-700/50 focus:border-brand-400/50 text-white placeholder-gray-500"
                                         />
                                         <button
                                             type="button"
@@ -279,11 +279,11 @@ const LoginPage: React.FC = () => {
                                             placeholder="Konfirmasi Password"
                                             {...registerSignup('confirmPassword')}
                                             error={errorsSignup.confirmPassword?.message}
-                                            className="pl-10 pr-10 bg-gray-900/50 border-gray-700/50 focus:border-primary-500/50 text-white placeholder-gray-500"
+                                            className="pl-10 pr-10 bg-gray-900/50 border-gray-700/50 focus:border-brand-400/50 text-white placeholder-gray-500"
                                         />
                                     </div>
 
-                                    <button type="submit" className="w-full bg-primary-600 hover:bg-primary-500 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mt-4" disabled={loading}>
+                                    <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mt-4" disabled={loading}>
                                         {loading ? 'Memproses...' : (
                                             <>
                                                 Daftar <ArrowRightIcon className="w-4 h-4" />
@@ -306,9 +306,9 @@ const LoginPage: React.FC = () => {
                             >
                                 <UserCircleIcon className="w-4 h-4 text-gray-400" />
                                 {isLoginMode ? (
-                                    <>Belum punya akun? <span className="text-primary-400">Daftar di sini</span></>
+                                    <>Belum punya akun? <span className="text-brand-300">Daftar di sini</span></>
                                 ) : (
-                                    <>Sudah punya akun? <span className="text-primary-400">Masuk di sini</span></>
+                                    <>Sudah punya akun? <span className="text-brand-300">Masuk di sini</span></>
                                 )}
                             </button>
 
@@ -318,7 +318,7 @@ const LoginPage: React.FC = () => {
                             </div>
 
                             <div className="text-center border-t border-gray-800/60 pt-4">
-                                <Link to="/" className="text-sm text-gray-400 hover:text-primary-400 transition-colors font-medium">
+                                <Link to="/" className="text-sm text-gray-400 hover:text-brand-300 transition-colors font-medium">
                                     Kembali ke pemilihan peran
                                 </Link>
                             </div>

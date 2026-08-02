@@ -71,7 +71,8 @@ vi.mock('../utils/pdfHeaderUtils', () => ({
 }));
 
 // Import services after mocking
-import { softDelete, restore, permanentDelete, softDeleteBulk, restoreBulk } from '../services/SoftDeleteService';
+import { softDelete, restore, permanentDelete, softDeleteBulk, restoreBulk, cleanupExpired, getDeletedItems, ENTITY_KEY_COLUMN, ENTITY_OWNER_COLUMN, getAllDeletedItems } from '../services/SoftDeleteService';
+import { supabase } from '../services/supabase';
 import { recordAction, undo, canUndo, getUndoTimeRemaining } from '../services/UndoManager';
 import { exportToPDF, exportToExcel, exportToCSV } from '../services/ExportService';
 
@@ -118,6 +119,203 @@ describe('SoftDeleteService', () => {
         it('should permanently remove a record', async () => {
             const result = await permanentDelete('students', 'test-id-1');
             expect(result.success).toBe(true);
+        });
+    });
+});
+
+describe('SoftDeleteService API id-based', () => {
+    describe('regresi: kolom kunci per entity (anti-HTTP 400)', () => {
+        it('softDelete user_settings memakai kolom user_id (bukan id)', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            await softDelete('user_settings', 'user-1');
+
+            const idx = fromMock.mock.calls.findIndex(call => call[0] === 'user_settings');
+            expect(idx).toBeGreaterThanOrEqual(0);
+            const builder = fromMock.mock.results[idx].value;
+            expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
+        });
+
+        it('softDeleteBulk user_settings memakai kolom user_id (bukan id)', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            await softDeleteBulk('user_settings', ['user-1', 'user-2']);
+
+            const idx = fromMock.mock.calls.findIndex(call => call[0] === 'user_settings');
+            expect(idx).toBeGreaterThanOrEqual(0);
+            const builder = fromMock.mock.results[idx].value;
+            expect(builder.in).toHaveBeenCalledWith('user_id', ['user-1', 'user-2']);
+        });
+
+        it('restore user_settings memakai kolom user_id (bukan id)', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            await restore('user_settings', 'user-1');
+
+            const idx = fromMock.mock.calls.findIndex(call => call[0] === 'user_settings');
+            expect(idx).toBeGreaterThanOrEqual(0);
+            const builder = fromMock.mock.results[idx].value;
+            expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
+        });
+
+        it('restoreBulk user_settings memakai kolom user_id (bukan id)', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            await restoreBulk('user_settings', ['user-1', 'user-2']);
+
+            const idx = fromMock.mock.calls.findIndex(call => call[0] === 'user_settings');
+            expect(idx).toBeGreaterThanOrEqual(0);
+            const builder = fromMock.mock.results[idx].value;
+            expect(builder.in).toHaveBeenCalledWith('user_id', ['user-1', 'user-2']);
+        });
+
+        it('permanentDelete user_settings memakai kolom user_id (bukan id)', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            await permanentDelete('user_settings', 'user-1');
+
+            const idx = fromMock.mock.calls.findIndex(call => call[0] === 'user_settings');
+            expect(idx).toBeGreaterThanOrEqual(0);
+            const builder = fromMock.mock.results[idx].value;
+            expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
+        });
+
+        it('getDeletedItems user_settings memetakan id dari kolom kunci user_id', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            // Baris user_settings punya user_id, TANPA kolom id — hasil map
+            // harus mengambil id dari kolom kunci (user_id), bukan item.id.
+            const row = { user_id: 'user-1', deleted_at: '2026-07-01T00:00:00.000Z', school_name: 'X' };
+            fromMock.mockImplementationOnce(() => {
+                const chain = {
+                    select: vi.fn().mockReturnThis(),
+                    eq: vi.fn().mockReturnThis(),
+                    not: vi.fn().mockReturnThis(),
+                    order: vi.fn().mockReturnThis(),
+                    then: (resolve: (v: unknown) => void) => resolve({ data: [row], error: null }),
+                } as { select: ReturnType<typeof vi.fn>; eq: ReturnType<typeof vi.fn>; not: ReturnType<typeof vi.fn>; order: ReturnType<typeof vi.fn>; then: (resolve: (v: unknown) => void) => void };
+                return chain;
+            });
+
+            const items = await getDeletedItems('user_settings', 'user-1');
+            expect(items).toHaveLength(1);
+            expect(items[0].id).toBe('user-1');
+        });
+
+        it('entity biasa (students) tetap memakai kolom id', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            await softDelete('students', 'student-1');
+
+            const idx = fromMock.mock.calls.findIndex(call => call[0] === 'students');
+            expect(idx).toBeGreaterThanOrEqual(0);
+            const builder = fromMock.mock.results[idx].value;
+            expect(builder.eq).toHaveBeenCalledWith('id', 'student-1');
+        });
+    });
+
+    describe('regresi: owner filter per entity (anti-HTTP 400)', () => {
+        it.each(['homework', 'announcements'] as const)(
+            '%s tidak punya user_id → getDeletedItems di-skip tanpa query',
+            async (entity) => {
+                const fromMock = vi.mocked(supabase.from);
+                fromMock.mockClear();
+
+                const items = await getDeletedItems(entity, 'user-1');
+
+                expect(items).toEqual([]);
+                // Tidak boleh ada query ke tabel tsb sama sekali (tanpa kolom
+                // user_id, `.eq('user_id', ...)` akan ditolak PostgREST HTTP 400).
+                const queriedTables = fromMock.mock.calls.map(call => call[0]);
+                expect(queriedTables).not.toContain(entity);
+            }
+        );
+
+        it('getDeletedItems students memakai kolom owner user_id', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            await getDeletedItems('students', 'user-1');
+
+            const idx = fromMock.mock.calls.findIndex(call => call[0] === 'students');
+            expect(idx).toBeGreaterThanOrEqual(0);
+            const builder = fromMock.mock.results[idx].value;
+            expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
+        });
+
+        it('getAllDeletedItems tidak pernah men-query homework/announcements', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            const items = await getAllDeletedItems('user-1');
+
+            expect(Array.isArray(items)).toBe(true);
+            const queriedTables = fromMock.mock.calls.map(call => call[0]);
+            expect(queriedTables).not.toContain('homework');
+            expect(queriedTables).not.toContain('announcements');
+            // user_settings ikut di-query (punya user_id) — pastikan tidak
+            // ter-skip oleh guard owner yang terlalu agresif
+            expect(queriedTables).toContain('user_settings');
+        });
+
+        it('ENTITY_OWNER_COLUMN terdefinisi untuk semua entity (string atau null)', () => {
+            const entities = Object.keys(ENTITY_OWNER_COLUMN) as (keyof typeof ENTITY_OWNER_COLUMN)[];
+            expect(entities.length).toBeGreaterThan(0);
+            for (const entity of entities) {
+                expect(ENTITY_OWNER_COLUMN[entity] === null || typeof ENTITY_OWNER_COLUMN[entity] === 'string').toBe(true);
+            }
+        });
+    });
+});
+
+describe('cleanupExpired', () => {
+    describe('regresi: kolom kunci per entity (anti-HTTP 400)', () => {
+        it('user_settings di-query memakai kolom kunci user_id, bukan id (sebelumnya 400 di startup)', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            const result = await cleanupExpired();
+
+            expect(result.success).toBe(true);
+
+            // user_settings memakai PK user_id tanpa kolom id → select('id')
+            // ditolak PostgREST (HTTP 400). Refactor memakai ENTITY_KEY_COLUMN
+            // sehingga user_settings ikut di-cleanup tapi dengan kolom user_id.
+            const settingsCallIdx = fromMock.mock.calls.findIndex(call => call[0] === 'user_settings');
+            expect(settingsCallIdx).toBeGreaterThanOrEqual(0);
+
+            const settingsBuilder = fromMock.mock.results[settingsCallIdx].value;
+            expect(settingsBuilder.select).toHaveBeenCalledWith('user_id');
+            expect(settingsBuilder.select).not.toHaveBeenCalledWith('id');
+        });
+
+        it('setiap entity di-select memakai kolom kuncinya sendiri (ENTITY_KEY_COLUMN)', async () => {
+            const fromMock = vi.mocked(supabase.from);
+            fromMock.mockClear();
+
+            await cleanupExpired();
+
+            const calls = fromMock.mock.calls;
+            expect(calls.length).toBeGreaterThan(0);
+
+            // Invariant anti-400: query select() tiap entity harus memakai
+            // kolom kunci yang terdaftar di ENTITY_KEY_COLUMN — bukan
+            // hardcode 'id' yang bisa ditolak PostgREST.
+            for (let i = 0; i < calls.length; i++) {
+                const entity = calls[i][0] as keyof typeof ENTITY_KEY_COLUMN;
+                const expectedKey = ENTITY_KEY_COLUMN[entity];
+                expect(expectedKey).toBeDefined();
+
+                const builder = fromMock.mock.results[i].value;
+                expect(builder.select).toHaveBeenCalledWith(expectedKey);
+            }
         });
     });
 });

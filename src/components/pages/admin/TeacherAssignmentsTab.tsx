@@ -349,7 +349,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Guru Mapel</p>
-                    <p className="mt-2 text-3xl font-bold text-indigo-600">{stats.subjectTeacherCount}</p>
+                    <p className="mt-2 text-3xl font-bold text-brand-600">{stats.subjectTeacherCount}</p>
                 </div>
             </div>
 
@@ -391,7 +391,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
             <div className="grid grid-cols-1 xl:grid-cols-[360px,1fr] gap-6">
                 <div ref={formPanelRef} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 scroll-mt-6">
                     <div className="flex items-center gap-2 mb-5">
-                        <Plus className="w-5 h-5 text-indigo-500" />
+                        <Plus className="w-5 h-5 text-brand-500" />
                         <h3 className="text-lg font-bold">Tambah Penugasan</h3>
                     </div>
 
@@ -493,7 +493,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                                                 setSelectedSubjects([...DEFAULT_SUBJECT_OPTIONS]);
                                             }
                                         }}
-                                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold transition-colors"
+                                        className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 font-semibold transition-colors"
                                     >
                                         {selectedSubjects.length === DEFAULT_SUBJECT_OPTIONS.length ? 'Batal Pilih Semua' : 'Pilih Semua'}
                                     </button>
@@ -507,8 +507,8 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                                                 type="button"
                                                 onClick={() => handleSubjectToggle(subject)}
                                                 className={`px-3 py-2 rounded-xl border text-xs font-semibold transition-colors ${isSelected
-                                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
-                                                    : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-indigo-300'
+                                                    ? 'bg-brand-600 border-brand-600 text-white shadow-sm'
+                                                    : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-brand-300'
                                                 }`}
                                             >
                                                 {subject}
@@ -546,7 +546,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-lg shadow-indigo-500/20 disabled:opacity-60"
+                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-medium shadow-lg shadow-brand-600/20 disabled:opacity-60"
                         >
                             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                             Simpan Penugasan
@@ -558,7 +558,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                     <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div>
                             <h3 className="text-lg font-bold flex items-center gap-2">
-                                <Users className="w-5 h-5 text-indigo-500" />
+                                <Users className="w-5 h-5 text-brand-500" />
                                 Penugasan Aktif
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Wali kelas dapat melihat semua nilai kelasnya. Guru mapel hanya menginput mapel yang ditugaskan.</p>
@@ -589,7 +589,7 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
 
                     {isLoading ? (
                         <div className="px-6 py-16 flex justify-center">
-                            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                            <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
                         </div>
                     ) : filteredAssignments.length === 0 ? (
                         <div className="px-6 py-16 text-center">
@@ -613,14 +613,14 @@ export const TeacherAssignmentsTab: React.FC<TeacherAssignmentsTabProps> = ({ cu
                                                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
                                                     : assignment.assignment_role === 'assistant'
                                                         ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                                                        : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400'
+                                                        : 'bg-brand-100 text-brand-800 dark:bg-brand-900/30 dark:text-brand-400'
                                                     }`}>
                                                     {assignment.assignment_role === 'homeroom' ? <UserCheck className="w-3.5 h-3.5" /> : assignment.assignment_role === 'assistant' ? <UserPlus className="w-3.5 h-3.5" /> : <BookOpen className="w-3.5 h-3.5" />}
                                                     {roleLabel}
                                                 </span>
                                                 <span className="text-sm font-semibold text-gray-900 dark:text-white">{classItem?.name || 'Kelas tidak ditemukan'}</span>
                                                 {assignment.subject_name ? (
-                                                    <span className="text-sm text-indigo-600 dark:text-indigo-400">• {assignment.subject_name}</span>
+                                                    <span className="text-sm text-brand-600 dark:text-brand-400">• {assignment.subject_name}</span>
                                                 ) : null}
                                             </div>
                                             <p className="text-sm text-gray-600 dark:text-gray-300">

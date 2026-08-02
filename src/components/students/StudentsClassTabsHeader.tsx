@@ -106,7 +106,7 @@ export const StudentsClassTabsHeader: React.FC<StudentsClassTabsHeaderProps> = (
         <div className="absolute left-0 top-0 bottom-2 z-10 flex items-center pr-10 bg-gradient-to-r from-slate-50 via-slate-50/70 to-transparent dark:from-slate-950/90 dark:via-slate-950/70 to-transparent pointer-events-none transition-opacity duration-300">
           <button type="button"
             onClick={() => scroll('left')}
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-md text-slate-600 dark:text-slate-300 pointer-events-auto transition-transform hover:scale-105 active:scale-95"
+            className="flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-md text-slate-600 dark:text-slate-300 pointer-events-auto transition-transform hover:scale-105 active:scale-95"
             aria-label="Scroll left"
           >
             <ChevronLeftIcon className="w-5 h-5" />
@@ -119,7 +119,7 @@ export const StudentsClassTabsHeader: React.FC<StudentsClassTabsHeaderProps> = (
         <div className="absolute right-0 top-0 bottom-2 z-10 flex items-center pl-10 bg-gradient-to-l from-slate-50 via-slate-50/70 to-transparent dark:from-slate-950/90 dark:via-slate-950/70 to-transparent pointer-events-none transition-opacity duration-300">
           <button type="button"
             onClick={() => scroll('right')}
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-md text-slate-600 dark:text-slate-300 pointer-events-auto transition-transform hover:scale-105 active:scale-95"
+            className="flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-md text-slate-600 dark:text-slate-300 pointer-events-auto transition-transform hover:scale-105 active:scale-95"
             aria-label="Scroll right"
           >
             <ChevronRightIcon className="w-5 h-5" />
@@ -144,7 +144,7 @@ export const StudentsClassTabsHeader: React.FC<StudentsClassTabsHeaderProps> = (
             <TabsTrigger
               key={classItem.id}
               value={classItem.id}
-              className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white dark:data-[state=active]:bg-indigo-500 dark:data-[state=active]:text-white bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg px-5 py-3 min-h-[44px] text-sm font-semibold transition-all shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex-shrink-0"
+              className="data-[state=active]:bg-brand-600 data-[state=active]:text-white dark:data-[state=active]:bg-brand-600 dark:data-[state=active]:text-white bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg px-5 py-3 min-h-[44px] text-sm font-semibold transition-all shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex-shrink-0"
             >
               {classItem.name}
             </TabsTrigger>

@@ -166,7 +166,7 @@ export function triggerStarsConfetti() {
 export function triggerSideCannons() {
     runConfetti((confetti) => {
         const end = Date.now() + 1500;
-        const colors = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef'];
+        const colors = ['#0d7e9e', '#11657f', '#38b9d4', '#d946ef'];
 
         (function frame() {
             confetti({
@@ -199,7 +199,7 @@ export function triggerSubtleConfetti() {
         particleCount: 30,
         spread: 50,
         origin: { y: 0.7 },
-        colors: ['#6366f1', '#8b5cf6', '#a855f7'],
+        colors: ['#0d7e9e', '#11657f', '#38b9d4'],
         scalar: 0.8,
         gravity: 1.2
     }));

@@ -128,8 +128,8 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
             >
                 <div className="flex items-center justify-between border-b border-slate-200 p-6 dark:border-slate-800">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/50">
-                            <svg className="h-5 w-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-900/50">
+                            <svg className="h-5 w-5 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" />
                             </svg>
                         </div>
@@ -229,7 +229,7 @@ export const AccessibilitySettingsPanel: React.FC<{
                                 role="switch"
                                 aria-checked={isHighContrast}
                                 onClick={toggleContrast}
-                                className={`relative h-6 w-11 rounded-full transition-colors ${isHighContrast ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                                className={`relative h-6 w-11 rounded-full transition-colors ${isHighContrast ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'}`}
                             >
                                 <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${isHighContrast ? 'translate-x-5' : ''}`} />
                             </button>

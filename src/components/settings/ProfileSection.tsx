@@ -91,14 +91,14 @@ const ProfileSection: React.FC = () => {
     return (
         <SettingsCard className="overflow-hidden">
             <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Profil Pengguna</CardTitle>
+                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Profil Pengguna</CardTitle>
                 <CardDescription className="text-base">Perbarui informasi profil dan foto identitas Anda.</CardDescription>
             </CardHeader>
             <CardContent className="pt-8">
                 <form onSubmit={handleProfileSubmit} className="space-y-8">
                     <div className="flex flex-col sm:flex-row items-center gap-8">
                         <div className="relative group">
-                            <div className="absolute -inset-1 bg-gradient-to-tr from-green-500 to-emerald-500 rounded-full opacity-70 blur group-hover:opacity-100 transition duration-500"></div>
+                            <div className="absolute -inset-1 bg-gradient-to-tr from-emerald-500 to-emerald-600 rounded-full opacity-70 blur group-hover:opacity-100 transition duration-500"></div>
                             <div className="relative">
                                 <ImageUploader
                                     currentImageUrl={user?.avatarUrl || `https://i.pravatar.cc/150?u=${user?.id}`}
@@ -156,7 +156,7 @@ const ProfileSection: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">
-                        <Button type="submit" disabled={!isOnline} className="px-8 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-500/20 transition-all hover:scale-[1.02]">
+                        <Button type="submit" disabled={!isOnline} className="px-8 rounded-xl bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-green-800 hover:to-emerald-900 text-white shadow-lg shadow-green-500/20 transition-all hover:scale-[1.02]">
                             Simpan Perubahan
                         </Button>
                     </div>

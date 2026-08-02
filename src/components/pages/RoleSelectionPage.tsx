@@ -60,7 +60,7 @@ const RoleSelectionPage: React.FC = () => {
                         <div className="group">
                             <div className="login-card !m-0 mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-emerald-500 dark:group-hover:border-emerald-400 dark:group-hover:shadow-emerald-500/30">
                                 <div className="flex justify-center mb-6">
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-500/20 dark:to-emerald-600/20 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 transition-transform group-hover:scale-110">
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 dark:from-emerald-500/20 dark:to-emerald-600/20 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 transition-transform group-hover:scale-110">
                                         <GraduationCapIcon className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600 dark:text-emerald-400" />
                                     </div>
                                 </div>
@@ -74,10 +74,10 @@ const RoleSelectionPage: React.FC = () => {
 
                         {/* Parent/Student Card */}
                         <div className="group">
-                            <div className="login-card !m-0 mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-indigo-500 dark:group-hover:border-indigo-400 dark:group-hover:shadow-indigo-500/30">
+                            <div className="login-card !m-0 mx-auto h-full p-6 sm:p-8 transition-all duration-300 group-hover:border-brand-500 dark:group-hover:border-brand-400 dark:group-hover:shadow-brand-600/30">
                                 <div className="flex justify-center mb-6">
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-500/20 dark:to-indigo-600/20 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 transition-transform group-hover:scale-110">
-                                        <UsersIcon className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-600 dark:text-indigo-400" />
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-brand-600 to-brand-700 dark:from-brand-500/20 dark:to-brand-600/20 rounded-full flex items-center justify-center border border-gray-200 dark:border-white/10 transition-transform group-hover:scale-110">
+                                        <UsersIcon className="w-8 h-8 sm:w-10 sm:h-10 text-brand-600 dark:text-brand-400" />
                                     </div>
                                 </div>
                                 <h2 className="form-title mb-2">Saya Orang Tua/Siswa</h2>

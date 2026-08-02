@@ -385,33 +385,6 @@ const StudentDetailPage = () => {
                                         <TabsTrigger value="grades" className="h-11">Nilai</TabsTrigger>
                                         <TabsTrigger value="activity" className="h-11">Keaktifan</TabsTrigger>
                                         <TabsTrigger value="violations" className="h-11">Pelanggaran</TabsTrigger>
-                                        <TabsTrigger value="bintang" className="h-11">
-                                            <ShieldAlertIcon className="w-4 h-4 mr-1.5 inline text-emerald-500" />
-                                            BINTANG
-                                        </TabsTrigger>
-                                        <TabsTrigger value="extracurricular" className="h-11">
-                                            <Trophy className="w-4 h-4 mr-1.5 inline" />
-                                            Ekstrakurikuler
-                                        </TabsTrigger>
-                                        <TabsTrigger value="achievements" className="h-11">
-                                            <Trophy className="w-4 h-4 mr-1.5 inline" />
-                                            Prestasi
-                                        </TabsTrigger>
-                                        <TabsTrigger value="reports" className="h-11">Catatan Guru</TabsTrigger>
-                                        <TabsTrigger value="development" className="h-11">
-                                            <BrainCircuitIcon className="w-4 h-4 mr-1.5 inline" />
-                                            Analisis Perkembangan
-                                        </TabsTrigger>
-                                        <TabsTrigger value="communication" className="h-11">
-                                            <div className="relative">
-                                                Komunikasi
-                                                {unreadMessagesCount > 0 && (
-                                                    <span className="absolute -top-1.5 -right-4 min-w-4.5 h-4.5 px-1 bg-red-500 rounded-full text-xxs text-white flex items-center justify-center font-bold">
-                                                        {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </TabsTrigger>
                                     </TabsList>
                                 </div>
                             </div>
@@ -419,14 +392,14 @@ const StudentDetailPage = () => {
                         <TabsContent value="grades" className="p-0">
                             {activeTab === 'grades' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', data: null })} onEdit={(r) => setModalState({ type: 'academic', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} currentUserId={user?.id} kkm={kkm} semesterLabel={selectedSemesterLabel} canAdd={canAdd} canManageAllRecords={canManageAllRecords} />
+                                    <GradesTab records={filteredAcademicRecords} onAdd={() => setModalState({ type: 'academic', mode: 'add', data: undefined })} onEdit={(r) => setModalState({ type: 'academic', mode: 'edit', data: r })} onDelete={(id) => handleDelete('academic_records', id)} isOnline={isOnline} currentUserId={user?.id} kkm={kkm} semesterLabel={selectedSemesterLabel} canAdd={canAdd} canManageAllRecords={canManageAllRecords} />
                                 </Suspense>
                             )}
                         </TabsContent>
                         <TabsContent value="activity" className="p-0">
                             {activeTab === 'activity' && (
                                 <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', data: null })} onEdit={(r) => setModalState({ type: 'quiz', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} currentUserId={user?.id} semesterLabel={selectedSemesterLabel} canAdd={canAdd} canManageAllRecords={canManageAllRecords} />
+                                    <ActivityTab quizPoints={filteredQuizPoints} onAdd={() => setModalState({ type: 'quiz', mode: 'add', data: undefined })} onEdit={(r) => setModalState({ type: 'quiz', mode: 'edit', data: r })} onDelete={(id) => handleDelete('quiz_points', id)} onApplyPoints={() => setModalState({ type: 'applyPoints' })} isOnline={isOnline} currentUserId={user?.id} semesterLabel={selectedSemesterLabel} canAdd={canAdd} canManageAllRecords={canManageAllRecords} />
                                 </Suspense>
                             )}
                         </TabsContent>
@@ -435,7 +408,7 @@ const StudentDetailPage = () => {
                                 <Suspense fallback={<StudentDetailTabFallback />}>
                                     <ViolationsTab
                                         violations={filteredViolations}
-                                        onAdd={() => setModalState({ type: 'violation', mode: 'add', data: null })}
+                                        onAdd={() => setModalState({ type: 'violation', mode: 'add', data: undefined })}
                                         onEdit={(r) => setModalState({ type: 'violation', mode: 'edit', data: r })}
                                         onDelete={(id) => handleDelete('violations', id)}
 
@@ -448,114 +421,6 @@ const StudentDetailPage = () => {
                                         isHomeroomTeacher={isHomeroomTeacher}
                                         canAdd={canAdd}
                                         canManageAllRecords={canManageAllRecords}
-                                    />
-                                </Suspense>
-                            )}
-                        </TabsContent>
-                        <TabsContent value="bintang" className="p-4 sm:p-6 bg-white dark:bg-slate-900 border-x border-b border-gray-200 dark:border-white/10 rounded-b-2xl">
-                            {activeTab === 'bintang' && (
-                                <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <BintangTab 
-                                        studentId={studentId || ''} 
-                                        studentName={student.name}
-                                        violations={filteredViolations}
-                                    />
-                                </Suspense>
-                            )}
-                        </TabsContent>
-                        <TabsContent value="extracurricular" className="p-0">
-                            {activeTab === 'extracurricular' && (
-                                <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <ExtracurricularTab
-                                        studentExtracurriculars={filteredExtracurriculars}
-                                        attendanceRecords={filteredExAttendance}
-                                        grades={filteredExGrades}
-                                    />
-                                </Suspense>
-                            )}
-                        </TabsContent>
-                        <TabsContent value="achievements" className="p-4 sm:p-6 bg-white dark:bg-slate-900 border-x border-b border-gray-200 dark:border-white/10 rounded-b-2xl">
-                            {activeTab === 'achievements' && (
-                                <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <AchievementsTab
-                                        achievements={achievements}
-                                        isLoading={isAchievementsLoading}
-                                        error={achievementsError}
-                                        onAdd={() => setModalState({ type: 'achievement', mode: 'add', data: null } as any)}
-                                        onEdit={(r) => setModalState({ type: 'achievement', mode: 'edit', data: r } as any)}
-                                        onDelete={handleDeleteAchievement}
-                                        isOnline={isOnline}
-                                        currentUserId={user?.id}
-                                        studentName={student.name}
-                                        className={student.classes?.name || '-'}
-                                        canAdd={canManageStudentProfile && !isAssistant}
-                                    />
-                                </Suspense>
-                            )}
-                        </TabsContent>
-                        <TabsContent value="reports" className="p-0">
-                            {activeTab === 'reports' && (
-                                <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <ReportsTab reports={reports} onAdd={() => setModalState({ type: 'report', data: null })} onEdit={(r) => setModalState({ type: 'report', data: r })} onDelete={(id) => handleDelete('reports', id)} isOnline={isOnline} currentUserId={user?.id} canAdd={canManageStudentProfile && !isAssistant} />
-                                </Suspense>
-                            )}
-                        </TabsContent>
-                        <TabsContent value="development" className="p-4 sm:p-6">
-                            {activeTab === 'development' && (
-                                <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <ChildDevelopmentAnalysisTab
-                                        studentData={{
-                                            student: {
-                                                id: student.id,
-                                                name: student.name,
-                                                age: (student as any).date_of_birth ? (() => { const dob = new Date((student as any).date_of_birth); const today = new Date(); let age = today.getFullYear() - dob.getFullYear(); const m = today.getMonth() - dob.getMonth(); if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--; return age; })() : 12,
-                                                class: student.classes?.name
-                                            },
-                                            academicRecords: filteredAcademicRecords.map((r) => ({
-                                                subject: r.subject,
-                                                score: r.score,
-                                                assessment_name: r.assessment_name ?? undefined,
-                                                notes: r.notes ?? undefined
-                                            })),
-                                            attendanceRecords: filteredAttendance.map((a) => ({
-                                                status: a.status,
-                                                date: a.date
-                                            })),
-                                            violations: filteredViolations.map((v) => ({
-                                                description: v.description,
-                                                points: v.points,
-                                                date: v.date
-                                            })),
-                                            quizPoints: filteredQuizPoints.map((q) => ({
-                                                activity: q.quiz_name,
-                                                points: q.points,
-                                                date: q.quiz_date
-                                            }))
-                                        }}
-                                        allAcademicRecords={studentDetails?.academicRecords || []}
-                                        allAttendanceRecords={studentDetails?.attendanceRecords || []}
-                                        allViolations={studentDetails?.violations || []}
-                                        allQuizPoints={studentDetails?.quizPoints || []}
-                                        selectedSemesterId={selectedSemesterId}
-                                    />
-                                </Suspense>
-                            )}
-                        </TabsContent>
-
-                        <TabsContent value="communication" className="p-0">
-                            {activeTab === 'communication' && (
-                                <Suspense fallback={<StudentDetailTabFallback />}>
-                                    <CommunicationTab
-                                        communications={communications}
-                                        userAvatarUrl={user?.avatarUrl}
-                                        studentName={student.name}
-                                        currentUserId={user?.id}
-                                        onSendMessage={(msg, attachment) => sendMessageMutation.mutate({ message: msg, attachment })}
-                                        onEditMessage={(msg) => setModalState({ type: 'editCommunication', data: msg })}
-                                        onDeleteMessage={(id) => handleDelete('communications', id)}
-                                        isOnline={isOnline}
-                                        isSending={sendMessageMutation.isPending}
-                                        quickTemplates={communicationSignals}
                                     />
                                 </Suspense>
                             )}
@@ -641,7 +506,7 @@ const StudentDetailPage = () => {
                         )}
                         {modalState.type === 'report' && (
                             <ReportForm
-                                defaultValues={modalState.data}
+                                defaultValues={modalState.data || null}
                                 onSubmit={handleReportSubmit}
                                 onClose={() => setModalState({ type: 'closed' })}
                                 isPending={reportMutation.isPending}
@@ -649,7 +514,7 @@ const StudentDetailPage = () => {
                         )}
                         {modalState.type === 'academic' && (
                             <AcademicForm
-                                defaultValues={modalState.data}
+                                defaultValues={modalState.data || null}
                                 onSubmit={handleAcademicSubmit}
                                 onClose={() => setModalState({ type: 'closed' })}
                                 isPending={academicMutation.isPending}
@@ -657,7 +522,7 @@ const StudentDetailPage = () => {
                         )}
                         {modalState.type === 'quiz' && (
                             <QuizForm
-                                defaultValues={modalState.data}
+                                defaultValues={modalState.data || null}
                                 onSubmit={handleQuizSubmit}
                                 onClose={() => setModalState({ type: 'closed' })}
                                 isPending={quizMutation.isPending}
@@ -665,7 +530,7 @@ const StudentDetailPage = () => {
                         )}
                         {modalState.type === 'violation' && (
                             <ViolationForm
-                                defaultValues={modalState.data}
+                                defaultValues={modalState.data || null}
                                 onSubmit={handleViolationSubmit}
                                 onClose={() => setModalState({ type: 'closed' })}
                                 isPending={violationMutation.isPending}
@@ -673,7 +538,7 @@ const StudentDetailPage = () => {
                         )}
                         {modalState.type === 'achievement' && (
                             <AchievementForm
-                                defaultValues={modalState.data}
+                                defaultValues={modalState.data || null}
                                 onSubmit={handleAchievementSubmit}
                                 onClose={() => setModalState({ type: 'closed' })}
                                 isPending={createAchievementMutation.isPending || updateAchievementMutation.isPending || fileActionStatus !== 'idle'}

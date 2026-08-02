@@ -40,7 +40,7 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel
                     </div>
 
                     <DropdownMenu>
-                        <DropdownTrigger className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition-colors">
+                        <DropdownTrigger className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition-colors">
                             <MoreVerticalIcon className="w-4 h-4" />
                         </DropdownTrigger>
                         <DropdownContent>

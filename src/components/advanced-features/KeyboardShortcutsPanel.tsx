@@ -47,12 +47,12 @@ export const KeyboardShortcutsPanel: React.FC<{
                         {shortcut.modifiers?.map((modifier) => (
                           <kbd
                             key={modifier}
-                            className="min-w-[24px] rounded border border-slate-200 bg-slate-100 px-2 py-1 text-center text-xs font-mono uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-800"
+                            className="min-w-[24px] rounded border border-slate-200 bg-slate-100 px-2 py-1 text-center text-xs font-mono uppercase text-slate-600 dark:border-slate-700 dark:bg-slate-800"
                           >
                             {modifier === 'meta' ? '⌘' : modifier}
                           </kbd>
                         ))}
-                        <kbd className="min-w-[24px] rounded border border-slate-200 bg-slate-100 px-2 py-1 text-center text-xs font-mono uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-800">
+                        <kbd className="min-w-[24px] rounded border border-slate-200 bg-slate-100 px-2 py-1 text-center text-xs font-mono uppercase text-slate-600 dark:border-slate-700 dark:bg-slate-800">
                           {shortcut.key}
                         </kbd>
                       </div>

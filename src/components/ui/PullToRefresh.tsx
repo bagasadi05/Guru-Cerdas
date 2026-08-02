@@ -204,7 +204,7 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
                         shouldReduceMotion ? '' : 'transition-all duration-200'
                     } ${
                         isThresholdReached
-                            ? 'bg-indigo-500 text-white scale-110'
+                            ? 'bg-brand-600 text-white scale-110'
                             : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                     }`}
                     style={{

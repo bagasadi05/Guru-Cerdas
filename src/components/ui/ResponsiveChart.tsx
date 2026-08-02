@@ -194,7 +194,7 @@ export const InteractiveBar: React.FC<InteractiveBarProps> = ({
     maxValue,
     label,
     subLabel,
-    color = 'bg-indigo-500',
+    color = 'bg-brand-600',
     tooltipContent,
     onClick
 }) => {

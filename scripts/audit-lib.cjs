@@ -374,6 +374,20 @@ function blankComments(content) {
       i++;
       continue;
     }
+    // String literal: pertahankan isi utuh (jangan blank `//` di dalamnya)
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      out += ch;
+      i++;
+      continue;
+    }
+    // Template literal: pertahankan utuh (bisa memuat interpolasi ${...})
+    if (ch === '`') {
+      inTemplate = true;
+      out += ch;
+      i++;
+      continue;
+    }
     if (ch === '/' && content[i + 1] === '/') {
       const nl = content.indexOf('\n', i);
       const stop = nl === -1 ? len : nl;
@@ -441,7 +455,9 @@ function getDynamicImportSpecs(content) {
 // Kumpulkan nama export yang benar-benar di-import konsumen dari modul
 // `spec` (yang sedang di-mock). Konsumen = test file + chain import lokal
 // via BFS, minus modul yang dirinya dimock di test yang sama.
-// Mengembalikan { consumers, used } — `used` adalah Set nama export.
+// Mengembalikan { consumers, used, namespaceImport } — `used` adalah Set
+// nama export (termasuk member namespace statis X.foo & key 'default'),
+// `namespaceImport` true bila ada konsumen yang memakai `import * as X`.
 function collectUsedFromModule(testFile, testContent, mockedAbs, maxDepth, spec) {
   const consumers = getConsumerFiles(testFile, testContent, mockedAbs, maxDepth);
   const used = new Set();
@@ -488,6 +504,7 @@ module.exports = {
   getDefaultImports,
   getNamespaceImports,
   getNamespaceUsages,
+  blankComments,
   getDynamicImportSpecs,
   factoryBody,
   collectUsedFromModule,

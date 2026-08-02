@@ -131,7 +131,7 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
         return (
             <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden ${className}`}>
             {/* Header */}
-            <div className="p-4 bg-gradient-to-r from-indigo-600 to-purple-600">
+            <div className="p-4 bg-gradient-to-r from-brand-600 to-brand-700">
                 <div className="flex items-center justify-between mb-4">
                     <Button
                         variant="ghost"
@@ -210,8 +210,8 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                                 onClick={() => onDateClick?.(dateStr)}
                                 className={`
                                     aspect-square min-h-[44px] min-w-[44px] rounded-lg flex items-center justify-center text-sm font-medium
-                                    transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
-                                    ${isSelected ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-slate-900' : ''}
+                                    transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
+                                    ${isSelected ? 'ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-slate-900' : ''}
                                     ${!isSelected && today ? 'ring-2 ring-emerald-400 ring-offset-2 dark:ring-offset-slate-900' : ''}
                                     ${status
                                         ? `${STATUS_COLORS[status]} text-white shadow-md`

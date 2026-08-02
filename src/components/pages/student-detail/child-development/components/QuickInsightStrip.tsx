@@ -35,7 +35,7 @@ const INSIGHT_CONFIG = [
     emoji: '🎯',
     title: 'Fokus Belajar',
     emojiBg: 'bg-blue-100 dark:bg-blue-900/30',
-    cardGradient: 'from-blue-50/80 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10',
+    cardGradient: 'from-blue-50/80 to-brand-50/50 dark:from-blue-900/10 dark:to-brand-900/10',
     borderColor: 'border-blue-200/60 dark:border-blue-800/40',
   },
   {

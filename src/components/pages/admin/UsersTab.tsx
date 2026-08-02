@@ -195,7 +195,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                             setUserPage(1);
                             setDeletedPage(1);
                         }}
-                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                     />
                 </div>
                 <select
@@ -205,7 +205,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                         setUserPage(1);
                         setDeletedPage(1);
                     }}
-                    className="px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    className="px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
                     <option value="all">Semua Peran</option>
                     <option value="admin">Admin</option>
@@ -217,7 +217,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                 </select>
                 <Button 
                     onClick={() => setShowAddModal(true)}
-                    className="flex items-center gap-2 whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white"
+                    className="flex items-center gap-2 whitespace-nowrap bg-brand-600 hover:bg-brand-700 text-white"
                 >
                     <UserPlus size={18} />
                     <span>Tambah Pengguna</span>
@@ -240,7 +240,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                         {usersLoading ? (
                             <tr>
                                 <td colSpan={5} className="px-6 py-12 text-center">
-                                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
+                                    <Loader2 className="w-8 h-8 animate-spin text-brand-500 mx-auto" />
                                 </td>
                             </tr>
                         ) : users.length === 0 ? (
@@ -253,7 +253,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                             <tr key={u.user_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-600 to-brand-700 flex items-center justify-center text-white font-bold">
                                             {u.full_name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase() || 'U'}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -262,7 +262,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                                     type="text"
                                                     value={newName}
                                                     onChange={e => setNewName(e.target.value)}
-                                                    className="w-full px-2 py-1 mb-1 text-sm font-medium border-2 border-indigo-500 rounded-lg dark:bg-gray-900"
+                                                    className="w-full px-2 py-1 mb-1 text-sm font-medium border-2 border-brand-500 rounded-lg dark:bg-gray-900"
                                                     placeholder="Nama Lengkap"
                                                     autoFocus
                                                 />
@@ -279,7 +279,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                             <select
                                                 value={newRole}
                                                 onChange={(e) => setNewRole(e.target.value)}
-                                                className="px-3 py-1.5 text-sm border-2 border-indigo-500 rounded-lg bg-white dark:bg-gray-900"
+                                                className="px-3 py-1.5 text-sm border-2 border-brand-500 rounded-lg bg-white dark:bg-gray-900"
                                             >
                                                 <option value="admin">Admin</option>
                                                 <option value="teacher">Guru</option>
@@ -329,7 +329,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                                 className={`text-xs px-2 py-0.5 rounded-lg border transition-all ${
                                                     u.is_approved
                                                         ? 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
-                                                        : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-850 dark:text-indigo-450 dark:hover:bg-indigo-950/20 font-medium'
+                                                        : 'border-brand-200 text-brand-600 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-500 dark:hover:bg-brand-950/20 font-medium'
                                                 }`}
                                             >
                                                 {u.is_approved ? 'Blokir' : 'Setujui'}
@@ -344,7 +344,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                     <div className="flex justify-end gap-2">
                                         <button type="button"
                                             onClick={() => { setEditingUserId(u.user_id); setNewRole(u.role || 'teacher'); setNewName(u.full_name || ''); }}
-                                            className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg"
+                                            className="p-2 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg"
                                         >
                                             <Edit2 size={16} />
                                         </button>
@@ -422,7 +422,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                     {usersLoading ? (
                                         <tr>
                                             <td colSpan={4} className="px-6 py-12 text-center">
-                                                <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
+                                                <Loader2 className="w-8 h-8 animate-spin text-brand-500 mx-auto" />
                                             </td>
                                         </tr>
                                     ) : deletedUsers.length === 0 ? (
@@ -522,7 +522,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                             </button>
                         </div>
                         {addUserError && (
-                            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm">
+                            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-xl text-sm">
                                 {addUserError}
                             </div>
                         )}
@@ -587,7 +587,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                 </Button>
                                 <Button
                                     type="submit"
-                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                                    className="flex-1 bg-brand-600 hover:bg-brand-700"
                                     disabled={isAddingUser}
                                 >
                                     {isAddingUser ? <Loader2 size={18} className="animate-spin mx-auto" /> : 'Simpan Akun'}

@@ -47,7 +47,7 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                     <button
                         type="button"
                         onClick={() => onViewModeChange('grid')}
-                        className={`h-9 px-2.5 rounded-lg flex items-center justify-center transition-all ${
+                        className={`min-h-[44px] px-2.5 rounded-lg flex items-center justify-center transition-all ${
                             viewMode === 'grid'
                                 ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm font-semibold'
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
@@ -59,7 +59,7 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                     <button
                         type="button"
                         onClick={() => onViewModeChange('list')}
-                        className={`h-9 px-2.5 rounded-lg flex items-center justify-center transition-all ${
+                        className={`min-h-[44px] px-2.5 rounded-lg flex items-center justify-center transition-all ${
                             viewMode === 'list'
                                 ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm font-semibold'
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'

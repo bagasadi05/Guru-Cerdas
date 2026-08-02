@@ -50,7 +50,7 @@ const SemesterTransitionBanner: React.FC = () => {
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             {/* Left: Icon + Message */}
                             <div className="flex items-start gap-4">
-                                <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                                <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 dark:from-amber-500 dark:to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
                                     {isCreating ? (
                                         <Loader2Icon className="w-6 h-6 text-white animate-spin" />
                                     ) : (
@@ -97,7 +97,7 @@ const SemesterTransitionBanner: React.FC = () => {
                                     <Button
                                         onClick={performTransition}
                                         disabled={isTransitioning}
-                                        className="!bg-gradient-to-r !from-amber-500 !to-orange-500 hover:!from-amber-600 hover:!to-orange-600 !text-white !shadow-lg !shadow-amber-500/20 !border-0 !rounded-xl !text-xs sm:!text-sm !font-bold !px-4 !py-2.5"
+                                        className="!bg-gradient-to-r !from-amber-700 !to-orange-700 hover:!from-amber-800 hover:!to-orange-800 !text-white !shadow-lg !shadow-amber-500/20 !border-0 !rounded-xl !text-xs sm:!text-sm !font-bold !px-4 !py-2.5"
                                     >
                                         {isTransitioning ? (
                                             <Loader2Icon className="w-4 h-4 animate-spin mr-2" />

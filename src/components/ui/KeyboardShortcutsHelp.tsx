@@ -62,12 +62,12 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
             isOpen={isOpen}
             onClose={onClose}
             title="Pintasan Keyboard"
-            icon={<KeyboardIcon className="w-6 h-6 text-indigo-500" />}
+            icon={<KeyboardIcon className="w-6 h-6 text-brand-500" />}
         >
             <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
                 {categories.map((category) => (
                     <div key={category}>
-                        <h3 className="text-sm font-bold text-indigo-500 uppercase tracking-wide mb-3">
+                        <h3 className="text-sm font-bold text-brand-500 uppercase tracking-wide mb-3">
                             {categoryLabels[category]}
                         </h3>
                         <div className="space-y-2">
@@ -98,9 +98,9 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
                 ))}
 
                 {/* Tips */}
-                <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800">
-                    <h4 className="font-bold text-indigo-700 dark:text-indigo-300 mb-2">💡 Tips</h4>
-                    <ul className="text-sm text-indigo-600 dark:text-indigo-400 space-y-1">
+                <div className="p-4 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-200 dark:border-brand-800">
+                    <h4 className="font-bold text-brand-700 dark:text-brand-300 mb-2">💡 Tips</h4>
+                    <ul className="text-sm text-brand-600 dark:text-brand-400 space-y-1">
                         <li>• Gunakan Tab untuk navigasi antar input nilai</li>
                         <li>• Tekan Ctrl+S untuk menyimpan tanpa klik tombol</li>
                         <li>• Tekan F1 kapan saja untuk melihat bantuan ini</li>

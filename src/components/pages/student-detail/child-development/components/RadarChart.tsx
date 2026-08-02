@@ -92,7 +92,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
         <polygon
           key={`polygon-${dIdx}`}
           points={calculateRadarPoints(dataset.values, maxScore, centerX, centerY, radius)}
-          fill={dataset.fillColor || 'rgba(99, 102, 241, 0.3)'}
+          fill={dataset.fillColor || 'rgba(13, 126, 158, 0.3)'}
           stroke={dataset.strokeColor || 'rgb(99, 102, 241)'}
           strokeWidth={dataset.strokeWidth ?? 2}
           strokeDasharray={dataset.strokeDasharray}
@@ -131,7 +131,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
               y={pos.y}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="text-xxs font-bold fill-slate-600 dark:fill-slate-400 hover:fill-indigo-650 dark:hover:fill-indigo-400 transition-colors"
+              className="text-xxs font-bold fill-slate-600 dark:fill-slate-400 hover:fill-brand-600 dark:hover:fill-brand-400 transition-colors"
             >
               {truncatedLabel}
             </text>

@@ -39,7 +39,7 @@ export const ActivityLogsTab: React.FC<ActivityLogsTabProps> = ({
             <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <h3 className="text-lg font-bold flex items-center gap-2">
-                        <Activity size={20} className="text-indigo-500" />
+                        <Activity size={20} className="text-brand-500" />
                         Log Aktivitas
                     </h3>
                     <button type="button"
@@ -61,7 +61,7 @@ export const ActivityLogsTab: React.FC<ActivityLogsTabProps> = ({
                                 setLogSearchTerm(e.target.value);
                                 setLogPage(1);
                             }}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                         />
                     </div>
                 </div>
@@ -70,7 +70,7 @@ export const ActivityLogsTab: React.FC<ActivityLogsTabProps> = ({
 
             {logsLoading ? (
                 <div className="p-12 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-500 mx-auto" />
                 </div>
             ) : activityLogs.length === 0 ? (
                 <div className="p-12 text-center text-gray-500">

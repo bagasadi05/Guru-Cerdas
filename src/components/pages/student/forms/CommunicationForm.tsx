@@ -7,7 +7,7 @@ import { ValidatedTextarea } from '../../../ui/ValidatedInput';
 import { CommunicationRow } from '../types';
 
 interface CommunicationFormProps {
-    defaultValues: CommunicationRow;
+    defaultValues: CommunicationRow | null;
     onSubmit: (data: CommunicationFormValues) => void;
     onClose: () => void;
     isPending: boolean;
@@ -17,7 +17,7 @@ export const CommunicationForm: React.FC<CommunicationFormProps> = ({ defaultVal
     const { register, handleSubmit, formState: { errors } } = useForm<CommunicationFormValues>({
         resolver: validationResolver<CommunicationFormValues>(communicationRules),
         defaultValues: {
-            message: defaultValues.message,
+            message: defaultValues?.message || '',
         }
     });
 

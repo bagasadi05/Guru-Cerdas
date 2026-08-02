@@ -98,17 +98,17 @@ export const QuickTemplatesModal: React.FC<QuickTemplatesModalProps> = ({
             isOpen={isOpen}
             onClose={onClose}
             title="Template Absensi Cepat"
-            icon={<Sparkles className="w-5 h-5 text-purple-500" />}
+            icon={<Sparkles className="w-5 h-5 text-brand-500" />}
         >
             <div className="space-y-4">
-                <div className="p-3 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-700/50">
-                    <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+                <div className="p-3 rounded-xl bg-gradient-to-r from-brand-50 to-brand-100 dark:from-brand-900/20 dark:to-brand-800/20 border border-brand-200 dark:border-brand-700/50">
+                    <div className="flex items-center gap-2 text-brand-600 dark:text-brand-400">
                         <Users className="w-4 h-4" />
                         <p className="text-sm font-semibold">
                             {studentCount} siswa akan diproses
                         </p>
                     </div>
-                    <p className="text-xs text-purple-500/80 dark:text-purple-400/70 mt-1">
+                    <p className="text-xs text-brand-500/80 dark:text-brand-400/70 mt-1">
                         Pilih template di bawah untuk mengisi absensi dengan cepat
                     </p>
                 </div>

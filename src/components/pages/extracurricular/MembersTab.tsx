@@ -137,7 +137,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                                                         <span className={`inline-flex whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-semibold ${
                                                             isEnrolled 
                                                                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50' 
-                                                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                                                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
                                                         }`}>
                                                             {isEnrolled ? 'Terdaftar' : 'Belum'}
                                                         </span>
@@ -151,7 +151,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                                                 <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${
                                                     isEnrolled 
                                                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50' 
-                                                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
                                                 }`}>
                                                     {isEnrolled ? 'Terdaftar' : 'Belum'}
                                                 </span>
@@ -162,7 +162,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                                                         onClick={() => onEnrollmentChange(student.id, student.type, isEnrolled ? 'unenroll' : 'enroll')}
                                                         className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all w-full lg:w-auto ${
                                                             isEnrolled
-                                                                ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
+                                                                ? 'bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
                                                                 : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm shadow-emerald-500/20'
                                                         }`}
                                                     >

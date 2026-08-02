@@ -162,7 +162,7 @@ const iconMap: Record<ToastType, React.ReactNode> = {
     error: <AlertCircle className="h-5 w-5 text-red-500" />,
     warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
     info: <Info className="h-5 w-5 text-blue-500" />,
-    loading: <Loader2 className="h-5 w-5 animate-spin text-indigo-500" />
+    loading: <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
 };
 
 const bgColorMap: Record<ToastType, string> = {
@@ -170,7 +170,7 @@ const bgColorMap: Record<ToastType, string> = {
     error: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
     warning: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
     info: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
-    loading: 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
+    loading: 'bg-brand-50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-800'
 };
 
 const progressColorMap: Record<ToastType, string> = {
@@ -178,7 +178,7 @@ const progressColorMap: Record<ToastType, string> = {
     error: 'bg-red-500',
     warning: 'bg-amber-500',
     info: 'bg-blue-500',
-    loading: 'bg-indigo-500'
+    loading: 'bg-brand-600'
 };
 
 const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, onDismiss }) => {
@@ -247,7 +247,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
                                     toast.undoAction?.();
                                     handleDismiss();
                                 }}
-                                className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                             >
                                 <Undo2 className="h-3.5 w-3.5" />
                                 Urungkan
@@ -259,7 +259,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
                                     toast.action?.onClick();
                                     handleDismiss();
                                 }}
-                                className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                             >
                                 {toast.action.label}
                                 <ChevronRight className="h-3.5 w-3.5" />

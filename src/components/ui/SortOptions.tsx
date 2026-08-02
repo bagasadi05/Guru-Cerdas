@@ -90,7 +90,7 @@ export const SortOptions: React.FC<SortOptionsProps> = ({
                             key={option.value}
                             onClick={() => handleFieldChange(option.value)}
                             className={`w-full flex items-center justify-between px-4 py-2 text-sm text-left transition-colors ${value.field === option.value
-                                    ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
+                                    ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300'
                                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                                 }`}
                         >

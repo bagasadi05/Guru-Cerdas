@@ -77,7 +77,7 @@ export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
     if (studentExtracurriculars.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 flex items-center justify-center mb-5 shadow-sm">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 flex items-center justify-center mb-5 shadow-sm">
                     <Trophy className="w-10 h-10 text-amber-500 dark:text-amber-400" />
                 </div>
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
@@ -88,7 +88,7 @@ export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
                 </p>
                 <Link
                     to="/ekstrakurikuler"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-medium rounded-lg shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-700 to-orange-800 hover:from-amber-800 hover:to-orange-800 text-white text-sm font-medium rounded-lg shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all"
                 >
                     <Plus className="w-4 h-4" />
                     Kelola Ekstrakurikuler
@@ -127,7 +127,7 @@ export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
                             {/* Header */}
                             <div className="p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-b border-amber-100 dark:border-amber-900/20 flex justify-between items-start">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
+                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-700 to-orange-800 flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
                                         <Trophy className="w-5 h-5" />
                                     </div>
                                     <div>
@@ -145,12 +145,12 @@ export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
                                             Aktif
                                         </span>
                                     ) : (
-                                        <span className="bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 text-xs px-2 py-1 rounded-full font-medium">
+                                        <span className="bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400 text-xs px-2 py-1 rounded-full font-medium">
                                             {enrollment.status}
                                         </span>
                                     )}
                                     {!ekskul.is_active && (
-                                        <span className="flex items-center gap-1 bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 text-xs px-2 py-0.5 rounded-full font-medium">
+                                        <span className="flex items-center gap-1 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-xs px-2 py-0.5 rounded-full font-medium">
                                             <AlertCircle className="w-3 h-3" />
                                             Ekskul Nonaktif
                                         </span>

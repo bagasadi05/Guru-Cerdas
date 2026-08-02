@@ -291,7 +291,7 @@ export const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
                     <Button
                         onClick={handleApply}
                         disabled={!canApply}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20"
+                        className="bg-brand-600 hover:bg-brand-700 text-white shadow-md shadow-brand-600/20"
                     >
                         Terapkan Nilai
                     </Button>

@@ -153,8 +153,8 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                 className={`
                     relative border-2 border-dashed rounded-xl p-8 text-center transition-colors
                     ${isDragging
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                        : 'border-gray-300 dark:border-gray-700 hover:border-indigo-400'
+                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
+                        : 'border-gray-300 dark:border-gray-700 hover:border-brand-400'
                     }
                 `}
             >
@@ -168,10 +168,10 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
 
                 <div className="flex flex-col items-center gap-3">
                     {isParsing ? (
-                        <Loader2Icon className="w-12 h-12 text-indigo-500 animate-spin" />
+                        <Loader2Icon className="w-12 h-12 text-brand-500 animate-spin" />
                     ) : (
-                        <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                            <UploadIcon className="w-8 h-8 text-indigo-500" />
+                        <div className="w-16 h-16 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+                            <UploadIcon className="w-8 h-8 text-brand-500" />
                         </div>
                     )}
 

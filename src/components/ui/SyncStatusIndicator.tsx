@@ -216,7 +216,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
                             onClick={handleSync}
                             disabled={!isOnline || isSyncing}
                             className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${isOnline && !isSyncing
-                                ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                ? 'bg-brand-600 hover:bg-brand-700 text-white'
                                 : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                                 }`}
                         >

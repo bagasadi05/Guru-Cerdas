@@ -78,7 +78,7 @@ export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
                     </Button>
                     <Button
                         onClick={onExtend}
-                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                        className="flex-1 bg-brand-600 hover:bg-brand-700 text-white"
                     >
                         Perpanjang Sesi
                     </Button>

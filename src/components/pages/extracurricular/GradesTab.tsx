@@ -54,7 +54,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                     <button type="button"
                         onClick={onExportPDF}
                         disabled={enrollments.length === 0}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
                     >
                         <FileText className="w-4 h-4" />
                         Export PDF
@@ -62,7 +62,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                     <button type="button"
                         onClick={onExportExcel}
                         disabled={enrollments.length === 0}
-                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
                     >
                         <FileSpreadsheet className="w-4 h-4" />
                         Export Excel

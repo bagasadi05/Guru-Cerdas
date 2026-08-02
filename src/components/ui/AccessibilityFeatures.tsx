@@ -157,7 +157,7 @@ export const AccessibilitySettings: React.FC<{ className?: string }> = ({ classN
                 <button type="button"
                     id="high-contrast-toggle"
                     onClick={toggleHighContrast}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${highContrastMode ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${highContrastMode ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     role="switch"
                     aria-checked={highContrastMode}
@@ -186,7 +186,7 @@ export const AccessibilitySettings: React.FC<{ className?: string }> = ({ classN
                 <button type="button"
                     id="reduced-motion-toggle"
                     onClick={toggleReducedMotion}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${reducedMotion ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${reducedMotion ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     role="switch"
                     aria-checked={reducedMotion}
@@ -210,7 +210,7 @@ export const AccessibilitySettings: React.FC<{ className?: string }> = ({ classN
                             key={size}
                             onClick={() => setFontSize(size)}
                             className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all ${fontSize === size
-                                    ? 'bg-indigo-600 text-white shadow-lg'
+                                    ? 'bg-brand-600 text-white shadow-lg'
                                     : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                                 }`}
                             aria-label={`Set text size to ${size}`}

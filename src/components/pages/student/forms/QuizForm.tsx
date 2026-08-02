@@ -92,7 +92,7 @@ export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onC
                         <label
                             key={cat.value}
                             className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedCategory === cat.value
-                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
+                                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30'
                                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                 }`}
                         >
@@ -119,7 +119,7 @@ export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onC
                                 key={suggestion}
                                 type="button"
                                 onClick={() => handleSuggestionClick(suggestion)}
-                                className="px-3 py-1.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                className="px-3 py-1.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-brand-100 dark:hover:bg-brand-900/30 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                             >
                                 {suggestion}
                             </button>

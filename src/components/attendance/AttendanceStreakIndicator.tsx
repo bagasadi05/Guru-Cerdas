@@ -70,9 +70,9 @@ export const AttendanceStreakIndicator: React.FC<AttendanceStreakIndicatorProps>
                         className="group grid grid-cols-[28px_1fr_auto] items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-all cursor-pointer border border-gray-100 dark:border-gray-700"
                     >
                         {/* Rank Badge */}
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-lg shadow-yellow-500/30' :
-                                index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white shadow-lg shadow-gray-400/30' :
-                                    index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-lg shadow-orange-500/30' :
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${index === 0 ? 'bg-gradient-to-br from-yellow-700 to-yellow-900 text-white shadow-lg shadow-yellow-500/30' :
+                                index === 1 ? 'bg-gradient-to-br from-gray-500 to-gray-700 text-white shadow-lg shadow-gray-400/30' :
+                                    index === 2 ? 'bg-gradient-to-br from-orange-700 to-orange-900 text-white shadow-lg shadow-orange-500/30' :
                                         'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                             }`}>
                             {index + 1}

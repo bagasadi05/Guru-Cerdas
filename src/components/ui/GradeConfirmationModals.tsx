@@ -101,11 +101,11 @@ export const EmptyGradesConfirmation: React.FC<EmptyGradesConfirmationProps> = (
                 <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                     <div className="flex justify-between text-sm mb-2">
                         <span className="text-gray-500">Progress Input</span>
-                        <span className="font-bold text-indigo-600 dark:text-indigo-400">{percentage}%</span>
+                        <span className="font-bold text-brand-600 dark:text-brand-400">{percentage}%</span>
                     </div>
                     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all"
+                            className="h-full bg-gradient-to-r from-brand-600 to-brand-700 rounded-full transition-all"
                             style={{ width: `${percentage}%` }}
                         />
                     </div>
@@ -119,7 +119,7 @@ export const EmptyGradesConfirmation: React.FC<EmptyGradesConfirmationProps> = (
                     <Button variant="ghost" onClick={onClose}>
                         Isi Nilai Dulu
                     </Button>
-                    <Button onClick={onConfirm} className="bg-indigo-600 hover:bg-indigo-700">
+                    <Button onClick={onConfirm} className="bg-brand-600 hover:bg-brand-700">
                         Simpan {filledCount} Nilai
                     </Button>
                 </div>
@@ -158,7 +158,7 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
                 {/* Animated checkmark */}
                 <div className="w-20 h-20 mx-auto mb-4 relative">
                     <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-25" />
-                    <div className="relative w-full h-full bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
+                    <div className="relative w-full h-full bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
                         <CheckCircleIcon className="w-10 h-10 text-white animate-scale-in" />
                     </div>
                 </div>
@@ -178,7 +178,7 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
                             className="absolute w-2 h-2 rounded-full animate-confetti"
                             style={{
                                 left: `${10 + i * 7}%`,
-                                backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][i % 5],
+                                backgroundColor: ['#0d7e9e', '#11657f', '#ec4899', '#f59e0b', '#10b981'][i % 5],
                                 animationDelay: `${i * 0.1}s`,
                             }}
                         />

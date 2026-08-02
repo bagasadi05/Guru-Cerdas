@@ -317,7 +317,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
+                        <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
                             <CameraIcon className="w-8 h-8 text-slate-400 dark:text-slate-500" />
                         </div>
                     )}
@@ -509,7 +509,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                         <Button
                             onClick={processAndUpload}
                             disabled={isLoading}
-                            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                            className="bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800"
                         >
                             {isLoading ? (
                                 <>

@@ -47,7 +47,7 @@ export const RewardPointsCard: React.FC<RewardPointsCardProps> = ({
     return (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
             {/* Header with Total Points */}
-            <div className="p-5 bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 text-white">
+            <div className="p-5 bg-gradient-to-br from-amber-700 via-orange-800 to-red-800 text-white">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-amber-100 text-sm font-medium">Total Poin</p>

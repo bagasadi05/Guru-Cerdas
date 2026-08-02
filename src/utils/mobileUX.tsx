@@ -207,7 +207,7 @@ export const InlineLoading: React.FC<InlineLoadingProps> = ({
     return (
         <div className={`inline-flex items-center gap-2 ${className}`}>
             <svg
-                className={`animate-spin ${sizeClasses[size]} text-indigo-600 dark:text-indigo-400`}
+                className={`animate-spin ${sizeClasses[size]} text-brand-600 dark:text-brand-400`}
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -259,7 +259,7 @@ export const LoadingButton: React.FC<LoadingButtonProps> = ({
     variant = 'primary',
 }) => {
     const variantClasses = {
-        primary: 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/25',
+        primary: 'bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white shadow-lg shadow-brand-600/25',
         secondary: 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700',
         ghost: 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800',
         destructive: 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-500/25',

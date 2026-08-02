@@ -272,7 +272,7 @@ export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({
                 <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-850">
                     <button type="button" 
                         onClick={() => navigate('/riwayat')}
-                        className="w-full px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all flex items-center justify-center gap-2 border border-emerald-200/50 dark:border-emerald-900/30 active:scale-[0.98]"
+                        className="w-full px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-400 transition-all flex items-center justify-center gap-2 border border-emerald-200/50 dark:border-emerald-900/30 active:scale-[0.98]"
                     >
                         <span>Lihat Semua Aktivitas</span>
                         <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-800 rounded-full text-xxs">

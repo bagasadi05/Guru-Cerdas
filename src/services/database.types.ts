@@ -1619,6 +1619,24 @@ export type Database = {
           },
         ]
       }
+      ref_subject_alias: {
+        Row: {
+          alias: string
+          canonical: string
+          created_at: string
+        }
+        Insert: {
+          alias: string
+          canonical: string
+          created_at?: string
+        }
+        Update: {
+          alias?: string
+          canonical?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       ref_tema_kbc: {
         Row: {
           created_at: string | null

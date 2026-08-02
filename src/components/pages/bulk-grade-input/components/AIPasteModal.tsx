@@ -105,7 +105,7 @@ export const AIPasteModal: React.FC<AIPasteModalProps> = ({
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                     Tempelkan teks mentah berisi daftar nama dan nilai siswa (contoh dari WhatsApp atau Google Keep). AI akan mendeteksi nama secara pintar dan mengisi nilai ke tabel.
                 </p>
-                <div className="bg-indigo-50 dark:bg-indigo-950/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs text-indigo-700 dark:text-indigo-400">
+                <div className="bg-brand-50 dark:bg-brand-950/20 p-3 rounded-lg border border-brand-100 dark:border-brand-900/30 text-xs text-brand-700 dark:text-brand-400">
                     <strong className="block mb-1">Contoh format teks yang didukung:</strong>
                     • Budi dapet 90, Ani 85, Candra 77.5<br />
                     • No 1. Adi Setiawan nilai: 88<br />
@@ -118,14 +118,14 @@ export const AIPasteModal: React.FC<AIPasteModalProps> = ({
                         onChange={(e) => setPasteData(e.target.value)}
                         placeholder="Contoh: Budi 85, Ani 90, Citra 75..."
                         rows={6}
-                        className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                        className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                     />
                 </div>
                 <div className="flex gap-2 justify-end">
                     <Button variant="ghost" onClick={onClose} disabled={isParsing}>
                         Batal
                     </Button>
-                    <Button onClick={handleAiParse} disabled={isParsing} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Button onClick={handleAiParse} disabled={isParsing} className="bg-brand-600 hover:bg-brand-700 text-white">
                         {isParsing ? (
                             <>
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

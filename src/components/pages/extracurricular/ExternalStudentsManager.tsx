@@ -114,13 +114,13 @@ export const ExternalStudentsManager: React.FC<ExternalStudentsManagerProps> = (
                             className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm hover:shadow-md transition-shadow group flex flex-col"
                         >
                             <div className="flex items-start justify-between mb-4">
-                                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-lg uppercase flex-shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 font-bold text-lg uppercase flex-shrink-0">
                                     {student.name.charAt(0)}
                                 </div>
                                 <span className={`px-2 py-0.5 rounded text-xxs font-bold tracking-wider uppercase ${
                                     student.gender === 'Laki-laki' 
                                         ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                                        : 'bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+                                        : 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                                 }`}>
                                     {student.gender === 'Laki-laki' ? 'L' : 'P'}
                                 </span>
@@ -145,7 +145,7 @@ export const ExternalStudentsManager: React.FC<ExternalStudentsManagerProps> = (
                                 </button>
                                 <button type="button"
                                     onClick={() => onDeleteStudent(student)}
-                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
                                 >
                                     <Trash2 className="w-3.5 h-3.5" /> Hapus
                                 </button>

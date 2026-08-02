@@ -116,9 +116,9 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
             <button type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${hasValue
-                        ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
+                        ? 'border-brand-300 dark:border-brand-700 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300'
                         : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                    } hover:border-indigo-400 dark:hover:border-indigo-600`}
+                    } hover:border-brand-400 dark:hover:border-brand-600`}
             >
                 <CalendarIcon className="w-4 h-4" />
                 <span className="text-sm whitespace-nowrap">{formatDateDisplay()}</span>
@@ -128,7 +128,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
                             e.stopPropagation();
                             handleClear();
                         }}
-                        className="p-0.5 rounded hover:bg-indigo-200 dark:hover:bg-indigo-800"
+                        className="p-0.5 rounded hover:bg-brand-200 dark:hover:bg-brand-800"
                     >
                         <XIcon className="w-3 h-3" />
                     </button>
@@ -194,7 +194,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
                         </button>
                         <button type="button"
                             onClick={() => setIsOpen(false)}
-                            className="flex-1 px-3 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                            className="flex-1 px-3 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700"
                         >
                             Terapkan
                         </button>

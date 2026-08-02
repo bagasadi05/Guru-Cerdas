@@ -36,10 +36,10 @@ export const OperationProgress: React.FC<OperationProgressProps> = ({
     };
 
     const statusIconClasses = {
-        running: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400',
-        success: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
-        error: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
-        paused: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+        running: 'bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400',
+        success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+        error: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+        paused: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
     };
 
     return (
@@ -67,7 +67,7 @@ export const OperationProgress: React.FC<OperationProgressProps> = ({
                                 {status === 'error' && onRetry && (
                                     <button type="button"
                                         onClick={onRetry}
-                                        className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                                        className="text-xs font-medium text-brand-600 hover:text-brand-700"
                                     >
                                         Coba Lagi
                                     </button>

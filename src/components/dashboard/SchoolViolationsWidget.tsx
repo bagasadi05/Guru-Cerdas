@@ -26,7 +26,7 @@ export const SchoolViolationsWidget: React.FC = () => {
         <DashboardPanel>
             <DashboardPanelHeader className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                    <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg text-brand-700 dark:text-brand-400">
                         <TrendingDownIcon className="w-5 h-5" />
                     </div>
                     <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Analitik Pelanggaran Sekolah</h2>
@@ -80,7 +80,7 @@ export const SchoolViolationsWidget: React.FC = () => {
                                         <p className="text-sm font-medium text-slate-800 dark:text-white">{v.studentName}</p>
                                         <p className="text-xs text-slate-500 dark:text-slate-400">{v.className} • {new Date(v.date).toLocaleDateString('id-ID')}</p>
                                     </div>
-                                    <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded">
+                                    <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-semibold rounded">
                                         +{v.points} Poin
                                     </span>
                                 </div>

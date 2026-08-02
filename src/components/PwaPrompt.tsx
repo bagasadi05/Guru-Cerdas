@@ -121,14 +121,14 @@ const PwaPrompt: React.FC = () => {
           /* iOS Prompt Variant */
           <div className="flex flex-col gap-3 pr-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
                 <DownloadCloudIcon className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h4 className="font-bold text-xs sm:text-base text-white tracking-tight flex items-center gap-2">
+                <p className="font-bold text-xs sm:text-base text-white tracking-tight flex items-center gap-2">
                   Install Portal Guru
                   <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">PWA</span>
-                </h4>
+                </p>
                 <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-snug">
                   Akses super cepat & bekerja offline tanpa Safari
                 </p>
@@ -150,12 +150,12 @@ const PwaPrompt: React.FC = () => {
           /* Android / Desktop Native Prompt Variant */
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pr-6 sm:pr-5">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 shrink-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 shrink-0">
                 <DownloadCloudIcon className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <h4 className="font-bold text-xs sm:text-base text-white tracking-tight leading-snug">Install Aplikasi Portal</h4>
+                  <p className="font-bold text-xs sm:text-base text-white tracking-tight leading-snug">Install Aplikasi Portal</p>
                   <span className="text-[9px] sm:text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 leading-none shrink-0">PWA</span>
                 </div>
                 <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-tight truncate sm:whitespace-normal">
@@ -176,7 +176,7 @@ const PwaPrompt: React.FC = () => {
               <Button
                 size="sm"
                 onClick={handleInstallClick}
-                className="text-xs font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-lg shadow-emerald-500/20 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl transition-all duration-200 active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+                className="text-xs font-semibold bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/20 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl transition-all duration-200 active:scale-95 whitespace-nowrap flex items-center gap-1.5"
               >
                 <DownloadCloudIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Install

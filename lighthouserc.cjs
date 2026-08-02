@@ -18,6 +18,11 @@ module.exports = {
       // Serve the production build via Vite preview (handles SPA history fallback).
       // --strictPort so LHCI can rely on the configured port.
       startServerCommand: 'npx vite preview --port 4173 --strictPort',
+      // Vite preview logs "➜  Local: http://localhost:4173/" — the LHCI default
+      // ready pattern is /listen|ready/i, which "Local:" does NOT match. Without
+      // this, LHCI times out waiting for the server, then Lighthouse hits an
+      // unserved URL and every audit fails with NO_FCP ("page did not paint").
+      serverReadyPattern: 'Local:',
       url: [
         'http://localhost:4173/',
         'http://localhost:4173/guru-login',

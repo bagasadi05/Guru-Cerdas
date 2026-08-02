@@ -441,7 +441,7 @@ const SchedulePage: React.FC = () => {
                         onClick={() => setSearchParams({})}
                         className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
                             activeMainTab === 'jadwal'
-                                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md'
+                                ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-md'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
@@ -452,7 +452,7 @@ const SchedulePage: React.FC = () => {
                         onClick={() => setSearchParams({ tab: 'jurnal' })}
                         className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
                             activeMainTab === 'jurnal'
-                                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md'
+                                ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-md'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
@@ -603,7 +603,7 @@ const SchedulePage: React.FC = () => {
                         <div className="space-y-4">
                             {(analysisResult as { sections: { title: string; points: string[] }[] }).sections?.map((section, index) => (
                                 <div key={index}>
-                                    <h4 className="font-bold text-lg text-purple-300"><MarkdownText text={section.title} /></h4>
+                                    <h4 className="font-bold text-lg text-brand-300"><MarkdownText text={section.title} /></h4>
                                     <ul className="list-disc list-inside space-y-1 mt-2 text-gray-300">
                                         {section.points?.map((point, pIndex) => <li key={pIndex}><MarkdownText text={point} /></li>)}
                                     </ul>

@@ -177,7 +177,7 @@ const SmartInsightsPanel: React.FC = () => {
     return (
         <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-5 h-5 text-indigo-500" />
+                <Sparkles className="w-5 h-5 text-brand-500" />
                 <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">Insight & Peringatan Cerdas</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

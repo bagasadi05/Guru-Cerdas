@@ -122,7 +122,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             <div className="flex justify-between items-center gap-4">
               <div className="flex items-center gap-3">
                 {icon && (
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" aria-hidden="true">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20" aria-hidden="true">
                     {icon}
                   </div>
                 )}

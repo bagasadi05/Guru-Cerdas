@@ -41,7 +41,7 @@ export const GradeInputGrid: React.FC<GradeInputGridProps> = ({
             <CardContent className="space-y-4">
                 {/* Search bar */}
                 <div className="relative group">
-                    <SearchIcon className="w-5 h-5 text-gray-400 absolute top-1/2 left-3 -translate-y-1/2 transition-colors group-focus-within:text-indigo-500" />
+                    <SearchIcon className="w-5 h-5 text-gray-400 absolute top-1/2 left-3 -translate-y-1/2 transition-colors group-focus-within:text-brand-500" />
                     <Input
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}

@@ -73,7 +73,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: number) => void }> = (
       <div className="ml-3 text-sm font-normal flex-1">{toast.message}</div>
       <button
         type="button"
-        className="ml-auto -mx-1.5 -my-1.5 bg-white/10 text-gray-300 hover:text-white rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-white/20 inline-flex h-8 w-8"
+        className="ml-auto -mx-1.5 -my-1.5 bg-white/10 text-gray-300 hover:text-white rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-white/20 inline-flex h-11 w-11"
         onClick={() => onDismiss(toast.id)}
         aria-label="Close"
       >

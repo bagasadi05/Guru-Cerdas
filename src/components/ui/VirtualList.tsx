@@ -181,7 +181,7 @@ export function WindowedList<T>({
                 <div className="flex justify-center py-4">
                     <button type="button"
                         onClick={handleLoadMore}
-                        className="px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition-colors"
                     >
                         {loadMoreLabel} ({items.length - visibleCount} tersisa)
                     </button>

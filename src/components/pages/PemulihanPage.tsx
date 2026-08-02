@@ -69,7 +69,7 @@ const BackupHistorySection: React.FC = () => {
         return (
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
-                    <HardDrive className="w-5 h-5 text-indigo-500" />
+                    <HardDrive className="w-5 h-5 text-brand-500" />
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Riwayat Backup Otomatis</h2>
                 </div>
                 <div className="space-y-3">
@@ -88,7 +88,7 @@ const BackupHistorySection: React.FC = () => {
     return (
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
-                <HardDrive className="w-5 h-5 text-indigo-500" />
+                <HardDrive className="w-5 h-5 text-brand-500" />
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Riwayat Backup Otomatis</h2>
             </div>
             <div className="space-y-3">
@@ -101,7 +101,7 @@ const BackupHistorySection: React.FC = () => {
                             key={run.id as string}
                             className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 border border-slate-100 dark:border-slate-700"
                         >
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isSuccess ? 'bg-emerald-500/10 text-emerald-500' : isRunning ? 'bg-amber-500/10 text-amber-500' : 'bg-red-500/10 text-red-500'}`}>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isSuccess ? 'bg-emerald-500/10 text-emerald-700' : isRunning ? 'bg-amber-500/10 text-amber-700' : 'bg-red-500/10 text-red-700'}`}>
                                 {isSuccess ? <CheckCircle2 className="w-4 h-4" /> : isRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -114,7 +114,7 @@ const BackupHistorySection: React.FC = () => {
                                     {(run.size_bytes as number) > 0 && ` • ${((run.size_bytes as number) / 1024).toFixed(1)} KB`}
                                 </p>
                             </div>
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${isSuccess ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : isRunning ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${isSuccess ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : isRunning ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'bg-red-500/10 text-red-700 dark:text-red-400'}`}>
                                 {isSuccess ? 'Berhasil' : isRunning ? 'Berjalan' : 'Gagal'}
                             </span>
                         </div>
@@ -249,7 +249,7 @@ const PemulihanPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                                 <Database className="w-6 h-6 text-white" />
                             </div>
                             <div>
@@ -281,7 +281,7 @@ const PemulihanPage: React.FC = () => {
                         onClick={() => setSearchParams({ tab: 'history' })}
                         className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
                             activeTab === 'history'
-                                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md'
+                                ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-md'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
@@ -381,7 +381,7 @@ const PemulihanPage: React.FC = () => {
                         onClick={() => navigate('/sampah')}
                         className="flex items-center gap-4 p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group text-left"
                     >
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <Trash2 className="w-6 h-6 text-white" />
                         </div>
                         <div className="flex-1">
@@ -390,14 +390,14 @@ const PemulihanPage: React.FC = () => {
                                 Lihat, pulihkan, atau hapus permanen data yang dihapus
                             </p>
                         </div>
-                        <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-brand-500 transition-colors" />
                     </button>
 
                     <button type="button"
                         onClick={() => navigate('/riwayat')}
                         className="flex items-center gap-4 p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group text-left"
                     >
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-600 to-brand-700 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <History className="w-6 h-6 text-white" />
                         </div>
                         <div className="flex-1">
@@ -406,7 +406,7 @@ const PemulihanPage: React.FC = () => {
                                 Lihat semua aksi yang dilakukan dan lakukan undo jika diperlukan
                             </p>
                         </div>
-                        <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-brand-500 transition-colors" />
                     </button>
                 </div>
 
@@ -444,7 +444,7 @@ const PemulihanPage: React.FC = () => {
                 {perTableEntries.length > 0 && (
                     <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                            <Database className="w-5 h-5 text-indigo-500" />
+                            <Database className="w-5 h-5 text-brand-500" />
                             Breakdown per Tabel
                         </h2>
                         <div className="overflow-x-auto">
@@ -495,7 +495,7 @@ const PemulihanPage: React.FC = () => {
                                         key={record.id}
                                         className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 border border-slate-100 dark:border-slate-700"
                                     >
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isRestored ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isRestored ? 'bg-emerald-500/10 text-emerald-700' : 'bg-red-500/10 text-red-700'}`}>
                                             {isRestored ? <CheckCircle2 className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -508,9 +508,9 @@ const PemulihanPage: React.FC = () => {
                                             </p>
                                         </div>
                                         {isRestored ? (
-                                            <span className="px-2 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full">Dipulihkan</span>
+                                            <span className="px-2 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full">Dipulihkan</span>
                                         ) : (
-                                            <span className="px-2 py-1 text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400 rounded-full">Dihapus</span>
+                                            <span className="px-2 py-1 text-xs font-medium bg-red-500/10 text-red-700 dark:text-red-400 rounded-full">Dihapus</span>
                                         )}
                                     </div>
                                 );

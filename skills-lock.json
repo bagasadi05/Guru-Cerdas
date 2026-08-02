@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "thumb-first": {
+      "source": "kylezantos/thumb-first",
+      "sourceType": "github",
+      "skillPath": "skills/thumb-first/SKILL.md",
+      "computedHash": "7122104c2a5119bbe9dce966e2f64f23fff3590cba45bc61dbfbf24cc150aa1d"
+    },
+    "thumb-first-design": {
+      "source": "kylezantos/thumb-first",
+      "sourceType": "github",
+      "skillPath": "skills/thumb-first-design/SKILL.md",
+      "computedHash": "425d7396d851e2eff93c480167c701346c52f860d73e241c62fcfd4e9f52f349"
+    },
+    "thumb-first-platform": {
+      "source": "kylezantos/thumb-first",
+      "sourceType": "github",
+      "skillPath": "skills/thumb-first-platform/SKILL.md",
+      "computedHash": "2acad2b612a4e30c744c9b0147ff30fe6b2d2a1d5f541224cb040edf1d23713d"
+    },
+    "ui-design-review": {
+      "source": "mastepanoski/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ui-design-review/SKILL.md",
+      "computedHash": "fd408d58d8f3ee6e9691767ee2151ca9a353350bd8b71f5ddd71d3d5763f8ce4"
+    }
+  }
+}

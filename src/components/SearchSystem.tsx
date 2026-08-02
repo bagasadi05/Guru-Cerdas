@@ -378,10 +378,10 @@ export const GlobalSearchModal: React.FC<{
                                             : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                             }`}
                                     >
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${result.type === 'students' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600' :
-                                            result.type === 'attendance' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600' :
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${result.type === 'students' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700' :
+                                            result.type === 'attendance' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700' :
                                                 result.type === 'tasks' ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600' :
-                                                    'bg-amber-100 dark:bg-amber-900/40 text-amber-600'
+                                                    'bg-amber-100 dark:bg-amber-900/40 text-amber-700'
                                             }`}>
                                             {entityIcons[result.type]}
                                         </div>
@@ -478,7 +478,7 @@ export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }>
         return (
             <button type="button"
                 onClick={open}
-                className={`flex items-center justify-center w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 transition-all border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
+                className={`flex items-center justify-center w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-400 transition-all border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
                 aria-label="Cari"
             >
                 <Search className="w-4.5 h-4.5" />
@@ -489,7 +489,7 @@ export const SearchTrigger: React.FC<{ className?: string; iconOnly?: boolean }>
     return (
         <button type="button"
             onClick={open}
-            className={`flex items-center justify-center sm:justify-between gap-2 w-10 h-10 sm:w-[340px] sm:h-10 px-0 sm:px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 transition-all border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
+            className={`flex items-center justify-center sm:justify-between gap-2 w-10 h-10 sm:w-[340px] sm:h-10 px-0 sm:px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-400 transition-all border border-slate-200/10 dark:border-slate-700/20 flex-shrink-0 ${className}`}
         >
             <div className="flex items-center justify-center sm:justify-start gap-2 overflow-hidden flex-1 text-left">
                 <Search className="w-4 h-4 flex-shrink-0" />

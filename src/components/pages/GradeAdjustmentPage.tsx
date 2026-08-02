@@ -577,7 +577,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                 {/* Configuration Card */}
                 <Card className="no-print bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border-white/20 dark:border-slate-800 shadow-xl overflow-visible relative z-30">
                     <CardHeader className="pb-3 border-b border-slate-200/50 dark:border-slate-800/50">
-                        <CardTitle className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400">Filter Nilai Tersimpan</CardTitle>
+                        <CardTitle className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-800 dark:from-white dark:to-slate-400">Filter Nilai Tersimpan</CardTitle>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-5">
                         <div>

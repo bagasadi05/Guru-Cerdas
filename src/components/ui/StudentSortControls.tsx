@@ -34,7 +34,7 @@ const SortButton: React.FC<SortButtonProps> = ({ field, label, isActive, directi
             className={`
                 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
                 ${isActive
-                    ? 'bg-indigo-500 text-white'
+                    ? 'bg-brand-600 text-white'
                     : 'bg-white/10 text-gray-300 hover:bg-white/20'
                 }
             `}
@@ -109,7 +109,7 @@ export const StudentSortControls: React.FC<StudentSortControlsProps> = ({
                         <button type="button"
                             onClick={() => onGroupByChange('none')}
                             className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'none'
-                                ? 'bg-indigo-500 text-white'
+                                ? 'bg-brand-600 text-white'
                                 : 'bg-white/10 text-gray-300 hover:bg-white/20'
                                 }`}
                         >
@@ -118,7 +118,7 @@ export const StudentSortControls: React.FC<StudentSortControlsProps> = ({
                         <button type="button"
                             onClick={() => onGroupByChange('status')}
                             className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'status'
-                                ? 'bg-indigo-500 text-white'
+                                ? 'bg-brand-600 text-white'
                                 : 'bg-white/10 text-gray-300 hover:bg-white/20'
                                 }`}
                         >
@@ -127,7 +127,7 @@ export const StudentSortControls: React.FC<StudentSortControlsProps> = ({
                         <button type="button"
                             onClick={() => onGroupByChange('scoreRange')}
                             className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'scoreRange'
-                                ? 'bg-indigo-500 text-white'
+                                ? 'bg-brand-600 text-white'
                                 : 'bg-white/10 text-gray-300 hover:bg-white/20'
                                 }`}
                         >
@@ -155,8 +155,8 @@ export const GroupHeader: React.FC<{
         red: 'bg-red-500/20 text-red-300 border-red-500/30',
         amber: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
         blue: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-        indigo: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
-        gray: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+        indigo: 'bg-brand-500/20 text-brand-700 border-brand-500/30',
+        gray: 'bg-gray-500/20 text-gray-500 border-gray-500/30',
     };
 
     return (

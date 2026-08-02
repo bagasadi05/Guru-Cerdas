@@ -141,7 +141,7 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
             {(currentEval?.catatan_wali || currentEval?.adab_notes) && (
                 <div className="mt-6 bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
                     <span className="font-bold text-sm text-slate-800 dark:text-slate-200 block">Catatan Wali Kelas</span>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 bg-indigo-50/20 dark:bg-indigo-950/10 p-4 rounded-xl border border-indigo-500/10 min-h-[60px] leading-relaxed">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 bg-brand-50/20 dark:bg-brand-950/10 p-4 rounded-xl border border-brand-500/10 min-h-[60px] leading-relaxed">
                         {currentEval?.catatan_wali || currentEval?.adab_notes}
                     </p>
                 </div>

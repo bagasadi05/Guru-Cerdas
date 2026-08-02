@@ -74,7 +74,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className = '' })
                     {crumb.path ? (
                         <Link
                             to={crumb.path}
-                            className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1 whitespace-nowrap"
+                            className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1 whitespace-nowrap"
                         >
                             {index === 0 && <HomeIcon className="w-4 h-4" />}
                             <span>{crumb.label}</span>

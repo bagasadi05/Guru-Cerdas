@@ -604,7 +604,7 @@ const AdminPage: React.FC = () => {
     if (authLoading || isAdmin === null) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900">
-                <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mb-4" />
+                <Loader2 className="w-12 h-12 animate-spin text-brand-600 mb-4" />
                 <p className="text-gray-500 dark:text-gray-400 animate-pulse">Memuat Dasbor Admin...</p>
             </div>
         );
@@ -635,18 +635,18 @@ const AdminPage: React.FC = () => {
     const _distributionMax = Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades, stats.totalTasks);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950/20">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-brand-950/20">
             <div className="max-w-7xl mx-auto px-4 py-6 md:px-8">
 
                 {/* Header */}
                 <header className="mb-8">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/30">
+                            <div className="p-3 bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl text-white shadow-lg shadow-brand-600/30">
                                 <ShieldCheck size={28} />
                             </div>
                             <div>
-                                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
+                                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-800 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
                                     Dasbor Admin
                                 </h1>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
@@ -668,7 +668,7 @@ const AdminPage: React.FC = () => {
                             </div>
                             <button type="button"
                                 onClick={() => { fetchStats(); fetchUsers(); fetchAnnouncements(); fetchActivityLogs(); checkSystemHealth(); }}
-                                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-500/50 transition-all shadow-sm"
+                                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-brand-500/50 transition-all shadow-sm"
                             >
                                 <RefreshCw size={16} className={statsLoading ? 'animate-spin' : ''} />
                                 <span className="text-sm font-medium">Muat Ulang</span>
@@ -683,7 +683,7 @@ const AdminPage: React.FC = () => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
-                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                                    ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30'
                                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                                     }`}
                             >
@@ -817,7 +817,7 @@ const AdminPage: React.FC = () => {
 
                             <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 mb-6">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center text-white font-bold text-lg">
+                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-600 to-red-700 flex items-center justify-center text-white font-bold text-lg">
                                         {deleteModal.user.full_name?.[0]?.toUpperCase() || deleteModal.user.email?.[0]?.toUpperCase() || 'U'}
                                     </div>
                                     <div>
@@ -863,7 +863,7 @@ const AdminPage: React.FC = () => {
                         </div>
                         <button type="button"
                             onClick={() => { restoreUser(undoToast.user!); setUndoToast({ show: false, user: null, timeout: null }); }}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-medium transition-all"
+                            className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 rounded-xl font-medium transition-all"
                         >
                             <Undo2 size={16} />
                             Batalkan

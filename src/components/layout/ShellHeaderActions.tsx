@@ -50,7 +50,7 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
             {/* Unified Help & Tutorial Button */}
             <button type="button"
                 onClick={() => document.dispatchEvent(new CustomEvent('open-help-center'))}
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
                 aria-label="Pusat Bantuan & Tutorial"
                 title="Bantuan & Tutorial"
             >

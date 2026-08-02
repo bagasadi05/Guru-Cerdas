@@ -54,7 +54,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                 id={id}
                 disabled={disabled}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 py-2 ${icon ? 'pl-10 pr-4' : 'px-4'} text-left text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+                className={`flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 py-2 ${icon ? 'pl-10 pr-4' : 'px-4'} text-left text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
             >
                 {icon && (
                     <div className="absolute left-3 flex items-center justify-center pointer-events-none">
@@ -79,7 +79,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                                 key={option.value}
                                 className={`relative cursor-pointer select-none py-2.5 px-4 transition-colors ${
                                     value === option.value
-                                        ? 'bg-indigo-50 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100 font-medium'
+                                        ? 'bg-brand-50 text-brand-900 dark:bg-brand-900/40 dark:text-brand-100 font-medium'
                                         : 'text-slate-900 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'
                                 }`}
                                 onClick={() => {

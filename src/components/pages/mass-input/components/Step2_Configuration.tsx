@@ -63,7 +63,6 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     uniqueSubjects, selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
     violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,
     pasteData, setPasteData, isParsing, handleAiParse, isOnline, onOpenImport,
-    bypassDuplicateGuard, setBypassDuplicateGuard,
     handleSubmit, isSubmitDisabled, isSubmitting, submitButtonTooltip
 }) => {
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
@@ -86,14 +85,14 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     };
     return (
         <div className="lg:col-span-1 space-y-6 animate-fade-in-left">
-            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl shadow-indigo-500/10">
+            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl shadow-brand-600/10">
                 <div
                     className="p-5 sm:p-6 rounded-t-3xl border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer bg-slate-50 dark:bg-slate-800/50 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     onClick={() => setIsConfigOpen(!isConfigOpen)}
                 >
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center border border-indigo-200 dark:border-white/10">
-                            <SparklesIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-300" />
+                        <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center border border-brand-200 dark:border-white/10">
+                            <SparklesIcon className="w-5 h-5 text-brand-600 dark:text-brand-300" />
                         </div>
                         <h3 className="font-bold text-xl text-slate-900 dark:text-white tracking-wide">Konfigurasi</h3>
                     </div>
@@ -108,7 +107,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                 <div className={`p-5 sm:p-6 space-y-5 bg-white dark:bg-slate-900/50 ${isConfigOpen ? 'block' : 'hidden lg:block'}`}>
                     <div className="space-y-5">
                         <div className="space-y-2">
-                            <label htmlFor="class-select" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Kelas</label>
+                            <label htmlFor="class-select" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Kelas</label>
                             <CustomDropdown
                                 id="class-select"
                                 value={selectedClass}
@@ -116,7 +115,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 disabled={isLoadingClasses}
                                 placeholder="-- Pilih Kelas --"
                                 options={classes?.map(c => ({ value: c.id, label: c.name })) || []}
-                                className="border-slate-200 dark:border-white/10 focus:ring-indigo-500"
+                                className="border-slate-200 dark:border-white/10 focus:ring-brand-500"
                             />
                         </div>
 
@@ -126,7 +125,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                             <>
                                 {/* Activity Category Selection */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Kategori Aktivitas</label>
+                                    <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Kategori Aktivitas</label>
                                     <div className="grid grid-cols-3 gap-2">
                                         {[
                                             { value: 'bertanya', label: 'Bertanya', icon: '❓' },
@@ -143,8 +142,8 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                     setQuizInfo(p => ({ ...p, name: CATEGORY_DEFAULT_NAMES[cat.value] || cat.label }));
                                                 }}
                                                 className={`flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all text-left ${quizInfo.name === CATEGORY_DEFAULT_NAMES[cat.value]
-                                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
-                                                    : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-white dark:bg-slate-800'
+                                                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30'
+                                                    : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-600 bg-white dark:bg-slate-800'
                                                     }`}
                                             >
                                                 <span className="text-lg">{cat.icon}</span>
@@ -155,7 +154,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label htmlFor="quiz-name" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Nama Aktivitas</label>
+                                    <label htmlFor="quiz-name" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Nama Aktivitas</label>
                                     <Input id="quiz-name" value={quizInfo.name} onChange={e => setQuizInfo(p => ({ ...p, name: e.target.value }))} placeholder="cth. Aktif Bertanya" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30" />
                                     {/* Quick suggestions */}
                                     <div className="flex flex-wrap gap-1.5">
@@ -164,7 +163,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                 key={suggestion}
                                                 type="button"
                                                 onClick={() => setQuizInfo(p => ({ ...p, name: suggestion }))}
-                                                className="px-2 py-1 text-xs rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                                className="px-2 py-1 text-xs rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-brand-100 dark:hover:bg-brand-900/30 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                                             >
                                                 {suggestion}
                                             </button>
@@ -172,7 +171,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="quiz-subject" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Mata Pelajaran / Kategori</label>
+                                    <label htmlFor="quiz-subject" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Mata Pelajaran / Kategori</label>
                                     {isCustomSubject ? (
                                         <div className="flex gap-2">
                                             <Input
@@ -215,7 +214,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     )}
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="quiz-date" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Tanggal</label>
+                                    <label htmlFor="quiz-date" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Tanggal</label>
                                     <Input id="quiz-date" type="date" value={quizInfo.date} onChange={e => setQuizInfo(p => ({ ...p, date: e.target.value }))} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl" />
                                 </div>
                                 
@@ -225,7 +224,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                             type="button"
                                             onClick={handleSubmit}
                                             disabled={isSubmitDisabled || isSubmitting}
-                                            className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold tracking-wide shadow-md shadow-indigo-500/30"
+                                            className="w-full h-12 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold tracking-wide shadow-md shadow-brand-600/30"
                                         >
                                             <CheckIcon className="w-5 h-5 mr-2" />
                                             {isSubmitting ? 'Menyimpan...' : 'Simpan Keaktifan'}
@@ -238,7 +237,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                         {mode === 'subject_grade' && (
                             <>
                                 <div className="space-y-2">
-                                    <label htmlFor="grade-subject" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Mata Pelajaran</label>
+                                    <label htmlFor="grade-subject" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Mata Pelajaran</label>
                                     {isCustomSubject ? (
                                         <div className="flex gap-2">
                                             <Input
@@ -280,7 +279,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     )}
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="assessment-name" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Nama Penilaian</label>
+                                    <label htmlFor="assessment-name" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Nama Penilaian</label>
                                     {isCustomAssessment ? (
                                         <div className="flex gap-2">
                                             <Input
@@ -322,7 +321,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     )}
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="semester-select" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Semester</label>
+                                    <label htmlFor="semester-select" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Semester</label>
                                     <SemesterSelector
                                         value={subjectGradeInfo.semester}
                                         onChange={(val) => setSubjectGradeInfo(p => ({ ...p, semester: val }))}
@@ -333,7 +332,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="grade-notes" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Catatan (Opsional)</label>
+                                    <label htmlFor="grade-notes" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Catatan (Opsional)</label>
                                     <Input id="grade-notes" value={subjectGradeInfo.notes} onChange={e => setSubjectGradeInfo(p => ({ ...p, notes: e.target.value }))} placeholder="Catatan umum untuk semua nilai" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30" />
                                 </div>
 
@@ -343,12 +342,12 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                         <Button
                                             type="button"
                                             onClick={onOpenImport}
-                                            className="w-full h-12 bg-emerald-50 dark:bg-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 rounded-xl font-bold tracking-wide flex items-center justify-center gap-2 transition-all"
+                                            className="w-full h-12 bg-emerald-50 dark:bg-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 rounded-xl font-bold tracking-wide flex items-center justify-center gap-2 transition-all"
                                         >
                                             <UploadIcon className="w-5 h-5" />
                                             Import dari Excel
                                         </Button>
-                                        <p className="text-xs text-indigo-300/60 mt-2 text-center">Upload file Excel atau CSV dengan data nilai</p>
+                                        <p className="text-xs text-brand-300/60 mt-2 text-center">Upload file Excel atau CSV dengan data nilai</p>
                                     </div>
                                 )}
                             </>
@@ -357,33 +356,33 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                         {mode === 'violation' && (
                             <>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Jenis Pelanggaran</label>
+                                    <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Jenis Pelanggaran</label>
                                     <Button
                                         type="button"
                                         onClick={() => setIsViolationModalOpen(true)}
-                                        className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-indigo-500/50 text-slate-900 dark:text-white rounded-xl flex items-center justify-between px-4 transition-all"
+                                        className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-brand-500/50 text-slate-900 dark:text-white rounded-xl flex items-center justify-between px-4 transition-all"
                                     >
                                         <span className={selectedViolation ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-white/30'}>
                                             {selectedViolation ? selectedViolation.description : '-- Pilih Pelanggaran --'}
                                         </span>
-                                        <ChevronDownIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
+                                        <ChevronDownIcon className="h-5 w-5 text-brand-600 dark:text-brand-300" />
                                     </Button>
                                     {selectedViolation && (
-                                        <p className="text-xs text-indigo-600 dark:text-indigo-300 mt-1">{selectedViolation.points} poin</p>
+                                        <p className="text-xs text-brand-600 dark:text-brand-300 mt-1">{selectedViolation.points} poin</p>
                                     )}
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="violation-date" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Tanggal</label>
+                                    <label htmlFor="violation-date" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Tanggal</label>
                                     <Input id="violation-date" type="date" value={violationDate} onChange={e => setViolationDate(e.target.value)} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="violation-notes" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Keterangan (Opsional)</label>
+                                    <label htmlFor="violation-notes" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Keterangan (Opsional)</label>
                                     <textarea
                                         id="violation-notes"
                                         placeholder="Contoh: Terlambat 15 menit karena macet..."
                                         value={violationNotes}
                                         onChange={(e) => setViolationNotes(e.target.value)}
-                                        className="w-full h-24 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-indigo-500/50 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-all"
+                                        className="w-full h-24 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-brand-500/50 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-brand-500 outline-none resize-none transition-all"
                                     />
                                 </div>
                                 
@@ -393,7 +392,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                             type="button"
                                             onClick={handleSubmit}
                                             disabled={isSubmitDisabled || isSubmitting}
-                                            className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold tracking-wide shadow-md shadow-indigo-500/30"
+                                            className="w-full h-12 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold tracking-wide shadow-md shadow-brand-600/30"
                                         >
                                             <CheckIcon className="w-5 h-5 mr-2" />
                                             {isSubmitting ? 'Menyimpan...' : 'Simpan Pelanggaran'}
@@ -419,7 +418,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                 placeholder="Cari pelanggaran..."
                                                 value={violationSearchTerm}
                                                 onChange={(e) => setViolationSearchTerm(e.target.value)}
-                                                className="pl-10 h-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500"
+                                                className="pl-10 h-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl shadow-sm focus:ring-2 focus:ring-brand-500"
                                                 autoFocus
                                             />
                                         </div>
@@ -458,8 +457,8 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                                         className={`
                                                                             relative p-4 rounded-xl cursor-pointer transition-all duration-200 border group
                                                                             ${selectedViolationCode === violation.code
-                                                                                ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500 dark:border-indigo-500 shadow-md transform scale-[1.01]'
-                                                                                : 'bg-white dark:bg-gray-800/50 border-gray-100 dark:border-gray-700/50 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md'
+                                                                                ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-500 dark:border-brand-500 shadow-md transform scale-[1.01]'
+                                                                                : 'bg-white dark:bg-gray-800/50 border-gray-100 dark:border-gray-700/50 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-md'
                                                                             }
                                                                         `}
                                                                     >
@@ -467,8 +466,8 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                                             <div className={`
                                                                                 flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm transition-colors
                                                                                 ${selectedViolationCode === violation.code
-                                                                                    ? 'bg-indigo-500 text-white'
-                                                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
+                                                                                    ? 'bg-brand-600 text-white'
+                                                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-brand-100 dark:group-hover:bg-brand-900/30 group-hover:text-brand-600 dark:group-hover:text-brand-400'
                                                                                 }
                                                                             `}>
                                                                                 {violation.points}
@@ -477,7 +476,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                                                 <h4 className={`
                                                                                     font-medium text-sm mb-1.5 leading-relaxed
                                                                                     ${selectedViolationCode === violation.code
-                                                                                        ? 'text-indigo-900 dark:text-indigo-100'
+                                                                                        ? 'text-brand-900 dark:text-brand-100'
                                                                                         : 'text-gray-900 dark:text-gray-100'
                                                                                     }
                                                                                 `}>
@@ -488,7 +487,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                                                         #{violation.code}
                                                                                     </span>
                                                                                     {selectedViolationCode === violation.code && (
-                                                                                        <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 flex items-center gap-1 animate-fade-in">
+                                                                                        <span className="text-xs font-medium text-brand-600 dark:text-brand-400 flex items-center gap-1 animate-fade-in">
                                                                                             <CheckIcon className="w-3 h-3" /> Terpilih
                                                                                         </span>
                                                                                     )}
@@ -511,7 +510,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                         {mode === 'bulk_report' && (
                             <>
                                 <div className="space-y-2">
-                                    <label htmlFor="note-method" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Metode Catatan Guru</label>
+                                    <label htmlFor="note-method" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Metode Catatan Guru</label>
                                     <CustomDropdown
                                         id="note-method"
                                         value={noteMethod}
@@ -525,9 +524,9 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 </div>
                                 {noteMethod === 'template' && (
                                     <div className="space-y-2">
-                                        <label htmlFor="template-note" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Template Catatan</label>
-                                        <textarea id="template-note" value={templateNote} onChange={e => setTemplateNote(e.target.value)} rows={4} className="w-full p-3 border rounded-xl bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"></textarea>
-                                        <p className="text-xs text-indigo-600 dark:text-indigo-300">Gunakan [Nama Siswa] untuk personalisasi.</p>
+                                        <label htmlFor="template-note" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Template Catatan</label>
+                                        <textarea id="template-note" value={templateNote} onChange={e => setTemplateNote(e.target.value)} rows={4} className="w-full p-3 border rounded-xl bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"></textarea>
+                                        <p className="text-xs text-brand-600 dark:text-brand-300">Gunakan [Nama Siswa] untuk personalisasi.</p>
                                     </div>
                                 )}
                             </>
@@ -535,7 +534,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
 
                         {mode === 'academic_print' && (
                             <div className="space-y-2">
-                                <label htmlFor="print-subject" className="text-sm font-bold text-indigo-600 dark:text-indigo-200 tracking-wide uppercase">Mata Pelajaran</label>
+                                <label htmlFor="print-subject" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Mata Pelajaran</label>
                                 {isCustomSubject ? (
                                     <div className="flex gap-2">
                                         <Input
@@ -584,22 +583,22 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
             </div>
 
             {mode === 'subject_grade' && isOnline && (
-                <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl shadow-indigo-500/10">
+                <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl shadow-brand-600/10">
                     <h3 className="font-bold text-lg mb-4 border-b border-slate-200 dark:border-slate-700 pb-3 flex items-center gap-2 text-slate-900 dark:text-white">
-                        <ClipboardPasteIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-300" />
+                        <ClipboardPasteIcon className="w-5 h-5 text-brand-600 dark:text-brand-300" />
                         Tempel Data Nilai
                     </h3>
 
                     {/* Format Guide */}
                     <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                        <p className="text-xs font-bold text-indigo-600 dark:text-indigo-200 mb-2 uppercase tracking-wide">Format yang Didukung:</p>
+                        <p className="text-xs font-bold text-brand-600 dark:text-brand-200 mb-2 uppercase tracking-wide">Format yang Didukung:</p>
                         <div className="space-y-1 font-mono text-xs text-slate-600 dark:text-white/70">
                             <p>Ahmad Fauzi - 85</p>
                             <p>Budi Santoso: 90</p>
                             <p>Citra Dewi 78</p>
                             <p>1. Diana Putri 92</p>
                         </div>
-                        <p className="mt-2 text-xxs text-indigo-500 dark:text-indigo-300/70">
+                        <p className="mt-2 text-xxs text-brand-500 dark:text-brand-300/70">
                             AI akan mencocokkan nama dengan daftar siswa secara otomatis.
                         </p>
                     </div>
@@ -609,9 +608,9 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                         onChange={e => setPasteData(e.target.value)}
                         placeholder="Paste data nilai di sini...&#10;Contoh: Budi Santoso 95"
                         rows={5}
-                        className="w-full p-3 border rounded-xl bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all mb-3"
+                        className="w-full p-3 border rounded-xl bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all mb-3"
                     ></textarea>
-                    <Button onClick={handleAiParse} disabled={isParsing} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white border-none h-12 rounded-xl font-bold tracking-wide">
+                    <Button onClick={handleAiParse} disabled={isParsing} className="w-full bg-brand-600 hover:bg-brand-700 text-white border-none h-12 rounded-xl font-bold tracking-wide">
                         {isParsing ? 'Memproses...' : 'Proses dengan AI'}
                     </Button>
                 </div>

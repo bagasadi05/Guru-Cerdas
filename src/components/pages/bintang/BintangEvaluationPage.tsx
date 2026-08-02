@@ -144,7 +144,7 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
                         <Button
                             onClick={evalHook.handlePublish}
                             disabled={evaluations.length === 0 || evalHook.isPublishing}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm h-10 px-2 sm:px-3.5 whitespace-nowrap font-medium"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-1 bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm h-10 px-2 sm:px-3.5 whitespace-nowrap font-medium"
                         >
                             <Send size={14} />
                             <span>Publikasi</span>
@@ -158,7 +158,7 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
                     <div className="flex items-center gap-4 text-sm">
                         <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                             <div
-                                className="bg-indigo-500 h-2 rounded-full transition-all duration-500"
+                                className="bg-brand-600 h-2 rounded-full transition-all duration-500"
                                 style={{ width: `${(evalHook.evalStats.filled / evalHook.evalStats.total) * 100}%` }}
                             />
                         </div>
@@ -293,9 +293,9 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
                 maxWidth="max-w-2xl"
             >
                 <form onSubmit={(e) => evalHook.handleSaveEvaluation(e, getAspectSummary)} className="space-y-4 pt-4">
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
-                        <Info size={18} className="text-indigo-500 mt-0.5 shrink-0" />
-                        <p className="text-xs text-indigo-700 dark:text-indigo-300">
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800">
+                        <Info size={18} className="text-brand-500 mt-0.5 shrink-0" />
+                        <p className="text-xs text-brand-700 dark:text-brand-300">
                             Nilai otomatis dihitung dari poin pelanggaran siswa bulan ini. Anda dapat mengubah nilai secara manual jika diperlukan.
                         </p>
                     </div>
@@ -330,7 +330,7 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
                         <div className="w-full">
                             <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tuliskan pesan atau catatan perkembangan umum siswa untuk Orang Tua / Wali</label>
                             <textarea
-                                className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                                 rows={3}
                                 value={evalHook.formData.catatan_wali}
                                 onChange={(e) => evalHook.setFormData(prev => ({ ...prev, catatan_wali: e.target.value }))}

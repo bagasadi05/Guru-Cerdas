@@ -80,9 +80,9 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                         size="sm"
                         onClick={onShowAIPasteModal}
                         disabled={!selectedClass}
-                        className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 h-9"
+                        className="bg-brand-50 hover:bg-brand-100 text-brand-700 dark:bg-brand-950/30 dark:hover:bg-brand-900/30 border-brand-200 dark:border-brand-800 h-9"
                     >
-                        <SparklesIcon className="w-4 h-4 mr-1.5 text-indigo-500" />
+                        <SparklesIcon className="w-4 h-4 mr-1.5 text-brand-500" />
                         AI Paste
                     </Button>
                 </div>

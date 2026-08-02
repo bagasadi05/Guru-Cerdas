@@ -165,7 +165,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                 <div className="relative" onKeyDown={handleKeyDown}>
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                         {isLoading ? (
-                            <Loader2Icon className="h-5 w-5 text-indigo-500 animate-spin" />
+                            <Loader2Icon className="h-5 w-5 text-brand-500 animate-spin" />
                         ) : (
                             <SearchIcon className="h-5 w-5 text-gray-400" />
                         )}
@@ -198,7 +198,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                                 key={type}
                                 onClick={() => { setActiveTab(type); setActiveIndex(0); }}
                                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${activeTab === type
-                                        ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                                        ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
                                         : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
                                     }`}
                             >
@@ -265,16 +265,16 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                                     <button type="button"
                                         key={`${result.type}-${result.id}`}
                                         onClick={() => handleNavigate(result)}
-                                        className={`flex items-center gap-4 w-full p-3 rounded-lg cursor-pointer transition-colors text-left ${isActive ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                                        className={`flex items-center gap-4 w-full p-3 rounded-lg cursor-pointer transition-colors text-left ${isActive ? 'bg-brand-50 dark:bg-brand-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                                             }`}
                                         data-index={index}
                                     >
-                                        <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${isActive ? 'bg-indigo-100 dark:bg-indigo-900/40' : 'bg-gray-100 dark:bg-gray-700/50'
+                                        <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${isActive ? 'bg-brand-100 dark:bg-brand-900/40' : 'bg-gray-100 dark:bg-gray-700/50'
                                             }`}>
-                                            <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                                            <Icon className={`w-5 h-5 ${isActive ? 'text-brand-600 dark:text-brand-400' : 'text-gray-500 dark:text-gray-400'}`} />
                                         </div>
                                         <div className="flex-1 overflow-hidden">
-                                            <p className={`font-semibold truncate ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                                            <p className={`font-semibold truncate ${isActive ? 'text-brand-600 dark:text-brand-400' : 'text-gray-800 dark:text-gray-200'}`}>
                                                 {result.title}
                                             </p>
                                             <div className="flex items-center gap-2">
@@ -289,8 +289,8 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                                         </div>
                                         <div className="flex-shrink-0">
                                             <span className={`text-xs px-2 py-1 rounded-full ${isActive
-                                                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400'
-                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                                                    ? 'bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-400'
+                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600'
                                                 }`}>
                                                 {entityLabels[result.type]}
                                             </span>
@@ -313,7 +313,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                     {/* Loading State */}
                     {isLoading && searchTerm.length >= 2 && (
                         <div className="flex items-center justify-center py-12">
-                            <Loader2Icon className="w-8 h-8 text-indigo-500 animate-spin" />
+                            <Loader2Icon className="w-8 h-8 text-brand-500 animate-spin" />
                         </div>
                     )}
                 </div>

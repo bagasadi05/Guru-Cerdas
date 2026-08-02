@@ -177,6 +177,22 @@ export const componentShadow = {
 // ============================================
 
 export const colors = {
+    // Brand palette (LAGUNA, cyan-teal dalam, pengganti default indigo->purple)
+    // Diterapkan di seluruh app; selaras dengan tailwind.config.cjs.
+    brand: {
+        50: '#eefbfd',
+        100: '#d0f3f9',
+        200: '#a5e8f2',
+        300: '#6cd4e4',
+        400: '#38b9d4',
+        500: '#179cb9',
+        600: '#0d7e9e', // anchor - kontras AA 4.65:1 di atas putih
+        700: '#11657f',
+        800: '#135268',
+        900: '#134457',
+        950: '#0a2b3a',
+    },
+
     // Primary palette
     primary: {
         50: '#f0fdf4',
@@ -199,11 +215,11 @@ export const colors = {
         200: '#c7d2fe',
         300: '#a5b4fc',
         400: '#818cf8',
-        500: '#6366f1',
+        500: '#0d7e9e',
         600: '#4f46e5',
-        700: '#4338ca',
-        800: '#3730a3',
-        900: '#312e81',
+        700: '#11657f',
+        800: '#135268',
+        900: '#134457',
         950: '#1e1b4b',
     },
 
@@ -246,10 +262,10 @@ export const colors = {
 
     // Accent colors
     accent: {
-        purple: '#8b5cf6',
+        purple: '#11657f',
         blue: '#3b82f6',
         orange: '#f59e0b',
-        indigo: '#6366f1',
+        indigo: '#0d7e9e',
     },
 } as const;
 

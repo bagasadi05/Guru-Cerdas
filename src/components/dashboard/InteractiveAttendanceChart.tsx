@@ -99,7 +99,7 @@ const InteractiveAttendanceChartBase: React.FC<InteractiveAttendanceChartProps> 
             {/* Header with Export */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-indigo-500" />
+                    <TrendingUp className="w-5 h-5 text-brand-500" />
                     <div>
                         <h3 className="font-semibold text-gray-900 dark:text-white">
                             Tren Kehadiran 5 Hari Terakhir
@@ -144,7 +144,7 @@ const InteractiveAttendanceChartBase: React.FC<InteractiveAttendanceChartProps> 
                                         <button type="button"
                                             key={range}
                                             onClick={() => handleRangeChange(range)}
-                                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg ${selectedRange === range ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : ''}`}
+                                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg ${selectedRange === range ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400' : ''}`}
                                         >
                                             {rangeLabels[range]}
                                         </button>

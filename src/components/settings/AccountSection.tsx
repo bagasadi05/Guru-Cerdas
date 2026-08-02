@@ -61,9 +61,9 @@ const AccountSection: React.FC<AccountSectionProps> = ({ onLogout }) => {
         <>
             <div className="space-y-8">
                 <SettingsCard className="overflow-hidden relative">
-                    <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-indigo-500/70 via-purple-500/60 to-indigo-500/70 dark:from-indigo-400/60 dark:via-purple-400/50 dark:to-indigo-400/60" />
+                    <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-brand-500/70 via-brand-600/60 to-brand-500/70 dark:from-brand-400/60 dark:via-brand-500/50 dark:to-brand-400/60" />
                     <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                        <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">Keamanan Akun</CardTitle>
+                        <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-brand-700 dark:from-brand-400 dark:to-brand-500">Keamanan Akun</CardTitle>
                         <CardDescription className="text-base">Perbarui kata sandi dan amankan akun Anda.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-8">

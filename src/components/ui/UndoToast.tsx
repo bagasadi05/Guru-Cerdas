@@ -177,7 +177,7 @@ export const UndoToast: React.FC<UndoToastProps> = ({
                             font-medium text-sm transition-all
                             ${isUndoing || timeRemaining <= 0
                                 ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'
+                                : 'bg-brand-600 text-white hover:bg-brand-700 active:scale-95'
                             }
                         `}
                         aria-label="Batalkan aksi"

@@ -56,7 +56,7 @@ export const AIInsightWidget: React.FC<AIInsightWidgetProps> = ({
           {/* Outer ping animation */}
           <div className="absolute inset-0 rounded-full bg-primary-500/20 animate-ping"></div>
           {/* Inner pulse circle */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 animate-pulse"></div>
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-brand-600 to-brand-700 animate-pulse"></div>
           {/* Icon */}
           <SparklesIcon className="relative w-8 h-8 text-white animate-bounce" />
         </div>

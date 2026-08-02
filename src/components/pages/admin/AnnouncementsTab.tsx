@@ -44,7 +44,7 @@ const getAudienceLabel = (value?: string | null) => {
 
 // Icon mapping for templates - moved here to avoid JSX in .ts file
 const getTemplateIcon = (icon: AnnouncementTemplateIcon): React.ReactNode => {
-    const iconProps = { size: 20, className: "text-indigo-500" };
+    const iconProps = { size: 20, className: "text-brand-500" };
     switch (icon) {
         case 'calendar': return <Calendar {...iconProps} />;
         case 'clipboard-check': return <ClipboardCheck {...iconProps} />;
@@ -95,7 +95,7 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
             <div className="flex justify-end">
                 <button type="button"
                     onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 transition-all shadow-lg shadow-brand-600/30"
                 >
                     <Plus size={18} />
                     Buat Pengumuman
@@ -118,8 +118,8 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
 
                     {/* Templates Modal/Dropdown */}
                     {showTemplates && (
-                        <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-200 dark:border-purple-700/50">
-                            <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300 mb-3">Pilih Template</h4>
+                        <div className="mb-4 p-4 bg-gradient-to-r from-brand-100 to-brand-200 dark:from-brand-900/20 dark:to-brand-900/20 rounded-xl border border-purple-200 dark:border-purple-700/50">
+                            <h4 className="text-sm font-semibold text-purple-900 dark:text-brand-300 mb-3">Pilih Template</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
                                 {announcementTemplates.map(template => (
                                     <button type="button"
@@ -128,7 +128,7 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
                                         className="group text-left p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 hover:shadow-md transition-all"
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+                                            <div className="w-9 h-9 rounded-lg bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center">
                                                 {getTemplateIcon(template.icon)}
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -180,7 +180,7 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
                             <option value="students">Siswa</option>
                         </select>
                         <div className="flex gap-3">
-                            <button type="button" onClick={handleSubmit} className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">
+                            <button type="button" onClick={handleSubmit} className="px-6 py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700">
                                 Simpan
                             </button>
                             <button type="button" onClick={() => setShowAnnouncementForm(false)} className="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl">
@@ -195,7 +195,7 @@ export const AnnouncementsTab: React.FC<AnnouncementsTabProps> = ({
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                 {announcementsLoading ? (
                     <div className="p-12 text-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
+                        <Loader2 className="w-8 h-8 animate-spin text-brand-500 mx-auto" />
                     </div>
                 ) : announcements.length === 0 ? (
                     <div className="p-12 text-center text-gray-500">

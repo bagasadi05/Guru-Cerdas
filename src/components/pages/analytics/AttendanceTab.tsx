@@ -171,7 +171,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ dailyAttendance, a
             <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <BarChart3Icon className="w-5 h-5 text-indigo-600" />
+                        <BarChart3Icon className="w-5 h-5 text-brand-600" />
                         Tren Kehadiran
                     </CardTitle>
                 </CardHeader>
@@ -189,7 +189,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ dailyAttendance, a
             <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <PieChartIcon className="w-5 h-5 text-indigo-600" />
+                        <PieChartIcon className="w-5 h-5 text-brand-600" />
                         Proporsi Status Kehadiran
                     </CardTitle>
                 </CardHeader>

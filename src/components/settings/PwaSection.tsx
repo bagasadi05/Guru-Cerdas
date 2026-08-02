@@ -13,11 +13,11 @@ export const PwaSection: React.FC = () => {
             <SettingsCard className="overflow-hidden">
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25">
+                        <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-800 text-white shadow-lg shadow-emerald-500/25">
                             <Smartphone className="w-7 h-7" />
                         </div>
                         <div>
-                            <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400">
+                            <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-400 dark:to-teal-400">
                                 Aplikasi PWA
                             </CardTitle>
                             <CardDescription className="text-base mt-0.5">
@@ -35,7 +35,7 @@ export const PwaSection: React.FC = () => {
 
                         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
                             <div className="flex items-start gap-3 sm:gap-4 min-w-0">
-                                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
+                                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
                                     <DownloadCloudIcon className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                                 </div>
                                 <div className="space-y-1.5 min-w-0">
@@ -54,7 +54,7 @@ export const PwaSection: React.FC = () => {
                             <Button
                                 onClick={triggerPwaInstall}
                                 size="lg"
-                                className="w-full md:w-auto bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm rounded-xl shadow-xl shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 shrink-0 flex items-center justify-center gap-2"
+                                className="w-full md:w-auto bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-600 hover:to-teal-600 text-white font-bold px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm rounded-xl shadow-xl shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 shrink-0 flex items-center justify-center gap-2"
                             >
                                 <DownloadCloudIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                                 Install Aplikasi Sekarang
@@ -65,7 +65,7 @@ export const PwaSection: React.FC = () => {
                     {/* Features Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
-                            <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                            <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
                                 <Zap className="w-5 h-5" />
                             </div>
                             <h4 className="font-bold text-slate-900 dark:text-white text-base">Akses Super Cepat</h4>
@@ -75,7 +75,7 @@ export const PwaSection: React.FC = () => {
                         </div>
 
                         <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
-                            <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
+                            <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 flex items-center justify-center font-bold">
                                 <WifiOff className="w-5 h-5" />
                             </div>
                             <h4 className="font-bold text-slate-900 dark:text-white text-base">Mode Luring / Offline</h4>
@@ -85,7 +85,7 @@ export const PwaSection: React.FC = () => {
                         </div>
 
                         <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
-                            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold">
                                 <Bell className="w-5 h-5" />
                             </div>
                             <h4 className="font-bold text-slate-900 dark:text-white text-base">Notifikasi Real-time</h4>

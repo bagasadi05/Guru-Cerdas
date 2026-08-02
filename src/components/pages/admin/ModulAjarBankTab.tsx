@@ -297,7 +297,7 @@ export const ModulAjarBankTab: React.FC = () => {
                   onClick={() => setStatusFilter(f.id as any)}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                     statusFilter === f.id 
-                    ? 'bg-white text-indigo-600 dark:bg-slate-700 dark:text-white shadow-sm'
+                    ? 'bg-white text-brand-600 dark:bg-slate-700 dark:text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                   }`}
                 >
@@ -312,13 +312,13 @@ export const ModulAjarBankTab: React.FC = () => {
                 placeholder="Cari mapel / topik..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm w-48 focus:ring-2 focus:ring-indigo-500"
+                className="pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm w-48 focus:ring-2 focus:ring-brand-500"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
             <button
               onClick={handleOpenCreate}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2"
+              className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Manual
@@ -338,7 +338,7 @@ export const ModulAjarBankTab: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
               {loading ? (
-                <tr><td colSpan={4} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-500" /></td></tr>
+                <tr><td colSpan={4} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-500" /></td></tr>
               ) : filteredData.length === 0 ? (
                 <tr><td colSpan={4} className="p-8 text-center text-slate-500">Tidak ada data.</td></tr>
               ) : (
@@ -371,7 +371,7 @@ export const ModulAjarBankTab: React.FC = () => {
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => handleOpenEdit(row)} className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 font-bold text-xs px-3 transition-colors">
+                        <button onClick={() => handleOpenEdit(row)} className="p-1.5 text-brand-600 bg-brand-50 dark:bg-brand-900/30 dark:text-brand-400 rounded-lg hover:bg-brand-100 font-bold text-xs px-3 transition-colors">
                           {row.content_status === 'draft_ai' ? 'Review & Terbitkan' : 'Edit'}
                         </button>
                         <button onClick={() => handleDelete(row.id)} className="p-1.5 text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 rounded-lg hover:bg-red-100 transition-colors"><Trash2 className="w-4 h-4" /></button>
@@ -389,7 +389,7 @@ export const ModulAjarBankTab: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-indigo-500" />
+            <Activity className="w-5 h-5 text-brand-500" />
             AI Background Jobs (Monitor)
           </h3>
           <button onClick={fetchAiJobs} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
@@ -437,7 +437,7 @@ export const ModulAjarBankTab: React.FC = () => {
                           <button onClick={() => handleCancelAiJob(job.id)} className="text-red-500 hover:text-red-700 font-bold">Batal</button>
                         )}
                         {['failed', 'cancelled'].includes(job.status) && (
-                          <button onClick={() => handleRetryAiJob(job.id)} className="text-indigo-500 hover:text-indigo-700 font-bold">Coba Lagi</button>
+                          <button onClick={() => handleRetryAiJob(job.id)} className="text-brand-500 hover:text-brand-700 font-bold">Coba Lagi</button>
                         )}
                       </div>
                     </td>
@@ -466,7 +466,7 @@ export const ModulAjarBankTab: React.FC = () => {
                 </h3>
                 {editingItemMetadata && formState.content_status === 'draft_ai' && (
                   <p className="text-xs text-slate-500 mt-1 font-medium flex gap-3">
-                    <span>Provider: <strong className="text-indigo-500">{editingItemMetadata.provider}</strong></span>
+                    <span>Provider: <strong className="text-brand-500">{editingItemMetadata.provider}</strong></span>
                     <span>Waktu Proses: <strong>{editingItemMetadata.latency ? (editingItemMetadata.latency/1000).toFixed(2)+'s' : '-'}</strong></span>
                   </p>
                 )}
@@ -519,7 +519,7 @@ export const ModulAjarBankTab: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-indigo-700 dark:text-indigo-300 mb-1 flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/30 p-1.5 rounded-t-lg border-b border-indigo-100 dark:border-indigo-900/50">
+                  <label className="block text-[11px] font-bold text-brand-700 dark:text-brand-300 mb-1 flex items-center gap-1.5 bg-brand-50 dark:bg-brand-950/30 p-1.5 rounded-t-lg border-b border-brand-100 dark:border-brand-900/50">
                     Tujuan Pembelajaran (1 Baris per TP)
                   </label>
                   <textarea

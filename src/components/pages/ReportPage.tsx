@@ -321,7 +321,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
     }, [filteredAttendance]);
 
     if (isLoading) return <ReportPageSkeleton />;
-    if (isError) return <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950 text-red-500">Error: {error.message}</div>;
+    if (isError) return <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950 text-red-600">Error: {error.message}</div>;
     if (!data) return null;
 
     return (
@@ -510,7 +510,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                 </header>
 
                 {/* Preview Content */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center custom-scrollbar bg-gradient-to-br from-slate-100 to-emerald-50/30 dark:from-slate-900 dark:to-emerald-950/20">
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center custom-scrollbar bg-gradient-to-br from-slate-100 to-slate-200/30 dark:from-slate-900 dark:to-emerald-950/20">
                     <div id="printable-area" className="w-full md:w-[210mm] md:min-h-[297mm] bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-slate-800 dark:text-slate-200 shadow-xl md:shadow-2xl rounded-2xl p-6 md:p-[20mm] origin-top transform transition-transform animate-fade-in border border-slate-200 dark:border-slate-700">
                         {/* --- HEADER --- */}
                         <header className="-mx-6 md:-mx-[20mm] -mt-6 md:-mt-[20mm] px-6 md:px-[20mm] pt-6 md:pt-[18mm] pb-5 mb-6 rounded-t-2xl bg-white dark:bg-slate-900 border-b-4 border-slate-800 dark:border-slate-100">
@@ -627,7 +627,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                                     <table className="w-full text-sm border-collapse min-w-[600px] md:min-w-0">
                                         <thead>
-                                            <tr className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
+                                            <tr className="bg-gradient-to-r from-emerald-700 to-emerald-800 text-white">
                                                 <th className="p-3 text-center w-10 font-bold">No</th>
                                                 <th className="p-3 text-left font-bold">Nama Prestasi / Lomba</th>
                                                 <th className="p-3 text-left font-bold">Bidang</th>
@@ -692,7 +692,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                                     <table className="w-full text-sm border-collapse min-w-[520px] md:min-w-0">
                                         <thead>
-                                            <tr className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
+                                            <tr className="bg-gradient-to-r from-emerald-700 to-emerald-800 text-white">
                                                 <th className="p-3 text-center w-10 font-bold">No</th>
                                                 <th className="p-3 text-left font-bold">Catatan</th>
                                                 <th className="p-3 text-center w-24 font-bold">Frekuensi</th>
@@ -729,7 +729,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                                     <table className="w-full text-sm border-collapse min-w-[520px] md:min-w-0">
                                         <thead>
-                                            <tr className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
+                                            <tr className="bg-gradient-to-r from-emerald-700 to-emerald-800 text-white">
                                                 <th className="p-3 text-center w-10 font-bold">No</th>
                                                 <th className="p-3 text-left font-bold">Kegiatan</th>
                                                 <th className="p-3 text-center w-24 font-bold">Frekuensi</th>

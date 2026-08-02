@@ -5,6 +5,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // ── Brand kustom LAGUNA — cyan-teal dalam, pengganti default indigo→purple ──
+        // Diterapkan di seluruh app (bukan pilot): aksen tombol/link/gradient primary.
+        brand: {
+          50: '#eefbfd',
+          100: '#d0f3f9',
+          200: '#a5e8f2',
+          300: '#6cd4e4',
+          400: '#38b9d4',
+          500: '#179cb9',
+          600: '#0d7e9e',
+          700: '#11657f',
+          800: '#135268',
+          900: '#134457',
+          950: '#0a2b3a',
+        },
         slate: {
           850: '#151e32',
           900: '#0f172a',
@@ -196,8 +211,8 @@ module.exports = {
           '50%': { transform: 'translateY(-10px)' },
         },
         'pulse-glow': {
-          '0%, 100%': { 'box-shadow': '0 0 0 0 rgba(99, 102, 241, 0.4)' },
-          '50%': { 'box-shadow': '0 0 20px 5px rgba(99, 102, 241, 0.1)' },
+          '0%, 100%': { 'box-shadow': '0 0 0 0 rgba(23, 156, 185, 0.4)' },
+          '50%': { 'box-shadow': '0 0 20px 5px rgba(23, 156, 185, 0.1)' },
         },
         'subtle-pop': {
           '0%': { transform: 'scale(1)' },
@@ -205,8 +220,8 @@ module.exports = {
           '100%': { transform: 'scale(1)' },
         },
         'pulse-border': {
-          '0%, 100%': { 'border-color': 'rgba(99, 102, 241, 0.3)' },
-          '50%': { 'border-color': 'rgba(99, 102, 241, 0.8)' },
+          '0%, 100%': { 'border-color': 'rgba(23, 156, 185, 0.3)' },
+          '50%': { 'border-color': 'rgba(23, 156, 185, 0.8)' },
         },
         'holographic-shine': {
           from: { transform: 'translateX(-100%) skewX(-30deg)' },

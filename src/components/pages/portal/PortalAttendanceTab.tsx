@@ -201,13 +201,13 @@ export const PortalAttendanceTab: React.FC<PortalAttendanceTabProps> = ({ attend
         <div className="space-y-6 p-4 sm:p-6">
             <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
                 <div className="flex items-center gap-2">
-                    <ClockIcon className="h-5 w-5 text-indigo-500" />
+                    <ClockIcon className="h-5 w-5 text-brand-500" />
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Kehadiran</h3>
                 </div>
                 <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                    <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-900/30 dark:bg-indigo-950/20">
-                        <p className="text-xs font-bold uppercase text-indigo-600 dark:text-indigo-300">Tingkat Hadir</p>
-                        <p className="mt-2 text-2xl font-bold text-indigo-700 dark:text-indigo-200">{attendanceRate}%</p>
+                    <div className="rounded-2xl border border-brand-200 bg-brand-50 p-4 dark:border-brand-900/30 dark:bg-brand-950/20">
+                        <p className="text-xs font-bold uppercase text-brand-600 dark:text-brand-300">Tingkat Hadir</p>
+                        <p className="mt-2 text-2xl font-bold text-brand-700 dark:text-brand-200">{attendanceRate}%</p>
                     </div>
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/30 dark:bg-emerald-950/30">
                         <p className="text-xs font-bold uppercase text-emerald-600 dark:text-emerald-300">Hadir</p>
@@ -257,7 +257,7 @@ export const PortalAttendanceTab: React.FC<PortalAttendanceTabProps> = ({ attend
                 <div className="space-y-6">
                     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
                         <div className="flex items-center gap-2">
-                            <CalendarIcon className="h-5 w-5 text-indigo-500" />
+                            <CalendarIcon className="h-5 w-5 text-brand-500" />
                             <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Detail Tanggal Dipilih</h4>
                         </div>
                         <div className="mt-5 space-y-4">
@@ -317,7 +317,7 @@ export const PortalAttendanceTab: React.FC<PortalAttendanceTabProps> = ({ attend
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <div className="flex items-center gap-2">
-                            <BrainCircuitIcon className="h-5 w-5 text-violet-500" />
+                            <BrainCircuitIcon className="h-5 w-5 text-brand-500" />
                             <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Saran AI Kehadiran</h4>
                         </div>
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">

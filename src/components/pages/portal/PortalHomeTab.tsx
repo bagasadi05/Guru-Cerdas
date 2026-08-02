@@ -152,7 +152,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                          card.label === 'Tugas Aktif' ? 'Tugas Berjalan' :
                                          card.label === 'Pesan Belum Dibaca' ? 'Pesan Baru' : card.label}
                                     </span>
-                                    <span className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/80 dark:bg-white/10 shadow-sm transition-transform duration-300 group-hover:scale-110 ${isNewMessage ? 'animate-bounce bg-rose-100 text-rose-600' : ''}`}>
+                                    <span className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/80 dark:bg-white/10 shadow-sm transition-transform duration-300 group-hover:scale-110 ${isNewMessage ? 'animate-bounce bg-rose-100 text-rose-700' : ''}`}>
                                         <card.icon className="h-4.5 w-4.5" />
                                     </span>
                                 </div>
@@ -403,7 +403,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                 recentActivities.map((activity) => (
                                     <div key={activity.id} className="relative pl-9 group">
                                         {/* Activity dot indicator */}
-                                        <span className="absolute left-3.5 top-2.5 h-3 w-3 rounded-full bg-indigo-500 ring-4 ring-white dark:ring-slate-900 transition-transform duration-300 group-hover:scale-125 shadow-sm shadow-indigo-500/25" />
+                                        <span className="absolute left-3.5 top-2.5 h-3 w-3 rounded-full bg-brand-600 ring-4 ring-white dark:ring-slate-900 transition-transform duration-300 group-hover:scale-125 shadow-sm shadow-brand-600/25" />
                                         <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 transition-all">
                                             <p className="font-bold text-sm text-slate-900 dark:text-white">{activity.title}</p>
                                             <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{activity.description}</p>

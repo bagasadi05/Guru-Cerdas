@@ -169,7 +169,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 <button type="button"
                                     onClick={() => setSelectionMode('all')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'all'
-                                        ? 'bg-indigo-600 text-white'
+                                        ? 'bg-brand-600 text-white'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                 >
@@ -179,7 +179,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 <button type="button"
                                     onClick={() => setSelectionMode('class')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'class'
-                                        ? 'bg-indigo-600 text-white'
+                                        ? 'bg-brand-600 text-white'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                 >
@@ -188,7 +188,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 <button type="button"
                                     onClick={() => setSelectionMode('custom')}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectionMode === 'custom'
-                                        ? 'bg-indigo-600 text-white'
+                                        ? 'bg-brand-600 text-white'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                 >
@@ -206,7 +206,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 <select
                                     value={selectedClassId}
                                     onChange={e => setSelectedClassId(e.target.value)}
-                                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                                 >
                                     <option value="">-- Pilih Kelas --</option>
                                     {classes.map(cls => (
@@ -227,7 +227,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                     </label>
                                     <button type="button"
                                         onClick={handleSelectAll}
-                                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                                        className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
                                     >
                                         {selectedStudentIds.size === filteredStudents.length ? 'Batalkan Semua' : 'Pilih Semua'}
                                     </button>
@@ -251,7 +251,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                                 type="checkbox"
                                                 checked={selectedStudentIds.has(student.id)}
                                                 onChange={() => handleToggleStudent(student.id)}
-                                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                             />
                                             <img
                                                 src={getStudentAvatar(student.avatar_url, student.gender, student.id)}
@@ -279,7 +279,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                         <div className="relative">
                             <button type="button"
                                 onClick={() => setShowTemplates(!showTemplates)}
-                                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                             >
                                 <FileTextIcon className="w-4 h-4" />
                                 <span>Gunakan Template</span>
@@ -291,7 +291,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                     <div className="flex items-center gap-1 p-2 border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
                                         <button type="button"
                                             onClick={() => setSelectedCategory('all')}
-                                            className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === 'all' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === 'all' ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                                         >
                                             Semua
                                         </button>
@@ -299,7 +299,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                             <button type="button"
                                                 key={key}
                                                 onClick={() => setSelectedCategory(key as MessageTemplate['category'])}
-                                                className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === key ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                                className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${selectedCategory === key ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                                             >
                                                 {label}
                                             </button>
@@ -330,7 +330,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                                 value={message}
                                 onChange={e => setMessage(e.target.value)}
                                 placeholder="Tulis pesan untuk wali murid..."
-                                className="w-full h-32 px-4 py-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 resize-none text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                className="w-full h-32 px-4 py-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 resize-none text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                                 disabled={isSending}
                             />
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -340,7 +340,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
 
                         {/* Error Message */}
                         {error && (
-                            <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-600 dark:text-rose-400 text-sm">
+                            <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-700 dark:text-rose-400 text-sm">
                                 <AlertCircleIcon className="w-4 h-4 flex-shrink-0" />
                                 <span>{error}</span>
                             </div>
@@ -358,7 +358,7 @@ export const BulkMessageModal: React.FC<BulkMessageModalProps> = ({
                             <Button
                                 onClick={handleSend}
                                 disabled={!isOnline || !message.trim() || recipients.length === 0 || isSending}
-                                className="bg-gradient-to-r from-indigo-600 to-purple-600"
+                                className="bg-gradient-to-r from-brand-600 to-brand-700"
                             >
                                 {isSending ? (
                                     <>

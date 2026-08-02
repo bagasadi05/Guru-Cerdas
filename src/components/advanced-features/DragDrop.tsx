@@ -135,7 +135,7 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
                 relative group cursor-move
                 transition-all duration-200
                 ${isDragging ? 'opacity-50 scale-95' : ''}
-                ${isOver ? 'border-t-2 border-indigo-500' : ''}
+                ${isOver ? 'border-t-2 border-brand-500' : ''}
                 ${className}
             `}
         >

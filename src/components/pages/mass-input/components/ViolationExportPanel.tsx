@@ -32,7 +32,7 @@ const StudentAvatar: React.FC<{
     const resolvedAvatar = getStudentAvatar(avatarUrl, gender, studentId, name);
 
     return imgError ? (
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-600 to-brand-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
             {name.charAt(0).toUpperCase()}
         </div>
     ) : (
@@ -185,7 +185,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                 <div className="lg:col-span-1 space-y-6">
                     <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-lg">
                         <h3 className="font-bold text-lg mb-4 text-slate-900 dark:text-white flex items-center gap-2">
-                            <SparklesIcon className="w-5 h-5 text-indigo-500" />
+                            <SparklesIcon className="w-5 h-5 text-brand-500" />
                             Konfigurasi
                         </h3>
 
@@ -199,7 +199,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                                     disabled={isLoadingClasses}
                                     placeholder="-- Pilih Kelas --"
                                     options={classes?.map(c => ({ value: c.id, label: c.name })) || []}
-                                    className="border-slate-200 dark:border-white/10 focus:ring-indigo-500"
+                                    className="border-slate-200 dark:border-white/10 focus:ring-brand-500"
                                 />
                             </div>
 
@@ -238,13 +238,13 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
 
                     {/* Export Card */}
                     {selectedStudentIds.size > 0 && (
-                        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-5 shadow-lg text-white">
+                        <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl p-5 shadow-lg text-white">
                             <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
                                 <DownloadIcon className="w-5 h-5" />
                                 Export
                             </h3>
                             <div className="grid grid-cols-2 gap-3 mt-4">
-                                <Button onClick={() => handleExport('pdf')} className="h-12 bg-indigo-600 hover:bg-indigo-700 border-none text-white rounded-xl font-bold">
+                                <Button onClick={() => handleExport('pdf')} className="h-12 bg-brand-600 hover:bg-brand-700 border-none text-white rounded-xl font-bold">
                                     <FileTextIcon className="w-5 h-5 mr-2" /> PDF
                                 </Button>
                                 <Button onClick={() => handleExport('excel')} className="h-12 bg-blue-600 hover:bg-blue-700 border-none text-white rounded-xl font-bold">
@@ -266,7 +266,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                                 placeholder="Cari nama siswa..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full h-10 pl-10 pr-4 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full h-10 pl-10 pr-4 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
                             />
                         </div>
                         <div className="flex gap-2">
@@ -274,7 +274,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                                 <button type="button"
                                     key={tab.value}
                                     onClick={() => setStudentFilter(tab.value)}
-                                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${studentFilter === tab.value ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${studentFilter === tab.value ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                 >
                                     {tab.label}
                                 </button>

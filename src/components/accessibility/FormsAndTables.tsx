@@ -97,7 +97,7 @@ export function AccessibleTable<T extends { id: string | number }>({
                                 {column.sortable && onSort ? (
                                     <button type="button"
                                         onClick={() => onSort(column.key)}
-                                        className="flex items-center gap-1 transition-colors hover:text-indigo-600"
+                                        className="flex items-center gap-1 transition-colors hover:text-brand-600"
                                     >
                                         {column.header}
                                         <span aria-hidden="true">
@@ -206,9 +206,9 @@ export const AccessibleTabs: React.FC<AccessibleTabsProps> = ({
                         aria-controls={`tabpanel-${tab.id}`}
                         tabIndex={activeTab === tab.id ? 0 : -1}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`px-4 py-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${
+                        className={`px-4 py-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500 ${
                             activeTab === tab.id
-                                ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                ? 'border-b-2 border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400'
                                 : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                         }`}
                     >

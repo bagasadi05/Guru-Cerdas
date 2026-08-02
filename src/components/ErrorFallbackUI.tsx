@@ -143,7 +143,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
                 {isRetryable(error) && onRetry && (
                     <button type="button"
                         onClick={onRetry}
-                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
                     >
                         {action}
                     </button>
@@ -228,8 +228,8 @@ export const LoadingFallback: React.FC<LoadingFallbackProps> = ({
     return (
         <div className={`flex flex-col items-center justify-center p-8 ${className}`}>
             <div className="relative">
-                <div className="w-12 h-12 border-4 border-indigo-200 dark:border-indigo-900 rounded-full"></div>
-                <div className="absolute top-0 left-0 w-12 h-12 border-4 border-transparent border-t-indigo-600 rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-4 border-brand-200 dark:border-brand-900 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-12 h-12 border-4 border-transparent border-t-brand-600 rounded-full animate-spin"></div>
             </div>
             <p className="mt-4 text-slate-600 dark:text-slate-400">{message}</p>
         </div>
@@ -281,7 +281,7 @@ export const EmptyFallback: React.FC<EmptyFallbackProps> = ({
             {action && (
                 <button type="button"
                     onClick={action.onClick}
-                    className="mt-4 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="mt-4 px-4 py-2 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 transition-colors"
                 >
                     {action.label}
                 </button>

@@ -91,7 +91,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 ${summary.mood === 'good' ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 
                   summary.mood === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500' : 
                   'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500'}`}>
-                <div className={`p-2.5 rounded-full ${summary.mood === 'good' ? 'bg-green-100 text-green-600' : summary.mood === 'warning' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>
+                <div className={`p-2.5 rounded-full ${summary.mood === 'good' ? 'bg-green-100 text-green-700' : summary.mood === 'warning' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-600'}`}>
                     <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
@@ -151,7 +151,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                                 {atRiskStudents.map((item, index) => (
                                     <div key={index} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-sm">
+                                            <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-sm">
                                                 {item.student.name.substring(0, 2).toUpperCase()}
                                             </div>
                                             <div>
@@ -185,7 +185,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                                 {topPerformingStudents.map((item, index) => (
                                     <div key={index} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-sm">
+                                            <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm">
                                                 #{index + 1}
                                             </div>
                                             <div>

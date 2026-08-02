@@ -170,11 +170,11 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             )}
 
             {/* Template Download */}
-            <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl">
+            <div className="p-4 bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-800 rounded-xl">
                 <div className="flex items-start gap-3">
-                    <DownloadIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+                    <DownloadIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-indigo-800 dark:text-indigo-300 mb-2">
+                        <p className="text-sm font-medium text-brand-800 dark:text-brand-300 mb-2">
                             Butuh template?
                         </p>
                         <div className="flex gap-2">
@@ -182,7 +182,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                                 size="sm"
                                 variant="outline"
                                 onClick={() => downloadTemplate('xlsx')}
-                                className="text-indigo-600 border-indigo-300 hover:bg-indigo-100 dark:text-indigo-400 dark:border-indigo-700"
+                                className="text-brand-600 border-brand-300 hover:bg-brand-100 dark:text-brand-400 dark:border-brand-700"
                             >
                                 <DownloadIcon className="w-3 h-3 mr-1" />
                                 Excel (.xlsx)
@@ -191,7 +191,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                                 size="sm"
                                 variant="outline"
                                 onClick={() => downloadTemplate('csv')}
-                                className="text-indigo-600 border-indigo-300 hover:bg-indigo-100 dark:text-indigo-400 dark:border-indigo-700"
+                                className="text-brand-600 border-brand-300 hover:bg-brand-100 dark:text-brand-400 dark:border-brand-700"
                             >
                                 <DownloadIcon className="w-3 h-3 mr-1" />
                                 CSV (.csv)
@@ -202,7 +202,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             </div>
 
             {isProcessing && (
-                <div className="flex items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400">
+                <div className="flex items-center justify-center gap-2 text-brand-600 dark:text-brand-400">
                     <RefreshCwIcon className="w-5 h-5 animate-spin" />
                     <span>Membaca file...</span>
                 </div>
@@ -258,7 +258,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 </Button>
                 <Button
                     onClick={handlePreview}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                    className="flex-1 bg-brand-600 hover:bg-brand-700 text-white"
                     disabled={!mappings.some(m => m.targetField === 'name')}
                 >
                     Lanjut ke Preview
@@ -325,7 +325,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     </tbody>
                 </table>
                 {parsedRows.length > 50 && (
-                    <div className="p-2 bg-slate-100 dark:bg-slate-800 text-center text-xs text-slate-500">
+                    <div className="p-2 bg-slate-100 dark:bg-slate-800 text-center text-xs text-slate-600">
                         Menampilkan 50 dari {parsedRows.length} baris
                     </div>
                 )}
@@ -356,7 +356,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 <Button
                     onClick={handleImport}
                     disabled={validCount === 0 || isProcessing}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                    className="flex-1 bg-brand-600 hover:bg-brand-700 text-white"
                 >
                     {isProcessing ? (
                         <>
@@ -387,7 +387,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 </p>
             </div>
 
-            <Button onClick={handleClose} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button onClick={handleClose} className="bg-brand-600 hover:bg-brand-700 text-white">
                 Selesai
             </Button>
         </div>
@@ -404,7 +404,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             {step === 'preview' && renderPreviewStep()}
             {step === 'importing' && (
                 <div className="py-12 text-center">
-                    <RefreshCwIcon className="w-12 h-12 mx-auto text-indigo-600 animate-spin mb-4" />
+                    <RefreshCwIcon className="w-12 h-12 mx-auto text-brand-600 animate-spin mb-4" />
                     <p className="text-slate-600 dark:text-slate-400">Mengimport data...</p>
                 </div>
             )}

@@ -54,7 +54,7 @@ const NotificationItem: React.FC<{
             onClick={handleClick}
             className={`w-full text-left p-3 rounded-xl transition-colors flex items-start gap-3 ${notification.is_read
                     ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800'
-                    : 'bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30'
+                    : 'bg-brand-50 dark:bg-brand-900/20 hover:bg-brand-100 dark:hover:bg-brand-900/30'
                 }`}
         >
             <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${notification.type === 'danger'
@@ -76,7 +76,7 @@ const NotificationItem: React.FC<{
                         {notification.title}
                     </p>
                     {!notification.is_read && (
-                        <span className="flex-shrink-0 w-2 h-2 rounded-full bg-indigo-500 mt-1.5" />
+                        <span className="flex-shrink-0 w-2 h-2 rounded-full bg-brand-600 mt-1.5" />
                     )}
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
@@ -155,7 +155,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
                             {unreadCount > 0 && (
                                 <button type="button"
                                     onClick={handleMarkAllAsRead}
-                                    className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                                    className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
                                     title="Tandai semua sudah dibaca"
                                 >
                                     <CheckIcon className="w-4 h-4" />

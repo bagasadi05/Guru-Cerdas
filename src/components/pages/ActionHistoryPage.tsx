@@ -373,7 +373,7 @@ const ActionHistoryPage: React.FC = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
                 <div className="text-center">
-                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mx-auto" />
+                    <Loader2 className="w-10 h-10 text-brand-500 animate-spin mx-auto" />
                     <p className="mt-4 text-slate-500 dark:text-slate-400">Memuat riwayat aksi...</p>
                 </div>
             </div>
@@ -387,7 +387,7 @@ const ActionHistoryPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-600/20">
                                 <History className="w-6 h-6 text-white" />
                             </div>
                             <div>
@@ -438,8 +438,8 @@ const ActionHistoryPage: React.FC = () => {
                     {/* Total */}
                     <div className="bg-white dark:bg-slate-800/40 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-sm">
                         <div className="flex items-center justify-between">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-                                <Activity className="w-5 h-5 text-indigo-500" />
+                            <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center">
+                                <Activity className="w-5 h-5 text-brand-500" />
                             </div>
                             <div className="text-2xl font-bold text-slate-900 dark:text-white">{totalCount}</div>
                         </div>
@@ -504,14 +504,14 @@ const ActionHistoryPage: React.FC = () => {
                                     setPage(0);
                                 }}
                                 placeholder="Cari riwayat aksi..."
-                                className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-shadow"
+                                className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition-shadow"
                             />
                         </div>
 
                         <button type="button"
                             onClick={() => setShowFilters(!showFilters)}
                             className={`flex items-center gap-2 px-5 py-3 rounded-xl border transition-all ${hasActiveFilters
-                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                                ? 'bg-brand-600 border-brand-600 text-white shadow-lg shadow-brand-600/25'
                                 : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white shadow-sm'
                                 }`}
                         >
@@ -540,7 +540,7 @@ const ActionHistoryPage: React.FC = () => {
                                             setFilterType(e.target.value as ActionType | 'all');
                                             setPage(0);
                                         }}
-                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 cursor-pointer"
                                     >
                                         <option value="all">Semua Tipe</option>
                                         {Object.entries(actionTypeConfig).map(([key, config]) => (
@@ -559,7 +559,7 @@ const ActionHistoryPage: React.FC = () => {
                                             setFilterEntity(e.target.value as SoftDeleteEntity | 'all');
                                             setPage(0);
                                         }}
-                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 cursor-pointer"
                                     >
                                         <option value="all">Semua Data</option>
                                         {Object.entries(entityLabels).map(([key, label]) => (
@@ -579,7 +579,7 @@ const ActionHistoryPage: React.FC = () => {
                                             setDateRange(prev => ({ ...prev, start: e.target.value }));
                                             setPage(0);
                                         }}
-                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500"
                                     />
                                 </div>
 
@@ -594,7 +594,7 @@ const ActionHistoryPage: React.FC = () => {
                                             setDateRange(prev => ({ ...prev, end: e.target.value }));
                                             setPage(0);
                                         }}
-                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500"
                                     />
                                 </div>
                             </div>
@@ -606,7 +606,7 @@ const ActionHistoryPage: React.FC = () => {
                                     </p>
                                     <button type="button"
                                         onClick={clearFilters}
-                                        className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                                        className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors"
                                     >
                                         Reset Semua Filter
                                     </button>
@@ -645,7 +645,7 @@ const ActionHistoryPage: React.FC = () => {
 
                                 <div className="relative">
                                     {/* Timeline Line */}
-                                    <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gradient-to-b from-indigo-500/50 via-slate-300 dark:via-slate-600 to-transparent" />
+                                    <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gradient-to-b from-brand-500/50 via-slate-300 dark:via-slate-600 to-transparent" />
 
                                     <div className="space-y-3 relative">
                                         {groupActions.map((action) => {
@@ -674,7 +674,7 @@ const ActionHistoryPage: React.FC = () => {
                                                             <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${config.bgColor} ${config.color}`}>
                                                                 {config.label}
                                                             </span>
-                                                            <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${entity?.bgColor || 'bg-slate-100 dark:bg-slate-800'} ${entity?.color || 'text-slate-500'}`}>
+                                                            <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${entity?.bgColor || 'bg-slate-100 dark:bg-slate-800'} ${entity?.color || 'text-slate-600'}`}>
                                                                 {entityLabels[action.entity] || action.entity}
                                                             </span>
                                                             <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
@@ -688,7 +688,7 @@ const ActionHistoryPage: React.FC = () => {
                                                     <div className="flex items-center gap-2 flex-shrink-0">
                                                         <button type="button"
                                                             onClick={() => setViewDetailItem(action)}
-                                                            className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                                                            className="p-2 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
                                                             title="Lihat Detail"
                                                         >
                                                             <Eye className="w-5 h-5" />
@@ -698,13 +698,13 @@ const ActionHistoryPage: React.FC = () => {
                                                             <button type="button"
                                                                 onClick={() => undoMutation.mutate(action.id)}
                                                                 disabled={undoMutation.isPending}
-                                                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50"
+                                                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 text-white text-sm font-semibold shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50"
                                                             >
                                                                 <RotateCcw className={`w-4 h-4 ${undoMutation.isPending ? 'animate-spin' : ''}`} />
                                                                 Undo
                                                             </button>
                                                         ) : (
-                                                            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs">
+                                                            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 text-xs">
                                                                 <XCircle className="w-4 h-4" />
                                                                 <span className="hidden sm:inline">Tidak dapat dibatalkan</span>
                                                             </div>
@@ -730,7 +730,7 @@ const ActionHistoryPage: React.FC = () => {
                             </button>
 
                             <div className="flex items-center gap-1 px-4">
-                                <span className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-semibold flex items-center justify-center">
+                                <span className="w-10 h-10 rounded-xl bg-brand-600 text-white font-semibold flex items-center justify-center">
                                     {page + 1}
                                 </span>
                                 <span className="text-slate-400 mx-2">/</span>
@@ -758,10 +758,10 @@ const ActionHistoryPage: React.FC = () => {
                     title="Tentang Riwayat Aksi"
                 >
                     <div className="space-y-4 text-slate-600 dark:text-slate-400">
-                        <div className="flex items-start gap-3 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-                            <Info className="w-5 h-5 text-indigo-500 mt-0.5 flex-shrink-0" />
+                        <div className="flex items-start gap-3 p-4 rounded-xl bg-brand-500/10 border border-brand-500/20">
+                            <Info className="w-5 h-5 text-brand-500 mt-0.5 flex-shrink-0" />
                             <div>
-                                <p className="font-semibold text-indigo-600 dark:text-indigo-400 mb-1">Apa itu Riwayat Aksi?</p>
+                                <p className="font-semibold text-brand-600 dark:text-brand-400 mb-1">Apa itu Riwayat Aksi?</p>
                                 <p className="text-sm">Riwayat Aksi mencatat semua perubahan data yang Anda lakukan, termasuk menambah, mengedit, dan menghapus data.</p>
                             </div>
                         </div>
@@ -864,8 +864,8 @@ const ActionHistoryPage: React.FC = () => {
                                     </h4>
                                     <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                                         {viewDetailItem.previousState.map((state, idx) => (
-                                            <div key={idx} className="border-l-4 border-indigo-500 pl-4 py-1">
-                                                <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1">
+                                            <div key={idx} className="border-l-4 border-brand-500 pl-4 py-1">
+                                                <div className="text-xs font-bold text-brand-600 dark:text-brand-400 mb-1">
                                                     Item #{idx + 1} ({String(state.id)})
                                                 </div>
                                                 {renderDetailState(state)}
@@ -908,7 +908,7 @@ const ActionHistoryPage: React.FC = () => {
                     isOpen={showExport}
                     onClose={() => setShowExport(false)}
                     title="Export Riwayat Aksi"
-                    icon={<FileText className="w-5 h-5 text-indigo-500" />}
+                    icon={<FileText className="w-5 h-5 text-brand-500" />}
                 >
                     <div className="space-y-4">
                         <p className="text-slate-600 dark:text-slate-400">
@@ -919,7 +919,7 @@ const ActionHistoryPage: React.FC = () => {
                             <button type="button"
                                 onClick={() => handleExport('csv')}
                                 disabled={isExporting}
-                                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all group"
+                                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-all group"
                             >
                                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
                                     <FileText className="w-7 h-7 text-emerald-500" />
@@ -933,7 +933,7 @@ const ActionHistoryPage: React.FC = () => {
                             <button type="button"
                                 onClick={() => handleExport('json')}
                                 disabled={isExporting}
-                                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all group"
+                                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-all group"
                             >
                                 <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
                                     <Download className="w-7 h-7 text-blue-500" />
@@ -946,7 +946,7 @@ const ActionHistoryPage: React.FC = () => {
                         </div>
 
                         {isExporting && (
-                            <div className="flex items-center justify-center gap-2 py-3 text-indigo-600 dark:text-indigo-400">
+                            <div className="flex items-center justify-center gap-2 py-3 text-brand-600 dark:text-brand-400">
                                 <Loader2 className="w-5 h-5 animate-spin" />
                                 <span>Mengexport data...</span>
                             </div>

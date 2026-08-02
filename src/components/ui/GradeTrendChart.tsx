@@ -138,8 +138,8 @@ export const GradeTrendChart: React.FC<GradeTrendChartProps> = ({ records, class
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-slate-800 dark:text-white text-lg">Tren Perkembangan Nilai</h3>
-                <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full ${trend > 0 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' :
-                        trend < 0 ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' :
+                <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full ${trend > 0 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' :
+                        trend < 0 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
                             'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                     }`}>
                     {trend > 0 ? <TrendingUpIcon className="w-4 h-4" /> :
@@ -153,7 +153,7 @@ export const GradeTrendChart: React.FC<GradeTrendChartProps> = ({ records, class
 
             {/* Stats Cards */}
             <div className="grid grid-cols-3 gap-3 mb-6">
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-3 text-center">
+                <div className="bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/20 dark:to-brand-900/20 rounded-xl p-3 text-center">
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Rata-rata</p>
                     <p className={`text-2xl font-bold ${getScoreColor(overallAverage)}`}>{overallAverage}</p>
                 </div>
@@ -213,8 +213,8 @@ export const GradeTrendChart: React.FC<GradeTrendChartProps> = ({ records, class
                         {/* Gradient definition */}
                         <defs>
                             <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#6366f1" />
-                                <stop offset="100%" stopColor="#a855f7" />
+                                <stop offset="0%" stopColor="#0d7e9e" />
+                                <stop offset="100%" stopColor="#38b9d4" />
                             </linearGradient>
                         </defs>
 
@@ -230,7 +230,7 @@ export const GradeTrendChart: React.FC<GradeTrendChartProps> = ({ records, class
                                         cy={y}
                                         r="5"
                                         fill="white"
-                                        stroke="#6366f1"
+                                        stroke="#0d7e9e"
                                         strokeWidth="2"
                                     />
                                     <text

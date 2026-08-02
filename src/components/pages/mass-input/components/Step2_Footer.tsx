@@ -176,9 +176,9 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                         <Button
                             onClick={onShowAdjustment}
                             variant="outline"
-                            className="w-full sm:w-auto font-bold border-indigo-200 dark:border-indigo-900 bg-white dark:bg-gray-900 text-indigo-650 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 shadow-md shadow-indigo-500/5 flex items-center justify-center gap-2"
+                            className="w-full sm:w-auto font-bold border-brand-200 dark:border-brand-900 bg-white dark:bg-gray-900 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/20 shadow-md shadow-brand-600/5 flex items-center justify-center gap-2"
                         >
-                            <SparklesIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+                            <SparklesIcon className="w-4 h-4 text-brand-600 dark:text-brand-400 animate-pulse" />
                             Katrol & Pratinjau
                         </Button>
                     )}
@@ -186,7 +186,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                     {mode === 'subject_grade' && selectedStudentIds.size > 0 && onDeleteSelected && (
                         <Button
                             onClick={onDeleteSelected}
-                            className="w-full sm:w-auto font-bold tracking-wide text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-lg shadow-rose-900/20 flex items-center justify-center gap-2 transition-all duration-300 transform hover:-translate-y-1"
+                            className="w-full sm:w-auto font-bold tracking-wide text-white bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-600 hover:to-red-600 shadow-lg shadow-rose-900/20 flex items-center justify-center gap-2 transition-all duration-300 transform hover:-translate-y-1"
                         >
                             <XCircleIcon className="w-4 h-4 text-white" />
                             Hapus Nilai Terpilih ({selectedStudentIds.size})
@@ -197,7 +197,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                         <div className="w-full sm:w-64 text-center">
                             <div className="relative pt-1">
                                 <div className="overflow-hidden h-2 mb-2 text-xs flex rounded-full bg-white/10">
-                                    <div style={{ width: exportProgress }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500 relative">
+                                    <div style={{ width: exportProgress }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-emerald-700 to-emerald-800 transition-all duration-500 relative">
                                         <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                                     </div>
                                 </div>
@@ -209,7 +209,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                             onClick={handleSubmit}
                             disabled={isSubmitDisabled}
                             title={submitButtonTooltip}
-                            className="w-full sm:w-auto font-bold tracking-wide shadow-lg transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-green-900/20"
+                            className="w-full sm:w-auto font-bold tracking-wide shadow-lg transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-green-900/20"
                         >
                             {isSubmitting || isDeleting ? (
                                 <span className="flex items-center gap-2">

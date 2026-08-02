@@ -67,7 +67,7 @@ export const BulkMoveModal: React.FC<BulkMoveModalProps> = ({
                     <Button
                         onClick={handleConfirm}
                         disabled={!targetClassId || isMoving}
-                        className="bg-indigo-600 text-white hover:bg-indigo-700"
+                        className="bg-brand-600 text-white hover:bg-brand-700"
                     >
                         {isMoving ? 'Memindahkan...' : 'Pindahkan Siswa'}
                     </Button>

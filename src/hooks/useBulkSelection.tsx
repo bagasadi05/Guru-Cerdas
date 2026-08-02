@@ -178,11 +178,11 @@ export const BulkCheckbox: React.FC<BulkCheckboxProps> = ({
             className={`
                 ${sizeClasses[size]}
                 rounded border-2 flex items-center justify-center transition-all duration-200
-                focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
                 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 ${checked || indeterminate
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'border-slate-300 dark:border-slate-600 hover:border-indigo-500 dark:hover:border-indigo-400'
+                    ? 'bg-brand-600 border-brand-600 text-white'
+                    : 'border-slate-300 dark:border-slate-600 hover:border-brand-500 dark:hover:border-brand-400'
                 }
                 ${className}
             `}
@@ -242,9 +242,9 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
         <div className={`fixed bottom-24 lg:bottom-8 left-1/2 -translate-x-1/2 z-40 animate-fade-in-up ${className}`}>
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-3 flex items-center gap-3">
                 {/* Selection Info */}
-                <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
-                    <CheckSquareIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                    <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+                <div className="flex items-center gap-2 px-3 py-2 bg-brand-50 dark:bg-brand-900/30 rounded-xl">
+                    <CheckSquareIcon className="w-5 h-5 text-brand-600 dark:text-brand-400" />
+                    <span className="font-semibold text-brand-700 dark:text-brand-300">
                         {selectedCount} dipilih
                     </span>
                 </div>
@@ -252,7 +252,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
                 {/* Select All / Deselect All */}
                 <button type="button"
                     onClick={isAllSelected ? onDeselectAll : onSelectAll}
-                    className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                 >
                     {isAllSelected ? 'Batal Pilih Semua' : `Pilih Semua (${totalCount})`}
                 </button>
@@ -349,7 +349,7 @@ export const SelectableItem: React.FC<SelectableItemProps> = ({
             className={`
                 relative transition-all duration-200
                 ${isSelectionMode ? 'cursor-pointer' : ''}
-                ${isSelected ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-slate-900' : ''}
+                ${isSelected ? 'ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-slate-900' : ''}
                 ${className}
             `}
             onClick={handleClick}
@@ -370,7 +370,7 @@ export const SelectableItem: React.FC<SelectableItemProps> = ({
 
             {/* Selection Overlay */}
             {isSelected && (
-                <div className="absolute inset-0 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-xl pointer-events-none" />
+                <div className="absolute inset-0 bg-brand-500/10 dark:bg-brand-500/20 rounded-xl pointer-events-none" />
             )}
 
             {children}
@@ -430,7 +430,7 @@ export const BulkSelectHeader: React.FC<BulkSelectHeaderProps> = ({
             ) : (
                 <button type="button"
                     onClick={onEnterSelectionMode}
-                    className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                 >
                     <CheckSquareIcon className="w-4 h-4" />
                     Pilih

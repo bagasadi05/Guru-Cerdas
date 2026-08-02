@@ -73,13 +73,13 @@ const SkipLinks: React.FC<SkipLinksProps> = ({ links = defaultLinks }) => {
                     top: -100px;
                     left: 8px;
                     padding: 12px 24px;
-                    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+                    background: linear-gradient(135deg, #0d7e9e 0%, #11657f 100%);
                     color: white;
                     font-weight: 600;
                     font-size: 14px;
                     border-radius: 8px;
                     text-decoration: none;
-                    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+                    box-shadow: 0 4px 12px rgba(13, 126, 158, 0.4);
                     transition: top 0.2s ease-out, transform 0.2s ease-out;
                     outline: none;
                 }

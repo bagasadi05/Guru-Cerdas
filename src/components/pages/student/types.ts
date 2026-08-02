@@ -138,17 +138,17 @@ import { StudentAchievement } from '../../../types/studentAchievement';
 
 export type ModalState =
     | { type: 'closed' }
-    | { type: 'editStudent', data: StudentWithClass }
-    | { type: 'report', data: ReportRow | null }
-    | { type: 'academic', data: AcademicRecordRow | null }
-    | { type: 'quiz', data: QuizPointRow | null }
-    | { type: 'violation', mode: 'add' | 'edit', data: ViolationRow | null }
-    | { type: 'achievement', mode: 'add' | 'edit', data: StudentAchievement | null }
     | { type: 'confirmDelete', title: string; message: string; onConfirm: () => void; isPending: boolean }
-    | { type: 'applyPoints' }
+    | { type: 'aiAssistant' }
+    | { type: 'editStudent', data: StudentWithClass }
+    | { type: 'report', mode: 'add' | 'edit', data?: ReportRow }
+    | { type: 'academic', mode: 'add' | 'edit', data?: AcademicRecordRow }
+    | { type: 'quiz', mode: 'add' | 'edit', data?: QuizPointRow }
+    | { type: 'violation', mode: 'add' | 'edit', data?: ViolationRow }
+    | { type: 'achievement', mode: 'add' | 'edit', data?: StudentAchievement }
     | { type: 'editCommunication', data: CommunicationRow }
     | { type: 'portalAccess' }
-    | { type: 'aiAssistant' };
+    | { type: 'applyPoints' };
 
 export type AiSummary = {
     general_evaluation: string;

@@ -29,13 +29,18 @@ import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '..
 import { exportAchievementsToExcel } from '../../../services/achievementExport';
 import { useAuth } from '../../../hooks/useAuth';
 import { useToast } from '../../../hooks/useToast';
+import { Modal } from '../../ui/Modal';
+import { AchievementForm } from './forms/AchievementForm';
+import { AchievementFormValues } from './schemas';
 
 interface AchievementsTabProps {
     achievements: StudentAchievement[];
     isLoading: boolean;
     error?: any;
-    onAdd: () => void;
-    onEdit: (achievement: StudentAchievement) => void;
+    studentId: string;
+    isSubmitting: boolean;
+    fileActionStatus: 'idle' | 'uploading' | 'deleting';
+    onSave: (data: AchievementFormValues & { evidence_file?: File | null; certificate_removed?: boolean }, id?: string) => void;
     onDelete: (id: string) => void;
     isOnline: boolean;
     currentUserId?: string;
@@ -73,9 +78,9 @@ const AchievementsStats: React.FC<{ achievements: StudentAchievement[] }> = ({ a
                 <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.topPlacements}</p>
                 <p className="text-xs text-amber-500">🏆 Podium (Juara 1-3)</p>
             </div>
-            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30">
-                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.totalPoints}</p>
-                <p className="text-xs text-indigo-500">⭐️ Total Poin Prestasi</p>
+            <div className="p-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-800/30">
+                <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">{stats.totalPoints}</p>
+                <p className="text-xs text-brand-500">⭐️ Total Poin Prestasi</p>
             </div>
             <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
                 <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -91,8 +96,10 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
     achievements,
     isLoading,
     error,
-    onAdd,
-    onEdit,
+    studentId,
+    isSubmitting,
+    fileActionStatus,
+    onSave,
     onDelete,
     isOnline,
     currentUserId,
@@ -100,11 +107,29 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
     className = '-',
     canAdd = true,
 }) => {
+    const { user } = useAuth();
+    const toast = useToast();
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<AchievementCategory | 'all'>('all');
     const [levelFilter, setLevelFilter] = useState<AchievementLevel | 'all'>('all');
-    const { user } = useAuth();
-    const toast = useToast();
+    
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState<StudentAchievement | null>(null);
+
+    const handleAdd = () => {
+        setSelectedRecord(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEdit = (record: StudentAchievement) => {
+        setSelectedRecord(record);
+        setIsModalOpen(true);
+    };
+
+    const handleSave = async (data: AchievementFormValues & { evidence_file?: File | null; certificate_removed?: boolean }) => {
+        await onSave(data, selectedRecord?.id || undefined);
+        setIsModalOpen(false);
+    };
 
     // Filter achievements
     const filteredAchievements = useMemo(() => {
@@ -172,7 +197,7 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                     )}
                     {canAdd && !isBackendMissing && (
                         <Button
-                            onClick={onAdd}
+                            onClick={handleAdd}
                             disabled={!isOnline}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm flex items-center gap-2"
                         >
@@ -184,15 +209,15 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
             </div>
 
             {error && !isBackendMissing && (
-                <div className="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-455 text-sm">
+                <div className="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-700 dark:text-rose-455 text-sm">
                     Gagal memuat data prestasi: {error instanceof Error ? error.message : String(error)}
                 </div>
             )}
 
             {isBackendMissing ? (
-                <div className="mb-6 p-6 rounded-2xl bg-amber-50/80 dark:bg-indigo-950/20 border border-amber-200 dark:border-indigo-800/30 flex items-start gap-4 animate-fade-in">
-                    <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
-                        <AlertCircle className="w-5 h-5 text-amber-600 dark:text-indigo-400" />
+                <div className="mb-6 p-6 rounded-2xl bg-amber-50/80 dark:bg-brand-950/20 border border-amber-200 dark:border-brand-800/30 flex items-start gap-4 animate-fade-in">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-brand-900/40 flex items-center justify-center shrink-0">
+                        <AlertCircle className="w-5 h-5 text-amber-600 dark:text-brand-400" />
                     </div>
                     <div>
                         <h4 className="font-bold text-slate-900 dark:text-white text-base">
@@ -285,7 +310,7 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8"
-                                            onClick={() => onEdit(item)}
+                                            onClick={() => handleEdit(item)}
                                             disabled={!isOnline || item.user_id !== currentUserId}
                                             aria-label="Edit prestasi"
                                         >
@@ -379,6 +404,22 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                 </div>
             )}
             </>
+            )}
+            
+            {isModalOpen && (
+                <Modal 
+                    isOpen={true} 
+                    onClose={() => setIsModalOpen(false)} 
+                    title={selectedRecord ? 'Edit Prestasi' : 'Catat Prestasi Baru'}
+                >
+                    <AchievementForm
+                        defaultValues={selectedRecord}
+                        onSubmit={handleSave}
+                        onClose={() => setIsModalOpen(false)}
+                        isPending={isSubmitting}
+                        fileActionStatus={fileActionStatus}
+                    />
+                </Modal>
             )}
         </div>
     );

@@ -149,7 +149,7 @@ export const TrashModals: React.FC<TrashModalsProps> = ({
                 isOpen={!!viewDetailItem}
                 onClose={() => setViewDetailItem(null)}
                 title="Detail Item"
-                icon={<Eye className="w-5 h-5 text-indigo-500" />}
+                icon={<Eye className="w-5 h-5 text-brand-500" />}
             >
                 <div className="space-y-4">
                     <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">

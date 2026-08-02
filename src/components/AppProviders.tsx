@@ -22,6 +22,7 @@ import { UndoToastProvider } from './ui/UndoToast';
 import { KeyboardShortcutsProvider } from './advanced-features/KeyboardShortcutsProvider';
 import ErrorBoundary from './ErrorBoundary';
 import { AnimationProvider } from './AnimationProvider';
+import { MotionProvider } from './ui/MotionComponents';
 import { initQueryPersistence } from '../services/queryClient';
 
 interface AppProvidersProps {
@@ -35,7 +36,8 @@ interface AppProvidersProps {
  * Provider hierarchy (outermost → innermost):
  * ErrorBoundary → QueryClient → Theme → Accessibility →
  * I18n → Toast → Auth → Sync → Semester → UploadManager →
- * UploadProgress → UndoToast → KeyboardShortcuts → children
+ * UploadProgress → UndoToast → KeyboardShortcuts → MotionProvider →
+ * AnimationProvider → children
  */
 export function AppProviders({ children, queryClient }: AppProvidersProps) {
   const persistenceInitialized = useRef(false);
@@ -61,9 +63,11 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
                         <UploadProgressProvider>
                           <UndoToastProvider>
                             <KeyboardShortcutsProvider>
-                              <AnimationProvider>
-                                {children}
-                              </AnimationProvider>
+                              <MotionProvider>
+                                <AnimationProvider>
+                                  {children}
+                                </AnimationProvider>
+                              </MotionProvider>
                             </KeyboardShortcutsProvider>
                           </UndoToastProvider>
                         </UploadProgressProvider>

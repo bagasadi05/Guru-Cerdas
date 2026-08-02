@@ -24,7 +24,7 @@ export const SkipLinks: React.FC<SkipLinksProps> = ({
                     className="
                         sr-only focus:not-sr-only
                         focus:fixed focus:left-4 focus:top-4 focus:z-[9999]
-                        focus:rounded-lg focus:bg-indigo-600 focus:px-4 focus:py-2 focus:text-white
+                        focus:rounded-lg focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-white
                         focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-white
                     "
                 >
@@ -74,7 +74,7 @@ interface FocusRingProps {
 
 export const FocusRing: React.FC<FocusRingProps> = ({ children, className = '' }) => {
     return React.cloneElement(children, {
-        className: `${children.props.className || ''} focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${className}`
+        className: `${children.props.className || ''} focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${className}`
     });
 };
 
@@ -93,7 +93,7 @@ export const AccessibleIconButton: React.FC<AccessibleIconButtonProps> = ({
         <button type="button"
             aria-label={label}
             title={label}
-            className={`rounded-lg p-2 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:hover:bg-slate-800 ${className}`}
+            className={`rounded-lg p-2 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:hover:bg-slate-800 ${className}`}
             {...props}
         >
             {icon}

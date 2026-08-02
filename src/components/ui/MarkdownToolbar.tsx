@@ -34,7 +34,7 @@ export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ textareaRef, o
         type="button" 
         variant="ghost" 
         size="sm" 
-        className="h-8 w-8 p-0 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        className="h-11 w-11 p-0 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         onClick={() => insertText('**', '**')}
         title="Tebal (Bold)"
       >
@@ -44,7 +44,7 @@ export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ textareaRef, o
         type="button" 
         variant="ghost" 
         size="sm" 
-        className="h-8 w-8 p-0 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        className="h-11 w-11 p-0 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         onClick={() => insertText('*', '*')}
         title="Miring (Italic)"
       >
@@ -55,7 +55,7 @@ export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ textareaRef, o
         type="button" 
         variant="ghost" 
         size="sm" 
-        className="h-8 w-8 p-0 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        className="h-11 w-11 p-0 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         onClick={() => insertText('- ')}
         title="Daftar (Bulleted List)"
       >

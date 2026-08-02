@@ -356,7 +356,7 @@ const BrankasPage: React.FC = () => {
             {archivedClasses.length} di brankas
           </span>
           {totalArchivedStudents > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-[10px] sm:text-xs font-bold rounded-full border border-indigo-200/60 dark:border-indigo-500/20">
+            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-400 text-[10px] sm:text-xs font-bold rounded-full border border-brand-200/60 dark:border-brand-500/20">
               <GraduationCap className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               {totalArchivedStudents} siswa diarsipkan
             </span>
@@ -435,7 +435,7 @@ const BrankasPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm shadow-amber-500/5">
+            <div className="px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm shadow-amber-500/5">
               <Lock className="w-3.5 h-3.5" />
               Mode Kunci (Read-Only)
             </div>
@@ -492,10 +492,10 @@ const BrankasPage: React.FC = () => {
                         student.gender === 'Laki-laki'
                           ? selectedStudent?.id === student.id
                             ? 'bg-white/20 text-white'
-                            : 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                            : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
                           : selectedStudent?.id === student.id
                             ? 'bg-white/20 text-white'
-                            : 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
+                            : 'bg-pink-100 dark:bg-pink-500/20 text-pink-700 dark:text-pink-400'
                       }`}
                       aria-label={student.gender === 'Laki-laki' ? 'Laki-laki' : 'Perempuan'}
                       >
@@ -524,8 +524,8 @@ const BrankasPage: React.FC = () => {
                           {selectedStudent.name}
                           <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-black ${
                             selectedStudent.gender === 'Laki-laki'
-                              ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                              : 'bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400'
+                              ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
+                              : 'bg-pink-100 dark:bg-pink-500/20 text-pink-700 dark:text-pink-400'
                           }`}>
                             {selectedStudent.gender === 'Laki-laki' ? 'L' : 'P'}
                           </span>
@@ -598,7 +598,7 @@ const BrankasPage: React.FC = () => {
                                     <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{record.subject}</p>
                                     <p className="text-xxs text-slate-400 font-semibold truncate mt-0.5">{record.assessment_name || 'Asesmen'}</p>
                                   </div>
-                                  <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-black rounded-lg border border-emerald-500/20">
+                                  <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-black rounded-lg border border-emerald-500/20">
                                     {record.score}
                                   </span>
                                 </div>

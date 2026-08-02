@@ -66,7 +66,7 @@ export async function softDelete(
 
         const { error } = await tableQuery(entity)
             .update({ deleted_at: deletedAt })
-            .eq('id', id);
+            .eq(ENTITY_KEY_COLUMN[entity], id);
 
         if (error) throw error;
 
@@ -91,7 +91,7 @@ export async function softDeleteBulk(
 
         const { error } = await tableQuery(entity)
             .update({ deleted_at: deletedAt })
-            .in('id', ids);
+            .in(ENTITY_KEY_COLUMN[entity], ids);
 
         if (error) throw error;
 
@@ -114,7 +114,7 @@ export async function restore(
     try {
         const { error } = await tableQuery(entity)
             .update({ deleted_at: null })
-            .eq('id', id);
+            .eq(ENTITY_KEY_COLUMN[entity], id);
 
         if (error) throw error;
 
@@ -137,7 +137,7 @@ export async function restoreBulk(
     try {
         const { error } = await tableQuery(entity)
             .update({ deleted_at: null })
-            .in('id', ids);
+            .in(ENTITY_KEY_COLUMN[entity], ids);
 
         if (error) throw error;
 
@@ -160,7 +160,7 @@ export async function permanentDelete(
     try {
         const { error } = await tableQuery(entity)
             .delete()
-            .eq('id', id);
+            .eq(ENTITY_KEY_COLUMN[entity], id);
 
         if (error) throw error;
 
@@ -174,16 +174,62 @@ export async function permanentDelete(
 }
 
 /**
+ * Kolom owner (pemilik record) per entity untuk trash view.
+ *
+ * Hampir semua tabel memakai `user_id`; tabel yang TIDAK punya kolom owner
+ * (`homework`, `announcements` — global/sekolah, tidak dimiliki per user)
+ * bernilai `null` → entitas tsb di-SKIP dari trash view (tidak di-query).
+ *
+ * Sama seperti `ENTITY_KEY_COLUMN`: SELALU ambil kolom dari map ini, jangan
+ * hardcode `'user_id'` — query yang menargetkan kolom yang tidak ada ditolak
+ * PostgREST dengan HTTP 400 di runtime. Type `Record<SoftDeleteEntity, string | null>`
+ * memaksa tiap entity baru terdaftar di sini (TS error kalau lupa).
+ */
+export const ENTITY_OWNER_COLUMN: Readonly<Record<SoftDeleteEntity, string | null>> = {
+    students: 'user_id',
+    classes: 'user_id',
+    attendance: 'user_id',
+    violations: 'user_id',
+    quiz_points: 'user_id',
+    academic_records: 'user_id',
+    tasks: 'user_id',
+    reports: 'user_id',
+    schedules: 'user_id',
+    communications: 'user_id',
+    // homework & announcements: tidak punya kolom user_id (global/sekolah) → skip
+    homework: null,
+    extracurriculars: 'user_id',
+    student_extracurriculars: 'user_id',
+    extracurricular_attendance: 'user_id',
+    extracurricular_grades: 'user_id',
+    extracurricular_students: 'user_id',
+    student_achievements: 'user_id',
+    student_development_analyses: 'user_id',
+    school_info: 'user_id',
+    announcements: null,
+    academic_years: 'user_id',
+    semesters: 'user_id',
+    user_settings: 'user_id',
+};
+
+/**
  * Get all soft-deleted items for trash view
  */
 export async function getDeletedItems(
     entity: SoftDeleteEntity,
     userId: string
 ): Promise<DeletedItem[]> {
+    // Entity tanpa kolom owner (homework/announcements) tidak bisa di-scope
+    // per user → skip tanpa query (menghindari HTTP 400 dari PostgREST).
+    const ownerColumn = ENTITY_OWNER_COLUMN[entity];
+    if (!ownerColumn) {
+        return [];
+    }
+
     try {
         const { data, error } = await tableQuery(entity)
             .select('*')
-            .eq('user_id', userId)
+            .eq(ownerColumn, userId)
             .not('deleted_at', 'is', null)
             .order('deleted_at', { ascending: false });
 
@@ -200,7 +246,7 @@ export async function getDeletedItems(
                 const daysRemaining = Math.max(0, RETENTION_DAYS - daysSinceDelete);
 
                 return {
-                    id: item.id as string,
+                    id: item[ENTITY_KEY_COLUMN[entity]] as string,
                     entity,
                     deletedAt: item.deleted_at as string,
                     daysRemaining,
@@ -240,8 +286,51 @@ export async function getAllDeletedItems(userId: string): Promise<DeletedItem[]>
 }
 
 /**
- * Clean up expired soft-deleted records (older than 30 days)
+ * Kolom kunci (primary key) per entity untuk query batch cleanup.
+ *
+ * Hampir semua tabel memakai `id`; `user_settings` memakai `user_id`
+ * (tanpa kolom `id` sama sekali). SELALU ambil kolom dari map ini —
+ * jangan hardcode `'id'` — karena query yang menargetkan kolom yang tidak
+ * ada di tabel ditolak PostgREST dengan HTTP 400 di runtime (kasus nyata:
+ * 15× error konsol di semua halaman ber-guard, lihat docs/A11Y_LIGHTHOUSE_RESULTS.md).
+ *
+ * Type `Record<SoftDeleteEntity, string>` memaksa tiap entity baru yang
+ * ditambahkan ke union `SoftDeleteEntity` juga terdaftar di sini (TS error
+ * kalau lupa) — pola 400 seperti ini otomatis terhindar di masa depan.
+ *
+ * SELURUH API soft-delete memakai map ini sebagai kolom kunci (bukan
+ * hardcode `'id'`): `softDelete`/`softDeleteBulk`/`restore`/`restoreBulk`/
+ * `permanentDelete` (filter eq/in) dan `getDeletedItems` (memetakan
+ * `item.id` dari kolom kunci). Dengan begitu `user_settings` bisa di-soft-
+ * delete/restore/hapus-permanen memakai `user_id` dengan benar.
  */
+export const ENTITY_KEY_COLUMN: Readonly<Record<SoftDeleteEntity, string>> = {
+    students: 'id',
+    classes: 'id',
+    attendance: 'id',
+    violations: 'id',
+    quiz_points: 'id',
+    academic_records: 'id',
+    tasks: 'id',
+    reports: 'id',
+    schedules: 'id',
+    communications: 'id',
+    homework: 'id',
+    extracurriculars: 'id',
+    student_extracurriculars: 'id',
+    extracurricular_attendance: 'id',
+    extracurricular_grades: 'id',
+    extracurricular_students: 'id',
+    student_achievements: 'id',
+    student_development_analyses: 'id',
+    school_info: 'id',
+    announcements: 'id',
+    academic_years: 'id',
+    semesters: 'id',
+    // user_settings: primary key-nya `user_id` (bukan `id`)
+    user_settings: 'user_id',
+};
+
 export async function cleanupExpired(): Promise<{
     success: boolean;
     deletedCounts: Record<string, number>;
@@ -259,10 +348,12 @@ export async function cleanupExpired(): Promise<{
 
     try {
         for (const entity of entities) {
+            const keyColumn = ENTITY_KEY_COLUMN[entity];
+
             // First get items to delete (deleted_at < cutoff means they were deleted more than 30 days ago)
             // lt() filter on a date column automatically excludes null values
             const { data: itemsToDelete, error: selectError } = await tableQuery(entity)
-                .select('id')
+                .select(keyColumn)
                 .lt('deleted_at', cutoffISO);
 
             if (selectError) {
@@ -274,18 +365,18 @@ export async function cleanupExpired(): Promise<{
                 continue;
             }
 
-            // Delete them by ID
-            const ids = itemsToDelete.map((item) => item.id as string);
+            // Delete them by their key column (bukan hardcode 'id')
+            const keys = itemsToDelete.map((item) => item[keyColumn] as string);
             const { error: deleteError } = await tableQuery(entity)
                 .delete()
-                .in('id', ids);
+                .in(keyColumn, keys);
 
             if (deleteError) {
                 logger.error(`Failed to delete ${entity}`, new Error(deleteError.message || 'Delete failed'));
                 continue;
             }
 
-            deletedCounts[entity] = ids.length;
+            deletedCounts[entity] = keys.length;
         }
 
         return { success: true, deletedCounts };

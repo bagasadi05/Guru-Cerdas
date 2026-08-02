@@ -964,9 +964,9 @@ const BulkGradeInputPage: React.FC = () => {
                         <Button
                             onClick={() => setShowAdjustmentModal(true)}
                             variant="outline"
-                            className="flex-1 h-14 text-lg font-bold border-indigo-200 dark:border-indigo-900 bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 shadow-lg shadow-indigo-500/5 flex items-center justify-center gap-2"
+                            className="flex-1 h-14 text-lg font-bold border-brand-200 dark:border-brand-900 bg-white dark:bg-gray-900 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/20 shadow-lg shadow-brand-600/5 flex items-center justify-center gap-2"
                         >
-                            <SparklesIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+                            <SparklesIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 animate-pulse" />
                             Katrol & Pratinjau Cetak
                         </Button>
                         <Button
@@ -975,7 +975,7 @@ const BulkGradeInputPage: React.FC = () => {
                             // nama penilaian belum settle, supaya daftar nilai lama
                             // yang dipakai sebagai acuan update tidak ketinggalan.
                             disabled={saveMutation.isPending || filledCount === 0 || semesterLocked || !selectedSemester || availableSubjects.length === 0 || isExistingGradesError || isAssessmentNamePending}
-                            className="flex-1 h-14 text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="flex-1 h-14 text-lg font-bold bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 shadow-xl shadow-brand-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {saveMutation.isPending ? (
                                 <>

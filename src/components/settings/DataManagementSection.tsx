@@ -104,7 +104,7 @@ const DataManagementSection: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6">
-                <DatabaseIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                <DatabaseIcon className="w-8 h-8 text-brand-600 dark:text-brand-400" />
                 <div>
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Manajemen Data</h2>
                     <p className="text-slate-500 dark:text-slate-400">Cadangkan dan pulihkan database aplikasi Anda.</p>
@@ -169,7 +169,7 @@ const DataManagementSection: React.FC = () => {
                         <Button
                             onClick={handleSchoolSettingSave}
                             disabled={!hasChanges || isUpdating}
-                            className="px-8 bg-indigo-600 hover:bg-indigo-700 text-white"
+                            className="px-8 bg-brand-600 hover:bg-brand-700 text-white"
                         >
                                 {isUpdating ? <RefreshCwIcon className="w-4 h-4 animate-spin mr-2" /> : <SaveIcon className="w-4 h-4 mr-2" />}
                                 Simpan Perubahan
@@ -184,12 +184,12 @@ const DataManagementSection: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Backup Card */}
                 <SettingsCard className="overflow-hidden relative">
-                    <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-indigo-500/70 via-indigo-400/60 to-indigo-500/70 dark:from-indigo-400/60 dark:via-indigo-300/50 dark:to-indigo-400/60" />
+                    <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-brand-500/70 via-brand-400/60 to-brand-500/70 dark:from-brand-400/60 dark:via-brand-300/50 dark:to-brand-400/60" />
                     <div className="absolute top-0 right-0 p-3 opacity-10">
-                        <DownloadCloudIcon className="w-24 h-24 text-indigo-600" />
+                        <DownloadCloudIcon className="w-24 h-24 text-brand-600" />
                     </div>
                     <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50">
-                        <CardTitle className="text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
+                        <CardTitle className="text-brand-700 dark:text-brand-400 flex items-center gap-2">
                             <DownloadCloudIcon className="w-5 h-5" />
                             Cadangkan Data (Backup)
                         </CardTitle>
@@ -198,8 +198,8 @@ const DataManagementSection: React.FC = () => {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="bg-indigo-50 dark:bg-indigo-900/20 p-5 rounded-xl mb-4 border border-indigo-100/70 dark:border-indigo-800/70">
-                            <ul className="text-sm text-indigo-800 dark:text-indigo-300 space-y-2">
+                        <div className="bg-brand-50 dark:bg-brand-900/20 p-5 rounded-xl mb-4 border border-brand-100/70 dark:border-brand-800/70">
+                            <ul className="text-sm text-brand-800 dark:text-brand-300 space-y-2">
                                 <li className="flex items-center gap-2"><CheckCircleIcon className="w-4 h-4" /> Data Siswa & Kelas</li>
                                 <li className="flex items-center gap-2"><CheckCircleIcon className="w-4 h-4" /> Rekap Nilai & Absensi</li>
                                 <li className="flex items-center gap-2"><CheckCircleIcon className="w-4 h-4" /> Catatan & Laporan</li>
@@ -208,7 +208,7 @@ const DataManagementSection: React.FC = () => {
                         <Button
                             onClick={handleExport}
                             disabled={isExporting}
-                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 h-10 font-medium"
+                            className="w-full bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-600/20 h-10 font-medium"
                         >
                             {isExporting ? <RefreshCwIcon className="w-4 h-4 animate-spin mr-2" /> : <DownloadCloudIcon className="w-4 h-4 mr-2" />}
                             {isExporting ? 'Memproses...' : 'Unduh Backup (.json)'}
@@ -335,7 +335,7 @@ const DataManagementSection: React.FC = () => {
                             <Button
                                 onClick={handleConfirmImport}
                                 disabled={!validationResult.isValid || isImporting}
-                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                                className="flex-1 bg-brand-600 hover:bg-brand-700 text-white"
                             >
                                 {isImporting ? 'Memulihkan...' : 'Pulihkan Data'}
                             </Button>

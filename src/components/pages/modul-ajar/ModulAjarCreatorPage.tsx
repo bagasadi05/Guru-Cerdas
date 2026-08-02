@@ -734,7 +734,7 @@ const ModulAjarCreatorPage: React.FC = () => {
       />
 
       {/* Preview / History Column */}
-      <div className="flex-1 bg-slate-100 dark:bg-slate-950/50 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 overflow-hidden flex flex-col h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)]">
+      <div className="flex-1 bg-slate-100 dark:bg-slate-950/50 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 overflow-hidden flex flex-col h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)]">
         
         {/* Tab Header */}
         <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
@@ -764,13 +764,13 @@ const ModulAjarCreatorPage: React.FC = () => {
           </div>
 
           {activeTab === 'preview' && generatedDocument && (
-            <div className="flex bg-indigo-50/80 dark:bg-indigo-950/30 p-0.5 rounded-lg border border-indigo-100 dark:border-indigo-900/30">
+            <div className="flex bg-brand-50/80 dark:bg-brand-950/30 p-0.5 rounded-lg border border-brand-100 dark:border-brand-900/30">
               <button
                 onClick={() => setPreviewMode('guru')}
                 className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all ${
                   previewMode === 'guru'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/50 dark:hover:bg-indigo-950/50'
+                  ? 'bg-brand-600 text-white shadow-sm'
+                  : 'text-brand-600 dark:text-brand-400 hover:bg-brand-100/50 dark:hover:bg-brand-950/50'
                 }`}
               >
                 Perangkat Guru
@@ -779,8 +779,8 @@ const ModulAjarCreatorPage: React.FC = () => {
                 onClick={() => setPreviewMode('siswa')}
                 className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all ${
                   previewMode === 'siswa'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/50 dark:hover:bg-indigo-950/50'
+                  ? 'bg-brand-600 text-white shadow-sm'
+                  : 'text-brand-600 dark:text-brand-400 hover:bg-brand-100/50 dark:hover:bg-brand-950/50'
                 }`}
               >
                 Lembar Siswa Saja
@@ -790,7 +790,7 @@ const ModulAjarCreatorPage: React.FC = () => {
           
           {activeTab === 'preview' && (
             <div className="flex items-center gap-1">
-              <button onClick={handleCopy} disabled={!generatedDocument} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-indigo-600 transition-colors disabled:opacity-50" title="Salin Teks">
+              <button onClick={handleCopy} disabled={!generatedDocument} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-brand-600 transition-colors disabled:opacity-50" title="Salin Teks">
                 <Copy className="w-4 h-4" />
               </button>
               <button onClick={handlePrint} disabled={!generatedDocument} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors disabled:opacity-50 flex items-center gap-1.5 text-xs font-medium" title="Cetak / Simpan sebagai PDF">
@@ -819,9 +819,9 @@ const ModulAjarCreatorPage: React.FC = () => {
                     className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full space-y-4"
                   >
                     <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full border-4 border-indigo-100 dark:border-indigo-900/30"></div>
-                      <div className="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
-                      <Clock className="w-6 h-6 text-indigo-500 animate-pulse" />
+                      <div className="absolute inset-0 rounded-full border-4 border-brand-100 dark:border-brand-900/30"></div>
+                      <div className="absolute inset-0 rounded-full border-4 border-brand-500 border-t-transparent animate-spin"></div>
+                      <Clock className="w-6 h-6 text-brand-500 animate-pulse" />
                     </div>
                     <div className="space-y-1.5">
                       <h3 className="font-bold text-slate-800 dark:text-white">AI Sedang Bekerja</h3>
@@ -840,9 +840,9 @@ const ModulAjarCreatorPage: React.FC = () => {
                     className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full space-y-4"
                   >
                     <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full border-4 border-indigo-100 dark:border-indigo-900/30"></div>
-                      <div className="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
-                      <Clock className="w-6 h-6 text-indigo-500 animate-pulse" />
+                      <div className="absolute inset-0 rounded-full border-4 border-brand-100 dark:border-brand-900/30"></div>
+                      <div className="absolute inset-0 rounded-full border-4 border-brand-500 border-t-transparent animate-spin"></div>
+                      <Clock className="w-6 h-6 text-brand-500 animate-pulse" />
                     </div>
 
                     <div className="space-y-1.5">

@@ -61,9 +61,9 @@ export const AttendanceClassSelector: React.FC<AttendanceClassSelectorProps> = (
               data-class-id={classItem.id}
               onClick={() => onSelectClass(classItem.id)}
               data-tutorial="class-pill"
-              className={`h-9 sm:h-10 px-4 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 snap-start transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+              className={`min-h-[44px] px-4 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 snap-start transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                 isSelected
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25 scale-[1.02]'
+                  ? 'bg-gradient-to-r from-emerald-700 to-emerald-800 text-white shadow-md shadow-emerald-500/25 scale-[1.02]'
                   : 'bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400'
               }`}
             >

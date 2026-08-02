@@ -104,7 +104,7 @@ export const StudentAnalyticsTab: React.FC<StudentAnalyticsTabProps> = ({
         <div className="p-4 md:p-6 pb-24 lg:pb-6 space-y-8">
             {/* Header */}
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl text-white">
+                <div className="p-2 bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl text-white">
                     <RadarIcon className="w-6 h-6" />
                 </div>
                 <div>
@@ -155,7 +155,7 @@ export const StudentAnalyticsTab: React.FC<StudentAnalyticsTabProps> = ({
                             {/* Student score polygon */}
                             <polygon
                                 points={studentPolygonPoints}
-                                fill="rgba(99, 102, 241, 0.3)"
+                                fill="rgba(13, 126, 158, 0.3)"
                                 stroke="rgb(99, 102, 241)"
                                 strokeWidth="2"
                             />
@@ -195,7 +195,7 @@ export const StudentAnalyticsTab: React.FC<StudentAnalyticsTabProps> = ({
                         </svg>
                     </div>
                     <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-3">
-                        Rata-rata: <span className="font-bold text-indigo-600 dark:text-indigo-400">{overallAverage}</span>
+                        Rata-rata: <span className="font-bold text-brand-600 dark:text-brand-400">{overallAverage}</span>
                     </p>
                 </div>
 
@@ -225,15 +225,15 @@ export const StudentAnalyticsTab: React.FC<StudentAnalyticsTabProps> = ({
 
             {/* Summary Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-lg shadow-indigo-500/20">
+                <div className="bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl p-4 text-white shadow-lg shadow-brand-600/20">
                     <p className="text-xs opacity-80">Rata-rata Keseluruhan</p>
                     <p className="text-2xl font-bold">{overallAverage}</p>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl p-4 text-white shadow-lg shadow-emerald-500/20">
+                <div className="bg-gradient-to-br from-emerald-700 to-green-800 rounded-xl p-4 text-white shadow-lg shadow-emerald-500/20">
                     <p className="text-xs opacity-80">Nilai Tertinggi</p>
                     <p className="text-2xl font-bold">{Math.max(...studentScores, 0)}</p>
                 </div>
-                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white shadow-lg shadow-amber-500/20">
+                <div className="bg-gradient-to-br from-amber-700 to-orange-800 rounded-xl p-4 text-white shadow-lg shadow-amber-500/20">
                     <p className="text-xs opacity-80">Nilai Terendah</p>
                     <p className="text-2xl font-bold">{Math.min(...studentScores, 0)}</p>
                 </div>

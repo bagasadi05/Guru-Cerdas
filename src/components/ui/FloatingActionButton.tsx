@@ -131,7 +131,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
                             `}
                             style={{ animationDelay: `${index * 50}ms` }}
                         >
-                            <span className={`w-8 h-8 rounded-full flex items-center justify-center ${action.color || 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'}`}>
+                            <span className={`w-8 h-8 rounded-full flex items-center justify-center ${action.color || 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400'}`}>
                                 {action.icon}
                             </span>
                             <span className="text-sm font-medium whitespace-nowrap">

@@ -4,20 +4,20 @@ import React, { useState, useEffect } from 'react';
 const RobotIcon = () => (
     <svg width="180" height="180" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
         <defs>
-            {/* Gradient baru untuk kepala, selaras dengan tema ungu/indigo */}
+            {/* Gradient kepala, selaras dengan tema brand (teal) */}
             <radialGradient id="grad1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                <stop offset="0%" style={{ stopColor: '#a855f7', stopOpacity: 1 }} /> {/* purple-500 */}
-                <stop offset="100%" style={{ stopColor: '#6366F1', stopOpacity: 1 }} /> {/* indigo-500 */}
+                <stop offset="0%" style={{ stopColor: '#38b9d4', stopOpacity: 1 }} /> {/* brand-400 */}
+                <stop offset="100%" style={{ stopColor: '#179cb9', stopOpacity: 1 }} /> {/* brand-500 */}
             </radialGradient>
 
-            {/* Gradient baru untuk badan, menggunakan warna ungu dan indigo yang lebih kaya */}
+            {/* Gradient badan, menggunakan warna brand yang lebih kaya */}
             <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#9333ea', stopOpacity: 1 }} /> {/* purple-600 */}
-                <stop offset="100%" style={{ stopColor: '#3730a3', stopOpacity: 1 }} /> {/* indigo-800 */}
+                <stop offset="0%" style={{ stopColor: '#0d7e9e', stopOpacity: 1 }} /> {/* brand-600 */}
+                <stop offset="100%" style={{ stopColor: '#135268', stopOpacity: 1 }} /> {/* brand-800 */}
             </linearGradient>
 
             <filter id="head-shadow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#3730a3" floodOpacity="0.4" />
+                <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#135268" floodOpacity="0.4" />
             </filter>
 
             <style>
@@ -42,10 +42,10 @@ const RobotIcon = () => (
         </defs>
 
         {/* Neck */}
-        <rect x="90" y="95" width="20" height="15" fill="#7c3aed" /> {/* violet-600 */}
+        <rect x="90" y="95" width="20" height="15" fill="#0d7e9e" /> {/* brand-600 */}
 
         {/* Body */}
-        <path d="M50 110 H150 A20 20 0 0 1 170 130 V170 A20 20 0 0 1 150 190 H50 A20 20 0 0 1 30 170 V130 A20 20 0 0 1 50 110 Z" fill="url(#grad2)" stroke="#312e81" strokeWidth="2" /> {/* indigo-900 */}
+        <path d="M50 110 H150 A20 20 0 0 1 170 130 V170 A20 20 0 0 1 150 190 H50 A20 20 0 0 1 30 170 V130 A20 20 0 0 1 50 110 Z" fill="url(#grad2)" stroke="#134457" strokeWidth="2" /> {/* brand-900 */}
 
         {/* Screen on body */}
         <rect x="65" y="125" width="70" height="40" rx="10" fill="#111827" /> {/* gray-900 */}
@@ -54,7 +54,7 @@ const RobotIcon = () => (
         </text>
 
         {/* Head */}
-        <circle cx="100" cy="70" r="50" fill="url(#grad1)" stroke="#4338ca" strokeWidth="2" filter="url(#head-shadow)" /> {/* indigo-700 */}
+        <circle cx="100" cy="70" r="50" fill="url(#grad1)" stroke="#11657f" strokeWidth="2" filter="url(#head-shadow)" /> {/* brand-700 */}
 
         {/* Visor */}
         <path d="M60,65 Q100,50 140,65 L140,85 Q100,100 60,85 Z" fill="#111827" opacity="0.8" /> {/* gray-900 */}
@@ -64,7 +64,7 @@ const RobotIcon = () => (
         <circle cx="120" cy="75" r="8" fill="#22d3ee" className="eye-blink" />
 
         {/* Antenna */}
-        <line x1="100" y1="20" x2="100" y2="0" stroke="#7c3aed" strokeWidth="4" /> {/* violet-600 */}
+        <line x1="100" y1="20" x2="100" y2="0" stroke="#0d7e9e" strokeWidth="4" /> {/* brand-600 */}
         <circle cx="100" cy="0" r="8" className="antenna-glow" />
     </svg>
 );

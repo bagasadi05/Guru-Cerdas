@@ -65,17 +65,57 @@ className="gap-3 sm:gap-4 md:gap-6"
 
 ## 🎨 3. Warna & Gradient
 
-### Primary Gradient (Standar):
+### Semantic Gradient (Standar):
+Gradient dekoratif dikonsolidasikan ke **12 pasangan kanonik** (selaras dengan `src/styles/designTokens.ts`). Jangan membuat kombinasi `from-X to-Y` di luar daftar ini.
+
+| Semantik | Solid (Button/Header/Chip) | Tint (Background lembut) |
+|----------|----------------------------|--------------------------|
+| **Primary** (brand) | `from-brand-600 to-brand-700` | `from-brand-100 to-brand-200` |
+| **Success** | `from-emerald-500 to-emerald-600` | `from-emerald-50 to-teal-50` |
+| **Warning** | `from-amber-500 to-orange-600` | `from-amber-50 to-orange-50` |
+| **Danger** | `from-rose-500 to-red-600` | `from-red-50 to-rose-50` |
+| **Info** | `from-blue-500 to-cyan-600` | `from-sky-50 to-blue-50` |
+| **Neutral** (dark) | `from-slate-900 to-slate-800` | **Neutral soft:** `from-slate-100 to-slate-200` |
+
+> **Gradient brand** (`brand` = LAGUNA teal): solid `from-brand-600 to-brand-700`
+> (dua stop ≥ 4.5:1 terhadap teks putih — `from-brand-600 to-brand-500` GAGAL
+> 4.5:1 di stop brand-500, jadi dihindari), tint `from-brand-100 to-brand-200`,
+> 3-stop `from-brand-600 via-brand-700 to-brand-800`.
+
+#### Aturan:
+- **Solid** untuk elemen kontras tinggi (button, header, icon chip); **tint** hanya untuk background lembut.
+- **Data-viz / status maps** (grafik, legend, status attendance, theme picker) TETAP memakai warna per-kategori — jangan diratakan.
+- Variasi 3-stop (`via-`) dibatasi ke: `from-brand-600 via-brand-700 to-brand-800` (primary), `from-emerald-600 via-teal-600 to-emerald-700` (success), `from-amber-50 via-orange-50 to-yellow-50` (warning tint), `from-slate-900 via-slate-800 to-slate-900` (neutral dark).
+- Contoh pemakaian:
 ```css
 /* Button Primary */
-bg-gradient-to-r from-indigo-600 to-purple-600
+bg-gradient-to-r from-brand-600 to-brand-700
 
 /* Header/Hero Section */
-bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800
+bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800
 
-/* Card Highlight */
-bg-gradient-to-br from-indigo-500/10 to-purple-500/10
+/* Card Highlight (tint) */
+bg-gradient-to-br from-brand-100 to-brand-200
 ```
+
+### Palet Brand — LAGUNA (diterapkan di seluruh app):
+Identitas brand (pengganti default indigo→purple) yang **diterapkan di seluruh halaman** — bukan hanya pilot. Cyan-teal dalam — sengaja berbeda dari semua warna semantik (success=emerald, warning=amber, danger=rose, info=blue) agar tidak bentrok.
+
+| Token | 400 (aksen di dark) | 600 (aksi utama) | 700 (teks di light) |
+|-------|--------------------|------------------|---------------------|
+| `brand` | `#38b9d4` | `#0d7e9e` (AA 4.65:1) | `#11657f` (AA 6.4:1) |
+
+Skala penuh 50–950 ada di `tailwind.config.cjs` (`brand.*`) dan `src/styles/designTokens.ts` (`colors.brand`).
+
+Aturan pemakaian:
+- Solid aksi → `bg-brand-600 hover:bg-brand-700` (teks putih).
+- Teks aksen di light → `text-brand-700` (di atas bg terang / badge) atau `text-brand-600` (di atas putih).
+- Teks aksen di dark → `text-brand-400` (hover `text-brand-300`).
+- Gradient brand → `from-brand-600 to-brand-700` (solid, teks putih aman) / `from-brand-100 to-brand-200` (tint).
+- Focus ring → `ring-brand-500` / `focus:ring-brand-600` (≥ 3:1 untuk UI).
+- Aksen emas (bintang/prestasi) tetap pakai amber (`#fbbf24`).
+- **Kategori/data-viz TIDAK ikut migrasi**: status absensi (Libur=purple), warna mapel, peran, entity trash, chart series, streak level, template, error type tetap per-kategori.
+- Migrasi dijalankan via `node scripts/apply-brand-palette.cjs` (dry-run default; `--apply` untuk menulis).
 
 ### Status Colors:
 | Status | Background Light | Background Dark | Text |
@@ -88,19 +128,19 @@ bg-gradient-to-br from-indigo-500/10 to-purple-500/10
 ### Gradient untuk Ikon/Badge:
 ```tsx
 // Hadir (Success)
-"from-emerald-500 to-green-600"
+"from-emerald-500 to-emerald-600"
 
 // Izin (Warning)  
-"from-amber-500 to-orange-500"
+"from-amber-500 to-orange-600"
 
-// Sakit (Blue/Info)
-"from-blue-500 to-cyan-500"
+// Sakit (Info)
+"from-blue-500 to-cyan-600"
 
 // Alpha (Danger)
 "from-rose-500 to-red-600"
 
 // Primary Action
-"from-indigo-600 to-purple-600"
+"from-brand-600 to-brand-700"
 ```
 
 ---
@@ -141,7 +181,7 @@ className="glass-card rounded-2xl p-5 card-hover-glow border border-white/20 dar
 ### Common Button Patterns:
 ```tsx
 // Primary CTA
-className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg shadow-lg shadow-indigo-500/25 transition-all"
+className="bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white px-4 py-2 rounded-lg shadow-lg shadow-brand-600/25 transition-all"
 
 // Secondary
 className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-2 rounded-lg transition-all"
@@ -243,7 +283,8 @@ Sebelum commit, pastikan:
 
 - [ ] Semua card menggunakan `rounded-2xl`
 - [ ] Button menggunakan `rounded-lg`
-- [ ] Gradient mengikuti standar `from-indigo-600 to-purple-600`
+- [ ] Gradient memakai salah satu dari 12 pasangan semantik (bukan kombinasi acak `from-X to-Y`)
+- [ ] Data-viz/status maps TIDAK diratakan (warna per-kategori tetap)
 - [ ] Spacing responsif dengan pattern `p-3 sm:p-4 md:p-6`
 - [ ] Semua transition menggunakan `duration-300`
 - [ ] Dark mode di-handle untuk setiap komponen
@@ -258,7 +299,6 @@ Lihat `src/styles/designSystem.css` untuk utility classes yang sudah tersedia:
 - `.card-hover-glow` - Efek glow saat hover
 - `.btn-shine` - Efek shine pada tombol
 - `.gradient-border` - Border dengan gradient
-- `.text-gradient-primary` - Text dengan gradient
 
 ---
 
@@ -337,7 +377,7 @@ import { ariaLabels, IconButton } from '@/utils/accessibility';
 ```css
 /* All elements use consistent focus ring */
 :focus-visible {
-    outline: 2px solid #6366f1;
+    outline: 2px solid #0d7e9e;
     outline-offset: 2px;
 }
 ```

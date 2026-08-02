@@ -14,8 +14,8 @@ export const IDCard: React.FC<IDCardProps> = ({ student, className = 'VII-A', sc
         <div className="w-[85.6mm] h-[53.98mm] bg-white border border-gray-200 relative overflow-hidden flex shadow-sm print:shadow-none print:border-black/10">
             {/* Background Pattern */}
             <div className="absolute inset-0 z-0">
-                <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-r from-indigo-700 to-purple-800"></div>
-                <div className="absolute bottom-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-2xl transform translate-x-10 translate-y-10"></div>
+                <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-r from-brand-600 to-brand-700"></div>
+                <div className="absolute bottom-0 right-0 w-32 h-32 bg-brand-50 rounded-full blur-2xl transform translate-x-10 translate-y-10"></div>
             </div>
 
             {/* Content */}
@@ -58,7 +58,7 @@ export const IDCard: React.FC<IDCardProps> = ({ student, className = 'VII-A', sc
                             </div>
                             <div className="flex">
                                 <span className="w-12 font-medium">CODE</span>
-                                <span className="font-mono font-bold text-indigo-700">: {student.access_code || '-'}</span>
+                                <span className="font-mono font-bold text-brand-700">: {student.access_code || '-'}</span>
                             </div>
                         </div>
                     </div>

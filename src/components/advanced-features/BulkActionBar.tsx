@@ -40,7 +40,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
       className={`fixed bottom-24 left-1/2 z-40 flex -translate-x-1/2 items-center gap-4 rounded-2xl bg-slate-900 px-4 py-3 text-white shadow-2xl animate-slide-up ${className}`}
     >
       <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500 font-bold">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 font-bold">
           {selectedCount}
         </div>
         <span className="text-sm">item dipilih</span>

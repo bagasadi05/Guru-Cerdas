@@ -41,7 +41,7 @@ export const ExtracurricularDetailView: React.FC<ExtracurricularDetailViewProps>
                     </button>
 
                     <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
-                        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
                             <span className="text-2xl sm:text-4xl font-bold text-white uppercase">
                                 {extracurricular.name.substring(0, 2)}
                             </span>

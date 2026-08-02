@@ -17,7 +17,7 @@ const gradeColors: Record<string, string> = {
 };
 
 const aspectIcons: Record<string, React.ReactNode> = {
-    ADAB: <Shield size={16} className="text-indigo-500" />,
+    ADAB: <Shield size={16} className="text-brand-500" />,
     KEDISIPLINAN: <AlertTriangle size={16} className="text-amber-500" />,
     KERAPIAN: <Sparkles size={16} className="text-teal-500" />,
 };
@@ -317,7 +317,7 @@ export const BintangDailyObservationPage: React.FC<BintangDailyObservationPagePr
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Catatan Observasi</label>
                         <textarea 
-                            className="w-full p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500"
                             rows={3}
                             value={obsNotes}
                             onChange={(e) => setObsNotes(e.target.value)}

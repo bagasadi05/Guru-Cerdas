@@ -363,7 +363,7 @@ const BintangDashboardPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5">
-                            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-700 border border-amber-500/20">
                                 <Star size={22} className="fill-amber-500/20" />
                             </div>
                             <span>Program BINTANG</span>
@@ -413,8 +413,8 @@ const BintangDashboardPage: React.FC = () => {
                     {/* ══════════════════════════════════════════════════════════
                         1. SCORING INFO BANNER
                        ══════════════════════════════════════════════════════════ */}
-                    <div className="flex flex-col gap-3 p-4 rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200/60 dark:border-indigo-800/40">
-                        <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
+                    <div className="flex flex-col gap-3 p-4 rounded-2xl bg-gradient-to-r from-brand-100 to-brand-200 dark:from-brand-950/30 dark:to-brand-950/30 border border-brand-200/60 dark:border-brand-800/40">
+                        <div className="flex items-center gap-2 text-brand-700 dark:text-brand-300">
                             <Info size={16} />
                             <span className="font-semibold text-sm">Bagaimana Skor BINTANG Dihitung?</span>
                         </div>
@@ -489,7 +489,7 @@ const BintangDashboardPage: React.FC = () => {
                                 <Button
                                     onClick={() => setIsKeaktifanModalOpen(true)}
                                     variant="ghost"
-                                    className="flex items-center gap-1.5 text-sm h-9 px-3 font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg"
+                                    className="flex items-center gap-1.5 text-sm min-h-[44px] px-3 font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg"
                                 >
                                     <Sparkles size={16} />
                                     <span>+ Poin Keaktifan</span>
@@ -498,7 +498,7 @@ const BintangDashboardPage: React.FC = () => {
                                 <Button
                                     onClick={() => setIsObservationModalOpen(true)}
                                     variant="ghost"
-                                    className="flex items-center gap-1.5 text-sm h-9 px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
+                                    className="flex items-center gap-1.5 text-sm min-h-[44px] px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
                                 >
                                     <Eye size={16} />
                                     <span>Observasi</span>
@@ -509,7 +509,7 @@ const BintangDashboardPage: React.FC = () => {
                                         <Button
                                             onClick={openMentoringModal}
                                             variant="ghost"
-                                            className="flex items-center gap-1.5 text-sm h-9 px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
+                                            className="flex items-center gap-1.5 text-sm min-h-[44px] px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
                                         >
                                             <PlusCircle size={16} />
                                             <span>Catat Pembinaan</span>
@@ -525,7 +525,7 @@ const BintangDashboardPage: React.FC = () => {
                                         onClick={evalHook.handleDownloadClassPdf}
                                         disabled={evalHook.isDownloadingClass || !selectedClass}
                                         variant="ghost"
-                                        className="flex items-center gap-1.5 text-sm h-9 px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
+                                        className="flex items-center gap-1.5 text-sm min-h-[44px] px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
                                     >
                                         {evalHook.isDownloadingClass ? (
                                             <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
@@ -539,7 +539,7 @@ const BintangDashboardPage: React.FC = () => {
                                         onClick={evalHook.handleExportExcel}
                                         disabled={evalHook.isExportingExcel || students.length === 0}
                                         variant="ghost"
-                                        className="flex items-center gap-1.5 text-sm h-9 px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
+                                        className="flex items-center gap-1.5 text-sm min-h-[44px] px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
                                     >
                                         {evalHook.isExportingExcel ? (
                                             <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
@@ -559,7 +559,7 @@ const BintangDashboardPage: React.FC = () => {
                                     onClick={() => evalHook.handleGenerateAll(getAspectSummary)}
                                     disabled={evalHook.isGenerating || students.length === 0}
                                     variant="outline"
-                                    className="flex-1 md:flex-none justify-center items-center gap-1.5 text-sm h-10 px-4 font-medium border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-xl"
+                                    className="flex-1 md:flex-none justify-center items-center gap-1.5 text-sm h-10 px-4 font-medium border-brand-200 dark:border-brand-800/60 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20 hover:bg-brand-100 dark:hover:bg-brand-900/40 rounded-xl"
                                 >
                                     <Zap size={16} />
                                     <span>{evalHook.isGenerating ? 'Proses...' : 'Generate Semua'}</span>
@@ -567,7 +567,7 @@ const BintangDashboardPage: React.FC = () => {
                                 <Button
                                     onClick={evalHook.handlePublish}
                                     disabled={evaluations.length === 0 || evalHook.isPublishing}
-                                    className="flex-1 md:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-indigo-500/20"
+                                    className="flex-1 md:flex-none justify-center bg-brand-600 hover:bg-brand-700 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20"
                                 >
                                     <Send size={16} />
                                     <span>Publikasi</span>
@@ -583,7 +583,7 @@ const BintangDashboardPage: React.FC = () => {
                         <div className="flex items-center gap-4 text-sm">
                             <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
                                 <div
-                                    className="bg-indigo-500 h-2.5 rounded-full transition-all duration-500"
+                                    className="bg-brand-600 h-2.5 rounded-full transition-all duration-500"
                                     style={{ width: `${(evalHook.evalStats.filled / evalHook.evalStats.total) * 100}%` }}
                                 />
                             </div>
@@ -642,7 +642,7 @@ const BintangDashboardPage: React.FC = () => {
                                                         <div className="flex items-center gap-1.5">
                                                             <span className="truncate">{student.name}</span>
                                                             {hasKeaktifan && (
-                                                                <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-semibold" title={`+${activePts.totalPoints} poin keaktifan`}>
+                                                                <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold" title={`+${activePts.totalPoints} poin keaktifan`}>
                                                                     +{activePts.totalPoints}
                                                                 </span>
                                                             )}
@@ -803,7 +803,7 @@ const BintangDashboardPage: React.FC = () => {
                                                                     {(log.students as any)?.name}
                                                                 </td>
                                                                 <td className="py-2.5 px-4 text-xs">
-                                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-brand-100 text-brand-800 dark:bg-brand-900/30 dark:text-brand-300">
                                                                         {log.mentor_role}
                                                                     </span>
                                                                 </td>
@@ -858,7 +858,7 @@ const BintangDashboardPage: React.FC = () => {
                                                 <p className="text-[10px] text-slate-500">Poin Keaktifan</p>
                                             </div>
                                             <div className="text-center">
-                                                <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{keaktifanSummary.akademikCount}</p>
+                                                <p className="text-lg font-bold text-brand-600 dark:text-brand-400">{keaktifanSummary.akademikCount}</p>
                                                 <p className="text-[10px] text-slate-500">Poin Akademik</p>
                                             </div>
                                             <div className="text-center">
@@ -888,7 +888,7 @@ const BintangDashboardPage: React.FC = () => {
                                                     onClick={() => setKeaktifanFilter(tab.key)}
                                                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                                                         keaktifanFilter === tab.key
-                                                            ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                                                            ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
                                                             : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                                     }`}
                                                 >
@@ -931,11 +931,11 @@ const BintangDashboardPage: React.FC = () => {
                                                                 </td>
                                                                 <td className="py-2.5 px-4 text-xs">
                                                                     {q.subject != null ? (
-                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-medium">
+                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-[10px] font-medium">
                                                                             📚 {q.subject}
                                                                         </span>
                                                                     ) : (
-                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-medium">
+                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-medium">
                                                                             ⚡ Keaktifan
                                                                         </span>
                                                                     )}
@@ -967,7 +967,7 @@ const BintangDashboardPage: React.FC = () => {
                             className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                         >
                             <div className="flex items-center gap-3">
-                                <TrendingUp size={20} className="text-indigo-500" />
+                                <TrendingUp size={20} className="text-brand-500" />
                                 <div>
                                     <p className="font-semibold text-sm text-slate-800 dark:text-white">Tren Bulanan</p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">Grafik perkembangan poin per aspek</p>
@@ -1007,9 +1007,9 @@ const BintangDashboardPage: React.FC = () => {
                 maxWidth="max-w-2xl"
             >
                 <form onSubmit={(e) => evalHook.handleSaveEvaluation(e, getAspectSummary)} className="space-y-4 pt-4">
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
-                        <Info size={18} className="text-indigo-500 mt-0.5 shrink-0" />
-                        <p className="text-xs text-indigo-700 dark:text-indigo-300">
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800">
+                        <Info size={18} className="text-brand-500 mt-0.5 shrink-0" />
+                        <p className="text-xs text-brand-700 dark:text-brand-300">
                             Nilai otomatis dihitung dari poin pelanggaran siswa bulan ini. Anda dapat mengubah nilai secara manual jika diperlukan.
                         </p>
                     </div>
@@ -1044,7 +1044,7 @@ const BintangDashboardPage: React.FC = () => {
                         <div className="w-full">
                             <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tuliskan pesan atau catatan perkembangan umum siswa untuk Orang Tua / Wali</label>
                             <textarea
-                                className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                                 rows={3}
                                 value={evalHook.formData.catatan_wali}
                                 onChange={(e) => evalHook.setFormData(prev => ({ ...prev, catatan_wali: e.target.value }))}
@@ -1078,9 +1078,9 @@ const BintangDashboardPage: React.FC = () => {
                 title="Input Observasi Harian"
             >
                 <form onSubmit={handleObservationSubmit} className="space-y-4 pt-2">
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
-                        <Info size={18} className="text-indigo-500 mt-0.5 shrink-0" />
-                        <p className="text-xs text-indigo-700 dark:text-indigo-300">
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800">
+                        <Info size={18} className="text-brand-500 mt-0.5 shrink-0" />
+                        <p className="text-xs text-brand-700 dark:text-brand-300">
                             Observasi adalah catatan harian guru. Tidak mempengaruhi skor otomatis — hanya sebagai referensi wali kelas saat evaluasi.
                         </p>
                     </div>
@@ -1137,7 +1137,7 @@ const BintangDashboardPage: React.FC = () => {
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Catatan Observasi <span className="text-rose-500">*</span></label>
                         <textarea
-                            className="w-full p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500"
                             rows={3}
                             value={obsNotes}
                             onChange={(e) => setObsNotes(e.target.value)}
@@ -1195,11 +1195,11 @@ const BintangDashboardPage: React.FC = () => {
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Sasaran</label>
                             <div className="flex gap-4 mt-2 mb-3">
                                 <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
-                                    <input type="radio" name="mentoringTargetType" value="all" checked={mentoringTargetType === 'all'} onChange={() => setMentoringTargetType('all')} className="text-indigo-600 focus:ring-indigo-500" />
+                                    <input type="radio" name="mentoringTargetType" value="all" checked={mentoringTargetType === 'all'} onChange={() => setMentoringTargetType('all')} className="text-brand-600 focus:ring-brand-500" />
                                     Seluruh Siswa
                                 </label>
                                 <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
-                                    <input type="radio" name="mentoringTargetType" value="specific" checked={mentoringTargetType === 'specific'} onChange={() => setMentoringTargetType('specific')} className="text-indigo-600 focus:ring-indigo-500" />
+                                    <input type="radio" name="mentoringTargetType" value="specific" checked={mentoringTargetType === 'specific'} onChange={() => setMentoringTargetType('specific')} className="text-brand-600 focus:ring-brand-500" />
                                     Siswa Tertentu
                                 </label>
                             </div>
@@ -1226,7 +1226,7 @@ const BintangDashboardPage: React.FC = () => {
                                                                 setMentoringSelectedStudents(mentoringSelectedStudents.filter(id => id !== student.id));
                                                             }
                                                         }}
-                                                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                                                        className="rounded text-brand-600 focus:ring-brand-500 w-4 h-4"
                                                     />
                                                     <span className="text-sm text-slate-700 dark:text-slate-300">{student.name}</span>
                                                 </label>
@@ -1295,7 +1295,7 @@ const BintangDashboardPage: React.FC = () => {
                                 </div>
                                 <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-300 ease-out"
+                                        className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-300 ease-out"
                                         style={{
                                             width: `${(evalHook.downloadProgress.current / evalHook.downloadProgress.total) * 100}%`
                                         }}

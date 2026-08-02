@@ -28,10 +28,10 @@ const AiButton: React.FC<AiButtonProps> = ({ field, label, onAiFillField, fieldL
       type="button"
       onClick={() => onAiFillField(field)}
       disabled={loading}
-      className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+      className="text-xs text-brand-600 dark:text-brand-400 font-medium flex items-center gap-1 hover:text-brand-700 bg-brand-50 dark:bg-brand-900/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
     >
       {loading ? (
-        <span className="inline-block w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+        <span className="inline-block w-3.5 h-3.5 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
       ) : (
         <Sparkles className="w-3.5 h-3.5" />
       )}
@@ -153,10 +153,10 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   };
 
   return (
-    <div className="w-full lg:w-[45%] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)] overflow-hidden">
+    <div className="w-full lg:w-[45%] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)] overflow-hidden">
       <div className="p-4 lg:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 shrink-0">
         <h1 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-indigo-500" />
+          <Sparkles className="w-5 h-5 text-brand-500" />
           Modul Ajar Creator
         </h1>
         <p className="text-sm text-slate-500 mt-1">Langkah {activeStep} dari 5: Lengkapi form untuk menyusun dokumen.</p>
@@ -167,7 +167,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             <div 
               key={step} 
               className={`h-2 flex-1 rounded-full transition-all duration-300 ${
-                step <= activeStep ? 'bg-indigo-500' : 'bg-slate-100 dark:bg-slate-800'
+                step <= activeStep ? 'bg-brand-600' : 'bg-slate-100 dark:bg-slate-800'
               }`}
             />
           ))}
@@ -205,7 +205,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           onClick={() => onChange('generationMethod', method.id)}
                           className={`p-3.5 rounded-xl border text-left transition-all ${
                             formState.generationMethod === method.id
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-500 font-semibold shadow-sm'
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-900/40 dark:border-brand-500 font-semibold shadow-sm'
                             : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:border-slate-300'
                           }`}
                         >
@@ -226,7 +226,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           onClick={() => onChange('documentType', type)}
                           className={`p-3 rounded-xl border text-sm font-bold transition-all ${
                             formState.documentType === type
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-500'
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-900/40 dark:border-brand-500'
                             : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
                           }`}
                         >
@@ -369,7 +369,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       type="text" 
                       value={formState.satuanPendidikan}
                       onChange={(e) => onChange('satuanPendidikan', e.target.value)}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
                     />
                   </div>
 
@@ -433,7 +433,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       type="text" 
                       value={formState.fase} 
                       readOnly
-                      className="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-100 text-sm text-slate-500 cursor-not-allowed dark:bg-slate-800/50 dark:border-slate-700"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-100 text-sm text-slate-600 cursor-not-allowed dark:bg-slate-800/50 dark:border-slate-700"
                     />
                   </div>
 
@@ -444,7 +444,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       value={formState.mataPelajaran}
                       onChange={(e) => onChange('mataPelajaran', e.target.value)}
                       placeholder="Contoh: Matematika"
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
                     />
                   </div>
 
@@ -455,7 +455,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       value={formState.topik}
                       onChange={(e) => onChange('topik', e.target.value)}
                       placeholder="Contoh: Penjumlahan Bilangan Cacah"
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
                     />
                     {recommendations.length > 0 && (
                       <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -465,7 +465,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                             key={rec}
                             type="button"
                             onClick={() => onChange('topik', rec)}
-                            className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-md text-[11px] font-semibold text-slate-600 dark:text-slate-300 transition-colors"
+                            className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-md text-[11px] font-semibold text-slate-600 dark:text-slate-300 transition-colors"
                           >
                             {rec}
                           </button>
@@ -495,7 +495,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                     <select 
                       value={formState.targetPeserta}
                       onChange={(e) => onChange('targetPeserta', e.target.value)}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
                     >
                       <option value="Reguler/Tipikal (Peserta didik umum, tidak ada kesulitan belajar)">Reguler/Tipikal</option>
                       <option value="Peserta Didik dengan Kesulitan Belajar (Memiliki gaya belajar terbatas, misal: visual/audio)">Siswa Kesulitan Belajar</option>
@@ -512,7 +512,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       value={formState.kompetensiAwal}
                       onChange={(e) => onChange('kompetensiAwal', e.target.value)}
                       rows={3}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
                       placeholder="Pengetahuan/keterampilan yang wajib dimiliki siswa sebelum mempelajari materi ini."
                     />
                   </div>
@@ -523,7 +523,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       value={formState.saranaPrasarana}
                       onChange={(e) => onChange('saranaPrasarana', e.target.value)}
                       rows={3}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
                       placeholder="Alat, bahan, media pembelajaran (Proyektor, LKPD, alat peraga, dll)."
                     />
                   </div>
@@ -545,7 +545,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           type="button"
                           onClick={onGenerateCP}
                           disabled={isGeneratingCP || !formState.mataPelajaran}
-                          className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                          className="text-xs text-brand-600 dark:text-brand-400 font-medium flex items-center gap-1 hover:text-brand-700 bg-brand-50 dark:bg-brand-900/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                         >
                           <Sparkles className="w-3.5 h-3.5" />
                           {isGeneratingCP ? 'Mencari...' : 'Ambil CP Database'}
@@ -557,7 +557,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       value={formState.capaianPembelajaran}
                       onChange={(e) => onChange('capaianPembelajaran', e.target.value)}
                       rows={5}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
                       placeholder="Capaian Pembelajaran dari Kurikulum."
                     />
                   </div>
@@ -592,25 +592,25 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           value={formState.manualTujuanPembelajaran}
                           onChange={(e) => onChange('manualTujuanPembelajaran', e.target.value)}
                           rows={4}
-                          className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                          className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
                           placeholder="Contoh:&#10;1. Siswa dapat memahami perkalian dasar.&#10;2. Siswa dapat menjawab soal cerita perkalian."
                         />
 
                         {/* Ennis Critical Thinking IKTP Bank */}
-                        <div className="mt-2.5 p-3 bg-indigo-50/70 dark:bg-indigo-950/30 rounded-xl border border-indigo-200 dark:border-indigo-800/50 space-y-2">
+                        <div className="mt-2.5 p-3 bg-brand-50/70 dark:bg-brand-950/30 rounded-xl border border-brand-200 dark:border-brand-800/50 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
-                              <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                            <span className="text-xs font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
+                              <Sparkles className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                               💡 Bank Rekomendasi Indikator Berpikir Kritis (Klik + untuk isi otomatis)
                             </span>
-                            <span className="text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded font-bold">
+                            <span className="text-xs bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded font-bold">
                               HOTS
                             </span>
                           </div>
                           <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
                             {ENNIS_IKTP_BANK.map((cat, catIdx) => (
                               <div key={catIdx} className="space-y-1.5">
-                                <span className="text-xs font-bold text-indigo-800 dark:text-indigo-300 block">
+                                <span className="text-xs font-bold text-brand-800 dark:text-brand-300 block">
                                   • {cat.kategori}
                                 </span>
                                 <div className="flex flex-wrap gap-1.5">
@@ -622,7 +622,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                         const current = formState.manualTujuanPembelajaran ? formState.manualTujuanPembelajaran + '\n' : '';
                                         onChange('manualTujuanPembelajaran', current + iktp);
                                       }}
-                                      className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 hover:border-indigo-500 rounded-lg text-xs text-indigo-900 dark:text-indigo-200 text-left transition-colors font-medium shadow-2xs"
+                                      className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-brand-200 dark:border-brand-800 hover:border-brand-500 rounded-lg text-xs text-brand-900 dark:text-brand-200 text-left transition-colors font-medium shadow-2xs"
                                     >
                                       + {iktp}
                                     </button>
@@ -642,7 +642,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           value={formState.manualPertanyaanPemantik}
                           onChange={(e) => onChange('manualPertanyaanPemantik', e.target.value)}
                           rows={4}
-                          className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                          className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
                           placeholder="Contoh:&#10;Mengapa kita perlu mempelajari perkalian?&#10;Bagaimana perkalian mempermudah hitungan kita?"
                         />
                       </div>
@@ -702,7 +702,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           onClick={() => onChange('pendekatanPembelajaran', p.id)}
                           className={`p-2.5 rounded-lg border text-left transition-all ${
                             (formState.pendekatanPembelajaran || 'Student Centered') === p.id
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-950/40 dark:border-indigo-500 dark:text-indigo-300'
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-300'
                             : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
                           }`}
                         >
@@ -719,7 +719,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                         Model Pembelajaran & Sintaksis Wajib
                       </label>
-                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded">
+                      <span className="text-[10px] text-brand-600 dark:text-brand-400 font-semibold bg-brand-50 dark:bg-brand-950/50 px-2 py-0.5 rounded">
                         Katalog Modern
                       </span>
                     </div>
@@ -738,7 +738,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           onClick={() => setActiveCategoryTab(tab.id as ModelCategory)}
                           className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all text-center ${
                             activeCategoryTab === tab.id
-                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm'
+                            ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-white shadow-sm'
                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                           }`}
                         >
@@ -761,18 +761,18 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                             }}
                             className={`p-3 rounded-xl border text-left transition-all relative ${
                               isSelected
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-indigo-400'
+                              ? 'bg-brand-600 text-white border-brand-600 shadow-md'
+                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-brand-400'
                             }`}
                           >
                             <div className="flex justify-between items-start mb-1">
                               <span className="font-bold text-xs">{model.nama}</span>
                               {isSelected && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
                             </div>
-                            <div className={`text-[10px] font-medium mb-2 ${isSelected ? 'text-indigo-100' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                            <div className={`text-[10px] font-medium mb-2 ${isSelected ? 'text-brand-100' : 'text-brand-600 dark:text-brand-400'}`}>
                               {model.fokus}
                             </div>
-                            <div className={`text-[9px] line-clamp-2 ${isSelected ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'}`}>
+                            <div className={`text-[9px] line-clamp-2 ${isSelected ? 'text-brand-200' : 'text-slate-400 dark:text-slate-500'}`}>
                               Sintaks: {model.sintaks.map(s => s.langkah.split(':')[0]).join(' → ')}
                             </div>
                           </button>
@@ -785,10 +785,10 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       const selectedModelObj = LEARNING_MODELS.find(m => m.id === formState.selectedModelId || m.nama === formState.modelPembelajaran);
                       if (!selectedModelObj) return null;
                       return (
-                        <div className="p-3.5 bg-indigo-50/60 dark:bg-indigo-950/30 rounded-xl border border-indigo-200 dark:border-indigo-800/50 space-y-2 text-xs">
-                          <div className="flex items-center justify-between border-b border-indigo-200/60 dark:border-indigo-800/40 pb-2">
-                            <span className="font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
-                              <Compass className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                        <div className="p-3.5 bg-brand-50/60 dark:bg-brand-950/30 rounded-xl border border-brand-200 dark:border-brand-800/50 space-y-2 text-xs">
+                          <div className="flex items-center justify-between border-b border-brand-200/60 dark:border-brand-800/40 pb-2">
+                            <span className="font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
+                              <Compass className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                               Sintaksis Wajib: {selectedModelObj.nama} ({selectedModelObj.sumber})
                             </span>
                           </div>
@@ -796,7 +796,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           <div className="space-y-1 pl-1">
                             {selectedModelObj.sintaks.map((step, idx) => (
                               <div key={idx} className="flex items-start gap-2 text-[11px]">
-                                <span className="font-bold text-indigo-700 dark:text-indigo-300 shrink-0">{idx + 1}.</span>
+                                <span className="font-bold text-brand-700 dark:text-brand-300 shrink-0">{idx + 1}.</span>
                                 <div>
                                   <span className="font-semibold text-slate-800 dark:text-slate-200">{step.langkah}</span>
                                   <span className="text-slate-500 dark:text-slate-400 block text-[10px]">{step.deskripsi}</span>
@@ -805,7 +805,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                             ))}
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-indigo-200/60 dark:border-indigo-800/40 text-[10px]">
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-brand-200/60 dark:border-brand-800/40 text-[10px]">
                             <div>
                               <span className="font-bold text-emerald-700 dark:text-emerald-400 block mb-0.5">✓ Kelebihan:</span>
                               <ul className="list-disc pl-3 space-y-0.5 text-slate-600 dark:text-slate-400">
@@ -869,7 +869,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       <div>
                         <div className="flex justify-between text-[11px] text-slate-500 mb-1">
                           <span>1. Pendahuluan</span>
-                          <span className="font-bold text-indigo-600 dark:text-indigo-400">{formState.alokasiPendahuluan} Menit</span>
+                          <span className="font-bold text-brand-600 dark:text-brand-400">{formState.alokasiPendahuluan} Menit</span>
                         </div>
                         <input 
                           type="range"
@@ -877,14 +877,14 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           max={Math.max(5, formState.jpPerPertemuan * formState.durasiPerJp - 20)}
                           value={formState.alokasiPendahuluan}
                           onChange={(e) => adjustPendahuluan(parseInt(e.target.value))}
-                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600"
                         />
                       </div>
 
                       <div>
                         <div className="flex justify-between text-[11px] text-slate-500 mb-1">
                           <span>2. Kegiatan Inti</span>
-                          <span className="font-bold text-indigo-600 dark:text-indigo-400">{formState.alokasiInti} Menit</span>
+                          <span className="font-bold text-brand-600 dark:text-brand-400">{formState.alokasiInti} Menit</span>
                         </div>
                         <input 
                           type="range"
@@ -892,14 +892,14 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           max={Math.max(10, formState.jpPerPertemuan * formState.durasiPerJp - 10)}
                           value={formState.alokasiInti}
                           onChange={(e) => adjustInti(parseInt(e.target.value))}
-                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600"
                         />
                       </div>
 
                       <div>
                         <div className="flex justify-between text-[11px] text-slate-500 mb-1">
                           <span>3. Penutup</span>
-                          <span className="font-bold text-indigo-600 dark:text-indigo-400">{formState.alokasiPenutup} Menit</span>
+                          <span className="font-bold text-brand-600 dark:text-brand-400">{formState.alokasiPenutup} Menit</span>
                         </div>
                         <input 
                           type="range"
@@ -907,7 +907,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           max={Math.max(5, formState.jpPerPertemuan * formState.durasiPerJp - 20)}
                           value={formState.alokasiPenutup}
                           onChange={(e) => adjustPenutup(parseInt(e.target.value))}
-                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600"
                         />
                       </div>
                     </div>
@@ -967,7 +967,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                   updated[idx] = { ...updated[idx], kriteria: e.target.value };
                                   onChange('rubrikAsesmen', updated);
                                 }}
-                                className="w-full p-2 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 rounded text-xs focus:ring-1 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white"
+                                className="w-full p-2 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 rounded text-xs focus:ring-1 focus:ring-brand-500 outline-none text-slate-800 dark:text-white"
                                 placeholder="Misal: Keaktifan Diskusi"
                               />
                             </div>
@@ -1040,7 +1040,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                         const newRow: RubrikRow = { kriteria: '', sangatBaik: '', baik: '', cukup: '', perluBimbingan: '' };
                         onChange('rubrikAsesmen', [...(formState.rubrikAsesmen || []), newRow]);
                       }}
-                      className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-[11px] font-semibold transition-colors"
+                      className="w-full py-2 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/20 dark:hover:bg-brand-950/40 text-brand-700 dark:text-brand-400 rounded-lg text-[11px] font-semibold transition-colors"
                     >
                       + Tambah Kriteria Kustom
                     </button>
@@ -1055,7 +1055,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       value={formState.manualLkpdTugas}
                       onChange={(e) => onChange('manualLkpdTugas', e.target.value)}
                       rows={4}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
                       placeholder="Masukkan tugas/kegiatan kelompok atau mandiri..."
                     />
                   </div>
@@ -1068,7 +1068,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       value={formState.manualSoalEvaluasi}
                       onChange={(e) => onChange('manualSoalEvaluasi', e.target.value)}
                       rows={4}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
                       placeholder="Masukkan butir-butir pertanyaan evaluasi..."
                     />
                   </div>
@@ -1098,7 +1098,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
           <button
             type="button"
             onClick={() => setActiveStep(prev => prev + 1)}
-            className="px-5 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-600 flex items-center gap-1.5"
+            className="px-5 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 flex items-center gap-1.5"
           >
             Selanjutnya
             <ChevronRight className="w-4 h-4" />
@@ -1108,7 +1108,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             type="button"
             onClick={onGenerate}
             disabled={queueStatus === 'pending' || queueStatus === 'processing' || isAiGenerating || !formState.mataPelajaran || !formState.topik}
-            className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-emerald-500 hover:from-indigo-600 hover:to-emerald-600 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50"
+            className="px-5 py-2.5 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50"
           >
             <Sparkles className="w-4 h-4" />
             ✨ Buat {formState.documentType}

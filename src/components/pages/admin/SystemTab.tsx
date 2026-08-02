@@ -135,7 +135,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold flex items-center gap-2">
-                        <Cpu size={20} className="text-indigo-500" />
+                        <Cpu size={20} className="text-brand-500" />
                         Informasi Sistem
                     </h3>
                     <button type="button"
@@ -185,7 +185,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({
                                 <TrendingUp size={16} className="text-gray-400" />
                                 Versi Aplikasi
                             </span>
-                            <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">v2.0.0</span>
+                            <span className="font-mono font-bold text-brand-600 dark:text-brand-400">v2.0.0</span>
                         </div>
                         <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
                             <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
@@ -203,7 +203,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({
             {/* Data Usage */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                    <BarChart3 size={20} className="text-indigo-500" />
+                    <BarChart3 size={20} className="text-brand-500" />
                     Distribusi Data
                 </h3>
                 <div className="space-y-4">

@@ -49,7 +49,7 @@ export const TrashToolbar: React.FC<TrashToolbarProps> = ({
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Cari item yang dihapus..."
-                        className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-shadow"
+                        className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition-shadow"
                     />
                 </div>
 
@@ -58,7 +58,7 @@ export const TrashToolbar: React.FC<TrashToolbarProps> = ({
                     <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as any)}
-                        className="appearance-none pl-10 pr-10 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm cursor-pointer"
+                        className="appearance-none pl-10 pr-10 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm cursor-pointer"
                     >
                         {sortOptions.map(opt => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -131,8 +131,8 @@ export const TrashToolbar: React.FC<TrashToolbarProps> = ({
                     aria-pressed={filterEntity === 'all'}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                         filterEntity === 'all'
-                            ? 'bg-indigo-600 text-white border-indigo-600'
-                            : 'bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/50'
+                            ? 'bg-brand-600 text-white border-brand-600'
+                            : 'bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/50 hover:border-brand-300 dark:hover:border-brand-500/50'
                     }`}
                 >
                     Semua ({stats.total})
@@ -145,8 +145,8 @@ export const TrashToolbar: React.FC<TrashToolbarProps> = ({
                         aria-pressed={filterEntity === key}
                         className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                             filterEntity === key
-                                ? `border-transparent ${config.bgColor} ${config.color} ring-2 ring-indigo-500/40`
-                                : 'bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/50'
+                                ? `border-transparent ${config.bgColor} ${config.color} ring-2 ring-brand-500/40`
+                                : 'bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/50 hover:border-brand-300 dark:hover:border-brand-500/50'
                         }`}
                     >
                         <span className="inline-flex items-center gap-1.5">

@@ -18,7 +18,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({ className = '' }) => (
  * Skeleton for configuration card (class, subject, assessment selectors)
  */
 export const ConfigurationCardSkeleton: React.FC = () => (
-    <div className="p-6 rounded-3xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700">
+    <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2 mb-4">
             <Skeleton className="w-6 h-6 rounded-full" />
             <Skeleton className="w-32 h-6" />

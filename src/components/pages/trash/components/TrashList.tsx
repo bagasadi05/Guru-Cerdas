@@ -64,7 +64,7 @@ export const TrashList: React.FC<TrashListProps> = ({
                         type="checkbox"
                         checked={selectedItems.size === filteredItems.length && filteredItems.length > 0}
                         onChange={selectAll}
-                        className="w-5 h-5 rounded-md border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-white dark:bg-slate-800 cursor-pointer"
+                        className="w-5 h-5 rounded-md border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500 bg-white dark:bg-slate-800 cursor-pointer"
                     />
                     <span className="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                         Pilih Semua ({filteredItems.length})
@@ -115,7 +115,7 @@ export const TrashList: React.FC<TrashListProps> = ({
                                     key={item.id}
                                     className={`group flex items-center gap-4 p-4 bg-white dark:bg-slate-800/40 border rounded-2xl hover:shadow-md transition-all ${
                                         selectedItems.has(item.id)
-                                            ? 'ring-2 ring-indigo-500 border-indigo-500/50'
+                                            ? 'ring-2 ring-brand-500 border-brand-500/50'
                                             : 'border-slate-200 dark:border-slate-700/50'
                                     }`}
                                 >
@@ -123,7 +123,7 @@ export const TrashList: React.FC<TrashListProps> = ({
                                         type="checkbox"
                                         checked={selectedItems.has(item.id)}
                                         onChange={() => toggleSelect(item.id)}
-                                        className="w-5 h-5 rounded-md border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-white dark:bg-slate-800 cursor-pointer"
+                                        className="w-5 h-5 rounded-md border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500 bg-white dark:bg-slate-800 cursor-pointer"
                                     />
 
                                     <div className={`w-12 h-12 rounded-xl ${config.bgColor} flex items-center justify-center ${config.color} flex-shrink-0`}>
@@ -136,7 +136,7 @@ export const TrashList: React.FC<TrashListProps> = ({
                                                 {getItemDisplayName(item)}
                                             </p>
                                             {getViolationRiskBadge(item) && (
-                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/20">
+                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/20">
                                                     {getViolationRiskBadge(item)}
                                                 </span>
                                             )}
@@ -155,10 +155,10 @@ export const TrashList: React.FC<TrashListProps> = ({
 
                                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold ${
                                         item.daysRemaining <= 3
-                                            ? 'bg-red-500/15 text-red-500 dark:text-red-400'
+                                            ? 'bg-red-500/15 text-red-700 dark:text-red-400'
                                             : item.daysRemaining <= 7
-                                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                                                : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400'
+                                                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                                                : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400'
                                     }`}>
                                         <Clock className="w-3.5 h-3.5" />
                                         {item.daysRemaining} hari

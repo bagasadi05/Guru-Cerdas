@@ -20,16 +20,16 @@ export type { Announcement } from './types';
  * Icon mapping for announcement templates
  */
 export const templateIconMap: Record<AnnouncementTemplateIcon, React.ReactNode> = {
-    calendar: <Calendar size={ 20} className = "text-indigo-500" />,
-'clipboard-check': <ClipboardCheck size={ 20 } className = "text-indigo-500" />,
-    'file-text': <FileText size={ 20 } className = "text-indigo-500" />,
-        users: <Users size={ 20 } className = "text-indigo-500" />,
-            'heart-pulse': <HeartPulse size={ 20 } className = "text-indigo-500" />,
-                bus: <Bus size={ 20 } className = "text-indigo-500" />,
-                    'graduation-cap': <GraduationCap size={ 20 } className = "text-indigo-500" />,
-                        trophy: <Trophy size={ 20 } className = "text-indigo-500" />,
-                            'credit-card': <CreditCard size={ 20 } className = "text-indigo-500" />,
-                                flag: <Flag size={ 20 } className = "text-indigo-500" />,
+    calendar: <Calendar size={ 20} className = "text-brand-500" />,
+'clipboard-check': <ClipboardCheck size={ 20 } className = "text-brand-500" />,
+    'file-text': <FileText size={ 20 } className = "text-brand-500" />,
+        users: <Users size={ 20 } className = "text-brand-500" />,
+            'heart-pulse': <HeartPulse size={ 20 } className = "text-brand-500" />,
+                bus: <Bus size={ 20 } className = "text-brand-500" />,
+                    'graduation-cap': <GraduationCap size={ 20 } className = "text-brand-500" />,
+                        trophy: <Trophy size={ 20 } className = "text-brand-500" />,
+                            'credit-card': <CreditCard size={ 20 } className = "text-brand-500" />,
+                                flag: <Flag size={ 20 } className = "text-brand-500" />,
 };
 
 /**

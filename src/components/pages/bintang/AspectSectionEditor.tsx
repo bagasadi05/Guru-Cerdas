@@ -62,7 +62,7 @@ export const AspectSectionEditor: React.FC<AspectSectionEditorProps> = ({
             <div className="w-full mt-3">
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Catatan {meta.label}</label>
                 <textarea
-                    className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                     rows={2}
                     value={notesValue}
                     onChange={(e) => onNotesChange(e.target.value)}

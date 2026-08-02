@@ -15,7 +15,7 @@ const OfflineBanner: React.FC = () => {
     <div
       className={`fixed bottom-0 left-0 right-0 p-3 text-center text-sm font-semibold z-50 flex items-center justify-center gap-3 animate-fade-in shadow-lg
         ${isOnline
-          ? 'bg-indigo-600 text-white'
+          ? 'bg-brand-600 text-white'
           : 'bg-yellow-400 dark:bg-yellow-500 text-gray-900 dark:text-black'
         }`}
       role="status"

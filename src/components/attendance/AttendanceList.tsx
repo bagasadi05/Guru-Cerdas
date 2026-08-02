@@ -79,7 +79,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                 className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center transition-all
                                     ${isSelected
                                         ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600'
                                     }
                                 `}
                                 aria-label={isSelected ? `Batalkan pilihan ${student.name}` : `Pilih ${student.name}`}
@@ -160,8 +160,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                         }
                                         textClass = "text-slate-800 dark:text-white font-bold";
                                     } else {
-                                        circleClass = "bg-white/50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-500 group-hover/btn:border-indigo-300 dark:group-hover/btn:border-indigo-500 shadow-sm transition-all";
-                                        textClass = "text-slate-500 dark:text-slate-400 font-medium group-hover/btn:text-indigo-600 dark:group-hover/btn:text-indigo-400";
+                                        circleClass = "bg-white/50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-500 group-hover/btn:border-brand-300 dark:group-hover/btn:border-brand-500 shadow-sm transition-all";
+                                        textClass = "text-slate-500 dark:text-slate-400 font-medium group-hover/btn:text-brand-600 dark:group-hover/btn:text-brand-400";
                                     }
 
                                     return (

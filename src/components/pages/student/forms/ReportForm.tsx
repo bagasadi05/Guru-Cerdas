@@ -145,7 +145,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
                             type="button"
                             onClick={() => handleToggleTag(tag)}
                             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${selectedTags.includes(tag)
-                                ? 'bg-indigo-600 text-white'
+                                ? 'bg-brand-600 text-white'
                                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                                 }`}
                         >
@@ -175,7 +175,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
                         {selectedTags.map(tag => (
                             <span
                                 key={tag}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400"
                             >
                                 #{tag}
                                 <button type="button" onClick={() => handleToggleTag(tag)} className="hover:text-red-500">
@@ -191,7 +191,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
             <div>
                 <label className="block text-sm font-medium mb-1">Lampiran (Opsional)</label>
                 {!attachmentPreview && !attachmentFile ? (
-                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors">
+                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:border-brand-500 dark:hover:border-brand-500 transition-colors">
                         <div className="flex flex-col items-center justify-center">
                             <UploadIcon className="w-6 h-6 mb-1 text-gray-400" />
                             <p className="text-sm text-gray-500 dark:text-gray-400">Klik untuk upload foto/dokumen</p>

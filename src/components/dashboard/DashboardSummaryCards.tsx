@@ -132,7 +132,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
             <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Kelas Perlu Perhatian
             </span>
-            <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform">
+            <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 group-hover:scale-110 transition-transform">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
@@ -170,7 +170,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
             <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Siswa Prioritas
             </span>
-            <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
+            <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 group-hover:scale-110 transition-transform">
               <UserX className="w-4 h-4" />
             </div>
           </div>

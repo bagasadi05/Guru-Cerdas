@@ -166,13 +166,13 @@ export const ClassesMasterDataTab: React.FC<ClassesMasterDataTabProps> = ({ onLo
                             placeholder="Cari kelas..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
+                            className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 dark:text-white transition-all"
                         />
                     </div>
                     
                     <Button 
                         onClick={() => handleOpenModal()} 
-                        className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex-shrink-0"
+                        className="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white shadow-sm flex-shrink-0"
                     >
                         <Plus size={16} className="mr-2" />
                         Tambah Kelas
@@ -182,7 +182,7 @@ export const ClassesMasterDataTab: React.FC<ClassesMasterDataTabProps> = ({ onLo
 
             {loading ? (
                 <div className="py-12 flex flex-col items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-4" />
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-500 mb-4" />
                     <p className="text-gray-500">Memuat data kelas...</p>
                 </div>
             ) : filteredClasses.length === 0 ? (
@@ -211,7 +211,7 @@ export const ClassesMasterDataTab: React.FC<ClassesMasterDataTabProps> = ({ onLo
                                     <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                                         <button type="button"
                                             onClick={() => handleOpenModal(cls)}
-                                            className="p-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                                            className="p-2 text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-900/30 rounded-lg transition-colors"
                                             title="Edit"
                                         >
                                             <Edit2 size={16} />
@@ -249,7 +249,7 @@ export const ClassesMasterDataTab: React.FC<ClassesMasterDataTabProps> = ({ onLo
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 placeholder="Contoh: X IPA 1"
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                                 required
                                 disabled={isSubmitting}
                             />
@@ -268,7 +268,7 @@ export const ClassesMasterDataTab: React.FC<ClassesMasterDataTabProps> = ({ onLo
                         <Button
                             type="submit"
                             disabled={isSubmitting || !formData.name.trim()}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                            className="bg-brand-600 hover:bg-brand-700 text-white"
                         >
                             {isSubmitting ? (
                                 <>

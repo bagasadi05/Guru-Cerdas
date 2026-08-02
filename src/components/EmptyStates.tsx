@@ -600,7 +600,7 @@ export const WelcomeEmptyState: React.FC<WelcomeEmptyStateProps> = ({
                 { icon: <ClipboardList className="w-5 h-5" />, title: 'Buat Tugas', desc: 'Kelola pekerjaan kelas' }
             ].map((tip, i) => (
                 <div key={i} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-left">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-950/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-950/20 flex items-center justify-center text-emerald-700 dark:text-emerald-400 mb-2">
                         {tip.icon}
                     </div>
                     <h4 className="font-medium text-slate-900 dark:text-white text-sm">{tip.title}</h4>

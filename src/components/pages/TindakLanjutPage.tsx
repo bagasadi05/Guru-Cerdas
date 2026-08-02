@@ -94,7 +94,7 @@ export const TindakLanjutPage: React.FC = () => {
   if (userRole !== 'waka_kesiswaan' && userRole !== 'kepala_madrasah' && userRole !== 'admin') {
     return (
       <div className="p-8 text-center max-w-7xl mx-auto">
-        <div className="bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 p-6 rounded-2xl border border-rose-200 dark:border-rose-900 flex flex-col items-center">
+        <div className="bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 p-6 rounded-2xl border border-rose-200 dark:border-rose-900 flex flex-col items-center">
           <ShieldCheck className="w-12 h-12 mb-4" />
           <h2 className="text-xl font-bold">Akses Ditolak</h2>
           <p className="mt-2 text-sm">Halaman ini hanya dapat diakses oleh Pimpinan Madrasah.</p>
@@ -116,7 +116,7 @@ export const TindakLanjutPage: React.FC = () => {
     <div className="w-full min-h-full p-4 md:p-6 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
       <header className="mb-6">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-          <ShieldCheck className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+          <ShieldCheck className="w-8 h-8 text-brand-600 dark:text-brand-400" />
           Tindak Lanjut Pelanggaran
         </h1>
         <p className="mt-2 text-slate-600 dark:text-slate-400">
@@ -143,7 +143,7 @@ export const TindakLanjutPage: React.FC = () => {
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+              <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
             </div>
           ) : error ? (
             <div className="p-8 text-center text-rose-500">
@@ -210,7 +210,7 @@ export const TindakLanjutPage: React.FC = () => {
                         <Button 
                           size="sm" 
                           onClick={() => setSelectedViolation(v)}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm rounded-xl"
+                          className="bg-brand-600 hover:bg-brand-700 text-white shadow-sm rounded-xl"
                         >
                           Tindak Lanjuti
                         </Button>
@@ -246,7 +246,7 @@ export const TindakLanjutPage: React.FC = () => {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Misal: Sudah dipanggil bersama orang tua..."
-                className="w-full min-h-[100px] p-3 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow resize-y"
+                className="w-full min-h-[100px] p-3 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow resize-y"
               />
             </div>
           </div>

@@ -40,9 +40,9 @@ export async function exportSchedulePdf(
         Senin: '#3b82f6',
         Selasa: '#10b981',
         Rabu: '#f59e0b',
-        Kamis: '#8b5cf6',
+        Kamis: '#11657f',
         Jumat: '#f43f5e',
-        Sabtu: '#6366f1',
+        Sabtu: '#0d7e9e',
     };
 
     const drawHeader = () => {

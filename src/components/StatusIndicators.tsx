@@ -281,7 +281,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
                         {(status === 'pending' || status === 'error') && (
                             <button type="button"
                                 onClick={sync}
-                                className="w-full px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium"
+                                className="w-full px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium"
                             >
                                 Sinkronkan Sekarang
                             </button>
@@ -553,7 +553,7 @@ export const UploadProgressPanel: React.FC<{ className?: string }> = ({ classNam
                 className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
                 <div className="flex items-center gap-2">
-                    <Upload className="w-4 h-4 text-indigo-500" />
+                    <Upload className="w-4 h-4 text-brand-500" />
                     <span className="font-medium text-slate-900 dark:text-white">
                         Upload ({uploads.length})
                     </span>
@@ -584,7 +584,7 @@ export const UploadProgressPanel: React.FC<{ className?: string }> = ({ classNam
                             </div>
                             <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-indigo-500 transition-all duration-300"
+                                    className="h-full bg-brand-600 transition-all duration-300"
                                     style={{ width: `${upload.progress}%` }}
                                 />
                             </div>
@@ -653,13 +653,13 @@ export const LoadingWithStatus: React.FC<LoadingWithStatusProps> = ({
     return (
         <div className="relative">
             <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
-                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-3" />
+                <Loader2 className="w-8 h-8 text-brand-500 animate-spin mb-3" />
                 <p className="text-slate-600 dark:text-slate-400 font-medium">{message}</p>
                 {progress !== undefined && (
                     <div className="w-48 mt-3">
                         <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-indigo-500 transition-all duration-300"
+                                className="h-full bg-brand-600 transition-all duration-300"
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
@@ -703,7 +703,7 @@ export const SWUpdateBanner: React.FC = () => {
         <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:w-96 z-[9999] animate-slide-up">
             <div className="relative overflow-hidden rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl p-4 sm:p-5">
                 {/* Glowing accent at the top */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-400 animate-pulse"></div>
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 animate-pulse"></div>
                 
                 <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 bg-emerald-100 dark:bg-emerald-500/20 p-2.5 rounded-full ring-4 ring-emerald-50 dark:ring-emerald-500/10 mt-1">

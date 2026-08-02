@@ -250,7 +250,7 @@ const AiDashboardInsight: React.FC<AiDashboardInsightProps> = ({ dashboardData }
                 <Button
                     onClick={generateInsight}
                     disabled={isLoading || !dashboardData}
-                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 rounded-full px-6"
+                    className="bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-600 hover:to-brand-800 text-white border-0 shadow-lg shadow-brand-600/20 transition-all hover:scale-105 rounded-full px-6"
                 >
                     <SparklesIcon className="w-4 h-4 mr-2" />
                     Buat Wawasan Harian AI
@@ -326,9 +326,9 @@ const AiDashboardInsight: React.FC<AiDashboardInsightProps> = ({ dashboardData }
 
             {/* Class Focus Suggestion Section */}
             {insight.class_focus_suggestion && (
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                        <SparklesIcon className="w-5 h-5 text-indigo-500" />
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-brand-500/5 border border-brand-500/10">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center">
+                        <SparklesIcon className="w-5 h-5 text-brand-500" />
                     </div>
                     <div>
                         <p className="font-bold text-slate-800 dark:text-slate-200">

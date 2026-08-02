@@ -4,7 +4,7 @@ import { inputCards, exportCards } from '../constants';
 
 export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode) => void }> = ({ handleModeSelect }) => (
     <div className="w-full max-w-7xl mx-auto space-y-8 animate-fade-in-up pb-8">
-        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-600 via-emerald-600 to-green-700 p-6 md:p-8 shadow-xl shadow-green-500/20">
+        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-6 md:p-8 shadow-xl shadow-green-500/20">
             {/* Decorative background elements */}
             <div className="absolute top-0 right-0 -mt-20 -mr-20 w-72 h-72 bg-emerald-500/30 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
             <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-72 h-72 bg-green-500/30 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
@@ -20,7 +20,7 @@ export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode)
                     <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight font-serif drop-shadow-sm">
                         Manajemen Siswa
                     </h1>
-                    <p className="text-sm md:text-base text-green-100/90 leading-relaxed max-w-3xl mx-auto md:mx-0 font-light tracking-wide">
+                    <p className="text-sm md:text-base text-green-100/90 leading-relaxed max-w-3xl mx-auto md:mx-0 font-normal tracking-wide">
                         Efisiensi tingkat lanjut untuk pengelolaan data akademik. Pilih modul aksi untuk memulai proses massal.
                     </p>
                 </div>
@@ -44,7 +44,7 @@ export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode)
                         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 dark:from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                         <div className="relative z-10 flex flex-col items-start space-y-4">
-                            <div className="w-14 h-14 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/30 rounded-xl flex items-center justify-center border border-green-200 dark:border-green-800/50 group-hover:scale-110 transition-transform duration-500">
+                            <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-green-900/50 dark:to-emerald-900/30 rounded-xl flex items-center justify-center border border-green-200 dark:border-green-800/50 group-hover:scale-110 transition-transform duration-500">
                                 <card.icon className="w-7 h-7 text-green-600 dark:text-green-300 group-hover:text-green-700 dark:group-hover:text-white transition-colors duration-300" />
                             </div>
                             <div>
@@ -74,7 +74,7 @@ export const Step1_ModeSelection: React.FC<{ handleModeSelect: (mode: InputMode)
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 dark:from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                         <div className="relative z-10 flex flex-col items-start space-y-4">
-                            <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/30 rounded-xl flex items-center justify-center border border-blue-200 dark:border-blue-800/50 group-hover:scale-110 transition-transform duration-500">
+                            <div className="w-14 h-14 bg-gradient-to-br from-sky-50 to-blue-50 dark:from-blue-900/50 dark:to-brand-900/30 rounded-xl flex items-center justify-center border border-blue-200 dark:border-blue-800/50 group-hover:scale-110 transition-transform duration-500">
                                 <card.icon className="w-7 h-7 text-blue-600 dark:text-blue-300 group-hover:text-blue-700 dark:group-hover:text-white transition-colors duration-300" />
                             </div>
                             <div>

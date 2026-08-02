@@ -91,7 +91,7 @@ export const SmartReminders: React.FC<SmartRemindersProps> = ({
                     <Bell className="w-5 h-5 text-emerald-500" />
                     Pengingat Pintar
                 </h2>
-                <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-semibold">
+                <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold">
                     {reminders.length} item
                 </span>
             </div>

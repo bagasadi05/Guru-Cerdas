@@ -118,9 +118,9 @@ export const JournalRekapPanel: React.FC<JournalRekapPanelProps> = ({ filters })
 
     if (isBackendMissing) {
         return (
-            <div className="p-6 rounded-2xl bg-amber-50/80 dark:bg-indigo-950/20 border border-amber-200 dark:border-indigo-800/30 flex items-start gap-4 animate-fade-in">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
-                    <AlertCircle className="w-5 h-5 text-amber-600 dark:text-indigo-400" />
+            <div className="p-6 rounded-2xl bg-amber-50/80 dark:bg-brand-950/20 border border-amber-200 dark:border-brand-800/30 flex items-start gap-4 animate-fade-in">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-brand-900/40 flex items-center justify-center shrink-0">
+                    <AlertCircle className="w-5 h-5 text-amber-600 dark:text-brand-400" />
                 </div>
                 <div>
                     <h4 className="font-bold text-slate-900 dark:text-white text-base">
@@ -136,7 +136,7 @@ export const JournalRekapPanel: React.FC<JournalRekapPanelProps> = ({ filters })
 
     if (rekapError) {
         return (
-            <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/30 flex items-start gap-4 text-rose-600 dark:text-rose-400">
+            <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/30 flex items-start gap-4 text-rose-700 dark:text-rose-400">
                 <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                 <div>
                     <h4 className="font-bold text-slate-900 dark:text-white">Gagal memuat rekap jurnal</h4>
@@ -176,7 +176,7 @@ export const JournalRekapPanel: React.FC<JournalRekapPanelProps> = ({ filters })
                     <Button
                         onClick={handleExportPdf}
                         disabled={isExportingPdf || isJournalsLoading || !journals || journals.length === 0}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl flex items-center gap-2 px-4 py-2.5 font-medium shadow-sm transition-colors text-sm disabled:opacity-50"
+                        className="bg-brand-600 hover:bg-brand-700 text-white rounded-2xl flex items-center gap-2 px-4 py-2.5 font-medium shadow-sm transition-colors text-sm disabled:opacity-50"
                     >
                         {isExportingPdf ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

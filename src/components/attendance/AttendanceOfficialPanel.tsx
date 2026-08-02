@@ -65,12 +65,12 @@ export const AttendanceOfficialPanel: React.FC<Props> = ({ students, attendanceR
   if (!isHomeroom) return null;
 
   return (
-    <div className="border border-indigo-200 dark:border-indigo-800 rounded-xl p-4 bg-indigo-50/50 dark:bg-indigo-900/10">
+    <div className="border border-brand-200 dark:border-brand-800 rounded-xl p-4 bg-brand-50/50 dark:bg-brand-900/10">
       <div className="flex items-center gap-2 mb-3">
-        <ShieldCheckIcon className="w-5 h-5 text-indigo-600" />
-        <h3 className="font-bold text-indigo-800 dark:text-indigo-300">Panel Wali Kelas — Status Resmi</h3>
+        <ShieldCheckIcon className="w-5 h-5 text-brand-600" />
+        <h3 className="font-bold text-brand-800 dark:text-brand-300">Panel Wali Kelas — Status Resmi</h3>
       </div>
-      <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 mb-3">
+      <p className="text-xs text-brand-600/70 dark:text-brand-400/70 mb-3">
         Tetapkan status resmi untuk rekap harian. Menggantikan status dari guru mapel jika ada.
       </p>
 
@@ -105,8 +105,8 @@ export const AttendanceOfficialPanel: React.FC<Props> = ({ students, attendanceR
                       disabled={isPending}
                       className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${
                         active
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200'
+                          ? 'bg-brand-600 text-white shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
                       {opt.label}

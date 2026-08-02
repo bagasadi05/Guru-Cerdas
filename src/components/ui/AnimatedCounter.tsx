@@ -115,14 +115,14 @@ export const AnimatedPercentage: React.FC<AnimatedPercentageProps> = ({
     };
 
     const colorClasses = {
-        primary: 'text-indigo-500',
+        primary: 'text-brand-500',
         success: 'text-emerald-500',
         warning: 'text-amber-500',
         error: 'text-rose-500',
     };
 
     const ringColors = {
-        primary: 'stroke-indigo-500',
+        primary: 'stroke-brand-500',
         success: 'stroke-emerald-500',
         warning: 'stroke-amber-500',
         error: 'stroke-rose-500',
@@ -201,14 +201,14 @@ export const AnimatedStatCard: React.FC<AnimatedStatCardProps> = ({
     className = '',
 }) => {
     const colorClasses = {
-        primary: 'from-indigo-500 to-purple-600',
-        success: 'from-emerald-500 to-green-600',
+        primary: 'from-brand-600 to-brand-700',
+        success: 'from-emerald-500 to-emerald-600',
         warning: 'from-amber-500 to-orange-600',
         error: 'from-rose-500 to-red-600',
     };
 
     const glowClasses = {
-        primary: 'shadow-indigo-500/30',
+        primary: 'shadow-brand-600/30',
         success: 'shadow-emerald-500/30',
         warning: 'shadow-amber-500/30',
         error: 'shadow-rose-500/30',

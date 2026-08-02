@@ -243,7 +243,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                     {/* Excel Formula Config Card */}
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
                         <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
-                            <span className="w-2 h-4 rounded-sm bg-indigo-500"></span>
+                            <span className="w-2 h-4 rounded-sm bg-brand-600"></span>
                             Bobot Rumus Katrol
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
@@ -285,19 +285,19 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                     </div>
 
                     {/* AI Audit Activation */}
-                    <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/10 border border-indigo-200/50 dark:border-indigo-900/30 rounded-2xl">
-                        <h3 className="text-sm font-bold text-indigo-950 dark:text-indigo-300 mb-2 flex items-center gap-1.5">
-                            <SparklesIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div className="p-4 bg-brand-50/50 dark:bg-brand-950/10 border border-brand-200/50 dark:border-brand-900/30 rounded-2xl">
+                        <h3 className="text-sm font-bold text-brand-950 dark:text-brand-300 mb-2 flex items-center gap-1.5">
+                            <SparklesIcon className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                             Audit AI Cerdas (81-98)
                         </h3>
-                        <p className="text-xs text-indigo-900/70 dark:text-indigo-400/70 mb-4 leading-relaxed">
+                        <p className="text-xs text-brand-900/70 dark:text-brand-400/70 mb-4 leading-relaxed">
                             AI akan mendeteksi bias kompresi nilai, melindungi siswa berprestasi tinggi agar tetap adil.
                         </p>
                         
                         <Button
                             onClick={handleRunAiAudit}
                             disabled={isAiLoading || listData.length === 0}
-                            className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20"
+                            className="w-full h-10 bg-brand-600 hover:bg-brand-700 text-white font-bold flex items-center justify-center gap-1.5 shadow-md shadow-brand-600/20"
                         >
                             {isAiLoading ? (
                                 <>
@@ -314,8 +314,8 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
 
                         {/* AI Summary feedback if loaded */}
                         {classAnalysis && (
-                            <div className="mt-4 p-3 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-indigo-950 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 max-h-36 overflow-y-auto">
-                                <strong className="text-indigo-600 dark:text-indigo-400">Analisis Kelas AI:</strong>
+                            <div className="mt-4 p-3 bg-white dark:bg-slate-900 rounded-xl border border-brand-100 dark:border-brand-950 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 max-h-36 overflow-y-auto">
+                                <strong className="text-brand-600 dark:text-brand-400">Analisis Kelas AI:</strong>
                                 <p className="mt-1">{classAnalysis}</p>
                             </div>
                         )}
@@ -353,7 +353,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                                 disabled={aiAdjustments.length === 0}
                                 className={`text-left px-3 py-2 text-xs font-semibold rounded-lg border transition-all flex items-center justify-between ${
                                     activeScenario === 'ai'
-                                        ? 'bg-indigo-900 text-white border-indigo-900 dark:bg-indigo-400 dark:text-slate-950 dark:border-indigo-400'
+                                        ? 'bg-brand-900 text-white border-brand-900 dark:bg-brand-400 dark:text-slate-950 dark:border-brand-400'
                                         : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 disabled:opacity-40'
                                 }`}
                             >
@@ -397,7 +397,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                         </Button>
                         <Button
                             onClick={handleSave}
-                            className="w-full flex items-center justify-center gap-1.5 font-bold h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-lg shadow-green-500/20"
+                            className="w-full flex items-center justify-center gap-1.5 font-bold h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-lg shadow-green-500/20"
                         >
                             <SaveIcon className="w-4 h-4" />
                             Terapkan & Simpan Nilai
@@ -490,7 +490,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                                 </div>
                                 <div className="flex justify-between border-b border-slate-100 py-1">
                                     <span className="font-semibold">Skenario Terpilih:</span>
-                                    <span className="font-bold text-indigo-600 dark:text-indigo-400 capitalize">{activeScenario}</span>
+                                    <span className="font-bold text-brand-600 dark:text-brand-400 capitalize">{activeScenario}</span>
                                 </div>
                             </div>
 
@@ -521,7 +521,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                                                         <div className="flex flex-col">
                                                             <span>{item.name}</span>
                                                             {isAiAdjusted && activeScenario === 'ai' && item.aiRationale && (
-                                                                <span className="no-print text-xxs text-indigo-500 font-medium italic mt-0.5">
+                                                                <span className="no-print text-xxs text-brand-500 font-medium italic mt-0.5">
                                                                     ✨ {item.aiRationale}
                                                                 </span>
                                                             )}
@@ -531,7 +531,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
                                                     <td className="border border-slate-300 p-2 text-center text-slate-500 font-semibold">{item.formula}</td>
                                                     <td className="border border-slate-300 p-2 text-center text-slate-500 font-semibold flex-row justify-center items-center gap-1">
                                                         <span>{item.ai}</span>
-                                                        {isAiAdjusted && <span className="no-print text-indigo-500">✨</span>}
+                                                        {isAiAdjusted && <span className="no-print text-brand-500">✨</span>}
                                                     </td>
                                                     <td className="border border-slate-300 p-1 text-center font-bold">
                                                         {/* Editable score in screen view, static score in print view */}

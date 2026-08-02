@@ -236,7 +236,7 @@ const TourOverlay: React.FC = () => {
             {/* Target highlight */}
             {targetRect && (
                 <div
-                    className="absolute border-2 border-indigo-500 rounded-xl animate-pulse pointer-events-none"
+                    className="absolute border-2 border-brand-500 rounded-xl animate-pulse pointer-events-none"
                     style={{
                         left: targetRect.left - 8,
                         top: targetRect.top - 8,
@@ -256,7 +256,7 @@ const TourOverlay: React.FC = () => {
                     {steps.map((_, i) => (
                         <div
                             key={i}
-                            className={`h-1 flex-1 rounded-full transition-colors ${i <= currentStep ? 'bg-indigo-500' : 'bg-slate-200 dark:bg-slate-700'
+                            className={`h-1 flex-1 rounded-full transition-colors ${i <= currentStep ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'
                                 }`}
                         />
                     ))}
@@ -272,7 +272,7 @@ const TourOverlay: React.FC = () => {
                 {step.action && (
                     <button type="button"
                         onClick={step.action.onClick}
-                        className="w-full mb-3 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-xl font-medium hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors"
+                        className="w-full mb-3 px-4 py-2 bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-400 rounded-xl font-medium hover:bg-brand-200 dark:hover:bg-brand-900/60 transition-colors"
                     >
                         {step.action.label}
                     </button>
@@ -296,7 +296,7 @@ const TourOverlay: React.FC = () => {
                         )}
                         <button type="button"
                             onClick={isLastStep ? complete : next}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-medium"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium"
                         >
                             {isLastStep ? 'Selesai' : 'Lanjut'}
                             {isLastStep ? <Check className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -421,8 +421,8 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-                            <Book className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center">
+                            <Book className="w-5 h-5 text-brand-600 dark:text-brand-400" />
                         </div>
                         <div>
                             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -431,7 +431,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                             {selectedArticle && (
                                 <button type="button"
                                     onClick={() => setSelectedArticle(null)}
-                                    className="text-sm text-indigo-600"
+                                    className="text-sm text-brand-600"
                                 >
                                     ← Kembali
                                 </button>
@@ -465,7 +465,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Cari artikel bantuan..."
                                     aria-label="Cari artikel bantuan"
-                                    className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-brand-500"
                                 />
                             </div>
                         </div>
@@ -475,7 +475,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                             <button type="button"
                                 onClick={() => setSelectedCategory(null)}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${!selectedCategory
-                                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600'
+                                    ? 'bg-brand-100 dark:bg-brand-900/40 text-brand-700'
                                     : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }`}
                             >
@@ -486,7 +486,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
                                     className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory === cat
-                                        ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600'
+                                        ? 'bg-brand-100 dark:bg-brand-900/40 text-brand-700'
                                         : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }`}
                                 >
@@ -508,8 +508,8 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                                         className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-left transition-colors"
                                     >
                                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${article.videoUrl
-                                            ? 'bg-red-100 dark:bg-red-900/40 text-red-600'
-                                            : 'bg-blue-100 dark:bg-blue-900/40 text-blue-600'
+                                            ? 'bg-red-100 dark:bg-red-900/40 text-red-700'
+                                            : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700'
                                             }`}>
                                             {article.videoUrl ? <Video className="w-5 h-5" /> : <Book className="w-5 h-5" />}
                                         </div>
@@ -521,7 +521,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                                                 {article.content.replace(/<[^>]*>/g, '').substring(0, 100)}...
                                             </p>
                                             <div className="flex items-center gap-2 mt-2">
-                                                <span className="text-xs text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 rounded">
+                                                <span className="text-xs text-brand-600 bg-brand-50 dark:bg-brand-900/40 px-2 py-0.5 rounded">
                                                     {article.category}
                                                 </span>
                                             </div>
@@ -649,7 +649,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, className = '' })
                         onClick={handleSeek}
                     >
                         <div
-                            className="h-full bg-indigo-500 rounded-full"
+                            className="h-full bg-brand-600 rounded-full"
                             style={{ width: `${progress}%` }}
                         />
                     </div>
@@ -734,15 +734,15 @@ export const FeatureTip: React.FC<FeatureTipProps> = ({
             {children}
             {isVisible && (
                 <div className={`absolute z-50 ${positionClasses[position]} animate-scale-in`}>
-                    <div className="w-64 p-4 bg-indigo-600 text-white rounded-xl shadow-lg">
+                    <div className="w-64 p-4 bg-brand-600 text-white rounded-xl shadow-lg">
                         <div className="flex items-start gap-2 mb-2">
                             <Lightbulb className="w-5 h-5 flex-shrink-0" />
                             <h4 className="font-medium">{title}</h4>
                         </div>
-                        <p className="text-sm text-indigo-100 mb-3">{description}</p>
+                        <p className="text-sm text-brand-100 mb-3">{description}</p>
                         <button type="button"
                             onClick={dismiss}
-                            className="text-sm font-medium text-indigo-200 hover:text-white"
+                            className="text-sm font-medium text-brand-200 hover:text-white"
                         >
                             Mengerti
                         </button>
@@ -765,7 +765,7 @@ export const HelpButton: React.FC<{
         <button type="button"
             id="tour-help-button"
             onClick={onClick}
-            className={`fixed bottom-24 lg:bottom-4 right-4 w-12 h-12 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-all hover:scale-105 ${className}`}
+            className={`fixed bottom-24 lg:bottom-4 right-4 w-12 h-12 bg-brand-600 hover:bg-brand-700 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-all hover:scale-105 ${className}`}
             aria-label="Bantuan"
         >
             <HelpCircle className="w-6 h-6" />

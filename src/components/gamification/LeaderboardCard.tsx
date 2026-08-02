@@ -26,11 +26,11 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
     const getRankStyle = (rank: number) => {
         switch (rank) {
             case 1:
-                return 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white';
+                return 'bg-gradient-to-r from-amber-700 to-orange-800 text-white';
             case 2:
-                return 'bg-gradient-to-r from-slate-300 to-slate-400 text-white';
+                return 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-900';
             case 3:
-                return 'bg-gradient-to-r from-amber-600 to-orange-700 text-white';
+                return 'bg-gradient-to-r from-amber-700 to-orange-800 text-white';
             default:
                 return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
         }

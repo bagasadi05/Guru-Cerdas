@@ -78,7 +78,7 @@ const renderDescription = (text: string | null) => {
                     href={part}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium break-all"
+                    className="text-brand-600 dark:text-brand-400 hover:underline font-medium break-all"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {part}
@@ -164,7 +164,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
             }}
             className={`
                 rounded-2xl p-4 border transition-all duration-300 group relative overflow-hidden cursor-grab active:cursor-grabbing
-                bg-white dark:bg-slate-800/50 border-slate-200 dark:border-white/5 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/10 shadow-sm
+                bg-white dark:bg-slate-800/50 border-slate-200 dark:border-white/5 hover:border-brand-500/30 hover:shadow-lg hover:shadow-brand-600/10 shadow-sm
                 ${overdue ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-transparent'}
                 ${isUpdating ? 'opacity-60 pointer-events-none' : ''}
             `}
@@ -237,7 +237,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                         {/* Due Date */}
                         {task.due_date && (
                             <div className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-lg ${overdue
-                                ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                                ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
                                 : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400'
                                 }`}>
                                 {overdue ? <AlertTriangleIcon className="w-3 h-3" /> : <CalendarIcon className="w-3 h-3" />}
@@ -262,8 +262,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                                 <button type="button"
                                     onClick={() => onStatusChange(task.id, nextStatus)}
                                     className={`px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 sm:gap-1 ${nextStatus === 'done'
-                                        ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30'
-                                        : 'bg-blue-500/20 text-blue-500 hover:bg-blue-500/30'
+                                        ? 'bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30'
+                                        : 'bg-blue-500/20 text-blue-600 hover:bg-blue-500/30'
                                         }`}
                                     title={`Pindah ke ${statusConfig[nextStatus].title}`}
                                     disabled={isUpdating}
@@ -352,7 +352,7 @@ const Column: React.FC<ColumnProps> = ({
                 onDrop={handleDropLocal}
                 className={`rounded-3xl p-3 min-h-[300px] transition-all duration-300 ${
                     isDragOver
-                        ? 'bg-indigo-500/10 border-2 border-dashed border-indigo-500 shadow-lg shadow-indigo-500/5'
+                        ? 'bg-brand-500/10 border-2 border-dashed border-brand-500 shadow-lg shadow-brand-600/5'
                         : 'bg-white/50 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-700/30 shadow-inner'
                 }`}
             >
@@ -365,7 +365,7 @@ const Column: React.FC<ColumnProps> = ({
                             <p className="text-sm text-slate-500">Tidak ada tugas</p>
                             <button type="button"
                                 onClick={() => onAddTask(status)}
-                                className="mt-3 text-sm text-indigo-400 hover:text-indigo-300"
+                                className="mt-3 text-sm text-brand-400 hover:text-brand-300"
                             >
                                 + Tambah tugas
                             </button>
@@ -613,7 +613,7 @@ const TasksPage: React.FC = () => {
                 <div className="rounded-2xl border border-red-200/60 dark:border-red-500/30 bg-red-50/60 dark:bg-red-500/10 px-4 py-3 shadow-sm">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-start gap-3">
-                            <div className="p-2 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
+                            <div className="p-2 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400">
                                 <AlertTriangleIcon className="w-4 h-4" />
                             </div>
                             <div>
@@ -635,7 +635,7 @@ const TasksPage: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight font-serif mb-2 text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300">
+                    <h1 className="text-3xl font-bold tracking-tight font-serif mb-2 text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-800 dark:from-white dark:to-slate-300">
                         Manajemen Tugas
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-2">
@@ -652,7 +652,7 @@ const TasksPage: React.FC = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Cari tugas..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
+                            className="w-full pl-10 pr-4 py-2.5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all shadow-sm"
                         />
                     </div>
 
@@ -671,7 +671,7 @@ const TasksPage: React.FC = () => {
                     {/* Add Task Button */}
                     <Button
                         onClick={() => handleAddTask('todo')}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/20"
+                        className="bg-brand-600 hover:bg-brand-700 text-white rounded-xl shadow-lg shadow-brand-600/20"
                     >
                         <PlusIcon className="w-4 h-4 mr-2" />
                         <span className="hidden sm:inline">Tugas Baru</span>
@@ -738,7 +738,7 @@ const TasksPage: React.FC = () => {
                             <p className="text-slate-500 dark:text-slate-500 mb-3">Tidak ada tugas {statusConfig[mobileActiveTab].title}</p>
                             <button type="button"
                                 onClick={() => handleAddTask(mobileActiveTab)}
-                                className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-medium"
+                                className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-500 dark:hover:text-brand-300 font-medium"
                             >
                                 + Tambah tugas
                             </button>
@@ -785,7 +785,7 @@ const TasksPage: React.FC = () => {
                     <p className="text-slate-500 dark:text-slate-400 mb-6">Mulai dengan menambahkan tugas pertama Anda</p>
                     <Button
                         onClick={() => handleAddTask('todo')}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl"
+                        className="bg-brand-600 hover:bg-brand-700 text-white rounded-xl"
                     >
                         <PlusIcon className="w-4 h-4 mr-2" />
                         Tambah Tugas Pertama
@@ -822,7 +822,7 @@ const TasksPage: React.FC = () => {
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Tambahkan deskripsi..."
                             rows={3}
-                            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all resize-none"
                         />
                     </div>
 
@@ -870,7 +870,7 @@ const TasksPage: React.FC = () => {
                         <Button
                             type="submit"
                             disabled={createTaskMutation.isPending || updateTaskMutation.isPending}
-                            className="bg-indigo-600 hover:bg-indigo-700"
+                            className="bg-brand-600 hover:bg-brand-700"
                         >
                             {(createTaskMutation.isPending || updateTaskMutation.isPending) && (
                                 <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />

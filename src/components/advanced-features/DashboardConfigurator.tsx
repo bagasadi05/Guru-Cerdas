@@ -46,7 +46,7 @@ export const DashboardConfigurator: React.FC<{
                                             onClick={() => toggleWidget(existing.id)}
                                             className={`rounded-lg p-2 ${
                                                 existing.visible
-                                                    ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40'
+                                                    ? 'bg-brand-100 text-brand-700 dark:bg-brand-900/40'
                                                     : 'bg-slate-200 text-slate-500 dark:bg-slate-700'
                                             }`}
                                         >
@@ -60,7 +60,7 @@ export const DashboardConfigurator: React.FC<{
                                                 size: 'md',
                                                 visible: true
                                             })}
-                                            className="rounded-lg bg-indigo-500 p-2 text-white hover:bg-indigo-600"
+                                            className="rounded-lg bg-brand-600 p-2 text-white hover:bg-brand-700"
                                         >
                                             <Plus className="h-5 w-5" />
                                         </button>
@@ -80,7 +80,7 @@ export const DashboardConfigurator: React.FC<{
                     </button>
                     <button type="button"
                         onClick={onClose}
-                        className="rounded-lg bg-indigo-500 px-4 py-2 text-white hover:bg-indigo-600"
+                        className="rounded-lg bg-brand-600 px-4 py-2 text-white hover:bg-brand-700"
                     >
                         Selesai
                     </button>

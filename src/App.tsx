@@ -88,7 +88,7 @@ export const preloadRoute = (path: string) => {
 // or renders the main Layout with the requested page.
 const AppLoadingScreen = () => (
   <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950">
-    <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+    <div className="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
 

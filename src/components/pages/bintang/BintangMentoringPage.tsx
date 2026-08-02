@@ -181,7 +181,7 @@ export const BintangMentoringPage: React.FC<BintangMentoringPageProps> = ({ pres
                                             {(log.students as any)?.name}
                                         </td>
                                         <td className="py-3 px-4 text-sm">
-                                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800 dark:bg-brand-900/30 dark:text-brand-300">
                                                 {log.mentor_role}
                                             </span>
                                         </td>
@@ -246,7 +246,7 @@ export const BintangMentoringPage: React.FC<BintangMentoringPageProps> = ({ pres
                                         value="all" 
                                         checked={targetType === 'all'} 
                                         onChange={() => setTargetType('all')} 
-                                        className="text-indigo-600 focus:ring-indigo-500"
+                                        className="text-brand-600 focus:ring-brand-500"
                                     />
                                     Seluruh Siswa di Kelas
                                 </label>
@@ -257,7 +257,7 @@ export const BintangMentoringPage: React.FC<BintangMentoringPageProps> = ({ pres
                                         value="specific" 
                                         checked={targetType === 'specific'} 
                                         onChange={() => setTargetType('specific')} 
-                                        className="text-indigo-600 focus:ring-indigo-500"
+                                        className="text-brand-600 focus:ring-brand-500"
                                     />
                                     Siswa Tertentu
                                 </label>
@@ -285,7 +285,7 @@ export const BintangMentoringPage: React.FC<BintangMentoringPageProps> = ({ pres
                                                                 setSelectedStudents(selectedStudents.filter(id => id !== student.id));
                                                             }
                                                         }}
-                                                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                                                        className="rounded text-brand-600 focus:ring-brand-500 w-4 h-4"
                                                     />
                                                     <span className="text-sm text-slate-700 dark:text-slate-300">{student.name}</span>
                                                 </label>

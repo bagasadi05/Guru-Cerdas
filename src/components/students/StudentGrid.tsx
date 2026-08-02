@@ -69,7 +69,7 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                                         {student.access_code}
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-[10px] sm:text-xs font-medium border border-amber-200 dark:border-amber-900/30">
+                                    <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[10px] sm:text-xs font-medium border border-amber-200 dark:border-amber-900/30">
                                         <KeyRoundIcon className="w-3 h-3" />
                                         Butuh Kode
                                     </span>

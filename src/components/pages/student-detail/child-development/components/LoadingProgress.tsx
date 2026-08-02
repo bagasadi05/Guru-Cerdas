@@ -11,9 +11,9 @@ const LOADING_STEPS = [
 
 export const LoadingProgress: React.FC<{ currentStep: number }> = ({ currentStep }) => {
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-8 border border-purple-200 dark:border-purple-800">
+    <div className="bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/20 dark:to-blue-900/20 rounded-2xl p-8 border border-brand-200 dark:border-brand-800">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
         </div>
         <div>
@@ -68,7 +68,7 @@ export const LoadingProgress: React.FC<{ currentStep: number }> = ({ currentStep
       <div className="mt-6">
         <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-brand-600 to-brand-700 transition-all duration-300"
             style={{ width: `${(currentStep / LOADING_STEPS.length) * 100}%` }}
           />
         </div>

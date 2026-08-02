@@ -293,7 +293,7 @@ class ErrorBoundary extends Component<Props, State> {
         <div className="flex flex-col items-center justify-center min-h-[500px] bg-gray-100 dark:bg-gray-950 text-center p-8">
           <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
             <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-orange-200 dark:from-red-900/50 dark:to-orange-900/70 rounded-full flex items-center justify-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-rose-500 to-red-600 dark:from-red-900/50 dark:to-orange-900/70 rounded-full flex items-center justify-center">
                 <AlertTriangleIcon className="w-10 h-10 text-red-600 dark:text-red-400" />
               </div>
             </div>
@@ -334,7 +334,7 @@ class ErrorBoundary extends Component<Props, State> {
               {isChunkError ? (
                 <Button
                   onClick={this.recoverFromChunkError}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="flex-1 bg-brand-600 hover:bg-brand-700 text-white"
                 >
                   <RefreshCwIcon className="w-4 h-4 mr-2" />
                   {this.getLanguage() === 'id' ? 'Muat Ulang Aplikasi' : 'Reload Application'}
@@ -342,7 +342,7 @@ class ErrorBoundary extends Component<Props, State> {
               ) : (
                 <Button
                   onClick={this.handleRetry}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="flex-1 bg-brand-600 hover:bg-brand-700 text-white"
                 >
                   <RefreshCwIcon className="w-4 h-4 mr-2" />
                   {this.getTranslations().errors.tryAgain}
@@ -401,7 +401,7 @@ export const AsyncErrorBoundary: React.FC<{
       <React.Suspense
         fallback={
           <div className="flex items-center justify-center min-h-[200px]">
-            <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full"></div>
+            <div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full"></div>
           </div>
         }
       >

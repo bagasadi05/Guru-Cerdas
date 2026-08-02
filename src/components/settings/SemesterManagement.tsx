@@ -263,7 +263,7 @@ export const SemesterManagement: React.FC = () => {
                 <div>
                     <CardTitle className="flex items-center gap-2">
                         Manajemen Semester
-                        {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>}
+                        {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-600"></div>}
                     </CardTitle>
                     <CardDescription>Atur Tahun Ajaran dan Semester Aktif</CardDescription>
                 </div>
@@ -327,7 +327,7 @@ export const SemesterManagement: React.FC = () => {
                     </div>
                 ) : (
                     years.map(year => (
-                        <div key={year.id} className={`border rounded-xl transition-all ${year.is_active ? 'border-indigo-200 bg-indigo-50/30 dark:border-indigo-900/50 dark:bg-indigo-900/10' : 'border-slate-200 dark:border-slate-700'}`}>
+                        <div key={year.id} className={`border rounded-xl transition-all ${year.is_active ? 'border-brand-200 bg-brand-50/30 dark:border-brand-900/50 dark:bg-brand-900/10' : 'border-slate-200 dark:border-slate-700'}`}>
                             <div
                                 className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50"
                                 onClick={() => toggleYearExpand(year.id)}
@@ -341,7 +341,7 @@ export const SemesterManagement: React.FC = () => {
                                     <div>
                                         <h3 className="font-bold text-lg flex items-center gap-2">
                                             {year.name}
-                                            {year.is_active && <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs dark:bg-indigo-900 dark:text-indigo-300">Aktif</span>}
+                                            {year.is_active && <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs dark:bg-brand-900 dark:text-brand-300">Aktif</span>}
                                         </h3>
                                         <p className="text-sm text-gray-500">
                                             {new Date(year.start_date).toLocaleDateString('id-ID')} - {new Date(year.end_date).toLocaleDateString('id-ID')}

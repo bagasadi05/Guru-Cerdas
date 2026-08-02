@@ -201,7 +201,7 @@ const JurnalMengajarPage: React.FC = () => {
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative z-10">
         <div className="relative">
           <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-xl opacity-50 dark:opacity-20 rounded-full" />
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400 bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent font-serif relative">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400 bg-gradient-to-r from-emerald-500 to-emerald-600 bg-clip-text text-transparent font-serif relative">
             Jurnal Mengajar
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400 relative">
@@ -219,9 +219,9 @@ const JurnalMengajarPage: React.FC = () => {
       </header>
 
       {backendMissing ? (
-        <div className="p-6 rounded-2xl bg-amber-50/80 dark:bg-indigo-950/20 border border-amber-200 dark:border-indigo-800/30 flex items-start gap-4 animate-fade-in">
-          <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
-            <FileText className="w-5 h-5 text-amber-600 dark:text-indigo-400" />
+        <div className="p-6 rounded-2xl bg-amber-50/80 dark:bg-brand-950/20 border border-amber-200 dark:border-brand-800/30 flex items-start gap-4 animate-fade-in">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-brand-900/40 flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5 text-amber-600 dark:text-brand-400" />
           </div>
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white text-base">
@@ -254,7 +254,7 @@ const JurnalMengajarPage: React.FC = () => {
                 aria-label={isFilterExpanded ? 'Tutup filter' : 'Buka filter'}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100/50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100/50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                   </div>
                   <div>
@@ -422,7 +422,7 @@ const JurnalMengajarPage: React.FC = () => {
               </div>
             ) : journals.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 p-10 flex flex-col items-center text-center max-w-2xl mx-auto">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 text-slate-400 dark:text-slate-500 shadow-inner">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 text-slate-600 dark:text-slate-500 shadow-inner">
                   <BookOpen className="w-8 h-8" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Belum Ada Jurnal</h3>
@@ -459,14 +459,14 @@ const JurnalMengajarPage: React.FC = () => {
                                 <Calendar className="w-3 h-3" />
                                 {formatIdDate(j.date)}
                               </span>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-500/10 text-[11px] font-medium text-brand-700 dark:text-brand-400 uppercase tracking-wider">
                                 {className}
                               </span>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-[11px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-[11px] font-medium text-amber-700 dark:text-amber-400 uppercase tracking-wider">
                                 {j.subject}
                               </span>
                               {typeof j.meeting_number === 'number' && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                                   Pertemuan ke-{j.meeting_number}
                                 </span>
                               )}
@@ -533,13 +533,13 @@ const JurnalMengajarPage: React.FC = () => {
         <TabsContent value="rekap">
           <MotionDiv initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           {isGlobalRole && (
-            <div className="flex items-center gap-2 mb-4 bg-indigo-50 dark:bg-indigo-900/20 px-4 py-3 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
-              <label className="text-sm font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer flex items-center gap-2 w-full">
+            <div className="flex items-center gap-2 mb-4 bg-brand-50 dark:bg-brand-900/20 px-4 py-3 rounded-2xl border border-brand-100 dark:border-brand-800/30">
+              <label className="text-sm font-medium text-brand-700 dark:text-brand-300 cursor-pointer flex items-center gap-2 w-full">
                 <input 
                   type="checkbox" 
                   checked={showAllTeachers} 
                   onChange={(e) => setShowAllTeachers(e.target.checked)}
-                  className="rounded border-indigo-300 text-indigo-600 focus:ring-indigo-600 w-4 h-4"
+                  className="rounded border-brand-300 text-brand-600 focus:ring-brand-600 w-4 h-4"
                 />
                 Tampilkan Rekap Jurnal Seluruh Guru (Mode Supervisi)
               </label>

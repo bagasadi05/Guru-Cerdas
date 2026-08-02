@@ -28,7 +28,7 @@ export const SchoolAttendanceWidget: React.FC = () => {
         <DashboardPanel>
             <DashboardPanelHeader className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-700 dark:text-emerald-400">
                         <CalendarIcon className="w-5 h-5" />
                     </div>
                     <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Rekap Absensi Hari Ini</h2>

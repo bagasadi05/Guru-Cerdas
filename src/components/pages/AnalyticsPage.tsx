@@ -160,7 +160,7 @@ const AnalyticsPage: React.FC = () => {
                         onClick={() => setActiveTab(tab.id)}
                         className={`snap-start relative flex-shrink-0 sm:flex-1 min-w-[110px] min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 focus:outline-none
                             ${activeTab === tab.id 
-                                ? 'text-indigo-600 dark:text-indigo-400 scale-100' 
+                                ? 'text-brand-600 dark:text-brand-400 scale-100' 
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 scale-95 hover:scale-100'}`}
                     >
                         {activeTab === tab.id && (
@@ -178,7 +178,7 @@ const AnalyticsPage: React.FC = () => {
 
             {/* Tab Content Rendering */}
             <div className="mt-6 min-h-[400px]">
-                <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}>
+                <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div></div>}>
                     {activeTab === 'overview' && (
                         <OverviewTab 
                             students={students} classes={classes} attendanceStats={attendanceStats} 

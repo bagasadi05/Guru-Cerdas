@@ -1783,7 +1783,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           onClick={() => setActiveTabMode('single')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
             activeTabMode === 'single'
-              ? 'bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-indigo-650 dark:text-indigo-400 shadow-sm transform scale-102 font-bold'
+              ? 'bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-brand-600 dark:text-brand-400 shadow-sm transform scale-102 font-bold'
               : 'text-slate-605 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-205'
           }`}
         >
@@ -1793,7 +1793,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           onClick={() => setActiveTabMode('comparative')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
             activeTabMode === 'comparative'
-              ? 'bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-indigo-650 dark:text-indigo-400 shadow-sm transform scale-102 font-bold'
+              ? 'bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl text-brand-600 dark:text-brand-400 shadow-sm transform scale-102 font-bold'
               : 'text-slate-605 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-205'
           }`}
         >
@@ -1829,7 +1829,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Semester 1 Card */}
           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-slate-700/60 p-5 shadow-sm flex items-center gap-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl -mr-6 -mt-6" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-brand-500/5 rounded-full blur-xl -mr-6 -mt-6" />
             <ScoreRing
               score={avgScoreSem1}
               size={72}
@@ -1838,7 +1838,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             <div>
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Rata-rata Semester 1</p>
               <h4 className="text-lg font-extrabold text-slate-800 dark:text-white mt-0.5">Semester Ganjil</h4>
-              <span className="mt-2 inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 px-2 py-0.5 text-xxs font-bold">
+              <span className="mt-2 inline-flex items-center rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950/30 dark:text-brand-400 px-2 py-0.5 text-xxs font-bold">
                 {sem1Academic.length} Rekor Nilai
               </span>
             </div>
@@ -1864,7 +1864,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           {/* Growth Card */}
           <div className={`rounded-2xl p-5 text-white shadow-lg relative overflow-hidden flex flex-col justify-between ${
             avgScoreDiff >= 0 
-              ? 'bg-gradient-to-br from-teal-500 to-cyan-600 shadow-teal-500/20' 
+              ? 'bg-gradient-to-br from-blue-500 to-cyan-600 shadow-teal-500/20' 
               : 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/20'
           }`}>
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl -mr-6 -mt-6" />
@@ -1892,7 +1892,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 <h4 className="font-bold text-slate-800 dark:text-slate-200 text-lg">Bagan Radar Ganda: Dimensi Holistik</h4>
                 <div className="flex gap-4 text-xs font-semibold">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-3.5 h-3.5 rounded bg-indigo-500 inline-block" />
+                    <span className="w-3.5 h-3.5 rounded bg-brand-600 inline-block" />
                     <span className="text-slate-600 dark:text-slate-400">Sem 1</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -1936,8 +1936,8 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 {/* Semester 1 Polygon (Indigo) */}
                 <polygon 
                   points={calculateRadarPoints(compHolisticDimensions.sem1, maxScore, centerX, centerY, radius)} 
-                  fill="rgba(99, 102, 241, 0.15)" 
-                  stroke="rgba(99, 102, 241, 0.85)" 
+                  fill="rgba(13, 126, 158, 0.15)" 
+                  stroke="rgba(13, 126, 158, 0.85)" 
                   strokeWidth="2.5" 
                   strokeDasharray="4 2"
                 />
@@ -1995,7 +1995,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                         y={pos.y} 
                         textAnchor="middle" 
                         dominantBaseline="middle" 
-                        className="text-xxs font-bold fill-slate-600 dark:fill-slate-400 hover:fill-indigo-650 dark:hover:fill-indigo-400 transition-colors"
+                        className="text-xxs font-bold fill-slate-600 dark:fill-slate-400 hover:fill-brand-600 dark:hover:fill-brand-400 transition-colors"
                       >
                         {pos.label}
                       </text>
@@ -2009,9 +2009,9 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
             {/* Legenda & Mini Stats */}
             <div className="border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-4 grid grid-cols-2 gap-4 text-xs font-semibold">
-              <div className="flex flex-col items-center p-2 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/20">
+              <div className="flex flex-col items-center p-2 rounded-xl bg-brand-50/50 dark:bg-brand-950/10 border border-brand-100/50 dark:border-brand-900/20">
                 <span className="text-xxs text-slate-500 font-medium">Rata-rata Dimensi S1</span>
-                <span className="text-base font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                <span className="text-base font-bold text-brand-600 dark:text-brand-400 mt-0.5">
                   {Math.round(compHolisticDimensions.sem1.reduce((a,b)=>a+b,0)/5)}
                 </span>
               </div>
@@ -2032,7 +2032,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 <h4 className="font-bold text-slate-800 dark:text-slate-200 text-lg">Bagan Perbandingan Nilai Mapel</h4>
                 <div className="flex gap-4 text-xs font-semibold">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-3.5 h-3.5 rounded bg-indigo-500 inline-block" />
+                    <span className="w-3.5 h-3.5 rounded bg-brand-600 inline-block" />
                     <span className="text-slate-600 dark:text-slate-400">Semester 1</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -2051,7 +2051,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-semibold text-slate-700 dark:text-slate-300">{item.subject}</span>
                       <div className="flex gap-3 text-xxs">
-                        <span className="text-indigo-600 dark:text-indigo-400 font-bold">Sem 1: {item.sem1 ?? '-'}</span>
+                        <span className="text-brand-600 dark:text-brand-400 font-bold">Sem 1: {item.sem1 ?? '-'}</span>
                         <span className="text-emerald-600 dark:text-emerald-400 font-bold">Sem 2: {item.sem2 ?? '-'}</span>
                       </div>
                     </div>
@@ -2062,7 +2062,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                           <span className="text-xxs text-slate-400 font-semibold w-7">Sem 1</span>
                           <div className="flex-1 h-2 bg-slate-200/50 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div 
-                              className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-indigo-505 transition-all duration-505" 
+                              className="h-full rounded-full bg-gradient-to-r from-brand-600 to-brand-700 transition-all duration-500" 
                               style={{ width: `${item.sem1}%` }} 
                             />
                           </div>
@@ -2075,7 +2075,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                           <span className="text-xxs text-slate-400 font-semibold w-7">Sem 2</span>
                           <div className="flex-1 h-2 bg-slate-200/50 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div 
-                              className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-505 transition-all duration-505" 
+                              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-500" 
                               style={{ width: `${item.sem2}%` }} 
                             />
                           </div>
@@ -2106,7 +2106,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                 <p className="text-[11px] text-slate-400 font-semibold">SEMESTER 1</p>
-                <p className="text-2xl font-bold mt-1 text-indigo-600 dark:text-indigo-400">
+                <p className="text-2xl font-bold mt-1 text-brand-600 dark:text-brand-400">
                   {compAttendanceStats.sem1.percentage}%
                 </p>
                 <p className="text-xxs text-slate-500 mt-2 font-medium">
@@ -2211,8 +2211,8 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
         {/* Comparative AI Analysis CTA / Dashboard */}
         {!comparativeAnalysis ? (
-          <div className="flex flex-col items-center justify-center py-12 px-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl border border-purple-200 dark:border-purple-800">
-            <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-full p-6 mb-6">
+          <div className="flex flex-col items-center justify-center py-12 px-4 bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/20 dark:to-blue-900/20 rounded-2xl border border-brand-200 dark:border-brand-800">
+            <div className="bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/20 dark:to-blue-900/20 rounded-full p-6 mb-6">
               <BrainCircuitIcon className="w-16 h-16 text-purple-600 dark:text-purple-400" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
@@ -2225,7 +2225,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               onClick={handleGenerateComparativeAnalysis}
               size="lg"
               disabled={sem1Academic.length === 0 || sem2Academic.length === 0}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-md transition-all duration-300"
+              className="bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 shadow-md transition-all duration-300"
             >
               <SparklesIcon className="w-5 h-5 mr-2" />
               Jalankan Analisis Perbandingan AI
@@ -2236,11 +2236,11 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             {/* TS narrowing: comparativeAnalysis is guaranteed non-null in this else branch */}
             {(() => { if (!comparativeAnalysis) return null; })()}
             {/* Header Laporan Komparasi */}
-            <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800">
+            <Card className="bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/20 dark:to-blue-900/20 border-brand-200 dark:border-brand-800">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between flex-wrap gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-full p-3">
+                    <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-full p-3">
                       <BrainCircuitIcon className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -2249,7 +2249,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                         <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${
                           comparativeAnalysis.generatedBy === 'Offline Fallback'
                             ? 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                            : 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/50'
+                            : 'bg-brand-50 text-brand-700 border-brand-200 dark:bg-brand-950/30 dark:text-brand-400 dark:border-brand-900/50'
                         }`}>
                           {comparativeAnalysis.generatedBy === 'Offline Fallback' ? '📴 Offline Standard' : '✨ AI Generated'}
                         </span>
@@ -2300,7 +2300,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 className="bg-gradient-to-br from-emerald-500/10 to-slate-500/5 dark:from-emerald-500/5 dark:to-slate-500/0 border border-emerald-500/20 dark:border-emerald-500/10 rounded-2xl p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl -mr-6 -mt-6" />
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 dark:bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 font-semibold text-lg">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 dark:bg-emerald-500/15 flex items-center justify-center text-emerald-700 dark:text-emerald-400 mb-3 font-semibold text-lg">
                   🌱
                 </div>
                 <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-wide uppercase mb-1">Ulasan Pertumbuhan Menyeluruh Ananda</h4>
@@ -2323,8 +2323,8 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-indigo-50/30 dark:bg-indigo-950/10 p-5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/20">
-                    <h5 className="font-bold text-indigo-700 dark:text-indigo-400 text-sm uppercase mb-3 flex items-center gap-2">
+                  <div className="bg-brand-50/30 dark:bg-brand-950/10 p-5 rounded-xl border border-brand-100/50 dark:border-brand-900/20">
+                    <h5 className="font-bold text-brand-700 dark:text-brand-400 text-sm uppercase mb-3 flex items-center gap-2">
                       <span>📚</span> Semester 1
                     </h5>
                     <div className="space-y-4">
@@ -2377,8 +2377,8 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-indigo-50/30 dark:bg-indigo-950/10 p-5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/20">
-                    <h5 className="font-bold text-indigo-700 dark:text-indigo-400 text-sm uppercase mb-3 flex items-center gap-2">
+                  <div className="bg-brand-50/30 dark:bg-brand-950/10 p-5 rounded-xl border border-brand-100/50 dark:border-brand-900/20">
+                    <h5 className="font-bold text-brand-700 dark:text-brand-400 text-sm uppercase mb-3 flex items-center gap-2">
                       <span>😇</span> Semester 1
                     </h5>
                     <div className="space-y-4">
@@ -2431,8 +2431,8 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-indigo-50/30 dark:bg-indigo-950/10 p-5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/20">
-                    <h5 className="font-bold text-indigo-700 dark:text-indigo-400 text-sm uppercase mb-3 flex items-center gap-2">
+                  <div className="bg-brand-50/30 dark:bg-brand-950/10 p-5 rounded-xl border border-brand-100/50 dark:border-brand-900/20">
+                    <h5 className="font-bold text-brand-700 dark:text-brand-400 text-sm uppercase mb-3 flex items-center gap-2">
                       <span>🎨</span> Semester 1
                     </h5>
                     <div className="space-y-4">
@@ -2559,15 +2559,15 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
               previousAvg={periodStats.previousAvg}
               label="Rata-rata 3 Bulan Terakhir"
             />
-            <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl p-4 text-white shadow-lg shadow-emerald-500/20">
+            <div className="bg-gradient-to-br from-emerald-700 to-emerald-800 rounded-xl p-4 text-white shadow-lg shadow-emerald-500/20">
               <p className="text-xs opacity-80">Nilai Tertinggi</p>
               <p className="text-2xl font-bold">{Math.max(...studentScores, 0)}</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white shadow-lg shadow-amber-500/20">
+            <div className="bg-gradient-to-br from-amber-700 to-orange-800 rounded-xl p-4 text-white shadow-lg shadow-amber-500/20">
               <p className="text-xs opacity-80">Nilai Terendah</p>
               <p className="text-2xl font-bold">{Math.min(...studentScores, 0)}</p>
             </div>
-            <div className="bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl p-4 text-white shadow-lg shadow-slate-500/20">
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-4 text-white shadow-lg shadow-slate-500/20">
               <p className="text-xs opacity-80">Jumlah Mapel</p>
               <p className="text-2xl font-bold">{subjects.length}</p>
             </div>
@@ -2588,14 +2588,14 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                       <polygon key={level} points={calculateRadarPoints(subjects.map(() => level), maxScore, centerX, centerY, radius)} fill="none" stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />
                     ))}
                     {axisEndpoints.map((axis, i) => (<line key={i} x1={axis.x1} y1={axis.y1} x2={axis.x2} y2={axis.y2} stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />))}
-                    <polygon points={studentPolygonPoints} fill="rgba(99, 102, 241, 0.3)" stroke="rgb(99, 102, 241)" strokeWidth="2" />
+                    <polygon points={studentPolygonPoints} fill="rgba(13, 126, 158, 0.3)" stroke="rgb(99, 102, 241)" strokeWidth="2" />
                     {subjects.map((_, i) => { const angle = i * (2 * Math.PI / subjects.length) - Math.PI / 2; const ratio = studentScores[i] / maxScore; return (<circle key={i} cx={centerX + radius * ratio * Math.cos(angle)} cy={centerY + radius * ratio * Math.sin(angle)} r="5" fill="white" stroke="rgb(99, 102, 241)" strokeWidth="2" />); })}
                     {labelPositions.map((pos, i) => (<text key={i} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" className="text-xxs font-medium fill-slate-600 dark:fill-slate-400">{pos.label.length > 10 ? pos.label.substring(0, 10) + '...' : pos.label}</text>))}
                   </svg>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[260px]">
-                  <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-full p-4 mb-4 text-indigo-500">
+                  <div className="bg-brand-50 dark:bg-brand-900/20 rounded-full p-4 mb-4 text-brand-700">
                     <BrainCircuitIcon className="w-12 h-12" />
                   </div>
                   <h5 className="font-semibold text-slate-800 dark:text-slate-200 text-center mb-2">Bagan Radar Tidak Tersedia</h5>
@@ -2604,7 +2604,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                   </p>
                 </div>
               )}
-              <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-3">Rata-rata: <span className="font-bold text-indigo-600 dark:text-indigo-400">{overallAverage}</span></p>
+              <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-3">Rata-rata: <span className="font-bold text-brand-600 dark:text-brand-400">{overallAverage}</span></p>
             </div>
             {/* Bar Chart */}
             <SubjectPerformanceChart
@@ -2615,8 +2615,8 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
         )}
 
         {/* AI Analysis CTA */}
-        <div className="flex flex-col items-center justify-center py-12 px-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl border border-purple-200 dark:border-purple-800">
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-full p-6 mb-6">
+        <div className="flex flex-col items-center justify-center py-12 px-4 bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/20 dark:to-blue-900/20 rounded-2xl border border-brand-200 dark:border-brand-800">
+          <div className="bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/20 dark:to-blue-900/20 rounded-full p-6 mb-6">
             <BrainCircuitIcon className="w-16 h-16 text-purple-600 dark:text-purple-400 animate-pulse" />
           </div>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
@@ -2628,7 +2628,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
           <Button
             onClick={handleGenerateAnalysis}
             size="lg"
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-bold px-8 shadow-md"
+            className="bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 font-bold px-8 shadow-md"
           >
             <SparklesIcon className="w-5 h-5 mr-2" />
             ✨ Buat Laporan Perkembangan
@@ -2773,14 +2773,14 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                           <polygon key={level} points={calculateRadarPoints(subjects.map(() => level), maxScore, centerX, centerY, radius)} fill="none" stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />
                         ))}
                         {axisEndpoints.map((axis, i) => (<line key={i} x1={axis.x1} y1={axis.y1} x2={axis.x2} y2={axis.y2} stroke="currentColor" strokeWidth="1" className="text-slate-200 dark:text-slate-700" />))}
-                        <polygon points={studentPolygonPoints} fill="rgba(99, 102, 241, 0.3)" stroke="rgb(99, 102, 241)" strokeWidth="2" />
+                        <polygon points={studentPolygonPoints} fill="rgba(13, 126, 158, 0.3)" stroke="rgb(99, 102, 241)" strokeWidth="2" />
                         {subjects.map((_, i) => { const angle = i * (2 * Math.PI / subjects.length) - Math.PI / 2; const ratio = studentScores[i] / maxScore; return (<circle key={i} cx={centerX + radius * ratio * Math.cos(angle)} cy={centerY + radius * ratio * Math.sin(angle)} r="5" fill="white" stroke="rgb(99, 102, 241)" strokeWidth="2" />); })}
                         {labelPositions.map((pos, i) => (<text key={i} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" className="text-xxs font-medium fill-slate-600 dark:fill-slate-400">{pos.label.length > 10 ? pos.label.substring(0, 10) + '...' : pos.label}</text>))}
                       </svg>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[260px]">
-                      <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-full p-4 mb-4 text-indigo-500">
+                      <div className="bg-brand-50 dark:bg-brand-900/20 rounded-full p-4 mb-4 text-brand-700">
                         <BrainCircuitIcon className="w-12 h-12" />
                       </div>
                       <h5 className="font-semibold text-slate-800 dark:text-slate-200 text-center mb-2">Bagan Radar Tidak Tersedia</h5>
@@ -2789,7 +2789,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                       </p>
                     </div>
                   )}
-                  <p className="text-center text-xs text-slate-505 dark:text-slate-400 mt-3">Rata-rata: <span className="font-bold text-indigo-600 dark:text-indigo-400">{overallAverage}</span></p>
+                  <p className="text-center text-xs text-slate-505 dark:text-slate-400 mt-3">Rata-rata: <span className="font-bold text-brand-600 dark:text-brand-400">{overallAverage}</span></p>
                 </div>
                 {/* Subject Performance Chart */}
                 <SubjectPerformanceChart
@@ -2803,7 +2803,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             <Card className="border-slate-200 dark:border-slate-800">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg p-2">
+                  <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-lg p-2">
                     <PlayCircleIcon className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -2833,13 +2833,13 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
             />
 
             {/* Footer Note */}
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/10 dark:to-blue-950/10 rounded-2xl p-6 border border-purple-200/50 dark:border-purple-900/50">
+            <div className="bg-gradient-to-r from-brand-100 to-brand-200 dark:from-brand-950/10 dark:to-blue-950/10 rounded-2xl p-6 border border-brand-200/50 dark:border-brand-900/50">
               <div className="flex items-start gap-4">
                 <div className="bg-purple-100 dark:bg-purple-950/40 rounded-full p-2.5 flex-shrink-0">
                   <AlertCircleIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-purple-900 dark:text-purple-300 mb-1 text-sm uppercase tracking-wide">Catatan Penting Guru & Orang Tua</h4>
+                  <h4 className="font-bold text-purple-900 dark:text-brand-300 mb-1 text-sm uppercase tracking-wide">Catatan Penting Guru & Orang Tua</h4>
                   <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                     Analisis perkembangan siswa ini dirumuskan berdasarkan rekam data akademik serta perilaku harian kelas secara objektif.
                     Setiap anak tumbuh dengan garis waktu dan potensi keunikannya masing-masing. Terus dukung perkembangan minat-bakat Ananda, dan jalin komunikasi intensif dengan pihak sekolah untuk hasil stimulasi terbaik.

@@ -18,7 +18,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
     <div className="w-full max-w-4xl space-y-4">
       {isLoading ? (
         <div className="text-center py-12 text-slate-400 flex flex-col items-center gap-2">
-          <RefreshCw className="w-6 h-6 animate-spin text-indigo-500" />
+          <RefreshCw className="w-6 h-6 animate-spin text-brand-500" />
           Memuat riwayat pembuatan...
         </div>
       ) : history.length === 0 ? (
@@ -32,11 +32,11 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
             <div 
               key={item.id}
               onClick={() => onRestore(item)}
-              className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between"
+              className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between"
             >
               <div className="space-y-2">
                 <div className="flex justify-between items-start gap-2">
-                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-md text-[10px] font-bold">
+                  <span className="px-2 py-0.5 bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400 rounded-md text-[10px] font-bold">
                     {item.document_type}
                   </span>
                   <button 

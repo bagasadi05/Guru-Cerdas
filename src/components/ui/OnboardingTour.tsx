@@ -258,7 +258,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
             {/* Spotlight on current element */}
             {targetRect && (
                 <div
-                    className="fixed rounded-xl ring-4 ring-indigo-500 ring-offset-4 ring-offset-transparent shadow-[0_0_0_9999px_rgba(15,23,42,0.85)] transition-all duration-500 ease-out pointer-events-none z-[9999]"
+                    className="fixed rounded-xl ring-4 ring-brand-500 ring-offset-4 ring-offset-transparent shadow-[0_0_0_9999px_rgba(15,23,42,0.85)] transition-all duration-500 ease-out pointer-events-none z-[9999]"
                     style={{
                         top: targetRect.top - 6,
                         left: targetRect.left - 6,
@@ -276,12 +276,12 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-600 to-brand-700 flex items-center justify-center text-white shadow-lg shadow-brand-600/30 shrink-0">
                             {step.icon}
                         </div>
                         <div className="min-w-0">
                             <h3 className="font-bold text-slate-800 dark:text-white text-sm sm:text-base truncate">{step.title}</h3>
-                            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                            <span className="text-xs font-semibold text-brand-600 dark:text-brand-400">
                                 {currentStep + 1} / {tourSteps.length}
                             </span>
                         </div>
@@ -305,7 +305,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                     <div className="mb-4">
                         <button type="button"
                             onClick={() => setShowTips(!showTips)}
-                            className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                            className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 flex items-center gap-1 transition-colors"
                         >
                             <SparklesIcon className="w-3 h-3" />
                             {showTips ? 'Sembunyikan tips' : 'Lihat tips'}
@@ -314,7 +314,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                             <ul className="mt-2 space-y-1.5 animate-fade-in">
                                 {step.tips.map((tip, i) => (
                                     <li key={i} className="flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400">
-                                        <span className="text-indigo-500 mt-0.5">💡</span>
+                                        <span className="text-brand-500 mt-0.5">💡</span>
                                         {tip}
                                     </li>
                                 ))}
@@ -326,7 +326,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                 {/* Progress bar */}
                 <div className="relative h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mb-4 overflow-hidden">
                     <div
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-brand-600 to-brand-700 rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${progress}%` }}
                     />
                 </div>
@@ -339,9 +339,9 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
                             onClick={() => handleGoTo(index)}
                             className={`h-2 rounded-full transition-all duration-300 ${
                                 index === currentStep
-                                    ? 'bg-indigo-500 w-5'
+                                    ? 'bg-brand-600 w-5'
                                     : index < currentStep
-                                    ? 'bg-indigo-300 dark:bg-indigo-700 w-2'
+                                    ? 'bg-brand-300 dark:bg-brand-700 w-2'
                                     : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 w-2'
                             }`}
                             aria-label={`Langkah ${index + 1}: ${tourSteps[index].title}`}
@@ -362,7 +362,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
 
                     <Button
                         onClick={handleNext}
-                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl shadow-lg shadow-indigo-500/30 flex items-center gap-2"
+                        className="bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white px-4 py-2 rounded-xl shadow-lg shadow-brand-600/30 flex items-center gap-2"
                     >
                         {isLastStep ? (
                             <>
@@ -381,7 +381,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
 
             {/* Welcome message for first step */}
             {currentStep === 0 && (
-                <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-full shadow-2xl flex items-center gap-2 sm:gap-3 max-w-[calc(100vw-32px)] z-[10001] animate-bounce">
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-brand-600 to-brand-700 text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-full shadow-2xl flex items-center gap-2 sm:gap-3 max-w-[calc(100vw-32px)] z-[10001] animate-bounce">
                     <SparklesIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-amber-300" />
                     <span className="font-bold text-xs sm:text-base tracking-wide text-center truncate">Kenali Semua Menu Portal Guru!</span>
                 </div>
@@ -389,7 +389,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
 
             {/* Completion celebration for last step */}
             {isLastStep && (
-                <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-full shadow-2xl flex items-center gap-2 sm:gap-3 max-w-[calc(100vw-32px)] z-[10001]">
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-700 to-emerald-800 text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-full shadow-2xl flex items-center gap-2 sm:gap-3 max-w-[calc(100vw-32px)] z-[10001]">
                     <RocketIcon className="w-5 h-5 shrink-0" />
                     <span className="font-bold text-xs sm:text-sm text-center">Anda sudah mengenal semua menu!</span>
                 </div>

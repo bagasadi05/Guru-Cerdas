@@ -67,7 +67,7 @@ const CollapsibleSectionBase: React.FC<CollapsibleSectionProps> = ({
             >
                 <div className="flex items-center gap-3">
                     {icon && (
-                        <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                        <div className="p-2 rounded-lg bg-brand-500/10 text-brand-700 dark:text-brand-400">
                             {icon}
                         </div>
                     )}

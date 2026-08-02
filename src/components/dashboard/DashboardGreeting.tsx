@@ -61,17 +61,17 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
   const locale = language === 'id' ? 'id-ID' : 'en-US';
 
   return (
-    <header className="bg-gradient-to-br from-indigo-100/90 via-purple-100/60 to-pink-100/60 dark:from-indigo-950/40 dark:via-purple-950/20 dark:to-pink-950/20 backdrop-blur-xl border border-indigo-200/50 dark:border-slate-800/60 p-4 sm:p-6 md:p-7 rounded-3xl shadow-[0_8px_30px_rgb(79,70,229,0.08)] dark:shadow-indigo-500/5 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5 animate-scale-in relative overflow-hidden">
+    <header className="bg-gradient-to-br from-brand-100/90 via-brand-200/60 to-brand-50/60 dark:from-brand-950/40 dark:via-brand-900/20 dark:to-brand-800/20 backdrop-blur-xl border border-brand-200/60 dark:border-slate-800/60 p-4 sm:p-6 md:p-7 rounded-3xl shadow-[0_8px_30px_rgb(13,126,158,0.10)] dark:shadow-brand-500/10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5 animate-scale-in relative overflow-hidden">
       {/* Decorative background blur element */}
-      <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-400/20 dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute -top-20 -right-20 w-64 h-64 bg-brand-400/20 dark:bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
       
       <div className="flex items-center gap-3 sm:gap-4 relative z-10 min-w-0">
         <span className="text-3xl sm:text-4xl filter drop-shadow-md animate-bounce select-none shrink-0">{icon}</span>
         <div className="min-w-0 flex-1">
           <h1 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-            {greeting}, <span className="text-indigo-600 dark:text-indigo-400">{displayName}</span>! 🌟
+            {greeting}, <span className="text-brand-700 dark:text-brand-300">{displayName}</span>! 🌟
           </h1>
-          <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-indigo-200/70 mt-1 italic leading-relaxed">
+          <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-brand-200/70 mt-1 italic leading-relaxed">
             &ldquo;{randomQuote}&rdquo;
           </p>
         </div>
@@ -97,14 +97,14 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
         </div>
 
         {/* Live clock */}
-        <div className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-mono font-bold text-xs sm:text-sm px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-indigo-200/20 shadow-sm tracking-wider">
+        <div className="flex items-center gap-1.5 bg-brand-500/10 text-brand-700 dark:text-brand-300 font-mono font-bold text-xs sm:text-sm px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-brand-200/20 shadow-sm tracking-wider">
           ⏰ {currentTime.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':')}
         </div>
 
         {/* Sidebar toggle (XL only) */}
         <button type="button"
           onClick={onToggleSidebar}
-          className="hidden lg:flex items-center gap-2 bg-white/40 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl text-xs font-extrabold text-slate-700 dark:text-indigo-200 px-3.5 py-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="hidden lg:flex items-center gap-2 bg-white/40 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl text-xs font-extrabold text-slate-700 dark:text-brand-200 px-3.5 py-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           {isSidebarOpen ? t.dashboard.hidePanel : t.dashboard.showPanel}
         </button>

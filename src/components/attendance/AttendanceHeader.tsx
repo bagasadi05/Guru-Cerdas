@@ -10,7 +10,7 @@ interface AttendanceHeaderProps {
 
 export const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({ onAnalyze, onExport, isOnline }) => {
     return (
-        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-600 via-emerald-600 to-green-700 p-6 md:p-8 shadow-xl shadow-green-500/20 mb-6">
+        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-6 md:p-8 shadow-xl shadow-green-500/20 mb-6">
             {/* Decorative background elements */}
             <div className="absolute top-0 right-0 -mt-20 -mr-20 w-72 h-72 bg-emerald-500/30 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
             <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-72 h-72 bg-green-500/30 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
@@ -27,7 +27,7 @@ export const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({ onAnalyze, o
                         <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight font-serif drop-shadow-sm">
                             Insight Kehadiran
                         </h1>
-                        <p className="text-sm md:text-base text-green-100/90 leading-relaxed max-w-2xl mx-auto md:mx-0 font-light tracking-wide">
+                        <p className="text-sm md:text-base text-green-100/90 leading-relaxed max-w-2xl mx-auto md:mx-0 font-normal tracking-wide">
                             Visualisasi dan analisis cerdas untuk memonitor kedisiplinan siswa setiap harinya.
                         </p>
                     </div>

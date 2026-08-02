@@ -39,7 +39,7 @@ export const IDCardPrintModal: React.FC<IDCardPrintModalProps> = ({ isOpen, onCl
                     <Button variant="ghost" onClick={onClose}>Batal</Button>
                     <Button
                         onClick={handlePrint}
-                        className="bg-indigo-600 text-white hover:bg-indigo-700"
+                        className="bg-brand-600 text-white hover:bg-brand-700"
                     >
                         <PrinterIcon className="w-4 h-4 mr-2" />
                         Cetak Kartu

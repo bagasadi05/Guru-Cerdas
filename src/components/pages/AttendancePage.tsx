@@ -189,7 +189,7 @@ const AttendancePage: React.FC = () => {
                 <div className="relative z-10 p-3 sm:p-0 -mx-4 px-4 sm:mx-0 transition-all rounded-3xl overflow-hidden flex-1 shadow-[0_8px_30px_rgb(16,185,129,0.15)] mb-2">
                     <button
                         type="button"
-                        className="group relative overflow-hidden w-full rounded-3xl bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 dark:from-emerald-600 dark:via-teal-700 dark:to-emerald-800 cursor-pointer text-left"
+                        className="group relative overflow-hidden w-full rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 dark:from-emerald-600 dark:via-teal-700 dark:to-emerald-800 cursor-pointer text-left"
                         onClick={() => setDatePickerOpen(true)}
                         aria-label="Pilih tanggal absensi"
                     >
@@ -253,7 +253,7 @@ const AttendancePage: React.FC = () => {
                             <Button
                                 onClick={markRestAsPresent}
                                 size="default"
-                                className="w-full sm:w-auto text-sm font-bold shadow-lg shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 border-none transition-all active:scale-95 duration-200"
+                                className="w-full sm:w-auto text-sm font-bold shadow-lg shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 border-none transition-all active:scale-95 duration-200"
                             >
                                 <CheckCircleIcon className="w-4 h-4 mr-2" />
                                 Tandai Sisa Hadir ({unmarkedStudents.length})
@@ -264,12 +264,12 @@ const AttendancePage: React.FC = () => {
 
                 {/* Batch Action Bar — appears when students are selected */}
                 {selectedStudents.size > 0 && viewMode === 'list' && (
-                    <div className="mb-4 p-3 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl shadow-lg shadow-emerald-500/25 flex flex-col sm:flex-row sm:items-center gap-3 animate-fade-in">
+                    <div className="mb-4 p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl shadow-lg shadow-emerald-500/25 flex flex-col sm:flex-row sm:items-center gap-3 animate-fade-in">
                         <div className="flex items-center gap-2 text-white flex-shrink-0">
                             <span className="font-bold text-sm">{selectedStudents.size} siswa dipilih</span>
                             <button type="button"
                                 onClick={() => setSelectedStudents(new Set())}
-                                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                                className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                                 aria-label="Batal pilih semua"
                             >
                                 <XIcon className="w-4 h-4 text-white" />
@@ -288,7 +288,7 @@ const AttendancePage: React.FC = () => {
                                     <button type="button"
                                         key={opt.value}
                                         onClick={() => handleBatchStatusChange(opt.value)}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${btnStyle}`}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-xl text-xs font-bold transition-all active:scale-95 ${btnStyle}`}
                                     >
                                         <opt.icon className="w-3.5 h-3.5" />
                                         {opt.label}
@@ -353,7 +353,7 @@ const AttendancePage: React.FC = () => {
                             onClick={handleSave}
                             disabled={isSaving}
                             data-tutorial="attendance-save"
-                            className="w-full h-14 text-lg font-bold shadow-[0_8px_30px_rgb(16,185,129,0.25)] bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 border border-white/20 rounded-2xl transition-all hover:-translate-y-1 active:scale-[0.98] text-white"
+                            className="w-full h-14 text-lg font-bold shadow-[0_8px_30px_rgb(16,185,129,0.25)] bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 border border-white/20 rounded-2xl transition-all hover:-translate-y-1 active:scale-[0.98] text-white"
                         >
                             {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
                         </Button>
@@ -365,7 +365,7 @@ const AttendancePage: React.FC = () => {
                     <div className="mt-6 space-y-4">
                         <CollapsibleSection
                             title="Ringkasan & Streak Kehadiran"
-                            icon={<BarChart3 className="w-4 h-4 text-indigo-500" />}
+                            icon={<BarChart3 className="w-4 h-4 text-brand-500" />}
                             defaultOpen={false}
                         >
                             <AttendanceSummaryWidget
@@ -550,7 +550,7 @@ const AttendancePage: React.FC = () => {
                                 setIsSaveConfirmOpen(false);
                                 performSave();
                             }}
-                            className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
+                            className="flex-1 bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 text-white"
                         >
                             {isSaving ? 'Menyimpan...' : 'Simpan & Tandai Hadir'}
                         </Button>

@@ -42,6 +42,44 @@ vi.stubGlobal('crypto', {
     randomUUID: () => 'test-uuid-' + Math.random().toString(36).substr(2, 9)
 });
 
+// ── Mock supabase untuk verifikasi kolom kunci dinamis ──────────────────────
+// dataManagement.archiveOldRecords(deleteAfterArchive=true) memanggil
+// softDeleteBulk(entity, ids) — kolom query (eq/in) harus diambil dari
+// ENTITY_KEY_COLUMN[entity], bukan hardcode 'id'.
+const bulkEqCalls: Array<{ table: string; column: string; value: string }> = [];
+const bulkInCalls: Array<{ table: string; column: string; values: string[] }> = [];
+
+vi.mock('../../src/services/supabase', () => {
+    const makeChain = (table: string) => {
+        const chain: Record<string, unknown> = {
+            update: vi.fn(() => chain),
+            eq: vi.fn((column: string, value: string) => {
+                bulkEqCalls.push({ table, column, value });
+                return chain;
+            }),
+            in: vi.fn((column: string, values: string[]) => {
+                bulkInCalls.push({ table, column, values });
+                return chain;
+            }),
+            select: vi.fn(() => chain),
+            not: vi.fn(() => chain),
+            order: vi.fn(() => chain),
+            lt: vi.fn(() => chain),
+            insert: vi.fn(() => Promise.resolve({ data: null, error: null })),
+            delete: vi.fn(() => chain),
+            then: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+        };
+        return chain;
+    };
+    return {
+        supabase: {
+            from: vi.fn((table: string) => makeChain(table)),
+        },
+    };
+});
+
+import { softDeleteBulk, ENTITY_KEY_COLUMN } from '../../src/services/SoftDeleteService';
+
 describe('Data Management Service', () => {
     beforeEach(() => {
         localStorageMock.clear();
@@ -462,5 +500,44 @@ describe('Data Management Service', () => {
 
             expect(url).toContain('blob:');
         });
+    });
+});
+
+describe('Data Management — kolom kunci dinamis (anti-HTTP 400)', () => {
+    beforeEach(() => {
+        bulkEqCalls.length = 0;
+        bulkInCalls.length = 0;
+    });
+
+    it('softDeleteBulk user_settings memakai kolom user_id (bukan hardcode id)', async () => {
+        const result = await softDeleteBulk('user_settings', ['user-1', 'user-2']);
+        expect(result.success).toBe(true);
+
+        const call = bulkInCalls.find(c => c.table === 'user_settings');
+        expect(call).toBeDefined();
+        expect(call!.column).toBe('user_id');
+        expect(call!.values).toEqual(['user-1', 'user-2']);
+    });
+
+    it('softDeleteBulk entity biasa (students) tetap memakai kolom id', async () => {
+        const result = await softDeleteBulk('students', ['s-1']);
+        expect(result.success).toBe(true);
+
+        const call = bulkInCalls.find(c => c.table === 'students');
+        expect(call).toBeDefined();
+        expect(call!.column).toBe('id');
+    });
+
+    it('invariant: kolom in() tiap entity = ENTITY_KEY_COLUMN[entity] (bukan hardcode id)', async () => {
+        const entities = ['students', 'tasks', 'violations', 'homework', 'announcements', 'user_settings'] as const;
+
+        for (const entity of entities) {
+            bulkInCalls.length = 0;
+            await softDeleteBulk(entity, ['x-1']);
+
+            const call = bulkInCalls.find(c => c.table === entity);
+            expect(call).toBeDefined();
+            expect(call!.column).toBe(ENTITY_KEY_COLUMN[entity]);
+        }
     });
 });

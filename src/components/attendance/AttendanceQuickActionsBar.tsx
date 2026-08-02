@@ -52,7 +52,7 @@ export const AttendanceQuickActionsBar: React.FC<AttendanceQuickActionsBarProps>
                   onClick={() => onViewModeChange(option.mode)}
                   className={`w-10 h-10 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300'
+                      ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
                       : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                   aria-label={option.ariaLabel}

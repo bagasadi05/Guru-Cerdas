@@ -219,4 +219,5 @@ graph TB
 - [Data Flow Architecture](./data-flow.md)
 - [Security Architecture](./security.md)
 - [Offline Sync Strategy](./offline-sync.md)
+- [Soft Delete Contract](./soft-delete.md)
 - [Deployment Guide](../guides/deployment.md)

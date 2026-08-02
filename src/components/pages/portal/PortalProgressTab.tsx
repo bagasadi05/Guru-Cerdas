@@ -165,7 +165,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
 
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
-                        <BarChartIcon className="h-5 w-5 text-indigo-500" />
+                        <BarChartIcon className="h-5 w-5 text-brand-500" />
                         <p className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">{averageScore ?? 'N/A'}</p>
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Rata-rata nilai</p>
                     </div>
@@ -262,7 +262,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                             </div>
                             <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                                 <div
-                                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-rose-500 transition-all duration-500"
+                                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-600 transition-all duration-500"
                                     style={{ width: `${progressPercent}%` }}
                                 />
                             </div>
@@ -297,7 +297,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Poin 7 hari terakhir</p>
                                 </div>
                                 <div className="rounded-3xl border border-white/80 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/10">
-                                    <BookOpenIcon className="h-5 w-5 text-indigo-500" />
+                                    <BookOpenIcon className="h-5 w-5 text-brand-500" />
                                     <p className="mt-3 text-2xl font-bold text-slate-950 dark:text-white">{pointSubjects.length}</p>
                                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Mapel/area aktif</p>
                                 </div>
@@ -306,7 +306,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                             <div className="mt-6 grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
                                 <div className="rounded-[28px] border border-white/80 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/10">
                                     <div className="mt-4 flex items-start gap-4">
-                                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-xl font-black text-white shadow-lg shadow-amber-500/20">
+                                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-700 to-orange-800 text-xl font-black text-white shadow-lg shadow-amber-500/20">
                                             +{latestPoint?.points ?? 0}
                                         </div>
                                         <div className="min-w-0">
@@ -357,7 +357,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                                                     </div>
                                                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                                                         <div
-                                                            className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-600"
+                                                            className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-600"
                                                             style={{ width: `${Math.min(100, Math.round((points / totalQuizPoints) * 100))}%` }}
                                                         />
                                                     </div>
@@ -405,10 +405,10 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                                                                 Terakhir {pointDateFormatter.format(new Date(item.latestDate))}
                                                             </p>
                                                         </div>
-                                                        <span className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-bold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">+{item.total}</span>
+                                                        <span className="rounded-full bg-brand-100 px-3 py-1 text-sm font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">+{item.total}</span>
                                                     </div>
                                                     <div className="mt-4 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                                        <SparklesIcon className="h-4 w-4 text-indigo-500" />
+                                                        <SparklesIcon className="h-4 w-4 text-brand-500" />
                                                         {item.count} aktivitas tercatat
                                                     </div>
                                                 </div>

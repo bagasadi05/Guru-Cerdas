@@ -87,7 +87,7 @@ export const QuickNotePresets: React.FC<QuickNotePresetsProps> = ({
     return (
         <div className="space-y-3">
             <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-indigo-500" />
+                <FileText className="w-4 h-4 text-brand-500" />
                 <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300">
                     Catatan Cepat
                 </h4>
@@ -98,7 +98,7 @@ export const QuickNotePresets: React.FC<QuickNotePresetsProps> = ({
                     <button type="button"
                         key={preset.id}
                         onClick={() => onSelectPreset(preset.text)}
-                        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 ${preset.bgColor} transition-all hover:shadow-md active:scale-95 ${currentNote === preset.text ? 'ring-2 ring-indigo-500' : ''
+                        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 ${preset.bgColor} transition-all hover:shadow-md active:scale-95 ${currentNote === preset.text ? 'ring-2 ring-brand-500' : ''
                             }`}
                     >
                         <div className={`${preset.color}`}>
