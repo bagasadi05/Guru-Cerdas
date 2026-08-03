@@ -75,31 +75,71 @@ function parseRetryAfterSeconds(header: string | null | undefined): number {
   return RATE_LIMIT_WINDOW_MS / 1000;
 }
 
-function isOriginAllowed(origin: string | undefined, allowedOrigin: string | undefined): boolean {
-  if (!allowedOrigin) return false;
-  if (!origin) return false;
-  const allowedOrigins = allowedOrigin
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
+function getRequestOrigin(req: ExtendedRequest): string | undefined {
+  const origin = req.headers.origin;
+  if (typeof origin === 'string' && origin.length > 0) return origin;
+  const referer = req.headers.referer;
+  if (typeof referer === 'string') {
+    try {
+      return new URL(referer).origin;
+    } catch {
+      // Fallback
+    }
+  }
+  const host = (req.headers['x-forwarded-host'] || req.headers.host) as string | undefined;
+  if (host) {
+    const proto = (req.headers['x-forwarded-proto'] || 'https') as string;
+    return `${proto}://${host}`;
+  }
+  return undefined;
+}
 
-  return allowedOrigins.some((pattern) => {
+function isOriginAllowed(req: ExtendedRequest, allowedOriginEnv: string | undefined): boolean {
+  const origin = getRequestOrigin(req);
+  if (!origin) return false;
+
+  // 1. Same-origin request: host header matches request origin hostname
+  const reqHost = ((req.headers['x-forwarded-host'] || req.headers.host) as string | undefined)?.toLowerCase();
+  if (reqHost) {
+    try {
+      const originHost = new URL(origin).hostname.toLowerCase();
+      if (originHost === reqHost) return true;
+    } catch {
+      // Fallback
+    }
+  }
+
+  // 2. Default allowed production & dev origins
+  const defaultPatterns = [
+    'https://guru-cerdas.my.id',
+    'https://*.guru-cerdas.my.id',
+    'https://*.vercel.app',
+    'http://localhost:*',
+    'http://127.0.0.1:*',
+  ];
+
+  const configuredPatterns = allowedOriginEnv
+    ? allowedOriginEnv.split(',').map((item) => item.trim()).filter(Boolean)
+    : [];
+
+  const allPatterns = [...configuredPatterns, ...defaultPatterns];
+
+  return allPatterns.some((pattern) => {
     if (pattern === origin) return true;
 
-    // Match wildcards (e.g. https://*.guru-cerdas.my.id)
+    // Match wildcards (e.g. https://*.guru-cerdas.my.id or http://localhost:*)
     if (pattern.includes('*')) {
       const regexStr =
         '^' +
         pattern
-          .replace(/\*/g, '__WILDCARD__')
-          .replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') // Escape regex characters
-          .replace(/__WILDCARD__/g, '[a-zA-Z0-9-]+') + // Match alphanumeric and dash subdomains
+          .replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&') // Escape regex special chars
+          .replace(/\*/g, '[a-zA-Z0-9-.:]+') + // Match wildcard
         '$';
       const regex = new RegExp(regexStr);
       return regex.test(origin);
     }
 
-    // Automatically match subdomains of pattern domain (e.g. www.domain.com matches domain.com)
+    // Automatically match subdomains of pattern domain
     try {
       const patternUrl = new URL(pattern);
       const originUrl = new URL(origin);
@@ -114,20 +154,6 @@ function isOriginAllowed(origin: string | undefined, allowedOrigin: string | und
 
     return false;
   });
-}
-
-function getRequestOrigin(req: ExtendedRequest): string | undefined {
-  const origin = req.headers.origin;
-  if (typeof origin === 'string' && origin.length > 0) return origin;
-  const referer = req.headers.referer;
-  if (typeof referer === 'string') {
-    try {
-      return new URL(referer).origin;
-    } catch {
-      return undefined;
-    }
-  }
-  return undefined;
 }
 
 function getClientKey(req: ExtendedRequest): string {
@@ -273,8 +299,7 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
     return;
   }
 
-  const origin = getRequestOrigin(req);
-  if (!isOriginAllowed(origin, process.env.GEMINI_ALLOWED_ORIGIN)) {
+  if (!isOriginAllowed(req, process.env.GEMINI_ALLOWED_ORIGIN)) {
     res.status(403).json({ error: 'Origin not allowed', requestId });
     return;
   }
