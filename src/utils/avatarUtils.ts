@@ -103,6 +103,15 @@ const AVATAR_SIZES: Record<AvatarSize, { w: number; h: number; q: number }> = {
 const getOptimizedUrl = (url: string, size: AvatarSize = 'md'): string => {
     // Only optimize real absolute URLs (not data URIs)
     if (url && url.startsWith('http')) {
+        // Skip proxying for internal domain, R2 storage, or Supabase URLs to prevent CSP connect-src SW blockages
+        if (
+            url.includes('guru-cerdas.my.id') ||
+            url.includes('r2.cloudflarestorage.com') ||
+            url.includes('r2.dev') ||
+            url.includes('supabase.co')
+        ) {
+            return url;
+        }
         const { w, h, q } = AVATAR_SIZES[size];
         return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=${w}&h=${h}&fit=cover&q=${q}`;
     }

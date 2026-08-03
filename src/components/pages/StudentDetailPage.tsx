@@ -299,79 +299,106 @@ const StudentDetailPage = () => {
                     ]}
                     className="mb-4"
                 />
+                {/* Profile Header Card */}
+                <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm overflow-hidden">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 f-p-card">
+                        {/* Avatar + Name */}
+                        <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                            <div className="relative group shrink-0">
+                                <img
+                                    src={getStudentAvatar(student.avatar_url, student.gender, student.id, undefined, 'md')}
+                                    alt={student.name}
+                                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-white shadow-md dark:border-slate-600"
+                                />
+                                <input type="file" ref={photoInputRef} onChange={handlePhotoChange} accept="image/png, image/jpeg" className="hidden" disabled={isUploadingPhoto || !isOnline} />
+                                {canManageStudentProfile ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => photoInputRef.current?.click()}
+                                        disabled={isUploadingPhoto || !isOnline}
+                                        aria-label="Unggah foto profil siswa"
+                                        className="absolute -bottom-1 -right-1 p-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md shadow-md transition-transform hover:scale-110"
+                                    >
+                                        <CameraIcon className="w-3 h-3" />
+                                    </button>
+                                ) : null}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h1 className="f-text-xl text-slate-900 dark:text-white font-bold leading-snug truncate">
+                                    {student.name}
+                                </h1>
+                                <p className="f-text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                                    {student.classes?.name
+                                        ? (student.classes.name.toLowerCase().startsWith('kelas')
+                                            ? student.classes.name
+                                            : `Kelas ${student.classes.name}`)
+                                        : 'N/A'}
+                                </p>
+                            </div>
+                        </div>
 
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div className="flex items-center gap-3 sm:gap-4 w-full md:w-auto">
-                        <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Kembali" className="flex-shrink-0 h-10 w-10 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-transform hover:-translate-x-1">
-                            <ArrowLeftIcon className="w-5 h-5" />
-                        </Button>
-                        <div className="relative group flex-shrink-0">
-                            <img src={getStudentAvatar(student.avatar_url, student.gender, student.id, undefined, 'md')} alt={student.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md group-hover:shadow-lg transition-all duration-300 dark:border-white/10 group-hover:scale-105" />
-                            <input type="file" ref={photoInputRef} onChange={handlePhotoChange} accept="image/png, image/jpeg" className="hidden" disabled={isUploadingPhoto || !isOnline} />
+                        {/* Action buttons — auto width on desktop, full width on mobile */}
+                        <div className="flex items-center gap-2 shrink-0">
                             {canManageStudentProfile ? (
-                                <button type="button" onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} aria-label="Unggah foto profil siswa" className="absolute -bottom-1 -right-1 p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-md hover:scale-110 transition-transform">
-                                    <CameraIcon className="w-4 h-4" />
-                                </button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setModalState({ type: 'editStudent', data: student })}
+                                    disabled={!isOnline}
+                                    className="f-btn flex-1 sm:flex-none bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
+                                >
+                                    <UserCircleIcon className="f-icon-sm text-slate-500 dark:text-slate-400" />
+                                    <span className="truncate">Edit Profil</span>
+                                </Button>
+                            ) : null}
+
+                            <Link to={`/cetak-rapot/${studentId}`} className="flex-1 sm:flex-none flex min-w-0">
+                                <Button
+                                    variant="outline"
+                                    className="w-full f-btn bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
+                                >
+                                    <FileTextIcon className="f-icon-sm text-slate-500 dark:text-slate-400" />
+                                    <span className="truncate">Cetak Rapor</span>
+                                </Button>
+                            </Link>
+
+                            {canManageStudentProfile ? (
+                                <Button
+                                    onClick={() => setModalState({ type: 'portalAccess' })}
+                                    className="f-btn flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-sm"
+                                >
+                                    <KeyRoundIcon className="f-icon-sm" />
+                                    <span className="truncate">Akses Portal</span>
+                                </Button>
                             ) : null}
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white truncate">{student.name}</h1>
-                            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 truncate">Kelas {student.classes?.name || 'N/A'}</p>
-                        </div>
                     </div>
-                    <div className="flex items-center gap-2 w-full md:w-auto self-start md:self-center flex-wrap">
-                        {canManageStudentProfile ? (
-                            <Button
-                                variant="outline"
-                                onClick={() => setModalState({ type: 'editStudent', data: student })}
-                                disabled={!isOnline}
-                                className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-all hover:-translate-y-0.5"
-                            >
-                                <UserCircleIcon className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Edit Profil</span>
-                            </Button>
-                        ) : null}
-
-                        <Link to={`/cetak-rapot/${studentId}`} className="flex-1 sm:flex-none flex">
-                            <Button variant="outline" className="w-full h-10 px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-all hover:-translate-y-0.5">
-                                <FileTextIcon className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Cetak Rapor</span>
-                            </Button>
-                        </Link>
-
-                        {canManageStudentProfile ? (
-                            <Button
-                                onClick={() => setModalState({ type: 'portalAccess' })}
-                                className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
-                            >
-                                <KeyRoundIcon className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Akses Portal</span>
-                            </Button>
-                        ) : null}
-                    </div>
-                </header>
+                </div>
 
                 {/* Semester Selector */}
-                <div className="mt-6 mb-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-3 border border-gray-200 dark:border-white/10 animate-fade-in-up">
-                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter Semester:</span>
-                    <SemesterSelector
-                        value={selectedSemesterId || 'all'}
-                        onChange={(semId) => setSelectedSemesterId(semId === 'all' ? null : semId)}
-                        size="sm"
-                        includeAllOption={true}
-                        className="min-w-[200px] lg:min-w-[200px] w-full lg:w-auto"
-                    />
-                    <div className="w-full sm:w-auto text-xs text-slate-500 dark:text-slate-400">
+                <div className="f-mt-lg f-mb-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl f-p-card border border-slate-200 dark:border-white/10 animate-fade-in-up space-y-2">
+                    <div className="flex items-center justify-between f-gap-row">
+                        <span className="f-text-sm-medium text-slate-600 dark:text-slate-400 shrink-0">Filter Semester:</span>
+                        <SemesterSelector
+                            value={selectedSemesterId || 'all'}
+                            onChange={(semId) => setSelectedSemesterId(semId === 'all' ? null : semId)}
+                            size="sm"
+                            includeAllOption={true}
+                            className="flex-1 min-w-0"
+                        />
+                    </div>
+                    <div className="f-text-xs text-slate-500 dark:text-slate-400">
                         Sedang melihat: <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedSemesterLabel}</span>
                     </div>
                 </div>
 
-                <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mt-6">
+                <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 f-gap-grid">
                     <StatCard icon={CheckCircleIcon} label="Hadir" value={`${attendanceSummary.Hadir} hari`} color="from-green-500 to-emerald-400" />
                     <StatCard icon={AlertCircleIcon} label="Izin" value={`${attendanceSummary.Izin} hari`} color="from-blue-500 to-cyan-400" />
                     <StatCard icon={AlertCircleIcon} label="Sakit" value={`${attendanceSummary.Sakit} hari`} color="from-yellow-500 to-amber-400" />
                     <StatCard icon={XCircleIcon} label="Alpha" value={`${attendanceSummary.Alpha} hari`} color="from-orange-500 to-red-400" />
-                    <div className="col-span-2 sm:col-span-1">
-                        <StatCard icon={ShieldAlertIcon} label="Poin Pelanggaran" value={totalViolationPoints} color="from-red-500 to-rose-400" />
-                    </div>
+                    <StatCard icon={ShieldAlertIcon} label="Poin Pelanggaran" value={totalViolationPoints} color="from-red-500 to-rose-400" className="col-span-2 sm:col-span-1" />
                 </section>
+
 
                 <Card>
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -380,11 +407,38 @@ const StudentDetailPage = () => {
                             <div className="relative">
                                 <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-gray-900 to-transparent pointer-events-none z-10 transition-opacity duration-300 ${tabScrollState.left ? 'opacity-100' : 'opacity-0'}`} />
                                 <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10 transition-opacity duration-300 ${tabScrollState.right ? 'opacity-100' : 'opacity-0'}`} />
-                                <div ref={tabsScrollRef} className="flex justify-start sm:justify-center px-2 sm:px-6 py-2 overflow-x-auto scrollbar-hide">
-                                    <TabsList className="bg-gray-100/70 dark:bg-black/30 p-1 rounded-xl">
-                                        <TabsTrigger value="grades" className="h-11">Nilai</TabsTrigger>
-                                        <TabsTrigger value="activity" className="h-11">Keaktifan</TabsTrigger>
-                                        <TabsTrigger value="violations" className="h-11">Pelanggaran</TabsTrigger>
+                                <div ref={tabsScrollRef} className="flex justify-start px-2 sm:px-4 py-2 overflow-x-auto scrollbar-hide">
+                                    <TabsList className="bg-gray-100/70 dark:bg-black/30 p-1 rounded-xl w-full flex justify-between gap-1 min-w-max lg:min-w-0 flex-nowrap lg:flex-wrap xl:flex-nowrap">
+                                        <TabsTrigger value="grades" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">Nilai</TabsTrigger>
+                                        <TabsTrigger value="activity" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">Keaktifan</TabsTrigger>
+                                        <TabsTrigger value="violations" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">Pelanggaran</TabsTrigger>
+                                        <TabsTrigger value="bintang" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">
+                                            <ShieldAlertIcon className="w-3.5 h-3.5 mr-1 inline text-emerald-500" />
+                                            BINTANG
+                                        </TabsTrigger>
+                                        <TabsTrigger value="extracurricular" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">
+                                            <Trophy className="w-3.5 h-3.5 mr-1 inline" />
+                                            Ekstra
+                                        </TabsTrigger>
+                                        <TabsTrigger value="achievements" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">
+                                            <Trophy className="w-3.5 h-3.5 mr-1 inline" />
+                                            Prestasi
+                                        </TabsTrigger>
+                                        <TabsTrigger value="reports" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">Catatan Guru</TabsTrigger>
+                                        <TabsTrigger value="development" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">
+                                            <BrainCircuitIcon className="w-3.5 h-3.5 mr-1 inline" />
+                                            Perkembangan
+                                        </TabsTrigger>
+                                        <TabsTrigger value="communication" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">
+                                            <div className="relative">
+                                                Komunikasi
+                                                {unreadMessagesCount > 0 && (
+                                                    <span className="absolute -top-1.5 -right-3 min-w-4 h-4 px-1 bg-red-500 rounded-full text-xxs text-white flex items-center justify-center font-bold">
+                                                        {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TabsTrigger>
                                     </TabsList>
                                 </div>
                             </div>
@@ -421,6 +475,122 @@ const StudentDetailPage = () => {
                                         isHomeroomTeacher={isHomeroomTeacher}
                                         canAdd={canAdd}
                                         canManageAllRecords={canManageAllRecords}
+                                    />
+                                </Suspense>
+                            )}
+                        </TabsContent>
+                        <TabsContent value="bintang" className="p-0">
+                            {activeTab === 'bintang' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <BintangTab
+                                        studentId={studentId!}
+                                        studentName={student.name}
+                                        violations={filteredViolations}
+                                    />
+                                </Suspense>
+                            )}
+                        </TabsContent>
+                        <TabsContent value="extracurricular" className="p-0">
+                            {activeTab === 'extracurricular' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <ExtracurricularTab
+                                        studentExtracurriculars={filteredExtracurriculars}
+                                        attendanceRecords={filteredExAttendance}
+                                        grades={filteredExGrades}
+                                    />
+                                </Suspense>
+                            )}
+                        </TabsContent>
+                        <TabsContent value="achievements" className="p-0">
+                            {activeTab === 'achievements' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <AchievementsTab
+                                        achievements={achievements}
+                                        isLoading={isAchievementsLoading}
+                                        error={achievementsError}
+                                        studentId={studentId!}
+                                        isSubmitting={createAchievementMutation.isPending || updateAchievementMutation.isPending}
+                                        fileActionStatus={fileActionStatus}
+                                        onSave={handleAchievementSubmit}
+                                        onDelete={handleDeleteAchievement}
+                                        isOnline={isOnline}
+                                        currentUserId={user?.id}
+                                        studentName={student.name}
+                                        className={student.classes?.name || '-'}
+                                        canAdd={canAdd}
+                                    />
+                                </Suspense>
+                            )}
+                        </TabsContent>
+                        <TabsContent value="reports" className="p-0">
+                            {activeTab === 'reports' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <ReportsTab
+                                        reports={reports}
+                                        onAdd={() => setModalState({ type: 'report', mode: 'add', data: undefined })}
+                                        onEdit={(r) => setModalState({ type: 'report', mode: 'edit', data: r })}
+                                        onDelete={(id) => handleDelete('reports', id)}
+                                        isOnline={isOnline}
+                                        currentUserId={user?.id}
+                                        canAdd={canAdd}
+                                    />
+                                </Suspense>
+                            )}
+                        </TabsContent>
+                        <TabsContent value="development" className="p-0">
+                            {activeTab === 'development' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <ChildDevelopmentAnalysisTab
+                                        studentData={{
+                                            student: {
+                                                id: student.id,
+                                                name: student.name,
+                                                class: student.classes?.name || undefined
+                                            },
+                                            academicRecords: filteredAcademicRecords.map(r => ({
+                                                subject: r.subject,
+                                                score: r.score,
+                                                assessment_name: r.assessment_name || undefined,
+                                                notes: r.notes || undefined
+                                            })),
+                                            attendanceRecords: filteredAttendance.map(a => ({
+                                                status: a.status,
+                                                date: a.date
+                                            })),
+                                            violations: filteredViolations.map(v => ({
+                                                description: v.description,
+                                                points: v.points,
+                                                date: v.date
+                                            })),
+                                            quizPoints: filteredQuizPoints.map(q => ({
+                                                activity: q.quiz_name || q.subject || 'Keaktifan',
+                                                points: q.points,
+                                                date: q.quiz_date || q.created_at
+                                            }))
+                                        }}
+                                        allAcademicRecords={filteredAcademicRecords}
+                                        allAttendanceRecords={filteredAttendance}
+                                        allViolations={filteredViolations}
+                                        allQuizPoints={filteredQuizPoints}
+                                        selectedSemesterId={selectedSemesterId}
+                                    />
+                                </Suspense>
+                            )}
+                        </TabsContent>
+                        <TabsContent value="communication" className="p-0">
+                            {activeTab === 'communication' && (
+                                <Suspense fallback={<StudentDetailTabFallback />}>
+                                    <CommunicationTab
+                                        communications={communications}
+                                        userAvatarUrl={getStudentAvatar(user?.avatarUrl)}
+                                        studentName={student.name}
+                                        currentUserId={user?.id}
+                                        onSendMessage={(msg, att) => sendMessageMutation.mutate({ message: msg, attachment: att })}
+                                        onEditMessage={(msg) => setModalState({ type: 'editCommunication', data: msg })}
+                                        onDeleteMessage={(id) => handleDelete('communications', id)}
+                                        isOnline={isOnline}
+                                        isSending={sendMessageMutation.isPending}
+                                        quickTemplates={communicationSignals}
                                     />
                                 </Suspense>
                             )}

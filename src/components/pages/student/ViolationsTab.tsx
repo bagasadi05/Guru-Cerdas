@@ -269,50 +269,59 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     }, [violations, severityFilter]);
 
     return (
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6 space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/60">
                 <div>
-                    <CardTitle>Riwayat Pelanggaran</CardTitle>
-                    <CardDescription>Semua catatan pelanggaran tata tertib sekolah.</CardDescription>
+                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <ShieldAlertIcon className="w-5 h-5 text-rose-500 shrink-0" /> Riwayat Pelanggaran
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-slate-500 dark:text-slate-400 text-sm">
+                        Semua catatan pelanggaran tata tertib sekolah.
+                    </CardDescription>
                 </div>
-            </div>
-            <div className="flex gap-2">
-                <DropdownMenu>
-                    <DropdownTrigger className="gap-2">
-                        <DownloadIcon className="w-4 h-4" />
-                        Export
-                    </DropdownTrigger>
-                    <DropdownContent>
-                        <DropdownItem onClick={async () => {
-                            await exportViolationsToPDF({
-                                studentName: studentName || 'Siswa',
-                                className: className || '-',
-                                schoolName: user?.school_name || 'Sekolah',
-                                violations: filteredViolations,
-                                teacherName: user?.name
-                            });
-                            toast.success('Mengunduh Laporan PDF...');
-                        }} icon={<FileTextIcon className="w-4 h-4 text-red-500" />}>
-                            Export PDF (Formal)
-                        </DropdownItem>
-                        <DropdownItem onClick={async () => {
-                            await exportViolationsToExcel({
-                                studentName: studentName || 'Siswa',
-                                className: className || '-',
-                                schoolName: user?.school_name || 'Sekolah',
-                                violations: filteredViolations,
-                                teacherName: user?.name
-                            });
-                            toast.success('Mengunduh Data Excel...');
-                        }} icon={<FileSpreadsheetIcon className="w-4 h-4 text-green-600" />}>
-                            Export Excel
-                        </DropdownItem>
-                    </DropdownContent>
-                </DropdownMenu>
-                <Button onClick={onAdd} disabled={!isOnline || !canAdd}>
-                    <PlusIcon className="w-4 h-4 mr-2" />Tambah Pelanggaran
-                </Button>
+                <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+                    <DropdownMenu>
+                        <DropdownTrigger className="h-10 px-3.5 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 rounded-xl border border-slate-200/80 dark:border-slate-700/80 font-medium text-sm transition-all flex items-center gap-2">
+                            <DownloadIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                            Export
+                        </DropdownTrigger>
+                        <DropdownContent>
+                            <DropdownItem onClick={async () => {
+                                await exportViolationsToPDF({
+                                    studentName: studentName || 'Siswa',
+                                    className: className || '-',
+                                    schoolName: user?.school_name || 'Sekolah',
+                                    violations: filteredViolations,
+                                    teacherName: user?.name
+                                });
+                                toast.success('Mengunduh Laporan PDF...');
+                            }} icon={<FileTextIcon className="w-4 h-4 text-rose-500" />}>
+                                Export PDF (Formal)
+                            </DropdownItem>
+                            <DropdownItem onClick={async () => {
+                                await exportViolationsToExcel({
+                                    studentName: studentName || 'Siswa',
+                                    className: className || '-',
+                                    schoolName: user?.school_name || 'Sekolah',
+                                    violations: filteredViolations,
+                                    teacherName: user?.name
+                                });
+                                toast.success('Mengunduh Data Excel...');
+                            }} icon={<FileSpreadsheetIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}>
+                                Export Excel
+                            </DropdownItem>
+                        </DropdownContent>
+                    </DropdownMenu>
+                    <Button
+                        onClick={onAdd}
+                        disabled={!isOnline || !canAdd}
+                        className="h-10 px-4 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm"
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                        Tambah Pelanggaran
+                    </Button>
+                </div>
             </div>
 
             {/* Threshold Alert */}

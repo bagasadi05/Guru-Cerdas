@@ -1,4 +1,5 @@
 import './styles/tailwind.css';
+import './styles/fluidDesign.css';
 
 // Polyfill crypto.randomUUID for non-secure contexts (e.g. LAN IP)
 if (typeof crypto === 'undefined') {

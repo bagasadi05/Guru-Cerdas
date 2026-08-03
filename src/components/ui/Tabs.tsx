@@ -116,7 +116,7 @@ export const TabsTrigger: React.FC<{ children: React.ReactNode, value: string, c
       onKeyDown={handleKeyDown}
       data-state={isActive ? 'active' : 'inactive'}
       data-value={value}
-      className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 h-10 text-sm font-medium ring-offset-white dark:ring-offset-slate-900 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:text-slate-500 dark:data-[state=inactive]:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 flex-shrink-0 ${className}`}
+      className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3.5 py-2 h-10 text-sm font-medium ring-offset-white dark:ring-offset-slate-900 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:font-semibold data-[state=active]:shadow-md data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/80 flex-shrink-0 ${className}`}
       aria-selected={isActive}
       aria-controls={`tabs-panel-${value}`}
       id={`tabs-trigger-${value}`}

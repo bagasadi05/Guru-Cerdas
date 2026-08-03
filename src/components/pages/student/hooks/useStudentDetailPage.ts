@@ -560,21 +560,21 @@ export const useStudentDetailPage = () => {
             ? []
             : !selectedSemesterId
                 ? studentDetails.violations
-                : studentDetails.violations.filter(r => r.semester_id === selectedSemesterId);
+                : studentDetails.violations.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
         return dedupeViolations(semesterScopedViolations);
     }, [studentDetails, selectedSemesterId]);
 
     const filteredAcademicRecords = useMemo(() => {
         const semesterScopedRecords = !selectedSemesterId
             ? academicRecords
-            : academicRecords.filter(r => r.semester_id === selectedSemesterId);
+            : academicRecords.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
         return dedupeAcademicRecords(semesterScopedRecords);
     }, [academicRecords, selectedSemesterId]);
 
     const filteredQuizPoints = useMemo(() => {
         const semesterScopedQuizPoints = !selectedSemesterId
             ? quizPoints
-            : quizPoints.filter(r => r.semester_id === selectedSemesterId);
+            : quizPoints.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
         return dedupeQuizPoints(semesterScopedQuizPoints);
     }, [quizPoints, selectedSemesterId]);
 
@@ -583,19 +583,19 @@ export const useStudentDetailPage = () => {
     const filteredExtracurriculars = useMemo(() => {
         if (!studentDetails?.studentExtracurriculars) return [];
         if (!selectedSemesterId) return studentDetails.studentExtracurriculars;
-        return studentDetails.studentExtracurriculars.filter(r => r.semester_id === selectedSemesterId);
+        return studentDetails.studentExtracurriculars.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
     }, [studentDetails, selectedSemesterId]);
 
     const filteredExAttendance = useMemo(() => {
         if (!studentDetails?.extracurricularAttendance) return [];
         if (!selectedSemesterId) return studentDetails.extracurricularAttendance;
-        return studentDetails.extracurricularAttendance.filter(r => r.semester_id === selectedSemesterId);
+        return studentDetails.extracurricularAttendance.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
     }, [studentDetails, selectedSemesterId]);
 
     const filteredExGrades = useMemo(() => {
         if (!studentDetails?.extracurricularGrades) return [];
         if (!selectedSemesterId) return studentDetails.extracurricularGrades;
-        return studentDetails.extracurricularGrades.filter(r => r.semester_id === selectedSemesterId);
+        return studentDetails.extracurricularGrades.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
     }, [studentDetails, selectedSemesterId]);
 
     const totalViolationPoints = useMemo(() => filteredViolations.reduce((sum, v) => sum + v.points, 0) || 0, [filteredViolations]);

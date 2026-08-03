@@ -421,28 +421,40 @@ export const GradesTab: React.FC<GradesTabProps> = ({
     };
 
     return (
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6 space-y-6">
             {/* Header with filters */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/60">
                 <div>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
                         Nilai Akademik
-                        <span className="text-sm font-normal px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/50">
                             KKM: {kkm}
                         </span>
                     </CardTitle>
-                    <CardDescription>Daftar nilai sumatif atau formatif yang telah diinput.</CardDescription>
+                    <CardDescription className="mt-1 text-slate-500 dark:text-slate-400 text-sm">
+                        Daftar nilai sumatif atau formatif yang telah diinput.
+                    </CardDescription>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
                     {/* Export Button */}
-                    <Button variant="outline" size="sm" onClick={handleExportChart} title="Export Chart">
-                        <DownloadIcon className="w-4 h-4 mr-1" />
+                    <Button
+                        variant="outline"
+                        onClick={handleExportChart}
+                        title="Export Chart"
+                        className="h-10 px-3.5 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 rounded-xl border border-slate-200/80 dark:border-slate-700/80 font-medium text-sm transition-all flex items-center gap-2"
+                    >
+                        <DownloadIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                         Export
                     </Button>
 
                     {/* Add Button */}
-                    <Button onClick={onAdd} disabled={!isOnline || !canAdd} className="whitespace-nowrap">
-                        <PlusIcon className="w-4 h-4 mr-2" />Tambah Nilai
+                    <Button
+                        onClick={onAdd}
+                        disabled={!isOnline || !canAdd}
+                        className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm whitespace-nowrap"
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                        Tambah Nilai
                     </Button>
                 </div>
             </div>

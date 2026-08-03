@@ -205,19 +205,24 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 dark:border-white/10 flex-shrink-0">
-                <div className="flex items-center justify-between mb-3">
-                    <CardTitle className="flex items-center gap-2">
-                        <MessageSquareIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-                        Komunikasi dengan Orang Tua
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
+            <div className="p-4 sm:p-6 pb-4 border-b border-slate-100 dark:border-slate-800/60 flex-shrink-0">
+                <div className="flex items-center justify-between gap-4">
+                    <div>
+                        <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                            <MessageSquareIcon className="w-5 h-5 text-blue-500 shrink-0" />
+                            Komunikasi dengan Orang Tua
+                        </CardTitle>
+                        <p className="mt-1 text-slate-500 dark:text-slate-400 text-sm">
+                            Pesan langsung & komunikasi dua arah dengan orang tua siswa.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
                         <button type="button"
                             onClick={() => setShowSearch(!showSearch)}
-                            className={`p-2 rounded-lg transition-colors ${showSearch ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500'}`}
+                            className={`p-2.5 rounded-xl border transition-all ${showSearch ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                             title="Cari pesan"
                         >
-                            <SearchIcon className="w-4 h-4" />
+                            <SearchIcon className="w-4 h-4 shrink-0" />
                         </button>
                     </div>
                 </div>

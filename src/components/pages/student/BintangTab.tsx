@@ -90,23 +90,23 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="p-4 sm:p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/60">
                 <div>
-                    <CardTitle className="flex items-center gap-2 text-xl">
-                        <ShieldAlertIcon className="w-6 h-6 text-emerald-500" />
+                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <ShieldAlertIcon className="w-5 h-5 text-emerald-500 shrink-0" />
                         Rapor BINTANG
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="mt-1 text-slate-500 dark:text-slate-400 text-sm">
                         Bina Tertib dan Tanggung Jawab - dihitung otomatis dari poin pelanggaran
                     </CardDescription>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0 w-full sm:w-auto">
                     <select
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm px-3 py-2 shadow-sm focus:ring-2 focus:ring-emerald-500"
+                        className="h-10 px-3.5 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer shadow-sm flex-1 sm:flex-none"
                     >
                         {monthOptions.map(m => (
                             <option key={m.value} value={m.value}>{m.label}</option>
@@ -116,16 +116,16 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
                     <Button 
                         onClick={handleDownloadPdf}
                         disabled={isDownloadingPdf}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 min-w-[140px] justify-center"
+                        className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm justify-center flex-1 sm:flex-none"
                     >
                         {isDownloadingPdf ? (
                             <span className="flex items-center gap-2">
-                                <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
+                                <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full shrink-0" />
                                 Proses...
                             </span>
                         ) : (
                             <>
-                                <PrinterIcon className="w-4 h-4" /> Cetak Rapor
+                                <PrinterIcon className="w-4 h-4 shrink-0" /> Cetak Rapor
                             </>
                         )}
                     </Button>

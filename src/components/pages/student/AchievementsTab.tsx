@@ -162,21 +162,21 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
     }
 
     return (
-        <div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="p-4 sm:p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/60">
                 <div>
-                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-amber-500" /> Portofolio Prestasi Siswa
+                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <Trophy className="w-5 h-5 text-amber-500 shrink-0" /> Portofolio Prestasi Siswa
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="mt-1 text-slate-500 dark:text-slate-400 text-sm">
                         Daftar kompetisi, perlombaan, dan penghargaan terstruktur yang dimenangkan siswa.
                     </CardDescription>
                 </div>
-                <div className="flex gap-2 self-start sm:self-auto">
+                <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
                     {!isBackendMissing && (
                         <DropdownMenu>
-                            <DropdownTrigger className="gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl px-4 py-2 border border-slate-200 font-medium">
-                                <DownloadIcon className="w-4 h-4" />
+                            <DropdownTrigger className="h-10 px-3.5 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 rounded-xl border border-slate-200/80 dark:border-slate-700/80 font-medium text-sm transition-all flex items-center gap-2">
+                                <DownloadIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                                 Export
                             </DropdownTrigger>
                             <DropdownContent>
@@ -189,7 +189,7 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                                         teacherName: user?.name
                                     });
                                     toast.success('Mengunduh Data Excel...');
-                                }} icon={<FileSpreadsheetIcon className="w-4 h-4 text-green-600" />}>
+                                }} icon={<FileSpreadsheetIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}>
                                     Export Excel
                                 </DropdownItem>
                             </DropdownContent>
@@ -199,7 +199,7 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                         <Button
                             onClick={handleAdd}
                             disabled={!isOnline}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm flex items-center gap-2"
+                            className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm"
                         >
                             <PlusIcon className="w-4 h-4" />
                             Tambah Prestasi
@@ -209,15 +209,16 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
             </div>
 
             {error && !isBackendMissing && (
-                <div className="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-700 dark:text-rose-455 text-sm">
-                    Gagal memuat data prestasi: {error instanceof Error ? error.message : String(error)}
+                <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+                    <span>Gagal memuat data prestasi: {error instanceof Error ? error.message : String(error)}</span>
                 </div>
             )}
 
             {isBackendMissing ? (
-                <div className="mb-6 p-6 rounded-2xl bg-amber-50/80 dark:bg-brand-950/20 border border-amber-200 dark:border-brand-800/30 flex items-start gap-4 animate-fade-in">
-                    <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-brand-900/40 flex items-center justify-center shrink-0">
-                        <AlertCircle className="w-5 h-5 text-amber-600 dark:text-brand-400" />
+                <div className="p-6 rounded-2xl bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 flex items-start gap-4 animate-fade-in">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                        <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
                         <h4 className="font-bold text-slate-900 dark:text-white text-base">
@@ -233,16 +234,16 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                     {achievements.length > 0 && <AchievementsStats achievements={achievements} />}
 
             {/* Filter controls */}
-            <div className="flex flex-col md:flex-row gap-3 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3">
                 {/* Search */}
                 <div className="relative flex-1">
-                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                         type="text"
                         placeholder="Cari prestasi, penyelenggara..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        className="w-full h-10 pl-10 pr-4 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all shadow-sm"
                     />
                 </div>
 
@@ -250,7 +251,7 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                 <select
                     value={categoryFilter}
                     onChange={e => setCategoryFilter(e.target.value as any)}
-                    className="px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="h-10 px-3.5 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer shadow-sm min-w-[140px]"
                 >
                     <option value="all">Semua Bidang</option>
                     {Object.entries(ACHIEVEMENT_CATEGORY_META).map(([key, value]) => (
@@ -264,7 +265,7 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                 <select
                     value={levelFilter}
                     onChange={e => setLevelFilter(e.target.value as any)}
-                    className="px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="h-10 px-3.5 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer shadow-sm min-w-[140px]"
                 >
                     <option value="all">Semua Tingkat</option>
                     {Object.entries(ACHIEVEMENT_LEVEL_META).map(([key, value]) => (
@@ -277,18 +278,28 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
 
             {/* List */}
             {filteredAchievements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-                    <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/20 flex items-center justify-center mb-4">
+                <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800/80 rounded-2xl bg-slate-50/50 dark:bg-slate-900/30">
+                    <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4 shadow-inner">
                         <Trophy className="w-8 h-8 text-amber-500" />
                     </div>
-                    <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">
                         {achievements.length === 0 ? 'Belum Ada Portofolio Prestasi' : 'Pencarian Tidak Ditemukan'}
                     </h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mt-1">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mt-1.5 leading-relaxed">
                         {achievements.length === 0
                             ? 'Catat pencapaian prestasi akademik maupun non-akademik siswa di sini.'
                             : 'Coba ubah kata kunci pencarian atau filter yang Anda terapkan.'}
                     </p>
+                    {achievements.length === 0 && canAdd && !isBackendMissing && (
+                        <Button
+                            onClick={handleAdd}
+                            disabled={!isOnline}
+                            className="mt-5 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl shadow-sm transition-all flex items-center gap-2"
+                        >
+                            <PlusIcon className="w-4 h-4" />
+                            Tambah Prestasi Pertama
+                        </Button>
+                    )}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

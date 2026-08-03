@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Calendar, Star, Info, AlertCircle, ArrowRight, Plus } from 'lucide-react';
+import { CardTitle, CardDescription } from '../../ui/Card';
 import { Database } from '../../../services/database.types';
 
 type Extracurricular = Database['public']['Tables']['extracurriculars']['Row'];
@@ -103,6 +104,25 @@ export const ExtracurricularTab: React.FC<ExtracurricularTabProps> = ({
 
     return (
         <div className="space-y-6 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/60">
+                <div>
+                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <Trophy className="w-5 h-5 text-amber-500 shrink-0" /> Kegiatan Ekstrakurikuler
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-slate-500 dark:text-slate-400 text-sm">
+                        Daftar kegiatan pengembangan minat dan bakat non-akademik siswa.
+                    </CardDescription>
+                </div>
+                <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+                    <Link
+                        to="/ekstrakurikuler"
+                        className="h-10 px-4 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm justify-center"
+                    >
+                        <Plus className="w-4 h-4 shrink-0" />
+                        Kelola Ekskul
+                    </Link>
+                </div>
+            </div>
             <div className="grid gap-6 md:grid-cols-2">
                 {studentExtracurriculars.map((enrollment) => {
                     const ekskul = enrollment.extracurriculars;

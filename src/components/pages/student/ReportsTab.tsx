@@ -285,16 +285,27 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
     const hasActiveFilters = searchQuery || categoryFilter !== 'all' || tagFilter;
 
     return (
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6 space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/60">
                 <div>
-                    <CardTitle>Catatan Guru</CardTitle>
-                    <CardDescription>Catatan perkembangan, laporan, atau insiden khusus.</CardDescription>
+                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <BookOpenIcon className="w-5 h-5 text-emerald-500 shrink-0" /> Catatan Guru
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-slate-500 dark:text-slate-400 text-sm">
+                        Catatan perkembangan, laporan, atau insiden khusus.
+                    </CardDescription>
                 </div>
-                <Button onClick={onAdd} disabled={!isOnline || !canAdd}>
-                    <PlusIcon className="w-4 h-4 mr-2" />Tambah Catatan
-                </Button>
+                <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+                    <Button
+                        onClick={onAdd}
+                        disabled={!isOnline || !canAdd}
+                        className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm whitespace-nowrap"
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                        Tambah Catatan
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
