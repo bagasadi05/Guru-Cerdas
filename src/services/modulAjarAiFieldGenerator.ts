@@ -25,13 +25,24 @@ async function cacheToBank(ctx: FieldContext, partial: Record<string, any>): Pro
     const normMapel = ctx.mapel.toLowerCase().trim();
     const normTopik = ctx.topik.toLowerCase().trim();
 
-    const { data: existing } = await supabase
+    // Cek error select — Supabase mengembalikan {error}, bukan throw.
+    const { data: existing, error: selectError } = await supabase
       .from('ref_boilerplate_topik')
-      .select('id, konten_json')
+      .select('id, content_status, konten_json')
       .eq('mata_pelajaran', normMapel)
       .eq('topik', normTopik)
       .eq('fase', ctx.fase)
       .maybeSingle();
+
+    if (selectError) {
+      console.error('[AI Cache] Gagal memeriksa bank:', selectError);
+      return;
+    }
+
+    // Jangan menurunkan konten yang sudah verified menjadi draft.
+    if (existing && existing.content_status === 'verified') {
+      return;
+    }
 
     const existingJson = existing?.konten_json ? (typeof existing.konten_json === 'object' ? existing.konten_json : {}) : {};
 
@@ -46,13 +57,15 @@ async function cacheToBank(ctx: FieldContext, partial: Record<string, any>): Pro
     };
 
     if (existing) {
-      await supabase.from('ref_boilerplate_topik').update(merged).eq('id', existing.id);
+      const { error } = await supabase.from('ref_boilerplate_topik').update(merged).eq('id', existing.id);
+      if (error) console.error('[AI Cache] Gagal update bank:', error);
     } else {
-      await supabase.from('ref_boilerplate_topik').insert(merged as any);
+      const { error } = await supabase.from('ref_boilerplate_topik').insert(merged as any);
+      if (error) console.error('[AI Cache] Gagal insert bank:', error);
     }
   } catch (e) {
-    // Non-blocking — jangan gagalkan UI kalau cache gagal
-    console.warn('[AI Cache] Gagal simpan ke bank:', e);
+    // Non-blocking — jangan gagalkan UI kalau cache gagal, tapi tetap log
+    console.error('[AI Cache] Gagal simpan ke bank:', e);
   }
 }
 

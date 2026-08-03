@@ -721,7 +721,14 @@ export const SWUpdateBanner: React.FC = () => {
                         <div className="mt-4 flex items-center gap-2 sm:gap-3">
                             <button
                                 type="button"
-                                onClick={() => updateFn?.()}
+                                onClick={() => {
+                                    if (updateFn) {
+                                        updateFn();
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                    setVisible(false);
+                                }}
                                 className="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.23)] hover:-translate-y-0.5 active:translate-y-0"
                             >
                                 Perbarui Sekarang

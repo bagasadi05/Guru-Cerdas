@@ -272,7 +272,7 @@ ATURAN WAJIB:
 }
 
 async function completeJob(supabase: SupabaseClient, jobId: string, resultJson: any) {
-  await supabase
+  const { error } = await supabase
     .from('ai_content_jobs')
     .update({
       status: 'completed',
@@ -283,13 +283,19 @@ async function completeJob(supabase: SupabaseClient, jobId: string, resultJson: 
       locked_at: null
     })
     .eq('id', jobId);
+
+  if (error) {
+    // Jangan biarkan job "selesai" di log padahal update DB gagal —
+    // kalau dibiarkan, klien akan polling selamanya tanpa status akhir.
+    console.error(`[Worker] Gagal menandai job ${jobId} selesai:`, error.message);
+  }
 }
 
 async function handleJobFailure(supabase: SupabaseClient, job: any, isTransient: boolean, errorCode: string, errorDetail: string) {
   const atMaxAttempts = job.attempt_count >= job.max_attempts;
   
   if (isTransient && !atMaxAttempts) {
-    await supabase
+    const { error } = await supabase
       .from('ai_content_jobs')
       .update({
         status: 'retry_wait',
@@ -301,8 +307,12 @@ async function handleJobFailure(supabase: SupabaseClient, job: any, isTransient:
         updated_at: new Date().toISOString()
       })
       .eq('id', job.id);
+
+    if (error) {
+      console.error(`[Worker] Gagal menandai job ${job.id} retry_wait:`, error.message);
+    }
   } else {
-    await supabase
+    const { error } = await supabase
       .from('ai_content_jobs')
       .update({
         status: 'failed',
@@ -313,5 +323,9 @@ async function handleJobFailure(supabase: SupabaseClient, job: any, isTransient:
         updated_at: new Date().toISOString()
       })
       .eq('id', job.id);
+
+    if (error) {
+      console.error(`[Worker] Gagal menandai job ${job.id} failed:`, error.message);
+    }
   }
 }

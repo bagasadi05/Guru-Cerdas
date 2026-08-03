@@ -50,6 +50,8 @@ export const ModulAjarBankTab: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [editingItemMetadata, setEditingItemMetadata] = useState<any>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [jobsError, setJobsError] = useState<string | null>(null);
 
   // AI Queue State
   const [aiJobs, setAiJobs] = useState<any[]>([]);
@@ -62,17 +64,23 @@ export const ModulAjarBankTab: React.FC = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const { data: result, error } = await supabase
         .from('ref_boilerplate_topik')
         .select('*')
         .order('mata_pelajaran', { ascending: true });
       
-      if (!error && result) {
+      if (error) {
+        // Jangan diam-diam: admin harus tahu RLS/network gagal, bukan "tabel kosong".
+        console.error('Gagal memuat bank konten:', error);
+        setFetchError(`Gagal memuat bank konten: ${error.message}`);
+      } else if (result) {
         setData(result);
       }
     } catch (e: any) {
       console.error(e);
+      setFetchError(`Gagal memuat bank konten: ${e?.message || 'kesalahan tidak diketahui'}`);
     } finally {
       setLoading(false);
     }
@@ -80,6 +88,7 @@ export const ModulAjarBankTab: React.FC = () => {
 
   const fetchAiJobs = async () => {
     setLoadingJobs(true);
+    setJobsError(null);
     try {
       const { data: jobs, error } = await supabase
         .from('ai_content_jobs')
@@ -90,11 +99,15 @@ export const ModulAjarBankTab: React.FC = () => {
         .order('created_at', { ascending: false })
         .limit(10);
       
-      if (!error && jobs) {
+      if (error) {
+        console.error('Gagal memuat antrian AI:', error);
+        setJobsError(`Gagal memuat antrian AI: ${error.message}`);
+      } else if (jobs) {
         setAiJobs(jobs);
       }
     } catch (e: any) {
       console.error(e);
+      setJobsError(`Gagal memuat antrian AI: ${e?.message || 'kesalahan tidak diketahui'}`);
     } finally {
       setLoadingJobs(false);
     }
@@ -227,31 +240,48 @@ export const ModulAjarBankTab: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Yakin ingin menghapus topik ini?')) return;
     try {
-      await supabase.from('ref_boilerplate_topik').delete().eq('id', id);
+      const { error } = await supabase.from('ref_boilerplate_topik').delete().eq('id', id);
+      if (error) {
+        console.error('Gagal menghapus dari server:', error);
+        window.alert(`Gagal menghapus: ${error.message}`);
+        return;
+      }
+      setData(prev => prev.filter(item => item.id !== id));
     } catch (e: any) {
       console.error('Gagal menghapus dari server:', e);
-    } finally {
-      setData(prev => prev.filter(item => item.id !== id));
+      window.alert(`Gagal menghapus: ${e?.message || 'kesalahan tidak diketahui'}`);
     }
   };
 
   const handleCancelAiJob = async (jobId: string) => {
     if (!window.confirm('Batalkan job AI ini?')) return;
     try {
-      await supabase.rpc('cancel_modul_ajar_ai_job' as any, { p_job_id: jobId });
+      const { error } = await supabase.rpc('cancel_modul_ajar_ai_job' as any, { p_job_id: jobId });
+      if (error) {
+        console.error('Failed to cancel job:', error);
+        window.alert(`Gagal membatalkan job: ${error.message}`);
+        return;
+      }
       fetchAiJobs();
     } catch (e: any) {
       console.error('Failed to cancel job:', e);
+      window.alert(`Gagal membatalkan job: ${e?.message || 'kesalahan tidak diketahui'}`);
     }
   };
 
   const handleRetryAiJob = async (jobId: string) => {
     if (!window.confirm('Ulangi pemrosesan job AI ini?')) return;
     try {
-      await supabase.rpc('retry_modul_ajar_ai_job' as any, { p_job_id: jobId });
+      const { error } = await supabase.rpc('retry_modul_ajar_ai_job' as any, { p_job_id: jobId });
+      if (error) {
+        console.error('Failed to retry job:', error);
+        window.alert(`Gagal mengulang job: ${error.message}`);
+        return;
+      }
       fetchAiJobs();
     } catch (e: any) {
       console.error('Failed to retry job:', e);
+      window.alert(`Gagal mengulang job: ${e?.message || 'kesalahan tidak diketahui'}`);
     }
   };
 
@@ -271,6 +301,12 @@ export const ModulAjarBankTab: React.FC = () => {
       
       {/* Table Topik & Templates */}
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+        {fetchError && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-xs font-semibold text-red-700 dark:text-red-300 flex items-center justify-between gap-2">
+            <span>⚠️ {fetchError}</span>
+            <button onClick={fetchData} className="text-red-600 dark:text-red-300 hover:underline shrink-0 font-bold">Coba lagi</button>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -396,6 +432,12 @@ export const ModulAjarBankTab: React.FC = () => {
             <RefreshCw className={`w-4 h-4 ${loadingJobs ? 'animate-spin' : ''}`} />
           </button>
         </div>
+        {jobsError && (
+          <div className="mb-3 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-xs font-semibold text-red-700 dark:text-red-300 flex items-center justify-between gap-2">
+            <span>⚠️ {jobsError}</span>
+            <button onClick={fetchAiJobs} className="text-red-600 dark:text-red-300 hover:underline shrink-0 font-bold">Coba lagi</button>
+          </div>
+        )}
         
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">

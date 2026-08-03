@@ -164,24 +164,37 @@ export const modulAjarContentService = {
     const normMapel = mapel.toLowerCase().trim();
     const normTopik = topik.toLowerCase().trim();
 
-    let query = supabase.from('ref_boilerplate_topik').select('*').eq('mata_pelajaran', normMapel).eq('topik', normTopik);
+    // Hanya konten yang sudah di-review/verified yang boleh dipakai guru lain.
+    // Draf (draft_ai/draft_manual) milik guru lain tidak boleh bocor sebagai
+    // boilerplate sebelum admin meninjau (alur Bank Bersama).
+    let query = supabase.from('ref_boilerplate_topik').select('*').eq('mata_pelajaran', normMapel).eq('topik', normTopik).eq('content_status', 'verified');
     if (fase) {
       query = query.or(`fase.eq.${fase},fase.is.null`);
     }
 
-    const { data: exactMatches } = await query;
+    // Cek error! Query yang gagal (RLS/network/kolom hilang) TIDAK boleh
+    // disamakan dengan "bank kosong" — nanti UI menyesatkan guru.
+    const { data: exactMatches, error: exactError } = await query;
+    if (exactError) {
+      console.error('[getBoilerplate] Query exact gagal:', exactError);
+      throw new Error(`Gagal membaca bank konten: ${exactError.message}`);
+    }
     if (exactMatches && exactMatches.length > 0) {
       const specificMatch = exactMatches.find((item: any) => item.fase === fase);
       return unpackBoilerplate(specificMatch || exactMatches[0]);
     }
 
     // Fallback ilike
-    let fallbackQuery = supabase.from('ref_boilerplate_topik').select('*').ilike('mata_pelajaran', `%${normMapel}%`).ilike('topik', `%${normTopik}%`);
+    let fallbackQuery = supabase.from('ref_boilerplate_topik').select('*').ilike('mata_pelajaran', `%${normMapel}%`).ilike('topik', `%${normTopik}%`).eq('content_status', 'verified');
     if (fase) {
       fallbackQuery = fallbackQuery.or(`fase.eq.${fase},fase.is.null`);
     }
 
-    const { data: partialMatches } = await fallbackQuery;
+    const { data: partialMatches, error: partialError } = await fallbackQuery;
+    if (partialError) {
+      console.error('[getBoilerplate] Query fallback gagal:', partialError);
+      throw new Error(`Gagal membaca bank konten: ${partialError.message}`);
+    }
     if (partialMatches && partialMatches.length > 0) {
       const specificPartialMatch = partialMatches.find((item: any) => item.fase === fase);
       return unpackBoilerplate(specificPartialMatch || partialMatches[0]);

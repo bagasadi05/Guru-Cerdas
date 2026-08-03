@@ -179,6 +179,10 @@ Deno.serve(async (req) => {
         Body: fileBytes,
         ContentLength: uploadFile.size,
         ContentType: uploadFile.type,
+        // Objects are immutable (each upload gets a unique UUID key), so the
+        // browser and Cloudflare CDN can cache them for a full year. This
+        // reduces repeated bandwidth on every view.
+        CacheControl: "public, max-age=31536000, immutable",
       });
 
       await s3.send(command);

@@ -7,31 +7,33 @@ vi.mock('../../../../services/supabase', () => {
     supabase: {
       from: (table: string) => {
         if (table === 'ref_boilerplate_topik') {
-          return {
-            select: () => ({
-              eq: () => ({
-                eq: () => ({
-                  or: () => Promise.resolve({
-                    data: [{
-                      id: '1',
-                      mata_pelajaran: 'matematika',
-                      topik: 'penjumlahan',
-                      fase: 'A',
-                      tujuan_pembelajaran: ['Peserta didik dapat memahami konsep penjumlahan.'],
-                      pemahaman_bermakna: ['Kemampuan penjumlahan membantu menghitung sisa barang.'],
-                      pertanyaan_pemantik: ['Bagaimana cara menjumlahkan angka?'],
-                      lkpd_tugas: 'Kerjakan soal 1-5',
-                      soal_evaluasi: 'Hitunglah 5 + 3',
-                      pengayaan: ['Soal tantangan'],
-                      remedial: ['Latihan dasar'],
-                      daftar_pustaka: ['Buku Matematika SD']
-                    }],
-                    error: null
-                  })
-                })
-              })
+          // Chain generik: getBoilerplate memanggil select().eq().eq().eq().or()
+          // (termasuk filter content_status='verified')
+          const boilerplateChain: any = {
+            select: () => boilerplateChain,
+            eq: () => boilerplateChain,
+            ilike: () => boilerplateChain,
+            or: () => Promise.resolve({
+              data: [{
+                id: '1',
+                mata_pelajaran: 'matematika',
+                topik: 'penjumlahan',
+                fase: 'A',
+                content_status: 'verified',
+                is_verified: true,
+                tujuan_pembelajaran: ['Peserta didik dapat memahami konsep penjumlahan.'],
+                pemahaman_bermakna: ['Kemampuan penjumlahan membantu menghitung sisa barang.'],
+                pertanyaan_pemantik: ['Bagaimana cara menjumlahkan angka?'],
+                lkpd_tugas: 'Kerjakan soal 1-5',
+                soal_evaluasi: 'Hitunglah 5 + 3',
+                pengayaan: ['Soal tantangan'],
+                remedial: ['Latihan dasar'],
+                daftar_pustaka: ['Buku Matematika SD']
+              }],
+              error: null
             })
           };
+          return boilerplateChain;
         }
         if (table === 'ref_sintaks_kegiatan') {
           return {

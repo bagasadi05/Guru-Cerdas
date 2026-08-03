@@ -86,35 +86,22 @@ export const getDefaultAvatar = (gender?: string | null, studentId?: string): st
  * - 'sm' (96px)  : tabel, grid thumbnail, list, dropdown (avatar kecil)
  * - 'md' (256px) : header profil, detail siswa, kartu (default)
  * - 'lg' (512px) : preview besar, cetak (jarang dipakai)
+ *
+ * Catatan: sejak proxy weserv.nl dihapus, ukuran tidak lagi mengubah URL yang
+ * dihasilkan — parameter dipertahankan demi kompatibilitas pemanggil.
  */
 export type AvatarSize = 'sm' | 'md' | 'lg';
 
-const AVATAR_SIZES: Record<AvatarSize, { w: number; h: number; q: number }> = {
-  sm: { w: 96, h: 96, q: 80 },
-  md: { w: 256, h: 256, q: 80 },
-  lg: { w: 512, h: 512, q: 85 },
-};
-
 /**
- * Get optimized avatar URL using a global proxy to save data.
+ * Resolve URL avatar. Foto disajikan langsung dari R2 (egress $0, gratis),
+ * tanpa proxy resize pihak ketiga (weserv.nl). URL dikembalikan apa adanya.
+ *
  * @param url - Original image URL
- * @param size - Target size: 'sm' (96px), 'md' (256px), 'lg' (512px). Default 'md'.
+ * @param _size - Dipertahankan untuk kompatibilitas API; tidak lagi digunakan.
  */
-const getOptimizedUrl = (url: string, size: AvatarSize = 'md'): string => {
-    // Only optimize real absolute URLs (not data URIs)
-    if (url && url.startsWith('http')) {
-        // Skip proxying for internal domain, R2 storage, or Supabase URLs to prevent CSP connect-src SW blockages
-        if (
-            url.includes('guru-cerdas.my.id') ||
-            url.includes('r2.cloudflarestorage.com') ||
-            url.includes('r2.dev') ||
-            url.includes('supabase.co')
-        ) {
-            return url;
-        }
-        const { w, h, q } = AVATAR_SIZES[size];
-        return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=${w}&h=${h}&fit=cover&q=${q}`;
-    }
+const getOptimizedUrl = (url: string, _size?: AvatarSize): string => {
+    // Data URI dan semua URL http dikembalikan langsung — R2 egress $0, jadi
+    // tidak perlu proxy pihak ketiga untuk menghemat bandwidth.
     return url;
 };
 
@@ -125,7 +112,7 @@ const getOptimizedUrl = (url: string, size: AvatarSize = 'md'): string => {
  * @param gender - Student's gender
  * @param studentId - Student ID for unique default avatar
  * @param studentName - Student name for initials
- * @param size - Target proxy size: 'sm' | 'md' | 'lg'. Default 'md'.
+ * @param size - Ukuran tampilan yang diinginkan; dipertahankan untuk kompatibilitas (tidak lagi mengubah URL).
  * @returns Final avatar URL to display
  */
 export const getStudentAvatar = (

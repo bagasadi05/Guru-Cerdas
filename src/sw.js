@@ -6,11 +6,18 @@ import { BackgroundSyncPlugin } from 'workbox-background-sync';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
-// Do NOT call self.skipWaiting() here. This was causing forced mid-session
+// Do NOT call self.skipWaiting() unconditionally on load. This was causing forced mid-session
 // reloads whenever a new Service Worker was deployed (e.g. while a teacher
 // was saving grades). The new SW will now wait until the user explicitly
 // clicks "Perbarui" on the update banner, or all tabs are closed naturally.
 clientsClaim();
+
+// Listen for message from update banner to skip waiting on demand
+self.addEventListener('message', (event) => {
+    if (event.data && (event.data.type === 'SKIP_WAITING' || event.data === 'skipWaiting')) {
+        self.skipWaiting();
+    }
+});
 
 cleanupOutdatedCaches();
 

@@ -35,8 +35,8 @@ interface ImageUploaderProps {
 
 const DEFAULT_CONFIG: Required<ImageUploadConfig> = {
     maxFileSize: 2, // 2MB (after compression ~200KB)
-    maxWidth: 400,
-    maxHeight: 400,
+    maxWidth: 600,
+    maxHeight: 600,
     quality: 0.8,
     aspectRatio: 1,
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],

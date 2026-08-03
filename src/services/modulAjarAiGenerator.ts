@@ -72,11 +72,19 @@ PENTING:
 - Gunakan bahasa sesuai ${faseInfo}.`;
 }
 
+export interface CacheToDatabaseResult {
+  ok: boolean;
+  saved?: boolean;
+  skippedVerified?: boolean;
+  error?: string;
+}
+
 export async function generateModulAjarAiContent(
   mapel: string,
   topik: string,
   fase: string,
-  modelPembelajaran?: string
+  modelPembelajaran?: string,
+  onCacheError?: (message: string) => void
 ): Promise<AiModulAjarContent> {
   const prompt = buildPrompt(mapel, topik, fase, modelPembelajaran);
 
@@ -115,9 +123,22 @@ export async function generateModulAjarAiContent(
     skenarioPembelajaran: result.skenarioPembelajaran || [],
   };
 
-  cacheToDatabase(mapel, topik, fase, normalized).catch(err =>
-    logger.warn('[AI Modul Ajar] Cache failed:', 'ModulAjarAI', err)
-  );
+  // Simpan draf ke Bank Bersama — non-blocking, tapi error dilaporkan ke UI
+  // agar guru tahu draf-nya gagal masuk antrian review admin (bukan diam-diam).
+  cacheToDatabase(mapel, topik, fase, normalized)
+    .then((res) => {
+      if (!res.ok) {
+        const msg = `Draf AI gagal tersimpan ke Bank Bersama: ${res.error}`;
+        logger.error('[AI Modul Ajar] ' + msg, 'ModulAjarAI');
+        onCacheError?.(msg);
+      } else if (res.skippedVerified) {
+        logger.info('[AI Modul Ajar] Konten sudah verified di bank — draf dilewati.', 'ModulAjarAI');
+      }
+    })
+    .catch((err) => {
+      logger.error('[AI Modul Ajar] Cache failed:', 'ModulAjarAI', err);
+      onCacheError?.('Draf AI gagal tersimpan ke Bank Bersama (kesalahan tidak terduga).');
+    });
 
   logger.info(`[AI Modul Ajar] Success: ${mapel} / ${topik}`, 'ModulAjarAI');
   return normalized;
@@ -154,17 +175,23 @@ async function cacheToDatabase(
   topik: string,
   fase: string,
   content: AiModulAjarContent
-): Promise<void> {
+): Promise<CacheToDatabaseResult> {
   const normMapel = mapel.toLowerCase().trim();
   const normTopik = topik.toLowerCase().trim();
 
-  const { data: existing } = await supabase
+  // SELECT dicek error-nya — kalau gagal (RLS/network), berhenti dengan pesan jelas,
+  // bukan lanjut diam-diam ke INSERT yang akan gagal juga.
+  const { data: existing, error: selectError } = await supabase
     .from('ref_boilerplate_topik')
-    .select('id')
+    .select('id, content_status')
     .eq('mata_pelajaran', normMapel)
     .eq('topik', normTopik)
     .eq('fase', fase)
     .maybeSingle();
+
+  if (selectError) {
+    return { ok: false, error: `gagal memeriksa bank konten: ${selectError.message}` };
+  }
 
   const payload = {
     tujuan_pembelajaran: content.tujuanPembelajaran,
@@ -175,21 +202,58 @@ async function cacheToDatabase(
     pengayaan: content.pengayaan,
     remedial: content.remedial,
     daftar_pustaka: content.daftarPustaka,
-    is_verified: true,
-    content_status: 'verified',
+    // Hasil AI guru disimpan sebagai DRAFT yang menunggu review admin.
+    // Jangan auto-verified agar konten yang belum ditinjau tidak menjadi
+    // cache hit publik untuk guru lain (sesuai alur Bank Bersama).
+    is_verified: false,
+    content_status: 'draft_ai',
     generated_by_provider: 'gemini',
     konten_json: content as any,
   };
 
   if (existing) {
-    await supabase.from('ref_boilerplate_topik').update(payload).eq('id', existing.id);
-  } else {
-    const insertPayload = {
-      mata_pelajaran: normMapel,
-      topik: normTopik,
-      fase: fase,
-      ...payload,
-    };
-    await supabase.from('ref_boilerplate_topik').insert(insertPayload);
+    // Jangan pernah menurunkan konten yang sudah verified menjadi draft.
+    if (existing.content_status === 'verified') {
+      return { ok: true, saved: false, skippedVerified: true };
+    }
+    const { error } = await supabase.from('ref_boilerplate_topik').update(payload).eq('id', existing.id);
+    if (error) {
+      return { ok: false, error: `gagal memperbarui draf: ${error.message}` };
+    }
+    return { ok: true, saved: true };
   }
+
+  const insertPayload = {
+    mata_pelajaran: normMapel,
+    topik: normTopik,
+    fase: fase,
+    ...payload,
+  };
+
+  const { error: insertError } = await supabase.from('ref_boilerplate_topik').insert(insertPayload);
+  if (insertError) {
+    // 23505 = unique violation: dua guru generate topik yang sama bersamaan.
+    // Alihkan ke UPDATE pada baris yang menang agar tidak gagal diam-diam.
+    if (insertError.code === '23505') {
+      const { data: raced, error: racedError } = await supabase
+        .from('ref_boilerplate_topik')
+        .select('id, content_status')
+        .eq('mata_pelajaran', normMapel)
+        .eq('topik', normTopik)
+        .eq('fase', fase)
+        .maybeSingle();
+      if (!racedError && raced) {
+        // Baris yang menang sudah verified (admin publish bersamaan) → draf
+        // tidak perlu disimpan, jangan tampilkan warning palsu ke guru.
+        if (raced.content_status === 'verified') {
+          return { ok: true, saved: false, skippedVerified: true };
+        }
+        const { error: retryError } = await supabase.from('ref_boilerplate_topik').update(payload).eq('id', raced.id);
+        if (!retryError) return { ok: true, saved: true };
+      }
+    }
+    return { ok: false, error: `gagal menambah draf: ${insertError.message}` };
+  }
+
+  return { ok: true, saved: true };
 }

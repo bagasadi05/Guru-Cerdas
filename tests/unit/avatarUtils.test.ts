@@ -17,20 +17,20 @@ describe('avatarUtils', () => {
         expect(resolved).not.toContain('i.pravatar.cc');
     });
 
-    it.each([
-        ['sm', 96, 80],
-        ['md', 256, 80],
-        ['lg', 512, 85],
-    ])('proxy URL uses size=%s → w=%d q=%d', (size, w, q) => {
+    it.each(['sm', 'md', 'lg'])('returns original URL directly without proxy for size=%s', (size) => {
         const uploadedUrl = 'https://example.com/avatar.jpg';
-        const expected = `https://images.weserv.nl/?url=${encodeURIComponent(uploadedUrl)}&w=${w}&h=${w}&fit=cover&q=${q}`;
-        expect(getStudentAvatar(uploadedUrl, 'Perempuan', 'student-2', 'Aisyah', size as any)).toBe(expected);
+        // R2 egress $0 — no third-party proxy; URL is returned as-is for all sizes.
+        expect(getStudentAvatar(uploadedUrl, 'Perempuan', 'student-2', 'Aisyah', size as any)).toBe(uploadedUrl);
     });
 
-    it('defaults to md (256px) when no size is passed', () => {
+    it('returns original URL directly when no size is passed', () => {
         const uploadedUrl = 'https://example.com/avatar.jpg';
-        const expected = `https://images.weserv.nl/?url=${encodeURIComponent(uploadedUrl)}&w=256&h=256&fit=cover&q=80`;
-        expect(getStudentAvatar(uploadedUrl)).toBe(expected);
+        expect(getStudentAvatar(uploadedUrl)).toBe(uploadedUrl);
+    });
+
+    it('returns original URL for R2 / internal storage domains (no proxy)', () => {
+        const r2Url = 'https://pub-56e5bb83497b4de198d9ee6ad82fc35b.r2.dev/avatars/student-1.jpg';
+        expect(getStudentAvatar(r2Url, 'Laki-laki', 'student-1')).toBe(r2Url);
     });
 
     it('returns original URL for non-http strings (data URIs)', () => {
