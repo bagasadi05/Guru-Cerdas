@@ -159,7 +159,7 @@ export const ResponsiveChart: React.FC<ResponsiveChartProps> = ({
                     className="relative overflow-auto"
                     style={{
                         minHeight: isFullscreen ? '100%' : minHeight,
-                        maxHeight: isFullscreen ? '100vh' : undefined
+                        maxHeight: isFullscreen ? '100dvh' : undefined
                     }}
                     onMouseLeave={() => setTooltip(null)}
                 >
