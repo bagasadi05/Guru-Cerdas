@@ -38,6 +38,7 @@ Sebelum deployment, pastikan:
 | `VITE_APP_VERSION` | Application version (optional) | `1.0.0` |
 | `VITE_SENTRY_DSN` | Sentry DSN for error tracking (optional) | `` |
 | `VITE_USE_CUSTOM_PWA_PROMPT` | Enable custom PWA prompt UI (optional) | `false` |
+| `VITE_ENABLE_AI_MODUL_AJAR` | Enable Generative AI option in Modul Ajar Creator | `true` |
 
 > ⚠️ **Security Notice**: Do **NOT** set `VITE_GEMINI_API_KEY` in Vercel production environment variables. Keep `VITE_GEMINI_API_KEY` only in your local `.env` file for development. Production builds route requests through `/api/gemini` so API keys remain strictly server-side.
 
