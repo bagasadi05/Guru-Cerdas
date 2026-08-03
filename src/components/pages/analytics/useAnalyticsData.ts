@@ -16,7 +16,7 @@ const _EMPTY_STUDENTS: Student[] = [];
 
 export const useAnalyticsData = () => {
     const { user, userRole } = useAuth();
-    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'admin';
+    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'admin';
     const { activeSemester } = useSemester();
     const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>(isLeadership ? 'all' : '30d');
     const [selectedClassId, setSelectedClassId] = useState<string>('all');

@@ -53,6 +53,7 @@ const roleLabelMap: Record<string, string> = {
     admin: 'Admin',
     teacher: 'Guru',
     waka_kesiswaan: 'Waka Kesiswaan',
+    waka_kurikulum: 'Waka Kurikulum',
     kepala_madrasah: 'Kepala Madrasah',
     student: 'Siswa',
     parent: 'Orang Tua',
@@ -211,6 +212,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                     <option value="admin">Admin</option>
                     <option value="teacher">Guru</option>
                     <option value="waka_kesiswaan">Waka Kesiswaan</option>
+                                    <option value="waka_kurikulum">Waka Kurikulum</option>
                     <option value="kepala_madrasah">Kepala Madrasah</option>
                     <option value="student">Siswa</option>
                     <option value="parent">Orang Tua</option>
@@ -284,6 +286,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                                 <option value="admin">Admin</option>
                                                 <option value="teacher">Guru</option>
                                                 <option value="waka_kesiswaan">Waka Kesiswaan</option>
+                                    <option value="waka_kurikulum">Waka Kurikulum</option>
                                                 <option value="kepala_madrasah">Kepala Madrasah</option>
                                                 <option value="student">Siswa</option>
                                                 <option value="parent">Orang Tua</option>
@@ -571,6 +574,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                     <option value="admin">Admin</option>
                                     <option value="teacher">Guru</option>
                                     <option value="waka_kesiswaan">Waka Kesiswaan</option>
+                                    <option value="waka_kurikulum">Waka Kurikulum</option>
                                     <option value="kepala_madrasah">Kepala Madrasah</option>
                                     <option value="student">Siswa</option>
                                     <option value="parent">Orang Tua</option>

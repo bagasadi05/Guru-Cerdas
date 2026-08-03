@@ -53,7 +53,7 @@ const SchoolStatsGrid: React.FC = () => {
         const [stuRes, clsRes, tchRes] = await Promise.all([
           supabase.from('students').select('id', { count: 'exact', head: true }).is('deleted_at', null),
           supabase.from('classes').select('id', { count: 'exact', head: true }).is('deleted_at', null).eq('is_archived', false),
-          supabase.from('user_roles').select('user_id', { count: 'exact', head: true }).in('role', ['guru', 'wali_kelas', 'kepala_madrasah', 'waka_kesiswaan', 'admin']),
+          supabase.from('user_roles').select('user_id', { count: 'exact', head: true }).in('role', ['guru', 'wali_kelas', 'kepala_madrasah', 'waka_kesiswaan', 'waka_kurikulum', 'admin']),
         ]);
         setStats({
           totalStudents: stuRes.count ?? 0,

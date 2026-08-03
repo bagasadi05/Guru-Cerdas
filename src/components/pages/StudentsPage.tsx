@@ -8,7 +8,7 @@ import { useStudentsPageViewModel } from '../students/useStudentsPageViewModel';
 const StudentsPage: React.FC = () => {
     const toast = useToast();
     const { user, userRole, isAdmin } = useAuth();
-    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan';
+    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum';
     const { isLoading, viewProps } = useStudentsPageViewModel({ userId: user?.id, toast, isAdmin, canViewAll: isLeadership });
 
     if (isLoading) return <StudentsPageSkeleton />;

@@ -51,7 +51,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     students, classes, attendanceStats, taskStats, genderStats, atRiskStudents, topPerformingStudents 
 }) => {
     const { userRole } = useAuth();
-    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'admin';
+    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'admin';
     // Generate AI Summary string
     const generateSummary = () => {
         if (students.length === 0) return { text: isLeadership ? "Belum ada data siswa di madrasah." : "Belum ada siswa di kelas Anda. Silakan tambahkan siswa terlebih dahulu.", mood: 'neutral' };

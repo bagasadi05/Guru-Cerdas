@@ -52,7 +52,7 @@ const JurnalMengajarPage: React.FC = () => {
   const [filters, setFilters] = useState<TeachingJournalFilters>({});
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const isGlobalRole = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'admin';
+  const isGlobalRole = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'admin';
   const [showAllTeachers, setShowAllTeachers] = useState(false);
 
   // Subjects derived from a small free-text input (case-insensitive contains).

@@ -50,7 +50,7 @@ export interface MenuEntry {
 }
 
 /** Roles that run the school rather than a classroom. */
-const LEADERSHIP_ROLES = new Set(['kepala_madrasah', 'waka_kesiswaan']);
+const LEADERSHIP_ROLES = new Set(['kepala_madrasah', 'waka_kesiswaan', 'waka_kurikulum']);
 
 export const isLeadershipRole = (role?: string | null): boolean =>
   !!role && LEADERSHIP_ROLES.has(role);

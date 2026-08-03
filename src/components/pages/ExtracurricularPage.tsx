@@ -27,7 +27,7 @@ import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 
 const ExtracurricularPage: React.FC = () => {
     const { user: _user, userRole } = useAuth();
-    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan';
+    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum';
     const canAdd = !isLeadership;
     const toast = useToast();
 

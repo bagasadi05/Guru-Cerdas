@@ -47,7 +47,7 @@ const BintangDashboardPage: React.FC = () => {
         return teacherAssignments.some((a: any) => a.assignment_role === 'homeroom');
     }, [teacherAssignments]);
 
-    const isWalas = isAdmin || isHomeroomTeacher || userRole === 'waka_kesiswaan' || userRole === 'kepala_madrasah';
+    const isWalas = isAdmin || isHomeroomTeacher || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'kepala_madrasah';
 
     // ── Shared filters ───────────────────────────────────────────────────────
     const [classes, setClasses] = useState<Array<{ id: string; name: string }>>([]);

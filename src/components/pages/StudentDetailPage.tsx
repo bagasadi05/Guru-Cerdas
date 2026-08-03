@@ -206,7 +206,7 @@ const StudentDetailPage = () => {
     const canManageStudentProfile = student.user_id === user?.id || isHomeroomTeacher || userRole === 'admin';
     const canManageAllRecords = isHomeroomTeacher || userRole === 'admin';
     const isAssistant = assignments.some((a: any) => a.class_id === student.class_id && a.assignment_role === 'assistant');
-    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan';
+    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum';
     const canAdd = !isAssistant && !isLeadership;
 
     const handleDeleteAchievement = (id: string) => {

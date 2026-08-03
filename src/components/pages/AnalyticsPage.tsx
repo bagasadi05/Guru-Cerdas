@@ -25,7 +25,7 @@ import { Download, RefreshCwIcon, UsersIcon, CalendarIcon, LayoutDashboard, Grad
 const AnalyticsPage: React.FC = () => {
     const { start } = useTour();
     const { userRole } = useAuth();
-    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'admin';
+    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'admin';
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'attendance' | 'character' | 'comparison'>('overview');
 

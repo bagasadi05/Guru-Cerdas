@@ -67,7 +67,7 @@ export const SemesterProvider: React.FC<{ children: ReactNode }> = ({ children }
             let { allSemesters, allSemestersError, semesterData, semesterError } = await performFetch();
 
             // Auto-Pilot Logic: Check if we need to initialize or switch semesters
-            const isGlobalRole = userRole === 'admin' || userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan';
+            const isGlobalRole = userRole === 'admin' || userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum';
             if (isGlobalRole && !allSemestersError) {
                 const { semesterType } = getCurrentAcademicTerm();
                 const expectedNames = semesterType === 'Ganjil' ? ['ganjil', '1'] : ['genap', '2'];

@@ -58,7 +58,7 @@ import { useGlobalSearch } from '../GlobalSearchContext';
 
 const DashboardPage: React.FC = () => {
   const { user, userRole } = useAuth();
-  const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'kepala_madrasah' || userRole === 'admin';
+  const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'kepala_madrasah' || userRole === 'admin';
   const todayStr = new Date().toLocaleDateString('sv-SE');
   const { data: journalStatus } = useTodayJournalStatus(todayStr);
   const navigate = useNavigate();

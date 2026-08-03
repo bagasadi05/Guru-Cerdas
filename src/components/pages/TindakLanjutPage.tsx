@@ -91,7 +91,7 @@ export const TindakLanjutPage: React.FC = () => {
     v.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (userRole !== 'waka_kesiswaan' && userRole !== 'kepala_madrasah' && userRole !== 'admin') {
+  if (userRole !== 'waka_kesiswaan' && userRole !== 'waka_kurikulum' && userRole !== 'kepala_madrasah' && userRole !== 'admin') {
     return (
       <div className="p-8 text-center max-w-7xl mx-auto">
         <div className="bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 p-6 rounded-2xl border border-rose-200 dark:border-rose-900 flex flex-col items-center">

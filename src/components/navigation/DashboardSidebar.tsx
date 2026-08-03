@@ -60,6 +60,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
       case 'admin': return 'Administrator';
       case 'kepala_madrasah': return 'Kepala Madrasah';
       case 'waka_kesiswaan': return 'Waka Kesiswaan';
+      case 'waka_kurikulum': return 'Waka Kurikulum';
       case 'student': return 'Siswa';
       case 'parent': return 'Orang Tua';
       default: return 'Guru';

@@ -52,6 +52,7 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
   let roleLabel = 'Guru';
   if (userRole === 'kepala_madrasah') roleLabel = 'Kepala Madrasah';
   else if (userRole === 'waka_kesiswaan') roleLabel = 'Waka Kesiswaan';
+  else if (userRole === 'waka_kurikulum') roleLabel = 'Waka Kurikulum';
   else if (userRole === 'admin') roleLabel = 'Admin';
   else if (userRole === 'student') roleLabel = 'Siswa';
 
