@@ -1,4 +1,4 @@
-import { generateOpenRouterJson } from '../services/openRouterService';
+import { generateGeminiJson } from '../services/geminiService';
 import { getBackoffDelay, isRateLimitError, isTransientError } from './aiConfig';
 
 export interface StudentNoteInput {
@@ -59,7 +59,7 @@ export async function generateTeacherNotesBatched(
     let ok = false;
     for (let attempt = 1; attempt <= maxRetries && !ok; attempt++) {
       try {
-        const parsed = await generateOpenRouterJson<{ notes: { studentId: string; teacherNote: string }[] }>(prompt, systemInstruction);
+        const parsed = await generateGeminiJson<{ notes: { studentId: string; teacherNote: string }[] }>(prompt, systemInstruction);
         (parsed.notes || []).forEach((item) => {
           let note = (item.teacherNote || '').replace(/\\n/g, ' ').trim();
           const sentences = note.split(/[.!?]+/).filter((x) => x.trim().length > 0);

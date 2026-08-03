@@ -19,7 +19,7 @@ import { SparklesIcon, CheckCircleIcon, AlertTriangleIcon } from '../Icons';
 import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
 import { MarkdownText } from '../ui/MarkdownText';
-import { generateOpenRouterJson } from '../../services/openRouterService';
+import { generateGeminiJson } from '../../services/geminiService';
 import type { DashboardQueryData, AiInsight, StoredInsight } from '../../types';
 
 // =============================================================================
@@ -157,7 +157,7 @@ const AiDashboardInsight: React.FC<AiDashboardInsightProps> = ({ dashboardData }
             );
 
             // Generate insight via AI
-            const parsedInsight = await generateOpenRouterJson<AiInsight>(prompt, SYSTEM_INSTRUCTION);
+            const parsedInsight = await generateGeminiJson<AiInsight>(prompt, SYSTEM_INSTRUCTION);
 
             // Enrich insight with student IDs for linking
             const enrichedInsight: AiInsight = {

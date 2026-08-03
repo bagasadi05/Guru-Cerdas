@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal } from '../../../ui/Modal';
 import { Button } from '../../../ui/Button';
 import { useToast } from '../../../../hooks/useToast';
-import { generateOpenRouterJson } from '../../../../services/openRouterService';
+import { generateGeminiJson } from '../../../../services/geminiService';
 import { SparklesIcon } from '../../../Icons';
 import { findStudentMatch } from '../../../../utils/studentMatcher';
 
@@ -52,7 +52,7 @@ export const AIPasteModal: React.FC<AIPasteModalProps> = ({
                 { "studentName": "Nama Siswa", "score": "85" }
             ]`;
             const prompt = `Daftar Siswa: ${JSON.stringify(studentNames)}\n\nTeks Nilai untuk Diproses:\n${pasteData}`;
-            const parsedResults = await generateOpenRouterJson<ReviewDataItem[]>(prompt, systemInstruction);
+            const parsedResults = await generateGeminiJson<ReviewDataItem[]>(prompt, systemInstruction);
             
             if (!Array.isArray(parsedResults)) {
                 throw new Error('Format respon AI tidak valid (bukan list).');

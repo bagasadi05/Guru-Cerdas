@@ -8,15 +8,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock the OpenRouter service
-vi.mock('../openRouterService', () => ({
-    generateOpenRouterJson: vi.fn(),
+vi.mock('../geminiService', () => ({
+    generateGeminiJson: vi.fn(),
 }));
 
 import {
     calculateFormulaScore,
     analyzeAndAdjustGradesWithAI,
 } from '../gradeAdjustmentService';
-import { generateOpenRouterJson } from '../openRouterService';
+import { generateGeminiJson } from '../geminiService';
 
 describe('gradeAdjustmentService', () => {
     beforeEach(() => {
@@ -95,7 +95,7 @@ describe('gradeAdjustmentService', () => {
         ];
 
         it('should process AI result and return adjustments for all students', async () => {
-            (generateOpenRouterJson as ReturnType<typeof vi.fn>).mockResolvedValue({
+            (generateGeminiJson as ReturnType<typeof vi.fn>).mockResolvedValue({
                 class_analysis: 'Kelas memiliki sebaran nilai yang cukup baik.',
                 adjustments: [
                     {
@@ -139,7 +139,7 @@ describe('gradeAdjustmentService', () => {
         });
 
         it('should fallback for students missing from AI response', async () => {
-            (generateOpenRouterJson as ReturnType<typeof vi.fn>).mockResolvedValue({
+            (generateGeminiJson as ReturnType<typeof vi.fn>).mockResolvedValue({
                 class_analysis: 'Sebaran nilai normal.',
                 adjustments: [
                     {
@@ -174,7 +174,7 @@ describe('gradeAdjustmentService', () => {
         });
 
         it('should clamp ai_score within target range', async () => {
-            (generateOpenRouterJson as ReturnType<typeof vi.fn>).mockResolvedValue({
+            (generateGeminiJson as ReturnType<typeof vi.fn>).mockResolvedValue({
                 class_analysis: 'Baik.',
                 adjustments: [
                     {
@@ -211,7 +211,7 @@ describe('gradeAdjustmentService', () => {
         });
 
         it('should provide clean fallback when AI call fails', async () => {
-            (generateOpenRouterJson as ReturnType<typeof vi.fn>).mockRejectedValue(
+            (generateGeminiJson as ReturnType<typeof vi.fn>).mockRejectedValue(
                 new Error('AI service unavailable')
             );
 
@@ -231,7 +231,7 @@ describe('gradeAdjustmentService', () => {
         });
 
         it('should handle empty students array', async () => {
-            (generateOpenRouterJson as ReturnType<typeof vi.fn>).mockResolvedValue({
+            (generateGeminiJson as ReturnType<typeof vi.fn>).mockResolvedValue({
                 class_analysis: 'Tidak ada data.',
                 adjustments: [],
             });

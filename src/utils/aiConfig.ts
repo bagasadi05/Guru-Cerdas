@@ -21,7 +21,6 @@ export function pickRandomKey(keysEnv: string): string[] {
 }
 
 let geminiKeyIndex = 0;
-let openRouterKeyIndex = 0;
 
 /**
  * Round-robin key selection — lebih adil daripada random untuk
@@ -35,20 +34,8 @@ export function pickNextGeminiKey(): string {
   return key;
 }
 
-export function pickNextOpenRouterKey(): string {
-  const keys = pickRandomKey(import.meta.env.VITE_OPENROUTER_API_KEY || '');
-  if (keys.length === 0) return '';
-  const key = keys[openRouterKeyIndex % keys.length];
-  openRouterKeyIndex = (openRouterKeyIndex + 1) % keys.length;
-  return key;
-}
-
 export function getGeminiKeyCount(): number {
   return pickRandomKey(import.meta.env.VITE_GEMINI_API_KEY || '').length;
-}
-
-export function getOpenRouterKeyCount(): number {
-  return pickRandomKey(import.meta.env.VITE_OPENROUTER_API_KEY || '').length;
 }
 
 // ─── Circuit Breaker ──────────────────────────────────────────────
@@ -136,7 +123,6 @@ export function recordCircuitFailure(provider: string): void {
 export function resetCircuitBreakers(): void {
   circuitStates.clear();
   geminiKeyIndex = 0;
-  openRouterKeyIndex = 0;
 }
 
 // ─── Response Cache ───────────────────────────────────────────────
@@ -232,18 +218,15 @@ export function getBackoffDelay(attempt: number, baseMs: number = 1000): number 
   const exponential = baseMs * Math.pow(2, attempt - 1);
   // Jitter: ±25% dari nilai exponential
   const jitter = exponential * 0.25 * (Math.random() * 2 - 1);
-  return Math.min(exponential + jitter, 30_000); // Max 30 detik
+  // Max 60 detik — Gemini free-tier quota resets per menit, jadi retry yang
+  // lebih cepat dari itu hampir pasti kena 429 lagi.
+  return Math.min(exponential + jitter, 60_000);
 }
 
 // ─── Provider Status ──────────────────────────────────────────────
 
 export interface ProviderStatus {
   gemini: {
-    available: boolean;
-    keyCount: number;
-    circuitOpen: boolean;
-  };
-  openRouter: {
     available: boolean;
     keyCount: number;
     circuitOpen: boolean;
@@ -259,18 +242,12 @@ export interface ProviderStatus {
  */
 export function getProviderStatus(): ProviderStatus {
   const geminiCircuit = circuitStates.get('gemini');
-  const openRouterCircuit = circuitStates.get('openrouter');
 
   return {
     gemini: {
       available: getGeminiKeyCount() > 0,
       keyCount: getGeminiKeyCount(),
       circuitOpen: geminiCircuit?.isOpen ?? false,
-    },
-    openRouter: {
-      available: getOpenRouterKeyCount() > 0,
-      keyCount: getOpenRouterKeyCount(),
-      circuitOpen: openRouterCircuit?.isOpen ?? false,
     },
     rateLimits: {
       remaining: 0, // Diisi oleh rateLimiter
@@ -282,8 +259,7 @@ export function getProviderStatus(): ProviderStatus {
 // ─── User-Friendly Error Messages ─────────────────────────────────
 
 const RATE_LIMIT_MESSAGES: Record<string, string> = {
-  gemini: 'Layanan Gemini sedang sibuk. Mencadangkan ke OpenRouter...',
-  openrouter: 'Semua layanan AI sedang sibuk. Silakan tunggu 1-2 menit dan coba lagi.',
+  gemini: 'Layanan Gemini sedang sibuk. Silakan tunggu 1-2 menit dan coba lagi.',
   generic: 'Layanan AI sedang tidak tersedia. Silakan coba beberapa saat lagi.',
 };
 

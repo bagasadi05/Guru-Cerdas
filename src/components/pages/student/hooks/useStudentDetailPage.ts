@@ -798,7 +798,7 @@ export const useStudentDetailPage = () => {
         setIsAiReportLoading(true);
         setAiReportError('');
         try {
-            const { generateOpenRouterContent, getAssistantContent } = await import('../../../../services/openRouterService');
+            const { generateGeminiContent, getAssistantContent } = await import('../../../../services/geminiService');
 
             const avgScore = filteredAcademicRecords.length > 0
                 ? Math.round(filteredAcademicRecords.reduce((a, b) => a + b.score, 0) / filteredAcademicRecords.length)
@@ -836,7 +836,7 @@ ${filteredViolations.length > 0 ? `- Detail Pelanggaran: ${filteredViolations.ma
 
 Tulis laporan yang menyentuh hati, memotivasi, dan komprehensif agar orang tua memahami betul perkembangan anaknya secara holistik. Gunakan format WhatsApp yang indah.`;
 
-            const response = await generateOpenRouterContent([
+            const response = await generateGeminiContent([
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: prompt }
             ]);

@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { generateOpenRouterJson } from '../../services/openRouterService';
+import { generateGeminiJson } from '../../services/geminiService';
 import { useToast } from '../../hooks/useToast';
 import { AiAnalysis, AttendanceRow, StudentRow } from '../../types';
 
@@ -43,7 +43,7 @@ Berikan analisis dalam format JSON murni yang sesuai dengan schema TypeScript:
   "pattern_warnings": [{"pattern_description": "deskripsi pola", "implicated_students": ["nama siswa"]}]
 }`;
 
-      const jsonData = await generateOpenRouterJson<AiAnalysis>(prompt);
+      const jsonData = await generateGeminiJson<AiAnalysis>(prompt);
       setAiAnalysisResult(jsonData);
     } catch (err: unknown) {
       toast.error('Gagal menganalisis data. Coba lagi dalam beberapa saat.');

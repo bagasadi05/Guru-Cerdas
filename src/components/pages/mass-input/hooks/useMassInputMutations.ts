@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../services/supabase';
-import { generateOpenRouterJson } from '../../../../services/openRouterService';
+import { generateGeminiJson } from '../../../../services/geminiService';
 import { generateTeacherNotesBatched } from '../../../../utils/aiBatch';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useToast } from '../../../../hooks/useToast';
@@ -324,7 +324,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
               { "studentName": "Nama Siswa", "score": "85" }
             ]`;
             const prompt = `Daftar Siswa: ${JSON.stringify(studentNames)}\n\nTeks Nilai untuk Diproses:\n${pasteData}`;
-            const parsedResults = await generateOpenRouterJson<ReviewDataItem[]>(prompt, systemInstruction);
+            const parsedResults = await generateGeminiJson<ReviewDataItem[]>(prompt, systemInstruction);
             if (!Array.isArray(parsedResults)) throw new Error('Format respon AI tidak valid (bukan list).');
             const newScores: Record<string, string> = {}; let matchedCount = 0;
             const unmatchedNames: string[] = [];

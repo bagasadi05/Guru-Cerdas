@@ -29,26 +29,26 @@ Sebelum deployment, pastikan:
 
 ---
 
-## Environment Variables
-
-### Required Variables
+### Client-Side Variables (Vite Bundle)
 
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `VITE_SUPABASE_URL` | Supabase project URL | `https://xxxxx.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key | `eyJhbGci...` |
+| `VITE_APP_VERSION` | Application version (optional) | `1.0.0` |
+| `VITE_SENTRY_DSN` | Sentry DSN for error tracking (optional) | `` |
+| `VITE_USE_CUSTOM_PWA_PROMPT` | Enable custom PWA prompt UI (optional) | `false` |
 
-### Optional Variables
+> ⚠️ **Security Notice**: Do **NOT** set `VITE_GEMINI_API_KEY` in Vercel production environment variables. Keep `VITE_GEMINI_API_KEY` only in your local `.env` file for development. Production builds route requests through `/api/gemini` so API keys remain strictly server-side.
 
-| Variable | Description | Default |
+### Server-Side Variables (Vercel Serverless Functions)
+
+| Variable | Description | Example |
 |----------|-------------|---------|
-| `VITE_GEMINI_API_KEY` | Google Gemini API key for AI features | `` |
-| `VITE_APP_VERSION` | Application version | `1.0.0` |
-| `VITE_SENTRY_DSN` | Sentry DSN for error tracking | `` |
-| `VITE_USE_CUSTOM_PWA_PROMPT` | Enable or disable custom PWA prompt UI | `false` |
-| `VITE_ERROR_MONITORING_ENDPOINT` | Telemetry endpoint for client error logs | `` |
-| `VITE_OPENROUTER_PROXY_URL` | OpenRouter proxy endpoint for secure AI calls | `` |
-| `VITE_OPENROUTER_API_KEY` | Local fallback OpenRouter API Key for AI Insights | `` |
+| `GEMINI_API_KEY` | Google Gemini API key(s) (comma-separated for multi-key round-robin & 429 cooldown) | `key1,key2` |
+| `GEMINI_ALLOWED_ORIGIN` | Allowed request origin(s) for the `/api/gemini` proxy | `https://your-domain.my.id` |
+
+
 | ~~`VITE_PIONEER_API_KEY`~~ | ~~Analytics/tracking token for Pioneer platform~~ | ~~``~~ |
 
 ### Getting Supabase Credentials
@@ -103,9 +103,14 @@ Vercel provides the easiest deployment experience for Vite projects.
 2. Go to [Vercel](https://vercel.com) and sign in
 3. Click **New Project**
 4. Import your GitHub repository
-5. Configure environment variables:
-   - Add `VITE_SUPABASE_URL`
-   - Add `VITE_SUPABASE_ANON_KEY`
+5. Configure environment variables in Vercel Dashboard:
+   - **Client Variables**:
+     - `VITE_SUPABASE_URL`
+     - `VITE_SUPABASE_ANON_KEY`
+   - **Serverless Variables** (Server-side only):
+     - `GEMINI_API_KEY` (comma-separated keys, e.g. `key1,key2`)
+     - `GEMINI_ALLOWED_ORIGIN` (e.g. `https://your-domain.my.id`)
+   - *Note*: Ensure `VITE_GEMINI_API_KEY` is **removed** from Vercel so keys never leak to the client browser bundle.
 6. Click **Deploy**
 
 #### Option 2: Via CLI

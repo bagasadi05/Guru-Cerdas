@@ -1,5 +1,5 @@
 import { isAiEnabled, supabase } from './supabase';
-import { generateOpenRouterJson } from './openRouterService';
+import { generateGeminiJson } from './geminiService';
 import { logger } from './logger';
 
 export interface ChildDevelopmentData {
@@ -348,7 +348,7 @@ Berikan analisis dalam format JSON dengan struktur:
 {"summary":{"name":"","age":0,"class":"","overallAssessment":""},"cognitive":{"strengths":[],"areasForDevelopment":[],"learningStyle":"","criticalThinking":"","academicComparison":""},"affective":{"positiveCharacters":[],"socialSkills":"","characterDevelopmentAreas":[],"emotionalIntelligence":"","discipline":""},"psychomotor":{"motorSkills":"","outstandingSkills":[],"areasNeedingStimulation":[],"coordination":""},"recommendations":{"homeSupport":[],"neededStimulation":{"cognitive":[],"affective":[],"psychomotor":[]},"developmentPlan":{"threeMonths":[],"sixMonths":[]},"warningsSigns":[]}}`;
 
     // Call AI via OpenRouter
-    const analysis = await generateOpenRouterJson<ComprehensiveChildAnalysis>(prompt, systemInstruction);
+    const analysis = await generateGeminiJson<ComprehensiveChildAnalysis>(prompt, systemInstruction);
 
     return analysis;
 
@@ -854,7 +854,7 @@ export async function generateComparativeChildAnalysis(
       }
     }`;
 
-    const analysis = await generateOpenRouterJson<ComparativeChildAnalysis>(prompt, systemInstruction);
+    const analysis = await generateGeminiJson<ComparativeChildAnalysis>(prompt, systemInstruction);
     return {
       ...analysis,
       isComparative: true

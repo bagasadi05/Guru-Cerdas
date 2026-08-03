@@ -7,7 +7,7 @@
  * @module services/aiInsightService
  */
 
-import { generateOpenRouterJson } from './openRouterService';
+import { generateGeminiJson } from './geminiService';
 import type { Database } from './database.types';
 import { logger } from './logger';
 import { supabase } from './supabase';
@@ -167,7 +167,7 @@ Tugas Anda:
 3. Berikan satu saran fokus untuk kelas secara umum.`;
 
   // Generate insight using OpenRouter
-  const parsedInsight = await generateOpenRouterJson<AIInsight>(prompt, systemInstruction);
+  const parsedInsight = await generateGeminiJson<AIInsight>(prompt, systemInstruction);
 
   // Create name-to-ID map for student resolution
   const studentNameMap = createStudentNameMap(students);

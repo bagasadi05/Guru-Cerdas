@@ -1,4 +1,4 @@
-import { generateOpenRouterJson } from './openRouterService';
+import { generateGeminiJson } from './geminiService';
 
 export interface AIStudentAdjustment {
     student_id: string;
@@ -99,7 +99,7 @@ Tugas Anda:
 
 
     try {
-        const result = await generateOpenRouterJson<AIGradeAdjustmentResult>(prompt, systemInstruction);
+        const result = await generateGeminiJson<AIGradeAdjustmentResult>(prompt, systemInstruction);
         
         // Post-process fallback validation: make sure every student is represented
         const resolvedAdjustments = students.map(s => {

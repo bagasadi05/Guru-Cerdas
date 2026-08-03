@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase, isAiEnabled } from '../../services/supabase';
-import { generateOpenRouterContent, getAssistantContent } from '../../services/openRouterService';
+import { generateGeminiContent, getAssistantContent } from '../../services/geminiService';
 import { useAuth } from '../../hooks/useAuth';
 import { Database } from '../../services/database.types';
 import { generateStudentReport, ReportData, ensureLogoLoaded } from '../../services/pdfGenerator';
@@ -188,7 +188,7 @@ Contoh format yang diharapkan:
 
 Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
 
-            const response = await generateOpenRouterContent([
+            const response = await generateGeminiContent([
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: prompt }
             ]);

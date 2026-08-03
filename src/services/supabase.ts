@@ -289,11 +289,11 @@ export const clearStaleAuthTokens = (): void => {
   }
 };
 
-// Centralized AI Client Configuration (OpenRouter)
-// NOTE: Never read VITE_OPENROUTER_API_KEY here — key is server-side only.
-const openRouterProxyUrl = import.meta.env.VITE_OPENROUTER_PROXY_URL || '';
-// In local dev only: direct key fallback (never bundled in production builds)
-const devApiKey = import.meta.env.DEV ? (import.meta.env.VITE_OPENROUTER_API_KEY || '') : '';
+// Centralized AI Client Configuration (Gemini)
+// Production: the client calls the bundled serverless proxy (api/gemini.ts) —
+// the real key stays server-side, so VITE_GEMINI_API_KEY is only a dev fallback.
+const geminiProxyUrl = import.meta.env.VITE_GEMINI_PROXY_URL || '';
+const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 /**
  * Flag indicating whether AI features are enabled.
@@ -322,7 +322,11 @@ const devApiKey = import.meta.env.DEV ? (import.meta.env.VITE_OPENROUTER_API_KEY
 // When unset or any other value, AI availability is auto-derived from the proxy/dev key.
 const aiFeatureFlag = String(import.meta.env.VITE_ENABLE_AI_FEATURES ?? '').toLowerCase();
 const aiExplicitlyDisabled = aiFeatureFlag === 'false';
-export const isAiEnabled = !aiExplicitlyDisabled && (!import.meta.env.DEV || !!openRouterProxyUrl || !!devApiKey);
+// Prod ships with the serverless proxy (default /api/gemini), so no client key is needed.
+// Dev needs either a proxy env or a direct dev key.
+export const isAiEnabled =
+  !aiExplicitlyDisabled &&
+  (!!geminiProxyUrl || !import.meta.env.DEV || !!geminiApiKey);
 
 if (!isAiEnabled) {
     logger.warn("AI API Keys are not set. AI features will not work.", "Supabase");

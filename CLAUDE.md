@@ -50,7 +50,7 @@ src/
 | PDF | `services/pdfGenerator.ts` | jsPDF |
 | Excel | `hooks/useExcelParser.ts` | ExcelJS |
 | i18n | `locales/en/`, `locales/id/` | react-i18next |
-| AI | `services/openRouterService.ts` | Via Vercel proxy |
+
 | Offline | `services/offlineQueue.ts` | Workbox + custom queue |
 | Push | `services/PushNotificationService.ts` | Web Push API |
 | Soft delete | `services/SoftDeleteService.ts` | Trash + recovery |

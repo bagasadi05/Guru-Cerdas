@@ -1,4 +1,4 @@
-import { generateOpenRouterJson } from './openRouterService';
+import { generateGeminiJson } from './geminiService';
 import { supabase } from './supabase';
 import { logger } from './logger';
 
@@ -90,7 +90,7 @@ export async function generateModulAjarAiContent(
 
   logger.info(`[AI Modul Ajar] Generating: ${mapel} / ${topik} / Fase ${fase}`, 'ModulAjarAI');
 
-  const result = await generateOpenRouterJson<AiModulAjarContent>(prompt, SYSTEM_INSTRUCTION);
+  const result = await generateGeminiJson<AiModulAjarContent>(prompt, SYSTEM_INSTRUCTION);
 
   if (!result.tujuanPembelajaran || !Array.isArray(result.tujuanPembelajaran) || result.tujuanPembelajaran.length === 0) {
     throw new Error('AI menghasilkan konten tidak lengkap (tujuan pembelajaran kosong).');

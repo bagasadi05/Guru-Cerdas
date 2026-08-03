@@ -1,4 +1,4 @@
-export type AIProvider = 'gemini' | 'openrouter';
+export type AIProvider = 'gemini';
 
 export type GenerateResult<T> = {
   data: T;

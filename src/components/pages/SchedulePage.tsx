@@ -8,7 +8,7 @@ import { Input } from '../ui/Input';
 import { PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, CheckCircleIcon } from '../Icons';
 import { Modal } from '../ui/Modal';
 import { MarkdownText } from '../ui/MarkdownText';
-import { generateOpenRouterJson } from '../../services/openRouterService';
+import { generateGeminiJson } from '../../services/geminiService';
 import { supabase } from '../../services/supabase';
 import { softDelete } from '../../services/SoftDeleteService';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -326,7 +326,7 @@ const SchedulePage: React.FC = () => {
         const systemInstruction = `Anda adalah seorang analis efisiensi jadwal...`;
         const prompt = `Analisis data jadwal JSON berikut dan berikan wawasan. Fokus pada: 1. Konflik Jadwal... Data Jadwal: ${JSON.stringify(schedule)}`;
         try {
-            const result = await generateOpenRouterJson<{ sections: { title: string; points: string[] }[] }>(prompt, systemInstruction);
+            const result = await generateGeminiJson<{ sections: { title: string; points: string[] }[] }>(prompt, systemInstruction);
             setAnalysisResult(result);
         } catch (error) {
             console.error("Schedule Analysis Error:", error);
