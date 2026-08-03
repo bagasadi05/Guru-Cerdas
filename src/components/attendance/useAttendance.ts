@@ -260,7 +260,13 @@ export const useAttendance = () => {
         },
         onError: (err: Error, newRecords, context) => {
             queryClient.setQueryData(['attendanceData', user?.id, selectedClass, selectedDate], context?.previousAttendance);
-            toast.error(`Gagal menyimpan absensi: ${err.message}`);
+            if (err.message?.includes('foreign key constraint')) {
+                toast.error('Data siswa telah diperbarui. Memuat ulang daftar siswa terbaru...');
+                queryClient.invalidateQueries({ queryKey: ['students'] });
+                queryClient.invalidateQueries({ queryKey: ['attendanceData'] });
+            } else {
+                toast.error(`Gagal menyimpan absensi: ${err.message}`);
+            }
         },
         onSuccess: (data, variables) => {
             if (data.synced) {
@@ -540,18 +546,26 @@ export const useAttendance = () => {
         ) as Record<string, AttendanceRecord>;
         setAttendanceRecords(recordsWithIds);
 
+        const validStudentIds = new Set(students.map(s => s.id));
         const semesterIdForDate = getSemesterByDate(selectedDate)?.id || selectedSemesterId || activeSemester?.id || null;
-        const recordsToUpsert = Object.entries(recordsWithIds).map(([student_id, record]) => ({
-            id: record.id!,
-            student_id,
-            date: selectedDate,
-            status: record.status,
-            teacher_status: record.status,
-            teacher_id: user.id,
-            notes: record.note,
-            user_id: user.id,
-            semester_id: semesterIdForDate,
-        }));
+        const recordsToUpsert = Object.entries(recordsWithIds)
+            .filter(([student_id]) => validStudentIds.has(student_id))
+            .map(([student_id, record]) => ({
+                id: record.id!,
+                student_id,
+                date: selectedDate,
+                status: record.status,
+                teacher_status: record.status,
+                teacher_id: user.id,
+                notes: record.note,
+                user_id: user.id,
+                semester_id: semesterIdForDate,
+            }));
+
+        if (recordsToUpsert.length === 0) {
+            toast.warning('Tidak ada siswa valid untuk disimpan. Silakan muat ulang halaman.');
+            return;
+        }
 
         saveAttendance(recordsToUpsert);
     };
