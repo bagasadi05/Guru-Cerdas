@@ -104,7 +104,6 @@ const StudentDetailPage = () => {
         isLoading,
         isError,
         queryError,
-        studentDetails,
         filteredAttendance,
         attendanceSummary,
         filteredViolations,

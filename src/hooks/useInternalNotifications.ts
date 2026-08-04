@@ -66,7 +66,9 @@ export const useInternalNotifications = () => {
             return () => clearTimeout(timer);
         }
 
-        fetchNotifications();
+        setTimeout(() => {
+            void fetchNotifications();
+        }, 0);
 
         // Subscribe to realtime changes
         const subscription = supabase
