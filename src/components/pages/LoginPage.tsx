@@ -216,7 +216,7 @@ const LoginPage: React.FC = () => {
                                             <input type="checkbox" className="rounded border-gray-600 bg-gray-800/50 text-brand-400 focus:ring-brand-400/50 focus:ring-offset-gray-900 cursor-pointer" />
                                             <span className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">Ingat saya</span>
                                         </label>
-                                        <button type="button" onClick={() => setIsForgotModalOpen(true)} className="text-xs py-2 min-h-[44px] flex items-center text-brand-300 hover:text-brand-200 transition-colors">
+                                        <button type="button" onClick={() => setIsForgotModalOpen(true)} className="text-xs text-brand-300 hover:text-brand-200 transition-colors">
                                             Lupa password?
                                         </button>
                                     </div>

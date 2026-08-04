@@ -491,12 +491,12 @@ const ExtracurricularPage: React.FC = () => {
                 />
             )}
 
-            {/* Modal Add/Edit Extracurricular */}
+            {/* Modals from old file */}
             {isModalOpen && createPortal(
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-                    <div className="relative w-full max-w-lg bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-                        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="sticky top-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-6 py-4 border-b border-slate-200 dark:border-slate-700 z-10">
                             <h2 className="text-xl font-bold text-slate-800 dark:text-white">
                                 {editingExtracurricular ? 'Edit Ekstrakurikuler' : 'Tambah Ekstrakurikuler Baru'}
                             </h2>
@@ -506,7 +506,7 @@ const ExtracurricularPage: React.FC = () => {
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Ekstrakurikuler *</label>
                                 <Input required type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Kategori</label>
                                     <Select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}>
@@ -523,7 +523,7 @@ const ExtracurricularPage: React.FC = () => {
                                     <Input type="number" min="1" value={formData.max_participants} onChange={(e) => setFormData({ ...formData, max_participants: parseInt(e.target.value) || 30 })} />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hari Jadwal</label>
                                     <Select value={formData.schedule_day} onChange={(e) => setFormData({ ...formData, schedule_day: e.target.value })}>
@@ -586,7 +586,7 @@ const ExtracurricularPage: React.FC = () => {
                         <form onSubmit={(e) => { e.preventDefault(); mutations.createStudentsMutation.mutate({ rows: newStudentRows, bulkClassName }); }} className="space-y-4">
                             <div className="space-y-4">
                                 {newStudentRows.map((row, index) => (
-                                    <div key={index} className="flex flex-col sm:flex-row gap-3">
+                                    <div key={index} className="flex gap-3">
                                         <Input required type="text" value={row.name} onChange={(e) => { const n = [...newStudentRows]; n[index].name = e.target.value; setNewStudentRows(n); }} placeholder="Nama Siswa" className="flex-[2]" />
                                         <Select value={row.gender} onChange={(e) => { const n = [...newStudentRows]; n[index].gender = e.target.value as Gender; setNewStudentRows(n); }} className="flex-1">
                                             <option value="Laki-laki">L</option><option value="Perempuan">P</option>

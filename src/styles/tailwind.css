@@ -26,8 +26,9 @@
 /* ── Hardware Accelerated Scrolling ────────────────────────────────
    Promote sticky & fixed headers/toolbars to independent GPU layers
    to prevent layout thrashing and repaint jank during scroll. */
+.sticky,
 .fixed {
-  will-change: transform;
+  transform: translateZ(0);
   backface-visibility: hidden;
 }
 
@@ -50,13 +51,5 @@ html, body {
    class provides a utility for inline font loading if needed. */
 .font-display-swap {
   font-display: swap;
-}
-
-/* ── Touch Target Safeguard ──────────────────────────────────── */
-@layer utilities {
-  .touch-target {
-    min-width: 44px;
-    min-height: 44px;
-  }
 }
 

@@ -36,7 +36,7 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                     placeholder="Cari nama atau kode akses siswa..."
                     value={searchTerm}
                     onChange={e => onSearchChange(e.target.value)}
-                    className="pl-10 h-11 text-base sm:text-sm w-full shadow-sm border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 rounded-xl bg-white dark:bg-slate-800 transition-all"
+                    className="pl-10 h-11 text-xs sm:text-sm w-full shadow-sm border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 rounded-xl bg-white dark:bg-slate-800 transition-all"
                 />
             </div>
 
@@ -75,7 +75,7 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                     <Select
                         value={genderFilter}
                         onChange={(e) => onGenderFilterChange(e.target.value as any)}
-                        className="h-11 !text-base sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 !px-3 shadow-sm cursor-pointer"
+                        className="h-11 !text-xs sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 !px-3 shadow-sm cursor-pointer"
                     >
                         <option value="all">Semua Gender</option>
                         <option value="Laki-laki">Laki-laki</option>
@@ -88,7 +88,7 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                     <Select
                         value={accessCodeFilter}
                         onChange={(e) => onAccessCodeFilterChange(e.target.value as any)}
-                        className="h-11 !text-base sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 !px-3 shadow-sm cursor-pointer"
+                        className="h-11 !text-xs sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 !px-3 shadow-sm cursor-pointer"
                     >
                         <option value="all">Semua Status</option>
                         <option value="has_code">Sudah Ada Kode</option>

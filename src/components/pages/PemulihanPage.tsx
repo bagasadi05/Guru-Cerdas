@@ -243,7 +243,7 @@ const PemulihanPage: React.FC = () => {
     const perTableEntries = Object.entries(auditStats?.perTable ?? {});
 
     return (
-        <div className="min-h-dvh bg-slate-50 dark:bg-slate-900">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
             <div className="p-4 md:p-6 lg:p-8 space-y-6 w-full pb-24 lg:pb-6 max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

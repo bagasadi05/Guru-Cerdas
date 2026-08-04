@@ -37,7 +37,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     return (
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {/* Desktop Table View */}
-            <div className="hidden lg:block overflow-x-auto table-responsive">
+            <div className="hidden lg:block table-responsive">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
                         <tr>
@@ -100,7 +100,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                             </code>
                                             <button type="button"
                                                 onClick={() => { navigator.clipboard.writeText(student.access_code || ''); toast.success("Disalin!"); }}
-                                                className="text-gray-400 hover:text-emerald-600 transition-colors opacity-0 group-hover:opacity-100 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center"
+                                                className="text-gray-400 hover:text-emerald-600 transition-colors opacity-0 group-hover:opacity-100"
                                                 title="Salin"
                                             >
                                                 <ClipboardIcon className="w-4 h-4" />
@@ -115,7 +115,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                        <Link to={`/siswa/${student.id}`} className="p-2 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+                                        <Link to={`/siswa/${student.id}`} className="p-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
                                             <EyeIcon className="w-4 h-4" />
                                         </Link>
                                         {isAdmin && (
@@ -124,7 +124,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                                     onClick={() => onAction(student, 'edit')}
                                                     aria-label={`Edit siswa ${student.name}`}
                                                     title="Edit Siswa"
-                                                    className="p-2 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-emerald-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                                    className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-emerald-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                                                 >
                                                     <PencilIcon className="w-4 h-4" aria-hidden="true" />
                                                 </button>
@@ -132,7 +132,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                                     onClick={() => onAction(student, 'delete')}
                                                     aria-label={`Hapus siswa ${student.name}`}
                                                     title="Hapus Siswa"
-                                                    className="p-2 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                                    className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                                                 >
                                                     <TrashIcon className="w-4 h-4" aria-hidden="true" />
                                                 </button>

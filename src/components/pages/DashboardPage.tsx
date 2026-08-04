@@ -357,7 +357,7 @@ const DashboardPage: React.FC = () => {
 
         {/* Right Column */}
         <div className={`space-y-4 order-2 lg:row-span-4 lg:row-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-3 lg:col-start-10 block' : 'hidden lg:block lg:col-span-3 lg:col-start-10'}`}>
-          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl h-full max-h-[70dvh] lg:max-h-[800px] flex flex-col overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl h-full max-h-[800px] flex flex-col overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
             <Tabs defaultValue="schedule" className="w-full flex flex-col h-full">
               <div className="p-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-100/50 dark:bg-slate-800/40 backdrop-blur-md">
                 <TabsList className="w-full grid grid-cols-2">
@@ -412,7 +412,7 @@ const DashboardPage: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => navigate('/tugas')}
-                    className="w-full min-h-[44px] sm:min-h-0"
+                    className="w-full"
                   >
                     Lihat Semua Tugas
                   </Button>

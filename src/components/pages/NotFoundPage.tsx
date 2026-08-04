@@ -34,7 +34,7 @@ const NotFoundPage: React.FC = () => {
   }, [countdown, navigate]);
 
   return (
-    <div className="min-h-dvh cosmic-bg flex items-center justify-center p-6">
+    <div className="min-h-screen cosmic-bg flex items-center justify-center p-6">
       <MotionDiv
         initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 30 }}
         animate={{ opacity: 1, y: 0 }}

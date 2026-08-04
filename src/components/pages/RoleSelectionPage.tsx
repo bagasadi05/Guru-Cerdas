@@ -19,7 +19,7 @@ const RoleSelectionPage: React.FC = () => {
     // Show a loader while checking auth state to prevent flashing the selection page
     if (loading || session) {
         return (
-            <div className="flex items-center justify-center min-h-dvh cosmic-bg">
+            <div className="flex items-center justify-center h-screen cosmic-bg">
                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
@@ -31,7 +31,7 @@ const RoleSelectionPage: React.FC = () => {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="min-h-dvh w-full overflow-y-auto bg-white dark:bg-gray-900"
+            className="h-screen w-full overflow-y-auto bg-white dark:bg-gray-900"
         >
             {/* Background Orb */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none flex items-center justify-center">

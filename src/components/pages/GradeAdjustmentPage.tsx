@@ -550,7 +550,7 @@ export const GradeAdjustmentPage: React.FC = () => {
     const semesterLocked = selectedSemester ? isSemesterLocked(selectedSemester) : false;
 
     return (
-        <div className="w-full space-y-6 pb-28 lg:pb-8 animate-fade-in relative z-10">
+        <div className="w-full space-y-6 pb-20 animate-fade-in relative z-10">
             <div className="max-w-7xl mx-auto w-full space-y-6">
 
                 {/* Header */}
@@ -1073,7 +1073,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                                         pattern="[0-9]*"
                                                                                         value={scoreValue}
                                                                                         onChange={(e) => handleManualScoreChange(key, e.target.value)}
-                                                                                        className={`no-print w-14 min-h-[36px] text-center text-xs font-bold border rounded p-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
+                                                                                        className={`no-print w-14 text-center text-xs font-bold border rounded p-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
                                                                                             isFailed
                                                                                                 ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400'
                                                                                                 : manualOverrides.has(key)
@@ -1132,7 +1132,7 @@ export const GradeAdjustmentPage: React.FC = () => {
                                                                             pattern="[0-9]*"
                                                                             value={scoreValue}
                                                                             onChange={(e) => handleManualScoreChange(item.id, e.target.value)}
-                                                                            className={`no-print w-16 min-h-[36px] text-center text-xs font-bold border rounded p-1 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
+                                                                            className={`no-print w-16 text-center text-xs font-bold border rounded p-1 focus:outline-none focus:ring-1 focus:ring-emerald-500 ${
                                                                                 isFailed
                                                                                     ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400'
                                                                                     : manualOverrides.has(item.id)

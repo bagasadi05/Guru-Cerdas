@@ -210,7 +210,7 @@ export const TindakLanjutPage: React.FC = () => {
                         <Button 
                           size="sm" 
                           onClick={() => setSelectedViolation(v)}
-                          className="bg-brand-600 hover:bg-brand-700 text-white shadow-sm rounded-xl min-h-[44px] px-3.5"
+                          className="bg-brand-600 hover:bg-brand-700 text-white shadow-sm rounded-xl"
                         >
                           Tindak Lanjuti
                         </Button>

@@ -190,7 +190,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                             <button type="button"
                                 onClick={() => onNoteClick(student.id, record?.note || '')}
                                 className={`
-                                    w-11 h-11 flex items-center justify-center rounded-xl transition-all
+                                    w-10 h-10 flex items-center justify-center rounded-xl transition-all
                                     ${record?.note
                                         ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
                                         : 'text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800'

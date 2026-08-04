@@ -74,14 +74,14 @@ export const StudentProfileHeader: React.FC<StudentProfileHeaderProps> = ({
 
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-3 sm:gap-4 w-full md:w-auto">
-                    <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Kembali" className="flex-shrink-0 h-11 w-11 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-transform hover:-translate-x-1">
+                    <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Kembali" className="flex-shrink-0 h-10 w-10 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-transform hover:-translate-x-1">
                         <ArrowLeftIcon className="w-5 h-5" />
                     </Button>
                     <div className="relative group flex-shrink-0">
                         <img src={getStudentAvatar(student.avatar_url, student.gender, student.id, undefined, 'md')} alt={student.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md group-hover:shadow-lg transition-all duration-300 dark:border-white/10 group-hover:scale-105" />
                         <input type="file" ref={photoInputRef} onChange={handlePhotoChange} accept="image/png, image/jpeg" className="hidden" disabled={isUploadingPhoto || !isOnline} />
                         {canManageStudentProfile ? (
-                            <button type="button" onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} aria-label="Unggah foto profil siswa" className="absolute -bottom-1 -right-1 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-md hover:scale-110 transition-transform">
+                            <button type="button" onClick={() => photoInputRef.current?.click()} disabled={isUploadingPhoto || !isOnline} aria-label="Unggah foto profil siswa" className="absolute -bottom-1 -right-1 p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-md hover:scale-110 transition-transform">
                                 <CameraIcon className="w-4 h-4" />
                             </button>
                         ) : null}
@@ -97,14 +97,14 @@ export const StudentProfileHeader: React.FC<StudentProfileHeaderProps> = ({
                             variant="outline"
                             onClick={() => setIsEditModalOpen(true)}
                             disabled={!isOnline}
-                            className="flex-1 sm:flex-none h-11 min-h-[44px] px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-all hover:-translate-y-0.5"
+                            className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-all hover:-translate-y-0.5"
                         >
                             <UserCircleIcon className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Edit Profil</span>
                         </Button>
                     ) : null}
 
                     <Link to={`/cetak-rapot/${studentId}`} className="flex-1 sm:flex-none flex">
-                        <Button variant="outline" className="w-full h-11 min-h-[44px] px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-all hover:-translate-y-0.5">
+                        <Button variant="outline" className="w-full h-10 px-3 sm:px-4 bg-white/50 dark:bg-white/10 border-gray-200 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20 text-gray-900 dark:text-white transition-all hover:-translate-y-0.5">
                             <FileTextIcon className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Cetak Rapor</span>
                         </Button>
                     </Link>
@@ -112,7 +112,7 @@ export const StudentProfileHeader: React.FC<StudentProfileHeaderProps> = ({
                     {canManageStudentProfile ? (
                         <Button
                             onClick={() => setIsPortalModalOpen(true)}
-                            className="flex-1 sm:flex-none h-11 min-h-[44px] px-3 sm:px-4 bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-900 hover:to-emerald-900 text-white shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
+                            className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-900 hover:to-emerald-900 text-white shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
                         >
                             <KeyRoundIcon className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Akses Portal</span>
                         </Button>
