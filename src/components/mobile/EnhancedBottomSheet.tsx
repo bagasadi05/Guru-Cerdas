@@ -36,7 +36,7 @@ const EnhancedBottomSheet: React.FC<EnhancedBottomSheetProps> = ({
   children,
   title,
   subtitle,
-  maxHeight = '70vh',
+  maxHeight = '70dvh',
   showDragHandle = true,
   closeOnBackdrop = true,
   keyboardAware = true,

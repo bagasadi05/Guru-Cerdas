@@ -371,7 +371,7 @@ const ActionHistoryPage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+            <div className="min-h-dvh flex items-center justify-center bg-slate-50 dark:bg-slate-900">
                 <div className="text-center">
                     <Loader2 className="w-10 h-10 text-brand-500 animate-spin mx-auto" />
                     <p className="mt-4 text-slate-500 dark:text-slate-400">Memuat riwayat aksi...</p>
@@ -381,7 +381,7 @@ const ActionHistoryPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="min-h-dvh bg-slate-50 dark:bg-slate-900">
             <div className="p-4 md:p-6 lg:p-8 space-y-6 w-full pb-24 lg:pb-6">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -688,7 +688,7 @@ const ActionHistoryPage: React.FC = () => {
                                                     <div className="flex items-center gap-2 flex-shrink-0">
                                                         <button type="button"
                                                             onClick={() => setViewDetailItem(action)}
-                                                            className="p-2 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
+                                                            className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
                                                             title="Lihat Detail"
                                                         >
                                                             <Eye className="w-5 h-5" />
@@ -698,7 +698,7 @@ const ActionHistoryPage: React.FC = () => {
                                                             <button type="button"
                                                                 onClick={() => undoMutation.mutate(action.id)}
                                                                 disabled={undoMutation.isPending}
-                                                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 text-white text-sm font-semibold shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50"
+                                                                className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 text-white text-sm font-semibold shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50"
                                                             >
                                                                 <RotateCcw className={`w-4 h-4 ${undoMutation.isPending ? 'animate-spin' : ''}`} />
                                                                 Undo

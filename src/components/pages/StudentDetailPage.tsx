@@ -316,9 +316,9 @@ const StudentDetailPage = () => {
                                         onClick={() => photoInputRef.current?.click()}
                                         disabled={isUploadingPhoto || !isOnline}
                                         aria-label="Unggah foto profil siswa"
-                                        className="absolute -bottom-1 -right-1 p-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md shadow-md transition-transform hover:scale-110"
+                                        className="absolute -bottom-1 -right-1 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg shadow-md transition-transform hover:scale-110"
                                     >
-                                        <CameraIcon className="w-3 h-3" />
+                                        <CameraIcon className="w-4 h-4" />
                                     </button>
                                 ) : null}
                             </div>
@@ -337,7 +337,7 @@ const StudentDetailPage = () => {
                         </div>
 
                         {/* Action buttons — auto width on desktop, full width on mobile */}
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0 w-full sm:w-auto">
                             {canManageStudentProfile ? (
                                 <Button
                                     variant="outline"
@@ -808,7 +808,7 @@ const StudentDetailPage = () => {
                                         value={aiReport}
                                         onChange={(e) => setAiReport(e.target.value)}
                                         rows={12}
-                                        className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-fuchsia-500 focus:ring-fuchsia-500 text-sm p-4 transition-all resize-y min-h-[250px] overflow-y-auto leading-relaxed"
+                                        className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-fuchsia-500 focus:ring-fuchsia-500 text-base sm:text-sm p-4 transition-all resize-y min-h-[250px] overflow-y-auto leading-relaxed"
                                     />
 
                                     <div className="flex flex-col sm:flex-row gap-3 pt-2">

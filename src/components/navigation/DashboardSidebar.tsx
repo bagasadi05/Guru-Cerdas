@@ -83,7 +83,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
                 className="relative w-12 h-12 object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-md"
               />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h1 className="text-lg font-bold tracking-wide text-slate-800 dark:text-white uppercase font-serif">
                 MI Al Irsyad
               </h1>

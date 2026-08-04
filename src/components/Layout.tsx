@@ -124,7 +124,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [location.pathname]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950/50" style={{ height: '100dvh' }}>
+    <div className="flex h-dvh overflow-hidden bg-slate-50 dark:bg-slate-950/50">
       {/* Accessibility: Skip Links */}
       <SkipLinks />
 
@@ -157,15 +157,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         />
       </div>
 
-      <div className="flex flex-col flex-1 w-full overflow-hidden relative z-10">
+      <div className="flex flex-col flex-1 w-full overflow-y-auto overflow-x-clip relative z-10">
         {/* Header */}
         <header
-          className="h-16 lg:h-20 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-sticky transition-all duration-300"
+          className="h-16 lg:h-20 pt-[env(safe-area-inset-top)] flex items-center justify-between px-4 lg:px-8 shrink-0 z-sticky transition-all duration-300"
           role="banner"
         >
           <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm"></div>
 
-          <div className="relative z-10 flex items-center gap-3 w-full">
+          <div className="relative z-10 flex items-center gap-3 w-full min-w-0">
 
 
             {/* Search button */}
@@ -187,7 +187,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
         <main
           id="main-content"
-          className={`flex-1 overflow-hidden ${isMobile && isLandscape ? 'pl-16' : ''}`}
+          className={`flex-1 overflow-y-auto overflow-x-clip ${isMobile && isLandscape ? 'pl-16' : ''}`}
           role="main"
         >
           <PullToRefresh

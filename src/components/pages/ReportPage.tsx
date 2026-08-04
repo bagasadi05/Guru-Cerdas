@@ -321,11 +321,11 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
     }, [filteredAttendance]);
 
     if (isLoading) return <ReportPageSkeleton />;
-    if (isError) return <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950 text-red-600">Error: {error.message}</div>;
+    if (isError) return <div className="flex items-center justify-center h-dvh bg-slate-50 dark:bg-slate-950 text-red-600">Error: {error.message}</div>;
     if (!data) return null;
 
     return (
-        <div className="h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950 font-sans overflow-hidden">
+        <div className="h-dvh flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950 font-sans overflow-hidden">
             {/* Sidebar / Settings Panel */}
             <aside className={`
                 fixed inset-y-0 left-0 z-30 w-full md:w-80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-in-out border-r border-slate-200 dark:border-slate-800
@@ -788,7 +788,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                 <FloatingActionButton
                     icon={<PrinterIcon className="w-6 h-6" />}
                     onClick={handlePrint}
-                    className="md:hidden fixed bottom-6 right-6 z-40 bg-emerald-500 hover:bg-emerald-600 shadow-xl shadow-emerald-500/30"
+                    className="md:hidden fixed bottom-24 right-6 z-40 bg-emerald-500 hover:bg-emerald-600 shadow-xl shadow-emerald-500/30"
                 />
             </div>
         </div>

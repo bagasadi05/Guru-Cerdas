@@ -612,7 +612,7 @@ const AdminPage: React.FC = () => {
     // Loading screen
     if (authLoading || isAdmin === null) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900">
+            <div className="flex flex-col items-center justify-center min-h-dvh bg-white dark:bg-gray-900">
                 <Loader2 className="w-12 h-12 animate-spin text-brand-600 mb-4" />
                 <p className="text-gray-500 dark:text-gray-400 animate-pulse">Memuat Dasbor Admin...</p>
             </div>
@@ -644,8 +644,8 @@ const AdminPage: React.FC = () => {
     const _distributionMax = Math.max(stats.totalStudents, stats.totalAttendance, stats.totalGrades, stats.totalTasks);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-brand-950/20">
-            <div className="max-w-7xl mx-auto px-4 py-6 md:px-8">
+        <div className="min-h-dvh bg-gradient-to-br from-slate-50 via-white to-brand-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-brand-950/20">
+            <div className="max-w-7xl mx-auto px-4 py-6 pb-24 lg:pb-8 md:px-8">
 
                 {/* Header */}
                 <header className="mb-8">
@@ -803,7 +803,7 @@ const AdminPage: React.FC = () => {
 
                 {/* Error Toast */}
                 {error && (
-                    <div className="fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3">
+                    <div className="fixed bottom-20 lg:bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 z-50">
                         <AlertCircle size={20} />
                         <span>{error}</span>
                         <button type="button" onClick={() => setError(null)} aria-label="Tutup pesan error"><X size={18} /></button>
@@ -860,7 +860,7 @@ const AdminPage: React.FC = () => {
 
                 {/* Success Toast */}
                 {undoToast.show && undoToast.user && (
-                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 z-50 animate-in slide-in-from-bottom duration-300">
+                    <div className="fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 z-50 animate-in slide-in-from-bottom duration-300">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
                                 <Trash2 size={16} className="text-emerald-400" />

@@ -80,11 +80,10 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
             end={item.href === '/dashboard'}
             onTouchStart={() => preloadRoute(item.href)}
             onClick={handleNavClick}
-            className="flex flex-col items-center justify-center gap-1 
+            className="flex-1 min-w-0 min-h-[52px] flex flex-col items-center justify-center gap-1 
                       relative touch-manipulation focus-visible:outline-none 
                       focus-visible:ring-2 focus-visible:ring-emerald-500/50 
                       focus-visible:ring-offset-2 rounded-xl transition-all duration-200"
-            style={{ minWidth: '60px', minHeight: '52px' }}
             aria-label={item.label}
           >
             {({ isActive }) => (
@@ -134,11 +133,10 @@ const EnhancedMobileBottomNav: React.FC<EnhancedMobileBottomNavProps> = ({
         {/* More Button */}
         <button type="button"
           onClick={handleMoreClick}
-          className="flex flex-col items-center justify-center gap-0.5 
+          className="flex-1 min-w-0 min-h-[52px] flex flex-col items-center justify-center gap-0.5 
                     relative touch-manipulation focus-visible:outline-none 
                     focus-visible:ring-2 focus-visible:ring-emerald-500/50 
                     focus-visible:ring-offset-2 rounded-xl transition-all duration-200"
-          style={{ minWidth: '60px', minHeight: '52px' }}
           aria-label="More options"
           aria-expanded={isMoreMenuOpen}
           aria-haspopup="dialog"

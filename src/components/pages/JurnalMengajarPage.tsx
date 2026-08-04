@@ -497,7 +497,7 @@ const JurnalMengajarPage: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg"
+                              className="h-10 w-10 min-w-[40px] min-h-[40px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg"
                               onClick={() => handleOpenEdit(j)}
                               aria-label="Edit Jurnal"
                             >
@@ -507,7 +507,7 @@ const JurnalMengajarPage: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg"
+                              className="h-10 w-10 min-w-[40px] min-h-[40px] text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg"
                               onClick={() => handleDelete(j.id)}
                               disabled={deleteJournal.isPending && deletingId === j.id}
                               aria-label="Hapus Jurnal"

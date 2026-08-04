@@ -30,7 +30,7 @@ const TrashPage: React.FC = () => {
 
     if (trashData.isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+            <div className="min-h-dvh flex items-center justify-center bg-slate-50 dark:bg-slate-900">
                 <div className="text-center">
                     <Loader2 className="w-10 h-10 text-brand-500 animate-spin mx-auto" />
                     <p className="mt-4 text-slate-500 dark:text-slate-400">Memuat item yang dihapus...</p>
@@ -40,7 +40,7 @@ const TrashPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="min-h-dvh bg-slate-50 dark:bg-slate-900">
             <div className="p-4 md:p-6 lg:p-8 space-y-6 w-full pb-24 lg:pb-6">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

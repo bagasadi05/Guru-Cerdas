@@ -960,7 +960,7 @@ const BulkGradeInputPage: React.FC = () => {
 
                 {/* Save and Adjustment Buttons */}
                 {selectedClass && grades.length > 0 && (
-                    <div className="sticky bottom-4 lg:bottom-8 flex flex-col sm:flex-row gap-3">
+                    <div className="sticky bottom-20 lg:bottom-8 flex flex-col sm:flex-row gap-3 z-20">
                         <Button
                             onClick={() => setShowAdjustmentModal(true)}
                             variant="outline"

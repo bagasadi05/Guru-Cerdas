@@ -96,7 +96,7 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
     achievements,
     isLoading,
     error,
-    _studentId,
+    studentId: _studentId,
     isSubmitting,
     fileActionStatus,
     onSave,

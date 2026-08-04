@@ -138,7 +138,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
                   border-t border-slate-200 dark:border-slate-700
                   animate-slide-up pointer-events-auto"
         style={{
-          maxHeight: '85vh',
+          maxHeight: '85dvh',
           paddingBottom: 'calc(max(env(safe-area-inset-bottom), 16px) + 80px)',
         }}
         role="dialog"
@@ -150,7 +150,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
         <button
           type="button"
           onClick={handleClose}
-          className="w-full flex justify-center pt-3 pb-2 cursor-pointer 
+          className="w-full flex justify-center items-center min-h-[44px] pt-3 pb-2 cursor-pointer 
                     hover:bg-slate-50 dark:hover:bg-slate-800/50 
                     transition-colors rounded-t-3xl"
           aria-label="Close menu"
@@ -171,7 +171,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
         {/* Content - Grid Layout */}
         <div 
           className="px-6 py-4 overflow-y-auto overscroll-contain" 
-          style={{ maxHeight: 'calc(85vh - 300px)' }}
+          style={{ maxHeight: 'calc(85dvh - 300px)' }}
         >
           <div className="grid grid-cols-2 gap-3">
             {displayedItems.map((item) => {

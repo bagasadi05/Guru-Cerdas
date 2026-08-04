@@ -155,7 +155,7 @@ const AttendancePage: React.FC = () => {
     }
 
     return (
-        <div className="w-full min-h-full p-4 sm:p-6 lg:p-8 flex flex-col max-w-7xl mx-auto">
+        <div className="w-full min-h-full p-4 sm:p-6 lg:p-8 pb-28 lg:pb-8 flex flex-col max-w-7xl mx-auto">
             <h1 className="sr-only">Absensi</h1>
             <AttendanceHeader
                 onAnalyze={handleAnalyzeAttendance}
