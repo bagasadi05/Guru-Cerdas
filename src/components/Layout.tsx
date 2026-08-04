@@ -157,7 +157,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         />
       </div>
 
-      <div className="flex flex-col flex-1 w-full overflow-y-auto overflow-x-clip relative z-10">
+      <div className="flex flex-col flex-1 w-full overflow-hidden relative z-10">
         {/* Header */}
         <header
           className="h-16 lg:h-20 pt-[env(safe-area-inset-top)] flex items-center justify-between px-4 lg:px-8 shrink-0 z-sticky transition-all duration-300"
@@ -192,9 +192,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         >
           <PullToRefresh
             onRefresh={handleRefresh}
-            className="h-full mobile-content-safe lg:pb-6 px-4 lg:px-8 pt-4 lg:pt-6"
+            className="min-h-full mobile-content-safe lg:pb-6 px-4 lg:px-8 pt-4 lg:pt-6"
           >
-            <div className="max-w-7xl mx-auto h-full">
+            <div className="max-w-7xl mx-auto min-h-full">
               <PageTransition transitionKey={location.pathname}>
                 {children}
               </PageTransition>
