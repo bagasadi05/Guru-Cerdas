@@ -126,7 +126,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 {/* Activity Category Selection */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Kategori Aktivitas</label>
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                         {[
                                             { value: 'bertanya', label: 'Bertanya', icon: '❓' },
                                             { value: 'menjawab', label: 'Menjawab', icon: '💡' },
@@ -141,13 +141,13 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                 onClick={() => {
                                                     setQuizInfo(p => ({ ...p, name: CATEGORY_DEFAULT_NAMES[cat.value] || cat.label }));
                                                 }}
-                                                className={`flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all text-left ${quizInfo.name === CATEGORY_DEFAULT_NAMES[cat.value]
+                                                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all text-left min-w-0 overflow-hidden ${quizInfo.name === CATEGORY_DEFAULT_NAMES[cat.value]
                                                     ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30'
                                                     : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-600 bg-white dark:bg-slate-800'
                                                     }`}
                                             >
-                                                <span className="text-lg">{cat.icon}</span>
-                                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{cat.label}</span>
+                                                <span className="text-base sm:text-lg flex-shrink-0">{cat.icon}</span>
+                                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate min-w-0 leading-tight">{cat.label}</span>
                                             </button>
                                         ))}
                                     </div>

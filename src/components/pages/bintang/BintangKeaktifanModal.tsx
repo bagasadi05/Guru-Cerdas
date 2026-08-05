@@ -250,20 +250,20 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                         Kategori Aktivitas
                     </label>
-                    <div className="grid grid-cols-3 gap-1.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {ACTIVITY_CATEGORIES.map(cat => (
                             <button
                                 key={cat.value}
                                 type="button"
                                 onClick={() => setCategory(cat.value)}
-                                className={`flex items-center justify-center gap-1 px-2 py-2 text-xs font-medium rounded-lg border transition-all ${
+                                className={`flex items-center gap-2 px-3 py-2.5 text-xs font-semibold rounded-xl border transition-all text-left min-w-0 overflow-hidden ${
                                     category === cat.value
                                         ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
                                         : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
                                 }`}
                             >
-                                <span>{cat.icon}</span>
-                                <span className="hidden sm:inline">{cat.label}</span>
+                                <span className="flex-shrink-0 text-base">{cat.icon}</span>
+                                <span className="truncate min-w-0 leading-tight">{cat.label}</span>
                             </button>
                         ))}
                     </div>
