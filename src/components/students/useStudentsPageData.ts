@@ -22,7 +22,29 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
   const [searchTerm, setSearchTerm] = useState('');
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [activeClassId, setActiveClassId] = useState('');
+  const [activeClassIdState, setActiveClassIdState] = useState<string>(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const classFromUrl = searchParams.get('class');
+      if (classFromUrl) return classFromUrl;
+      return sessionStorage.getItem('guru_cerdas_active_class_id') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const setActiveClassId = (id: string) => {
+    try {
+      if (id) {
+        sessionStorage.setItem('guru_cerdas_active_class_id', id);
+      }
+    } catch {
+      // ignore storage errors
+    }
+    setActiveClassIdState(id);
+  };
+
+  const activeClassId = activeClassIdState;
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
   const [genderFilter, setGenderFilter] = useState<'all' | 'Laki-laki' | 'Perempuan'>('all');
   const [accessCodeFilter, setAccessCodeFilter] = useState<'all' | 'has_code' | 'no_code'>('all');
@@ -124,10 +146,23 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
 
   useEffect(() => {
     if (classes.length > 0) {
-      const exists = classes.some((classItem) => classItem.id === activeClassId);
-      if (!activeClassId || !exists) {
-        const timer = setTimeout(() => setActiveClassId(classes[0].id), 0);
-        return () => clearTimeout(timer);
+      const savedClassId = (() => {
+        try {
+          const searchParams = new URLSearchParams(window.location.search);
+          return searchParams.get('class') || sessionStorage.getItem('guru_cerdas_active_class_id');
+        } catch {
+          return null;
+        }
+      })();
+
+      const savedExists = savedClassId ? classes.some((c) => c.id === savedClassId) : false;
+      const activeExists = activeClassId ? classes.some((c) => c.id === activeClassId) : false;
+
+      if (savedExists && !activeExists) {
+        setActiveClassId(savedClassId!);
+      } else if (!activeExists && !savedExists) {
+        const defaultId = classes[0].id;
+        setActiveClassId(defaultId);
       }
     }
   }, [classes, activeClassId]);

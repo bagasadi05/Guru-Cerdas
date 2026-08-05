@@ -294,7 +294,15 @@ const StudentDetailPage = () => {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate('/siswa')}
+                        onClick={() => {
+                            const targetClassId = student?.class_id;
+                            if (targetClassId) {
+                                try { sessionStorage.setItem('guru_cerdas_active_class_id', targetClassId); } catch {}
+                                navigate(`/siswa?class=${targetClassId}`);
+                            } else {
+                                navigate('/siswa');
+                            }
+                        }}
                         className="gap-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 shadow-sm rounded-xl font-semibold text-xs sm:text-sm min-h-[40px]"
                     >
                         <ArrowLeftIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -303,7 +311,7 @@ const StudentDetailPage = () => {
                     <Breadcrumb
                         items={[
                             { label: 'Beranda', path: '/dashboard' },
-                            { label: 'Siswa', path: '/siswa' },
+                            { label: 'Siswa', path: student?.class_id ? `/siswa?class=${student.class_id}` : '/siswa' },
                             { label: student.name }
                         ]}
                     />
