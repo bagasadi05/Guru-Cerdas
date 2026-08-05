@@ -33,7 +33,7 @@ const AnalyticsPage: React.FC = () => {
         dateRange, setDateRange,
         selectedClassId, setSelectedClassId,
         classes, isLoading, refetch,
-        students, attendance: _attendance, academicRecords, violations: _violations, quizPoints: _quizPoints, tasks: _tasks,
+        students, attendance, academicRecords, violations, quizPoints, tasks: _tasks,
         gradeStats, attendanceStats, classStats, atRiskStudents, topPerformingStudents,
         dailyAttendance, taskStats, genderStats, violationsStats, quizPointsStats
     } = useAnalyticsData();
@@ -200,7 +200,14 @@ const AnalyticsPage: React.FC = () => {
                     )}
                     {activeTab === 'character' && (
                         <CharacterTab 
-                            violationsStats={violationsStats} quizPointsStats={quizPointsStats} 
+                            violationsStats={violationsStats}
+                            quizPointsStats={quizPointsStats}
+                            students={students}
+                            classes={classes}
+                            attendance={attendance}
+                            violations={violations}
+                            quizPoints={quizPoints}
+                            selectedClassId={selectedClassId}
                         />
                     )}
                     {activeTab === 'comparison' && isLeadership && (
