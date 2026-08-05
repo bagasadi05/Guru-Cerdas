@@ -144,7 +144,7 @@ export const StudentsClassTabsHeader: React.FC<StudentsClassTabsHeaderProps> = (
             <TabsTrigger
               key={classItem.id}
               value={classItem.id}
-              className="data-[state=active]:bg-brand-600 data-[state=active]:text-white dark:data-[state=active]:bg-brand-600 dark:data-[state=active]:text-white bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg px-5 py-3 min-h-[44px] text-sm font-semibold transition-all shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex-shrink-0"
+              className="data-[state=active]:bg-brand-600 data-[state=active]:text-white data-[state=active]:border-brand-500 data-[state=active]:shadow-md data-[state=active]:shadow-brand-600/30 dark:data-[state=active]:bg-brand-600 dark:data-[state=active]:text-white dark:data-[state=active]:border-brand-500 data-[state=inactive]:bg-white/80 dark:data-[state=inactive]:bg-slate-800/80 data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-300 data-[state=inactive]:border-slate-200 dark:data-[state=inactive]:border-slate-700/80 border rounded-xl px-5 py-2.5 min-h-[44px] text-sm font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-700/60 flex-shrink-0"
             >
               {classItem.name}
             </TabsTrigger>
