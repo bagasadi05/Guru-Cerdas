@@ -246,7 +246,11 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         <td className="p-4 rounded-l-xl border-y border-l border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
                                                             <Checkbox
                                                                 checked={isSelected}
-                                                                onChange={() => handleStudentSelect(s.id)}
+                                                                onChange={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleStudentSelect(s.id);
+                                                                }}
+                                                                onClick={(e) => e.stopPropagation()}
                                                                 className="border-slate-300 dark:border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                                                             />
                                                         </td>
@@ -354,7 +358,11 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 <div className="flex items-start gap-3 mb-3">
                                                         <Checkbox
                                                             checked={isSelected}
-                                                            onChange={() => handleStudentSelect(s.id)}
+                                                            onChange={(e) => {
+                                                                e.stopPropagation();
+                                                                handleStudentSelect(s.id);
+                                                            }}
+                                                            onClick={(e) => e.stopPropagation()}
                                                             className="w-5 h-5 mt-1 border-white/30 data-[state=checked]:bg-brand-600 data-[state=checked]:border-brand-500"
                                                         />
                                                     <img
