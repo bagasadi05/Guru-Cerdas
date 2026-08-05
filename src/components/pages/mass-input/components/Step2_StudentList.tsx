@@ -341,7 +341,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         className="w-14 h-14 rounded-full object-cover ring-2 ring-slate-200 dark:ring-white/20 shadow-md"
                                                     />
                                                     <div className="flex-grow min-w-0">
-                                                        <p className="font-bold text-slate-900 dark:text-white text-lg truncate flex items-center gap-2">
+                                                        <p className="font-bold text-slate-900 dark:text-white text-lg flex flex-wrap items-center gap-2">
                                                             {s.name}
                                                             {selectedClass === 'all' && classes && (
                                                                 <span className="text-xs font-normal text-brand-500 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-800/50 flex-shrink-0">
