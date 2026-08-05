@@ -4,7 +4,7 @@ import { statusOptions } from '../../constants';
 import { InfoIcon, PencilIcon, Share2Icon } from '../Icons';
 import { CheckSquare, Square } from 'lucide-react';
 import { createWhatsAppLink, generateAttendanceMessage } from '../../utils/whatsappUtils';
-import { getStudentAvatar } from '../../utils/avatarUtils';
+import { getStudentAvatar, getDefaultAvatar } from '../../utils/avatarUtils';
 
 interface AttendanceListProps {
     students: StudentRow[];
@@ -98,6 +98,13 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                     alt={student.name}
                                     loading="lazy"
                                     decoding="async"
+                                    onError={(e) => {
+                                        const target = e.currentTarget;
+                                        const fallbackSrc = getDefaultAvatar(student.gender, student.id);
+                                        if (target.src !== fallbackSrc) {
+                                            target.src = fallbackSrc;
+                                        }
+                                    }}
                                     className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-slate-700 shadow-sm"
                                 />
                                 {record?.status && (() => {

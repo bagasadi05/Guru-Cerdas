@@ -145,7 +145,8 @@ export const useAttendance = () => {
             if (studentsError) throw studentsError;
             return (studentsData || []) as unknown as StudentRow[];
         },
-        enabled: !!selectedClass && !!user
+        enabled: !!selectedClass && !!user,
+        staleTime: 0,
     });
 
     const { data: existingAttendance, isSuccess: hasLoadedAttendance } = useQuery({
