@@ -289,15 +289,25 @@ const StudentDetailPage = () => {
     return (
         <div className="space-y-8 p-4 md:p-6 pb-8 lg:pb-6 bg-gray-50 dark:bg-gray-900 min-h-screen max-w-7xl mx-auto">
             <div className="no-print">
-                {/* Breadcrumb Navigation */}
-                <Breadcrumb
-                    items={[
-                        { label: 'Beranda', path: '/dashboard' },
-                        { label: 'Siswa', path: '/siswa' },
-                        { label: student.name }
-                    ]}
-                    className="mb-4"
-                />
+                {/* Navigation Header (Back Button + Breadcrumb) */}
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/siswa')}
+                        className="gap-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 shadow-sm rounded-xl font-semibold text-xs sm:text-sm min-h-[40px]"
+                    >
+                        <ArrowLeftIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                        <span>Kembali ke Data Siswa</span>
+                    </Button>
+                    <Breadcrumb
+                        items={[
+                            { label: 'Beranda', path: '/dashboard' },
+                            { label: 'Siswa', path: '/siswa' },
+                            { label: student.name }
+                        ]}
+                    />
+                </div>
                 {/* Profile Header Card */}
                 <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm overflow-hidden">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 f-p-card">
