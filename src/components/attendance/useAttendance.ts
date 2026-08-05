@@ -138,7 +138,7 @@ export const useAttendance = () => {
             if (!selectedClass || !user) return [];
             const { data: studentsData, error: studentsError } = await supabase
                 .from('students')
-                .select('id, name, class_id, user_id')
+                .select('id, name, class_id, user_id, gender, avatar_url')
                 .eq('class_id', selectedClass)
                 .is('deleted_at', null)
                 .order('name', { ascending: true });
