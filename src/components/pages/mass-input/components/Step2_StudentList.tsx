@@ -84,6 +84,28 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         }
     }, [mode, flatStudentList.length, focusItem]);
 
+    const classMap = useMemo(() => {
+        const map = new Map<string, string>();
+        if (classes) {
+            classes.forEach(c => map.set(c.id, c.name));
+        }
+        return map;
+    }, [classes]);
+
+    const existingGradesSet = useMemo(() => {
+        const set = new Set<string>();
+        if (existingGrades) {
+            existingGrades.forEach(g => set.add(g.student_id));
+        }
+        return set;
+    }, [existingGrades]);
+
+    const globalIndexMap = useMemo(() => {
+        const map = new Map<string, number>();
+        flatStudentList.forEach((st, idx) => map.set(st.id, idx));
+        return map;
+    }, [flatStudentList]);
+
     return (
         <div className="lg:col-span-2 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden shadow-xl shadow-brand-600/10 animate-fade-in-right">
             {/* Header with Search and Filters */}
@@ -201,10 +223,9 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 </tr>
                                             )}
                                             {group.students.map((s: StudentRow) => {
-                                                const globalIndex = flatStudentList.findIndex(st => st.id === s.id);
+                                                const globalIndex = globalIndexMap.get(s.id) ?? 0;
                                                 const isSelected = selectedStudentIds.has(s.id);
-                                                const gradeRecord = (existingGrades || []).find(g => g.student_id === s.id);
-                                                const hasGrade = !!gradeRecord;
+                                                const hasGrade = existingGradesSet.has(s.id);
                                                 const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
 
                                                 return (
@@ -243,7 +264,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                         {s.name}
                                                                         {selectedClass === 'all' && classes && (
                                                                             <span className="ml-2 text-xs text-brand-500 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-800/50">
-                                                                                {classes.find(c => c.id === s.class_id)?.name || 'Unknown Class'}
+                                                                                {classMap.get(s.class_id || '') || 'Unknown Class'}
                                                                             </span>
                                                                         )}
                                                                     </span>
@@ -309,10 +330,9 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                         <GroupHeader title={group.title} count={group.students.length} color={group.color} />
                                     )}
                                     {group.students.map((s: StudentRow) => {
-                                        const globalIndex = flatStudentList.findIndex(st => st.id === s.id);
+                                        const globalIndex = globalIndexMap.get(s.id) ?? 0;
                                         const isSelected = selectedStudentIds.has(s.id);
-                                        const gradeRecord = (existingGrades || []).find(g => g.student_id === s.id);
-                                        const hasGrade = !!gradeRecord;
+                                        const hasGrade = existingGradesSet.has(s.id);
                                         const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
 
                                         return (
@@ -346,7 +366,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         </p>
                                                         {selectedClass === 'all' && classes && (
                                                             <span className="inline-block mt-1 text-xs font-normal text-brand-500 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-800/50">
-                                                                {classes.find(c => c.id === s.class_id)?.name || 'Unknown'}
+                                                                {classMap.get(s.class_id || '') || 'Unknown'}
                                                             </span>
                                                         )}
                                                         <div className="flex flex-wrap items-center gap-2 mt-1">

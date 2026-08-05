@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useDeferredValue } from 'react';
 import { useToast } from '../../../../hooks/useToast';
 import { useMassInputData } from './useMassInputData';
 import { useMassInputState } from './useMassInputState';
@@ -63,6 +63,8 @@ export function useMassInputViewModel() {
             .map(([studentId]) => studentId));
     }, [state.scores]);
 
+    const deferredSearchTerm = useDeferredValue(state.searchTerm);
+
     const students = useMemo((): StudentRow[] => {
         if (!data.studentsData) return [];
         let filtered = data.studentsData;
@@ -73,9 +75,12 @@ export function useMassInputViewModel() {
             if (state.studentFilter === 'selected') filtered = filtered.filter(s => state.selectedStudentIds.has(s.id));
             else if (state.studentFilter === 'unselected') filtered = filtered.filter(s => !state.selectedStudentIds.has(s.id));
         }
-        if (state.searchTerm) filtered = filtered.filter(s => s.name.toLowerCase().includes(state.searchTerm.toLowerCase()));
+        if (deferredSearchTerm) {
+            const term = deferredSearchTerm.toLowerCase().trim();
+            filtered = filtered.filter(s => s.name.toLowerCase().includes(term));
+        }
         return filtered;
-    }, [data.studentsData, state.searchTerm, state.studentFilter, studentsWithInputScores, state.selectedStudentIds, state.mode]);
+    }, [data.studentsData, deferredSearchTerm, state.studentFilter, studentsWithInputScores, state.selectedStudentIds, state.mode]);
 
     const gradedCount = useMemo(() => Object.values(state.scores).filter((s: string) => s && s.trim() !== '').length, [state.scores]);
 
