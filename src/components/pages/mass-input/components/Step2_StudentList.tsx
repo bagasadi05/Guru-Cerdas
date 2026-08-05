@@ -92,12 +92,12 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         return map;
     }, [classes]);
 
-    const existingGradesSet = useMemo(() => {
-        const set = new Set<string>();
+    const existingGradesMap = useMemo(() => {
+        const map = new Map<string, any>();
         if (existingGrades) {
-            existingGrades.forEach(g => set.add(g.student_id));
+            existingGrades.forEach(g => map.set(g.student_id, g));
         }
-        return set;
+        return map;
     }, [existingGrades]);
 
     const globalIndexMap = useMemo(() => {
@@ -225,7 +225,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                             {group.students.map((s: StudentRow) => {
                                                 const globalIndex = globalIndexMap.get(s.id) ?? 0;
                                                 const isSelected = selectedStudentIds.has(s.id);
-                                                const hasGrade = existingGradesSet.has(s.id);
+                                                const gradeRecord = existingGradesMap.get(s.id);
+                                                const hasGrade = !!gradeRecord;
                                                 const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
 
                                                 return (
@@ -332,7 +333,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                     {group.students.map((s: StudentRow) => {
                                         const globalIndex = globalIndexMap.get(s.id) ?? 0;
                                         const isSelected = selectedStudentIds.has(s.id);
-                                        const hasGrade = existingGradesSet.has(s.id);
+                                        const gradeRecord = existingGradesMap.get(s.id);
+                                        const hasGrade = !!gradeRecord;
                                         const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
 
                                         return (
