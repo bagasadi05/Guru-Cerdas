@@ -4,6 +4,7 @@ import { supabase } from '../../../services/supabase';
 import { useAuth } from '../../../hooks/useAuth';
 import { useSemester } from '../../../contexts/SemesterContext';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../utils/academicRecordUtils';
+import { violationList } from '../../../services/violations.data';
 import {
     AnalyticsClass, Student, AnalyticsAttendance, AnalyticsTask,
     AnalyticsAcademicRecord, AnalyticsViolation, AnalyticsQuizPoint,
@@ -135,7 +136,7 @@ export const useAnalyticsData = () => {
                 let academicQuery = supabase.from('academic_records').select('student_id, score, subject, assessment_name, created_at').in('student_id', chunk).is('deleted_at', null);
                 if (activeSemester?.id) academicQuery = academicQuery.eq('semester_id', activeSemester.id);
 
-                let violationsQuery = supabase.from('violations').select('id, student_id, type, points, date, created_at').in('student_id', chunk).is('deleted_at', null);
+                let violationsQuery = supabase.from('violations').select('id, student_id, type, description, points, date, created_at').in('student_id', chunk).is('deleted_at', null);
                 if (startDate) violationsQuery = violationsQuery.gte('date', startDate.toISOString().split('T')[0]);
                 if (activeSemester?.id) violationsQuery = violationsQuery.eq('semester_id', activeSemester.id); // Add semester filter
 
@@ -334,8 +335,11 @@ export const useAnalyticsData = () => {
         const byType: Record<string, number> = {};
         let totalPoints = 0;
         violations.forEach(v => {
-            const type = v.type || 'Lainnya';
-            byType[type] = (byType[type] || 0) + 1;
+            const rawType = v.type || '';
+            const rawDesc = v.description || '';
+            const matched = violationList.find(item => item.code === rawType || item.description === rawType || item.code === rawDesc);
+            const label = matched?.description || rawDesc || rawType || 'Lainnya';
+            byType[label] = (byType[label] || 0) + 1;
             totalPoints += v.points || 0;
         });
 
@@ -353,7 +357,7 @@ export const useAnalyticsData = () => {
 
         return {
             total: violations.length, totalPoints,
-            byType: Object.entries(byType).map(([type, count]) => ({ type, count })),
+            byType: Object.entries(byType).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count),
             topViolators,
         };
     }, [violations, students]);

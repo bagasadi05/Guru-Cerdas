@@ -31,7 +31,7 @@ export type Student = Pick<Database['public']['Tables']['students']['Row'], 'id'
 export type AnalyticsAttendance = Pick<Database['public']['Tables']['attendance']['Row'], 'student_id' | 'date' | 'status'>;
 export type AnalyticsTask = Pick<Database['public']['Tables']['tasks']['Row'], 'id' | 'status' | 'due_date'>;
 export type AnalyticsAcademicRecord = Pick<Database['public']['Tables']['academic_records']['Row'], 'student_id' | 'score' | 'subject' | 'assessment_name' | 'created_at'>;
-export type AnalyticsViolation = Pick<Database['public']['Tables']['violations']['Row'], 'id' | 'student_id' | 'type' | 'points' | 'date' | 'created_at'>;
+export type AnalyticsViolation = Pick<Database['public']['Tables']['violations']['Row'], 'id' | 'student_id' | 'type' | 'description' | 'points' | 'date' | 'created_at'>;
 export type AnalyticsQuizPoint = Pick<Database['public']['Tables']['quiz_points']['Row'], 'id' | 'student_id' | 'points' | 'category' | 'created_at'>;
 
 export interface AtRiskItem {
