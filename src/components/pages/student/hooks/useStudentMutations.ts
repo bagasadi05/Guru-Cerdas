@@ -56,6 +56,10 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             queryClient.invalidateQueries({ queryKey: ['studentReports', studentId] });
             queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
             queryClient.invalidateQueries({ queryKey: ['students'] });
+            // Invalidate student lists cached by other menus (Attendance, Grade Input, etc.)
+            // so avatar_url updates are immediately reflected everywhere.
+            queryClient.invalidateQueries({ queryKey: ['studentsForAttendance'] });
+            queryClient.invalidateQueries({ queryKey: ['studentsForMassInput'] });
             queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
             onSuccessCloseModal();
             toast.success("Data berhasil disimpan!");
