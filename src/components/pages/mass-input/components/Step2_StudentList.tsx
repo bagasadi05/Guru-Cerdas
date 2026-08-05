@@ -320,7 +320,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 key={s.id}
                                                 onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
                                                 className={`
-                                            bg-white dark:bg-slate-800 rounded-2xl p-5 border transition-all duration-300
+                                            bg-white dark:bg-slate-800 rounded-2xl p-4 border transition-all duration-300
                                             focus-within:bg-brand-50/70 focus-within:dark:bg-brand-950/20 focus-within:shadow-md transition-all
                                             ${(isSelected || hasScore)
                                                         ? 'bg-green-50 dark:bg-green-500/20 border-green-300 dark:border-green-500/30 shadow-lg shadow-green-500/10'
@@ -329,28 +329,28 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                             ${mode !== 'subject_grade' ? 'cursor-pointer active:scale-95' : ''}
                                         `}
                                             >
-                                                <div className="flex items-center gap-4 mb-4">
+                                                <div className="flex items-start gap-3 mb-3">
                                                         <Checkbox
                                                             checked={isSelected}
                                                             onChange={() => handleStudentSelect(s.id)}
-                                                            className="w-6 h-6 border-white/30 data-[state=checked]:bg-brand-600 data-[state=checked]:border-brand-500"
+                                                            className="w-5 h-5 mt-1 border-white/30 data-[state=checked]:bg-brand-600 data-[state=checked]:border-brand-500"
                                                         />
                                                     <img
                                                         src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name, 'sm')}
                                                         alt={s.name}
-                                                        className="w-14 h-14 rounded-full object-cover ring-2 ring-slate-200 dark:ring-white/20 shadow-md"
+                                                        className="w-11 h-11 rounded-full object-cover ring-2 ring-slate-200 dark:ring-white/20 shadow-md flex-shrink-0"
                                                     />
                                                     <div className="flex-grow min-w-0">
-                                                        <p className="font-bold text-slate-900 dark:text-white text-lg flex flex-wrap items-center gap-2">
+                                                        <p className="font-bold text-slate-900 dark:text-white text-base leading-snug">
                                                             {s.name}
-                                                            {selectedClass === 'all' && classes && (
-                                                                <span className="text-xs font-normal text-brand-500 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-800/50 flex-shrink-0">
-                                                                    {classes.find(c => c.id === s.class_id)?.name || 'Unknown'}
-                                                                </span>
-                                                            )}
                                                         </p>
-                                                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                                                            <span className="text-sm text-slate-500 dark:text-brand-200/70">No. {globalIndex + 1}</span>
+                                                        {selectedClass === 'all' && classes && (
+                                                            <span className="inline-block mt-1 text-xs font-normal text-brand-500 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-800/50">
+                                                                {classes.find(c => c.id === s.class_id)?.name || 'Unknown'}
+                                                            </span>
+                                                        )}
+                                                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                            <span className="text-xs text-slate-500 dark:text-brand-200/70">No. {globalIndex + 1}</span>
                                                             {mode === 'subject_grade' && hasGrade && (
                                                                 <span className="animate-pulse text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 flex items-center gap-1 w-fit">
                                                                     ⚠️ Nilai Sudah Ada
