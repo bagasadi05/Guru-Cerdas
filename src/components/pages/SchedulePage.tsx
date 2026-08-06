@@ -92,6 +92,7 @@ const SchedulePage: React.FC = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [viewMode, setViewMode] = useState<ScheduleViewMode>('daily');
     const [selectedDay, setSelectedDay] = useState<string>(new Date().toLocaleDateString('id-ID', { weekday: 'long' }));
+    const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [isAnalysisModalOpen, setAnalysisModalOpen] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<{ sections: { title: string; points: string[] }[] } | { error: string } | null>(null);
     const [isAnalysisLoading, setAnalysisLoading] = useState(false);
@@ -176,13 +177,23 @@ const SchedulePage: React.FC = () => {
         );
     }, [classes, user, teacherAssignments]);
 
+    const selectableClasses = useMemo(() => {
+        if (classes && classes.length > 0) return classes;
+        return accessibleClasses;
+    }, [classes, accessibleClasses]);
+
     const classNameMap = useMemo(() => {
         const map = new Map<string, string>();
         classes.forEach(c => map.set(c.id, c.name));
         return map;
     }, [classes]);
 
-    const schedule = rawSchedule;
+    const filteredSchedule = useMemo(() => {
+        if (!selectedClassId) return rawSchedule;
+        return rawSchedule.filter(item => item.class_id === selectedClassId);
+    }, [rawSchedule, selectedClassId]);
+
+    const schedule = filteredSchedule;
     const scheduleByDay = useMemo(() => {
         const map: Record<string, ScheduleRow[]> = {};
         daysOfWeek.forEach(day => { map[day] = []; });
@@ -279,7 +290,7 @@ const SchedulePage: React.FC = () => {
             return;
         }
 
-        if (!accessibleClasses.some((classItem) => classItem.id === formData.class_id)) {
+        if (!selectableClasses.some((classItem) => classItem.id === formData.class_id)) {
             setErrors({ class_id: 'Pilih kelas yang tersedia pada daftar.' });
             return;
         }
@@ -495,7 +506,15 @@ const SchedulePage: React.FC = () => {
 
                 <div className="space-y-6">
                     <ScheduleDaySelector days={daysOfWeek} selectedDay={selectedDay} onSelectDay={setSelectedDay} getDayNumber={getDayNumber} />
-                    <ScheduleViewToolbar viewMode={viewMode} selectedDay={selectedDay} currentDaySessions={currentDaySchedule.length} onViewModeChange={setViewMode} />
+                    <ScheduleViewToolbar
+                        viewMode={viewMode}
+                        selectedDay={selectedDay}
+                        currentDaySessions={currentDaySchedule.length}
+                        onViewModeChange={setViewMode}
+                        selectedClassId={selectedClassId}
+                        onClassChange={setSelectedClassId}
+                        classes={classes}
+                    />
 
                     {viewMode === 'weekly' ? (
                         <WeeklyScheduleView schedule={schedule} classes={classes} onEdit={handleOpenEditModal} onIsiJurnal={handleIsiJurnal} />
@@ -569,11 +588,11 @@ const SchedulePage: React.FC = () => {
                                 <span>Gagal memuat kelas.</span>
                                 <Button type="button" size="sm" variant="ghost" onClick={() => refetchClasses()}>Coba lagi</Button>
                             </div>
-                        ) : accessibleClasses.length > 0 ? (
+                        ) : selectableClasses.length > 0 ? (
                             <CustomDropdown
                                 value={formData.class_id ?? ''}
                                 onChange={(val) => setFormData({ ...formData, class_id: val })}
-                                options={accessibleClasses.map(c => ({ value: c.id, label: c.name }))}
+                                options={selectableClasses.map(c => ({ value: c.id, label: c.name }))}
                                 placeholder="Pilih Kelas"
                             />
                         ) : (
