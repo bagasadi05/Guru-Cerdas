@@ -389,51 +389,6 @@ export async function cleanupExpired(): Promise<{
     }
 }
 
-/**
- * Soft-delete all violation records before a specified cutoff date (e.g. 2026-08-01 for August).
- */
-export async function deleteViolationsBeforeDate(
-    cutoffDateStr: string = '2026-08-01'
-): Promise<{ success: boolean; count: number; error?: string }> {
-    try {
-        const nowIso = new Date().toISOString();
-
-        // 1. Update records where date < cutoffDateStr
-        const { data: dateData, error: dateError } = await supabase
-            .from('violations')
-            .update({ deleted_at: nowIso })
-            .lt('date', cutoffDateStr)
-            .is('deleted_at', null)
-            .select('id');
-
-        if (dateError) throw dateError;
-
-        // 2. Update records where created_at < ISO cutoff
-        const { data: createdData, error: createdError } = await supabase
-            .from('violations')
-            .update({ deleted_at: nowIso })
-            .lt('created_at', `${cutoffDateStr}T00:00:00Z`)
-            .is('deleted_at', null)
-            .select('id');
-
-        if (createdError) throw createdError;
-
-        const uniqueIds = new Set([
-            ...(dateData || []).map((r) => r.id),
-            ...(createdData || []).map((r) => r.id),
-        ]);
-
-        return { success: true, count: uniqueIds.size };
-    } catch (error) {
-        console.error('Failed to delete violations before date:', error);
-        return {
-            success: false,
-            count: 0,
-            error: error instanceof Error ? error.message : 'Unknown error',
-        };
-    }
-}
-
 export default {
     softDelete,
     softDeleteBulk,
@@ -443,5 +398,4 @@ export default {
     getDeletedItems,
     getAllDeletedItems,
     cleanupExpired,
-    deleteViolationsBeforeDate,
 };
