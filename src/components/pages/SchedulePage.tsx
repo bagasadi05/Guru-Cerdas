@@ -345,8 +345,8 @@ const SchedulePage: React.FC = () => {
         } finally { setAnalysisLoading(false); }
     };
 
-    const handleExportPdf = () => exportSchedulePdf(schedule, scheduleByDay, user?.name || 'Guru', toast);
-    const handleExportToIcs = () => exportScheduleIcs(schedule, toast);
+    const handleExportPdf = () => exportSchedulePdf(schedule, scheduleByDay, user?.name || 'Guru', toast, classNameMap);
+    const handleExportToIcs = () => exportScheduleIcs(schedule, toast, classNameMap);
 
     const handleEnableNotifications = async () => {
         setIsEnablingNotifications(true);

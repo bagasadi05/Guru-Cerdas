@@ -1,6 +1,6 @@
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 import { getJsPDF } from '../utils/dynamicImports';
-import { daysOfWeek } from '../utils/scheduleUtils';
+import { daysOfWeek, resolveClassName } from '../utils/scheduleUtils';
 import { ScheduleRow } from '../types';
 
 import * as ics from 'ics';
@@ -11,7 +11,8 @@ export async function exportSchedulePdf(
     schedule: ScheduleRow[],
     scheduleByDay: Record<string, ScheduleRow[]>,
     teacherName: string,
-    toast: { success: (msg: string) => void; warning: (msg: string) => void }
+    toast: { success: (msg: string) => void; warning: (msg: string) => void },
+    classNameMap?: Map<string, string>
 ) {
     if (!schedule || schedule.length === 0) {
         toast.warning("Tidak ada jadwal untuk diekspor.");
@@ -116,7 +117,8 @@ export async function exportSchedulePdf(
             doc.setFont("helvetica", "normal");
             doc.setFontSize(8);
             doc.setTextColor(colors.secondaryText[0], colors.secondaryText[1], colors.secondaryText[2]);
-            doc.text(`Kelas ${item.class_id}`, currentX + 4, itemY + 9);
+            const className = resolveClassName(item.class_id ? classNameMap?.get(item.class_id) : undefined, item.class_id);
+            doc.text(className, currentX + 4, itemY + 9);
 
             if (idx < itemsForDay.length - 1) {
                 doc.setDrawColor(243, 244, 246);
@@ -147,7 +149,8 @@ export async function exportSchedulePdf(
 
 export function exportScheduleIcs(
     schedule: ScheduleRow[],
-    toast: { success: (msg: string) => void; warning: (msg: string) => void }
+    toast: { success: (msg: string) => void; warning: (msg: string) => void },
+    classNameMap?: Map<string, string>
 ) {
     if (!schedule || schedule.length === 0) {
         toast.warning("Tidak ada jadwal untuk diekspor.");
@@ -177,18 +180,20 @@ export function exportScheduleIcs(
         const month = eventDate.getMonth() + 1;
         const day = eventDate.getDate();
 
+        const className = resolveClassName(item.class_id ? classNameMap?.get(item.class_id) : undefined, item.class_id);
+
         return {
             uid: `guru-pwa-${item.id}@myapp.com`,
-            title: `${item.subject} (Kelas ${item.class_id})`,
+            title: `${item.subject} (${className})`,
             start: [year, month, day, startHour, startMinute] as ics.DateArray,
             end: [year, month, day, endHour, endMinute] as ics.DateArray,
             recurrenceRule: `FREQ=WEEKLY;BYDAY=${dayToICalDay[item.day]}`,
-            description: `Jadwal mengajar untuk kelas ${item.class_id}`,
+            description: `Jadwal mengajar mata pelajaran ${item.subject} untuk ${className}`,
             location: 'Sekolah',
             startOutputType: 'local',
             endOutputType: 'local',
             alarms: [
-                { action: 'display', description: 'Pengingat Kelas', trigger: { minutes: 10, before: true } },
+                { action: 'display', description: `Pengingat ${item.subject}`, trigger: { minutes: 10, before: true } },
             ],
         } as ics.EventAttributes;
     });
