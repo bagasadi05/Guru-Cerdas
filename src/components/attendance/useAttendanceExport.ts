@@ -136,12 +136,14 @@ export const useAttendanceExport = (
         const pageHeight = doc.internal.pageSize.getHeight();
         const pageWidth = doc.internal.pageSize.getWidth();
         let isFirstClass = true;
+        let classIndex = 0;
 
         for (const classData of studentsByClass) {
           if (!isFirstClass) doc.addPage('landscape');
           isFirstClass = false;
+          classIndex++;
 
-          const titleText = `REKAPITULASI KEHADIRAN SISWA - KELAS ${classData.name.toUpperCase()}`;
+          const titleText = `REKAPITULASI KEHADIRAN SISWA - KELAS ${classData.name.toUpperCase()} (Kelas ${classIndex} dari ${studentsByClass.length})`;
           const subText = `${exportTitle.toUpperCase()} • ${schoolName || '-'}`;
           const headerY = addPdfHeader(doc, { schoolName, orientation: 'landscape' });
           const pageWidthHeader = doc.internal.pageSize.getWidth();
@@ -151,6 +153,12 @@ export const useAttendanceExport = (
           doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
           doc.text(subText, pageWidthHeader / 2, headerY + 5, { align: 'center' });
+
+          // Garis pemisah kelas — agar saat mencetak beberapa kelas tiap bagian jelas terpisah
+          doc.setDrawColor(79, 70, 229);
+          doc.setLineWidth(0.4);
+          doc.line(14, headerY + 9, pageWidthHeader - 14, headerY + 9);
+          doc.setDrawColor(0, 0, 0);
 
           const attendanceMap = new Map<string, Map<string, AttendanceStatus>>();
           attendance.forEach((r: AttendanceRow) => {
@@ -187,7 +195,7 @@ export const useAttendanceExport = (
           autoTable(doc, {
             head: [headers],
             body: rows,
-            startY: 38,
+            startY: headerY + 11,
             styles: { fontSize: 7, cellPadding: 1, halign: 'center' },
             columnStyles: { 1: { halign: 'left', fontStyle: 'bold' } },
             headStyles: { fillColor: [79, 70, 229] },
@@ -210,12 +218,14 @@ export const useAttendanceExport = (
         const pageHeight = doc.internal.pageSize.getHeight();
         const pageWidth = doc.internal.pageSize.getWidth();
         let isFirstClass = true;
+        let classIndex = 0;
 
         for (const classData of studentsByClass) {
           if (!isFirstClass) doc.addPage();
           isFirstClass = false;
+          classIndex++;
 
-          const titleText = `RINGKASAN ABSENSI SEMESTER - KELAS ${classData.name.toUpperCase()}`;
+          const titleText = `RINGKASAN ABSENSI SEMESTER - KELAS ${classData.name.toUpperCase()} (Kelas ${classIndex} dari ${studentsByClass.length})`;
           const subText = `${exportTitle.toUpperCase()} • ${schoolName || '-'}`;
           const headerY = addPdfHeader(doc, { schoolName, orientation: 'portrait' });
           const pageWidthHeader2 = doc.internal.pageSize.getWidth();
@@ -225,6 +235,12 @@ export const useAttendanceExport = (
           doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
           doc.text(subText, pageWidthHeader2 / 2, headerY + 5, { align: 'center' });
+
+          // Garis pemisah kelas — agar saat mencetak beberapa kelas tiap bagian jelas terpisah
+          doc.setDrawColor(79, 70, 229);
+          doc.setLineWidth(0.4);
+          doc.line(14, headerY + 9, pageWidthHeader2 - 14, headerY + 9);
+          doc.setDrawColor(0, 0, 0);
 
           const attendanceMap = new Map<string, { h: number, s: number, i: number, a: number }>();
           attendance.forEach((r: AttendanceRow) => {
@@ -256,7 +272,7 @@ export const useAttendanceExport = (
           autoTable(doc, {
             head: [headers],
             body: rows,
-            startY: 38,
+            startY: headerY + 11,
             styles: { fontSize: 9, cellPadding: 2, halign: 'center' },
             columnStyles: { 1: { halign: 'left', fontStyle: 'bold' } },
             headStyles: { fillColor: [79, 70, 229] },
