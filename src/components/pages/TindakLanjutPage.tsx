@@ -5,10 +5,11 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { AlertCircle, ShieldCheck, Search, Loader2, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, ShieldCheck, Search, Loader2, CheckCircle2, Trash2 } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { Input } from '../ui/Input';
 import { ConfirmationDialog } from '../ui/ConfirmationDialog';
+import { deleteViolationsBeforeDate } from '../../services/SoftDeleteService';
 
 type ViolationWithStudent = {
   id: string;
@@ -34,6 +35,7 @@ export const TindakLanjutPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedViolation, setSelectedViolation] = useState<ViolationWithStudent | null>(null);
   const [notes, setNotes] = useState('');
+  const [showCleanupConfirm, setShowCleanupConfirm] = useState(false);
 
   // Fetch violations that need follow-up
   const { data: violations = [], isLoading, error } = useQuery({
@@ -80,6 +82,26 @@ export const TindakLanjutPage: React.FC = () => {
     },
   });
 
+  const cleanupBeforeAugustMutation = useMutation({
+    mutationFn: async () => {
+      return deleteViolationsBeforeDate('2026-08-01');
+    },
+    onSuccess: (res) => {
+      if (res.success) {
+        toast.success(`Berhasil menghapus ${res.count} data pelanggaran sebelum Agustus 2026.`);
+        setShowCleanupConfirm(false);
+        queryClient.invalidateQueries({ queryKey: ['violations'] });
+        queryClient.invalidateQueries({ queryKey: ['studentStats'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      } else {
+        toast.error(`Gagal menghapus: ${res.error}`);
+      }
+    },
+    onError: (err: Error) => {
+      toast.error(`Gagal menghapus: ${err.message}`);
+    },
+  });
+
   const handleResolve = () => {
     if (selectedViolation) {
       resolveMutation.mutate({ id: selectedViolation.id, notes });
@@ -114,14 +136,24 @@ export const TindakLanjutPage: React.FC = () => {
 
   return (
     <div className="w-full min-h-full p-4 md:p-6 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-          <ShieldCheck className="w-8 h-8 text-brand-600 dark:text-brand-400" />
-          Tindak Lanjut Pelanggaran
-        </h1>
-        <p className="mt-2 text-slate-600 dark:text-slate-400">
-          Pantau dan kelola pelanggaran siswa yang memerlukan tindak lanjut khusus.
-        </p>
+      <header className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+            <ShieldCheck className="w-8 h-8 text-brand-600 dark:text-brand-400" />
+            Tindak Lanjut Pelanggaran
+          </h1>
+          <p className="mt-2 text-slate-600 dark:text-slate-400">
+            Pantau dan kelola pelanggaran siswa yang memerlukan tindak lanjut khusus.
+          </p>
+        </div>
+        <Button
+          onClick={() => setShowCleanupConfirm(true)}
+          variant="outline"
+          className="border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 flex items-center gap-2 self-start sm:self-auto"
+        >
+          <Trash2 className="w-4 h-4 text-rose-500" />
+          <span>Hapus Pelanggaran Sebelum Agustus</span>
+        </Button>
       </header>
 
       <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 overflow-hidden">
@@ -150,26 +182,21 @@ export const TindakLanjutPage: React.FC = () => {
               Gagal memuat data: {error.message}
             </div>
           ) : filteredViolations.length === 0 ? (
-            <div className="p-12 flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mb-4">
-                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-              </div>
-              <h3 className="text-lg font-medium text-slate-900 dark:text-white">Semua Tuntas</h3>
-              <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
-                Tidak ada pelanggaran yang menunggu tindak lanjut saat ini. Kerja bagus!
-              </p>
+            <div className="p-12 text-center text-slate-500 dark:text-slate-400">
+              <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3 opacity-80" />
+              <p className="font-semibold text-lg text-slate-700 dark:text-slate-300">Tidak ada kasus menggantung</p>
+              <p className="text-sm mt-1">Semua pelanggaran yang perlu tindak lanjut telah diselesaikan.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse whitespace-nowrap">
-                <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    <th className="px-6 py-3 font-semibold text-slate-900 dark:text-slate-300">Tanggal</th>
-                    <th className="px-6 py-3 font-semibold text-slate-900 dark:text-slate-300">Siswa</th>
-                    <th className="px-6 py-3 font-semibold text-slate-900 dark:text-slate-300">Kelas</th>
-                    <th className="px-6 py-3 font-semibold text-slate-900 dark:text-slate-300">Pelanggaran</th>
-                    <th className="px-6 py-3 font-semibold text-slate-900 dark:text-slate-300 text-center">Status</th>
-                    <th className="px-6 py-3 font-semibold text-slate-900 dark:text-slate-300 text-right">Aksi</th>
+                    <th className="p-4">Siswa & Kelas</th>
+                    <th className="p-4">Tanggal</th>
+                    <th className="p-4">Pelanggaran</th>
+                    <th className="p-4 text-center">Poin & Tingkat</th>
+                    <th className="p-4 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
