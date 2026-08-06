@@ -53,7 +53,7 @@ export function getHonorificTitle(
     'marlina', 'kusuma', 'nia', 'ratih', 'kartika', 'melati', 'hidayati', 'utami',
     'astuti', 'wahyuni', 'sulastri', 'suharti', 'widya', 'agustina', 'lestari',
     'anggraini', 'oktavia', 'dwi', 'tri', 'bu', 'ibu', 'ning', 'ukhti', 'ummi',
-    'dian', 'lia', 'nita', 'lusi', 'desy', 'desi', 'maya', 'anti', 'irma', 'vivi'
+    'dian', 'lia', 'nita', 'lusi', 'desy', 'desi', 'maya', 'anti', 'irma', 'vivi', 'ayu'
   ];
 
   const nameParts = lowerName.split(/[\s,.]+/);

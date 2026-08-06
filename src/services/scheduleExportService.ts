@@ -1,9 +1,7 @@
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
-import { getJsPDF } from '../utils/dynamicImports';
+import { getJsPDF, getAutoTable } from '../utils/dynamicImports';
 import { daysOfWeek, resolveClassName } from '../utils/scheduleUtils';
 import { ScheduleRow } from '../types';
-
-import * as ics from 'ics';
 
 // ─── PDF Export ──────────────────────────────────────────────────────────────
 
@@ -22,124 +20,96 @@ export async function exportSchedulePdf(
     await ensureLogosLoaded();
 
     const { default: jsPDF } = await getJsPDF();
+    const { default: autoTable } = await getAutoTable();
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
-    const colGap = 10;
-    const colWidth = (pageWidth - (margin * 2) - colGap) / 2;
 
-    const colors = {
-        primary: [16, 185, 129],
-        text: [31, 41, 55],
-        secondaryText: [107, 114, 128],
-        lightBg: [249, 250, 251],
-        border: [229, 231, 235],
+    let startY = addPdfHeader(doc, { orientation: 'portrait' });
+    
+    // Draw Title and Info
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(31, 41, 55);
+    doc.text("Jadwal Mengajar", pageWidth / 2, startY, { align: 'center' });
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(107, 114, 128);
+    const teacherNameDisplay = teacherName || 'Guru';
+    doc.text(`Guru: ${teacherNameDisplay}`, margin, startY + 8);
+    doc.text(`Tahun Ajaran: ${new Date().getFullYear()}/${new Date().getFullYear() + 1}`, pageWidth - margin, startY + 8, { align: 'right' });
+    
+    startY += 15;
+
+    // Helper to format time (remove seconds if present, e.g., 07:30:00 -> 07:30)
+    const formatTime = (time: string) => {
+        if (!time) return '';
+        const parts = time.split(':');
+        if (parts.length >= 2) return `${parts[0]}:${parts[1]}`;
+        return time;
     };
 
-    const dayHexColors: Record<string, string> = {
-        Senin: '#3b82f6',
-        Selasa: '#10b981',
-        Rabu: '#f59e0b',
-        Kamis: '#11657f',
-        Jumat: '#f43f5e',
-        Sabtu: '#0d7e9e',
-    };
-
-    const drawHeader = () => {
-        const headerY = addPdfHeader(doc, { orientation: 'portrait' });
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-        doc.text("Jadwal Mengajar", pageWidth / 2, headerY, { align: 'center' });
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        doc.setTextColor(colors.secondaryText[0], colors.secondaryText[1], colors.secondaryText[2]);
-        const teacherNameDisplay = teacherName || 'Guru';
-        doc.text(`Guru: ${teacherNameDisplay}`, margin, headerY + 8);
-        doc.text(`Tahun Ajaran: ${new Date().getFullYear()}/${new Date().getFullYear() + 1}`, pageWidth - margin, headerY + 8, { align: 'right' });
-        return headerY + 15;
-    };
-
-    const startY = drawHeader();
-    let yLeft = startY;
-    let yRight = startY;
+    // Prepare table data
+    const tableBody: any[] = [];
 
     daysOfWeek.forEach((day) => {
         const itemsForDay = scheduleByDay[day] || [];
         if (itemsForDay.length === 0) return;
 
-        const isLeft = yLeft <= yRight;
-        const currentX = isLeft ? margin : margin + colWidth + colGap;
-        let currentY = isLeft ? yLeft : yRight;
-
-        const headerHeight = 12;
-        const itemHeight = 18;
-        const cardHeight = headerHeight + (itemsForDay.length * itemHeight) + 5;
-
-        if (currentY + cardHeight > pageHeight - margin) {
-            doc.addPage();
-            drawHeader();
-            yLeft = 45;
-            yRight = 45;
-            currentY = 45;
-        }
-
-        const dayColor = dayHexColors[day] || '#6b7280';
-        doc.setFillColor(dayColor);
-        doc.setDrawColor(dayColor);
-        doc.roundedRect(currentX, currentY, colWidth, headerHeight, 2, 2, 'F');
-        doc.rect(currentX, currentY + headerHeight - 2, colWidth, 2, 'F');
-
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text(day.toUpperCase(), currentX + 4, currentY + 8);
-
-        doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-        doc.setLineWidth(0.2);
-        doc.setFillColor(255, 255, 255);
-        doc.rect(currentX, currentY + headerHeight, colWidth, cardHeight - headerHeight, 'S');
-
-        let itemY = currentY + headerHeight + 6;
-        itemsForDay.forEach((item, idx) => {
-            doc.setFont("courier", "bold");
-            doc.setFontSize(9);
-            doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-            doc.text(`${item.start_time} - ${item.end_time}`, currentX + 4, itemY);
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
-            doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-            const subject = item.subject.length > 25 ? item.subject.substring(0, 23) + '...' : item.subject;
-            doc.text(subject, currentX + 4, itemY + 5);
-
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(8);
-            doc.setTextColor(colors.secondaryText[0], colors.secondaryText[1], colors.secondaryText[2]);
+        itemsForDay.forEach((item, index) => {
+            const timeStr = `${formatTime(item.start_time)} - ${formatTime(item.end_time)}`;
             const className = resolveClassName(item.class_id ? classNameMap?.get(item.class_id) : undefined, item.class_id);
-            doc.text(className, currentX + 4, itemY + 9);
-
-            if (idx < itemsForDay.length - 1) {
-                doc.setDrawColor(243, 244, 246);
-                doc.line(currentX + 4, itemY + 12, currentX + colWidth - 4, itemY + 12);
+            
+            // Add a separator/header row for the day if it's the first item
+            if (index === 0) {
+                tableBody.push([{ content: day.toUpperCase(), colSpan: 3, styles: { fillColor: [243, 244, 246], fontStyle: 'bold', textColor: [31, 41, 55] } }]);
             }
-            itemY += itemHeight;
+            
+            tableBody.push([
+                timeStr,
+                item.subject,
+                className
+            ]);
         });
-
-        const usedHeight = cardHeight + 8;
-        if (isLeft) yLeft += usedHeight;
-        else yRight += usedHeight;
     });
 
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(`Hal ${i} dari ${pageCount}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
-        doc.text(`Portal Guru App`, margin, pageHeight - 10);
-    }
+    autoTable(doc, {
+        startY,
+        head: [['Waktu', 'Mata Pelajaran', 'Kelas']],
+        body: tableBody,
+        theme: 'grid',
+        styles: {
+            font: 'helvetica',
+            fontSize: 10,
+            cellPadding: 5,
+            lineColor: [229, 231, 235],
+            lineWidth: 0.1,
+            textColor: [55, 65, 81],
+        },
+        headStyles: {
+            fillColor: [16, 185, 129], // Emerald 500
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center',
+        },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 35 },
+            2: { halign: 'center', cellWidth: 40 },
+        },
+        alternateRowStyles: {
+            fillColor: [252, 253, 253], // Very light gray
+        },
+        margin: { left: margin, right: margin },
+        didDrawPage: (data) => {
+            // Footer with page numbers
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Hal ${data.pageNumber}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+            doc.text(`Portal Guru App`, margin, pageHeight - 10);
+        }
+    });
 
     doc.save('Jadwal_Mengajar.pdf');
     toast.success("Jadwal PDF berhasil diunduh!");
@@ -157,60 +127,93 @@ export function exportScheduleIcs(
         return;
     }
 
-    const dayToICalDay: Record<string, 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA'> = {
+    const dayToICalDay: Record<string, string> = {
         'Senin': 'MO', 'Selasa': 'TU', 'Rabu': 'WE', 'Kamis': 'TH', 'Jumat': 'FR', 'Sabtu': 'SA',
     };
     const dayNameToIndex: Record<string, number> = {
         'Minggu': 0, 'Senin': 1, 'Selasa': 2, 'Rabu': 3, 'Kamis': 4, 'Jumat': 5, 'Sabtu': 6,
     };
 
-    const events: ics.EventAttributes[] = schedule.map(item => {
-        const [startHour, startMinute] = item.start_time.split(':').map(Number);
-        const [endHour, endMinute] = item.end_time.split(':').map(Number);
-        const now = new Date();
+    // Helper: pad number to 2 digits
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    // Helper: format time string, strip seconds if present (07:30:00 -> 07:30)
+    const parseTime = (t: string): [number, number] => {
+        const parts = t.split(':').map(Number);
+        return [parts[0] || 0, parts[1] || 0];
+    };
+
+    // Build VCALENDAR manually for maximum compatibility
+    const lines: string[] = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Guru Cerdas//Jadwal Mengajar//ID',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'X-WR-CALNAME:Jadwal Mengajar',
+        'X-WR-TIMEZONE:Asia/Jakarta',
+    ];
+
+    schedule.forEach(item => {
+        const [startHour, startMinute] = parseTime(item.start_time);
+        const [endHour, endMinute] = parseTime(item.end_time);
+        const icalDay = dayToICalDay[item.day];
+
+        if (!icalDay) return; // Skip if day not mapped (e.g., Minggu)
+
         const targetDayIndex = dayNameToIndex[item.day];
+        const now = new Date();
         const currentDayIndex = now.getDay();
         let dayDifference = targetDayIndex - currentDayIndex;
-        if (dayDifference < 0 || (dayDifference === 0 && (now.getHours() > startHour || (now.getHours() === startHour && now.getMinutes() > startMinute)))) {
+        if (dayDifference < 0) dayDifference += 7;
+        if (dayDifference === 0 && (now.getHours() > startHour || (now.getHours() === startHour && now.getMinutes() > startMinute))) {
             dayDifference += 7;
         }
-        const eventDate = new Date();
+
+        const eventDate = new Date(now);
         eventDate.setDate(now.getDate() + dayDifference);
-        const year = eventDate.getFullYear();
-        const month = eventDate.getMonth() + 1;
-        const day = eventDate.getDate();
 
-        const className = resolveClassName(item.class_id ? classNameMap?.get(item.class_id) : undefined, item.class_id);
+        const y = eventDate.getFullYear();
+        const m = pad(eventDate.getMonth() + 1);
+        const d = pad(eventDate.getDate());
+        const dtStart = `${y}${m}${d}T${pad(startHour)}${pad(startMinute)}00`;
+        const dtEnd = `${y}${m}${d}T${pad(endHour)}${pad(endMinute)}00`;
 
-        return {
-            uid: `guru-pwa-${item.id}@myapp.com`,
-            title: `${item.subject} (${className})`,
-            start: [year, month, day, startHour, startMinute] as ics.DateArray,
-            end: [year, month, day, endHour, endMinute] as ics.DateArray,
-            recurrenceRule: `FREQ=WEEKLY;BYDAY=${dayToICalDay[item.day]}`,
-            description: `Jadwal mengajar mata pelajaran ${item.subject} untuk ${className}`,
-            location: 'Sekolah',
-            startOutputType: 'local',
-            endOutputType: 'local',
-            alarms: [
-                { action: 'display', description: `Pengingat ${item.subject}`, trigger: { minutes: 10, before: true } },
-            ],
-        } as ics.EventAttributes;
+        const className = resolveClassName(
+            item.class_id ? classNameMap?.get(item.class_id) : undefined,
+            item.class_id
+        );
+
+        const uid = `guru-cerdas-${item.id}@gurucerdas.app`;
+        const stamp = `${y}${m}${d}T${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+        lines.push('BEGIN:VEVENT');
+        lines.push(`UID:${uid}`);
+        lines.push(`DTSTAMP:${stamp}`);
+        lines.push(`DTSTART;TZID=Asia/Jakarta:${dtStart}`);
+        lines.push(`DTEND;TZID=Asia/Jakarta:${dtEnd}`);
+        lines.push(`RRULE:FREQ=WEEKLY;BYDAY=${icalDay}`);
+        lines.push(`SUMMARY:${item.subject} (${className})`);
+        lines.push(`DESCRIPTION:Jadwal mengajar ${item.subject} untuk ${className}`);
+        lines.push(`LOCATION:Sekolah`);
+        lines.push('BEGIN:VALARM');
+        lines.push('TRIGGER:-PT10M');
+        lines.push('ACTION:DISPLAY');
+        lines.push(`DESCRIPTION:Pengingat ${item.subject}`);
+        lines.push('END:VALARM');
+        lines.push('END:VEVENT');
     });
 
-    ics.createEvents(events, (error, value) => {
-        if (error) {
-            toast.warning("Gagal membuat file kalender.");
-            console.error(error);
-            return;
-        }
-        const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'jadwal_mengajar.ics';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("File kalender (.ics) berhasil diunduh!");
-    });
+    lines.push('END:VCALENDAR');
+
+    const icsContent = lines.join('\r\n');
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'jadwal_mengajar.ics';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+    toast.success("File kalender (.ics) berhasil diunduh!");
 }
