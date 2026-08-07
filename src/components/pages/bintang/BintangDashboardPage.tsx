@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';import { Star, ClipboardCheck, BarChart3, AlertTriangle,
     Sparkles, Zap, Send, FileText, CheckCircle, PlusCircle, Info, Printer,
-    ChevronDown, Search, TrendingUp, Eye, Users, Gift, FileSpreadsheet
+    ChevronDown, Search, TrendingUp, Eye, Users, FileSpreadsheet,
+    Pencil, Trash2, ShieldAlert, Lock, Plus
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
-import { bintangService, calculateAspectPoints, BINTANG_THRESHOLDS, type AspectPointsSummary, type BintangGrade } from '../../../services/bintangService';
+import { bintangService, calculateAspectPoints, getAspectForViolation, BINTANG_THRESHOLDS, type AspectPointsSummary, type BintangGrade } from '../../../services/bintangService';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Card } from '../../ui/Card';
@@ -19,6 +20,31 @@ import { gradeColors, aspectMeta } from './bintangConstants';
 import { AspectSectionEditor } from './AspectSectionEditor';
 import { useBintangEvaluation } from './hooks/useBintangEvaluation';
 import BintangTrendChart from './BintangTrendChart';
+import { ViolationForm } from '../student/forms/ViolationForm';
+import { QuizForm } from '../student/forms/QuizForm';
+import { SEVERITY_LEVELS, type SeverityLevel } from '../student/violationMeta';
+import { ViolationFormValues, QuizFormValues } from '../student/schemas';
+import { ViolationRow, QuizPointRow } from '../student/types';
+import { violationList } from '../../../services/violations.data';
+import { writeAuditLog } from '../../../services/auditTrail';
+import { r2StorageService } from '../../../services/r2StorageService';
+import { useSemester } from '../../../contexts/SemesterContext';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/Tabs';
+
+
+
+// ─── Violation severity helpers ─────────────────────────────────────────────
+
+const isSeverityLevel = (value: string | null | undefined): value is SeverityLevel =>
+    !!value && value in SEVERITY_LEVELS;
+
+const getViolationSeverityFromCategory = (category?: string): SeverityLevel | null => {
+    const normalized = category?.toLowerCase();
+    if (normalized === 'ringan' || normalized === 'sedang' || normalized === 'berat') {
+        return normalized as SeverityLevel;
+    }
+    return null;
+};
 
 
 
@@ -28,6 +54,9 @@ const BintangDashboardPage: React.FC = () => {
     const { user, isAdmin, userRole } = useAuth();
     const toast = useToast();
     const { confirm: confirmPublish, Dialog: PublishConfirmDialog } = useConfirmation();
+    const { confirm: confirmDeleteViolation, Dialog: DeleteViolationDialog } = useConfirmation();
+    const { confirm: confirmDeleteQuiz, Dialog: DeleteQuizDialog } = useConfirmation();
+    const { isLocked, activeSemester } = useSemester();
 
     // ── Access control ───────────────────────────────────────────────────────
     const { data: teacherAssignments = [] } = useQuery({
@@ -58,8 +87,10 @@ const BintangDashboardPage: React.FC = () => {
     // ── Data state ───────────────────────────────────────────────────────────
     const [students, setStudents] = useState<Array<{ id: string; name: string }>>([]);
     const [violations, setViolations] = useState<Array<{
-        id: string; student_id: string; description: string; points: number;
-        date: string; severity: string | null; students: { name: string } | null;
+        id: string; student_id: string; user_id: string | null; description: string; points: number;
+        date: string; severity: string | null; semester_id: string | null; type: string | null;
+        context_notes: string | null; evidence_url: string | null; created_at: string;
+        students: { name: string } | null;
     }>>([]);
     const [evaluations, setEvaluations] = useState<Array<{
         id: string; student_id: string; month: string;
@@ -68,19 +99,36 @@ const BintangDashboardPage: React.FC = () => {
         catatan_wali: string | null; is_published: boolean; evaluator_id: string;
     }>>([]);
     const [quizPoints, setQuizPoints] = useState<Array<{
-        id: string; student_id: string; quiz_name: string | null; subject: string | null; points: number; category: string | null; quiz_date: string;
+        id: string; student_id: string; quiz_name: string | null; subject: string | null; points: number; category: string | null; quiz_date: string; semester_id: string | null;
     }>>([]);
     const [mentoringLogs, setMentoringLogs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     // ── UI state ─────────────────────────────────────────────────────────────
-    const [showMentoringHistory, setShowMentoringHistory] = useState(false);
     const [mentoringSearchQuery, setMentoringSearchQuery] = useState('');
-
-    // Collapsible sections
-    const [showTrendChart, setShowTrendChart] = useState(false);
-    const [showKeaktifanHistory, setShowKeaktifanHistory] = useState(false);
     const [keaktifanFilter, setKeaktifanFilter] = useState<'semua' | 'akademik' | 'keaktifan'>('semua');
+
+    // ── Violation management (view / add / edit / delete) ────────────────────
+    const [violationSearchQuery, setViolationSearchQuery] = useState('');
+    const [violationSeverityFilter, setViolationSeverityFilter] = useState<'all' | 'ringan' | 'sedang' | 'berat'>('all');
+    const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
+    const [editingViolation, setEditingViolation] = useState<ViolationRow | null>(null);
+    const [isViolationSaving, setIsViolationSaving] = useState(false);
+    const [isAddViolationModalOpen, setIsAddViolationModalOpen] = useState(false);
+    const [violationStudentId, setViolationStudentId] = useState('');
+
+    // ── Quiz point (poin keaktifan) edit/delete ──────────────────────────────
+    const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+    const [editingQuizPoint, setEditingQuizPoint] = useState<QuizPointRow | null>(null);
+    const [isQuizSaving, setIsQuizSaving] = useState(false);
+
+    // Collapsible section
+    const [showTrendChart, setShowTrendChart] = useState(false);
+    const [showInfoBanner, setShowInfoBanner] = useState(false);
+    const [showMoreActions, setShowMoreActions] = useState(false);
+
+    // ── Student Detail Modal ─────────────────────────────────────────────────
+    const [detailStudentId, setDetailStudentId] = useState<string | null>(null);
 
     // ── Evaluation state & handlers (shared hook) ──────────────────────────
     const evalHook = useBintangEvaluation({
@@ -153,7 +201,7 @@ const BintangDashboardPage: React.FC = () => {
                 const monthStart = `${selectedMonth}-01`;
                 const { data: quizData } = await supabase
                     .from('quiz_points')
-                    .select('id, student_id, quiz_name, subject, points, category, quiz_date')
+                    .select('id, student_id, quiz_name, subject, points, category, quiz_date, semester_id')
                     .in('student_id', studentIds)
                     .is('deleted_at', null)
                     .gte('quiz_date', monthStart);
@@ -253,13 +301,37 @@ const BintangDashboardPage: React.FC = () => {
         });
     }, [mentoringLogs, mentoringSearchQuery]);
 
+    const filteredViolations = useMemo(() => {
+        let list = violations;
+        if (violationSeverityFilter !== 'all') {
+            list = list.filter(v => v.severity === violationSeverityFilter);
+        }
+        if (violationSearchQuery.trim()) {
+            const query = violationSearchQuery.toLowerCase();
+            list = list.filter(v => {
+                const name = (v.students?.name || '').toLowerCase();
+                const desc = (v.description || '').toLowerCase();
+                return name.includes(query) || desc.includes(query);
+            });
+        }
+        return list;
+    }, [violations, violationSearchQuery, violationSeverityFilter]);
+
+    const violationStats = useMemo(() => ({
+        total: violations.length,
+        points: violations.reduce((sum, v) => sum + (v.points || 0), 0),
+        ringan: violations.filter(v => v.severity === 'ringan').length,
+        sedang: violations.filter(v => v.severity === 'sedang').length,
+        berat: violations.filter(v => v.severity === 'berat').length,
+    }), [violations]);
+
     // ── Grouped quiz points by student for history view ────────────────────────
     // Recent quiz points (last 50, newest first)
     const recentQuizPoints = useMemo(() => {
         let filtered = [...quizPoints];
         if (keaktifanFilter === 'akademik') filtered = filtered.filter(q => q.subject != null);
         if (keaktifanFilter === 'keaktifan') filtered = filtered.filter(q => q.subject == null);
-        return filtered.sort((a, b) => new Date(b.quiz_date).getTime() - new Date(a.quiz_date).getTime()).slice(0, 50);
+        return filtered.sort((a, b) => new Date(b.quiz_date).getTime() - new Date(a.quiz_date).getTime()).slice(0, 200);
     }, [quizPoints, keaktifanFilter]);
 
     const keaktifanSummary = useMemo(() => {
@@ -351,6 +423,259 @@ const BintangDashboardPage: React.FC = () => {
         }
     };
 
+    // ── Violation edit / delete handlers ─────────────────────────────────────
+
+    const openEditViolation = (v: ViolationRow) => {
+        setEditingViolation(v);
+        setIsViolationModalOpen(true);
+    };
+
+    const handleSaveViolation = async (data: ViolationFormValues & { evidence_file?: File }) => {
+        if (!user || !editingViolation) return;
+        setIsViolationSaving(true);
+        try {
+            const selectedViolation = violationList.find(v => v.description === data.description);
+            let evidenceUrl = editingViolation.evidence_url || null;
+
+            if (data.evidence_file) {
+                const result = await r2StorageService.uploadFile(data.evidence_file, 'violations');
+                if (editingViolation.evidence_url) {
+                    try {
+                        await r2StorageService.deleteFile({ publicUrl: editingViolation.evidence_url });
+                    } catch (e) {
+                        console.warn('Gagal menghapus bukti lama:', e);
+                    }
+                }
+                evidenceUrl = result.publicUrl;
+            }
+
+            const payload = {
+                date: data.date,
+                description: data.description,
+                context_notes: data.context_notes || null,
+                points: selectedViolation?.points ?? editingViolation.points ?? 0,
+                severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || editingViolation.severity || null,
+                evidence_url: evidenceUrl,
+            };
+
+            await bintangService.updateViolation(editingViolation.id, payload);
+            // Audit log tidak boleh menggagalkan notifikasi sukses jika gagal dicatat.
+            try {
+                await writeAuditLog({
+                    userId: user.id,
+                    userEmail: user.email,
+                    tableName: 'violations',
+                    recordId: editingViolation.id,
+                    action: 'UPDATE',
+                    oldData: {
+                        date: editingViolation.date,
+                        description: editingViolation.description,
+                        points: editingViolation.points,
+                        severity: editingViolation.severity,
+                        context_notes: editingViolation.context_notes,
+                    },
+                    newData: payload,
+                });
+            } catch (auditErr) {
+                console.warn('Gagal menulis audit log pelanggaran:', auditErr);
+            }
+            toast.success('Pelanggaran berhasil diperbarui');
+            setIsViolationModalOpen(false);
+            setEditingViolation(null);
+            await fetchAllData();
+        } catch (error: any) {
+            console.error('Gagal memperbarui pelanggaran:', error);
+            toast.error(error.message || 'Gagal memperbarui pelanggaran');
+        } finally {
+            setIsViolationSaving(false);
+        }
+    };
+
+    const handleDeleteViolation = async (v: ViolationRow) => {
+        const studentName = v.students?.name || getStudentName(v.student_id);
+        await confirmDeleteViolation({
+            title: 'Hapus Pelanggaran',
+            message: `Yakin ingin menghapus pelanggaran "${v.description}" milik ${studentName}? Catatan akan dipindah ke tempat sampah (soft delete).`,
+            confirmText: 'Ya, Hapus',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    await bintangService.softDeleteViolation(v.id);
+                    try {
+                        await writeAuditLog({
+                            userId: user?.id || '',
+                            userEmail: user?.email || '',
+                            tableName: 'violations',
+                            recordId: v.id,
+                            action: 'DELETE',
+                            oldData: { description: v.description, points: v.points, date: v.date },
+                            newData: null,
+                        });
+                    } catch (auditErr) {
+                        console.warn('Gagal menulis audit log hapus pelanggaran:', auditErr);
+                    }
+                    toast.success('Pelanggaran berhasil dihapus');
+                    await fetchAllData();
+                } catch (error: any) {
+                    console.error('Gagal menghapus pelanggaran:', error);
+                    toast.error(error.message || 'Gagal menghapus pelanggaran');
+                }
+            },
+        });
+    };
+
+    const openAddViolation = () => {
+        setViolationStudentId('');
+        setIsAddViolationModalOpen(true);
+    };
+
+    const handleAddViolation = async (data: ViolationFormValues & { evidence_file?: File }) => {
+        if (!user) return;
+        if (!violationStudentId) {
+            toast.error('Pilih siswa terlebih dahulu');
+            return;
+        }
+
+        // Soft duplicate warning (harian) — scoped ke siswa yang dipilih
+        const isDuplicate = violations.some(v =>
+            v.student_id === violationStudentId && v.date === data.date && v.description === data.description
+        );
+        if (isDuplicate) {
+            const confirmed = window.confirm(
+                `Siswa sudah memiliki catatan pelanggaran "${data.description}" pada tanggal ini.\n\nApakah Anda yakin ini adalah kejadian yang berbeda?`
+            );
+            if (!confirmed) return;
+        }
+
+        setIsViolationSaving(true);
+        try {
+            const selectedViolation = violationList.find(v => v.description === data.description);
+            let evidenceUrl: string | null = null;
+            if (data.evidence_file) {
+                const result = await r2StorageService.uploadFile(data.evidence_file, 'violations');
+                evidenceUrl = result.publicUrl;
+            }
+
+            const payload = {
+                date: data.date,
+                description: data.description,
+                context_notes: data.context_notes || null,
+                points: selectedViolation?.points ?? 0,
+                type: 'general' as const,
+                severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || null,
+                evidence_url: evidenceUrl,
+                student_id: violationStudentId,
+                user_id: user.id,
+                semester_id: activeSemester?.id || null,
+            };
+
+            await bintangService.insertViolation(payload);
+            try {
+                await writeAuditLog({
+                    userId: user.id,
+                    userEmail: user.email,
+                    tableName: 'violations',
+                    recordId: payload.student_id,
+                    action: 'INSERT',
+                    oldData: null,
+                    newData: payload as Record<string, unknown>,
+                });
+            } catch (auditErr) {
+                console.warn('Gagal menulis audit log pelanggaran baru:', auditErr);
+            }
+            toast.success('Pelanggaran berhasil dicatat');
+            setIsAddViolationModalOpen(false);
+            setViolationStudentId('');
+            await fetchAllData();
+        } catch (error: any) {
+            console.error('Gagal mencatat pelanggaran:', error);
+            toast.error(error.message || 'Gagal mencatat pelanggaran');
+        } finally {
+            setIsViolationSaving(false);
+        }
+    };
+
+    // ── Poin keaktifan edit / delete ─────────────────────────────────────────
+
+    const openEditQuiz = (q: QuizPointRow) => {
+        setEditingQuizPoint(q);
+        setIsQuizModalOpen(true);
+    };
+
+    const handleSaveQuiz = async (data: QuizFormValues) => {
+        if (!user || !editingQuizPoint) return;
+        setIsQuizSaving(true);
+        try {
+            const payload = {
+                quiz_date: data.quiz_date,
+                subject: data.subject || null,
+                quiz_name: data.quiz_name,
+                category: data.category || null,
+            };
+            await bintangService.updateQuizPoint(editingQuizPoint.id, payload);
+            try {
+                await writeAuditLog({
+                    userId: user.id,
+                    userEmail: user.email,
+                    tableName: 'quiz_points',
+                    recordId: editingQuizPoint.id,
+                    action: 'UPDATE',
+                    oldData: {
+                        quiz_date: editingQuizPoint.quiz_date,
+                        quiz_name: editingQuizPoint.quiz_name,
+                        subject: editingQuizPoint.subject,
+                        category: editingQuizPoint.category,
+                    },
+                    newData: payload,
+                });
+            } catch (auditErr) {
+                console.warn('Gagal menulis audit log poin keaktifan:', auditErr);
+            }
+            toast.success('Poin keaktifan berhasil diperbarui');
+            setIsQuizModalOpen(false);
+            setEditingQuizPoint(null);
+            await fetchAllData();
+        } catch (error: any) {
+            console.error('Gagal memperbarui poin keaktifan:', error);
+            toast.error(error.message || 'Gagal memperbarui poin keaktifan');
+        } finally {
+            setIsQuizSaving(false);
+        }
+    };
+
+    const handleDeleteQuiz = async (q: QuizPointRow) => {
+        const studentName = getStudentName(q.student_id);
+        await confirmDeleteQuiz({
+            title: 'Hapus Poin Keaktifan',
+            message: `Yakin ingin menghapus poin keaktifan "${q.quiz_name || 'Aktivitas'}" milik ${studentName}?`,
+            confirmText: 'Ya, Hapus',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    await bintangService.softDeleteQuizPoint(q.id);
+                    try {
+                        await writeAuditLog({
+                            userId: user?.id || '',
+                            userEmail: user?.email || '',
+                            tableName: 'quiz_points',
+                            recordId: q.id,
+                            action: 'DELETE',
+                            oldData: { quiz_name: q.quiz_name, points: q.points, quiz_date: q.quiz_date },
+                            newData: null,
+                        });
+                    } catch (auditErr) {
+                        console.warn('Gagal menulis audit log hapus poin:', auditErr);
+                    }
+                    toast.success('Poin keaktifan berhasil dihapus');
+                    await fetchAllData();
+                } catch (error: any) {
+                    console.error('Gagal menghapus poin keaktifan:', error);
+                    toast.error(error.message || 'Gagal menghapus poin keaktifan');
+                }
+            },
+        });
+    };
+
     // ── For non-Walas, show simplified view ─────────────────────────────────
     // Mereka bisa input poin keaktifan & observasi, lihat data read-only
 
@@ -406,47 +731,66 @@ const BintangDashboardPage: React.FC = () => {
                 <div className="text-center py-16 text-slate-500">Memuat data...</div>
             )}
 
-            {/* ─── Main Content (Single Page) ─────────────────────────────── */}
+            {/* ─── Main Content (Tabbed) ──────────────────────────────────── */}
             {selectedClass && !isLoading && (
-                <div className="space-y-6">
+                <Tabs defaultValue="rekap" className="w-full">
+                    {/* ─── Tab Navigation ─────────────────────────────────────── */}
+                    <TabsList className="w-full max-w-full overflow-x-auto justify-start sm:justify-center">
+                        <TabsTrigger value="rekap"><BarChart3 size={16} className="mr-1.5" /> Rekap BINTANG</TabsTrigger>
+                        <TabsTrigger value="pembinaan"><ClipboardCheck size={16} className="mr-1.5" /> Pembinaan</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="rekap" className="mt-6">
+                    <div className="space-y-6">
 
                     {/* ══════════════════════════════════════════════════════════
-                        1. SCORING INFO BANNER
+                        1. SCORING INFO BANNER (collapsible)
                        ══════════════════════════════════════════════════════════ */}
-                    <div className="flex flex-col gap-3 p-4 rounded-2xl bg-gradient-to-r from-brand-100 to-brand-200 dark:from-brand-950/30 dark:to-brand-950/30 border border-brand-200/60 dark:border-brand-800/40">
-                        <div className="flex items-center gap-2 text-brand-700 dark:text-brand-300">
-                            <Info size={16} />
-                            <span className="font-semibold text-sm">Bagaimana Skor BINTANG Dihitung?</span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600 dark:text-slate-400">
-                            <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/40">
-                                <div className="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
-                                    <AlertTriangle size={14} className="text-rose-500" />
-                                </div>
-                                <div>
-                                    <p className="font-medium text-slate-700 dark:text-slate-300">1. Pelanggaran</p>
-                                    <p className="mt-0.5">Setiap pelanggaran menambah poin per aspek (ADAB/DISIPLIN/RAPI). Makin tinggi poin, makin turun grade.</p>
+                    <div className="rounded-2xl border border-brand-200/60 dark:border-brand-800/40 overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setShowInfoBanner(v => !v)}
+                            className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-brand-100 to-brand-200 dark:from-brand-950/30 dark:to-brand-950/30 hover:opacity-90 transition-opacity text-left"
+                        >
+                            <div className="flex items-center gap-2 text-brand-700 dark:text-brand-300">
+                                <Info size={15} />
+                                <span className="font-semibold text-sm">Cara kerja Skor BINTANG</span>
+                            </div>
+                            <ChevronDown size={16} className={`text-brand-500 transition-transform duration-200 ${showInfoBanner ? 'rotate-180' : ''}`} />
+                        </button>
+                        {showInfoBanner && (
+                            <div className="p-4 bg-gradient-to-r from-brand-50 to-brand-100 dark:from-brand-950/20 dark:to-brand-950/20">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600 dark:text-slate-400">
+                                    <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/40">
+                                        <div className="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
+                                            <AlertTriangle size={14} className="text-rose-500" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-slate-700 dark:text-slate-300">1. Pelanggaran</p>
+                                            <p className="mt-0.5">Setiap pelanggaran menambah poin per aspek (ADAB/DISIPLIN/RAPI). Makin tinggi poin, makin turun grade.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/40">
+                                        <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                                            <Sparkles size={14} className="text-emerald-500" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-slate-700 dark:text-slate-300">2. Poin Keaktifan</p>
+                                            <p className="mt-0.5">Setiap +1 poin keaktifan <strong>meng-offset</strong> poin pelanggaran (Adab → Disiplin → Rapi).</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/40">
+                                        <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                                            <FileText size={14} className="text-amber-500" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-slate-700 dark:text-slate-300">3. Evaluasi Bulanan</p>
+                                            <p className="mt-0.5">Wali kelas review &amp; konfirmasi grade otomatis, tambah catatan, lalu publikasikan.</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/40">
-                                <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                                    <Sparkles size={14} className="text-emerald-500" />
-                                </div>
-                                <div>
-                                    <p className="font-medium text-slate-700 dark:text-slate-300">2. Poin Keaktifan</p>
-                                    <p className="mt-0.5">Setiap +1 poin keaktifan <strong>meng-offset</strong> poin pelanggaran (Adab → Disiplin → Rapi).</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/40">
-                                <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                                    <FileText size={14} className="text-amber-500" />
-                                </div>
-                                <div>
-                                    <p className="font-medium text-slate-700 dark:text-slate-300">3. Evaluasi Bulanan</p>
-                                    <p className="mt-0.5">Wali kelas review & konfirmasi grade otomatis, tambah catatan, lalu publikasikan.</p>
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* ══════════════════════════════════════════════════════════
@@ -479,95 +823,101 @@ const BintangDashboardPage: React.FC = () => {
                     </div>
 
                     {/* ══════════════════════════════════════════════════════════
-                        3. ACTION BAR — tiered by role
+                        3. ACTION BAR — simplified
                        ══════════════════════════════════════════════════════════ */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        
-                        {/* Kiri: Input Data & Pencatatan */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+
+                        {/* Kiri: Aksi Input Utama */}
                         <div className="flex flex-wrap items-center gap-2">
-                            <div className="flex items-center p-1 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
+                            {/* Tombol utama selalu terlihat */}
+                            <Button
+                                onClick={() => setIsKeaktifanModalOpen(true)}
+                                className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm shadow-emerald-600/20"
+                            >
+                                <Sparkles size={15} />
+                                <span>+ Poin Keaktifan</span>
+                            </Button>
+                            <Button
+                                onClick={() => { setViolationStudentId(''); setIsAddViolationModalOpen(true); }}
+                                className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-sm shadow-rose-600/20"
+                            >
+                                <ShieldAlert size={15} />
+                                <span>+ Pelanggaran</span>
+                            </Button>
+
+                            {/* Tombol sekunder — toggle */}
+                            <div className="relative">
                                 <Button
-                                    onClick={() => setIsKeaktifanModalOpen(true)}
-                                    variant="ghost"
-                                    className="flex items-center gap-1.5 text-sm min-h-[44px] px-3 font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg"
+                                    variant="outline"
+                                    onClick={() => setShowMoreActions(v => !v)}
+                                    className="flex items-center gap-1.5 text-sm h-10 px-3 font-medium rounded-xl border-slate-200 dark:border-slate-700"
+                                    title="Aksi lainnya"
                                 >
-                                    <Sparkles size={16} />
-                                    <span>+ Poin Keaktifan</span>
+                                    <span className="text-slate-600 dark:text-slate-300">Lainnya</span>
+                                    <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${showMoreActions ? 'rotate-180' : ''}`} />
                                 </Button>
-                                <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" />
-                                <Button
-                                    onClick={() => setIsObservationModalOpen(true)}
-                                    variant="ghost"
-                                    className="flex items-center gap-1.5 text-sm min-h-[44px] px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
-                                >
-                                    <Eye size={16} />
-                                    <span>Observasi</span>
-                                </Button>
-                                {isWalas && (
-                                    <>
-                                        <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" />
-                                        <Button
-                                            onClick={openMentoringModal}
-                                            variant="ghost"
-                                            className="flex items-center gap-1.5 text-sm min-h-[44px] px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
+                                {showMoreActions && (
+                                    <div className="absolute left-0 top-full mt-1.5 z-20 min-w-[180px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg py-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setIsObservationModalOpen(true); setShowMoreActions(false); }}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                                         >
-                                            <PlusCircle size={16} />
-                                            <span>Catat Pembinaan</span>
-                                        </Button>
-                                    </>
+                                            <Eye size={15} className="text-slate-400" /> Observasi Harian
+                                        </button>
+                                        {isWalas && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { openMentoringModal(); setShowMoreActions(false); }}
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                            >
+                                                <PlusCircle size={15} className="text-slate-400" /> Catat Pembinaan
+                                            </button>
+                                        )}
+                                        {isWalas && (
+                                            <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
+                                        )}
+                                        {isWalas && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { evalHook.handleDownloadClassPdf(); setShowMoreActions(false); }}
+                                                disabled={evalHook.isDownloadingClass}
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                                            >
+                                                <Printer size={15} className="text-slate-400" /> {evalHook.isDownloadingClass ? 'Proses...' : 'Cetak Kelas'}
+                                            </button>
+                                        )}
+                                        {isWalas && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { evalHook.handleExportExcel(); setShowMoreActions(false); }}
+                                                disabled={evalHook.isExportingExcel || students.length === 0}
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                                            >
+                                                <FileSpreadsheet size={15} className="text-slate-400" /> {evalHook.isExportingExcel ? 'Proses...' : 'Export Excel'}
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </div>
-
-                            {/* Laporan & Export */}
-                            {isWalas && (
-                                <div className="flex items-center p-1 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
-                                    <Button
-                                        onClick={evalHook.handleDownloadClassPdf}
-                                        disabled={evalHook.isDownloadingClass || !selectedClass}
-                                        variant="ghost"
-                                        className="flex items-center gap-1.5 text-sm min-h-[44px] px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
-                                    >
-                                        {evalHook.isDownloadingClass ? (
-                                            <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
-                                        ) : (
-                                            <Printer size={16} />
-                                        )}
-                                        <span className="hidden sm:inline">{evalHook.isDownloadingClass ? 'Proses...' : 'Cetak Kelas'}</span>
-                                    </Button>
-                                    <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" />
-                                    <Button
-                                        onClick={evalHook.handleExportExcel}
-                                        disabled={evalHook.isExportingExcel || students.length === 0}
-                                        variant="ghost"
-                                        className="flex items-center gap-1.5 text-sm min-h-[44px] px-3 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
-                                    >
-                                        {evalHook.isExportingExcel ? (
-                                            <span className="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full" />
-                                        ) : (
-                                            <FileSpreadsheet size={16} />
-                                        )}
-                                        <span className="hidden sm:inline">{evalHook.isExportingExcel ? 'Proses...' : 'Export Excel'}</span>
-                                    </Button>
-                                </div>
-                            )}
                         </div>
 
-                        {/* Kanan: Evaluasi Bulanan */}
+                        {/* Kanan: Evaluasi Bulanan (Walas only) */}
                         {isWalas && (
-                            <div className="flex items-center gap-2 w-full md:w-auto mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200 dark:border-slate-800">
+                            <div className="flex items-center gap-2">
                                 <Button
                                     onClick={() => evalHook.handleGenerateAll(getAspectSummary)}
                                     disabled={evalHook.isGenerating || students.length === 0}
                                     variant="outline"
-                                    className="flex-1 md:flex-none justify-center items-center gap-1.5 text-sm h-10 px-4 font-medium border-brand-200 dark:border-brand-800/60 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20 hover:bg-brand-100 dark:hover:bg-brand-900/40 rounded-xl"
+                                    className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium border-brand-200 dark:border-brand-800/60 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20 hover:bg-brand-100 dark:hover:bg-brand-900/40 rounded-xl"
                                 >
                                     <Zap size={16} />
-                                    <span>{evalHook.isGenerating ? 'Proses...' : 'Generate Semua'}</span>
+                                    <span className="hidden sm:inline">{evalHook.isGenerating ? 'Proses...' : 'Generate'}</span>
                                 </Button>
                                 <Button
                                     onClick={evalHook.handlePublish}
                                     disabled={evaluations.length === 0 || evalHook.isPublishing}
-                                    className="flex-1 md:flex-none justify-center bg-brand-600 hover:bg-brand-700 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20"
+                                    className="bg-brand-600 hover:bg-brand-700 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20"
                                 >
                                     <Send size={16} />
                                     <span>Publikasi</span>
@@ -681,6 +1031,16 @@ const BintangDashboardPage: React.FC = () => {
                                                     </td>
                                                     <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">
                                                         <div className="flex justify-end gap-1 sm:gap-2">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                                                                onClick={() => setDetailStudentId(student.id)}
+                                                                title="Detail & Riwayat"
+                                                            >
+                                                                <Eye size={14} className="sm:mr-1 text-slate-500 dark:text-slate-400" />
+                                                                <span className="hidden lg:inline text-slate-600 dark:text-slate-300">Detail</span>
+                                                            </Button>
                                                             {isWalas && (
                                                                 <Button
                                                                     variant="outline"
@@ -738,226 +1098,6 @@ const BintangDashboardPage: React.FC = () => {
                     </div>
 
                     {/* ══════════════════════════════════════════════════════════
-                        6. COLLAPSIBLE: RIWAYAT PEMBINAAN
-                       ══════════════════════════════════════════════════════════ */}
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
-                        <button
-                            type="button"
-                            onClick={() => setShowMentoringHistory(!showMentoringHistory)}
-                            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <ClipboardCheck size={20} className="text-amber-500" />
-                                <div>
-                                    <p className="font-semibold text-sm text-slate-800 dark:text-white">Riwayat Pembinaan</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">{mentoringLogs.length} catatan tersimpan</p>
-                                </div>
-                            </div>
-                            <ChevronDown size={20} className={`text-slate-400 transition-transform duration-300 ${showMentoringHistory ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        <AnimatePresence>
-                            {showMentoringHistory && (
-                                <MotionDiv
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.25 }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="border-t border-slate-200 dark:border-slate-700">
-                                        <div className="p-4 border-b border-slate-100 dark:border-slate-800">
-                                            <div className="relative max-w-sm">
-                                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-                                                <Input
-                                                    placeholder="Cari siswa atau catatan..."
-                                                    className="pl-9 w-full text-sm"
-                                                    value={mentoringSearchQuery}
-                                                    onChange={(e) => setMentoringSearchQuery(e.target.value)}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {filteredMentoringLogs.length === 0 ? (
-                                            <div className="text-center py-8 text-slate-500 text-sm">
-                                                {mentoringSearchQuery.trim() ? 'Tidak ada catatan yang cocok.' : 'Belum ada catatan pembinaan.'}
-                                            </div>
-                                        ) : (
-                                            <div className="overflow-x-auto max-h-80 overflow-y-auto">
-                                                <table className="w-full text-left border-collapse">
-                                                    <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/80">
-                                                        <tr className="border-b border-slate-200 dark:border-slate-700">
-                                                            <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Tanggal</th>
-                                                            <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Siswa</th>
-                                                            <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Mentor</th>
-                                                            <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Catatan</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {filteredMentoringLogs.map((log: any) => (
-                                                            <tr key={log.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                                                                <td className="py-2.5 px-4 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                                                                    {new Date(log.date).toLocaleDateString('id-ID')}
-                                                                </td>
-                                                                <td className="py-2.5 px-4 text-xs text-slate-700 dark:text-slate-300 font-medium">
-                                                                    {(log.students as any)?.name}
-                                                                </td>
-                                                                <td className="py-2.5 px-4 text-xs">
-                                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-brand-100 text-brand-800 dark:bg-brand-900/30 dark:text-brand-300">
-                                                                        {log.mentor_role}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-2.5 px-4 text-xs text-slate-600 dark:text-slate-400 max-w-[240px] truncate" title={log.notes}>
-                                                                    {log.notes}
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        )}
-                                    </div>
-                                </MotionDiv>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    {/* ══════════════════════════════════════════════════════════
-                        7. COLLAPSIBLE: RIWAYAT POIN KEAKTIFAN
-                       ══════════════════════════════════════════════════════════ */}
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
-                        <button
-                            type="button"
-                            onClick={() => setShowKeaktifanHistory(!showKeaktifanHistory)}
-                            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Gift size={20} className="text-emerald-500" />
-                                <div>
-                                    <p className="font-semibold text-sm text-slate-800 dark:text-white">Riwayat Poin Keaktifan</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">{quizPoints.length} poin tercatat bulan ini</p>
-                                </div>
-                            </div>
-                            <ChevronDown size={20} className={`text-slate-400 transition-transform duration-300 ${showKeaktifanHistory ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        <AnimatePresence>
-                            {showKeaktifanHistory && (
-                                <MotionDiv
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.25 }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="border-t border-slate-200 dark:border-slate-700">
-                                        {/* Stats row — breakdown by type */}
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
-                                            <div className="text-center">
-                                                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{keaktifanSummary.keaktifanCount}</p>
-                                                <p className="text-[10px] text-slate-500">Poin Keaktifan</p>
-                                            </div>
-                                            <div className="text-center">
-                                                <p className="text-lg font-bold text-brand-600 dark:text-brand-400">{keaktifanSummary.akademikCount}</p>
-                                                <p className="text-[10px] text-slate-500">Poin Akademik</p>
-                                            </div>
-                                            <div className="text-center">
-                                                <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
-                                                    {keaktifanSummary.keaktifanPoints + keaktifanSummary.akademikPoints}
-                                                </p>
-                                                <p className="text-[10px] text-slate-500">Total Offset</p>
-                                            </div>
-                                            <div className="text-center">
-                                                <p className="text-lg font-bold text-slate-600 dark:text-slate-400">
-                                                    {students.filter(s => studentQuizMap.get(s.id)?.totalPoints).length}
-                                                </p>
-                                                <p className="text-[10px] text-slate-500">Siswa Dapat Poin</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Filter tabs */}
-                                        <div className="flex gap-1 px-4 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-                                            {([
-                                                { key: 'semua' as const, label: 'Semua', count: quizPoints.length },
-                                                { key: 'keaktifan' as const, label: '⚡ Keaktifan', count: keaktifanSummary.keaktifanCount },
-                                                { key: 'akademik' as const, label: '📚 Akademik', count: keaktifanSummary.akademikCount },
-                                            ]).map(tab => (
-                                                <button
-                                                    key={tab.key}
-                                                    type="button"
-                                                    onClick={() => setKeaktifanFilter(tab.key)}
-                                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                                                        keaktifanFilter === tab.key
-                                                            ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
-                                                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                                    }`}
-                                                >
-                                                    {tab.label}
-                                                    <span className="ml-1 text-[10px] opacity-60">({tab.count})</span>
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        {/* Table */}
-                                        {recentQuizPoints.length === 0 ? (
-                                            <div className="text-center py-8 text-slate-500 text-sm">
-                                                {keaktifanFilter === 'keaktifan' ? 'Belum ada poin keaktifan umum bulan ini.' :
-                                                 keaktifanFilter === 'akademik' ? 'Belum ada poin akademik bulan ini.' :
-                                                 'Belum ada poin keaktifan bulan ini. Klik <strong>"+ Poin Keaktifan"</strong> untuk menambah.'}
-                                            </div>
-                                        ) : (
-                                            <div className="overflow-x-auto max-h-80 overflow-y-auto">
-                                                <table className="w-full text-left border-collapse">
-                                                    <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/80">
-                                                        <tr className="border-b border-slate-200 dark:border-slate-700">
-                                                            <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Tanggal</th>
-                                                            <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Siswa</th>
-                                                            <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Aktivitas</th>
-                                                            <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Tipe</th>
-                                                            <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300 text-center">Poin</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {recentQuizPoints.map(q => (
-                                                            <tr key={q.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                                                                <td className="py-2.5 px-4 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                                                                    {new Date(q.quiz_date).toLocaleDateString('id-ID')}
-                                                                </td>
-                                                                <td className="py-2.5 px-4 text-xs text-slate-700 dark:text-slate-300 font-medium">
-                                                                    {getStudentName(q.student_id)}
-                                                                </td>
-                                                                <td className="py-2.5 px-4 text-xs text-slate-600 dark:text-slate-400 max-w-[180px] truncate" title={q.quiz_name || ''}>
-                                                                    {q.quiz_name || '-'}
-                                                                </td>
-                                                                <td className="py-2.5 px-4 text-xs">
-                                                                    {q.subject != null ? (
-                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-[10px] font-medium">
-                                                                            📚 {q.subject}
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-medium">
-                                                                            ⚡ Keaktifan
-                                                                        </span>
-                                                                    )}
-                                                                </td>
-                                                                <td className="py-2.5 px-4 text-xs text-center">
-                                                                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-                                                                        +{q.points}
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        )}
-                                    </div>
-                                </MotionDiv>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    {/* ══════════════════════════════════════════════════════════
                         8. COLLAPSIBLE: TREN BULANAN
                        ══════════════════════════════════════════════════════════ */}
                     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
@@ -993,11 +1133,105 @@ const BintangDashboardPage: React.FC = () => {
                         </AnimatePresence>
                     </div>
 
-                </div>
+                    </div>
+                    </TabsContent>
+
+                    {/* ══ TAB: PEMBINAAN ══ */}
+                    <TabsContent value="pembinaan" className="mt-6">
+                        <div className="space-y-4">
+                            {/* Header + add */}
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p className="font-semibold text-sm text-slate-800 dark:text-white">Riwayat Pembinaan</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">{mentoringLogs.length} catatan tersimpan</p>
+                                </div>
+                                {isWalas && (
+                                    <Button
+                                        onClick={openMentoringModal}
+                                        className="bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20"
+                                    >
+                                        <Plus size={16} /> Catat Pembinaan
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* Search */}
+                            <div className="relative max-w-sm">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+                                <Input
+                                    placeholder="Cari siswa atau catatan..."
+                                    className="pl-9 w-full text-sm"
+                                    value={mentoringSearchQuery}
+                                    onChange={(e) => setMentoringSearchQuery(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Table */}
+                            <Card className="p-0 overflow-hidden">
+                                {filteredMentoringLogs.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-14 text-center">
+                                        <ClipboardCheck size={40} className="text-slate-300 dark:text-slate-600 mb-3" />
+                                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                                            {mentoringSearchQuery.trim() ? 'Tidak ada catatan yang cocok.' : 'Belum ada catatan pembinaan.'}
+                                        </p>
+                                        {isWalas && (
+                                            <Button
+                                                onClick={openMentoringModal}
+                                                variant="outline"
+                                                className="mt-4 text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-800/60"
+                                            >
+                                                <Plus size={14} className="mr-1.5" /> Catat Pembinaan Pertama
+                                            </Button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/80">
+                                                <tr className="border-b border-slate-200 dark:border-slate-700">
+                                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Tanggal</th>
+                                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Siswa</th>
+                                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Mentor</th>
+                                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Catatan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredMentoringLogs.map((log: any) => (
+                                                    <tr key={log.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                                                        <td className="py-2.5 px-4 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                                                            {new Date(log.date).toLocaleDateString('id-ID')}
+                                                        </td>
+                                                        <td className="py-2.5 px-4 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                                                            {(log.students as any)?.name}
+                                                        </td>
+                                                        <td className="py-2.5 px-4 text-xs">
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-brand-100 text-brand-800 dark:bg-brand-900/30 dark:text-brand-300">
+                                                                {log.mentor_role}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-2.5 px-4 text-xs text-slate-600 dark:text-slate-400 max-w-[300px] truncate" title={log.notes}>
+                                                            {log.notes}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </Card>
+                        </div>
+                    </TabsContent>
+                </Tabs>
             )}
 
             {/* ─── Publish Confirmation ──────────────────────────────────────── */}
             {PublishConfirmDialog}
+
+            {/* ─── Delete Quiz Point Confirmation ────────────────────────────── */}
+            {DeleteQuizDialog}
+
+            {/* ─── Delete Violation Confirmation ──────────────────────────────── */}
+            {DeleteViolationDialog}
 
             {/* ─── Edit Evaluation Modal ─────────────────────────────────────── */}
             <Modal
@@ -1062,6 +1296,184 @@ const BintangDashboardPage: React.FC = () => {
                 </form>
             </Modal>
 
+            {/* ─── Student Detail Modal ──────────────────────────────────────── */}
+            <Modal
+                isOpen={!!detailStudentId}
+                onClose={() => setDetailStudentId(null)}
+                title={`Detail Riwayat: ${getStudentName(detailStudentId || '')}`}
+                maxWidth="max-w-4xl"
+            >
+                <div className="pt-4 space-y-6">
+                    {/* Pelanggaran Section */}
+                    <div>
+                        <div className="flex justify-between items-center mb-3">
+                            <h3 className="font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                                <ShieldAlert size={18} className="text-rose-500" />
+                                Riwayat Pelanggaran
+                            </h3>
+                            {isWalas && (
+                                <Button
+                                    size="sm"
+                                    onClick={() => {
+                                        setViolationStudentId(detailStudentId!);
+                                        setIsAddViolationModalOpen(true);
+                                    }}
+                                    className="bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 dark:hover:bg-rose-900/50"
+                                >
+                                    <Plus size={14} className="mr-1" /> Catat
+                                </Button>
+                            )}
+                        </div>
+                        <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 dark:bg-slate-800">
+                                    <tr>
+                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Tanggal</th>
+                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Pelanggaran</th>
+                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300 text-center">Poin</th>
+                                        {isWalas && <th className="py-2 px-3 text-right font-medium text-slate-600 dark:text-slate-300">Aksi</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {violations.filter(v => v.student_id === detailStudentId).length === 0 ? (
+                                        <tr><td colSpan={4} className="py-4 text-center text-slate-500">Tidak ada pelanggaran bulan ini</td></tr>
+                                    ) : (
+                                        violations.filter(v => v.student_id === detailStudentId).map(v => (
+                                            <tr key={v.id} className="border-t border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                                                <td className="py-2 px-3 whitespace-nowrap">{new Date(v.date).toLocaleDateString('id-ID')}</td>
+                                                <td className="py-2 px-3 text-slate-700 dark:text-slate-300">{v.description}</td>
+                                                <td className="py-2 px-3 text-center font-bold text-rose-600 dark:text-rose-400">+{v.points}</td>
+                                                {isWalas && (
+                                                    <td className="py-2 px-3 text-right whitespace-nowrap">
+                                                        <div className="flex justify-end gap-1">
+                                                            <button onClick={() => { setDetailStudentId(null); openEditViolation(v as unknown as ViolationRow); }} className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30" title="Edit"><Pencil size={14}/></button>
+                                                            <button onClick={() => { setDetailStudentId(null); handleDeleteViolation(v as unknown as ViolationRow); }} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30" title="Hapus"><Trash2 size={14}/></button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Keaktifan Section */}
+                    <div>
+                        <div className="flex justify-between items-center mb-3">
+                            <h3 className="font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                                <Sparkles size={18} className="text-emerald-500" />
+                                Poin Keaktifan
+                            </h3>
+                            {isWalas && (
+                                <Button
+                                    size="sm"
+                                    onClick={() => {
+                                        setIsKeaktifanModalOpen(true);
+                                    }}
+                                    className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                                >
+                                    <Plus size={14} className="mr-1" /> Tambah
+                                </Button>
+                            )}
+                        </div>
+                        <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 dark:bg-slate-800">
+                                    <tr>
+                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Tanggal</th>
+                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Aktivitas</th>
+                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300 text-center">Poin</th>
+                                        {isWalas && <th className="py-2 px-3 text-right font-medium text-slate-600 dark:text-slate-300">Aksi</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {quizPoints.filter(q => q.student_id === detailStudentId).length === 0 ? (
+                                        <tr><td colSpan={4} className="py-4 text-center text-slate-500">Belum ada poin keaktifan bulan ini</td></tr>
+                                    ) : (
+                                        quizPoints.filter(q => q.student_id === detailStudentId).map(q => (
+                                            <tr key={q.id} className="border-t border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                                                <td className="py-2 px-3 whitespace-nowrap">{new Date(q.quiz_date).toLocaleDateString('id-ID')}</td>
+                                                <td className="py-2 px-3 text-slate-700 dark:text-slate-300">{q.quiz_name} {q.subject && <span className="ml-1 text-[10px] bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded-full">{q.subject}</span>}</td>
+                                                <td className="py-2 px-3 text-center font-bold text-emerald-600 dark:text-emerald-400">+{q.points}</td>
+                                                {isWalas && (
+                                                    <td className="py-2 px-3 text-right whitespace-nowrap">
+                                                        <div className="flex justify-end gap-1">
+                                                            <button onClick={() => { setDetailStudentId(null); openEditQuiz(q as unknown as QuizPointRow); }} className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30" title="Edit"><Pencil size={14}/></button>
+                                                            <button onClick={() => { setDetailStudentId(null); handleDeleteQuiz(q as unknown as QuizPointRow); }} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30" title="Hapus"><Trash2 size={14}/></button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* ─── Add Violation Modal ──────────────────────────────────────── */}
+            <Modal
+                isOpen={isAddViolationModalOpen}
+                onClose={() => {
+                    setIsAddViolationModalOpen(false);
+                    setViolationStudentId('');
+                }}
+                title="Catat Pelanggaran"
+                maxWidth="max-w-xl"
+            >
+                <div className="pt-2 space-y-4">
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800">
+                        <ShieldAlert size={18} className="text-rose-500 mt-0.5 shrink-0" />
+                        <p className="text-xs text-rose-700 dark:text-rose-300">
+                            Pelanggaran yang dicatat akan menambah poin aspek BINTANG siswa (Adab / Disiplin / Rapi) dan menyesuaikan grade otomatis.
+                        </p>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            Siswa <span className="text-rose-500">*</span>
+                        </label>
+                        <CustomDropdown
+                            value={violationStudentId}
+                            onChange={setViolationStudentId}
+                            placeholder="Pilih siswa..."
+                            options={students.map(s => ({ value: s.id, label: s.name }))}
+                        />
+                    </div>
+                    <ViolationForm
+                        defaultValues={null}
+                        onSubmit={handleAddViolation}
+                        onClose={() => setIsAddViolationModalOpen(false)}
+                        isPending={isViolationSaving}
+                    />
+                </div>
+            </Modal>
+
+            {/* ─── Edit Violation Modal ──────────────────────────────────────── */}
+            <Modal
+                isOpen={isViolationModalOpen}
+                onClose={() => {
+                    setIsViolationModalOpen(false);
+                    setEditingViolation(null);
+                }}
+                title={`Edit Pelanggaran: ${editingViolation?.students?.name || getStudentName(editingViolation?.student_id || '') || 'Siswa'}`}
+                maxWidth="max-w-xl"
+            >
+                <div className="pt-4">
+                    {editingViolation && (
+                        <ViolationForm
+                            defaultValues={editingViolation}
+                            onSubmit={handleSaveViolation}
+                            onClose={() => setIsViolationModalOpen(false)}
+                            isPending={isViolationSaving}
+                        />
+                    )}
+                </div>
+            </Modal>
+
             {/* ─── Keaktifan Modal ──────────────────────────────────────────── */}
             <BintangKeaktifanModal
                 isOpen={isKeaktifanModalOpen}
@@ -1069,7 +1481,30 @@ const BintangDashboardPage: React.FC = () => {
                 students={students}
                 userId={user?.id || ''}
                 onSuccess={fetchAllData}
+                semesterId={activeSemester?.id || null}
             />
+
+            {/* ─── Edit Poin Keaktifan Modal ────────────────────────────────── */}
+            <Modal
+                isOpen={isQuizModalOpen}
+                onClose={() => {
+                    setIsQuizModalOpen(false);
+                    setEditingQuizPoint(null);
+                }}
+                title={`Edit Poin Keaktifan: ${getStudentName(editingQuizPoint?.student_id || '')}`}
+                maxWidth="max-w-lg"
+            >
+                <div className="pt-4">
+                    {editingQuizPoint && (
+                        <QuizForm
+                            defaultValues={editingQuizPoint}
+                            onSubmit={handleSaveQuiz}
+                            onClose={() => setIsQuizModalOpen(false)}
+                            isPending={isQuizSaving}
+                        />
+                    )}
+                </div>
+            </Modal>
 
             {/* ─── Observation Modal (inline, simplified) ──────────────────── */}
             <Modal

@@ -79,6 +79,8 @@ export type ViolationRow = Partial<ViolationRowBase> & Pick<ViolationRowBase, Vi
     parent_notified?: boolean | null;
     /** F17-2: nama guru yang mencatat pelanggaran (untuk akuntabilitas akses kolaboratif) */
     recorded_by_name?: string | null;
+    /** Joined student name (from violations.students(name)) when fetched with a relation */
+    students?: { name: string } | null;
 };
 
 /**

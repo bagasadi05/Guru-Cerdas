@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { violationList, type BintangAspect } from './violations.data';
+import type { Database } from './database.types';
 import type {
   BintangMentoringInsert,
   BintangDailyObservationInsert,
@@ -226,7 +227,7 @@ export const bintangService = {
 
       const { data, error } = await supabase
         .from('violations')
-        .select('id, student_id, description, points, date, severity, students(name)')
+        .select('id, student_id, user_id, date, description, context_notes, points, type, severity, semester_id, evidence_url, parent_notified, parent_notified_at, created_at, students(name)')
         .in('student_id', studentIds)
         .gte('date', startDate)
         .lt('date', endDate)
@@ -242,6 +243,88 @@ export const bintangService = {
       console.warn('bintangService.getViolationsForClass exception:', err);
       return [];
     }
+  },
+
+  /**
+   * Insert a new violation record (used by the BINTANG dashboard so walas
+   * can record a violation without leaving the menu).
+   */
+  async insertViolation(payload: Database['public']['Tables']['violations']['Insert']) {
+    const { data, error } = await supabase
+      .from('violations')
+      .insert(payload)
+      .select('id');
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Update an existing violation record (used by the BINTANG dashboard so
+   * walas/kesiswaan can correct a recorded violation without leaving the menu).
+   */
+  async updateViolation(id: string, payload: Database['public']['Tables']['violations']['Update']) {
+    const { data, error } = await supabase
+      .from('violations')
+      .update(payload)
+      .eq('id', id)
+      .select('id');
+
+    if (error) throw error;
+    // RLS may silently allow the query but affect 0 rows — surface that as an error.
+    if (!data || data.length === 0) {
+      throw new Error('Anda tidak memiliki izin untuk mengubah pelanggaran ini.');
+    }
+    return data;
+  },
+
+  /**
+   * Soft-delete a violation record (sets deleted_at). RLS governs who may delete.
+   */
+  async softDeleteViolation(id: string) {
+    const { data, error } = await supabase
+      .from('violations')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('id');
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Anda tidak memiliki izin untuk menghapus pelanggaran ini.');
+    }
+    return data;
+  },
+
+  // --- Quiz Points (poin keaktifan) management for the BINTANG dashboard ---
+
+  /** Update an existing quiz_points row (edit poin keaktifan). */
+  async updateQuizPoint(id: string, payload: Database['public']['Tables']['quiz_points']['Update']) {
+    const { data, error } = await supabase
+      .from('quiz_points')
+      .update(payload)
+      .eq('id', id)
+      .select('id');
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Anda tidak memiliki izin untuk mengubah poin ini.');
+    }
+    return data;
+  },
+
+  /** Soft-delete a quiz_points row (hapus poin keaktifan). */
+  async softDeleteQuizPoint(id: string) {
+    const { data, error } = await supabase
+      .from('quiz_points')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('id');
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Anda tidak memiliki izin untuk menghapus poin ini.');
+    }
+    return data;
   },
 
   /**

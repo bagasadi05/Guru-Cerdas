@@ -35,6 +35,8 @@ interface BintangKeaktifanModalProps {
     students: Array<{ id: string; name: string }>;
     userId: string;
     onSuccess: () => void;
+    /** Semester yang sedang aktif — diikat ke poin keaktifan baru agar semester lock tetap berlaku. */
+    semesterId?: string | null;
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────
@@ -45,6 +47,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
     students,
     userId,
     onSuccess,
+    semesterId,
 }) => {
     const toast = useToast();
 
@@ -113,6 +116,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
                 max_points: 1,
                 category,
                 is_used: false,
+                semester_id: semesterId || null,
             }));
 
             const { error } = await supabase
