@@ -34,7 +34,7 @@ const getDuplicateGuardWindowIso = () => (
 export interface UseMassInputMutationsParams {
     mode: InputMode | null;
     selectedClass: string;
-    quizInfo: { name: string; subject: string; date: string };
+    quizInfo: { name: string; subject: string; date: string; points: number; max_points: number };
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     scores: Record<string, string>;
     validationErrors: Record<string, string>;
@@ -129,8 +129,8 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                             quiz_date: quizInfo.date,
                             student_id,
                             user_id: user.id,
-                            points: 1,
-                            max_points: 1,
+                            points: quizInfo.points || 1,
+                            max_points: quizInfo.max_points || 1,
                             semester_id: activeSemester?.id || null,
                         }));
 

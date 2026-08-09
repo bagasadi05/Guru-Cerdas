@@ -43,8 +43,10 @@ export function useMassInputState() {
     const [selectedClass, setSelectedClass] = useState(() => initialDraft?.selectedClass || '');
     const [prevClass, setPrevClass] = useState(selectedClass);
     const [prevMode, setPrevMode] = useState(mode);
-    const [quizInfo, setQuizInfo] = useState({ name: '', subject: '', date: new Date().toISOString().slice(0, 10) });
+    const [quizInfo, setQuizInfo] = useState({ name: '', subject: '', date: new Date().toISOString().slice(0, 10), points: 1, max_points: 1 });
     const [subjectGradeInfo, setSubjectGradeInfo] = useState(() => initialDraft?.subjectGradeInfo || { subject: '', assessment_name: '', notes: '', semester: '' });
+    const [kkm, setKkm] = useState(75);
+    const [attitudePredicates, setAttitudePredicates] = useState<Record<string, { spiritual: string; social: string }>>(() => ({}));
     const [scores, setScores] = useState<Record<string, string>>(() => initialDraft?.scores || {});
     const [pasteData, setPasteData] = useState('');
     const [selectedViolationCode, setSelectedViolationCode] = useState('');
@@ -149,12 +151,6 @@ export function useMassInputState() {
     }, [mode, selectedClass, selectedStudentIds, scores, subjectGradeInfo]);
 
     const handleModeSelect = (selectedMode: InputMode) => {
-        if (selectedMode === 'grade_adjustment') {
-            setMode('subject_grade');
-            setStep(2);
-            setIsCustomSubject(false);
-            return;
-        }
         setMode(selectedMode);
         setStep(2);
         setIsCustomSubject(false);
@@ -171,7 +167,7 @@ export function useMassInputState() {
     const handleBack = () => {
         clearSubjectGradeDraft();
         setStep(1); setMode(null); setSelectedClass('');
-        setQuizInfo({ name: '', subject: '', date: new Date().toISOString().slice(0, 10) });
+        setQuizInfo({ name: '', subject: '', date: new Date().toISOString().slice(0, 10), points: 1, max_points: 1 });
         setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '', semester: activeSemester?.id || '' });
         setScores({}); setPasteData(''); setSelectedViolationCode('');
         setViolationDate(new Date().toISOString().slice(0, 10));
@@ -214,6 +210,8 @@ export function useMassInputState() {
         selectedClass, setSelectedClass,
         quizInfo, setQuizInfo,
         subjectGradeInfo, setSubjectGradeInfo,
+        kkm, setKkm,
+        attitudePredicates, setAttitudePredicates,
         scores, setScores,
         pasteData, setPasteData,
         selectedViolationCode,

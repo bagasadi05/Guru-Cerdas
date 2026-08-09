@@ -104,6 +104,72 @@ export type Database = {
         }
         Relationships: []
       }
+      attitude_records: {
+        Row: {
+          assessment_name: string | null
+          created_at: string
+          deleted_at: string | null
+          id: string
+          notes: string | null
+          semester_id: string | null
+          social_description: string | null
+          social_predicate: string | null
+          spiritual_description: string | null
+          spiritual_predicate: string | null
+          student_id: string
+          subject: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assessment_name?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          semester_id?: string | null
+          social_description?: string | null
+          social_predicate?: string | null
+          spiritual_description?: string | null
+          spiritual_predicate?: string | null
+          student_id: string
+          subject?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          assessment_name?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          semester_id?: string | null
+          social_description?: string | null
+          social_predicate?: string | null
+          spiritual_description?: string | null
+          spiritual_predicate?: string | null
+          student_id?: string
+          subject?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attitude_records_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: false
+            referencedRelation: "semesters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attitude_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       action_history: {
         Row: {
           action_type: string

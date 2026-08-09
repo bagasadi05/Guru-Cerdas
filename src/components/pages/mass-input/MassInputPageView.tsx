@@ -28,10 +28,14 @@ export interface MassInputPageViewProps {
     setSelectedClass: (v: string) => void;
     classes: ClassRow[] | undefined;
     isLoadingClasses: boolean;
-    quizInfo: { name: string; subject: string; date: string };
-    setQuizInfo: React.Dispatch<React.SetStateAction<{ name: string; subject: string; date: string }>>;
+    quizInfo: { name: string; subject: string; date: string; points: number; max_points: number };
+    setQuizInfo: React.Dispatch<React.SetStateAction<{ name: string; subject: string; date: string; points: number; max_points: number }>>;
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     setSubjectGradeInfo: React.Dispatch<React.SetStateAction<{ subject: string; assessment_name: string; notes: string; semester: string }>>;
+    kkm: number;
+    setKkm: (v: number) => void;
+    attitudePredicates: Record<string, { spiritual: string; social: string }>;
+    setAttitudePredicates: React.Dispatch<React.SetStateAction<Record<string, { spiritual: string; social: string }>>>;
     isCustomSubject: boolean;
     setIsCustomSubject: (v: boolean) => void;
     uniqueSubjects: string[] | undefined;
@@ -110,7 +114,8 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
     const {
         step, mode, handleModeSelect, handleBack, currentCard,
         isConfigOpen, setIsConfigOpen, selectedClass, setSelectedClass, classes, isLoadingClasses,
-        quizInfo, setQuizInfo, subjectGradeInfo, setSubjectGradeInfo,
+        quizInfo, setQuizInfo, subjectGradeInfo, setSubjectGradeInfo, kkm, setKkm,
+        attitudePredicates, setAttitudePredicates,
         isCustomSubject, setIsCustomSubject, uniqueSubjects,
         selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
         violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,
@@ -227,6 +232,8 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     isOnline={isOnline}
                                     bypassDuplicateGuard={bypassDuplicateGuard}
                                     setBypassDuplicateGuard={setBypassDuplicateGuard}
+                                    kkm={kkm}
+                                    setKkm={setKkm}
                                     onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
                                     handleSubmit={handleSubmit}
                                     isSubmitDisabled={isSubmitDisabled}
@@ -351,7 +358,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                 {mode === 'subject_grade' && (
                     <Modal isOpen={showChartModal} onClose={() => setShowChartModal(false)} title="Distribusi Nilai">
                         <div className="p-4">
-                            <GradeDistributionChart scores={scores} kkm={75} />
+                            <GradeDistributionChart scores={scores} kkm={kkm} />
                         </div>
                     </Modal>
                 )}
@@ -369,7 +376,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                 props.setScores(finalScores);
                             }
                         }}
-                        kkm={75}
+                        kkm={kkm}
                         subject={subjectGradeInfo.subject}
                         assessmentName={subjectGradeInfo.assessment_name}
                         className={classes?.find(c => c.id === selectedClass)?.name || ''}

@@ -31,7 +31,7 @@ export type ViolationRow = Partial<ViolationRowBase> & Pick<ViolationRowBase, Vi
 };
 
 
-export type InputMode = 'quiz' | 'subject_grade' | 'violation' | 'violation_export' | 'bulk_report' | 'academic_print' | 'grade_adjustment';
+export type InputMode = 'quiz' | 'subject_grade' | 'attitude' | 'violation' | 'violation_export' | 'bulk_report' | 'academic_print';
 export type Step = 1 | 2;
 export type ReviewDataItem = { studentName: string; score: string; };
 export type StudentFilter = 'all' | 'selected' | 'unselected' | 'graded' | 'ungraded';
@@ -40,7 +40,7 @@ export interface MassInputState {
     step: Step;
     mode: InputMode | null;
     selectedClass: string;
-    quizInfo: { name: string; subject: string; date: string };
+    quizInfo: { name: string; subject: string; date: string; points: number; max_points: number };
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     scores: Record<string, string>;
     pasteData: string;

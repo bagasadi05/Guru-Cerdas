@@ -1,9 +1,10 @@
-import { GraduationCapIcon, CheckSquareIcon, ShieldAlertIcon, PrinterIcon, FileTextIcon, DownloadIcon } from '../../Icons';
+import { GraduationCapIcon, CheckSquareIcon, ShieldAlertIcon, PrinterIcon, FileTextIcon, DownloadIcon, HeartIcon } from '../../Icons';
 import { InputMode } from './types';
 
 export const inputCards: { mode: InputMode; title: string; description: string; icon: React.FC<{ className?: string }> }[] = [
     { mode: 'subject_grade', title: 'Input Nilai Mapel', description: 'Masukkan nilai sumatif/akhir kelas (dilengkapi fitur Katrol Nilai & Hapus Nilai Massal).', icon: GraduationCapIcon },
     { mode: 'quiz', title: 'Input Poin Keaktifan', description: 'Beri poin untuk siswa yang aktif di kelas.', icon: CheckSquareIcon },
+    { mode: 'attitude', title: 'Input Nilai Sikap', description: 'Input predikat sikap spiritual & sosial (KI-1 & KI-2 per siswa).', icon: HeartIcon },
     { mode: 'violation', title: 'Input Pelanggaran', description: 'Catat poin pelanggaran untuk beberapa siswa.', icon: ShieldAlertIcon },
 ];
 

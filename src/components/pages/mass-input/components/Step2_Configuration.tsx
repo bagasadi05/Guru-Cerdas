@@ -25,8 +25,8 @@ interface Step2_ConfigurationProps {
     setSelectedClass: (id: string) => void;
     classes: ClassRow[] | undefined;
     isLoadingClasses: boolean;
-    quizInfo: { name: string; subject: string; date: string };
-    setQuizInfo: React.Dispatch<React.SetStateAction<{ name: string; subject: string; date: string }>>;
+    quizInfo: { name: string; subject: string; date: string; points: number; max_points: number };
+    setQuizInfo: React.Dispatch<React.SetStateAction<{ name: string; subject: string; date: string; points: number; max_points: number }>>;
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     setSubjectGradeInfo: React.Dispatch<React.SetStateAction<{ subject: string; assessment_name: string; notes: string; semester: string }>>;
     isCustomSubject: boolean;
@@ -51,6 +51,8 @@ interface Step2_ConfigurationProps {
     onOpenImport?: () => void;
     bypassDuplicateGuard: boolean;
     setBypassDuplicateGuard: (v: boolean) => void;
+    kkm: number;
+    setKkm: (v: number) => void;
     handleSubmit?: () => void;
     isSubmitDisabled?: boolean;
     isSubmitting?: boolean;
@@ -63,7 +65,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     uniqueSubjects, selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
     violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,
     pasteData, setPasteData, isParsing, handleAiParse, isOnline, onOpenImport,
-    handleSubmit, isSubmitDisabled, isSubmitting, submitButtonTooltip
+    handleSubmit, isSubmitDisabled, isSubmitting, submitButtonTooltip, kkm, setKkm
 }) => {
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
     const [violationSearchTerm, setViolationSearchTerm] = useState('');
@@ -217,6 +219,16 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     <label htmlFor="quiz-date" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Tanggal</label>
                                     <Input id="quiz-date" type="date" value={quizInfo.date} onChange={e => setQuizInfo(p => ({ ...p, date: e.target.value }))} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl" />
                                 </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <label htmlFor="quiz-points" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Poin</label>
+                                        <Input id="quiz-points" type="number" min="1" max="100" value={quizInfo.points} onChange={e => setQuizInfo(p => ({ ...p, points: Math.max(1, Number(e.target.value) || 1) }))} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-center font-bold" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="quiz-max-points" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Poin Maks</label>
+                                        <Input id="quiz-max-points" type="number" min="1" max="100" value={quizInfo.max_points} onChange={e => setQuizInfo(p => ({ ...p, max_points: Math.max(1, Number(e.target.value) || 1) }))} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-center font-bold" />
+                                    </div>
+                                </div>
                                 
                                 {handleSubmit && selectedClass === 'all' && (
                                     <div className="pt-2" title={submitButtonTooltip}>
@@ -330,6 +342,10 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                         showIcon={true}
                                         className="w-full"
                                     />
+                                </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="grade-kkm" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">KKM (Kriteria Ketuntasan Minimal)</label>
+                                    <Input id="grade-kkm" type="number" min="0" max="100" value={kkm} onChange={e => setKkm(Math.max(0, Math.min(100, Number(e.target.value) || 75)))} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-center font-bold" />
                                 </div>
                                 <div className="space-y-2">
                                     <label htmlFor="grade-notes" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Catatan (Opsional)</label>
@@ -504,6 +520,42 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                         </div>
                                     </div>
                                 </Modal>
+                            </>
+                        )}
+
+                        {mode === 'attitude' && (
+                            <>
+                                <div className="space-y-2">
+                                    <label htmlFor="attitude-subject" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Mata Pelajaran</label>
+                                    {isCustomSubject ? (
+                                        <div className="flex gap-2">
+                                            <Input id="attitude-subject" value={subjectGradeInfo.subject} onChange={e => setSubjectGradeInfo(p => ({ ...p, subject: e.target.value }))} placeholder="Ketik nama mapel..." autoFocus required className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30" />
+                                            <Button variant="outline" onClick={() => { setIsCustomSubject(false); setSubjectGradeInfo(p => ({ ...p, subject: '' })); }} title="Kembali ke daftar" className="px-3 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white"><XCircleIcon className="w-5 h-5" /></Button>
+                                        </div>
+                                    ) : (
+                                        <CustomDropdown id="attitude-subject" value={subjectGradeInfo.subject} onChange={val => { if (val === '__NEW__') { setIsCustomSubject(true); setSubjectGradeInfo(p => ({ ...p, subject: '' })); } else { setSubjectGradeInfo(p => ({ ...p, subject: val })); } }} placeholder="-- Pilih Mapel --" options={[{ value: 'Umum', label: 'Umum (Semua Mapel)' }, ...(uniqueSubjects?.map(s => ({ value: s, label: s })) || []), { value: '__NEW__', label: '+ Ketik Mapel Baru' }]} />
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="attitude-assessment" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Nama Penilaian</label>
+                                    <Input id="attitude-assessment" value={subjectGradeInfo.assessment_name} onChange={e => setSubjectGradeInfo(p => ({ ...p, assessment_name: e.target.value }))} placeholder="cth. Sikap Semester Ganjil" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="attitude-semester" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Semester</label>
+                                    <SemesterSelector value={subjectGradeInfo.semester} onChange={(val) => setSubjectGradeInfo(p => ({ ...p, semester: val }))} includeAllOption={false} activeOnly={true} showIcon={true} className="w-full" />
+                                </div>
+                                <div className="p-3 rounded-xl bg-pink-50 dark:bg-pink-500/10 border border-pink-200 dark:border-pink-500/20">
+                                    <p className="text-xs font-bold text-pink-700 dark:text-pink-300 mb-2">Predikat Sikap:</p>
+                                    <div className="grid grid-cols-2 gap-2 text-xs text-pink-600 dark:text-pink-400">
+                                        <span>SB = Sangat Baik</span><span>B = Baik</span>
+                                        <span>C = Cukup</span><span>K = Kurang</span>
+                                    </div>
+                                </div>
+                                <div className="p-3 rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20">
+                                    <p className="text-xs text-sky-600 dark:text-sky-300">
+                                        Isi predikat Sikap Spiritual (KI-1) dan Sikap Sosial (KI-2) untuk setiap siswa di panel daftar siswa.
+                                    </p>
+                                </div>
                             </>
                         )}
 
