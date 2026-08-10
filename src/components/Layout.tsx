@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from './ui/PageTransition';
 import { supabase } from '../services/supabase';
-import { useOnboarding, OnboardingTour } from './ui/OnboardingTour';
-import { InteractiveTutorialProvider, TutorialPicker } from './ui/InteractiveTutorial';
+import { useOnboarding } from './ui/OnboardingTour';
 import { SearchTrigger } from './SearchTrigger';
 import { SkipLinks } from './AccessibilityComponents';
 import { UploadProgressIndicator } from './ui/PerformanceIndicators';
+import { InteractiveTutorialProvider } from './ui/InteractiveTutorial';
 import { useParentMessageNotifications } from '../hooks/useParentMessageNotifications';
 import PullToRefresh from './ui/PullToRefresh';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,6 +25,18 @@ import {
 import DashboardSidebar from './navigation/DashboardSidebar';
 import { getDashboardMoreMenuItems } from './navigation/dashboardMenuConfig';
 import { ShellHeaderActions } from './layout/ShellHeaderActions';
+
+// ── Lazy-loaded UI overlays ──
+// These are only needed post-interaction (tour, tutorial, pull gesture,
+// upload feedback). Lazy-loading keeps them out of the app-shell parse
+// cost. Each is wrapped in its own <Suspense fallback={null}> below.
+const OnboardingTour = React.lazy(() =>
+  import('./ui/OnboardingTour').then((m) => ({ default: m.OnboardingTour })),
+);
+const TutorialPicker = React.lazy(() =>
+  import('./ui/InteractiveTutorial').then((m) => ({ default: m.TutorialPicker })),
+);
+
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, userRole } = useAuth();
@@ -234,14 +246,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Upload Progress Indicator - Floating */}
       <UploadProgressIndicator />
 
-      {/* Tutorial Picker Modal */}
-      <TutorialPicker
-        isOpen={isTutorialOpen}
-        onClose={() => setIsTutorialOpen(false)}
-      />
+      {/* Tutorial Picker Modal — lazy, only loaded when user opens it */}
+      <Suspense fallback={null}>
+        <TutorialPicker
+          isOpen={isTutorialOpen}
+          onClose={() => setIsTutorialOpen(false)}
+        />
+      </Suspense>
 
-      {/* Onboarding Tour Overlay */}
-      <OnboardingTour isOpen={showTour} onComplete={endTour} />
+      {/* Onboarding Tour Overlay — lazy, only loaded for tour */}
+      <Suspense fallback={null}>
+        <OnboardingTour isOpen={showTour} onComplete={endTour} />
+      </Suspense>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import './styles/print.css';
 import './styles/shellStyles.css';
 
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { AsyncErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './hooks/useAuth';
 import { useClickSound } from './hooks/useClickSound';
@@ -24,6 +24,27 @@ import { cleanupExpiredBackups } from './utils/dataBackup';
 import { SkipToMainContent } from './utils/pageAccessibility';
 import { useAppSearch } from './hooks/useAppSearch';
 import { useNavigate } from 'react-router-dom';
+
+// Page skeletons for route-aware Suspense fallback — replaces the generic
+// spinner with a layout-specific skeleton that mirrors the real page structure.
+import {
+  DashboardPageSkeleton,
+  StudentsPageSkeleton,
+  AttendancePageSkeleton,
+  SchedulePageSkeleton,
+  TasksPageSkeleton,
+  SettingsPageSkeleton,
+  StudentDetailPageSkeleton,
+  MassInputPageSkeleton,
+  ReportPageSkeleton,
+  ParentPortalPageSkeleton,
+  AdminPageSkeleton,
+  BrankasPageSkeleton,
+  PemulihanPageSkeleton,
+  BintangDashboardPageSkeleton,
+  ModulAjarCreatorPageSkeleton,
+  ExtracurricularPageSkeleton,
+} from '@/components/skeletons';
 
 // Start cleanup scheduler on app load
 startCleanupScheduler();
@@ -125,18 +146,52 @@ const AdminRoutes = () => {
   return isAdmin ? <Outlet /> : <Navigate to="/dashboard" replace />;
 };
 
-const loadingSpinner = <AppLoadingScreen />;
+// ── Route-aware Suspense fallback ──
+// Maps URL path prefixes to matching page skeletons so users see a
+// layout-specific placeholder instead of a generic spinner while the
+// lazy-loaded page chunk downloads.
+const routeSkeletonMap: Record<string, React.ComponentType> = {
+  '/dashboard': DashboardPageSkeleton,
+  '/siswa/': StudentDetailPageSkeleton,
+  '/siswa': StudentsPageSkeleton,
+  '/absensi': AttendancePageSkeleton,
+  '/jadwal': SchedulePageSkeleton,
+  '/tugas': TasksPageSkeleton,
+  '/pengaturan': SettingsPageSkeleton,
+  '/cetak-rapot': ReportPageSkeleton,
+  '/input-massal': MassInputPageSkeleton,
+  '/portal': ParentPortalPageSkeleton,
+  '/admin': AdminPageSkeleton,
+  '/brankas': BrankasPageSkeleton,
+  '/pemulihan': PemulihanPageSkeleton,
+  '/bintang': BintangDashboardPageSkeleton,
+  '/modul-ajar': ModulAjarCreatorPageSkeleton,
+  '/ekstrakurikuler': ExtracurricularPageSkeleton,
+};
+
+const RouteAwareFallback: React.FC = () => {
+  const location = useLocation();
+
+  const SkeletonComponent = React.useMemo(() => {
+    for (const [prefix, Comp] of Object.entries(routeSkeletonMap)) {
+      if (location.pathname.startsWith(prefix)) {
+        return Comp;
+      }
+    }
+    return null;
+  }, [location.pathname]);
+
+  return SkeletonComponent ? <SkeletonComponent /> : <AppLoadingScreen />;
+};
 
 function App() {
   useClickSound();
 
   return (
     <AppProviders queryClient={queryClient}>
-      <Suspense fallback={loadingSpinner}>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </Suspense>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
     </AppProviders>
   );
 }
@@ -192,7 +247,8 @@ function AppContent() {
       <GlobalSearchProvider onSearch={handleSearch}>
         <TourProvider>
           <div id="main-content" tabIndex={-1} className="outline-none" />
-          <Routes>
+          <Suspense fallback={<RouteAwareFallback />}>
+            <Routes>
             <Route path="/" element={<AsyncErrorBoundary context="RoleSelectionPage"><RoleSelectionPage /></AsyncErrorBoundary>} />
             <Route path="/guru-login" element={<AsyncErrorBoundary context="LoginPage"><LoginPage /></AsyncErrorBoundary>} />
             <Route path="/portal-login" element={<AsyncErrorBoundary context="PortalLoginPage"><PortalLoginPage /></AsyncErrorBoundary>} />
@@ -230,6 +286,7 @@ function AppContent() {
 
             <Route path="*" element={<AsyncErrorBoundary context="NotFoundPage"><NotFoundPage /></AsyncErrorBoundary>} />
           </Routes>
+          </Suspense>
 
           <PwaPrompt />
           <OfflineBanner />

@@ -24,7 +24,13 @@ export {
     StudentDetailPageSkeleton,
     MassInputPageSkeleton,
     ReportPageSkeleton,
-    ParentPortalPageSkeleton
+    ParentPortalPageSkeleton,
+    AdminPageSkeleton,
+    BrankasPageSkeleton,
+    PemulihanPageSkeleton,
+    BintangDashboardPageSkeleton,
+    ModulAjarCreatorPageSkeleton,
+    ExtracurricularPageSkeleton,
 } from './PageSkeletons';
 
 // Also export existing page skeletons

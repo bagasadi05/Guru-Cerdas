@@ -200,6 +200,19 @@ export default defineConfig(({ mode }) => {
           entryFileNames: 'assets/js/[name]-[hash].js',
         },
       },
+      // Stop Vite from module-preloding export-library chunks (jspdf, exceljs,
+      // html2canvas). All three are dynamically imported on demand and should
+      // never land in initial load — but Vite default modulepreload eagerly
+      // preloads them anyway. Filtering here saves 133.8 KB gzip (vendor-pdf)
+      // from the login page, verified in docs/BUNDLE_PERFORMANCE_REPORT.md.
+      modulePreload: {
+        resolveDependencies: (_filename, deps) => {
+          const excludeChunks = ['vendor-pdf', 'vendor-excel', 'vendor-canvas'];
+          return deps.filter(dep =>
+            !excludeChunks.some(chunk => dep.includes(chunk))
+          );
+        },
+      },
       // Chunk size warning limit — strict so we catch regressions early.
       // Export libraries (jspdf, exceljs) can push individual chunks past
       // this when loaded, but the initial-load chunks should stay well under.
