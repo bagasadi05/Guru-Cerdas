@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Program BINTANG — Mobile Review · thumb-first</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..900&family=Hanken+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ink:        oklch(0.165 0.006 75);
+    --surface:    oklch(0.205 0.006 75);
+    --surface-2:  oklch(0.245 0.007 75);
+    --paper:      oklch(0.935 0.005 85);
+    --paper-dim:  oklch(0.795 0.006 85);
+    --muted:      oklch(0.675 0.008 85);
+    --faint:      oklch(0.605 0.008 85);
+    --line:       oklch(0.95 0.01 85 / 0.09);
+    --line-strong:oklch(0.95 0.01 85 / 0.16);
+
+    /* Adaptive accent — sampled from the product: Brand Lagoon (brand-600 #0d7e9e) */
+    --accent:      oklch(0.60 0.10 205);
+    --accent-soft: oklch(0.66 0.09 205);
+    --accent-tint: oklch(0.62 0.11 205 / 0.14);
+
+    --crit:      oklch(0.655 0.185 25);
+    --crit-tint: oklch(0.655 0.185 25 / 0.15);
+    --imp:       oklch(0.805 0.125 78);
+    --imp-tint:  oklch(0.805 0.125 78 / 0.15);
+    --pol:       oklch(0.730 0.040 245);
+    --pol-tint:  oklch(0.730 0.040 245 / 0.16);
+
+    --reach-low:  oklch(0.745 0.135 152);
+    --reach-med:  oklch(0.805 0.125 78);
+    --reach-high: oklch(0.655 0.185 25);
+
+    --strong:  var(--reach-low);
+    --concern: var(--imp);
+    --problem: var(--crit);
+
+    --plat:      oklch(0.70 0.10 220);
+    --plat-tint: oklch(0.70 0.10 220 / 0.14);
+    --p0: oklch(0.64 0.20 25);   --p0-tint: oklch(0.64 0.20 25 / 0.16);
+    --p1: oklch(0.72 0.16 55);   --p1-tint: oklch(0.72 0.16 55 / 0.16);
+    --p2: oklch(0.82 0.13 90);   --p2-tint: oklch(0.82 0.13 90 / 0.16);
+    --p3: oklch(0.70 0.045 235); --p3-tint: oklch(0.70 0.045 235 / 0.16);
+
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px;
+    --s6:32px; --s7:48px; --s8:64px; --s9:96px;
+    --find-rail: 46px;
+
+    --display: "Schibsted Grotesk", "Hanken Grotesk", system-ui, sans-serif;
+    --sans: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: "Spline Sans Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  :root:has(#theme-light:checked) {
+    --ink:        oklch(0.985 0.003 75);
+    --surface:    oklch(0.967 0.004 75);
+    --surface-2:  oklch(0.945 0.005 75);
+    --paper:      oklch(0.190 0.006 85);
+    --paper-dim:  oklch(0.355 0.008 85);
+    --muted:      oklch(0.470 0.010 85);
+    --faint:      oklch(0.540 0.009 85);
+    --line:       oklch(0.20 0.010 85 / 0.12);
+    --line-strong:oklch(0.20 0.010 85 / 0.22);
+
+    --accent:      oklch(0.50 0.10 205);
+    --accent-soft: oklch(0.46 0.09 205);
+    --accent-tint: oklch(0.52 0.11 205 / 0.16);
+
+    --crit:      oklch(0.555 0.195 25);  --crit-tint: oklch(0.555 0.195 25 / 0.12);
+    --imp:       oklch(0.580 0.150 78);  --imp-tint:  oklch(0.580 0.150 78 / 0.14);
+    --pol:       oklch(0.500 0.055 245); --pol-tint:  oklch(0.500 0.055 245 / 0.14);
+
+    --reach-low:  oklch(0.555 0.140 152);
+    --reach-med:  oklch(0.580 0.150 78);
+    --reach-high: oklch(0.555 0.195 25);
+
+    --plat:      oklch(0.500 0.105 220); --plat-tint: oklch(0.500 0.105 220 / 0.14);
+    --p0: oklch(0.530 0.210 25);  --p0-tint: oklch(0.530 0.210 25 / 0.14);
+    --p1: oklch(0.560 0.160 55);  --p1-tint: oklch(0.560 0.160 55 / 0.14);
+    --p2: oklch(0.560 0.150 90);  --p2-tint: oklch(0.560 0.150 90 / 0.15);
+    --p3: oklch(0.500 0.050 235); --p3-tint: oklch(0.500 0.050 235 / 0.14);
+  }
+  :root:has(#theme-light:checked) .lens-table tbody tr:hover,
+  :root:has(#theme-light:checked) .fixorder li:hover { background: rgba(0,0,0,0.035); }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--accent-tint); }
+  a { color: var(--accent-soft); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+  .vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  .theme-switch { display: flex; justify-content: flex-end; margin-bottom: var(--s5); }
+  .theme-switch__pill { display: inline-flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 100px; overflow: hidden; }
+  .theme-switch__pill label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); padding: 6px 14px; cursor: pointer; user-select: none; transition: background 0.15s ease, color 0.15s ease; }
+  #theme-dark:checked  ~ .theme-switch__pill label[for="theme-dark"],
+  #theme-light:checked ~ .theme-switch__pill label[for="theme-light"] { background: var(--accent-tint); color: var(--accent-soft); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: clamp(40px, 6vw, 72px) clamp(20px, 5vw, 40px) 96px; }
+
+  .mono-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  header.doc { padding-bottom: var(--s7); margin-bottom: var(--s8); border-bottom: 1px solid var(--line); }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); display: inline-flex; align-items: center; gap: var(--s3);
+  }
+  .eyebrow::before { content: ""; width: 22px; height: 2px; background: var(--accent); display: inline-block; }
+  h1.title {
+    font-family: var(--display);
+    font-size: clamp(38px, 6vw, 60px);
+    font-weight: 700; letter-spacing: -0.025em; line-height: 1.02;
+    margin: var(--s5) 0 var(--s4); color: var(--paper); max-width: 18ch;
+  }
+  .lede { font-size: clamp(17px, 2.2vw, 19px); color: var(--paper-dim); max-width: 70ch; line-height: 1.6; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: var(--s6); margin-top: var(--s6); }
+  .meta-row .k { display: block; margin-bottom: 4px; }
+  .meta-row .v { font-size: 15px; color: var(--paper); }
+
+  .stats { display: flex; gap: clamp(20px, 4vw, 44px); margin-top: var(--s7); flex-wrap: wrap; }
+  .stat .num { font-family: var(--display); font-size: 40px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat.crit .num { color: var(--crit); }
+  .stat.imp .num  { color: var(--imp); }
+  .stat.pol .num  { color: var(--pol); }
+  .stat.forks .num { color: var(--accent-soft); }
+  .stat .num.zero { color: var(--muted); }
+  .stat .lbl { margin-top: var(--s2); }
+
+  section { margin-bottom: var(--s9); }
+  .sec-index { font-family: var(--mono); font-size: 12px; letter-spacing: 0.16em; color: var(--accent-soft); }
+  h2.section-title {
+    font-family: var(--display);
+    font-size: clamp(24px, 3.4vw, 32px);
+    font-weight: 600; letter-spacing: -0.02em; line-height: 1.1;
+    margin: var(--s2) 0 var(--s4); color: var(--paper);
+  }
+  .section-sub { color: var(--paper-dim); max-width: 74ch; margin: 0 0 var(--s6); }
+  .section-sub em { color: var(--paper); font-style: italic; }
+
+  .lens-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); }
+  .lens-table th, .lens-table td { padding: var(--s4) var(--s5); text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .lens-table tr:last-child td { border-bottom: none; }
+  .lens-table thead th { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); font-weight: 500; }
+  .lens-table tbody tr:hover { background: rgba(255,255,255,0.018); }
+  .lens-name { font-weight: 600; color: var(--paper); width: 30%; }
+  .lens-name .who { display: block; margin-top: 2px; color: var(--muted); font-weight: 400; font-size: 13.5px; }
+  .lens-read { color: var(--paper-dim); }
+  .lens-read em { color: var(--paper); font-style: italic; }
+  .verdict { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; }
+  .verdict::before { content: ""; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .v-strong  { color: var(--strong); }  .v-strong::before  { background: var(--strong); }
+  .v-concern { color: var(--concern); } .v-concern::before { background: var(--concern); }
+  .v-problem { color: var(--problem); } .v-problem::before { background: var(--problem); }
+  .v-mixed   { color: var(--muted); }   .v-mixed::before   { background: var(--muted); }
+
+  .thumb-grid { display: grid; grid-template-columns: 320px 1fr; gap: clamp(28px, 5vw, 56px); align-items: start; }
+  @media (max-width: 820px) { .thumb-grid { grid-template-columns: 1fr; } }
+  .thumb-figure { width: 100%; max-width: 320px; }
+  .thumb-key h4 { margin: 0 0 var(--s4); }
+  .key-list { list-style: none; margin: 0 0 var(--s6); padding: 0; display: grid; gap: 2px; }
+  .key-list li { display: grid; grid-template-columns: 22px 1fr auto; align-items: baseline; gap: var(--s3); padding: var(--s2) 0; border-bottom: 1px solid var(--line); }
+  .key-list li:last-child { border-bottom: none; }
+  .key-list .kn { font-family: var(--mono); font-size: 12px; color: var(--paper); font-variant-numeric: tabular-nums; }
+  .key-list .ka { color: var(--paper-dim); }
+  .key-list .kz { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .kz.low  { color: var(--reach-low); }
+  .kz.med  { color: var(--reach-med); }
+  .kz.high { color: var(--reach-high); }
+  .zone-defs { display: grid; gap: var(--s3); margin-top: var(--s5); }
+  .zone-def { display: grid; grid-template-columns: 12px 1fr; gap: var(--s3); align-items: start; }
+  .zone-def .dot { width: 11px; height: 11px; border-radius: 50%; margin-top: 6px; }
+  .zone-def .zt { font-weight: 600; color: var(--paper); }
+  .zone-def .zd { font-size: 13.5px; color: var(--muted); }
+  .whats-off { margin-top: var(--s5); padding-top: var(--s5); border-top: 1px solid var(--line); }
+  .whats-off .mono-label { color: var(--accent-soft); }
+  .whats-off p { margin: var(--s2) 0 0; color: var(--paper-dim); font-size: 14px; max-width: 60ch; }
+
+  .screen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--s4); }
+  .screen-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: var(--s5) var(--s4) var(--s4); display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+  .screen-card svg { width: 96px; height: auto; align-self: center; }
+  .screen-card .name { font-weight: 600; margin-top: var(--s4); font-size: 15px; }
+  .screen-card .read { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; margin-top: var(--s1); min-height: 3.3em; }
+  .screen-card.good .read { color: var(--strong); }
+  .screen-card.warn .read { color: var(--concern); }
+  .screen-card.bad  .read { color: var(--problem); }
+  .screen-card .note { font-size: 12.5px; color: var(--muted); margin-top: var(--s3); line-height: 1.5; }
+
+  .tier-label { display: flex; align-items: center; gap: var(--s4); margin: var(--s7) 0 var(--s5); }
+  .tier-label:first-of-type { margin-top: 0; }
+  .tier-label .mono-label { white-space: nowrap; }
+  .tier-label .rule { height: 1px; background: var(--line); flex: 1; }
+  .tier-label .count { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .tier-label.crit .mono-label { color: var(--crit); }
+  .tier-label.imp  .mono-label { color: var(--imp); }
+  .tier-label.pol  .mono-label { color: var(--pol); }
+
+  .findings { display: flex; flex-direction: column; gap: var(--s5); }
+  .finding { display: grid; grid-template-columns: var(--find-rail) 1fr var(--find-rail); column-gap: var(--s5); row-gap: var(--s5); align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: clamp(22px, 3vw, 30px); }
+  .finding[data-sev="crit"] { border-color: var(--crit-tint); }
+  .finding-head { display: contents; }
+  .find-num { grid-column: 1; grid-row: 1; font-family: var(--display); font-size: 34px; font-weight: 600; line-height: 0.9; font-variant-numeric: tabular-nums; color: var(--faint); }
+  .finding[data-sev="crit"] .find-num { color: var(--crit); }
+  .finding[data-sev="imp"]  .find-num { color: var(--imp); }
+  .finding[data-sev="pol"]  .find-num { color: var(--pol); }
+  .find-headtext { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: var(--s3); }
+  .find-tags { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+  .severity { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500; padding: 4px 9px; border-radius: 100px; }
+  .severity.crit { background: var(--crit-tint); color: var(--crit); }
+  .severity.imp  { background: var(--imp-tint);  color: var(--imp); }
+  .severity.pol  { background: var(--pol-tint);  color: var(--pol); }
+  .lens-chip { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 4px 9px; border: 1px solid var(--line-strong); border-radius: 100px; }
+  .find-title { font-family: var(--display); font-size: clamp(19px, 2.6vw, 23px); font-weight: 600; letter-spacing: -0.015em; line-height: 1.22; margin: 2px 0 0; color: var(--paper); }
+  .finding[data-sev="pol"] .find-title { font-size: clamp(17px, 2.2vw, 20px); }
+  .find-body { grid-column: 2; grid-row: 2; display: grid; gap: var(--s4); }
+  .find-body p { margin: 0; color: var(--paper-dim); }
+  .find-body p em { color: var(--paper); font-style: italic; }
+  .find-body .label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 3px; }
+  .fix { background: var(--surface-2); border-radius: 8px; padding: var(--s4) var(--s5); }
+  .fix .label { color: var(--accent-soft); }
+  .fix p { color: var(--paper); }
+
+  .fork-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s4); }
+  .fork { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: var(--s5); display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+  .fork.recommended { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-tint); }
+  .fork-tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .fork.recommended .fork-tag { color: var(--accent-soft); }
+  .fork.current .fork-tag { color: var(--concern); }
+  .fork h4 { font-family: var(--display); font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; margin: var(--s3) 0 var(--s2); min-height: 2.5em; }
+  .fork .summary { font-size: 13px; color: var(--muted); margin: 0 0 var(--s4); line-height: 1.5; }
+  .fork-phone { margin: var(--s2) 0 var(--s5); align-self: center; }
+  .fork ul { text-align: left; padding: 0; list-style: none; margin: 0; width: 100%; }
+  .fork li { font-size: 13px; color: var(--paper-dim); padding: var(--s3) 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 30px 1fr; gap: var(--s2); align-items: start; }
+  .fork li:first-child { border-top: none; }
+  .fork li .pro, .fork li .con { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; font-weight: 500; padding-top: 2px; }
+  .fork li .pro { color: var(--strong); }
+  .fork li .con { color: var(--problem); }
+
+  .callout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--s4); }
+  .callout { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: var(--s5); }
+  .callout h4 { font-family: var(--display); font-size: 16px; font-weight: 600; margin: 0 0 var(--s3); color: var(--paper); }
+  .callout p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  .limits { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: var(--s6); }
+  .limits ul { margin: 0; padding-left: 1.2em; color: var(--paper-dim); display: grid; gap: var(--s3); max-width: 82ch; }
+  .limits em { color: var(--paper); font-style: italic; }
+
+  .steps { counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s4); }
+  .step { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: var(--s5); counter-increment: step; }
+  .step .sn { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--accent-soft); }
+  .step .sn::before { content: counter(step, decimal-leading-zero) "  "; }
+  .step h4 { font-family: var(--display); font-size: 17px; font-weight: 600; line-height: 1.25; margin: var(--s3) 0 var(--s2); min-height: 2.5em; }
+  .step p { margin: 0; color: var(--muted); font-size: 13.5px; }
+
+  footer.doc { margin-top: var(--s8); padding-top: var(--s5); border-top: 1px solid var(--line); font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--s3); }
+
+  .fixorder { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .fixorder li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2) var(--s4); padding: var(--s4) var(--s5); border-bottom: 1px solid var(--line); }
+  .fixorder li:last-child { border-bottom: none; }
+  .fixorder li:hover { background: rgba(255,255,255,0.018); }
+  .fo-rank { width: 18px; flex-shrink: 0; font-family: var(--mono); font-size: 13px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .fo-class { flex-shrink: 0; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; padding: 3px 8px; border-radius: 5px; }
+  .fo-class.design { background: var(--accent-tint); color: var(--accent-soft); }
+  .fo-class.fork   { background: transparent; color: var(--muted); border: 1px solid var(--line-strong); }
+  .fo-class.defect { background: var(--plat-tint); color: var(--plat); }
+  .fo-text { flex: 1; min-width: 55%; color: var(--paper); }
+  .fo-text .src { display: block; margin-top: 2px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .fo-sev { flex-shrink: 0; margin-left: auto; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+
+  .tier-label.plat .mono-label { color: var(--plat); }
+  .defects { display: flex; flex-direction: column; gap: var(--s4); }
+  article.defect { display: grid; grid-template-columns: var(--find-rail) 1fr; column-gap: var(--s5); row-gap: var(--s3); align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: clamp(20px, 2.6vw, 26px); }
+  .pbadge { grid-column: 1; grid-row: 1; width: var(--find-rail); height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }
+  .pbadge.p0 { background: var(--p0-tint); color: var(--p0); }
+  .pbadge.p1 { background: var(--p1-tint); color: var(--p1); }
+  .pbadge.p2 { background: var(--p2-tint); color: var(--p2); }
+  .pbadge.p3 { background: var(--p3-tint); color: var(--p3); }
+  .defect-head { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: var(--s1); }
+  .defect-loc { font-family: var(--mono); font-size: 11.5px; color: var(--plat); }
+  .defect-title { font-family: var(--display); font-size: clamp(17px, 2.2vw, 20px); font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; color: var(--paper); margin: 2px 0 0; }
+  .defect-body { grid-column: 2; grid-row: 2; display: grid; gap: var(--s3); }
+  .defect-body p { margin: 0; color: var(--paper-dim); }
+  .defect-body .label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); display: block; margin-bottom: 3px; }
+  .defect-body code, .defect-loc code { font-family: var(--mono); font-size: 0.92em; }
+
+  @media (max-width: 600px) {
+    .finding { grid-template-columns: 1fr; row-gap: var(--s3); }
+    .find-num, .find-headtext, .find-body { grid-column: 1; grid-row: auto; }
+
+    .lens-table { display: block; padding: var(--s2) var(--s4); }
+    .lens-table thead { display: none; }
+    .lens-table tbody, .lens-table tr, .lens-table td { display: block; }
+    .lens-table tr { padding: var(--s4) 0; border-bottom: 1px solid var(--line); }
+    .lens-table tr:last-child { border-bottom: none; }
+    .lens-table td { padding: 0; border: none; }
+    .lens-table .lens-name { width: auto; margin-bottom: var(--s2); }
+    .lens-table .verdict { margin-bottom: var(--s2); }
+
+    article.defect { grid-template-columns: 1fr; row-gap: var(--s2); }
+    .pbadge, .defect-head, .defect-body { grid-column: 1; grid-row: auto; }
+    .pbadge { width: 44px; }
+    .fixorder .fo-sev { margin-left: 0; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lens-table tbody tr, .finding, .fork { transition: border-color 0.2s ease; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="theme-switch" role="radiogroup" aria-label="Report theme">
+    <input class="vh" type="radio" name="theme" id="theme-dark" checked>
+    <input class="vh" type="radio" name="theme" id="theme-light">
+    <div class="theme-switch__pill">
+      <label for="theme-dark">Dark</label>
+      <label for="theme-light">Light</label>
+    </div>
+  </div>
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header class="doc">
+    <div class="eyebrow">Mobile review · thumb-first</div>
+    <h1 class="title">Program BINTANG — alur menu di tangan guru</h1>
+    <p class="lede">
+      Dua pass atas alur <em>/bintang</em> pasca penyederhanaan (commit <code>b49baf8a</code>): Rekap BINTANG,
+      tab Pembinaan, dan lima modal (Poin Keaktifan, Catat/Edit Pelanggaran, Edit Poin, Observasi, Pembinaan)
+      plus modal baru Detail Riwayat Siswa. Temuan design (opini) dan defect platform (objektif, P0–P3)
+      disajikan terpisah, lalu diurutkan bersama.
+    </p>
+    <div class="meta-row">
+      <div><span class="mono-label k">Primary purpose</span><span class="v">Walas/kesiswaan mencatat poin &amp; pelanggaran, mengevaluasi, dan memantau BINTANG satu kelas dari satu halaman</span></div>
+      <div><span class="mono-label k">Platform</span><span class="v">Web / PWA (React + Vite + Tailwind) — phone-first, iOS &amp; Android</span></div>
+      <div><span class="mono-label k">Target</span><span class="v">Kode sumber alur Bintang (audit statik)</span></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num">5</div><div class="mono-label lbl">Design findings</div></div>
+      <div class="stat crit"><div class="num zero">0</div><div class="mono-label lbl">Critical</div></div>
+      <div class="stat imp"><div class="num">3</div><div class="mono-label lbl">Important</div></div>
+      <div class="stat pol"><div class="num">2</div><div class="mono-label lbl">Polish</div></div>
+      <div class="stat forks"><div class="num">4</div><div class="mono-label lbl">Silent forks</div></div>
+      <div class="stat"><div class="num" style="color:var(--plat)">4</div><div class="mono-label lbl">Platform defects</div></div>
+    </div>
+  </header>
+
+  <!-- ═══════════ FIX ORDER ═══════════ -->
+  <section style="margin-bottom: var(--s8);">
+    <div class="mono-label" style="color: var(--accent-soft);">Fix order · apa yang dikerjakan duluan</div>
+    <h2 class="section-title">Dua pass, satu daftar prioritas</h2>
+    <p class="section-sub">Temuan design dan defect platform diinterleave berdasarkan apa yang paling dulu dirasakan guru di lapangan. Tag <em>class</em> menjaga saluran tetap terlihat — opini tidak pernah menyamar sebagai bug, bug tidak pernah menyamar sebagai opini.</p>
+    <ul class="fixorder">
+      <li><span class="fo-rank">1</span><span class="fo-class defect">Defect</span><span class="fo-text">Target sentuh &lt;44px di modal baru — tombol edit/hapus 26px, chip keaktifan 26–38px, hapus bukti 24px<span class="src">platform · BintangDashboardPage.tsx:1349-1404 · BintangKeaktifanModal.tsx:212-288 · ViolationForm.tsx:200</span></span><span class="fo-sev">P2</span></li>
+      <li><span class="fo-rank">2</span><span class="fo-class design">Design</span><span class="fo-text">Modal bertumpuk dari Detail Riwayat Siswa + konteks siswa hilang saat "Tambah" keaktifan<span class="src">design · Budiu · Rausch · Nelson · finding 01</span></span><span class="fo-sev">Important</span></li>
+      <li><span class="fo-rank">3</span><span class="fo-class defect">Defect</span><span class="fo-text">Modal shell memakai max-h-[95vh] — bottom sheet terpotong di iOS Safari saat toolbar terlihat<span class="src">platform · components/ui/Modal.tsx:116,120</span></span><span class="fo-sev">P2</span></li>
+      <li><span class="fo-rank">4</span><span class="fo-class design">Design</span><span class="fo-text">Tabel grade = tabel desktop yang disusutkan ke layar 375px (min-w-480 + teks 10–11px)<span class="src">design · Nelson · Wroblewski · finding 02</span></span><span class="fo-sev">Important</span></li>
+      <li><span class="fo-rank">5</span><span class="fo-class design">Design</span><span class="fo-text">Aksi pencatatan paling sering (+ Pelanggaran / + Poin) berada di bawah 3 kartu ringkasan<span class="src">design · Hoober · Hurff · finding 03</span></span><span class="fo-sev">Important</span></li>
+      <li><span class="fo-rank">6</span><span class="fo-class fork">Fork</span><span class="fo-text">Siapa yang boleh mencatat pelanggaran — "+ Pelanggaran" tampil untuk semua role padahal komentar kode membatasi non-walas<span class="src">design · Rausch · §06</span></span><span class="fo-sev">Decision</span></li>
+      <li><span class="fo-rank">7</span><span class="fo-class defect">Defect</span><span class="fo-text">Query quiz_points tanpa limit lalu dipotong di JS (slice 200) — payload tak terbatas untuk kelas besar<span class="src">platform · BintangDashboardPage.tsx:197-203</span></span><span class="fo-sev">P3</span></li>
+      <li><span class="fo-rank">8</span><span class="fo-class design">Design</span><span class="fo-text">window.confirm untuk peringatan duplikat — keluar dari bahasa dialog aplikasi<span class="src">design · Rausch · de With · finding 04</span></span><span class="fo-sev">Polish</span></li>
+      <li><span class="fo-rank">9</span><span class="fo-class defect">Defect</span><span class="fo-text">Tombol icon-only tanpa aria-label (title saja) di modal Detail Riwayat<span class="src">platform · BintangDashboardPage.tsx:1349,1350,1403,1404</span></span><span class="fo-sev">P3</span></li>
+    </ul>
+  </section>
+
+  <!-- ═══════════ 01 · LENS SUMMARY ═══════════ -->
+  <section>
+    <div class="sec-index">01</div>
+    <h2 class="section-title">Bagaimana tiap lensa membaca alur ini</h2>
+    <p class="section-sub">
+      Setiap baris adalah praktisi nyata yang karyanya membentuk bidang ini. Yang ditulis adalah yang paling
+      mereka dorong jika meninjau alur BINTANG hari ini.
+    </p>
+    <table class="lens-table">
+      <thead><tr><th>Lensa</th><th>Verdict</th><th>Bacaan satu baris</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="lens-name">Ergonomic Realist <span class="who">Steven Hoober</span></td>
+          <td><span class="verdict v-concern">Concern</span></td>
+          <td class="lens-read">Aksi paling sering (catat pelanggaran/poin) ada di tengah halaman, di bawah ringkasan — guru mencatat sambil berdiri di kelas, bukan setelah scroll panjang.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Thumb-Zone Mapper <span class="who">Scott Hurff</span></td>
+          <td><span class="verdict v-concern">Concern</span></td>
+          <td class="lens-read">Tabel min-480px memaksa pan dua tangan; tombol catat berada di zona stretch, bukan natural.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Focus Forcer <span class="who">Luke Wroblewski</span></td>
+          <td><span class="verdict v-strong">Strong</span></td>
+          <td class="lens-read">Satu halaman dengan tujuan jelas, form berlabel terlihat (bukan placeholder-as-label), saran cepat + deteksi severity otomatis = default pintar.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Direct Manipulation <span class="who">Josh Clark</span></td>
+          <td><span class="verdict v-mixed">Mixed</span></td>
+          <td class="lens-read">Tabel = chrome berat di sekitar konten; beberapa target sentuh di bawah 44pt di modal baru.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Navigation Taxonomist <span class="who">Frank Rausch</span></td>
+          <td><span class="verdict v-concern">Concern</span></td>
+          <td class="lens-read">Struktur 2 tab (Rekap/Pembinaan) tepat; tapi flow catat dari detail siswa menumpuk overlay — sheet tidak boleh bertumpuk.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Empirical Skeptic <span class="who">Raluca Budiu / NN/g</span></td>
+          <td><span class="verdict v-concern">Concern</span></td>
+          <td class="lens-read">Overlay stacking adalah friksi #1 mobile modern — dan terjadi di sini; window.confirm menambah friksi.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Modern Craft <span class="who">de With · Nelson</span></td>
+          <td><span class="verdict v-mixed">Mixed</span></td>
+          <td class="lens-read">Arah penyederhanaan benar (Nelson), gerakan terkendali (de With) — tapi permukaan data utamanya masih desktop yang disusutkan.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Platform Canon <span class="who">HIG · Material 3</span></td>
+          <td><span class="verdict v-concern">Concern</span></td>
+          <td class="lens-read">Modal 95vh (bukan dvh) + target &lt;44px melanggar kanon minimum sentuh; shell global sudah kuat (100dvh, safe-area).</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══════════ 02 · THUMB-ZONE DIAGRAM ═══════════ -->
+  <section>
+    <div class="sec-index">02</div>
+    <h2 class="section-title">Di mana aksi-aksi mendarat</h2>
+    <p class="section-sub">
+      Zona Hurff menggambarkan <em>biaya</em> sebuah lokasi, bukan keharusan. Aksi yang sering harusnya di zona
+      natural; aksi jarang boleh di zona mahal. Setiap titik adalah aksi BINTANG yang dipetakan ke posisinya hari ini.
+    </p>
+    <div class="thumb-grid">
+      <svg class="thumb-figure" viewBox="0 0 320 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram ponsel posisi aksi-aksi alur BINTANG terhadap zona jangkauan jempol">
+        <defs>
+          <radialGradient id="reach" cx="50%" cy="96%" r="92%">
+            <stop offset="0%"  stop-color="oklch(0.745 0.135 152)" stop-opacity="0.42"/>
+            <stop offset="42%" stop-color="oklch(0.745 0.135 152)" stop-opacity="0.20"/>
+            <stop offset="64%" stop-color="oklch(0.805 0.125 78)"  stop-opacity="0.26"/>
+            <stop offset="100%" stop-color="oklch(0.655 0.185 25)" stop-opacity="0.40"/>
+          </radialGradient>
+          <clipPath id="screen"><rect x="26" y="64" width="268" height="512" rx="30"/></clipPath>
+        </defs>
+
+        <rect x="14" y="14" width="292" height="592" rx="44" fill="oklch(0.205 0.006 75)" stroke="oklch(0.32 0.006 75)" stroke-width="2"/>
+        <rect x="118" y="34" width="84" height="22" rx="11" fill="oklch(0.12 0.004 75)"/>
+        <g clip-path="url(#screen)">
+          <rect x="26" y="64" width="268" height="512" fill="url(#reach)"/>
+          <line x1="26" y1="252" x2="294" y2="252" stroke="oklch(0.95 0.01 85)" stroke-opacity="0.07" stroke-dasharray="2 5"/>
+          <line x1="26" y1="430" x2="294" y2="430" stroke="oklch(0.95 0.01 85)" stroke-opacity="0.07" stroke-dasharray="2 5"/>
+        </g>
+        <text x="42" y="150" font-family="Spline Sans Mono, monospace" font-size="9.5" letter-spacing="1.8" fill="oklch(0.655 0.185 25)" fill-opacity="0.9">OW</text>
+        <text x="42" y="345" font-family="Spline Sans Mono, monospace" font-size="9.5" letter-spacing="1.8" fill="oklch(0.805 0.125 78)" fill-opacity="0.9">STRETCH</text>
+        <text x="42" y="528" font-family="Spline Sans Mono, monospace" font-size="9.5" letter-spacing="1.8" fill="oklch(0.745 0.135 152)" fill-opacity="0.9">NATURAL</text>
+
+        <g font-family="Spline Sans Mono, monospace" font-size="11" font-weight="600" text-anchor="middle" fill="oklch(0.165 0.006 75)">
+          <!-- OW -->
+          <circle cx="74"  cy="120" r="12" fill="oklch(0.655 0.185 25)"/><text x="74"  y="124">1</text>
+          <circle cx="246" cy="120" r="12" fill="oklch(0.655 0.185 25)"/><text x="246" y="124">2</text>
+          <circle cx="74"  cy="190" r="12" fill="oklch(0.655 0.185 25)"/><text x="74"  y="194">3</text>
+          <!-- STRETCH -->
+          <circle cx="84"  cy="310" r="12" fill="oklch(0.805 0.125 78)"/><text x="84"  y="314">4</text>
+          <circle cx="246" cy="310" r="12" fill="oklch(0.805 0.125 78)"/><text x="246" y="314">5</text>
+          <circle cx="160" cy="352" r="12" fill="oklch(0.805 0.125 78)"/><text x="160" y="356">6</text>
+          <!-- NATURAL -->
+          <circle cx="110" cy="478" r="13" fill="oklch(0.745 0.135 152)"/><text x="110" y="482">7</text>
+          <circle cx="246" cy="516" r="12" fill="oklch(0.745 0.135 152)"/><text x="246" y="520">8</text>
+          <circle cx="160" cy="540" r="12" fill="oklch(0.745 0.135 152)"/><text x="160" y="544">9</text>
+        </g>
+        <rect x="119" y="586" width="82" height="4" rx="2" fill="oklch(0.95 0.01 85)" fill-opacity="0.55"/>
+      </svg>
+
+      <div class="thumb-key">
+        <h4 class="mono-label">Peta</h4>
+        <ol class="key-list">
+          <li><span class="kn">1</span><span class="ka">Filter Kelas &amp; Bulan</span><span class="kz high">Ow</span></li>
+          <li><span class="kn">2</span><span class="ka">Toggle banner "Cara kerja Skor"</span><span class="kz high">Ow</span></li>
+          <li><span class="kn">3</span><span class="ka">Tab Rekap / Pembinaan</span><span class="kz high">Ow</span></li>
+          <li><span class="kn">4</span><span class="ka">+ Poin Keaktifan (sering)</span><span class="kz med">Stretch</span></li>
+          <li><span class="kn">5</span><span class="ka">+ Pelanggaran (sering)</span><span class="kz med">Stretch</span></li>
+          <li><span class="kn">6</span><span class="ka">Menu "Lainnya" (observasi/pembinaan/export)</span><span class="kz med">Stretch</span></li>
+          <li><span class="kn">7</span><span class="ka">Aksi baris siswa (Detail / Isi / Cetak)</span><span class="kz low">Natural</span></li>
+          <li><span class="kn">8</span><span class="ka">Submit modal (Simpan — bottom sheet)</span><span class="kz low">Natural</span></li>
+          <li><span class="kn">9</span><span class="ka">Bottom nav aplikasi (shell)</span><span class="kz low">Natural</span></li>
+        </ol>
+
+        <div class="zone-defs">
+          <div class="zone-def"><span class="dot" style="background:var(--reach-low)"></span><div><span class="zt">Natural</span> · biaya rendah — <span class="zd">busur jempol tanpa usaha. Aksi utama, nav utama, kontrol sering.</span></div></div>
+          <div class="zone-def"><span class="dot" style="background:var(--reach-med)"></span><div><span class="zt">Stretch</span> · sedang — <span class="zd">terjangkau tapi genggaman bergeser. Aksi sekunder, pengaturan.</span></div></div>
+          <div class="zone-def"><span class="dot" style="background:var(--reach-high)"></span><div><span class="zt">Ow</span> · mahal — <span class="zd">perlu genggaman ulang. Aksi destruktif atau jarang — atau tidak ada yang penting.</span></div></div>
+        </div>
+
+        <div class="whats-off">
+          <span class="mono-label">Yang meleset</span>
+          <p>Dua aksi paling sering (4, 5) ada di zona stretch setelah guru melewati ringkasan; kontrol penyaring (1, 2) di zona Ow. Yang di zona natural justru aksi baris dan shell — bagus, tapi aksi pencatatan yang lebih sering kalah posisi.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 03 · PER-SCREEN READ ═══════════ -->
+  <section>
+    <div class="sec-index">03</div>
+    <h2 class="section-title">Tiap layar, sekali pandang</h2>
+    <p class="section-sub">Verdict cepat per permukaan agar temuan punya tempat berlabuh.</p>
+    <div class="screen-grid">
+      <div class="screen-card warn">
+        <svg viewBox="0 0 120 220"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><circle cx="20" cy="22" r="6" fill="none" stroke="oklch(0.5 0.01 85)"/><rect x="32" y="18" width="30" height="8" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="44" width="92" height="10" rx="2" fill="oklch(0.5 0.008 85)"/><rect x="14" y="60" width="92" height="26" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="92" width="28" height="28" rx="4" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="46" y="92" width="28" height="28" rx="4" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="78" y="92" width="28" height="28" rx="4" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="126" width="92" height="40" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="10" y="194" width="100" height="14" rx="4" fill="none" stroke="oklch(0.63 0.115 45)"/></svg>
+        <div class="name">Rekap BINTANG</div><div class="read">Tabel lebar, aksi tengah</div>
+        <div class="note">Tiga kartu ringkasan + tabel min-480px yang dipan horizontal; tombol catat di bawah ringkasan.</div>
+      </div>
+      <div class="screen-card good">
+        <svg viewBox="0 0 120 220"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><circle cx="20" cy="22" r="6" fill="none" stroke="oklch(0.5 0.01 85)"/><rect x="32" y="18" width="30" height="8" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="56" width="92" height="16" rx="4" fill="oklch(0.63 0.115 45)" fill-opacity="0.4"/><rect x="14" y="80" width="92" height="14" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="98" width="92" height="14" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="116" width="92" height="14" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="10" y="194" width="100" height="14" rx="4" fill="none" stroke="oklch(0.63 0.115 45)"/></svg>
+        <div class="name">Pembinaan</div><div class="read">Bersih &amp; fokus</div>
+        <div class="note">Daftar + pencarian + empty state dengan CTA; tidak ada masalah besar di sini.</div>
+      </div>
+      <div class="screen-card warn">
+        <svg viewBox="0 0 120 220"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><circle cx="20" cy="22" r="6" fill="none" stroke="oklch(0.5 0.01 85)"/><rect x="32" y="18" width="30" height="8" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="56" width="92" height="46" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="110" width="92" height="46" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="164" width="30" height="10" rx="2" fill="oklch(0.655 0.185 25)"/><rect x="10" y="194" width="100" height="14" rx="4" fill="none" stroke="oklch(0.63 0.115 45)"/></svg>
+        <div class="name">Detail Riwayat Siswa</div><div class="read">Overlay bertumpuk</div>
+        <div class="note">"Catat" dan "Tambah" membuka modal di atas modal; tombol edit/hapus 26px; teks 10–11px.</div>
+      </div>
+      <div class="screen-card good">
+        <svg viewBox="0 0 120 220"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><circle cx="20" cy="22" r="6" fill="none" stroke="oklch(0.5 0.01 85)"/><rect x="32" y="18" width="30" height="8" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="56" width="60" height="22" rx="4" fill="oklch(0.63 0.115 45)" fill-opacity="0.5"/><rect x="78" y="56" width="28" height="22" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="88" width="92" height="14" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="106" width="92" height="14" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="128" width="92" height="14" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="10" y="194" width="100" height="14" rx="4" fill="none" stroke="oklch(0.63 0.115 45)"/></svg>
+        <div class="name">Modal Poin Keaktifan</div><div class="read">Cepat &amp; pintar</div>
+        <div class="note">Saran cepat + kategori + mode massal; tapi chip dan tombol kategori di bawah 44px.</div>
+      </div>
+      <div class="screen-card good">
+        <svg viewBox="0 0 120 220"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><circle cx="20" cy="22" r="6" fill="none" stroke="oklch(0.5 0.01 85)"/><rect x="32" y="18" width="30" height="8" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="56" width="92" height="24" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="88" width="92" height="14" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="106" width="92" height="14" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="128" width="92" height="30" rx="3" fill="none" stroke="oklch(0.32 0.006 75)" stroke-dasharray="3 2"/><rect x="10" y="194" width="100" height="14" rx="4" fill="none" stroke="oklch(0.63 0.115 45)"/></svg>
+        <div class="name">Catat / Edit Pelanggaran</div><div class="read">Form terstruktur</div>
+        <div class="note">Severity auto-detect, pratinjau poin, upload bukti; tombol hapus bukti 24px.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 04 · FINDINGS ═══════════ -->
+  <section>
+    <div class="sec-index">04</div>
+    <h2 class="section-title">Urutan perbaikan yang saya sarankan</h2>
+    <p class="section-sub">
+      Diurutkan berdasarkan dampak ke pengguna: <em>important</em> (friksi nyata) → <em>polish</em> (penghalusan).
+    </p>
+
+    <div class="tier-label imp"><span class="mono-label">Important</span><span class="rule"></span><span class="count">3</span></div>
+    <div class="findings">
+      <article class="finding" data-sev="imp">
+        <div class="finding-head">
+          <span class="find-num">01</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity imp">Important</span><span class="lens-chip">Budiu</span><span class="lens-chip">Rausch</span><span class="lens-chip">Nelson</span></div>
+            <h3 class="find-title">Flow catat dari Detail Riwayat menumpuk modal dan membuang konteks siswa</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">What</span>Dari modal "Detail Riwayat Siswa", tombol <em>Catat</em> (pelanggaran) membuka modal Catat Pelanggaran <strong>di atas</strong> modal detail tanpa menutupnya (`BintangDashboardPage.tsx:1319`). Tombol <em>Tambah</em> (poin keaktifan) juga membuka `BintangKeaktifanModal` di atas modal detail (`:1373`) — dan modal itu punya dropdown siswa sendiri yang <strong>tidak ter-preselect</strong>, jadi guru memilih ulang siswa yang konteksnya sudah terbuka.</p>
+          <p><span class="label">Why it matters</span>Budiu/NN/g mencatat overlay proliferation (sheet bertumpuk) sebagai friksi mobile #1 — accidental dismissal dan disorientasi. Rausch: "flows built by stacking overlays" adalah anti-pola; sheet tidak pernah ditumpuk. Nelson: interaksi yang baik terasa "natural extension" — di sini konteks justru dibuang.</p>
+          <div class="fix"><p><span class="label">Fix</span>Tutup modal detail sebelum membuka form catat, dan teruskan `studentId` sebagai preselect (modal keaktifan sudah punya `students` — tambah prop preselect). Lebih baik lagi: jadikan catat/edit sebagai <em>state change inline</em> di dalam modal detail (lihat §05 — fork A/B/C).</p></div>
+        </div>
+      </article>
+
+      <article class="finding" data-sev="imp">
+        <div class="finding-head">
+          <span class="find-num">02</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity imp">Important</span><span class="lens-chip">Nelson</span><span class="lens-chip">Wroblewski</span></div>
+            <h3 class="find-title">Tabel grade adalah tabel desktop yang disusutkan ke layar 375px</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">What</span>Tabel utama `min-w-[480px]` dalam `overflow-x-auto` (`BintangDashboardPage.tsx:956`) — di ponsel guru meman horizontal. Sel memakai `text-[10px]`/`text-[11px]` untuk nama, poin, dan badge grade. Kolom Status disembunyikan di mobile, tapi lima kolom lain tetap berdempet.</p>
+          <p><span class="label">Why it matters</span>Nelson: mobile berarti "distilling complexity", bukan menjejalkan layar desktop. Wroblewski: ini permukaan data utama — tidak ada keputusan prioritas yang dibuat untuk ponsel. Pan horizontal + teks 10px = dua tangan dan squint saat guru menilai 30+ siswa.</p>
+          <div class="fix"><p><span class="label">Fix · lihat fork §06</span>Kartu per siswa di mobile (nama + 3 pill grade + poin + aksi) dengan baris tabel penuh hanya di sm+; atau tabel dengan kolom pertama sticky. Naikkan teks minimum ke 12–13px di sel.</p></div>
+        </div>
+      </article>
+
+      <article class="finding" data-sev="imp">
+        <div class="finding-head">
+          <span class="find-num">03</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity imp">Important</span><span class="lens-chip">Hoober</span><span class="lens-chip">Hurff</span></div>
+            <h3 class="find-title">Aksi pencatatan paling sering berada di bawah tiga kartu ringkasan</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">What</span>Urutan mobile: filter → banner → 3 kartu ringkasan → bar aksi (+ Poin Keaktifan, + Pelanggaran, Lainnya). Untuk mencatat satu pelanggaran saat kegiatan berlangsung, guru melewati ~700px konten.</p>
+          <p><span class="label">Why it matters</span>Hoober: rancang untuk genggaman paling terkendala; guru mencatat sambil berdiri/berjalan. Hurff: aksi sering harusnya di zona natural. Ringkasan itu bagus tapi bukan pekerjaan utama — mencatat adalah.</p>
+          <div class="fix"><p><span class="label">Fix</span>Di mobile: bar aksi di atas kartu ringkasan, atau FAB "+" yang membuka menu catat (konsisten dengan pola FAB 56px yang sudah ada di shell). Ringkasan tetap di bawah sebagai konteks.</p></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="tier-label pol"><span class="mono-label">Polish</span><span class="rule"></span><span class="count">2</span></div>
+    <div class="findings">
+      <article class="finding" data-sev="pol">
+        <div class="finding-head">
+          <span class="find-num">04</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity pol">Polish</span><span class="lens-chip">Rausch</span><span class="lens-chip">de With</span></div>
+            <h3 class="find-title">Peringatan duplikat memakai window.confirm native</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">What</span>Saat pelanggaran duplikat terdeteksi, app memanggil `window.confirm(...)` (`BintangDashboardPage.tsx:544`) — dialog browser, bukan dialog aplikasi. Padahal delete sudah memakai `useConfirmation` yang konsisten.</p>
+          <p><span class="label">Why it matters</span>Rausch: alert satu-aksi sebaiknya inline text. de With: fidelitas native — dialog browser memutus ilusi aplikasi dan tidak bisa di-styling (dark mode, bahasa).</p>
+          <div class="fix"><p><span class="label">Fix</span>Ganti dengan `useConfirmation` (pola yang sudah ada) atau pesan inline di dalam form — "Siswa sudah punya catatan ini pada tanggal tersebut. Yakin kejadian berbeda?"</p></div>
+        </div>
+      </article>
+
+      <article class="finding" data-sev="pol">
+        <div class="finding-head">
+          <span class="find-num">05</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity pol">Polish</span><span class="lens-chip">Clark</span></div>
+            <h3 class="find-title">Aksi baris Detail/Isi/Cetak mengandalkan title, label ikon hilang di mobile</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">What</span>Di tabel, tombol aksi hanya ikon dengan `title` (label teks `hidden lg:inline`) dan `min-w-[44px]` — sudah benar ukurannya. Tapi di modal Detail Riwayat, tombol edit/hapus baru (`:1349-1350, :1403-1404`) tidak konsisten: `p-1.5` (~26px) dan tanpa label teks maupun `aria-label`.</p>
+          <p><span class="label">Why it matters</span>Clark: affordance dan target sentuh adalah unit dasar touch. Inkonsistensi antar permukaan yang sama (tabel vs modal) membuat guru ragu mengetuk.</p>
+          <div class="fix"><p><span class="label">Fix</span>Samakan pola: `min-h-[44px] min-w-[44px]` + `aria-label` ("Edit pelanggaran", "Hapus pelanggaran", dst.) di kedua tempat. Detail teknis ada di defect P2/P3 bawah.</p></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ═══════════ PLATFORM DEFECTS ═══════════ -->
+  <section>
+    <div class="sec-index" style="color: var(--plat);">P</div>
+    <h2 class="section-title">Platform defects</h2>
+    <p class="section-sub">Masalah implementasi objektif di perangkat — tiap item punya lokasi dan perbaikan. Berbeda dari temuan design di atas: <em>ini bug, bukan keputusan.</em> Divariasikan terhadap target web/PWA. Shell global sudah kuat (viewport-fit=cover, 100dvh, safe-area, touch-action, anti-zoom) — tidak ada P0/P1 di alur ini.</p>
+    <div class="tier-label plat"><span class="mono-label">Technical · web / PWA</span><span class="rule"></span><span class="count">4</span></div>
+    <div class="defects">
+      <article class="defect" data-p="p2">
+        <span class="pbadge p2">P2</span>
+        <div class="defect-head">
+          <span class="defect-loc">BintangDashboardPage.tsx:1349-1350, 1403-1404 · BintangKeaktifanModal.tsx:212-288 · ViolationForm.tsx:200</span>
+          <h3 class="defect-title">Target sentuh &lt;44px di modal baru (regresi dari standar audit sebelumnya)</h3>
+        </div>
+        <div class="defect-body">
+          <p><span class="label">What</span>Modal Detail Riwayat: tombol edit/hapus `p-1.5` + ikon 14px ≈ <strong>26×26px</strong>. Modal Keaktifan: chip "Pilih Semua"/"Hapus Semua" `px-2 py-1` ≈ 26px, chip saran cepat `px-2.5 py-1` ≈ 26px, tombol kategori `px-3 py-2.5` ≈ 38px. ViolationForm: tombol hapus bukti `p-1.5` ≈ 24px. Audit 1 Agustus memperbaiki 23 tombol &lt;44px di halaman ini; kontrol baru ini lahir di bawah standar yang sama.</p>
+          <div class="fix"><p><span class="label">Fix</span>Terapkan pola yang sudah dipakai di tabel: `min-h-[44px] min-w-[44px]` pada tombol ikon; naikkan chip ke `min-h-[44px]` (padding vertikal &ge;10px atau `py-2.5`); tombol kategori `py-2.5` → `min-h-[44px]`.</p></div>
+        </div>
+      </article>
+
+      <article class="defect" data-p="p2">
+        <span class="pbadge p2">P2</span>
+        <div class="defect-head">
+          <span class="defect-loc">components/ui/Modal.tsx:116, 120</span>
+          <h3 class="defect-title">Modal shell memakai max-h-[95vh] — bottom sheet terpotong di iOS Safari</h3>
+        </div>
+        <div class="defect-body">
+          <p><span class="label">What</span>Kedua lapisan modal memakai `max-h-[95vh]`. Di iOS Safari dengan toolbar terlihat, `vh` lebih besar dari viewport nyata — bagian bawah form panjang (Catat Pelanggaran dengan upload bukti, Pembinaan, Keaktifan mode massal) bisa terpotong, tombol Simpan tersembunyi. Komponen ini dipakai semua modal alur BINTANG. Codebase sendiri sudah memakai `100dvh` di tempat lain — ini inkonsistensi.</p>
+          <div class="fix"><p><span class="label">Fix</span>`max-h-[95vh]` → `max-h-[95dvh]` di kedua baris (Modal.tsx:116 dan :120).</p></div>
+        </div>
+      </article>
+
+      <article class="defect" data-p="p3">
+        <span class="pbadge p3">P3</span>
+        <div class="defect-head">
+          <span class="defect-loc">BintangDashboardPage.tsx:197-203</span>
+          <h3 class="defect-title">Query quiz_points tanpa limit, dipotong di JS setelah fetch</h3>
+        </div>
+        <div class="defect-body">
+          <p><span class="label">What</span>Fetch poin keaktifan: `.in('student_id', studentIds).is('deleted_at', null).gte('quiz_date', monthStart)` — tanpa `.limit()`, lalu `.slice(0, 200)` di JS. Kelas besar (30+ siswa × banyak aktivitas sebulan) bisa menarik ratusan baris melebihi kebutuhan.</p>
+          <div class="fix"><p><span class="label">Fix</span>Tambah `.order('quiz_date', { ascending: false }).limit(200)` di query supabase, hapus slice di JS.</p></div>
+        </div>
+      </article>
+
+      <article class="defect" data-p="p3">
+        <span class="pbadge p3">P3</span>
+        <div class="defect-head">
+          <span class="defect-loc">BintangDashboardPage.tsx:1349, 1350, 1403, 1404</span>
+          <h3 class="defect-title">Tombol icon-only tanpa aria-label (title saja)</h3>
+        </div>
+        <div class="defect-body">
+          <p><span class="label">What</span>Empat tombol edit/hapus di modal Detail Riwayat hanya punya `title="Edit"`/`"Hapus"`. Screen reader membacanya sebagai "button" generik; `title` tidak reliable untuk a11y.</p>
+          <div class="fix"><p><span class="label">Fix</span>Tambah `aria-label` eksplisit ("Edit pelanggaran", "Hapus pelanggaran", "Edit poin", "Hapus poin").</p></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ═══════════ 05 · THE BIG FORK ═══════════ -->
+  <section>
+    <div class="sec-index">05</div>
+    <h2 class="section-title">Flow catat dari konteks siswa — pilih satu, dengan sadar</h2>
+    <p class="section-sub">
+      Finding 01 dan 05 saling terkait: bagaimana guru mencatat/edit saat sudah berada di Detail Riwayat.
+      Tiga jawaban koheren, berdampingan.
+    </p>
+    <div class="fork-grid">
+      <div class="fork current">
+        <div class="fork-tag">Opsi A · saat ini</div>
+        <h4>Modal bertumpuk</h4>
+        <div class="summary">Tombol "Catat"/"Tambah" membuka modal kedua di atas modal detail; keaktifan tidak membawa siswa terpilih.</div>
+        <div class="fork-phone">
+          <svg viewBox="0 0 120 220" width="108"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="44" width="92" height="60" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="18" y="52" width="60" height="8" rx="2" fill="oklch(0.5 0.008 85)"/><rect x="18" y="72" width="84" height="8" rx="2" fill="oklch(0.5 0.008 85)"/><rect x="18" y="88" width="50" height="8" rx="2" fill="oklch(0.5 0.008 85)"/><rect x="22" y="128" width="76" height="70" rx="6" fill="oklch(0.245 0.007 75)" stroke="oklch(0.63 0.115 45)" stroke-width="1.5"/><rect x="30" y="140" width="50" height="6" rx="2" fill="oklch(0.63 0.115 45)"/><rect x="30" y="154" width="60" height="6" rx="2" fill="oklch(0.4 0.008 85)"/><rect x="30" y="166" width="40" height="6" rx="2" fill="oklch(0.4 0.008 85)"/></svg>
+        </div>
+        <ul>
+          <li><span class="con">CON</span><span>Overlay bertumpuk — friksi #1 mobile (Budiu).</span></li>
+          <li><span class="con">CON</span><span>Konteks siswa hilang; dropdown kosong.</span></li>
+          <li><span class="con">CON</span><span>Dua lapisan = dua risiko dismiss tak sengaja.</span></li>
+        </ul>
+      </div>
+      <div class="fork recommended">
+        <div class="fork-tag">Opsi B · direkomendasikan</div>
+        <h4>Sub-view inline di dalam modal detail</h4>
+        <div class="summary">Tombol "Catat" mengganti isi modal detail menjadi form (state change), dengan siswa terkunci. Back kembali ke riwayat.</div>
+        <div class="fork-phone">
+          <svg viewBox="0 0 120 220" width="108"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="44" width="92" height="140" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="22" y="56" width="40" height="6" rx="2" fill="oklch(0.63 0.115 45)"/><rect x="22" y="72" width="76" height="10" rx="2" fill="oklch(0.5 0.008 85)"/><rect x="22" y="90" width="76" height="10" rx="2" fill="oklch(0.5 0.008 85)"/><rect x="22" y="108" width="76" height="30" rx="3" fill="none" stroke="oklch(0.32 0.006 75)" stroke-dasharray="3 2"/><rect x="22" y="150" width="36" height="18" rx="4" fill="oklch(0.63 0.115 45)"/><rect x="10" y="194" width="100" height="14" rx="4" fill="none" stroke="oklch(0.63 0.115 45)"/></svg>
+        </div>
+        <ul>
+          <li><span class="pro">PRO</span><span>Satu lapisan; tidak ada stacking (Rausch/Budiu).</span></li>
+          <li><span class="pro">PRO</span><span>Konteks siswa terjaga — tidak perlu pilih ulang.</span></li>
+          <li><span class="pro">PRO</span><span>Back = kembali ke riwayat, alami.</span></li>
+          <li><span class="con">CON</span><span>Perlu refactor kecil: form jadi komponen sub-view.</span></li>
+        </ul>
+      </div>
+      <div class="fork">
+        <div class="fork-tag">Opsi C · alternatif</div>
+        <h4>Tutup detail → modal ter-scope</h4>
+        <div class="summary">Tutup modal detail, buka modal catat dengan siswa di-preselect dan label "untuk: [nama]".</div>
+        <div class="fork-phone">
+          <svg viewBox="0 0 120 220" width="108"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="44" width="92" height="140" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="22" y="56" width="40" height="6" rx="2" fill="oklch(0.5 0.008 85)"/><rect x="22" y="72" width="76" height="10" rx="2" fill="oklch(0.5 0.008 85)"/><rect x="22" y="90" width="76" height="10" rx="2" fill="oklch(0.5 0.008 85)"/><rect x="22" y="108" width="76" height="30" rx="3" fill="none" stroke="oklch(0.32 0.006 75)" stroke-dasharray="3 2"/><rect x="22" y="150" width="36" height="18" rx="4" fill="oklch(0.63 0.115 45)"/><rect x="10" y="194" width="100" height="14" rx="4" fill="none" stroke="oklch(0.63 0.115 45)"/></svg>
+        </div>
+        <ul>
+          <li><span class="pro">PRO</span><span>Perubahan kecil; modal keaktifan tinggal preselect.</span></li>
+          <li><span class="pro">PRO</span><span>Form punya ruang penuh (tanpa konteks detail).</span></li>
+          <li><span class="con">CON</span><span>Konteks riwayat tertutup — guru harus buka lagi untuk lanjut memeriksa siswa lain.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 06 · OTHER FORKS ═══════════ -->
+  <section>
+    <div class="sec-index">06</div>
+    <h2 class="section-title">Keputusan yang diambil secara diam-diam</h2>
+    <p class="section-sub">Belum tentu salah — tapi layak disadari sebagai <em>keputusan</em>, bukan default.</p>
+    <div class="callout-grid">
+      <div class="callout"><h4>Siapa yang boleh mencatat pelanggaran</h4><p>"+ Pelanggaran" dan tombol "Catat" tampil untuk semua guru, padahal komentar kode menyatakan non-walas "input poin keaktifan &amp; observasi, lihat data read-only". Edit/hapus memang walas-only — apakah mencatat pelanggaran juga seharusnya? Keputusan role-gating perlu dijawab (dan dicocokkan dengan RLS).</p></div>
+      <div class="callout"><h4>Tabel vs. kartu di mobile</h4><p>Tabel horizontal mempertahankan densitas dan perbandingan antar-baris (guru terbiasa spreadsheet) tetapi menuntut dua tangan. Kartu per siswa lebih thumb-friendly tapi lebih panjang dan kehilangan perbandingan cepat. Signal: ukuran kelas 25–35; kalau guru membandingkan antar-siswa sering, sticky-first-column adalah kompromi.</p></div>
+      <div class="callout"><h4>"Lainnya" menyembunyikan aksi sekunder</h4><p>Dua primer selalu terlihat + overflow menu — kompromi penyederhanaan yang sehat. Tradeoff: Observasi Harian (kebiasaan harian) kini butuh dua ketukan. Kalau observasi ternyata lebih sering daripada pelanggaran, naikkan ke baris utama.</p></div>
+      <div class="callout"><h4>Pemilih bulan hanya 6 bulan ke belakang</h4><p>Riwayat terbatas setengah tahun dari halaman ini; data lama tetap ada di tempat lain (Analitik). Keputusan ukuran daftar yang masuk akal untuk kinerja — catat saja agar tidak dikira data hilang.</p></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 07 · LIMITS ═══════════ -->
+  <section>
+    <div class="sec-index">07</div>
+    <h2 class="section-title">Apa yang tidak bisa saya nilai dari kode saja</h2>
+    <div class="limits">
+      <ul>
+        <li>Reach nyata di perangkat fisik — audit ini statik dari kode; tidak ada run perangkat iOS/Android (genggaman guru riil, notched device, toolbar Safari).</li>
+        <li>Rasa <em>motion</em> — lensa Allen butuh app berjalan; dari kode saya bisa lihat CSS-nya, bukan kadensanya.</li>
+        <li>Interaksi keyboard/keyboard virtual dengan modal panjang di Safari riil.</li>
+        <li>Lighthouse/CWV tidak dijalankan ulang di sesi ini — skor 100/100 a11y sebelumnya berasal dari audit 1 Agustus sebelum perubahan alur ini.</li>
+        <li>Data nyata (jumlah siswa/kelas, frekuensi pencatatan) — asumsi ukuran kelas 25–35 siswa.</li>
+        <li>Halaman lama yang kini yatim: <code>BintangDailyObservationPage</code>, <code>BintangMentoringPage</code>, <code>BintangEvaluationPage</code> tidak lagi dirujuk App.tsx — kandidat pembersihan, bukan temuan desain.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════ 08 · NEXT STEPS ═══════════ -->
+  <section style="margin-bottom: var(--s6);">
+    <div class="sec-index">08</div>
+    <h2 class="section-title">Benang yang bisa ditarik</h2>
+    <div class="steps">
+      <div class="step"><div class="sn"></div><h4>Fix defect platform (cepat, pasti)</h4><p>Target &lt;44px di modal baru + Modal 95vh→95dvh + limit query quiz_points + aria-label. Semua punya file:line di bagian P.</p></div>
+      <div class="step"><div class="sn"></div><h4>Rancang ulang flow detail siswa</h4><p>Finding 01 + 05: pilih opsi B atau C di §05, teruskan konteks siswa, hilangkan stacking.</p></div>
+      <div class="step"><div class="sn"></div><h4>Keputusan mobile untuk tabel &amp; aksi</h4><p>Fork tabel-vs-kartu dan posisi bar aksi (finding 02, 03) — satu pass desain, bukan tambalan.</p></div>
+    </div>
+  </section>
+
+  <footer class="doc">
+    <span>Program BINTANG · mobile review · thumb-first</span>
+    <span>5 design findings · 4 forks · 4 platform defects · merged fix-order</span>
+  </footer>
+
+</div>
+</body>
+</html>

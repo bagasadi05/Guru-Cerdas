@@ -37,7 +37,7 @@ export function generateAutoNote(adab: BintangGrade, kedis: BintangGrade, kerapi
     else if (kedis === 'C') kedisNote = "Ananda masih sering kurang disiplin, mohon dorongan agar lebih tepat waktu dan fokus.";
     else kedisNote = "Tingkat kedisiplinan sangat kurang dan butuh pengawasan ekstra ketat dari rumah.";
 
-    if (kerapian === 'A') kerapianNote = "Serta senantiasa menjaga kebersihan dan kerapian seragam dengan sangat konsisten.";
+    if (kerapian === 'A') kerapianNote = "Senantiasa menjaga kebersihan dan kerapian seragam dengan sangat konsisten.";
     else if (kerapian === 'B') kerapianNote = "Penampilan sudah cukup rapi, mohon pertahankan kelengkapan atribut sekolah.";
     else if (kerapian === 'C') kerapianNote = "Sering terlihat kurang rapi, mohon dicek kembali penampilannya sebelum berangkat sekolah.";
     else kerapianNote = "Kerapian sangat kurang diperhatikan, mohon kerja samanya untuk selalu mengingatkan Ananda.";

@@ -143,7 +143,7 @@ const LoginPage: React.FC = () => {
                     <div className="flex-1 flex flex-col justify-center max-w-xl mx-auto lg:mx-0 w-full mt-8 lg:mt-0 text-center lg:text-left">
                         <div className="mb-4 flex flex-col items-center lg:items-start">
                             <span className="hidden lg:block text-6xl font-serif text-brand-400 leading-none mb-2">"</span>
-                            <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-white mb-4 lg:mb-6 leading-tight font-display">
+                            <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-white mb-4 lg:mb-6 leading-tight font-display-serif">
                                 Mengajar adalah<br/>
                                 menyalakan <span className="text-brand-400">obor,</span><br/>
                                 bukan <span className="text-brand-400">mengisi bejana.</span>
@@ -171,7 +171,7 @@ const LoginPage: React.FC = () => {
                     <div className="flex-1 flex items-center justify-center w-full pt-4 lg:pt-0">
                         <div className="login-card !m-0 w-full max-w-md !bg-[#151921] !border-gray-800/60 backdrop-blur-xl shadow-2xl relative p-6 sm:p-8">
                             <img src="/logo_sekolah.png" alt="Logo MI Al Irsyad" className="w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-6 object-contain drop-shadow-md" />
-                            <h1 className="text-2xl font-bold text-center text-white mb-2 font-display">
+                            <h1 className="text-2xl font-bold text-center text-white mb-2 font-display-serif">
                                 <span className="text-brand-400">{isLoginMode ? 'Selamat' : 'Mari'}</span> {isLoginMode ? 'Datang Kembali!' : 'Bergabung!'}
                             </h1>
                             <p className="text-gray-400 text-sm text-center mb-8">

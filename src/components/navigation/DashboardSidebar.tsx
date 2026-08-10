@@ -70,13 +70,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
   return (
     <aside className="relative w-72 h-full flex-shrink-0 font-sans">
       <div className="h-full m-4 rounded-3xl bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-emerald-500/10 dark:from-emerald-500/20 to-transparent opacity-50 pointer-events-none"></div>
-        <div className="absolute bottom-0 right-0 w-64 h-64 bg-brand-500/5 dark:bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col h-full p-5">
           <div className="flex items-center gap-4 px-2 mb-8 mt-2">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-emerald-600 blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full"></div>
+            <div className="relative">
               <img 
                 src="/logo_sekolah.png" 
                 alt="Logo MI Al Irsyad" 
@@ -94,10 +91,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
           </div>
 
           <div className="mb-6 p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 dark:from-emerald-500/10 to-brand-500/5 dark:to-brand-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="flex items-center gap-3 p-3 relative z-10">
               <div className="relative">
-                <div className="absolute inset-0 bg-emerald-500 rounded-full blur-sm opacity-50"></div>
                 <img
                   className="relative h-10 w-10 rounded-full object-cover border-2 border-white dark:border-white/20 shadow-md"
                   src={user?.avatarUrl}

@@ -25,7 +25,7 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
     const { isEasyMode, toggleEasyMode } = useAccessibility();
 
     return (
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-3">
             {/* Easy Mode Toggle */}
             <button type="button"
                 onClick={toggleEasyMode}
@@ -61,7 +61,7 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
                 <ThemeToggle />
             </ShellIconButton>
 
-            <div className="hidden md:block">
+            <div className="hidden xl:block">
                 <NetworkQualityIndicator size="sm" showLabel={true} />
             </div>
 
@@ -73,7 +73,7 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
 
             <Link
                 to="/pengaturan"
-                className="ml-1 flex h-11 w-11 items-center justify-center rounded-full ring-2 ring-white shadow-md transition-transform hover:scale-105 active:scale-95 dark:ring-slate-800 overflow-hidden shrink-0"
+                className="hidden sm:flex ml-1 h-11 w-11 items-center justify-center rounded-full ring-2 ring-white shadow-md transition-transform hover:scale-105 active:scale-95 dark:ring-slate-800 overflow-hidden shrink-0"
                 aria-label="Settings"
             >
                 <img

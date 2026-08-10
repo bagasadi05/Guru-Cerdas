@@ -27,7 +27,7 @@ export const BatchFillInput: React.FC<{
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Nilai"
-        className="w-20 h-8 text-center text-sm font-bold bg-white dark:bg-slate-800 border-amber-300 dark:border-amber-600 rounded-lg"
+        className="w-20 h-8 text-center text-base sm:text-sm font-bold bg-white dark:bg-slate-800 border-amber-300 dark:border-amber-600 rounded-lg"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && value.trim()) {
             onApply(value);

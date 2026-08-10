@@ -519,7 +519,7 @@ const NotificationsSection: React.FC = () => {
                                                     e.stopPropagation();
                                                     handlePreviewSound(sound.id);
                                                 }}
-                                                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors opacity-0 group-hover:opacity-100"
+                                                className="absolute bottom-1.5 right-1.5 p-2 min-w-[44px] min-h-[44px] rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors"
                                                 title="Preview suara"
                                             >
                                                 <PlayCircle className="w-4 h-4" />
@@ -533,7 +533,7 @@ const NotificationsSection: React.FC = () => {
                                                     e.stopPropagation();
                                                     fileInputRef.current?.click();
                                                 }}
-                                                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                                                className="absolute bottom-1.5 right-1.5 p-2 min-w-[44px] min-h-[44px] rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors"
                                                 title="Upload audio"
                                             >
                                                 <Upload className="w-4 h-4" />

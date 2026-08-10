@@ -136,7 +136,7 @@ export const ExternalStudentsManager: React.FC<ExternalStudentsManagerProps> = (
                                 </p>
                             </div>
 
-                            <div className="flex gap-2 pt-4 border-t border-slate-100 dark:border-slate-700/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex gap-2 pt-4 border-t border-slate-100 dark:border-slate-700/50 transition-opacity">
                                 <button type="button"
                                     onClick={() => onEditStudent(student)}
                                     className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"

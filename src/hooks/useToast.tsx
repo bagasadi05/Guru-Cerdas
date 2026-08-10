@@ -64,7 +64,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: number) => void }> = (
 
   return (
     <div
-      className="flex items-center w-full max-w-sm p-4 text-white bg-gray-800 rounded-lg shadow-2xl backdrop-blur-sm bg-opacity-80 border border-gray-700/50 transform transition-all duration-300 animate-fade-in-up"
+      className="flex items-center w-full max-w-[calc(100vw-32px)] p-4 text-white bg-gray-800 rounded-lg shadow-2xl backdrop-blur-sm bg-opacity-80 border border-gray-700/50 transform transition-all duration-300 animate-fade-in-up"
       role="alert"
     >
       <div className={`inline-flex items-center justify-center flex-shrink-0 w-8 h-8 ${COLORS[toast.type]} rounded-lg`}>
@@ -91,7 +91,7 @@ const ToastContainer: React.FC<{ toasts: Toast[]; onDismiss: (id: number) => voi
 
     useEffect(() => {
         const node = document.createElement('div');
-        node.className = 'fixed top-4 sm:top-10 left-1/2 -translate-x-1/2 z-toast space-y-2 sm:space-y-3 flex flex-col items-center max-w-[calc(100vw-32px)] w-full sm:w-auto px-2 pointer-events-none';
+        node.className = 'fixed top-4 sm:top-10 inset-x-0 mx-auto w-auto z-toast max-w-[calc(100vw-32px)] space-y-2 sm:space-y-3 flex flex-col items-center px-2 pointer-events-none';
         document.body.appendChild(node);
         // Defer setState to prevent cascading renders
         Promise.resolve().then(() => setPortalNode(node));

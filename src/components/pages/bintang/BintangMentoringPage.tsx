@@ -5,9 +5,10 @@ import { CustomDropdown } from '../../ui/CustomDropdown';
 import { useAuth } from '../../../hooks/useAuth';
 import { bintangService } from '../../../services/bintangService';
 import { supabase } from '../../../services/supabase';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle, Search, Pencil, Trash2 } from 'lucide-react';
 import { Modal } from '../../ui/Modal';
 import { useToast } from '../../../hooks/useToast';
+import { useConfirmation } from '../../ui/ConfirmationDialog';
 
 interface BintangMentoringPageProps {
     preselectedClass?: string;
@@ -37,6 +38,63 @@ export const BintangMentoringPage: React.FC<BintangMentoringPageProps> = ({ pres
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [notes, setNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // ── Edit/delete mentoring ──────────────────────────────────────────
+    const [editingLog, setEditingLog] = useState<any>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editDate, setEditDate] = useState('');
+    const [editRole, setEditRole] = useState('WALAS');
+    const [editNotes, setEditNotes] = useState('');
+    const { confirm: confirmDelete, Dialog: ConfirmDeleteDialog } = useConfirmation();
+
+    const openEditLog = (log: any) => {
+        setEditingLog(log);
+        setEditDate(log.date);
+        setEditRole(log.mentor_role);
+        setEditNotes(log.notes);
+        setIsEditModalOpen(true);
+    };
+
+    const handleSaveEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingLog || !editNotes) return;
+        setIsSubmitting(true);
+        try {
+            await bintangService.updateMentoringLog(editingLog.id, {
+                date: editDate,
+                notes: editNotes,
+                mentor_role: editRole,
+            });
+            toast.success('Catatan pembinaan berhasil diperbarui');
+            setIsEditModalOpen(false);
+            setEditingLog(null);
+            fetchLogs();
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.message || 'Gagal memperbarui catatan pembinaan');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteLog = async (log: any) => {
+        const studentName = (log.students as any)?.name || 'Siswa';
+        await confirmDelete({
+            title: 'Hapus Catatan Pembinaan',
+            message: `Yakin ingin menghapus catatan pembinaan untuk ${studentName}?`,
+            confirmText: 'Ya, Hapus',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    await bintangService.deleteMentoringLog(log.id);
+                    toast.success('Catatan pembinaan berhasil dihapus');
+                    await fetchLogs();
+                } catch (error: any) {
+                    console.error(error);
+                    toast.error(error.message || 'Gagal menghapus catatan pembinaan');
+                }
+            },
+        });
+    };
 
     useEffect(() => {
         const fetchClasses = async () => {
@@ -169,6 +227,7 @@ export const BintangMentoringPage: React.FC<BintangMentoringPageProps> = ({ pres
                                     <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300">Siswa</th>
                                     <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300">Peran Mentor</th>
                                     <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300">Catatan</th>
+                                    <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -187,6 +246,12 @@ export const BintangMentoringPage: React.FC<BintangMentoringPageProps> = ({ pres
                                         </td>
                                         <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300 max-w-md truncate">
                                             {log.notes}
+                                        </td>
+                                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                                            <div className="flex justify-end gap-1">
+                                                <button onClick={() => openEditLog(log)} className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30" title="Edit"><Pencil size={14}/></button>
+                                                <button onClick={() => handleDeleteLog(log)} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30" title="Hapus"><Trash2 size={14}/></button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -317,6 +382,51 @@ export const BintangMentoringPage: React.FC<BintangMentoringPageProps> = ({ pres
                     </div>
                 </form>
             </Modal>
+
+            {/* ── Edit Mentoring Modal ──────────────────────────────── */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => { setIsEditModalOpen(false); setEditingLog(null); }}
+                title="Edit Catatan Pembinaan"
+            >
+                <form onSubmit={handleSaveEdit} className="space-y-4 pt-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal</label>
+                        <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} required />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Peran Mentor</label>
+                        <CustomDropdown
+                            value={editRole}
+                            onChange={setEditRole}
+                            options={[
+                                { value: 'WALAS', label: 'Wali Kelas' },
+                                { value: 'KESISWAAN', label: 'Kesiswaan' },
+                                { value: 'KEPSEK', label: 'Kepala Sekolah' },
+                            ]}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Catatan</label>
+                        <textarea
+                            className="w-full p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                            rows={4}
+                            value={editNotes}
+                            onChange={(e) => setEditNotes(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <Button type="button" variant="outline" onClick={() => { setIsEditModalOpen(false); setEditingLog(null); }}>Batal</Button>
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* ── Delete Confirmation Dialog ─────────────────────────── */}
+            {ConfirmDeleteDialog}
         </div>
     );
 };

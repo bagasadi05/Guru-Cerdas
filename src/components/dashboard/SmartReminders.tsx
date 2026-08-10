@@ -162,7 +162,7 @@ export const SmartReminders: React.FC<SmartRemindersProps> = ({
                                         {reminder.action && (
                                             <Link
                                                 to={reminder.action.link}
-                                                className="inline-flex items-center gap-1 mt-2 text-xs font-semibold hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="inline-flex items-center gap-1 mt-2 text-xs font-semibold hover:underline text-slate-600 dark:text-slate-300 transition-colors"
                                             >
                                                 {reminder.action.label}
                                                 <ChevronRight className="w-3 h-3" />
@@ -173,8 +173,8 @@ export const SmartReminders: React.FC<SmartRemindersProps> = ({
                                     {reminder.dismissible && onDismiss && (
                                         <button type="button"
                                             onClick={() => onDismiss(reminder.id)}
-                                            className="flex-shrink-0 p-1 rounded-lg hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors opacity-0 group-hover:opacity-100"
-                                            aria-label="Dismiss"
+                                            className="flex-shrink-0 p-2 -m-1 rounded-lg text-slate-400 hover:bg-white/50 hover:text-slate-600 dark:hover:bg-gray-800/50 dark:hover:text-slate-300 transition-colors"
+                                            aria-label={`Tutup pengingat ${reminder.title}`}
                                         >
                                             <X className="w-4 h-4" />
                                         </button>

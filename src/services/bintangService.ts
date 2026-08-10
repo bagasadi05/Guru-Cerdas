@@ -150,6 +150,36 @@ export const bintangService = {
     return data;
   },
 
+  /** Update an existing mentoring log. Only the original mentor can edit. */
+  async updateMentoringLog(id: string, payload: { date?: string; notes?: string; mentor_role?: string }) {
+    const { data, error } = await supabase
+      .from('bintang_mentoring_logs')
+      .update({ ...payload, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('id');
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Anda tidak memiliki izin untuk mengubah catatan ini.');
+    }
+    return data;
+  },
+
+  /** Soft-delete a mentoring log with an is_deleted flag (or hard delete if no soft-delete column). */
+  async deleteMentoringLog(id: string) {
+    const { data, error } = await supabase
+      .from('bintang_mentoring_logs')
+      .delete()
+      .eq('id', id)
+      .select('id');
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Anda tidak memiliki izin untuk menghapus catatan ini.');
+    }
+    return data;
+  },
+
   // --- Daily Observations ---
   async getDailyObservations(classId?: string, month?: string) {
     try {
@@ -296,6 +326,17 @@ export const bintangService = {
   },
 
   // --- Quiz Points (poin keaktifan) management for the BINTANG dashboard ---
+
+  /** Insert quiz points (poin keaktifan) via the service layer with proper RLS adherence. */
+  async insertQuizPoints(inserts: Database['public']['Tables']['quiz_points']['Insert'][]) {
+    const { data, error } = await supabase
+      .from('quiz_points')
+      .insert(inserts)
+      .select();
+
+    if (error) throw error;
+    return data;
+  },
 
   /** Update an existing quiz_points row (edit poin keaktifan). */
   async updateQuizPoint(id: string, payload: Database['public']['Tables']['quiz_points']['Update']) {

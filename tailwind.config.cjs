@@ -133,11 +133,12 @@ module.exports = {
         '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
       },
       fontSize: {
-        xxs: '0.6875rem', // 11px — WCAG recommends ≥11px for small text
+        xxs: '0.75rem', // 12px — floor for micro-labels; 11px was below the readability floor
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         serif: ['Tinos', 'serif'],
+        'display-serif': ['Tinos', 'Georgia', 'serif'],
       },
       animation: {
         'fade-in-up': 'fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both',

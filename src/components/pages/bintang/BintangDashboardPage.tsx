@@ -56,6 +56,7 @@ const BintangDashboardPage: React.FC = () => {
     const { confirm: confirmPublish, Dialog: PublishConfirmDialog } = useConfirmation();
     const { confirm: confirmDeleteViolation, Dialog: DeleteViolationDialog } = useConfirmation();
     const { confirm: confirmDeleteQuiz, Dialog: DeleteQuizDialog } = useConfirmation();
+    const { confirm: confirmDeleteMentoring, Dialog: DeleteMentoringDialog } = useConfirmation();
     const { isLocked, activeSemester } = useSemester();
 
     // ── Access control ───────────────────────────────────────────────────────
@@ -102,6 +103,7 @@ const BintangDashboardPage: React.FC = () => {
         id: string; student_id: string; quiz_name: string | null; subject: string | null; points: number; category: string | null; quiz_date: string; semester_id: string | null;
     }>>([]);
     const [mentoringLogs, setMentoringLogs] = useState<any[]>([]);
+    const [dailyObservations, setDailyObservations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     // ── UI state ─────────────────────────────────────────────────────────────
@@ -156,6 +158,9 @@ const BintangDashboardPage: React.FC = () => {
     const [mentoringDate, setMentoringDate] = useState(new Date().toISOString().split('T')[0]);
     const [mentoringNotes, setMentoringNotes] = useState('');
     const [isMentoringSubmitting, setIsMentoringSubmitting] = useState(false);
+    // ── Mentoring edit/delete ─────────────────────────────────────────────
+    const [editingMentoringLog, setEditingMentoringLog] = useState<any>(null);
+    const [isMentoringEditModalOpen, setIsMentoringEditModalOpen] = useState(false);
 
     // ── Observation modal (simplified, inline) ───────────────────────────────
     const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
@@ -178,7 +183,7 @@ const BintangDashboardPage: React.FC = () => {
     const fetchAllData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [studentsRes, evalsData, viosData, logsData] = await Promise.all([
+            const [studentsRes, evalsData, viosData, logsData, obsData] = await Promise.all([
                 supabase
                     .from('students')
                     .select('id, name')
@@ -188,12 +193,14 @@ const BintangDashboardPage: React.FC = () => {
                 bintangService.getMonthlyEvaluations(selectedClass, selectedMonth),
                 bintangService.getViolationsForClass(selectedClass, selectedMonth),
                 bintangService.getMentoringLogs(selectedClass),
+                bintangService.getDailyObservations(selectedClass, selectedMonth),
             ]);
 
             setStudents(studentsRes.data || []);
             setEvaluations(evalsData || []);
             setViolations(viosData || []);
             setMentoringLogs(logsData || []);
+            setDailyObservations(obsData || []);
 
             // Fetch quiz points (poin keaktifan) for offset calculation
             const studentIds = (studentsRes.data || []).map(s => s.id);
@@ -421,6 +428,58 @@ const BintangDashboardPage: React.FC = () => {
         } finally {
             setIsObsSubmitting(false);
         }
+    };
+
+    // ── Mentoring edit / delete handlers ───────────────────────────────────
+
+    const openEditMentoring = (log: any) => {
+        setEditingMentoringLog(log);
+        setMentoringDate(log.date);
+        setMentoringNotes(log.notes);
+        setMentoringRole(log.mentor_role);
+        setIsMentoringEditModalOpen(true);
+    };
+
+    const handleSaveMentoringEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingMentoringLog || !mentoringNotes) return;
+        setIsMentoringSubmitting(true);
+        try {
+            await bintangService.updateMentoringLog(editingMentoringLog.id, {
+                date: mentoringDate,
+                notes: mentoringNotes,
+                mentor_role: mentoringRole,
+            });
+            toast.success('Catatan pembinaan berhasil diperbarui');
+            setIsMentoringEditModalOpen(false);
+            setEditingMentoringLog(null);
+            fetchAllData();
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.message || 'Gagal memperbarui catatan pembinaan');
+        } finally {
+            setIsMentoringSubmitting(false);
+        }
+    };
+
+    const handleDeleteMentoring = async (log: any) => {
+        const studentName = (log.students as any)?.name || 'Siswa';
+        await confirmDeleteMentoring({
+            title: 'Hapus Catatan Pembinaan',
+            message: `Yakin ingin menghapus catatan pembinaan untuk ${studentName}?`,
+            confirmText: 'Ya, Hapus',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    await bintangService.deleteMentoringLog(log.id);
+                    toast.success('Catatan pembinaan berhasil dihapus');
+                    await fetchAllData();
+                } catch (error: any) {
+                    console.error(error);
+                    toast.error(error.message || 'Gagal menghapus catatan pembinaan');
+                }
+            },
+        });
     };
 
     // ── Violation edit / delete handlers ─────────────────────────────────────
@@ -1193,6 +1252,7 @@ const BintangDashboardPage: React.FC = () => {
                                                     <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Siswa</th>
                                                     <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Mentor</th>
                                                     <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Catatan</th>
+                                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300 text-right">Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -1211,6 +1271,12 @@ const BintangDashboardPage: React.FC = () => {
                                                         </td>
                                                         <td className="py-2.5 px-4 text-xs text-slate-600 dark:text-slate-400 max-w-[300px] truncate" title={log.notes}>
                                                             {log.notes}
+                                                        </td>
+                                                        <td className="py-2.5 px-4 text-right whitespace-nowrap">
+                                                            <div className="flex justify-end gap-1">
+                                                                <button onClick={() => openEditMentoring(log)} className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30" title="Edit"><Pencil size={13}/></button>
+                                                                <button onClick={() => handleDeleteMentoring(log)} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30" title="Hapus"><Trash2 size={13}/></button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -1232,6 +1298,9 @@ const BintangDashboardPage: React.FC = () => {
 
             {/* ─── Delete Violation Confirmation ──────────────────────────────── */}
             {DeleteViolationDialog}
+
+            {/* ─── Delete Mentoring Confirmation ──────────────────────────────── */}
+            {DeleteMentoringDialog}
 
             {/* ─── Edit Evaluation Modal ─────────────────────────────────────── */}
             <Modal
@@ -1405,6 +1474,48 @@ const BintangDashboardPage: React.FC = () => {
                                                         </div>
                                                     </td>
                                                 )}
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Observasi Harian Section */}
+                    <div>
+                        <h3 className="font-semibold text-slate-800 dark:text-white flex items-center gap-2 mb-3">
+                            <Eye size={18} className="text-brand-500" />
+                            Observasi Harian
+                        </h3>
+                        <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 dark:bg-slate-800">
+                                    <tr>
+                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Tanggal</th>
+                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Aspek</th>
+                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Tipe</th>
+                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Catatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {dailyObservations.filter((o: any) => o.student_id === detailStudentId).length === 0 ? (
+                                        <tr><td colSpan={4} className="py-4 text-center text-slate-500">Belum ada observasi harian bulan ini</td></tr>
+                                    ) : (
+                                        dailyObservations.filter((o: any) => o.student_id === detailStudentId).map((o: any) => (
+                                            <tr key={o.id} className="border-t border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                                                <td className="py-2 px-3 whitespace-nowrap">{new Date(o.date).toLocaleDateString('id-ID')}</td>
+                                                <td className="py-2 px-3">
+                                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{aspectMeta[o.aspect as keyof typeof aspectMeta]?.label || o.aspect}</span>
+                                                </td>
+                                                <td className="py-2 px-3">
+                                                    {o.is_positive ? (
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Positif</span>
+                                                    ) : (
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Netral</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-2 px-3 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title={o.observation}>{o.observation}</td>
                                             </tr>
                                         ))
                                     )}
@@ -1688,6 +1799,48 @@ const BintangDashboardPage: React.FC = () => {
                     <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                         <Button type="button" variant="outline" onClick={() => setIsMentoringModalOpen(false)}>Batal</Button>
                         <Button type="submit" disabled={isMentoringSubmitting || !mentoringClass || !mentoringNotes}>
+                            {isMentoringSubmitting ? 'Menyimpan...' : 'Simpan'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* ─── Edit Mentoring Modal ─────────────────────────────────────────── */}
+            <Modal
+                isOpen={isMentoringEditModalOpen}
+                onClose={() => { setIsMentoringEditModalOpen(false); setEditingMentoringLog(null); }}
+                title="Edit Catatan Pembinaan"
+            >
+                <form onSubmit={handleSaveMentoringEdit} className="space-y-4 pt-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal</label>
+                        <Input type="date" value={mentoringDate} onChange={(e) => setMentoringDate(e.target.value)} required />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Peran Mentor</label>
+                        <CustomDropdown
+                            value={mentoringRole}
+                            onChange={setMentoringRole}
+                            options={[
+                                { value: 'WALAS', label: 'Wali Kelas' },
+                                { value: 'KESISWAAN', label: 'Kesiswaan' },
+                                { value: 'KEPSEK', label: 'Kepala Sekolah' },
+                            ]}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Catatan</label>
+                        <textarea
+                            className="w-full p-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                            rows={4}
+                            value={mentoringNotes}
+                            onChange={(e) => setMentoringNotes(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <Button type="button" variant="outline" onClick={() => { setIsMentoringEditModalOpen(false); setEditingMentoringLog(null); }}>Batal</Button>
+                        <Button type="submit" disabled={isMentoringSubmitting}>
                             {isMentoringSubmitting ? 'Menyimpan...' : 'Simpan'}
                         </Button>
                     </div>

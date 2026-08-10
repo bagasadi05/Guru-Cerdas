@@ -33,7 +33,23 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
         id: string; student_id: string; description: string; points: number;
         date: string; severity: string | null; students: {name: string} | null;
     }>>([]);
+    const [quizPoints, setQuizPoints] = useState<Array<{
+        id: string; student_id: string; quiz_name: string | null; subject: string | null; points: number; category: string | null; quiz_date: string; semester_id: string | null;
+    }>>([]);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Quiz points lookup for keaktifan offset
+    const studentQuizMap = useMemo(() => {
+        const map = new Map<string, number>();
+        for (const q of quizPoints) {
+            map.set(q.student_id, (map.get(q.student_id) || 0) + (q.points || 0));
+        }
+        return map;
+    }, [quizPoints]);
+
+    const getStudentQuizPoints = useCallback((studentId: string) => {
+        return studentQuizMap.get(studentId) || 0;
+    }, [studentQuizMap]);
 
     // Shared evaluation hook
     const evalHook = useBintangEvaluation({
@@ -47,6 +63,7 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
         students,
         evaluations,
         selectedClass,
+        getStudentQuizPoints,
     });
 
     const fetchData = useCallback(async () => {
@@ -65,6 +82,21 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
 
             const vios = await bintangService.getViolationsForClass(selectedClass, selectedMonth);
             setViolations(vios || []);
+
+            // Fetch quiz points for keaktifan offset
+            const studentIds = (studentsData || []).map((s: any) => s.id);
+            if (studentIds.length > 0) {
+                const monthStart = `${selectedMonth}-01`;
+                const { data: quizData } = await supabase
+                    .from('quiz_points')
+                    .select('id, student_id, quiz_name, subject, points, category, quiz_date, semester_id')
+                    .in('student_id', studentIds)
+                    .is('deleted_at', null)
+                    .gte('quiz_date', monthStart);
+                setQuizPoints(quizData || []);
+            } else {
+                setQuizPoints([]);
+            }
         } catch (error) {
             console.error('Failed to fetch evaluation data', error);
         } finally {
@@ -90,10 +122,10 @@ export const BintangEvaluationPage: React.FC<BintangEvaluationPageProps> = ({ se
             grouped.get(v.student_id)!.push({ description: v.description, points: v.points });
         }
         for (const [sid, vList] of grouped) {
-            map.set(sid, calculateAspectPoints(vList));
+            map.set(sid, calculateAspectPoints(vList, getStudentQuizPoints(sid)));
         }
         return map;
-    }, [violations]);
+    }, [violations, getStudentQuizPoints]);
 
     const getAspectSummary = (studentId: string): AspectPointsSummary => {
         return studentAspectMap.get(studentId) ?? {

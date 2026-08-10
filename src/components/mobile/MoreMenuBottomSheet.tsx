@@ -7,6 +7,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { useAccessibility } from '../ui/AccessibilityFeatures';
 import { EASY_MODE_PATHS } from '../navigation/menuRegistry';
 import { LogOutIcon } from 'lucide-react';
+import { AnimatePresence, MotionDiv } from '../ui/MotionComponents';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface MoreMenuItem {
   href: string;
@@ -35,6 +37,7 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
   const { triggerHaptic } = useHaptic();
   const { logout } = useAuth();
   const { isEasyMode } = useAccessibility();
+  const { shouldReduceMotion } = useReducedMotion();
   const sheetRef = useRef<HTMLDivElement>(null);
   const [showAllEasyMenu, setShowAllEasyMenu] = useState(false);
 
@@ -114,13 +117,17 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
     navigate('/', { replace: true });
   };
 
-  if (!isOpen) return null;
-
   return (
+    <AnimatePresence>
+      {isOpen && (
     <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center pointer-events-none">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in pointer-events-auto"
+      <MotionDiv
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
         onClick={handleClose}
         onTouchEnd={(e) => {
           e.preventDefault();
@@ -130,17 +137,21 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
       />
 
       {/* Bottom Sheet */}
-      <div
+      <MotionDiv
         ref={sheetRef}
         className="absolute bottom-0 left-0 right-0 z-[10001]
                   bg-white dark:bg-slate-900 
                   rounded-t-3xl shadow-2xl 
                   border-t border-slate-200 dark:border-slate-700
-                  animate-slide-up pointer-events-auto"
+                  pointer-events-auto"
         style={{
           maxHeight: '85vh',
           paddingBottom: 'calc(max(env(safe-area-inset-bottom), 16px) + 80px)',
         }}
+        initial={shouldReduceMotion ? { opacity: 0 } : { y: '100%' }}
+        animate={shouldReduceMotion ? { opacity: 1 } : { y: 0 }}
+        exit={shouldReduceMotion ? { opacity: 0 } : { y: '100%' }}
+        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         role="dialog"
         aria-modal="true"
         aria-label="More menu"
@@ -279,8 +290,10 @@ const MoreMenuBottomSheet: React.FC<MoreMenuBottomSheetProps> = ({
             Tutup
           </button>
         </div>
-      </div>
+      </MotionDiv>
     </div>
+      )}
+    </AnimatePresence>
   );
 };
 

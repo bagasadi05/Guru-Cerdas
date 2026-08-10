@@ -2,7 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { logger } from '../services/logger';
 import { errorReporter } from '../services/errorHandling';
-import { AlertTriangleIcon, RefreshCwIcon, HomeIcon } from './Icons';
+import { AlertTriangleIcon, RefreshCwIcon, HomeIcon, SparklesIcon } from './Icons';
 import { Button } from './ui/Button';
 import { idTranslations, enTranslations, type Language } from '../utils/i18n';
 
@@ -287,42 +287,80 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       const isChunkError = this.isChunkLoadError(this.state.error);
+      const isIndonesian = this.getLanguage() === 'id';
 
-      // Default error UI
+      // Default error UI - Modern Glassmorphism & High Aesthetic Design
       return (
-        <div className="flex flex-col items-center justify-center min-h-[500px] bg-gray-100 dark:bg-gray-950 text-center p-8">
-          <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
-            <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-rose-500 to-red-600 dark:from-red-900/50 dark:to-orange-900/70 rounded-full flex items-center justify-center">
-                <AlertTriangleIcon className="w-10 h-10 text-red-600 dark:text-red-400" />
+        <div className="flex flex-col items-center justify-center min-h-[500px] w-full p-4 sm:p-6 text-center animate-in fade-in zoom-in-95 duration-300">
+          <div className="relative max-w-md w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800/80 shadow-2xl shadow-slate-950/20 overflow-hidden">
+            {/* Ambient background glow effect */}
+            <div 
+              className={`absolute -top-20 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full pointer-events-none opacity-40 blur-3xl transition-all duration-500 ${
+                isChunkError 
+                  ? 'bg-gradient-to-br from-emerald-400 to-teal-500 dark:from-emerald-600 dark:to-teal-600' 
+                  : 'bg-gradient-to-br from-rose-400 to-red-600 dark:from-rose-600 dark:to-red-700'
+              }`} 
+            />
+
+            {/* Status Pill Badge */}
+            <div className="relative flex justify-center mb-4">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide border backdrop-blur-md shadow-sm ${
+                isChunkError
+                  ? 'bg-emerald-500/10 dark:bg-emerald-400/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 dark:border-emerald-400/30'
+                  : 'bg-rose-500/10 dark:bg-rose-400/15 text-rose-700 dark:text-rose-300 border-rose-500/20 dark:border-rose-400/30'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${
+                  isChunkError ? 'bg-emerald-500 animate-ping' : 'bg-rose-500 animate-pulse'
+                }`} />
+                {isChunkError 
+                  ? (isIndonesian ? 'Pembaruan Siap' : 'Update Ready')
+                  : (isIndonesian ? 'Perhatian Sistem' : 'System Notice')}
+              </span>
+            </div>
+
+            {/* Hero Animated Icon Badge */}
+            <div className="relative flex justify-center mb-6">
+              <div className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl transition-transform duration-300 hover:scale-105 ${
+                isChunkError
+                  ? 'bg-gradient-to-tr from-emerald-500 via-teal-500 to-emerald-400 text-white shadow-emerald-500/30 dark:shadow-emerald-950/50'
+                  : 'bg-gradient-to-tr from-rose-500 via-red-500 to-amber-500 text-white shadow-rose-500/30 dark:shadow-rose-950/50'
+              }`}>
+                {isChunkError ? (
+                  <SparklesIcon className="w-10 h-10 animate-pulse text-white drop-shadow-md" />
+                ) : (
+                  <AlertTriangleIcon className="w-10 h-10 text-white drop-shadow-md" />
+                )}
               </div>
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+            {/* Header Title */}
+            <h1 className="relative text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-2">
               {isChunkError 
-                ? (this.getLanguage() === 'id' ? 'Aplikasi Diperbarui' : 'Application Updated')
+                ? (isIndonesian ? 'Aplikasi Diperbarui' : 'Application Updated')
                 : this.getTranslations().errors.general}
             </h1>
 
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {/* Subtitle Description */}
+            <p className="relative text-sm leading-relaxed text-slate-600 dark:text-slate-400 mb-6 px-1">
               {isChunkError 
-                ? (this.getLanguage() === 'id' 
-                    ? 'Versi baru aplikasi telah tersedia. Silakan muat ulang halaman untuk menerapkan pembaruan.' 
-                    : 'A new version of the application is available. Please reload the page to apply the update.')
+                ? (isIndonesian 
+                    ? 'Versi baru Guru Cerdas telah tersedia. Silakan muat ulang halaman untuk menerapkan fitur & pembaruan terbaru.' 
+                    : 'A new version of Guru Cerdas is available. Please reload the page to apply the latest features & updates.')
                 : this.getTranslations().errors.contactSupport}
             </p>
 
+            {/* Dev Stack Trace Details */}
             {import.meta.env.DEV && this.state.error && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-left">
-                <p className="text-sm font-mono text-red-700 dark:text-red-300 break-all">
+              <div className="relative mb-6 p-4 bg-slate-100 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-2xl text-left shadow-inner">
+                <p className="text-xs font-mono font-semibold text-rose-600 dark:text-rose-400 break-all mb-1">
                   {this.state.error.message}
                 </p>
                 {this.state.errorInfo && (
-                  <details className="mt-2">
-                    <summary className="text-xs text-red-600 dark:text-red-400 cursor-pointer">
-                      Stack trace
+                  <details className="mt-2 group">
+                    <summary className="text-[11px] font-medium text-slate-500 dark:text-slate-400 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                      Lihat Detail Stack Trace
                     </summary>
-                    <pre className="mt-2 text-xs text-red-600 dark:text-red-400 overflow-auto max-h-40">
+                    <pre className="mt-2 p-2 bg-slate-200/50 dark:bg-slate-900 rounded-xl text-[10px] font-mono text-slate-700 dark:text-slate-300 overflow-auto max-h-40 border border-slate-300/40 dark:border-slate-800">
                       {this.state.errorInfo.componentStack}
                     </pre>
                   </details>
@@ -330,32 +368,41 @@ class ErrorBoundary extends Component<Props, State> {
               </div>
             )}
 
-            <div className="flex gap-3">
+            {/* Action Buttons */}
+            <div className="relative flex flex-col sm:flex-row gap-3">
               {isChunkError ? (
-                <Button
+                <button
+                  type="button"
                   onClick={this.recoverFromChunkError}
-                  className="flex-1 bg-brand-600 hover:bg-brand-700 text-white"
+                  className="w-full sm:flex-1 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl shadow-lg shadow-emerald-600/25 dark:shadow-emerald-950/40 font-semibold text-sm transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
                 >
-                  <RefreshCwIcon className="w-4 h-4 mr-2" />
-                  {this.getLanguage() === 'id' ? 'Muat Ulang Aplikasi' : 'Reload Application'}
-                </Button>
+                  <RefreshCwIcon className="w-4 h-4 transition-transform duration-500 group-hover:rotate-180" />
+                  <span className="whitespace-nowrap">
+                    {isIndonesian ? 'Muat Ulang Aplikasi' : 'Reload Application'}
+                  </span>
+                </button>
               ) : (
-                <Button
+                <button
+                  type="button"
                   onClick={this.handleRetry}
-                  className="flex-1 bg-brand-600 hover:bg-brand-700 text-white"
+                  className="w-full sm:flex-1 py-3 px-4 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white rounded-xl shadow-lg shadow-brand-600/25 dark:shadow-brand-950/40 font-semibold text-sm transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
                 >
-                  <RefreshCwIcon className="w-4 h-4 mr-2" />
-                  {this.getTranslations().errors.tryAgain}
-                </Button>
+                  <RefreshCwIcon className="w-4 h-4 transition-transform duration-500 group-hover:rotate-180" />
+                  <span className="whitespace-nowrap">
+                    {this.getTranslations().errors.tryAgain}
+                  </span>
+                </button>
               )}
-              <Button
+              <button
+                type="button"
                 onClick={this.handleGoHome}
-                variant="outline"
-                className="flex-1"
+                className="w-full sm:flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/60 rounded-xl font-medium text-sm transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
               >
-                <HomeIcon className="w-4 h-4 mr-2" />
-                {this.getTranslations().nav.dashboard}
-              </Button>
+                <HomeIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <span className="whitespace-nowrap">
+                  {this.getTranslations().nav.dashboard}
+                </span>
+              </button>
             </div>
           </div>
         </div>

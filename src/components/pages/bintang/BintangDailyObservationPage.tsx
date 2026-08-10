@@ -6,27 +6,8 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useToast } from '../../../hooks/useToast';
 import { bintangService, calculateAspectPoints, BINTANG_THRESHOLDS } from '../../../services/bintangService';
 import { supabase } from '../../../services/supabase';
-import { AlertTriangle, Shield, Sparkles, TrendingDown, PlusCircle } from 'lucide-react';
-
-/** Per-aspek badge color helpers */
-const gradeColors: Record<string, string> = {
-    A: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-    B: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    C: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-    D: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
-};
-
-const aspectIcons: Record<string, React.ReactNode> = {
-    ADAB: <Shield size={16} className="text-brand-500" />,
-    KEDISIPLINAN: <AlertTriangle size={16} className="text-amber-500" />,
-    KERAPIAN: <Sparkles size={16} className="text-teal-500" />,
-};
-
-const aspectLabels: Record<string, string> = {
-    ADAB: 'Adab',
-    KEDISIPLINAN: 'Kedisiplinan',
-    KERAPIAN: 'Kerapian',
-};
+import { Shield, Sparkles, TrendingDown, PlusCircle, AlertTriangle } from 'lucide-react';
+import { gradeColors, aspectMeta } from './bintangConstants';
 
 interface BintangDailyObservationPageProps {
     selectedClass: string;
@@ -162,12 +143,14 @@ export const BintangDailyObservationPage: React.FC<BintangDailyObservationPagePr
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-4 sm:px-6">
                         {(['ADAB', 'KEDISIPLINAN', 'KERAPIAN'] as const).map(aspect => {
                             const data = classSummary[aspect];
+                            const meta = aspectMeta[aspect];
+                            const Icon = meta.icon;
                             return (
                                 <div key={aspect} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-4">
                                     <div className="flex items-center gap-2 mb-3">
-                                        {aspectIcons[aspect]}
+                                        <Icon size={16} className={meta.color} />
                                         <span className="font-semibold text-sm text-slate-700 dark:text-slate-200">
-                                            {aspectLabels[aspect]}
+                                            {meta.label}
                                         </span>
                                     </div>
                                     <div className="flex items-end justify-between">
@@ -196,13 +179,13 @@ export const BintangDailyObservationPage: React.FC<BintangDailyObservationPagePr
                                     <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
                                         <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300">Nama Siswa</th>
                                         <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 text-center">
-                                            <div className="flex items-center justify-center gap-1">{aspectIcons.ADAB} Adab</div>
+                                            <div className="flex items-center justify-center gap-1"><Shield size={16} className="text-brand-500" /> Adab</div>
                                         </th>
                                         <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 text-center">
-                                            <div className="flex items-center justify-center gap-1">{aspectIcons.KEDISIPLINAN} Kedisiplinan</div>
+                                            <div className="flex items-center justify-center gap-1"><AlertTriangle size={16} className="text-amber-500" /> Kedisiplinan</div>
                                         </th>
                                         <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 text-center">
-                                            <div className="flex items-center justify-center gap-1">{aspectIcons.KERAPIAN} Kerapian</div>
+                                            <div className="flex items-center justify-center gap-1"><Sparkles size={16} className="text-teal-500" /> Kerapian</div>
                                         </th>
                                         <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 text-center">Total</th>
                                     </tr>

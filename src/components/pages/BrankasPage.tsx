@@ -443,7 +443,7 @@ const BrankasPage: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 min-h-[400px]">
               {/* Left Side: Students List */}
-              <div className="border-b lg:border-b-0 lg:border-r border-slate-200/60 dark:border-slate-700/50 p-4 sm:p-5 flex flex-col max-h-[50vh] lg:max-h-[calc(100vh-280px)] bg-white dark:bg-slate-800">
+              <div className="border-b lg:border-b-0 lg:border-r border-slate-200/60 dark:border-slate-700/50 p-4 sm:p-5 flex flex-col max-h-[50dvh] lg:max-h-[calc(100vh-280px)] bg-white dark:bg-slate-800">
               <div className="flex flex-col gap-2.5 mb-4">
                 <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 tracking-wide uppercase">Daftar Siswa</h4>
                 {classStudents.length > 0 && (
@@ -508,7 +508,7 @@ const BrankasPage: React.FC = () => {
             </div>
 
               {/* Right Side: Student History Viewer */}
-              <div className="lg:col-span-2 p-4 sm:p-6 flex flex-col justify-between overflow-y-auto max-h-[60vh] lg:max-h-[calc(100vh-280px)] custom-scrollbar bg-slate-50/30 dark:bg-slate-900/20">
+              <div className="lg:col-span-2 p-4 sm:p-6 flex flex-col justify-between overflow-y-auto max-h-[60dvh] lg:max-h-[calc(100vh-280px)] custom-scrollbar bg-slate-50/30 dark:bg-slate-900/20">
               {selectedStudent ? (
                 <div className="space-y-6 animate-fade-in">
                   {/* Student Title */}

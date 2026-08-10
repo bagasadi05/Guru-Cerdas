@@ -186,31 +186,28 @@ const AttendancePage: React.FC = () => {
                 </div>
 
                 {/* Date Picker Banner */}
-                <div className="relative z-10 p-3 sm:p-0 -mx-4 px-4 sm:mx-0 transition-all rounded-3xl overflow-hidden flex-1 shadow-[0_8px_30px_rgb(16,185,129,0.15)] mb-2">
+                <div className="relative z-10 p-3 sm:p-0 -mx-4 px-4 sm:mx-0 transition-all rounded-3xl overflow-hidden flex-1 shadow-[0_8px_30px_rgba(13,126,158,0.15)] mb-2">
                     <button
                         type="button"
-                        className="group relative overflow-hidden w-full rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 dark:from-emerald-600 dark:via-teal-700 dark:to-emerald-800 cursor-pointer text-left"
+                        className="group relative overflow-hidden w-full rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 dark:from-brand-700 dark:via-brand-800 dark:to-brand-900 cursor-pointer text-left"
                         onClick={() => setDatePickerOpen(true)}
                         aria-label="Pilih tanggal absensi"
                     >
-                        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E')] opacity-[0.1] mix-blend-overlay"></div>
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-
                         <div className="relative p-3 sm:p-4 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner border border-white/20 group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
                                     <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                                 </div>
                                 <div className="text-left flex-1 min-w-0">
-                                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-green-100 mb-0.5">Tanggal Absensi</p>
+                                    <p className="text-xs sm:text-xs font-bold uppercase tracking-wider text-green-100 mb-0.5">Tanggal Absensi</p>
                                     <h2 className="text-sm sm:text-xl font-bold text-white leading-tight truncate">
                                         {new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                     </h2>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
-                                {selectedDate === today && <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
-                                {selectedDate === today && <span className="sm:hidden inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-bold bg-white/20 text-white border border-white/20">HARI INI</span>}
+                                {selectedDate === today && <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
+                                {selectedDate === today && <span className="sm:hidden inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white border border-white/20">HARI INI</span>}
                                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-colors">
                                     <ChevronDownIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                 </div>
@@ -253,7 +250,7 @@ const AttendancePage: React.FC = () => {
                             <Button
                                 onClick={markRestAsPresent}
                                 size="default"
-                                className="w-full sm:w-auto text-sm font-bold shadow-lg shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 border-none transition-all active:scale-95 duration-200"
+                                className="w-full sm:w-auto text-sm font-bold shadow-lg shadow-brand-600/20 bg-brand-600 hover:bg-brand-700 border-none transition-all active:scale-95 duration-200"
                             >
                                 <CheckCircleIcon className="w-4 h-4 mr-2" />
                                 Tandai Sisa Hadir ({unmarkedStudents.length})
@@ -264,7 +261,7 @@ const AttendancePage: React.FC = () => {
 
                 {/* Batch Action Bar — appears when students are selected */}
                 {selectedStudents.size > 0 && viewMode === 'list' && (
-                    <div className="mb-4 p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl shadow-lg shadow-emerald-500/25 flex flex-col sm:flex-row sm:items-center gap-3 animate-fade-in">
+                    <div className="mb-4 p-3 bg-brand-600 rounded-2xl shadow-lg shadow-brand-600/25 flex flex-col sm:flex-row sm:items-center gap-3 animate-fade-in">
                         <div className="flex items-center gap-2 text-white flex-shrink-0">
                             <span className="font-bold text-sm">{selectedStudents.size} siswa dipilih</span>
                             <button type="button"
@@ -353,7 +350,7 @@ const AttendancePage: React.FC = () => {
                             onClick={handleSave}
                             disabled={isSaving}
                             data-tutorial="attendance-save"
-                            className="w-full h-14 text-lg font-bold shadow-[0_8px_30px_rgb(16,185,129,0.25)] bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 border border-white/20 rounded-2xl transition-all hover:-translate-y-1 active:scale-[0.98] text-white"
+                            className="w-full h-14 text-lg font-bold shadow-[0_8px_30px_rgba(13,126,158,0.25)] bg-brand-700 hover:bg-brand-800 border border-white/20 rounded-2xl transition-all active:scale-[0.98] text-white"
                         >
                             {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
                         </Button>
@@ -550,7 +547,7 @@ const AttendancePage: React.FC = () => {
                                 setIsSaveConfirmOpen(false);
                                 performSave();
                             }}
-                            className="flex-1 bg-gradient-to-r from-emerald-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 text-white"
+                            className="flex-1 bg-brand-700 hover:bg-brand-800 text-white"
                         >
                             {isSaving ? 'Menyimpan...' : 'Simpan & Tandai Hadir'}
                         </Button>

@@ -3,7 +3,7 @@ import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Modal } from '../../ui/Modal';
 import { CustomDropdown } from '../../ui/CustomDropdown';
-import { supabase } from '../../../services/supabase';
+import { bintangService } from '../../../services/bintangService';
 import { useToast } from '../../../hooks/useToast';
 import { Star, Sparkles } from 'lucide-react';
 
@@ -119,11 +119,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
                 semester_id: semesterId || null,
             }));
 
-            const { error } = await supabase
-                .from('quiz_points')
-                .insert(inserts);
-
-            if (error) throw error;
+            await bintangService.insertQuizPoints(inserts);
 
             toast.success(
                 inputMode === 'single'

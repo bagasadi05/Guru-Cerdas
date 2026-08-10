@@ -37,10 +37,13 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
                 const isEarned = earnedIds.has(badge.id);
 
                 return (
-                    <div
+                    <button
+                        type="button"
                         key={badge.id}
+                        aria-label={`${badge.name}: ${badge.description} (+${badge.points} poin)`}
                         className={`
-                            group relative flex flex-col items-center
+                            group relative flex flex-col items-center rounded-lg
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900
                             ${!isEarned && showAll ? 'opacity-30 grayscale' : ''}
                         `}
                     >
@@ -68,13 +71,13 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
                         </span>
 
                         {/* Tooltip */}
-                        <div className="absolute bottom-full mb-2 px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                        <div className="absolute bottom-full mb-2 px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10" aria-hidden="true">
                             <p className="font-semibold">{badge.name}</p>
                             <p className="mt-0.5 text-slate-300 dark:text-slate-600">{badge.description}</p>
                             <p className="mt-1 text-amber-400 dark:text-amber-600">+{badge.points} poin</p>
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900 dark:border-t-white" />
                         </div>
-                    </div>
+                    </button>
                 );
             })}
         </div>

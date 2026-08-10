@@ -65,6 +65,107 @@ export interface Translations {
         noUrgentActions: string;
         noUrgentDesc: string;
     };
+    lessonPlan: {
+        title: string;
+        subtitle: string;
+        step1: string;
+        step2: string;
+        step3: string;
+        step4: string;
+        step5: string;
+        documentType: string;
+        documentTypeModulAjar: string;
+        documentTypeRpp: string;
+        curriculumApproach: string;
+        curriculumMerdeka: string;
+        kurikulumBerbasisCinta: string;
+        kurikulumHybrid: string;
+        satuanPendidikan: string;
+        tahunAjaran: string;
+        semester: string;
+        ganjil: string;
+        genap: string;
+        jenjang: string;
+        kelas: string;
+        fase: string;
+        mataPelajaran: string;
+        topikMateri: string;
+        topicSuggestions: string;
+        placeholderMapel: string;
+        placeholderTopik: string;
+        targetPeserta: string;
+        targetReguler: string;
+        targetKesulitan: string;
+        targetCibi: string;
+        kompetensiAwal: string;
+        placeholderKompetensi: string;
+        saranaPrasarana: string;
+        placeholderSarana: string;
+        cp: string;
+        cpLookup: string;
+        cpSearching: string;
+        cpFromDb: string;
+        cpNotFound: string;
+        placeholderCp: string;
+        profilPancasila: string;
+        tujuanPembelajaran: string;
+        placeholderTujuan: string;
+        pertanyaanPemantik: string;
+        placeholderPemantik: string;
+        lkpd: string;
+        placeholderLkpd: string;
+        soalEvaluasi: string;
+        placeholderEvaluasi: string;
+        alokasiWaktu: string;
+        pertemuan: string;
+        jpPerTemu: string;
+        durasi: string;
+        modelPembelajaran: string;
+        metodePembelajaran: string;
+        pendahuluan: string;
+        kegiatanInti: string;
+        penutup: string;
+        visualAlokasi: string;
+        balancingAktif: string;
+        rubricAsesmen: string;
+        rubricDiskusi: string;
+        rubricPresentasi: string;
+        rubricSikap: string;
+        rubricEmpty: string;
+        rubricAddCustom: string;
+        rubricHapus: string;
+        rubricKriteria: string;
+        rubricSangatBaik: string;
+        rubricBaik: string;
+        rubricCukup: string;
+        rubricPerluBimbingan: string;
+        manualContentNote: string;
+        manualEditNote: string;
+        preview: string;
+        history: string;
+        historyEmpty: string;
+        historyLoading: string;
+        historyTopik: string;
+        historyKelas: string;
+        performaGuru: string;
+        lembarSiswa: string;
+        previewEmpty: string;
+        previewEmptyDesc: string;
+        copy: string;
+        copySuccess: string;
+        pdf: string;
+        word: string;
+        saveSuccess: string;
+        saveFailed: string;
+        validateSubject: string;
+        validateTopic: string;
+        validateMapel: string;
+        deleteConfirm: string;
+        restoreSuccess: string;
+        previous: string;
+        next: string;
+        create: string;
+    };
 }
 
 // Indonesian translations
@@ -117,6 +218,107 @@ export const idTranslations: Translations = {
         noUrgentActions: 'Tidak ada tindakan mendesak',
         noUrgentDesc: 'Absensi, pesan wali, tugas, dan tren nilai tidak menunjukkan masalah utama hari ini.',
     },
+    lessonPlan: {
+        title: 'Penyusun Modul Ajar / RPP',
+        subtitle: 'Langkah {step} dari 5: Lengkapi form untuk menyusun dokumen.',
+        step1: '1. Jenis Dokumen & Kurikulum',
+        step2: '2. Identitas Pelajaran',
+        step3: '3. Informasi Umum & Sarana',
+        step4: '4. Capaian & Profil Pancasila',
+        step5: '5. Alokasi Waktu & Model',
+        documentType: 'Jenis Dokumen',
+        documentTypeModulAjar: 'Modul Ajar',
+        documentTypeRpp: 'RPP',
+        curriculumApproach: 'Pendekatan Kurikulum',
+        curriculumMerdeka: 'Merdeka',
+        kurikulumBerbasisCinta: 'Berbasis Cinta',
+        kurikulumHybrid: 'Hybrid',
+        satuanPendidikan: 'Satuan Pendidikan',
+        tahunAjaran: 'Tahun Ajaran',
+        semester: 'Semester',
+        ganjil: 'Ganjil',
+        genap: 'Genap',
+        jenjang: 'Jenjang',
+        kelas: 'Kelas',
+        fase: 'Fase',
+        mataPelajaran: 'Mata Pelajaran',
+        topikMateri: 'Topik / Materi Pokok',
+        topicSuggestions: 'Saran Topik',
+        placeholderMapel: 'Contoh: Matematika',
+        placeholderTopik: 'Contoh: Penjumlahan Bilangan Cacah',
+        targetPeserta: 'Target Peserta Didik',
+        targetReguler: 'Reguler/Tipikal',
+        targetKesulitan: 'Peserta Didik dengan Kesulitan Belajar',
+        targetCibi: 'Peserta Didik Cerdas Istimewa/Bakat Istimewa (CIBI)',
+        kompetensiAwal: 'Kompetensi Awal (Prasyarat)',
+        placeholderKompetensi: 'Pengetahuan/keterampilan yang wajib dimiliki siswa sebelum mempelajari materi ini.',
+        saranaPrasarana: 'Sarana, Prasarana & Media',
+        placeholderSarana: 'Alat, bahan, media pembelajaran (Proyektor, LKPD, alat peraga, dll).',
+        cp: 'Capaian Pembelajaran (CP)',
+        cpLookup: 'Ambil CP dari Referensi',
+        cpSearching: 'Mencari...',
+        cpFromDb: 'Ambil CP dari Database',
+        cpNotFound: 'Capaian Pembelajaran (CP) untuk mata pelajaran dan fase ini belum tersedia di database — silakan isi manual atau minta admin menambahkan.',
+        placeholderCp: 'Capaian Pembelajaran dari Kurikulum.',
+        profilPancasila: 'Profil Pelajar Pancasila',
+        tujuanPembelajaran: 'Tujuan Pembelajaran (Satu per baris)',
+        placeholderTujuan: 'Contoh:\n1. Siswa dapat memahami perkalian dasar.\n2. Siswa dapat menjawab soal cerita perkalian.',
+        pertanyaanPemantik: 'Pertanyaan Pemantik (Satu per baris)',
+        placeholderPemantik: 'Contoh:\nMengapa kita perlu mempelajari perkalian?\nBagaimana perkalian mempermudah hitungan kita?',
+        lkpd: 'Tugas LKPD (Lembar Kerja Peserta Didik)',
+        placeholderLkpd: 'Masukkan tugas/kegiatan kelompok atau mandiri...',
+        soalEvaluasi: 'Soal Evaluasi Pengetahuan',
+        placeholderEvaluasi: 'Masukkan butir-butir pertanyaan evaluasi...',
+        alokasiWaktu: 'Alokasi Waktu',
+        pertemuan: 'Pertemuan',
+        jpPerTemu: 'JP / Pertemuan',
+        durasi: 'Durasi (Menit)',
+        modelPembelajaran: 'Model Pembelajaran',
+        metodePembelajaran: 'Metode Pembelajaran',
+        pendahuluan: '1. Pendahuluan',
+        kegiatanInti: '2. Kegiatan Inti',
+        penutup: '3. Penutup',
+        visualAlokasi: 'Visual Alokasi Waktu',
+        balancingAktif: 'Balancing Aktif',
+        rubricAsesmen: 'Rubrik Asesmen Interaktif',
+        rubricDiskusi: '+ Diskusi',
+        rubricPresentasi: '+ Presentasi',
+        rubricSikap: '+ Sikap',
+        rubricEmpty: 'Belum ada rubrik penilaian. Klik salah satu templat di atas untuk menambahkan.',
+        rubricAddCustom: '+ Tambah Kriteria Kustom',
+        rubricHapus: 'Hapus',
+        rubricKriteria: 'Kriteria Penilaian',
+        rubricSangatBaik: 'Sangat Baik (4)',
+        rubricBaik: 'Baik (3)',
+        rubricCukup: 'Cukup (2)',
+        rubricPerluBimbingan: 'Perlu Bimbingan (1)',
+        manualContentNote: 'Semua konten disusun manual berdasarkan isian Anda.',
+        manualEditNote: 'Dokumen dapat diedit kembali di panel pratinjau sebelum diekspor.',
+        preview: 'Pratinjau',
+        history: 'Riwayat Saya',
+        historyEmpty: 'Anda belum memiliki riwayat pembuatan modul ajar.',
+        historyLoading: 'Memuat riwayat pembuatan...',
+        historyTopik: 'Topik:',
+        historyKelas: 'Kelas',
+        performaGuru: 'Perangkat Guru',
+        lembarSiswa: 'Lembar Siswa Saja',
+        previewEmpty: 'Siap Membuat Dokumen',
+        previewEmptyDesc: 'Isi parameter lalu klik tombol {action} pada langkah ke-5.',
+        copy: 'Salin Teks',
+        copySuccess: 'Teks berhasil disalin!',
+        pdf: 'PDF',
+        word: 'Word',
+        saveSuccess: 'Draf Modul Ajar berhasil disusun! Anda dapat mengedit isinya secara bebas pada panel pratinjau.',
+        saveFailed: 'Gagal menyusun modul ajar: {message}',
+        validateSubject: 'Mata Pelajaran dan Topik/Materi wajib diisi.',
+        validateTopic: 'Isi Mata Pelajaran dan Topik dulu sebelum menggunakan AI.',
+        validateMapel: 'Mohon isi Mata Pelajaran terlebih dahulu.',
+        deleteConfirm: 'Apakah Anda yakin ingin menghapus dokumen ini dari riwayat?',
+        restoreSuccess: 'Parameter modul ajar berhasil dipulihkan ke formulir!',
+        previous: 'Sebelumnya',
+        next: 'Selanjutnya',
+        create: 'Buat {type}',
+    },
 };
 
 // English translations
@@ -168,6 +370,107 @@ export const enTranslations: Translations = {
         gradeDropTrend: 'Declining grade trend',
         noUrgentActions: 'No urgent actions',
         noUrgentDesc: 'Attendance, parent messages, tasks, and grade trends show no major issues today.',
+    },
+    lessonPlan: {
+        title: 'Lesson Plan / RPP Creator',
+        subtitle: 'Step {step} of 5: Fill in the form to create the document.',
+        step1: '1. Document Type & Curriculum',
+        step2: '2. Lesson Identity',
+        step3: '3. General Info & Facilities',
+        step4: '4. Learning Outcomes & Profile',
+        step5: '5. Time Allocation & Model',
+        documentType: 'Document Type',
+        documentTypeModulAjar: 'Lesson Plan',
+        documentTypeRpp: 'RPP',
+        curriculumApproach: 'Curriculum Approach',
+        curriculumMerdeka: 'Merdeka',
+        kurikulumBerbasisCinta: 'Love-Based',
+        kurikulumHybrid: 'Hybrid',
+        satuanPendidikan: 'Education Unit',
+        tahunAjaran: 'Academic Year',
+        semester: 'Semester',
+        ganjil: 'Odd',
+        genap: 'Even',
+        jenjang: 'Level',
+        kelas: 'Grade',
+        fase: 'Phase',
+        mataPelajaran: 'Subject',
+        topikMateri: 'Topic / Subject Matter',
+        topicSuggestions: 'Topic Suggestions',
+        placeholderMapel: 'Example: Mathematics',
+        placeholderTopik: 'Example: Addition of Whole Numbers',
+        targetPeserta: 'Student Target',
+        targetReguler: 'Regular/Typical',
+        targetKesulitan: 'Students with Learning Difficulties',
+        targetCibi: 'Gifted/Talented Students (CIBI)',
+        kompetensiAwal: 'Prior Knowledge (Prerequisite)',
+        placeholderKompetensi: 'Required knowledge/skills students must have before learning this material.',
+        saranaPrasarana: 'Facilities, Infrastructure & Media',
+        placeholderSarana: 'Tools, materials, learning media (Projector, worksheets, teaching aids, etc.).',
+        cp: 'Learning Outcomes (CP)',
+        cpLookup: 'Get CP from Reference',
+        cpSearching: 'Searching...',
+        cpFromDb: 'Get CP from Database',
+        cpNotFound: 'Learning Outcomes (CP) for this subject and phase are not yet available in the database — please fill manually or ask the admin to add them.',
+        placeholderCp: 'Learning outcomes from the curriculum.',
+        profilPancasila: 'Pancasila Student Profile',
+        tujuanPembelajaran: 'Learning Objectives (One per line)',
+        placeholderTujuan: 'Example:\n1. Students can understand basic multiplication.\n2. Students can solve multiplication word problems.',
+        pertanyaanPemantik: 'Trigger Questions (One per line)',
+        placeholderPemantik: 'Example:\nWhy do we need to learn multiplication?\nHow does multiplication make calculations easier?',
+        lkpd: 'Student Worksheet (LKPD)',
+        placeholderLkpd: 'Enter group or independent tasks/activities...',
+        soalEvaluasi: 'Knowledge Evaluation Questions',
+        placeholderEvaluasi: 'Enter evaluation question items...',
+        alokasiWaktu: 'Time Allocation',
+        pertemuan: 'Meetings',
+        jpPerTemu: 'LH / Meeting',
+        durasi: 'Duration (Minutes)',
+        modelPembelajaran: 'Learning Model',
+        metodePembelajaran: 'Teaching Methods',
+        pendahuluan: '1. Introduction',
+        kegiatanInti: '2. Core Activity',
+        penutup: '3. Closing',
+        visualAlokasi: 'Time Allocation Visual',
+        balancingAktif: 'Active Balancing',
+        rubricAsesmen: 'Interactive Assessment Rubric',
+        rubricDiskusi: '+ Discussion',
+        rubricPresentasi: '+ Presentation',
+        rubricSikap: '+ Attitude',
+        rubricEmpty: 'No rubric yet. Click one of the templates above to add.',
+        rubricAddCustom: '+ Add Custom Criteria',
+        rubricHapus: 'Delete',
+        rubricKriteria: 'Assessment Criteria',
+        rubricSangatBaik: 'Excellent (4)',
+        rubricBaik: 'Good (3)',
+        rubricCukup: 'Fair (2)',
+        rubricPerluBimbingan: 'Needs Guidance (1)',
+        manualContentNote: 'All content is manually compiled based on your input.',
+        manualEditNote: 'Documents can be edited again in the preview panel before exporting.',
+        preview: 'Preview',
+        history: 'My History',
+        historyEmpty: 'You have no lesson plan creation history yet.',
+        historyLoading: 'Loading history...',
+        historyTopik: 'Topic:',
+        historyKelas: 'Grade',
+        performaGuru: 'Teacher View',
+        lembarSiswa: 'Student Sheet Only',
+        previewEmpty: 'Ready to Create Document',
+        previewEmptyDesc: 'Fill in the parameters then click the {action} button in step 5.',
+        copy: 'Copy Text',
+        copySuccess: 'Text copied!',
+        pdf: 'PDF',
+        word: 'Word',
+        saveSuccess: 'Lesson plan draft created successfully! You can freely edit the content in the preview panel.',
+        saveFailed: 'Failed to create lesson plan: {message}',
+        validateSubject: 'Subject and Topic/Material must be filled in.',
+        validateTopic: 'Fill in the Subject and Topic first before using AI.',
+        validateMapel: 'Please fill in the Subject first.',
+        deleteConfirm: 'Are you sure you want to delete this document from history?',
+        restoreSuccess: 'Lesson plan parameters successfully restored to the form!',
+        previous: 'Previous',
+        next: 'Next',
+        create: 'Create {type}',
     },
 };
 

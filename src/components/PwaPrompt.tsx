@@ -156,7 +156,7 @@ const PwaPrompt: React.FC = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <p className="font-bold text-xs sm:text-base text-white tracking-tight leading-snug">Install Aplikasi Portal</p>
-                  <span className="text-[9px] sm:text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 leading-none shrink-0">PWA</span>
+                  <span className="text-[10px] sm:text-xs font-semibold uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 leading-none shrink-0">PWA</span>
                 </div>
                 <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-tight truncate sm:whitespace-normal">
                   Akses cepat, kerja offline, & notifikasi instan.

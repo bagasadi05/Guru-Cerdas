@@ -165,7 +165,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                 className="w-12 h-12 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
                             />
                             <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center ${student.gender === 'Laki-laki' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                                <span className="text-white text-[8px] font-bold">{student.gender === 'Laki-laki' ? 'L' : 'P'}</span>
+                                <span className="text-white text-[10px] font-bold">{student.gender === 'Laki-laki' ? 'L' : 'P'}</span>
                             </div>
                         </div>
                         <div className="flex-grow min-w-0">

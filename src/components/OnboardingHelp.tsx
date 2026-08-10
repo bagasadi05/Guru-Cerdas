@@ -165,12 +165,21 @@ const TourOverlay: React.FC = () => {
     const isFirstStep = currentStep === 0;
 
     // Calculate popup position
+    const POPUP_WIDTH = 320; // w-80
     const getPopupStyle = (): React.CSSProperties => {
+        const width = Math.min(POPUP_WIDTH, window.innerWidth - 16);
+        const half = width / 2;
+        const clampCenter = (x: number) => {
+            const min = half + 8;
+            const max = window.innerWidth - half - 8;
+            return Math.min(Math.max(x, min), Math.max(min, max));
+        };
+
         if (!targetRect || step.position === 'center') {
             return {
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)'
+                top: Math.max(12, (window.innerHeight - 240) / 2),
+                left: Math.max(8, (window.innerWidth - width) / 2),
+                width,
             };
         }
 
@@ -180,26 +189,30 @@ const TourOverlay: React.FC = () => {
             case 'top':
                 return {
                     bottom: window.innerHeight - targetRect.top + offset,
-                    left: targetRect.left + targetRect.width / 2,
-                    transform: 'translateX(-50%)'
+                    left: clampCenter(targetRect.left + targetRect.width / 2),
+                    transform: 'translateX(-50%)',
+                    width,
                 };
             case 'bottom':
                 return {
                     top: targetRect.bottom + offset,
-                    left: targetRect.left + targetRect.width / 2,
-                    transform: 'translateX(-50%)'
+                    left: clampCenter(targetRect.left + targetRect.width / 2),
+                    transform: 'translateX(-50%)',
+                    width,
                 };
             case 'left':
                 return {
                     top: targetRect.top + targetRect.height / 2,
                     right: window.innerWidth - targetRect.left + offset,
-                    transform: 'translateY(-50%)'
+                    transform: 'translateY(-50%)',
+                    width,
                 };
             case 'right':
                 return {
                     top: targetRect.top + targetRect.height / 2,
                     left: targetRect.right + offset,
-                    transform: 'translateY(-50%)'
+                    transform: 'translateY(-50%)',
+                    width,
                 };
             default:
                 return {};
@@ -248,7 +261,7 @@ const TourOverlay: React.FC = () => {
 
             {/* Tooltip popup */}
             <div
-                className="absolute w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-5 animate-scale-in"
+                className="absolute w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-5 animate-fade-in"
                 style={getPopupStyle()}
             >
                 {/* Progress */}

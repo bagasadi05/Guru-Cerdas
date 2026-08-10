@@ -113,7 +113,7 @@ export const TrashList: React.FC<TrashListProps> = ({
                             {items.map(item => (
                                 <div
                                     key={item.id}
-                                    className={`group flex items-center gap-4 p-4 bg-white dark:bg-slate-800/40 border rounded-2xl hover:shadow-md transition-all ${
+                                    className={`group flex flex-wrap items-center gap-3 sm:gap-4 p-4 bg-white dark:bg-slate-800/40 border rounded-2xl hover:shadow-md transition-all ${
                                         selectedItems.has(item.id)
                                             ? 'ring-2 ring-brand-500 border-brand-500/50'
                                             : 'border-slate-200 dark:border-slate-700/50'
@@ -164,7 +164,7 @@ export const TrashList: React.FC<TrashListProps> = ({
                                         {item.daysRemaining} hari
                                     </div>
 
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center gap-1 sm:ml-auto">
                                         <button type="button"
                                             onClick={() => setViewDetailItem(item)}
                                             className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"

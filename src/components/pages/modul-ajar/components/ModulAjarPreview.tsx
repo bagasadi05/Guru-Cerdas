@@ -1,6 +1,7 @@
 import React from 'react';
 import { MotionDiv } from '../../../ui/MotionComponents';
 import { BookOpen } from 'lucide-react';
+import { useTranslation } from '../../../../utils/i18n';
 
 interface ModulAjarPreviewProps {
   generatedDocument: string;
@@ -13,10 +14,11 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
   previewRef,
   documentType
 }) => {
+  const { t } = useTranslation();
   return (
     <>
       {generatedDocument ? (
-        <MotionDiv 
+        <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           ref={previewRef}
@@ -33,9 +35,9 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
           <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-2 animate-pulse">
             <BookOpen className="w-10 h-10 text-slate-300 dark:text-slate-600" />
           </div>
-          <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400">Siap Membuat Dokumen</h3>
+          <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400">{t.lessonPlan.previewEmpty}</h3>
           <p className="text-sm max-w-sm">
-            Isi parameter di sebelah kiri lalu klik tombol <strong>Buat {documentType}</strong> pada langkah ke-5.
+            {t.lessonPlan.previewEmptyDesc.replace('{action}', t.lessonPlan.create.replace('{type}', documentType))}
           </p>
         </div>
       )}

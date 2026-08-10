@@ -1,6 +1,7 @@
 import React from 'react';
 import { MotionDiv, AnimatePresence } from '../../../ui/MotionComponents';
 import { Sparkles, ChevronLeft, ChevronRight, Heart, CheckCircle2, AlertTriangle, Compass } from 'lucide-react';
+import { useTranslation } from '../../../../utils/i18n';
 import { FormState, RubrikRow } from '../types';
 import { useTopikRecommendations, useRubrikTemplates, useTemaKbc, useMateriInsersiMulti, useLearningModels } from '../hooks/useModulAjarQueries';
 import { PANCA_CINTA_TOPICS_FALLBACK, MATERI_INSERSI_FALLBACK } from '../constants/kbcConstants';
@@ -77,6 +78,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   fieldLoading = {},
   isAiGenerating
 }) => {
+  const { t } = useTranslation();
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
 
   // Shared wiring for every inline AI trigger in this form.
@@ -157,9 +159,9 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
       <div className="p-4 lg:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 shrink-0">
         <h1 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-brand-500" />
-          Modul Ajar Creator
+          {t.lessonPlan.title}
         </h1>
-        <p className="text-sm text-slate-500 mt-1">Langkah {activeStep} dari 5: Lengkapi form untuk menyusun dokumen.</p>
+        <p className="text-sm text-slate-500 mt-1">{t.lessonPlan.subtitle.replace('{step}', String(activeStep))}</p>
         
         {/* Progress Bar / Step Pills */}
         <div className="flex gap-1.5 mt-4">
@@ -188,7 +190,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             {activeStep === 1 && (
               <div className="space-y-6">
                 <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-wide border-b pb-2 border-slate-100 dark:border-slate-800">
-                  1. JENIS DOKUMEN & KURIKULUM
+                  {t.lessonPlan.step1}
                 </h3>
                 
                 <div className="space-y-5">
@@ -217,28 +219,28 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Jenis Dokumen</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{t.lessonPlan.documentType}</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {['Modul Ajar', 'RPP'].map(type => (
                         <button
                           key={type}
                           type="button"
                           onClick={() => onChange('documentType', type)}
-                          className={`p-3 rounded-xl border text-sm font-bold transition-all ${
+                          className={`p-3 min-h-[44px] rounded-xl border text-sm font-bold transition-all ${
                             formState.documentType === type
                             ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-900/40 dark:border-brand-500'
                             : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
                           }`}
                         >
-                          {type}
+                          {type === 'Modul Ajar' ? t.lessonPlan.documentTypeModulAjar : t.lessonPlan.documentTypeRpp}
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Pendekatan Kurikulum</label>
-                    <div className="grid grid-cols-3 gap-2.5">
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{t.lessonPlan.curriculumApproach}</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       {['Merdeka', 'Berbasis Cinta', 'Hybrid'].map(approach => (
                         <button
                           key={approach}
@@ -402,12 +404,12 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             {/* Step 2: Identitas Pelajaran */}
             {activeStep === 2 && (
               <div className="space-y-5">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">2. Identitas Pelajaran</h3>
-                
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{t.lessonPlan.step2}</h3>
+
                 <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-2">
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Jenjang</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.jenjang}</label>
                       <input 
                         type="text" 
                         value={formState.jenjang}
@@ -416,7 +418,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Kelas</label>
+                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.kelas}</label>
                       <select 
                         value={formState.kelas}
                         onChange={(e) => onChange('kelas', e.target.value)}
@@ -428,7 +430,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Fase</label>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.fase}</label>
                     <input 
                       type="text" 
                       value={formState.fase} 
@@ -438,7 +440,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Mata Pelajaran <span className="text-red-500">*</span></label>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.mataPelajaran} <span className="text-red-500">*</span></label>
                     <input 
                       type="text" 
                       value={formState.mataPelajaran}
@@ -449,7 +451,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Topik / Materi Pokok <span className="text-red-500">*</span></label>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.topikMateri} <span className="text-red-500">*</span></label>
                     <input 
                       type="text" 
                       value={formState.topik}
@@ -459,7 +461,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                     />
                     {recommendations.length > 0 && (
                       <div className="mt-2.5 flex flex-wrap gap-1.5">
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 block w-full font-medium">Saran Topik:</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 block w-full font-medium">{t.lessonPlan.topicSuggestions}:</span>
                         {recommendations.map(rec => (
                           <button
                             key={rec}
@@ -487,11 +489,11 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             {/* Step 3: Informasi Umum & Sarpras */}
             {activeStep === 3 && (
               <div className="space-y-5">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">3. Informasi Umum & Sarana</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{t.lessonPlan.step3}</h3>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">Target Peserta Didik</label>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">{t.lessonPlan.targetPeserta}</label>
                     <select 
                       value={formState.targetPeserta}
                       onChange={(e) => onChange('targetPeserta', e.target.value)}
@@ -504,8 +506,8 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-xs text-slate-500 dark:text-slate-400">Kompetensi Awal (Prasyarat)</label>
+                    <div className="flex flex-wrap justify-between items-end mb-1">
+                      <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.kompetensiAwal}</label>
                       <AiButton field="kompetensiAwal" label="Isi AI" {...aiProps} />
                     </div>
                     <textarea
@@ -518,7 +520,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Sarana, Prasarana & Media</label>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.saranaPrasarana}</label>
                     <textarea
                       value={formState.saranaPrasarana}
                       onChange={(e) => onChange('saranaPrasarana', e.target.value)}
@@ -534,13 +536,13 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             {/* Step 4: Komponen Inti */}
             {activeStep === 4 && (
               <div className="space-y-5">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">4. Capaian & Profil Pancasila</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{t.lessonPlan.step4}</h3>
                 
                 <div className="space-y-4">
                   <div>
-                    <div className="flex justify-between items-end mb-1.5">
-                      <label className="block text-xs text-slate-500 dark:text-slate-400">Capaian Pembelajaran (CP)</label>
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap justify-between items-end mb-1.5 gap-1.5">
+                      <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.cp}</label>
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <button
                           type="button"
                           onClick={onGenerateCP}
@@ -548,7 +550,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           className="text-xs text-brand-600 dark:text-brand-400 font-medium flex items-center gap-1 hover:text-brand-700 bg-brand-50 dark:bg-brand-900/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                         >
                           <Sparkles className="w-3.5 h-3.5" />
-                          {isGeneratingCP ? 'Mencari...' : 'Ambil CP Database'}
+                          {isGeneratingCP ? t.lessonPlan.cpSearching : t.lessonPlan.cpLookup}
                         </button>
                         <AiButton field="capaianPembelajaran" label="Generate AI" {...aiProps} />
                       </div>
@@ -563,7 +565,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2">Profil Pelajar Pancasila</label>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2">{t.lessonPlan.profilPancasila}</label>
                     <div className="flex flex-wrap gap-2">
                       {PROFIL_OPTIONS.map(profil => (
                         <button
@@ -584,8 +586,8 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   {formState.generationMethod === 'Manual' && (
                     <>
                       <div>
-                        <div className="flex justify-between items-end mb-1">
-                          <label className="block text-xs text-slate-500 dark:text-slate-400">Tujuan Pembelajaran (Satu per baris)</label>
+                        <div className="flex flex-wrap justify-between items-end mb-1">
+                          <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.tujuanPembelajaran}</label>
                           <AiButton field="manualTujuanPembelajaran" label="Isi AI" {...aiProps} />
                         </div>
                         <textarea
@@ -634,8 +636,8 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                         </div>
                       </div>
                       <div>
-                        <div className="flex justify-between items-end mb-1">
-                          <label className="block text-xs text-slate-500 dark:text-slate-400">Pertanyaan Pemantik (Satu per baris)</label>
+                        <div className="flex flex-wrap justify-between items-end mb-1">
+                          <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.pertanyaanPemantik}</label>
                           <AiButton field="manualPertanyaanPemantik" label="Isi AI" {...aiProps} />
                         </div>
                         <textarea
@@ -655,12 +657,12 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             {/* Step 5: Alokasi & Model */}
             {activeStep === 5 && (
               <div className="space-y-5">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">5. Alokasi Waktu & Model</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{t.lessonPlan.step5}</h3>
                 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Pertemuan</label>
+                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.pertemuan}</label>
                       <input 
                         type="number" 
                         value={formState.jumlahPertemuan}
@@ -669,7 +671,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">JP / Pertemuan</label>
+                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.jpPerTemu}</label>
                       <input 
                         type="number" 
                         value={formState.jpPerPertemuan}
@@ -678,7 +680,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Durasi (Menit)</label>
+                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.durasi}</label>
                       <input 
                         type="number" 
                         value={formState.durasiPerJp}
@@ -772,7 +774,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                             <div className={`text-[10px] font-medium mb-2 ${isSelected ? 'text-brand-100' : 'text-brand-600 dark:text-brand-400'}`}>
                               {model.fokus}
                             </div>
-                            <div className={`text-[9px] line-clamp-2 ${isSelected ? 'text-brand-200' : 'text-slate-400 dark:text-slate-500'}`}>
+                            <div className={`text-[10px] line-clamp-2 ${isSelected ? 'text-brand-200' : 'text-slate-400 dark:text-slate-500'}`}>
                               Sintaks: {model.sintaks.map(s => s.langkah.split(':')[0]).join(' → ')}
                             </div>
                           </button>
@@ -826,7 +828,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
                   {/* Metode Pembelajaran */}
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">Metode Pembelajaran (Pelengkap)</label>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">{t.lessonPlan.metodePembelajaran}</label>
                     <div className="flex flex-wrap gap-2">
                       {METODE_OPTIONS.map(metode => (
                         <button
@@ -860,15 +862,15 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
                   {/* Visual Time Allocator Slider */}
                   <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
-                    <div className="flex justify-between items-center mb-1">
-                      <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">Visual Alokasi Waktu (${formState.jpPerPertemuan * formState.durasiPerJp} Menit)</h4>
-                      <span className="text-[10px] text-slate-400 font-medium">Balancing Aktif</span>
+                    <div className="flex flex-wrap justify-between items-center mb-1">
+                      <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.lessonPlan.visualAlokasi} ({formState.jpPerPertemuan * formState.durasiPerJp} Menit)</h4>
+                      <span className="text-[10px] text-slate-400 font-medium">{t.lessonPlan.balancingAktif}</span>
                     </div>
                     
                     <div className="space-y-3.5">
                       <div>
                         <div className="flex justify-between text-[11px] text-slate-500 mb-1">
-                          <span>1. Pendahuluan</span>
+                          <span>{t.lessonPlan.pendahuluan}</span>
                           <span className="font-bold text-brand-600 dark:text-brand-400">{formState.alokasiPendahuluan} Menit</span>
                         </div>
                         <input 
@@ -883,7 +885,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
                       <div>
                         <div className="flex justify-between text-[11px] text-slate-500 mb-1">
-                          <span>2. Kegiatan Inti</span>
+                          <span>{t.lessonPlan.kegiatanInti}</span>
                           <span className="font-bold text-brand-600 dark:text-brand-400">{formState.alokasiInti} Menit</span>
                         </div>
                         <input 
@@ -898,7 +900,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
                       <div>
                         <div className="flex justify-between text-[11px] text-slate-500 mb-1">
-                          <span>3. Penutup</span>
+                          <span>{t.lessonPlan.penutup}</span>
                           <span className="font-bold text-brand-600 dark:text-brand-400">{formState.alokasiPenutup} Menit</span>
                         </div>
                         <input 
@@ -915,29 +917,29 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
                   {/* Rubrik Asesmen Interaktif */}
                   <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">Rubrik Asesmen Interaktif</h4>
+                    <div className="flex flex-wrap justify-between items-center gap-1.5">
+                      <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.lessonPlan.rubricAsesmen}</h4>
                       <div className="flex gap-1">
                         <button
                           type="button"
                           onClick={() => onChange('rubrikAsesmen', rubrikDiskusi)}
-                          className="px-2 py-1 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded text-[9px] font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 transition-colors animate-pulse"
+                          className="px-2 py-1 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 transition-colors animate-pulse"
                         >
-                          + Diskusi
+                          {t.lessonPlan.rubricDiskusi}
                         </button>
                         <button
                           type="button"
                           onClick={() => onChange('rubrikAsesmen', rubrikPresentasi)}
-                          className="px-2 py-1 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded text-[9px] font-semibold text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition-colors"
+                          className="px-2 py-1 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded text-xs font-semibold text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition-colors"
                         >
-                          + Presentasi
+                          {t.lessonPlan.rubricPresentasi}
                         </button>
                         <button
                           type="button"
                           onClick={() => onChange('rubrikAsesmen', rubrikSikap)}
-                          className="px-2 py-1 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 rounded text-[9px] font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors"
+                          className="px-2 py-1 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 rounded text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors"
                         >
-                          + Sikap
+                          {t.lessonPlan.rubricSikap}
                         </button>
                       </div>
                     </div>
@@ -955,10 +957,10 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                               }}
                               className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-[10px] font-bold"
                             >
-                              Hapus
+                              {t.lessonPlan.rubricHapus}
                             </button>
                             <div>
-                              <label className="text-[9px] text-slate-400 font-bold block mb-0.5">Kriteria Penilaian</label>
+                              <label className="text-xs text-slate-400 font-bold block mb-0.5">{t.lessonPlan.rubricKriteria}</label>
                               <input
                                 type="text"
                                 value={row.kriteria}
@@ -971,9 +973,9 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                 placeholder="Misal: Keaktifan Diskusi"
                               />
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               <div>
-                                <label className="text-[8px] text-slate-400 block font-semibold">Sangat Baik (4)</label>
+                                <label className="text-xs text-slate-400 block font-semibold">{t.lessonPlan.rubricSangatBaik}</label>
                                 <textarea
                                   value={row.sangatBaik}
                                   onChange={(e) => {
@@ -986,7 +988,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                 />
                               </div>
                               <div>
-                                <label className="text-[8px] text-slate-400 block font-semibold">Baik (3)</label>
+                                <label className="text-xs text-slate-400 block font-semibold">{t.lessonPlan.rubricBaik}</label>
                                 <textarea
                                   value={row.baik}
                                   onChange={(e) => {
@@ -999,7 +1001,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                 />
                               </div>
                               <div>
-                                <label className="text-[8px] text-slate-400 block font-semibold">Cukup (2)</label>
+                                <label className="text-xs text-slate-400 block font-semibold">{t.lessonPlan.rubricCukup}</label>
                                 <textarea
                                   value={row.cukup}
                                   onChange={(e) => {
@@ -1012,7 +1014,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                 />
                               </div>
                               <div>
-                                <label className="text-[8px] text-slate-400 block font-semibold">Perlu Bimbingan (1)</label>
+                                <label className="text-xs text-slate-400 block font-semibold">{t.lessonPlan.rubricPerluBimbingan}</label>
                                 <textarea
                                   value={row.perluBimbingan}
                                   onChange={(e) => {
@@ -1030,7 +1032,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       </div>
                     ) : (
                       <div className="text-center py-4 border border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 dark:text-slate-600 text-xs">
-                        Belum ada rubrik penilaian. Klik salah satu templat di atas untuk menambahkan.
+                        {t.lessonPlan.rubricEmpty}
                       </div>
                     )}
 
@@ -1042,13 +1044,13 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       }}
                       className="w-full py-2 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/20 dark:hover:bg-brand-950/40 text-brand-700 dark:text-brand-400 rounded-lg text-[11px] font-semibold transition-colors"
                     >
-                      + Tambah Kriteria Kustom
+                      {t.lessonPlan.rubricAddCustom}
                     </button>
                   </div>
 
                   <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-xs text-slate-500 dark:text-slate-400">Tugas LKPD (Lembar Kerja Peserta Didik)</label>
+                    <div className="flex flex-wrap justify-between items-end mb-1">
+                      <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.lkpd}</label>
                       <AiButton field="manualLkpdTugas" label="Buat AI" {...aiProps} />
                     </div>
                     <textarea
@@ -1060,8 +1062,8 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                     />
                   </div>
                   <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-xs text-slate-500 dark:text-slate-400">Soal Evaluasi Pengetahuan</label>
+                    <div className="flex flex-wrap justify-between items-end mb-1">
+                      <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.soalEvaluasi}</label>
                       <AiButton field="manualSoalEvaluasi" label="Buat AI" {...aiProps} />
                     </div>
                     <textarea
@@ -1088,7 +1090,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5"
           >
             <ChevronLeft className="w-4 h-4" />
-            Sebelumnya
+            {t.lessonPlan.previous}
           </button>
         ) : (
           <div />
@@ -1100,7 +1102,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             onClick={() => setActiveStep(prev => prev + 1)}
             className="px-5 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 flex items-center gap-1.5"
           >
-            Selanjutnya
+            {t.lessonPlan.next}
             <ChevronRight className="w-4 h-4" />
           </button>
         ) : (
@@ -1111,7 +1113,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             className="px-5 py-2.5 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50"
           >
             <Sparkles className="w-4 h-4" />
-            ✨ Buat {formState.documentType}
+            {t.lessonPlan.create.replace('{type}', formState.documentType)}
           </button>
         )}
       </div>

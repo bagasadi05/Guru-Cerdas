@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MotionDiv } from '../../ui/MotionComponents';
 import { BookOpen, History, Copy, Printer, FileText, Clock } from 'lucide-react';
+import { useTranslation } from '../../../utils/i18n';
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
 import { FormState } from './types';
@@ -22,6 +23,7 @@ import { ModulAjarHistory } from './components/ModulAjarHistory';
 import { ModulAjarPreview } from './components/ModulAjarPreview';
 
 const ModulAjarCreatorPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [formState, setFormState] = useState<FormState>({
     generationMethod: 'AI',
@@ -165,7 +167,7 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const generateManualModulAjar = async () => {
     if (!formState.mataPelajaran || !formState.topik) {
-      alert('Mata Pelajaran dan Topik/Materi wajib diisi.');
+      alert(t.lessonPlan.validateSubject);
       return;
     }
 
@@ -345,11 +347,11 @@ const ModulAjarCreatorPage: React.FC = () => {
       fetchHistory();
       alert(isAiGenerated
         ? '✨ Modul Ajar berhasil disusun oleh AI! Draf tersimpan di Riwayat Anda dan dikirim ke Bank Bersama untuk direview admin.'
-        : 'Draf Modul Ajar berhasil disusun dari Bank Data! Anda dapat mengedit isinya secara bebas pada panel pratinjau.');
+        : t.lessonPlan.saveSuccess);
 
     } catch (err: any) {
       console.error(err);
-      alert(`Gagal menyusun modul ajar: ${err.message}`);
+      alert(t.lessonPlan.saveFailed.replace('{message}', err.message));
     }
   };
 
@@ -448,7 +450,7 @@ const ModulAjarCreatorPage: React.FC = () => {
   /** AI per-field assistant — generate konten untuk satu field saja */
   const handleAiFillField = async (field: string) => {
     if (!formState.mataPelajaran || !formState.topik) {
-      alert('Isi Mata Pelajaran dan Topik dulu sebelum menggunakan AI.');
+      alert(t.lessonPlan.validateTopic);
       return;
     }
     setFieldLoading(prev => ({ ...prev, [field]: true }));
@@ -482,7 +484,7 @@ const ModulAjarCreatorPage: React.FC = () => {
       handleInputChange(field, content);
     } catch (err: any) {
       console.error(`[AI Field] ${field} generation failed:`, err);
-      alert(`Gagal meng-generate: ${err.message}`);
+      alert(t.lessonPlan.saveFailed.replace('{message}', err.message));
     } finally {
       setFieldLoading(prev => ({ ...prev, [field]: false }));
     }
@@ -565,7 +567,7 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const generateCP = async () => {
     if (!formState.mataPelajaran) {
-      alert('Mohon isi Mata Pelajaran terlebih dahulu.');
+      alert(t.lessonPlan.validateMapel);
       return;
     }
     
@@ -590,7 +592,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         handleInputChange('capaianPembelajaran', data.deskripsi_cp);
       } else {
         handleInputChange('capaianPembelajaran', '');
-        alert('Capaian Pembelajaran (CP) untuk mata pelajaran dan fase ini belum tersedia di database — silakan isi manual atau minta admin menambahkan.');
+        alert(t.lessonPlan.cpNotFound);
       }
     } catch (err) {
       console.error('Gagal mengambil CP:', err);
@@ -602,7 +604,7 @@ const ModulAjarCreatorPage: React.FC = () => {
   const handleCopy = () => {
     if (!previewRef.current) return;
     navigator.clipboard.writeText(previewRef.current.innerText);
-    alert('Teks berhasil disalin!');
+    alert(t.lessonPlan.copySuccess);
   };
 
   const handlePrint = () => {
@@ -688,7 +690,7 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const deleteHistoryItem = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Apakah Anda yakin ingin menghapus dokumen ini dari riwayat?')) return;
+    if (!confirm(t.lessonPlan.deleteConfirm)) return;
     try {
       const { error } = await supabase.from('lesson_plans').delete().eq('id', id);
       if (!error) {
@@ -744,7 +746,7 @@ const ModulAjarCreatorPage: React.FC = () => {
     });
     setGeneratedDocument(plan.generated_content);
     setActiveTab('preview');
-    alert('Parameter modul ajar berhasil dipulihkan ke formulir!');
+    alert(t.lessonPlan.restoreSuccess);
   };
 
   return (
@@ -794,29 +796,29 @@ const ModulAjarCreatorPage: React.FC = () => {
       <div className="flex-1 bg-slate-100 dark:bg-slate-950/50 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 overflow-hidden flex flex-col h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)]">
         
         {/* Tab Header */}
-        <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
+        <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-2.5 sm:px-4 shrink-0 shadow-sm z-10 gap-2">
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
             <button 
               onClick={() => setActiveTab('preview')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === 'preview' 
                 ? 'bg-white text-slate-800 dark:bg-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              Pratinjau
+              {t.lessonPlan.preview}
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('history')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                activeTab === 'history' 
+              className={`px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                activeTab === 'history'
                 ? 'bg-white text-slate-800 dark:bg-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
               }`}
             >
               <History className="w-3.5 h-3.5" />
-              Riwayat Saya
+              {t.lessonPlan.history}
             </button>
           </div>
 
@@ -830,7 +832,7 @@ const ModulAjarCreatorPage: React.FC = () => {
                   : 'text-brand-600 dark:text-brand-400 hover:bg-brand-100/50 dark:hover:bg-brand-950/50'
                 }`}
               >
-                Perangkat Guru
+                {t.lessonPlan.performaGuru}
               </button>
               <button
                 onClick={() => setPreviewMode('siswa')}
@@ -840,23 +842,23 @@ const ModulAjarCreatorPage: React.FC = () => {
                   : 'text-brand-600 dark:text-brand-400 hover:bg-brand-100/50 dark:hover:bg-brand-950/50'
                 }`}
               >
-                Lembar Siswa Saja
+                {t.lessonPlan.lembarSiswa}
               </button>
             </div>
           )}
           
           {activeTab === 'preview' && (
-            <div className="flex items-center gap-1">
-              <button onClick={handleCopy} disabled={!generatedDocument} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-brand-600 transition-colors disabled:opacity-50" title="Salin Teks">
+            <div className="flex items-center gap-0.5 shrink-0">
+              <button onClick={handleCopy} disabled={!generatedDocument} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-brand-600 transition-colors disabled:opacity-50" title={t.lessonPlan.copy}>
                 <Copy className="w-4 h-4" />
               </button>
-              <button onClick={handlePrint} disabled={!generatedDocument} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors disabled:opacity-50 flex items-center gap-1.5 text-xs font-medium" title="Cetak / Simpan sebagai PDF">
+              <button onClick={handlePrint} disabled={!generatedDocument} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors disabled:opacity-50 flex items-center gap-1 text-xs font-medium" title={t.lessonPlan.pdf}>
                 <Printer className="w-4 h-4" />
-                <span className="hidden sm:inline">PDF</span>
+                <span className="hidden sm:inline">{t.lessonPlan.pdf}</span>
               </button>
-              <button onClick={handleExportWord} disabled={!generatedDocument} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors disabled:opacity-50 flex items-center gap-1.5 text-xs font-medium" title="Download Format Ms. Word (.doc)">
+              <button onClick={handleExportWord} disabled={!generatedDocument} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors disabled:opacity-50 flex items-center gap-1 text-xs font-medium" title={t.lessonPlan.word}>
                 <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">Word</span>
+                <span className="hidden sm:inline">{t.lessonPlan.word}</span>
               </button>
             </div>
           )}

@@ -431,7 +431,7 @@ const StudentRekapTable: React.FC<{
                                                 <td className="px-4 py-3">
                                                     <a
                                                         href={`/siswa/${row.student.id}`}
-                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all inline-flex items-center opacity-0 group-hover:opacity-100"
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/30 transition-all inline-flex items-center"
                                                         title="Lihat Detail Siswa"
                                                     >
                                                         <ArrowRight className="w-4 h-4" />

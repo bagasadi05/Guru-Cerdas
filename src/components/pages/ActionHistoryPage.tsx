@@ -655,7 +655,7 @@ const ActionHistoryPage: React.FC = () => {
                                             return (
                                                 <div
                                                     key={action.id}
-                                                    className={`group flex items-center gap-4 p-4 bg-white dark:bg-slate-800/40 border rounded-2xl hover:shadow-md transition-all ${action.canUndo
+                                                    className={`group flex flex-wrap items-center gap-3 sm:gap-4 p-4 bg-white dark:bg-slate-800/40 border rounded-2xl hover:shadow-md transition-all ${action.canUndo
                                                         ? 'border-emerald-200 dark:border-emerald-500/20'
                                                         : 'border-slate-200 dark:border-slate-700/50'
                                                         }`}
@@ -685,7 +685,7 @@ const ActionHistoryPage: React.FC = () => {
                                                     </div>
 
                                                     {/* Actions */}
-                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                    <div className="flex items-center gap-2 flex-shrink-0 sm:ml-auto">
                                                         <button type="button"
                                                             onClick={() => setViewDetailItem(action)}
                                                             className="p-2 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"

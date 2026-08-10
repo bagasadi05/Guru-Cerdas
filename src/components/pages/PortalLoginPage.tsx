@@ -142,7 +142,7 @@ const PortalLoginPage: React.FC = () => {
                 <div className="flex-1 flex flex-col justify-center max-w-xl mx-auto lg:mx-0 w-full mt-8 lg:mt-0 text-center lg:text-left">
                     <div className="mb-4 flex flex-col items-center lg:items-start">
                         <span className="hidden lg:block text-6xl font-serif text-primary-500 leading-none mb-2">"</span>
-                        <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-white mb-4 lg:mb-6 leading-tight font-display">
+                        <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-white mb-4 lg:mb-6 leading-tight font-display-serif">
                             Setiap anak adalah<br/>
                             <span className="text-primary-500">bintang</span> yang unik,<br/>
                             bersinar dengan <span className="text-primary-500">cahayanya.</span>
@@ -158,7 +158,7 @@ const PortalLoginPage: React.FC = () => {
                             <div className="p-2 sm:p-3 bg-primary-950/50 rounded-xl shrink-0">
                                 <LightbulbIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary-500" />
                             </div>
-                            <p className="text-[10px] sm:text-xs text-gray-400 leading-relaxed">
+                            <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
                                 Kolaborasi guru dan orang tua adalah<br className="hidden sm:block"/>
                                 kunci keberhasilan masa depan anak.
                             </p>
@@ -182,7 +182,7 @@ const PortalLoginPage: React.FC = () => {
 
                         <img src="/logo_sekolah.png" alt="Logo MI Al Irsyad" className="w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-6 object-contain drop-shadow-md relative z-10" />
                         
-                        <h1 className="text-2xl font-bold text-center text-white mb-2 font-display relative z-10">
+                        <h1 className="text-2xl font-bold text-center text-white mb-2 font-display-serif relative z-10">
                             Portal <span className="text-primary-500">Siswa & Orang Tua</span>
                         </h1>
                         <p className="text-gray-400 text-sm text-center mb-8 relative z-10">
