@@ -17,6 +17,7 @@ import {
     UserCheck,
     GraduationCap,
     Library,
+    Bell,
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { softDelete } from '../../services/SoftDeleteService';
@@ -42,6 +43,7 @@ import {
     StudentsMasterDataTab,
     ClassesMasterDataTab,
     ModulAjarBankTab,
+    WhatsAppNotificationTab,
 } from './admin';
 
 const USER_PAGE_SIZE = 20;
@@ -629,6 +631,7 @@ const AdminPage: React.FC = () => {
         { id: 'activity', label: 'Aktivitas', icon: <Activity size={18} /> },
         { id: 'system', label: 'Sistem', icon: <Settings size={18} /> },
         { id: 'modul-ajar-bank', label: 'Bank Modul Ajar', icon: <Library size={18} /> },
+        { id: 'notifications', label: 'WhatsApp', icon: <Bell size={18} /> },
     ];
 
     const _userPageCount = Math.max(1, Math.ceil(userTotal / USER_PAGE_SIZE));
@@ -799,6 +802,10 @@ const AdminPage: React.FC = () => {
 
                 {activeTab === 'modul-ajar-bank' && (
                     <ModulAjarBankTab />
+                )}
+
+                {activeTab === 'notifications' && (
+                    <WhatsAppNotificationTab />
                 )}
 
                 {/* Error Toast */}

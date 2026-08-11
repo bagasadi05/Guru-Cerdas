@@ -16,6 +16,9 @@ import { violationList } from '../../../../services/violations.data';
 import { sanitizeFilename } from '../../../../services/securityEnhanced';
 import { InputMode, ClassRow, StudentRow, AcademicRecordRow, ReviewDataItem } from '../types';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../../utils/academicRecordUtils';
+import { sendInputNotification } from '../../../../services/fonnteService';
+
+const FONNTE_STORAGE_KEY = 'guru_cerdas_fonnte_config';
 
 const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
 
@@ -87,8 +90,71 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     const [exportProgress, setExportProgress] = useState('0%');
     const [confirmDeleteModal, setConfirmDeleteModal] = useState<{ isOpen: boolean; count: number }>({ isOpen: false, count: 0 });
     const [confirmDeleteText, setConfirmDeleteText] = useState('');
+    const [violationDuplicateList, setViolationDuplicateList] = useState<{
+        student_id: string;
+        student_name: string;
+        recorded_by_name: string | null;
+        description: string;
+        date: string;
+        points: number;
+    }[]>([]);
+    const [showViolationDuplicateDialog, setShowViolationDuplicateDialog] = useState(false);
 
     const selectedViolation = violationList.find(v => v.code === selectedViolationCode) || null;
+
+    const checkViolationDuplicates = async (onProceed: () => void) => {
+        if (!selectedViolation || selectedStudentIds.size === 0 || !user) {
+            onProceed();
+            return;
+        }
+        const studentIds = Array.from(selectedStudentIds);
+        let query = supabase
+            .from('violations')
+            .select('id, student_id, user_id')
+            .in('student_id', studentIds)
+            .eq('date', violationDate)
+            .eq('description', selectedViolation.description)
+            .gte('created_at', getDuplicateGuardWindowIso())
+            .is('deleted_at', null);
+
+        query = activeSemester?.id
+            ? query.eq('semester_id', activeSemester.id)
+            : query.is('semester_id', null);
+
+        const { data: existingRows } = await query;
+        if (!existingRows || existingRows.length === 0) {
+            onProceed();
+            return;
+        }
+
+        // Filter out self-duplicates (already handled silently by the mutation)
+        const otherTeacherDuplicates = existingRows.filter((r: any) => r.user_id !== user.id);
+        if (otherTeacherDuplicates.length === 0) {
+            onProceed();
+            return;
+        }
+
+        // Get recorder names
+        const otherUserIds = Array.from(new Set(otherTeacherDuplicates.map((r: any) => r.user_id)));
+        const { data: roleRows } = await supabase
+            .from('user_roles')
+            .select('user_id, full_name')
+            .in('user_id', otherUserIds);
+        const nameMap: Record<string, string> = {};
+        (roleRows || []).forEach((r: any) => { if (r.user_id) nameMap[r.user_id] = r.full_name || ''; });
+
+        const duplicates = otherTeacherDuplicates.map((r: any) => ({
+            student_id: r.student_id,
+            student_name: studentsData?.find(s => s.id === r.student_id)?.name || 'Unknown',
+            recorded_by_name: nameMap[r.user_id] || null,
+            description: selectedViolation.description,
+            date: violationDate,
+            points: selectedViolation.points,
+        }));
+
+        setViolationDuplicateList(duplicates);
+        setShowViolationDuplicateDialog(true);
+    };
 
     const { mutate: submitData, isPending: isSubmitting } = useMutation({
         mutationFn: async () => {
@@ -187,13 +253,10 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     if (!bypassDuplicateGuard) {
                         let existingViolationQuery = supabase
                             .from('violations')
-                            .select('id, student_id')
+                            .select('id, student_id, user_id')
                             .in('student_id', studentIds)
-                            .eq('user_id', user.id)
                             .eq('date', violationDate)
                             .eq('description', selectedViolation.description)
-                            .eq('points', selectedViolation.points)
-                            .eq('type', selectedViolation.code)
                             .gte('created_at', getDuplicateGuardWindowIso())
                             .is('deleted_at', null);
 
@@ -201,10 +264,12 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                             ? existingViolationQuery.eq('semester_id', activeSemester.id)
                             : existingViolationQuery.is('semester_id', null);
 
-                        const { data: existingViolationRows, error: existingViolationError } = await existingViolationQuery;
+                        const { data: existingRows, error: existingViolationError } = await existingViolationQuery;
                         if (existingViolationError) throw existingViolationError;
 
-                        duplicateStudentIds = new Set((existingViolationRows || []).map((row) => row.student_id));
+                        // Silent-skip hanya duplikat dari guru yang sama
+                        const selfDuplicates = (existingRows || []).filter((r: any) => r.user_id === user.id);
+                        duplicateStudentIds = new Set(selfDuplicates.map((r: any) => r.student_id));
                     }
                     const records: Database['public']['Tables']['violations']['Insert'][] = studentIds
                         .filter((student_id) => !duplicateStudentIds.has(student_id))
@@ -248,6 +313,37 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             queryClient.invalidateQueries({ queryKey: ['existingViolations'] });
             isScoresDirtyRef.current = false;
             clearSubjectGradeDraft();
+
+            // Fire-and-forget WhatsApp notification to admin
+            try {
+                const raw = localStorage.getItem(FONNTE_STORAGE_KEY);
+                if (raw) {
+                    const fonnteConfig = JSON.parse(raw);
+                    if (fonnteConfig?.enabled && fonnteConfig?.adminPhone) {
+                        const shouldNotify = mode != null && (
+                            (mode === 'quiz' && fonnteConfig.notifyQuiz) ||
+                            (mode === 'subject_grade' && fonnteConfig.notifyGrade) ||
+                            (mode === 'violation' && fonnteConfig.notifyViolation)
+                        );
+                        if (shouldNotify) {
+                            const classObj = classes?.find(c => c.id === selectedClass);
+                            sendInputNotification(
+                                {
+                                    mode: mode!,
+                                    teacherName: user?.name || 'Guru',
+                                    className: classObj?.name || '',
+                                    studentCount: selectedStudentIds.size,
+                                    quizName: quizInfo.name,
+                                    subject: mode === 'subject_grade' ? subjectGradeInfo.subject : quizInfo.subject,
+                                    assessmentName: subjectGradeInfo.assessment_name,
+                                    violationDesc: selectedViolation?.description || '',
+                                },
+                                fonnteConfig.adminPhone,
+                            ).catch(() => {}); // silent fail
+                        }
+                    }
+                }
+            } catch {} // silent fail
         },
         onError: (err: Error) => toast.error(`Gagal menyimpan: ${err.message}`),
     });
@@ -324,7 +420,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
               { "studentName": "Nama Siswa", "score": "85" }
             ]`;
             const prompt = `Daftar Siswa: ${JSON.stringify(studentNames)}\n\nTeks Nilai untuk Diproses:\n${pasteData}`;
-            const parsedResults = await generateGeminiJson<ReviewDataItem[]>(prompt, systemInstruction);
+            const parsedResults = await generateGeminiJson<ReviewDataItem[]>(prompt, systemInstruction, 'parse-values');
             if (!Array.isArray(parsedResults)) throw new Error('Format respon AI tidak valid (bukan list).');
             const newScores: Record<string, string> = {}; let matchedCount = 0;
             const unmatchedNames: string[] = [];
@@ -532,6 +628,8 @@ Format JSON yang diharapkan:
         confirmDeleteModal, setConfirmDeleteModal,
         confirmDeleteText, setConfirmDeleteText,
         handleConfirmDelete, handleDeleteSelected, handleSubmit,
+        violationDuplicateList, showViolationDuplicateDialog,
+        setShowViolationDuplicateDialog, checkViolationDuplicates,
         isOnline,
     };
 }
