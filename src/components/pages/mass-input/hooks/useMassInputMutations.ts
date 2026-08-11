@@ -17,8 +17,7 @@ import { sanitizeFilename } from '../../../../services/securityEnhanced';
 import { InputMode, ClassRow, StudentRow, AcademicRecordRow, ReviewDataItem } from '../types';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../../utils/academicRecordUtils';
 import { sendInputNotification } from '../../../../services/fonnteService';
-
-const FONNTE_STORAGE_KEY = 'guru_cerdas_fonnte_config';
+import { fetchFonnteConfig } from '../../../../hooks/useFonnteConfig';
 
 const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
 
@@ -315,16 +314,13 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             clearSubjectGradeDraft();
 
             // Fire-and-forget WhatsApp notification to admin
-            try {
-                const raw = localStorage.getItem(FONNTE_STORAGE_KEY);
-                if (raw) {
-                    const fonnteConfig = JSON.parse(raw);
+            if (mode != null) {
+                fetchFonnteConfig().then(fonnteConfig => {
                     if (fonnteConfig?.enabled && fonnteConfig?.adminPhone) {
-                        const shouldNotify = mode != null && (
+                        const shouldNotify =
                             (mode === 'quiz' && fonnteConfig.notifyQuiz) ||
                             (mode === 'subject_grade' && fonnteConfig.notifyGrade) ||
-                            (mode === 'violation' && fonnteConfig.notifyViolation)
-                        );
+                            (mode === 'violation' && fonnteConfig.notifyViolation);
                         if (shouldNotify) {
                             const classObj = classes?.find(c => c.id === selectedClass);
                             sendInputNotification(
@@ -342,8 +338,8 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                             ).catch(() => {}); // silent fail
                         }
                     }
-                }
-            } catch {} // silent fail
+                }).catch(() => {}); // silent fail
+            }
         },
         onError: (err: Error) => toast.error(`Gagal menyimpan: ${err.message}`),
     });

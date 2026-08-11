@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
+import { supabase } from '../services/supabase';
 import { sendWhatsApp } from '../services/fonnteService';
 import { useToast } from './useToast';
 
@@ -20,36 +21,89 @@ const DEFAULT_CONFIG: FonnteConfig = {
   notifyViolation: true,
 };
 
-function loadConfig(): FonnteConfig {
+/**
+ * Fetch Fonnte config from Supabase — usable by ANY authenticated user
+ * (even non-admin) so that notification dispatch works from teacher browsers.
+ */
+export async function fetchFonnteConfig(): Promise<FonnteConfig> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_CONFIG;
-    return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
+    const { data: adminRoles, error: roleError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'admin')
+      .limit(1);
+
+    if (roleError || !adminRoles || adminRoles.length === 0) {
+      return DEFAULT_CONFIG;
+    }
+
+    const adminUserId = adminRoles[0].user_id;
+
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('fonnte_config')
+      .eq('user_id', adminUserId)
+      .maybeSingle();
+
+    if (error || !data) return DEFAULT_CONFIG;
+
+    const raw = (data as any).fonnte_config;
+    if (!raw || typeof raw !== 'object') return DEFAULT_CONFIG;
+
+    return {
+      adminPhone: raw.adminPhone || '',
+      enabled: raw.enabled === true,
+      notifyQuiz: raw.notifyQuiz !== false,
+      notifyGrade: raw.notifyGrade !== false,
+      notifyViolation: raw.notifyViolation !== false,
+    };
   } catch {
     return DEFAULT_CONFIG;
   }
 }
 
-function saveConfig(config: FonnteConfig): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-}
-
 export function useFonnteConfig() {
   const { user } = useAuth();
   const toast = useToast();
-  const [config, setConfig] = useState<FonnteConfig>(loadConfig);
+  const [config, setConfig] = useState<FonnteConfig>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? { ...DEFAULT_CONFIG, ...JSON.parse(raw) } : DEFAULT_CONFIG;
+    } catch {
+      return DEFAULT_CONFIG;
+    }
+  });
 
   useEffect(() => {
-    setConfig(loadConfig());
-  }, []);
+    if (!user) return;
+    fetchFonnteConfig().then(serverConfig => {
+      setConfig(prev => {
+        const merged = { ...DEFAULT_CONFIG, ...serverConfig, ...prev };
+        return merged;
+      });
+    });
+  }, [user]);
 
   const updateConfig = useCallback((partial: Partial<FonnteConfig>) => {
     setConfig(prev => {
       const next = { ...prev, ...partial };
-      saveConfig(next);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      // Also persist to Supabase so teacher browsers can read it
+      if (user) {
+        supabase
+          .from('user_settings')
+          .upsert({
+            user_id: user.id,
+            fonnte_config: next,
+            updated_at: new Date().toISOString(),
+          } as any)
+          .then(({ error }) => {
+            if (error) console.warn('Failed to sync fonnte config to Supabase', error);
+          });
+      }
       return next;
     });
-  }, []);
+  }, [user]);
 
   const sendTest = useCallback(async (testMessage?: string): Promise<boolean> => {
     if (!config.adminPhone) {
