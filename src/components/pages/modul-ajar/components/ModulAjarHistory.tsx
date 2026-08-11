@@ -1,10 +1,11 @@
 import React from 'react';
-import { Trash2, Clock, RefreshCw } from 'lucide-react';
+import { Trash2, Clock, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useTranslation } from '../../../../utils/i18n';
 
 interface ModulAjarHistoryProps {
   history: any[];
   isLoading: boolean;
+  error?: string | null;
   onRestore: (plan: any) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
 }
@@ -12,6 +13,7 @@ interface ModulAjarHistoryProps {
 export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
   history,
   isLoading,
+  error,
   onRestore,
   onDelete
 }) => {
@@ -22,6 +24,11 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
         <div className="text-center py-12 text-slate-400 flex flex-col items-center gap-2">
           <RefreshCw className="w-6 h-6 animate-spin text-brand-500" />
           {t.lessonPlan.historyLoading}
+        </div>
+      ) : error ? (
+        <div className="text-center py-16 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl text-amber-700 dark:text-amber-300 p-8">
+          <AlertTriangle className="w-12 h-12 mx-auto text-amber-400 mb-3" />
+          <p className="text-sm">{error}</p>
         </div>
       ) : history.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 p-8">

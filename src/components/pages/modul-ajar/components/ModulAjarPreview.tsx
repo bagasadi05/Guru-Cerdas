@@ -2,6 +2,7 @@ import React from 'react';
 import { MotionDiv } from '../../../ui/MotionComponents';
 import { BookOpen } from 'lucide-react';
 import { useTranslation } from '../../../../utils/i18n';
+import { sanitizeContent } from '../../../../services/securityEnhanced';
 
 interface ModulAjarPreviewProps {
   generatedDocument: string;
@@ -28,7 +29,7 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
           }}
           contentEditable
           suppressContentEditableWarning
-          dangerouslySetInnerHTML={{ __html: generatedDocument }}
+          dangerouslySetInnerHTML={{ __html: sanitizeContent(generatedDocument) }}
         />
       ) : (
         <div className="w-full max-w-4xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 rounded-lg min-h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 p-8 text-center space-y-4">

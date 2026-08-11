@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase, clearStaleAuthTokens } from '../services/supabase';
+import { clearAiCache } from '../utils/aiConfig';
 import type { User, Session, AuthResponse, UserResponse } from '@supabase/supabase-js';
 import type { Database } from '../services/database.types';
 import { getStudentAvatar } from '../utils/avatarUtils';
@@ -394,6 +395,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await disableScheduleNotifications();
       await supabase.auth.signOut();
       await clearSupabaseCache();
+      clearAiCache(); // cache AI memori jangan bocor antar-user di device yang sama
     },
     updateUser: (data) => supabase.auth.updateUser({
       password: data.password,

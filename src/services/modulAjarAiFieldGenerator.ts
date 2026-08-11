@@ -158,8 +158,8 @@ Output JSON: {"soal": "string — nomor 1-5 hanya soal, tanpa kunci jawaban", "k
 
 Output murni teks biasa. Jangan gunakan format tabel Markdown. Nomor soal hanya sebagai "1.", "2.", dst.`;
 
-  const result = await generateGeminiJson<{ soal: string }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
-  cacheToBank(ctx, { soal_evaluasi: result.soal || '' });
+  const result = await generateGeminiJson<{ soal: string; kunci?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  cacheToBank(ctx, { soal_evaluasi: result.soal || '', kunci_jawaban: result.kunci || [] });
   return result.soal || '';
 }
 

@@ -3,8 +3,6 @@ import {
   pickNextGeminiKey,
   getGeminiKeyCount,
   isCircuitAllowed,
-  recordCircuitSuccess,
-  recordCircuitFailure,
   getCachedResponse,
   setCachedResponse,
   getBackoffDelay,
@@ -26,7 +24,11 @@ import { initGroqProvider } from './groqService';
 const DIRECT_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 function isDev(): boolean {
-  return import.meta.env.DEV === true;
+  // Hanya izinkan jalur direct (API key di client) saat development lokal.
+  // Build production TIDAK PERNAH boleh memakai direct endpoint — key harus
+  // tetap di server (proxy). Guard ini mencegah VITE_GEMINI_API_KEY bocor
+  // ke bundle yang di-deploy.
+  return import.meta.env.DEV === true && !import.meta.env.PROD;
 }
 
 /** Dev-only direct-call key (VITE_* values are bundled — never use in production). */
@@ -129,7 +131,7 @@ export async function generateGeminiContent(
 ): Promise<GeminiResponse> {
   // Provider init happens eagerly; cache layer doesn't depend on Groq
   const cacheKey = buildCacheKeyForMessages(messages);
-  const cached = getCachedResponse<GeminiResponse>(cacheKey);
+  const cached = getCachedResponse<GeminiResponse>(cacheKey, `content:${taskType}`);
   if (cached) {
     logger.info('[AI] Cache HIT — returning cached response', 'AI');
     return cached;
@@ -144,7 +146,7 @@ export async function generateGeminiContent(
       aiRouter.generateContent(taskType, messages)
     );
     logger.info('[AI] Generation success', 'AI');
-    setCachedResponse(cacheKey, result, 'default');
+    setCachedResponse(cacheKey, result, 'default', `content:${taskType}`);
     return result;
   } catch (err: any) {
     logger.warn(`[AI] Generation failed: ${err.message}`, 'AI');
@@ -167,14 +169,7 @@ export class GeminiProvider implements AiProvider {
       throw new Error('Layanan Gemini sedang dalam masa pemulihan.');
     }
 
-    try {
-      const result = await this.callWithRetry(messages, model);
-      recordCircuitSuccess('gemini');
-      return result;
-    } catch (err: any) {
-      recordCircuitFailure('gemini');
-      throw err;
-    }
+    return this.callWithRetry(messages, model);
   }
 
   private async callWithRetry(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
@@ -313,9 +308,10 @@ export async function generateGeminiJson<T>(
   systemInstruction?: string,
   taskType: AiTaskType = 'general'
 ): Promise<T> {
-  // Check cache first
+  // Check cache first — namespace per taskType agar prompt yang sama di
+  // konteks berbeda (modul-ajar vs insight) tidak saling menimpa.
   const cacheCategory = detectCacheCategory(prompt);
-  const cached = getCachedResponse<T>(prompt);
+  const cached = getCachedResponse<T>(prompt, `json:${taskType}`);
   if (cached) return cached;
 
   const messages: GeminiMessage[] = [];
@@ -329,7 +325,7 @@ export async function generateGeminiJson<T>(
 
   messages.push({ role: 'user', content: jsonPrompt });
 
-  const response = await generateGeminiContent(messages);
+  const response = await generateGeminiContent(messages, taskType);
   let content = getAssistantContent(response);
 
   // Robust JSON extraction:
@@ -360,7 +356,7 @@ export async function generateGeminiJson<T>(
   try {
     const parsed = JSON.parse(content) as T;
     // Cache successful parse
-    setCachedResponse(prompt, parsed, cacheCategory);
+    setCachedResponse(prompt, parsed, cacheCategory, `json:${taskType}`);
     return parsed;
   } catch (e: unknown) {
     logger.error('[AI] JSON Parse Error. Content was:', e instanceof Error ? e : 'GeminiJSON', {

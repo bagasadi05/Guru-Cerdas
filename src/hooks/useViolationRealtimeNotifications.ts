@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { useAuth } from './useAuth';
 import { useToast } from './useToast';
@@ -12,10 +12,9 @@ export const useViolationRealtimeNotifications = (studentId: string | undefined)
     const { user } = useAuth();
     const toast = useToast();
     const queryClient = useQueryClient();
-    const subscribedRef = useRef(false);
 
     useEffect(() => {
-        if (!studentId || !user?.id || subscribedRef.current) return;
+        if (!studentId || !user?.id) return;
 
         const channel = supabase
             .channel(`violations-student-${studentId}`)
@@ -66,11 +65,8 @@ export const useViolationRealtimeNotifications = (studentId: string | undefined)
             )
             .subscribe();
 
-        subscribedRef.current = true;
-
         return () => {
             supabase.removeChannel(channel);
-            subscribedRef.current = false;
         };
     }, [studentId, user?.id, toast, queryClient]);
 };

@@ -59,16 +59,22 @@ export const modulAjarAiService = {
 
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/modul-ajar-ai-worker`;
       
-      // Fire and forget (catch network/CORS error gracefully)
-      fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
+      // Trigger worker. Error TIDAK ditelan sepenuhnya: kalau gagal (network/
+      // CORS/403), log agar bisa didiagnosis. Fallback tetap polling job.
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!res.ok) {
+          console.warn('[AI Worker] Trigger worker gagal:', res.status, res.statusText);
         }
-      }).catch(() => {
-        // Edge function worker optional trigger; background worker or fallback will handle queue
-      });
+      } catch (e: any) {
+        console.warn('[AI Worker] Trigger worker network error:', e?.message || e);
+      }
     } catch {
       // Ignored
     }

@@ -129,7 +129,7 @@ export const modulAjarContentService = {
       .from('ref_boilerplate_topik')
       .select('topik')
       .ilike('mata_pelajaran', `%${normMapel}%`)
-      .eq('is_verified', true);
+      .eq('content_status', 'verified');
       
     if (!error && data && data.length > 0) {
       return Array.from(new Set(data.map(d => d.topik)));
@@ -167,10 +167,14 @@ export const modulAjarContentService = {
     // Hanya konten yang sudah di-review/verified yang boleh dipakai guru lain.
     // Draf (draft_ai/draft_manual) milik guru lain tidak boleh bocor sebagai
     // boilerplate sebelum admin meninjau (alur Bank Bersama).
-    let query = supabase.from('ref_boilerplate_topik').select('*').eq('mata_pelajaran', normMapel).eq('topik', normTopik).eq('content_status', 'verified');
-    if (fase) {
-      query = query.or(`fase.eq.${fase},fase.is.null`);
-    }
+    // Baris lama (pra-pipeline AI) hanya punya is_verified=true tanpa content_status —
+    // tangkap keduanya agar konten verified tidak "hilang" dari guru.
+    let query = supabase
+      .from('ref_boilerplate_topik')
+      .select('*')
+      .eq('mata_pelajaran', normMapel)
+      .eq('topik', normTopik)
+      .or(`content_status.eq.verified,and(is_verified.eq.true,content_status.is.null)${fase ? `,fase.eq.${fase},fase.is.null` : ''}`);
 
     // Cek error! Query yang gagal (RLS/network/kolom hilang) TIDAK boleh
     // disamakan dengan "bank kosong" — nanti UI menyesatkan guru.
@@ -185,10 +189,12 @@ export const modulAjarContentService = {
     }
 
     // Fallback ilike
-    let fallbackQuery = supabase.from('ref_boilerplate_topik').select('*').ilike('mata_pelajaran', `%${normMapel}%`).ilike('topik', `%${normTopik}%`).eq('content_status', 'verified');
-    if (fase) {
-      fallbackQuery = fallbackQuery.or(`fase.eq.${fase},fase.is.null`);
-    }
+    let fallbackQuery = supabase
+      .from('ref_boilerplate_topik')
+      .select('*')
+      .ilike('mata_pelajaran', `%${normMapel}%`)
+      .ilike('topik', `%${normTopik}%`)
+      .or(`content_status.eq.verified,and(is_verified.eq.true,content_status.is.null)${fase ? `,fase.eq.${fase},fase.is.null` : ''}`);
 
     const { data: partialMatches, error: partialError } = await fallbackQuery;
     if (partialError) {

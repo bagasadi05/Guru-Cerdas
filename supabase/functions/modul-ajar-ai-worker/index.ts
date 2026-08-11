@@ -35,6 +35,22 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers: corsHeaders });
   }
 
+  // Hanya guru/admin yang boleh memicu worker — mencegah role authenticated
+  // (siswa/orang tua) memakai kuota Gemini via endpoint ini.
+  const { data: roleData, error: roleError } = await userClient
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .in('role', ['admin', 'kepala_sekolah', 'teacher'])
+    .maybeSingle();
+
+  if (roleError || !roleData) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden: hanya guru/admin yang dapat memicu worker' }),
+      { status: 403, headers: corsHeaders }
+    );
+  }
+
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -62,7 +78,13 @@ async function processQueue(supabase: SupabaseClient) {
   const providerRouter = new ProviderRouter();
   const jsonSchema = zodToJsonSchema(ModulAjarFullSchema, "ModulAjarFullSchema");
 
-  while (true) {
+  // Batasi batch per invokasi — mencegah worker dibunuh platform di tengah
+  // antrean panjang (job terakhir tertinggal status processing selamanya).
+  const MAX_JOBS_PER_INVOCATION = 5;
+  let jobsProcessed = 0;
+
+  while (jobsProcessed < MAX_JOBS_PER_INVOCATION) {
+    jobsProcessed++;
     const { data: job, error } = await supabase.rpc('claim_next_modul_ajar_ai_job', {
       p_worker_id: WORKER_ID
     });
@@ -167,7 +189,7 @@ ATURAN WAJIB:
         const latency = Date.now() - startTime;
 
         // Log successful attempt
-        const { data: attempt } = await supabase.from('ai_generation_attempts').insert({
+        const { data: attempt, error: attemptError } = await supabase.from('ai_generation_attempts').insert({
           job_id: job.id,
           attempt_number: job.attempt_count,
           provider: result.provider,
@@ -179,6 +201,12 @@ ATURAN WAJIB:
           cached_tokens: result.cachedTokens,
           provider_request_id: result.requestId
         }).select('id').single();
+
+        if (attemptError) {
+          // Unique violation saat retry (attempt_number bentrok) — jangan ditelan:
+          // data attempt tidak bisa dipercaya kalau insert gagal diam-diam.
+          console.warn(`[Worker ${WORKER_ID}] Gagal mencatat attempt sukses:`, attemptError.message);
+        }
 
         attemptRecord = attempt;
 
@@ -252,7 +280,7 @@ ATURAN WAJIB:
            errorCode = 'internal_worker_error';
         }
 
-        await supabase.from('ai_generation_attempts').insert({
+        const { error: attemptFailError } = await supabase.from('ai_generation_attempts').insert({
           job_id: job.id,
           attempt_number: job.attempt_count,
           provider: 'unknown',
@@ -261,6 +289,10 @@ ATURAN WAJIB:
           error_category: errorCode,
           error_detail: aiError.message
         });
+
+        if (attemptFailError) {
+          console.warn(`[Worker ${WORKER_ID}] Gagal mencatat attempt gagal:`, attemptFailError.message);
+        }
 
         await handleJobFailure(supabase, job, isTransient, errorCode, aiError.message);
       }
@@ -272,6 +304,8 @@ ATURAN WAJIB:
 }
 
 async function completeJob(supabase: SupabaseClient, jobId: string, resultJson: any) {
+  // Guard: jangan menimpa job yang sudah di-cancel oleh admin saat worker
+  // masih memproses (cancel/retry balapan dengan worker).
   const { error } = await supabase
     .from('ai_content_jobs')
     .update({
@@ -282,7 +316,8 @@ async function completeJob(supabase: SupabaseClient, jobId: string, resultJson: 
       locked_by: null,
       locked_at: null
     })
-    .eq('id', jobId);
+    .eq('id', jobId)
+    .in('status', ['processing', 'pending']);
 
   if (error) {
     // Jangan biarkan job "selesai" di log padahal update DB gagal —
@@ -293,7 +328,9 @@ async function completeJob(supabase: SupabaseClient, jobId: string, resultJson: 
 
 async function handleJobFailure(supabase: SupabaseClient, job: any, isTransient: boolean, errorCode: string, errorDetail: string) {
   const atMaxAttempts = job.attempt_count >= job.max_attempts;
-  
+
+  // Guard: jangan menimpa status job yang sudah di-cancel oleh admin.
+
   if (isTransient && !atMaxAttempts) {
     const { error } = await supabase
       .from('ai_content_jobs')
@@ -306,7 +343,8 @@ async function handleJobFailure(supabase: SupabaseClient, job: any, isTransient:
         locked_at: null,
         updated_at: new Date().toISOString()
       })
-      .eq('id', job.id);
+      .eq('id', job.id)
+      .in('status', ['processing', 'pending', 'retry_wait']);
 
     if (error) {
       console.error(`[Worker] Gagal menandai job ${job.id} retry_wait:`, error.message);
@@ -322,7 +360,8 @@ async function handleJobFailure(supabase: SupabaseClient, job: any, isTransient:
         locked_at: null,
         updated_at: new Date().toISOString()
       })
-      .eq('id', job.id);
+      .eq('id', job.id)
+      .in('status', ['processing', 'pending', 'retry_wait']);
 
     if (error) {
       console.error(`[Worker] Gagal menandai job ${job.id} failed:`, error.message);

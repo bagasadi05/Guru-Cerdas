@@ -5,6 +5,7 @@ import { useTranslation } from '../../../utils/i18n';
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
 import { FormState } from './types';
+import type { Json } from '../../../services/database.types';
 import { useModulAjarAiJob } from './hooks/useModulAjarAiJob';
 import { buildHtmlTemplate, extractStudentHtml } from './utils/template';
 import { resolveLearningSyntax } from './utils/syntaxResolver';
@@ -84,6 +85,10 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const previewRef = useRef<HTMLDivElement>(null);
   const lastLoadedTopicRef = useRef<string>('');
+  // Sequence number untuk mencegah stale-write saat ganti topik cepat (A→B).
+  const boilerplateLoadSeqRef = useRef(0);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync teacher name from profile whenever user.name changes
   useEffect(() => {
@@ -96,10 +101,13 @@ const ModulAjarCreatorPage: React.FC = () => {
     if (formState.generationMethod === 'Manual' && formState.topik && formState.mataPelajaran) {
       if (formState.topik !== lastLoadedTopicRef.current) {
         lastLoadedTopicRef.current = formState.topik;
+        const loadSeq = ++boilerplateLoadSeqRef.current;
         
         const loadBoilerplate = async () => {
           try {
             const bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
+            // Abaikan hasil fetch lama — topik sudah berubah (stale-write guard).
+            if (loadSeq !== boilerplateLoadSeqRef.current) return;
             if (bp) {
               setBoilerplateMissingBanner(null);
               setFormState(prev => ({
@@ -121,6 +129,7 @@ const ModulAjarCreatorPage: React.FC = () => {
             }
           } catch (err: any) {
             // Query bank gagal (RLS/network) — jangan disamakan dengan "bank kosong".
+            if (loadSeq !== boilerplateLoadSeqRef.current) return;
             console.error('[Modul Ajar] Gagal memuat bank konten:', err);
             setBoilerplateMissingBanner(`⚠️ Gagal memuat bank konten: ${err.message || 'kesalahan tidak diketahui'}`);
           }
@@ -128,6 +137,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         loadBoilerplate();
       }
     } else {
+      boilerplateLoadSeqRef.current++; // invalidasi fetch yang sedang berjalan
       setBoilerplateMissingBanner(null);
     }
   }, [formState.generationMethod, formState.topik, formState.mataPelajaran, formState.kelas, formState.fase]);
@@ -135,8 +145,12 @@ const ModulAjarCreatorPage: React.FC = () => {
   useEffect(() => {
     // Convert school logo to base64 for reliable rendering/Word compatibility
     fetch('/logo_sekolah.png')
-      .then(res => res.blob())
+      .then(res => {
+        if (!res.ok) return null; // logo tidak tersedia — pakai placeholder
+        return res.blob();
+      })
       .then(blob => {
+        if (!blob) return;
         const reader = new FileReader();
         reader.onloadend = () => {
           setLogoBase64(reader.result as string);
@@ -170,6 +184,13 @@ const ModulAjarCreatorPage: React.FC = () => {
       alert(t.lessonPlan.validateSubject);
       return;
     }
+    if (!user) {
+      alert(t.lessonPlan.validateSubject); // sesi tidak valid — minta login ulang
+      return;
+    }
+    if (isSubmitting) return; // anti double-submit
+    setIsSubmitting(true);
+    setAiCacheWarning(null);
 
     try {
       let bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
@@ -200,12 +221,13 @@ const ModulAjarCreatorPage: React.FC = () => {
             pengayaan: aiContent.pengayaan,
             remedial: aiContent.remedial,
             daftar_pustaka: aiContent.daftarPustaka,
-            is_verified: true,
+            is_verified: false, // konten AI belum direview admin
             sumber_regulasi: null,
           };
         } catch (aiErr: any) {
           console.warn('[AI Fallback] AI generation failed, continuing with template:', aiErr.message);
-          // Continue with generic template if AI fails
+          // Beri tahu guru kalau AI gagal — jangan biarkan diam-diam jadi template generik.
+          setAiCacheWarning('AI gagal menghasilkan konten. Modul dibuat dengan template generik — periksa koneksi/kuota AI lalu coba lagi.');
         } finally {
           setIsAiGenerating(false);
         }
@@ -316,20 +338,28 @@ const ModulAjarCreatorPage: React.FC = () => {
         components: {
           target: formState.targetPeserta,
           cp: formState.capaianPembelajaran,
+          kompetensiAwal: formState.kompetensiAwal,
+          saranaPrasarana: formState.saranaPrasarana,
           profil: formState.profilPelajar,
           waktu: { pertemuan: formState.jumlahPertemuan, jp: formState.jpPerPertemuan, durasi: formState.durasiPerJp },
           model: formState.modelPembelajaran,
           metode: formState.metodePembelajaran,
           alokasi: { pendahuluan: formState.alokasiPendahuluan, inti: formState.alokasiInti, penutup: formState.alokasiPenutup },
-          rubrik: formState.rubrikAsesmen as any,
+          rubrik: formState.rubrikAsesmen.map(r => ({ ...r })) as unknown as Json[],
           temaKbc: formState.temaKbc,
           materiInsersi: formState.materiInsersi,
+          isKbcIntegrated: formState.isKbcIntegrated,
+          modelPembelajaranKbc: formState.modelPembelajaranKbc,
           pendekatanPembelajaran: formState.pendekatanPembelajaran,
           teknikPembelajaran: formState.teknikPembelajaran,
-          selectedModelId: formState.selectedModelId
+          selectedModelId: formState.selectedModelId,
+          tujuanPembelajaran: tujuanPembelajaranList,
+          pertanyaanPemantik: pertanyaanPemantikList,
+          lkpdTugas: lkpdText,
+          soalEvaluasi: evaluasiText
         },
         generated_content: htmlTemplate
-      } as any);
+      });
 
       if (insertError) {
         console.error('Gagal menyimpan modul ajar ke database:', insertError);
@@ -352,10 +382,13 @@ const ModulAjarCreatorPage: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       alert(t.lessonPlan.saveFailed.replace('{message}', err.message));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const renderPrivateDraftAiModulAjar = async (aiOutput: any) => {
+    if (!user) return; // sesi tidak valid — jangan lanjut insert
     const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
 
     // Gunakan AI-generated skenario array — biarkan template rich-render via intiToHtml()
@@ -409,20 +442,28 @@ const ModulAjarCreatorPage: React.FC = () => {
       components: {
         target: formState.targetPeserta,
         cp: formState.capaianPembelajaran,
+        kompetensiAwal: formState.kompetensiAwal,
+        saranaPrasarana: formState.saranaPrasarana,
         profil: formState.profilPelajar,
         waktu: { pertemuan: formState.jumlahPertemuan, jp: formState.jpPerPertemuan, durasi: formState.durasiPerJp },
         model: formState.modelPembelajaran,
         metode: formState.metodePembelajaran,
         alokasi: { pendahuluan: formState.alokasiPendahuluan, inti: formState.alokasiInti, penutup: formState.alokasiPenutup },
-        rubrik: formState.rubrikAsesmen as any,
+        rubrik: formState.rubrikAsesmen.map(r => ({ ...r })) as unknown as Json[],
         temaKbc: formState.temaKbc,
         materiInsersi: formState.materiInsersi,
+        isKbcIntegrated: formState.isKbcIntegrated,
+        modelPembelajaranKbc: formState.modelPembelajaranKbc,
         pendekatanPembelajaran: formState.pendekatanPembelajaran,
         teknikPembelajaran: formState.teknikPembelajaran,
-        selectedModelId: formState.selectedModelId
+        selectedModelId: formState.selectedModelId,
+        tujuanPembelajaran: Array.isArray(draftData.tujuanPembelajaran) ? draftData.tujuanPembelajaran : (draftData.tujuanPembelajaran || []),
+        pertanyaanPemantik: Array.isArray(draftData.pertanyaanPemantik) ? draftData.pertanyaanPemantik : (draftData.pertanyaanPemantik || []),
+        lkpdTugas: draftData.lkpdTugas || '',
+        soalEvaluasi: draftData.soalEvaluasi || ''
       },
       generated_content: htmlTemplate
-    } as any);
+    });
 
     if (insertError) {
       console.error('Gagal menyimpan modul ajar AI ke database:', insertError);
@@ -441,10 +482,17 @@ const ModulAjarCreatorPage: React.FC = () => {
   };
 
   const handleGenerate = () => {
-    // Both AI and Manual modes use the unified generator.
-    // AI fallback is automatically triggered inside generateManualModulAjar
-    // when the topic is not found in the database.
-    generateManualModulAjar();
+    if (!formState.mataPelajaran || !formState.topik) {
+      alert(t.lessonPlan.validateSubject);
+      return;
+    }
+    // Mode AI: pakai antrean server (polling via useModulAjarAiJob).
+    // Mode manual: generator langsung (dengan AI fallback bila boilerplate kosong).
+    if (isAiEnabled) {
+      queueHookResult.startJob();
+    } else {
+      generateManualModulAjar();
+    }
   };
 
   /** AI per-field assistant — generate konten untuk satu field saja */
@@ -499,12 +547,20 @@ const ModulAjarCreatorPage: React.FC = () => {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-      
-      if (data && !error) {
+
+      if (error) {
+        // Jangan samakan "gagal load" dengan "riwayat kosong".
+        console.error('Failed to load history:', error);
+        setHistoryError(`Gagal memuat riwayat: ${error.message}`);
+        setHistory([]);
+      } else if (data) {
         setHistory(data);
+        setHistoryError(null);
       }
     } catch (e) {
       console.error('Failed to load history:', e);
+      setHistoryError('Gagal memuat riwayat. Periksa koneksi lalu coba lagi.');
+      setHistory([]);
     } finally {
       setIsLoadingHistory(false);
     }
@@ -601,10 +657,15 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!previewRef.current) return;
-    navigator.clipboard.writeText(previewRef.current.innerText);
-    alert(t.lessonPlan.copySuccess);
+    try {
+      await navigator.clipboard.writeText(previewRef.current.innerText);
+      alert(t.lessonPlan.copySuccess);
+    } catch (e) {
+      console.error('Gagal menyalin ke clipboard:', e);
+      alert('Gagal menyalin. Coba lagi atau gunakan Ctrl+C.');
+    }
   };
 
   const handlePrint = () => {
@@ -660,9 +721,11 @@ const ModulAjarCreatorPage: React.FC = () => {
     printWindow.document.write('</body></html>');
     printWindow.document.close();
     printWindow.focus();
+    // Jangan close paksa setelah print — biarkan user menutup sendiri;
+    // gunakan onafterprint agar tidak menutup saat dialog print dibatalkan.
+    printWindow.onafterprint = () => printWindow.close();
     setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
+      try { printWindow.print(); } catch (e) { console.error('Gagal mencetak:', e); }
     }, 500);
   };
 
@@ -685,7 +748,9 @@ const ModulAjarCreatorPage: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Revoke setelah browser sempat memulai download — revoke sinkron bisa
+    // menggagalkan unduhan di beberapa browser.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const deleteHistoryItem = async (id: string, e: React.MouseEvent) => {
@@ -715,7 +780,7 @@ const ModulAjarCreatorPage: React.FC = () => {
       fase: plan.identity?.fase || 'A',
       mataPelajaran: plan.identity?.mapel || '',
       topik: plan.identity?.topik || '',
-      tahunAjaran: plan.identity?.tahun || '2023/2024',
+      tahunAjaran: plan.identity?.tahun || '',
       semester: plan.identity?.semester || 'Ganjil',
       guru: plan.identity?.guru || user?.name || '',
       targetPeserta: plan.components?.target || 'Reguler/Tipikal (Peserta didik umum, tidak ada kesulitan belajar)',
@@ -731,10 +796,16 @@ const ModulAjarCreatorPage: React.FC = () => {
       teknikPembelajaran: plan.components?.teknikPembelajaran || '',
       selectedModelId: plan.components?.selectedModelId || undefined,
       metodePembelajaran: plan.components?.metode || [],
-      manualTujuanPembelajaran: '',
-      manualPertanyaanPemantik: '',
-      manualLkpdTugas: '',
-      manualSoalEvaluasi: '',
+      // Isi manual* dari components bila tersimpan (jangan reset ke kosong),
+      // supaya setelah restore guru tidak perlu mengisi ulang dari nol.
+      manualTujuanPembelajaran: Array.isArray(plan.components?.tujuanPembelajaran)
+        ? plan.components.tujuanPembelajaran.join('\n')
+        : (plan.components?.tujuanPembelajaran || ''),
+      manualPertanyaanPemantik: Array.isArray(plan.components?.pertanyaanPemantik)
+        ? plan.components.pertanyaanPemantik.join('\n')
+        : (plan.components?.pertanyaanPemantik || ''),
+      manualLkpdTugas: plan.components?.lkpdTugas || '',
+      manualSoalEvaluasi: plan.components?.soalEvaluasi || '',
       alokasiPendahuluan: plan.components?.alokasi?.pendahuluan || 10,
       alokasiInti: plan.components?.alokasi?.inti || 50,
       alokasiPenutup: plan.components?.alokasi?.penutup || 10,
@@ -865,7 +936,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         </div>
 
         {/* Content Viewer */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-slate-200/50 dark:bg-slate-950/50">
+        <div className="relative flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-slate-200/50 dark:bg-slate-950/50">
           
           {activeTab === 'preview' ? (
             <>
@@ -937,6 +1008,7 @@ const ModulAjarCreatorPage: React.FC = () => {
             <ModulAjarHistory
               history={history}
               isLoading={isLoadingHistory}
+              error={historyError}
               onRestore={restoreParameters}
               onDelete={deleteHistoryItem}
             />

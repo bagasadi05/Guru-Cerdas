@@ -163,24 +163,20 @@ const CACHE_TTL = {
 type CacheCategory = keyof typeof CACHE_TTL;
 
 /**
- * Generate cache key dari prompt.
+ * Generate cache key dari prompt + namespace (taskType/provider).
+ * Dipakai sebagai Map key langsung (string prompt penuh) — Map sudah
+ * menangani hash secara aman, jadi tidak perlu hash 32-bit sendiri yang
+ * rawan kolisi lintas prompt panjang.
  */
-export function buildCacheKey(prompt: string): string {
-  // Hash sederhana — cukup untuk mencegah duplikasi prompt identik
-  let hash = 0;
-  for (let i = 0; i < prompt.length; i++) {
-    const char = prompt.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return `ai_cache_${hash}`;
+export function buildCacheKey(prompt: string, namespace: string = 'default'): string {
+  return `${namespace}::${prompt}`;
 }
 
 /**
  * Coba ambil dari cache. Return undefined jika miss atau expired.
  */
-export function getCachedResponse<T>(prompt: string): T | undefined {
-  const key = buildCacheKey(prompt);
+export function getCachedResponse<T>(prompt: string, namespace: string = 'default'): T | undefined {
+  const key = buildCacheKey(prompt, namespace);
   const entry = responseCache.get(key);
 
   if (!entry) return undefined;
@@ -198,9 +194,10 @@ export function getCachedResponse<T>(prompt: string): T | undefined {
 export function setCachedResponse<T>(
   prompt: string,
   data: T,
-  category: CacheCategory = 'default'
+  category: CacheCategory = 'default',
+  namespace: string = 'default'
 ): void {
-  const key = buildCacheKey(prompt);
+  const key = buildCacheKey(prompt, namespace);
   const ttl = CACHE_TTL[category];
 
   responseCache.set(key, {

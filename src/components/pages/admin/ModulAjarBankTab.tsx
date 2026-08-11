@@ -32,8 +32,8 @@ const emptyFormState: BoilerplateFormState = {
   pengayaan: '',
   remedial: '',
   daftar_pustaka: '',
-  is_verified: true,
-  content_status: 'verified',
+  is_verified: false,
+  content_status: 'draft_manual',
   sumber_regulasi: ''
 };
 
@@ -124,17 +124,19 @@ export const ModulAjarBankTab: React.FC = () => {
   const handleOpenEdit = (item: any) => {
     setEditingId(item.id);
     
-    // Map AI JSON if it's a draft_ai and it has raw JSON that hasn't been flattened yet
+    // Isi dari kolom flatten dulu (sumber kebenaran), lalu timpa dengan
+    // konten_json kalau punya nilai — jangan biarkan form kosong saat
+    // konten_json cuma {} padahal kolom flatten terisi.
     const draft = { ...item };
-    if (item.content_status === 'draft_ai' && item.konten_json) {
+    if (item.content_status === 'draft_ai' && item.konten_json && typeof item.konten_json === 'object') {
       const ai = item.konten_json;
-      draft.tujuan_pembelajaran = ai.tujuanPembelajaran || [];
-      draft.pemahaman_bermakna = ai.pemahamanBermakna || [];
-      draft.pertanyaan_pemantik = ai.pertanyaanPemantik || [];
-      draft.lkpd_tugas = ai.lkpdTugas || '';
-      draft.soal_evaluasi = ai.soalEvaluasi || '';
-      draft.pengayaan = ai.pengayaan || [];
-      draft.remedial = ai.remedial || [];
+      if (Array.isArray(ai.tujuanPembelajaran) && ai.tujuanPembelajaran.length > 0) draft.tujuan_pembelajaran = ai.tujuanPembelajaran;
+      if (Array.isArray(ai.pemahamanBermakna) && ai.pemahamanBermakna.length > 0) draft.pemahaman_bermakna = ai.pemahamanBermakna;
+      if (Array.isArray(ai.pertanyaanPemantik) && ai.pertanyaanPemantik.length > 0) draft.pertanyaan_pemantik = ai.pertanyaanPemantik;
+      if (ai.lkpdTugas) draft.lkpd_tugas = ai.lkpdTugas;
+      if (ai.soalEvaluasi) draft.soal_evaluasi = ai.soalEvaluasi;
+      if (Array.isArray(ai.pengayaan) && ai.pengayaan.length > 0) draft.pengayaan = ai.pengayaan;
+      if (Array.isArray(ai.remedial) && ai.remedial.length > 0) draft.remedial = ai.remedial;
     }
 
     setEditingItemMetadata({
@@ -183,8 +185,9 @@ export const ModulAjarBankTab: React.FC = () => {
     // Strict Publication Validation for Admin
     if (forcePublish) {
       const fullText = `${formState.tujuan_pembelajaran} ${formState.lkpd_tugas} ${formState.soal_evaluasi}`;
-      if (/\[|\{|\}|\]|todo|tbd|placeholder|isi di sini|nama sekolah/i.test(fullText)) {
-        setFormError('Gagal mempublikasikan: Konten masih mengandung placeholder atau simbol kurung [ / { / TODO.');
+      // Jangan blokir kurung [ { ] } — itu bisa notasi matematika/sains yang sah.
+      if (/todo|tbd|placeholder|isi di sini|nama sekolah|xxx|\.\.\./i.test(fullText)) {
+        setFormError('Gagal mempublikasikan: Konten masih mengandung placeholder (TODO / TBD / "isi di sini" / "nama sekolah").');
         return;
       }
     }
@@ -206,8 +209,12 @@ export const ModulAjarBankTab: React.FC = () => {
       is_verified: isVerified,
       content_status: newStatus,
       sumber_regulasi: formState.sumber_regulasi.trim() || null,
-      reviewed_by: user?.id || null,
-      reviewed_at: new Date().toISOString()
+      // reviewed_* hanya di-set saat benar-benar diterbitkan (verified),
+      // bukan saat sekadar menyimpan draft.
+      ...(newStatus === 'verified' ? {
+        reviewed_by: user?.id || null,
+        reviewed_at: new Date().toISOString()
+      } : {})
     };
 
     setSubmitting(true);
@@ -386,7 +393,7 @@ export const ModulAjarBankTab: React.FC = () => {
                     </td>
                     <td className="p-3 text-slate-600 dark:text-slate-300 font-semibold">{row.fase ? `Fase ${row.fase}` : 'Semua'}</td>
                     <td className="p-3">
-                      {row.content_status === 'verified' || row.is_verified ? (
+                      {row.content_status === 'verified' || (row.content_status == null && row.is_verified) ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
                           <CheckCircle2 className="w-3.5 h-3.5" /> Terverifikasi
                         </span>
@@ -399,6 +406,18 @@ export const ModulAjarBankTab: React.FC = () => {
                             {row.generated_by_provider || 'Auto'} • {row.generation_metadata?.latency_ms ? `${(row.generation_metadata.latency_ms/1000).toFixed(1)}s` : '-'}
                           </span>
                         </div>
+                      ) : row.content_status === 'in_review' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                          <Activity className="w-3.5 h-3.5" /> In Review
+                        </span>
+                      ) : row.content_status === 'rejected' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300">
+                          <XCircle className="w-3.5 h-3.5" /> Ditolak
+                        </span>
+                      ) : row.content_status === 'deprecated' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                          <XCircle className="w-3.5 h-3.5" /> Deprecated
+                        </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                           <XCircle className="w-3.5 h-3.5" /> Draf Manual

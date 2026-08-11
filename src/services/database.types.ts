@@ -104,72 +104,6 @@ export type Database = {
         }
         Relationships: []
       }
-      attitude_records: {
-        Row: {
-          assessment_name: string | null
-          created_at: string
-          deleted_at: string | null
-          id: string
-          notes: string | null
-          semester_id: string | null
-          social_description: string | null
-          social_predicate: string | null
-          spiritual_description: string | null
-          spiritual_predicate: string | null
-          student_id: string
-          subject: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          assessment_name?: string | null
-          created_at?: string
-          deleted_at?: string | null
-          id?: string
-          notes?: string | null
-          semester_id?: string | null
-          social_description?: string | null
-          social_predicate?: string | null
-          spiritual_description?: string | null
-          spiritual_predicate?: string | null
-          student_id: string
-          subject?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Update: {
-          assessment_name?: string | null
-          created_at?: string
-          deleted_at?: string | null
-          id?: string
-          notes?: string | null
-          semester_id?: string | null
-          social_description?: string | null
-          social_predicate?: string | null
-          spiritual_description?: string | null
-          spiritual_predicate?: string | null
-          student_id?: string
-          subject?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "attitude_records_semester_id_fkey"
-            columns: ["semester_id"]
-            isOneToOne: false
-            referencedRelation: "semesters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "attitude_records_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       action_history: {
         Row: {
           action_type: string
@@ -581,6 +515,72 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      attitude_records: {
+        Row: {
+          assessment_name: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          notes: string | null
+          semester_id: string | null
+          social_description: string | null
+          social_predicate: string | null
+          spiritual_description: string | null
+          spiritual_predicate: string | null
+          student_id: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessment_name?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          semester_id?: string | null
+          social_description?: string | null
+          social_predicate?: string | null
+          spiritual_description?: string | null
+          spiritual_predicate?: string | null
+          student_id: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          assessment_name?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          semester_id?: string | null
+          social_description?: string | null
+          social_predicate?: string | null
+          spiritual_description?: string | null
+          spiritual_predicate?: string | null
+          student_id?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attitude_records_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: false
+            referencedRelation: "semesters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attitude_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_logs: {
         Row: {
@@ -1282,6 +1282,7 @@ export type Database = {
           deleted_at: string | null
           document_type: string
           generated_content: string | null
+          generation_method: string | null
           id: string
           identity: Json
           updated_at: string | null
@@ -1294,6 +1295,7 @@ export type Database = {
           deleted_at?: string | null
           document_type: string
           generated_content?: string | null
+          generation_method?: string | null
           id?: string
           identity: Json
           updated_at?: string | null
@@ -1306,6 +1308,7 @@ export type Database = {
           deleted_at?: string | null
           document_type?: string
           generated_content?: string | null
+          generation_method?: string | null
           id?: string
           identity?: Json
           updated_at?: string | null
@@ -1455,6 +1458,44 @@ export type Database = {
           window_start?: string
         }
         Relationships: []
+      }
+      ref_bank_tp_iktp: {
+        Row: {
+          cp_id: string | null
+          created_at: string | null
+          id: string
+          iktp: Json
+          is_verified: boolean | null
+          tujuan_pembelajaran: string
+          updated_at: string | null
+        }
+        Insert: {
+          cp_id?: string | null
+          created_at?: string | null
+          id?: string
+          iktp?: Json
+          is_verified?: boolean | null
+          tujuan_pembelajaran: string
+          updated_at?: string | null
+        }
+        Update: {
+          cp_id?: string | null
+          created_at?: string | null
+          id?: string
+          iktp?: Json
+          is_verified?: boolean | null
+          tujuan_pembelajaran?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ref_bank_tp_iktp_cp_id_fkey"
+            columns: ["cp_id"]
+            isOneToOne: false
+            referencedRelation: "ref_capaian_pembelajaran"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ref_boilerplate_topik: {
         Row: {
@@ -1638,6 +1679,45 @@ export type Database = {
           sintaks_inti?: Json
           sintaks_pendahuluan?: Json
           sintaks_penutup?: Json
+        }
+        Relationships: []
+      }
+      ref_rubrik_template: {
+        Row: {
+          baik: string
+          created_at: string | null
+          cukup: string
+          id: string
+          kategori: string
+          kriteria: string
+          perlu_bimbingan: string
+          sangat_baik: string
+          updated_at: string | null
+          urutan: number
+        }
+        Insert: {
+          baik: string
+          created_at?: string | null
+          cukup: string
+          id?: string
+          kategori: string
+          kriteria: string
+          perlu_bimbingan: string
+          sangat_baik: string
+          updated_at?: string | null
+          urutan: number
+        }
+        Update: {
+          baik?: string
+          created_at?: string | null
+          cukup?: string
+          id?: string
+          kategori?: string
+          kriteria?: string
+          perlu_bimbingan?: string
+          sangat_baik?: string
+          updated_at?: string | null
+          urutan?: number
         }
         Relationships: []
       }
@@ -2417,6 +2497,7 @@ export type Database = {
         Row: {
           created_at: string | null
           deleted_at: string | null
+          fonnte_config: Json | null
           school_name: string | null
           semester_1_locked: boolean | null
           updated_at: string | null
@@ -2425,6 +2506,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           deleted_at?: string | null
+          fonnte_config?: Json | null
           school_name?: string | null
           semester_1_locked?: boolean | null
           updated_at?: string | null
@@ -2433,6 +2515,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           deleted_at?: string | null
+          fonnte_config?: Json | null
           school_name?: string | null
           semester_1_locked?: boolean | null
           updated_at?: string | null
@@ -2646,6 +2729,7 @@ export type Database = {
           sick_percentage: number
         }[]
       }
+      get_fonnte_config: { Args: never; Returns: Json }
       get_parent_subscription_status: {
         Args: {
           p_access_code: string

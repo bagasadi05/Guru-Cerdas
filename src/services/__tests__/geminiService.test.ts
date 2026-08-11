@@ -61,14 +61,14 @@ afterEach(() => {
 describe('geminiService — proxy mode', () => {
   it('posts to the proxy endpoint with the model in the body', async () => {
     const fetchMock = stubFetch(() => Promise.resolve(okGeminiResponse('{"nama":"Budi"}')));
-    vi.stubEnv('VITE_GEMINI_MODEL', 'gemini-2.0-flash');
+    vi.stubEnv('VITE_GEMINI_MODEL', 'gemini-2.5-flash');
 
     const result = await generateGeminiJson<{ nama: string }>('Buat data siswa unik-proxy-1', 'system prompt');
 
     expect(result).toEqual({ nama: 'Budi' });
     const { url, body } = lastFetchCall(fetchMock);
     expect(url).toBe('/api/gemini');
-    expect(body.model).toBe('gemini-2.0-flash');
+    expect(body.model).toBe('gemini-2.5-flash');
     expect(body.systemInstruction).toEqual({ parts: [{ text: 'system prompt' }] });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -96,17 +96,19 @@ describe('geminiService — proxy mode', () => {
     expect(result).toEqual({ ok: true });
   });
 
-  it('exhausts MAX_RETRIES (3) when the proxy keeps 429ing without Retry-After', async () => {
+  it('exhausts MAX_RETRIES (3) on Gemini then falls back to Groq, which also fails', async () => {
     vi.useFakeTimers();
     const fetchMock = stubFetch(() => Promise.resolve(rateLimitedResponse()));
 
     const promise = generateGeminiJson<{ ok: boolean }>('prompt exhaust-unik', undefined);
     promise.catch(() => {}); // attach early to avoid unhandled-rejection warnings
 
-    // Flush retry loop: 3 attempts with 5s/10s backoff between them.
-    await vi.advanceTimersByTimeAsync(30_000);
-    await expect(promise).rejects.toThrow(/Rate limit exceeded/);
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    // Flush retry loop: 3 Gemini attempts with 5s/10s backoff, then Groq fallback
+    // also 429s 3 times before giving up.
+    await vi.advanceTimersByTimeAsync(120_000);
+    await expect(promise).rejects.toThrow(/Semua provider AI gagal/);
+    // Gemini: 3 calls, Groq: 3 calls (both hit the mocked 429 endpoint).
+    expect(fetchMock).toHaveBeenCalledTimes(6);
   });
 
   it('caps concurrent requests at MAX_CONCURRENT (2)', async () => {
@@ -137,6 +139,7 @@ describe('geminiService — proxy mode', () => {
 
 describe('geminiService — direct mode (dev fallback)', () => {
   it('calls Google directly with the dev key when no proxy env is set', async () => {
+    vi.stubEnv('DEV', true as any);
     vi.stubEnv('VITE_GEMINI_PROXY_URL', '');
     vi.stubEnv('VITE_GEMINI_API_KEY', 'dev-key-123');
     const fetchMock = stubFetch(() => Promise.resolve(okGeminiResponse('{"ok":true}')));
@@ -146,11 +149,12 @@ describe('geminiService — direct mode (dev fallback)', () => {
 
     const { url } = lastFetchCall(fetchMock);
     expect(url).toMatch(
-      /^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-2\.0-flash:generateContent\?key=dev-key-123$/
+      /^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-2\.5-flash:generateContent\?key=dev-key-123$/
     );
   });
 
   it('does not send the model in the body when calling Google directly', async () => {
+    vi.stubEnv('DEV', true as any);
     vi.stubEnv('VITE_GEMINI_PROXY_URL', '');
     vi.stubEnv('VITE_GEMINI_API_KEY', 'dev-key-123');
     const fetchMock = stubFetch(() => Promise.resolve(okGeminiResponse('{"ok":true}')));

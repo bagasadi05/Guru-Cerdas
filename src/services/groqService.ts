@@ -6,8 +6,6 @@ import {
   pickNextGroqKey,
   getGroqKeyCount,
   isCircuitAllowed,
-  recordCircuitSuccess,
-  recordCircuitFailure,
   getBackoffDelay,
   isRateLimitError,
   isTransientError,
@@ -26,7 +24,11 @@ const BASE_TIMEOUT = 30_000;
 // =============================================================================
 
 function isDev(): boolean {
-  return import.meta.env.DEV === true;
+  // Hanya izinkan jalur direct (API key di client) saat development lokal.
+  // Build production TIDAK PERNAH boleh memakai direct endpoint — key harus
+  // tetap di server (proxy). Guard ini mencegah VITE_GROQ_API_KEY bocor
+  // ke bundle yang di-deploy.
+  return import.meta.env.DEV === true && !import.meta.env.PROD;
 }
 
 function devApiKey(): string {
@@ -65,12 +67,9 @@ export class GroqProvider implements AiProvider {
     }
 
     try {
-      const result = await this.callWithRetry(messages, model);
-      recordCircuitSuccess('groq');
-      return result;
+      return await this.callWithRetry(messages, model);
     } catch (err: any) {
       logger.warn(`[Groq] Failed: ${err.message}`, 'AI');
-      recordCircuitFailure('groq');
       throw err;
     }
   }

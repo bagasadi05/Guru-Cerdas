@@ -1,5 +1,6 @@
 import { FormState } from '../types';
 import { normalizeSoalEvaluasi } from '../../../../services/modulAjarAiGenerator';
+import { sanitizeContent } from '../../../../services/securityEnhanced';
 
 export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: number, logoBase64: string): string => {
   // Helper to sanitize markdown markers like **, *, __ and convert to HTML or clean up
@@ -185,7 +186,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
               <tr style="border: none;"><td style="padding: 4px; border: none;">Jenjang / Fase / Kelas</td><td style="padding: 4px; border: none;">:</td><td style="padding: 4px; border: none;">${formState.jenjang} / Fase ${formState.fase} / Kelas ${formState.kelas}</td></tr>
               <tr style="border: none;"><td style="padding: 4px; border: none;">Mata Pelajaran</td><td style="padding: 4px; border: none;">:</td><td style="padding: 4px; border: none;">${formState.mataPelajaran}</td></tr>
               <tr style="border: none;"><td style="padding: 4px; border: none;">Materi Pokok / Topik</td><td style="padding: 4px; border: none;">:</td><td style="padding: 4px; border: none;">${formState.topik}</td></tr>
-              <tr style="border: none;"><td style="padding: 4px; border: none;">Alokasi Waktu</td><td style="padding: 4px; border: none;">:</td><td style="padding: 4px; border: none;">${totalJP} JP (${formState.jumlahPertemuan} Pertemuan x ${formState.durasiPerJp} menit)</td></tr>
+              <tr style="border: none;"><td style="padding: 4px; border: none;">Alokasi Waktu</td><td style="padding: 4px; border: none;">:</td><td style="padding: 4px; border: none;">${totalJP} JP (${formState.jumlahPertemuan} Pertemuan x ${formState.jpPerPertemuan} JP x ${formState.durasiPerJp} menit = ${totalJP * formState.durasiPerJp} menit)</td></tr>
               ${(formState.isKbcIntegrated || formState.curriculumApproach === 'Berbasis Cinta') ? `
               <tr style="border: none; background-color: #e6f4ea;"><td style="padding: 4px; border: none; color: #137333;"><strong>Integrasi Kurikulum</strong></td><td style="padding: 4px; border: none; color: #137333;">:</td><td style="padding: 4px; border: none; color: #137333;"><strong>Kurikulum Berbasis Cinta (KBC - Kemenag RI 2025)</strong></td></tr>
               ${formState.materiInsersi ? `<tr style="border: none; background-color: #e6f4ea;"><td style="padding: 4px; border: none; color: #137333;"><strong>Materi Insersi KBC</strong></td><td style="padding: 4px; border: none; color: #137333;">:</td><td style="padding: 4px; border: none; color: #137333;">${sanitize(formState.materiInsersi)}</td></tr>` : ''}
