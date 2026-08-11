@@ -27,27 +27,12 @@ const DEFAULT_CONFIG: FonnteConfig = {
  */
 export async function fetchFonnteConfig(): Promise<FonnteConfig> {
   try {
-    const { data: adminRoles, error: roleError } = await supabase
-      .from('user_roles')
-      .select('user_id')
-      .eq('role', 'admin')
-      .limit(1);
-
-    if (roleError || !adminRoles || adminRoles.length === 0) {
-      return DEFAULT_CONFIG;
-    }
-
-    const adminUserId = adminRoles[0].user_id;
-
-    const { data, error } = await supabase
-      .from('user_settings')
-      .select('fonnte_config')
-      .eq('user_id', adminUserId)
-      .maybeSingle();
+    const { data, error } = await (supabase as any)
+      .rpc('get_fonnte_config');
 
     if (error || !data) return DEFAULT_CONFIG;
 
-    const raw = (data as any).fonnte_config;
+    const raw = data as unknown as Partial<FonnteConfig>;
     if (!raw || typeof raw !== 'object') return DEFAULT_CONFIG;
 
     return {
