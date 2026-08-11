@@ -85,7 +85,7 @@ Setiap tujuan harus SPESIFIK untuk topik "${ctx.topik}", bukan generik.
 
 Output JSON: {"tujuan": ["string", ...]}`;
 
-  const result = await generateGeminiJson<{ tujuan: string[] }>(prompt, SYSTEM_INSTRUCTION);
+  const result = await generateGeminiJson<{ tujuan: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
   const content = (result.tujuan || []).join('\n');
   cacheToBank(ctx, { tujuan_pembelajaran: result.tujuan || [] });
   return content;
@@ -107,7 +107,7 @@ Hindari pertanyaan ya/tidak — gunakan pertanyaan terbuka (apa, mengapa, bagaim
 
 Output JSON: {"pertanyaan": ["string", ...]}`;
 
-  const result = await generateGeminiJson<{ pertanyaan: string[] }>(prompt, SYSTEM_INSTRUCTION);
+  const result = await generateGeminiJson<{ pertanyaan: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
   const content = (result.pertanyaan || []).join('\n');
   cacheToBank(ctx, { pertanyaan_pemantik: result.pertanyaan || [] });
   return content;
@@ -135,7 +135,7 @@ LKPD harus:
 
 Output JSON: {"lkpd": "string — konten LKPD lengkap dengan langkah-langkah"}`;
 
-  const result = await generateGeminiJson<{ lkpd: string }>(prompt, SYSTEM_INSTRUCTION);
+  const result = await generateGeminiJson<{ lkpd: string }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
   cacheToBank(ctx, { lkpd_tugas: result.lkpd || '' });
   return result.lkpd || '';
 }
@@ -158,7 +158,7 @@ Output JSON: {"soal": "string — nomor 1-5 hanya soal, tanpa kunci jawaban", "k
 
 Output murni teks biasa. Jangan gunakan format tabel Markdown. Nomor soal hanya sebagai "1.", "2.", dst.`;
 
-  const result = await generateGeminiJson<{ soal: string }>(prompt, SYSTEM_INSTRUCTION);
+  const result = await generateGeminiJson<{ soal: string }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
   cacheToBank(ctx, { soal_evaluasi: result.soal || '' });
   return result.soal || '';
 }
@@ -179,7 +179,7 @@ Buat 2-3 butir kompetensi awal yang spesifik dan terukur.
 
 Output JSON: {"kompetensiAwal": "string — deskripsi kompetensi awal"}`;
 
-  const result = await generateGeminiJson<{ kompetensiAwal: string }>(prompt, SYSTEM_INSTRUCTION);
+  const result = await generateGeminiJson<{ kompetensiAwal: string }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
   cacheToBank(ctx, { kompetensi_awal: result.kompetensiAwal || '' });
   return result.kompetensiAwal || '';
 }
@@ -203,7 +203,7 @@ Buat 2-3 paragraf CP yang mencakup:
 
 Output JSON: {"cp": "string — deskripsi CP lengkap 2-3 paragraf, spesifik topik"}`;
 
-  const result = await generateGeminiJson<{ cp: string }>(prompt, SYSTEM_INSTRUCTION);
+  const result = await generateGeminiJson<{ cp: string }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
   const content = result.cp || '';
   cacheToBank(ctx, { capaian_pembelajaran: content });
   return content;

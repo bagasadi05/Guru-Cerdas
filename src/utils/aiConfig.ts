@@ -38,6 +38,22 @@ export function getGeminiKeyCount(): number {
   return pickRandomKey(import.meta.env.VITE_GEMINI_API_KEY || '').length;
 }
 
+// ─── Groq Key Support ────────────────────────────────────────────
+
+let groqKeyIndex = 0;
+
+export function pickNextGroqKey(): string {
+  const keys = pickRandomKey(import.meta.env.VITE_GROQ_API_KEY || '');
+  if (keys.length === 0) return '';
+  const key = keys[groqKeyIndex % keys.length];
+  groqKeyIndex = (groqKeyIndex + 1) % keys.length;
+  return key;
+}
+
+export function getGroqKeyCount(): number {
+  return pickRandomKey(import.meta.env.VITE_GROQ_API_KEY || '').length;
+}
+
 // ─── Circuit Breaker ──────────────────────────────────────────────
 
 interface CircuitState {
@@ -123,6 +139,7 @@ export function recordCircuitFailure(provider: string): void {
 export function resetCircuitBreakers(): void {
   circuitStates.clear();
   geminiKeyIndex = 0;
+  groqKeyIndex = 0;
 }
 
 // ─── Response Cache ───────────────────────────────────────────────
@@ -231,6 +248,11 @@ export interface ProviderStatus {
     keyCount: number;
     circuitOpen: boolean;
   };
+  groq: {
+    available: boolean;
+    keyCount: number;
+    circuitOpen: boolean;
+  };
   rateLimits: {
     remaining: number;
     resetInMs: number;
@@ -242,6 +264,7 @@ export interface ProviderStatus {
  */
 export function getProviderStatus(): ProviderStatus {
   const geminiCircuit = circuitStates.get('gemini');
+  const groqCircuit = circuitStates.get('groq');
 
   return {
     gemini: {
@@ -249,8 +272,13 @@ export function getProviderStatus(): ProviderStatus {
       keyCount: getGeminiKeyCount(),
       circuitOpen: geminiCircuit?.isOpen ?? false,
     },
+    groq: {
+      available: getGroqKeyCount() > 0,
+      keyCount: getGroqKeyCount(),
+      circuitOpen: groqCircuit?.isOpen ?? false,
+    },
     rateLimits: {
-      remaining: 0, // Diisi oleh rateLimiter
+      remaining: 0,
       resetInMs: 0,
     },
   };

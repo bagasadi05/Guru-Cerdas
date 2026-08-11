@@ -300,5 +300,16 @@ export function useMassInputViewModel() {
         validationErrors: state.validationErrors,
         bypassDuplicateGuard: state.bypassDuplicateGuard,
         setBypassDuplicateGuard: state.setBypassDuplicateGuard,
+        // violation duplicate detection
+        violationDuplicateList: mutations.violationDuplicateList,
+        showViolationDuplicateDialog: mutations.showViolationDuplicateDialog,
+        setShowViolationDuplicateDialog: mutations.setShowViolationDuplicateDialog,
+        onHandleSubmit: () => {
+            if (state.mode === 'violation' && state.selectedViolationCode) {
+                mutations.checkViolationDuplicates(() => mutations.handleSubmit());
+            } else {
+                mutations.handleSubmit();
+            }
+        },
     };
 }

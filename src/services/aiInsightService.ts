@@ -167,7 +167,7 @@ Tugas Anda:
 3. Berikan satu saran fokus untuk kelas secara umum.`;
 
   // Generate insight using OpenRouter
-  const parsedInsight = await generateGeminiJson<AIInsight>(prompt, systemInstruction);
+  const parsedInsight = await generateGeminiJson<AIInsight>(prompt, systemInstruction, 'insight');
 
   // Create name-to-ID map for student resolution
   const studentNameMap = createStudentNameMap(students);

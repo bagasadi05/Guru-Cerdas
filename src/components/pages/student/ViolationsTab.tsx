@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, ShieldAlertIcon, PencilIcon, TrashIcon, AlertTriangleIcon, CameraIcon, BellIcon, FilterIcon, FileTextIcon, FileSpreadsheetIcon, DownloadIcon, LockIcon } from 'lucide-react';
+import { PlusIcon, ShieldAlertIcon, PencilIcon, TrashIcon, AlertTriangleIcon, CameraIcon, BellIcon, FilterIcon, FileTextIcon, FileSpreadsheetIcon, DownloadIcon, LockIcon, UserIcon } from 'lucide-react';
 import { ViolationRow } from './types';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../../ui/DropdownMenu';
 import { exportViolationsToPDF, exportViolationsToExcel } from '../../../services/violationExport';
@@ -205,8 +205,14 @@ const ViolationCard: React.FC<{
                     <span className={`font-bold ${severity.textClass}`}>+{violation.points} poin</span>
                 </div>
                 {violation.recorded_by_name && (
-                    <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+                        <UserIcon className="w-3 h-3 text-slate-400" />
                         Dicatat oleh: {violation.recorded_by_name}
+                        {!isCreator && (
+                            <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                Guru Lain
+                            </span>
+                        )}
                     </p>
                 )}
             </div>

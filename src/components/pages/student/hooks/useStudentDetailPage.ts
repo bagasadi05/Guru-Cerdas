@@ -25,6 +25,7 @@ import { generateSimpleAccessCode } from '../../../../utils/accessCode';
 import { useStudentMutations } from './useStudentMutations';
 import { useConfetti } from '../../../../hooks/useConfetti';
 import { type SeverityLevel } from '../violationMeta';
+import { type DuplicateViolationData } from '../components/DuplicateViolationDialog';
 
 import {
     ModalState,
@@ -76,6 +77,12 @@ export const useStudentDetailPage = () => {
     const tabsScrollRef = useRef<HTMLDivElement>(null);
     const [tabScrollState, setTabScrollState] = useState({ left: false, right: false });
     const [subjectToApply, setSubjectToApply] = useState('');
+    const [duplicateDialog, setDuplicateDialog] = useState<{
+        existingViolation: DuplicateViolationData;
+        pendingData: ViolationFormValues & { evidence_file?: File };
+    } | null>(null);
+    const [violationConflictFields, setViolationConflictFields] = useState<string[]>([]);
+    const pendingViolationSubmitRef = useRef<((data: ViolationFormValues & { evidence_file?: File }) => void) | null>(null);
     const { kkm } = useUserSettings();
     const { activeSemester, semesters } = useSemester();
 
@@ -467,32 +474,18 @@ export const useStudentDetailPage = () => {
         }
     };
 
-    const handleViolationSubmit = async (data: ViolationFormValues & { evidence_file?: File }) => {
+    const executeViolationSubmit = async (data: ViolationFormValues & { evidence_file?: File }) => {
         if (!user || !studentId) return;
-        
-        // Pengecekan Duplikat Harian (Soft Warning)
-        if (modalState.type === 'violation' && !modalState.data?.id) {
-            const isDuplicate = filteredViolations.some(
-                v => v.date === data.date && v.description === data.description
-            );
-            
-            if (isDuplicate) {
-                const confirmed = window.confirm(
-                    `Siswa sudah memiliki catatan pelanggaran "${data.description}" pada tanggal ini.\n\nApakah Anda yakin ini adalah kejadian yang berbeda?`
-                );
-                if (!confirmed) return;
-            }
-        }
 
         const selectedViolation = violationList.find(v => v.description === data.description);
-        const existingViolation = modalState.type === 'violation' ? modalState.data : null;
-        let evidenceUrl = existingViolation?.evidence_url || null;
+        const existingViolationRecord = modalState.type === 'violation' ? modalState.data : null;
+        let evidenceUrl = existingViolationRecord?.evidence_url || null;
 
         if (data.evidence_file) {
             try {
                 const result = await r2StorageService.uploadFile(data.evidence_file, 'violations');
-                if (existingViolation?.evidence_url) {
-                    await r2StorageService.deleteFile({ publicUrl: existingViolation.evidence_url });
+                if (existingViolationRecord?.evidence_url) {
+                    await r2StorageService.deleteFile({ publicUrl: existingViolationRecord.evidence_url });
                 }
                 evidenceUrl = result.publicUrl;
             } catch (error: unknown) {
@@ -505,20 +498,61 @@ export const useStudentDetailPage = () => {
             date: data.date,
             description: data.description,
             context_notes: data.context_notes || null,
-            points: selectedViolation?.points ?? existingViolation?.points ?? 0,
-            type: existingViolation?.type || 'general',
-            severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || existingViolation?.severity || null,
-
+            points: selectedViolation?.points ?? existingViolationRecord?.points ?? 0,
+            type: existingViolationRecord?.type || 'general',
+            severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || existingViolationRecord?.severity || null,
             evidence_url: evidenceUrl,
             student_id: studentId,
             user_id: user.id,
-            semester_id: resolveSubmitSemesterId(existingViolation?.semester_id, selectedSemesterId, activeSemester?.id),
+            semester_id: resolveSubmitSemesterId(existingViolationRecord?.semester_id, selectedSemesterId, activeSemester?.id),
         };
+
         if (modalState.type === 'violation' && modalState.data?.id) {
             violationMutation.mutate({ operation: 'edit', data: violationPayload, id: modalState.data.id });
         } else {
             violationMutation.mutate({ operation: 'add', data: violationPayload });
         }
+    };
+
+    const handleViolationSubmit = async (data: ViolationFormValues & { evidence_file?: File }) => {
+        if (!user || !studentId) return;
+
+        // Duplicate detection — check if same violation type + date already exists
+        if (modalState.type === 'violation' && !modalState.data?.id) {
+            const existingViolation = filteredViolations.find(
+                v => v.date === data.date && v.description === data.description
+            );
+
+            if (existingViolation) {
+                setDuplicateDialog({
+                    existingViolation: {
+                        recorded_by_name: existingViolation.recorded_by_name || null,
+                        date: existingViolation.date,
+                        description: existingViolation.description,
+                        points: existingViolation.points,
+                    },
+                    pendingData: data,
+                });
+                return;
+            }
+        }
+
+        await executeViolationSubmit(data);
+    };
+
+    const handleDuplicateConfirm = () => {
+        if (duplicateDialog) {
+            const data = duplicateDialog.pendingData;
+            setDuplicateDialog(null);
+            executeViolationSubmit(data);
+        }
+    };
+
+    const handleDuplicateCancel = () => {
+        if (duplicateDialog) {
+            setViolationConflictFields(['date', 'description']);
+        }
+        setDuplicateDialog(null);
     };
 
     const handleCommunicationSubmit = (data: CommunicationFormValues) => {
@@ -839,7 +873,7 @@ Tulis laporan yang menyentuh hati, memotivasi, dan komprehensif agar orang tua m
             const response = await generateGeminiContent([
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: prompt }
-            ]);
+            ], 'teacher-report');
 
             const text = getAssistantContent(response) || '';
             setAiReport(text.trim());
@@ -919,6 +953,11 @@ Tulis laporan yang menyentuh hati, memotivasi, dan komprehensif agar orang tua m
         handleAcademicSubmit,
         handleQuizSubmit,
         handleViolationSubmit,
+        handleDuplicateConfirm,
+        handleDuplicateCancel,
+        duplicateDialog,
+        violationConflictFields,
+        setViolationConflictFields,
         handleCommunicationSubmit,
         handleDelete,
         handleCopyAccessCode,

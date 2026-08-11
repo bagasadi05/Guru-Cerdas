@@ -106,6 +106,11 @@ export interface MassInputPageViewProps {
     bypassDuplicateGuard: boolean;
     setBypassDuplicateGuard: (v: boolean) => void;
     onDeleteSelected?: () => void;
+    // violation duplicate detection
+    violationDuplicateList: { student_id: string; student_name: string; recorded_by_name: string | null; description: string; date: string; points: number }[];
+    showViolationDuplicateDialog: boolean;
+    setShowViolationDuplicateDialog: (v: boolean) => void;
+    onHandleSubmit: () => void;
 }
 
 export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
@@ -132,6 +137,9 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         confirmDeleteModal, setConfirmDeleteModal, confirmDeleteText, setConfirmDeleteText,
         handleDeleteConfirmClick, handleImport, handleImportConfirm, pendingImportData, setPendingImportData,
         bypassDuplicateGuard, setBypassDuplicateGuard,
+        onDeleteSelected,
+        violationDuplicateList, showViolationDuplicateDialog,
+        setShowViolationDuplicateDialog, onHandleSubmit,
     } = props;
 
     if (step === 1) {
@@ -235,7 +243,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     kkm={kkm}
                                     setKkm={setKkm}
                                     onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
-                                    handleSubmit={handleSubmit}
+                                    handleSubmit={onHandleSubmit}
                                     isSubmitDisabled={isSubmitDisabled}
                                     isSubmitting={isSubmitting}
                                     submitButtonTooltip={submitButtonTooltip}
@@ -261,7 +269,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     existingGrades={existingGrades}
                                     classes={classes}
                                     selectedClass={selectedClass}
-                                    handleSubmit={handleSubmit}
+                                    handleSubmit={onHandleSubmit}
                                     isSubmitDisabled={isSubmitDisabled}
                                     isSubmitting={isSubmitting}
                                     onShowAdjustment={() => setShowAdjustmentModal(true)}
@@ -338,7 +346,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         setSelectedStudentIds={setSelectedStudentIds}
                         isExporting={isExporting}
                         exportProgress={exportProgress}
-                        handleSubmit={handleSubmit}
+                        handleSubmit={onHandleSubmit}
                         isSubmitDisabled={isSubmitDisabled}
                         submitButtonTooltip={submitButtonTooltip}
                         isSubmitting={isSubmitting}
@@ -350,7 +358,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         existingViolations={existingViolations}
                         onShowChart={() => setShowChartModal(true)}
                         onShowAdjustment={() => setShowAdjustmentModal(true)}
-                        onDeleteSelected={props.onDeleteSelected}
+                        onDeleteSelected={onDeleteSelected}
                     />
                 )}
 
@@ -383,6 +391,44 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         semesterLabel={subjectGradeInfo.semester ? semesters.find(s => s.id === subjectGradeInfo.semester)?.name : undefined}
                     />
                 )}
+
+                {/* Violation Duplicate Dialog */}
+                <Modal
+                    isOpen={showViolationDuplicateDialog}
+                    onClose={() => setShowViolationDuplicateDialog(false)}
+                    title="Pelanggaran Sudah Tercatat"
+                    maxWidth="max-w-lg"
+                >
+                    <div className="space-y-4 pt-2">
+                        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                            <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+                                Guru lain sudah mencatat pelanggaran yang sama untuk {violationDuplicateList.length} siswa berikut:
+                            </p>
+                            <div className="max-h-48 overflow-y-auto space-y-2">
+                                {violationDuplicateList.map((dup) => (
+                                    <div key={dup.student_id} className="flex items-center gap-2 p-2 rounded-lg bg-white/60 dark:bg-black/20 text-xs">
+                                        <span className="font-medium text-slate-800 dark:text-slate-200">{dup.student_name}</span>
+                                        <span className="text-slate-400">—</span>
+                                        <span className="text-amber-600 dark:text-amber-400">
+                                            dicatat oleh {dup.recorded_by_name || 'Guru lain'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            Siswa yang tercantum di atas akan tetap disimpan pelanggarannya? Klik <strong>Lanjutkan</strong> untuk tetap menyimpan semua siswa, atau <strong>Batal</strong> untuk kembali.
+                        </p>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button type="button" variant="ghost" onClick={() => setShowViolationDuplicateDialog(false)}>
+                                Batal
+                            </Button>
+                            <Button type="button" onClick={() => { setShowViolationDuplicateDialog(false); handleSubmit(); }} className="bg-red-600 hover:bg-red-700 text-white">
+                                Lanjutkan & Simpan Semua
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
             </div>
         </div>
     );

@@ -30,6 +30,7 @@ import { ReportForm } from './student/forms/ReportForm';
 import { AcademicForm } from './student/forms/AcademicForm';
 import { QuizForm } from './student/forms/QuizForm';
 import { ViolationForm } from './student/forms/ViolationForm';
+import { DuplicateViolationDialog } from './student/components/DuplicateViolationDialog';
 import { CommunicationForm } from './student/forms/CommunicationForm';
 import { StudentDetailPageSkeleton } from '../skeletons/PageSkeletons';
 import { getStudentAvatar } from '../../utils/avatarUtils';
@@ -39,6 +40,7 @@ import { createWhatsAppLink } from '../../utils/whatsappUtils';
 
 // Hook
 import { useStudentDetailPage } from './student/hooks/useStudentDetailPage';
+import { useViolationRealtimeNotifications } from '../../hooks/useViolationRealtimeNotifications';
 
 const GradesTab = lazy(() => import('./student/GradesTab').then((module) => ({ default: module.GradesTab })));
 const ActivityTab = lazy(() => import('./student/ActivityTab').then((module) => ({ default: module.ActivityTab })));
@@ -122,6 +124,11 @@ const StudentDetailPage = () => {
         handleAcademicSubmit,
         handleQuizSubmit,
         handleViolationSubmit,
+        handleDuplicateConfirm,
+        handleDuplicateCancel,
+        duplicateDialog,
+        violationConflictFields,
+        setViolationConflictFields,
         handleCommunicationSubmit,
         handleDelete,
         handleCopyAccessCode,
@@ -146,6 +153,9 @@ const StudentDetailPage = () => {
         communications,
         unreadMessagesCount,
     } = useStudentDetailPage();
+
+    // Realtime notification for violations from other teachers
+    useViolationRealtimeNotifications(studentId);
 
     const [fileActionStatus, setFileActionStatus] = React.useState<'idle' | 'uploading' | 'deleting'>('idle');
 
@@ -719,8 +729,9 @@ const StudentDetailPage = () => {
                             <ViolationForm
                                 defaultValues={modalState.data || null}
                                 onSubmit={handleViolationSubmit}
-                                onClose={() => setModalState({ type: 'closed' })}
+                                onClose={() => { setModalState({ type: 'closed' }); setViolationConflictFields([]); }}
                                 isPending={violationMutation.isPending}
+                                conflictFields={violationConflictFields}
                             />
                         )}
                         {modalState.type === 'achievement' && (
@@ -877,6 +888,16 @@ const StudentDetailPage = () => {
                             )}
                         </div>
                     </Modal>
+                )
+            }
+            {
+                duplicateDialog && (
+                    <DuplicateViolationDialog
+                        isOpen={true}
+                        onClose={handleDuplicateCancel}
+                        onConfirm={handleDuplicateConfirm}
+                        existingViolation={duplicateDialog.existingViolation}
+                    />
                 )
             }
         </div >

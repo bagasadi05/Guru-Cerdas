@@ -16,6 +16,7 @@ interface ViolationFormProps {
     onSubmit: (data: ViolationFormValues & { evidence_file?: File }) => void;
     onClose: () => void;
     isPending: boolean;
+    conflictFields?: string[];
 }
 
 // Group violations by category for better UX
@@ -25,7 +26,7 @@ const violationsByCategory = {
     Berat: violationList.filter(v => v.category === 'Berat'),
 };
 
-export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onSubmit, onClose, isPending }) => {
+export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onSubmit, onClose, isPending, conflictFields = [] }) => {
     const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
     const [evidencePreview, setEvidencePreview] = useState<string | null>(defaultValues?.evidence_url || null);
     const defaultSeverity = defaultValues?.severity;
@@ -130,14 +131,28 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
             </div>
 
             {/* Date */}
-            <div>
-                <label className="block text-sm font-medium mb-1">Tanggal Kejadian</label>
-                <Input type="date" {...register('date')} error={errors.date?.message} />
+            <div className={conflictFields.includes('date') ? 'p-3 rounded-lg border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20' : ''}>
+                <label className="block text-sm font-medium mb-1">
+                    Tanggal Kejadian
+                    {conflictFields.includes('date') && (
+                        <span className="ml-2 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                            ⚠️ Sudah tercatat di tanggal ini
+                        </span>
+                    )}
+                </label>
+                <Input type="date" {...register('date')} error={errors.date?.message} className={conflictFields.includes('date') ? 'border-amber-300 dark:border-amber-600' : ''} />
             </div>
 
             {/* Violation Type Selection */}
-            <div>
-                <label className="block text-sm font-medium mb-1">Jenis Pelanggaran</label>
+            <div className={conflictFields.includes('description') ? 'p-3 rounded-lg border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20' : ''}>
+                <label className="block text-sm font-medium mb-1">
+                    Jenis Pelanggaran
+                    {conflictFields.includes('description') && (
+                        <span className="ml-2 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                            ⚠️ Jenis pelanggaran ini sudah tercatat
+                        </span>
+                    )}
+                </label>
                 <Select {...register('description')} error={errors.description?.message}>
                     <option value="">-- Pilih Pelanggaran --</option>
                     {Object.entries(violationsByCategory).map(([category, violations]) => (

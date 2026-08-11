@@ -11,16 +11,19 @@ import {
   isRateLimitError,
   isTransientError,
 } from '../utils/aiConfig';
+import {
+  aiRouter,
+  type AiTaskType,
+  type AiProvider,
+  type GeminiMessage,
+  type GeminiResponse,
+} from './aiProvider';
+import { initGroqProvider } from './groqService';
 
 // ─── Environment ──────────────────────────────────────────────────
 // Env is read lazily (inside functions) so tests can stub it with vi.stubEnv.
 
-const GEMINI_MODEL = 'gemini-2.0-flash';
 const DIRECT_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
-
-function getModel(): string {
-  return import.meta.env.VITE_GEMINI_MODEL || GEMINI_MODEL;
-}
 
 function isDev(): boolean {
   return import.meta.env.DEV === true;
@@ -54,16 +57,8 @@ function usesDirectEndpoint(): boolean {
 
 // ─── Interfaces ───────────────────────────────────────────────────
 
-export interface GeminiMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string | null;
-}
-
-export interface GeminiResponse {
-  choices: {
-    message: GeminiMessage;
-  }[];
-}
+// Types re-exported from aiProvider for backward compatibility
+export type { GeminiMessage, GeminiResponse } from './aiProvider';
 
 /**
  * 429 that carries the server's Retry-After hint (seconds → ms).
@@ -122,13 +117,17 @@ function parseRetryAfter(header: string | null | undefined): number {
 // ─── Main Entry Point ─────────────────────────────────────────────
 
 /**
- * Generates content using Gemini (via serverless proxy, or direct in dev).
- * Includes caching, circuit breaker, exponential backoff, Retry-After
- * honoring, and a concurrency queue.
+ * Generates content using the AI provider system (Gemini primary, Groq fallback).
+ * Includes caching, circuit breaker, exponential backoff, and a concurrency queue.
+ * 
+ * @param messages - Chat messages array with role/content
+ * @param taskType - Task classification for smart routing (default: 'general')
  */
 export async function generateGeminiContent(
-  messages: GeminiMessage[]
+  messages: GeminiMessage[],
+  taskType: AiTaskType = 'general'
 ): Promise<GeminiResponse> {
+  // Provider init happens eagerly; cache layer doesn't depend on Groq
   const cacheKey = buildCacheKeyForMessages(messages);
   const cached = getCachedResponse<GeminiResponse>(cacheKey);
   if (cached) {
@@ -140,146 +139,179 @@ export async function generateGeminiContent(
     throw new Error('Gemini API key tidak ditemukan. Cek VITE_GEMINI_API_KEY di .env');
   }
 
-  if (!isCircuitAllowed('gemini')) {
-    throw new Error('Layanan AI sedang dalam masa pemulihan. Silakan tunggu beberapa saat dan coba lagi.');
-  }
-
   try {
-    const result = await runWithConcurrency(() => callGeminiWithRetry(messages));
-    logger.info('[AI] Gemini success', 'AI');
-    recordCircuitSuccess('gemini');
+    const result = await runWithConcurrency(() =>
+      aiRouter.generateContent(taskType, messages)
+    );
+    logger.info('[AI] Generation success', 'AI');
     setCachedResponse(cacheKey, result, 'default');
     return result;
   } catch (err: any) {
-    logger.warn(`[AI] Gemini failed: ${err.message}`, 'AI');
-    recordCircuitFailure('gemini');
+    logger.warn(`[AI] Generation failed: ${err.message}`, 'AI');
     throw err;
   }
 }
 
-// ─── Gemini Implementation ────────────────────────────────────────
+// ─── Gemini Adapter (AiProvider implementation) ────────────────────
 
-async function callGeminiWithRetry(messages: GeminiMessage[]): Promise<GeminiResponse> {
-  let lastError: Error | null = null;
+/** Gemini provider directly via Google API. Registered as 'gemini' in aiRouter. */
+export class GeminiProvider implements AiProvider {
+  readonly name = 'gemini' as const;
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+  async generateContent(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+    if (usesDirectEndpoint() && getGeminiKeyCount() === 0) {
+      throw new Error('Gemini API key tidak ditemukan.');
+    }
+
+    if (!isCircuitAllowed('gemini')) {
+      throw new Error('Layanan Gemini sedang dalam masa pemulihan.');
+    }
+
     try {
-      return await callGeminiOnce(messages);
+      const result = await this.callWithRetry(messages, model);
+      recordCircuitSuccess('gemini');
+      return result;
     } catch (err: any) {
-      lastError = err;
-      const isTransient = isTransientError(err);
-
-      if (!isTransient) {
-        // Non-transient error (auth, invalid request, etc.) — don't retry
-        throw err;
-      }
-
-      if (attempt < MAX_RETRIES) {
-        // On 429: wait at least the server's Retry-After (Gemini free tier
-        // resets per minute, so retrying after 2s is guaranteed to 429 again).
-        const retryAfterMs = err instanceof GeminiRateLimitError ? err.retryAfterMs : 0;
-        const backoffMs = getBackoffDelay(attempt, isRateLimitError(err) ? 5000 : 1500);
-        const delay = Math.min(Math.max(retryAfterMs, backoffMs), 60_000);
-        logger.warn(
-          `[Gemini] Attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${Math.round(delay)}ms: ${err.message}`,
-          'AI'
-        );
-        await sleep(delay);
-      }
+      recordCircuitFailure('gemini');
+      throw err;
     }
   }
 
-  throw lastError || new Error('Gemini gagal setelah beberapa percobaan.');
-}
+  private async callWithRetry(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+    let lastError: Error | null = null;
 
-async function callGeminiOnce(messages: GeminiMessage[]): Promise<GeminiResponse> {
-  const endpoint = getEndpoint();
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        return await this.callOnce(messages, model);
+      } catch (err: any) {
+        lastError = err;
+        const isTransient = isTransientError(err);
 
-  // Convert generic messages → Gemini contents
-  const contents = messages
-    .filter(m => m.role !== 'system')
-    .map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content || '' }],
-    }));
+        if (!isTransient) {
+          throw err;
+        }
 
-  const systemInstruction = messages.find(m => m.role === 'system')?.content;
+        if (attempt < MAX_RETRIES) {
+          const retryAfterMs = err instanceof GeminiRateLimitError ? err.retryAfterMs : 0;
+          const backoffMs = getBackoffDelay(attempt, isRateLimitError(err) ? 5000 : 1500);
+          const delay = Math.min(Math.max(retryAfterMs, backoffMs), 60_000);
+          logger.warn(
+            `[Gemini] Attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${Math.round(delay)}ms: ${err.message}`,
+            'AI'
+          );
+          await sleep(delay);
+        }
+      }
+    }
 
-  const body: Record<string, any> = {
-    contents,
-    generationConfig: { temperature: 0.7 },
-  };
-  if (systemInstruction) {
-    body.systemInstruction = { parts: [{ text: systemInstruction }] };
+    throw lastError || new Error('Gemini gagal setelah beberapa percobaan.');
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), BASE_TIMEOUT);
+  private async callOnce(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+    const endpoint = getEndpoint();
 
+    const contents = messages
+      .filter(m => m.role !== 'system')
+      .map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content || '' }],
+      }));
+
+    const systemInstruction = messages.find(m => m.role === 'system')?.content;
+
+    const body: Record<string, any> = {
+      contents,
+      generationConfig: { temperature: 0.7 },
+    };
+    if (systemInstruction) {
+      body.systemInstruction = { parts: [{ text: systemInstruction }] };
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), BASE_TIMEOUT);
+
+    try {
+      let url: string;
+      let init: RequestInit;
+
+      if (usesDirectEndpoint()) {
+        const apiKey = pickNextGeminiKey();
+        if (!apiKey) {
+          throw new Error('Gemini API key tidak ditemukan.');
+        }
+        url = `${DIRECT_ENDPOINT}/${model}:generateContent?key=${apiKey}`;
+        init = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        };
+      } else {
+        url = endpoint;
+        init = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, ...body }),
+          signal: controller.signal,
+        };
+      }
+
+      const response = await fetch(url, init);
+
+      if (!response.ok) {
+        const text = await response.text();
+        const status = response.status;
+
+        if (status === 429) {
+          const retryAfterMs = parseRetryAfter(response.headers.get('retry-after'));
+          throw new GeminiRateLimitError(`Rate limit exceeded: Gemini API 429`, retryAfterMs);
+        }
+        if (status >= 500) {
+          throw new Error(`Gemini server error ${status}: ${text}`);
+        }
+        throw new Error(`Gemini API ${status}: ${text}`);
+      }
+
+      const data = await response.json();
+      const geminiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      return {
+        choices: [{ message: { role: 'assistant', content: geminiText } }],
+      } as GeminiResponse;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
+// ─── Legacy: old function aliases (removed — replaced by class above) ──
+// callGeminiWithRetry and callGeminiOnce moved into GeminiProvider class.
+
+// ─── Provider Initialization ───────────────────────────────────────
+
+// Register Gemini eagerly — Groq follows on module load
+aiRouter.register(new GeminiProvider());
+
+// Init Groq lazily to avoid circular dep issue during module evaluation
+setTimeout(() => {
   try {
-    let url: string;
-    let init: RequestInit;
-
-    if (usesDirectEndpoint()) {
-      const apiKey = pickNextGeminiKey();
-      if (!apiKey) {
-        throw new Error('Gemini API key tidak ditemukan.');
-      }
-      url = `${DIRECT_ENDPOINT}/${getModel()}:generateContent?key=${apiKey}`;
-      init = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      };
-    } else {
-      // Proxy mode: model goes in the body; the server-side proxy adds the key.
-      url = endpoint;
-      init = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: getModel(), ...body }),
-        signal: controller.signal,
-      };
-    }
-
-    const response = await fetch(url, init);
-
-    if (!response.ok) {
-      const text = await response.text();
-      const status = response.status;
-
-      if (status === 429) {
-        const retryAfterMs = parseRetryAfter(response.headers.get('retry-after'));
-        throw new GeminiRateLimitError(`Rate limit exceeded: Gemini API 429`, retryAfterMs);
-      }
-      if (status >= 500) {
-        throw new Error(`Gemini server error ${status}: ${text}`);
-      }
-      throw new Error(`Gemini API ${status}: ${text}`);
-    }
-
-    const data = await response.json();
-    const geminiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    return {
-      choices: [{ message: { role: 'assistant', content: geminiText } }],
-    } as GeminiResponse;
-  } finally {
-    clearTimeout(timeoutId);
+    initGroqProvider();
+  } catch {
+    logger.info('[AI] Groq not available, Gemini standalone', 'AI');
   }
-}
+}, 0);
 
 // ─── JSON Generation ──────────────────────────────────────────────
 
 /**
  * Wrapper for JSON generation commands.
  * Automatically tries to parse JSON and handles markdown cleanup.
- * Now with caching support for identical prompts.
+ * Now supports multi-provider routing via taskType parameter.
  */
 export async function generateGeminiJson<T>(
   prompt: string,
-  systemInstruction?: string
+  systemInstruction?: string,
+  taskType: AiTaskType = 'general'
 ): Promise<T> {
   // Check cache first
   const cacheCategory = detectCacheCategory(prompt);

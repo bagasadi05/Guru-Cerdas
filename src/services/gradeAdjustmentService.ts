@@ -99,7 +99,7 @@ Tugas Anda:
 
 
     try {
-        const result = await generateGeminiJson<AIGradeAdjustmentResult>(prompt, systemInstruction);
+        const result = await generateGeminiJson<AIGradeAdjustmentResult>(prompt, systemInstruction, 'grade-adjustment');
         
         // Post-process fallback validation: make sure every student is represented
         const resolvedAdjustments = students.map(s => {
