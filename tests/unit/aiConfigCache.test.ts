@@ -19,11 +19,16 @@ describe('aiConfig — Response Cache (getCachedResponse/setCachedResponse)', ()
   });
 
   describe('buildCacheKey', () => {
-    it('returns deterministic keys with ai_cache_ prefix', () => {
+    it('returns deterministic keys namespaced by prompt', () => {
       const key = buildCacheKey('hello');
-      expect(key).toMatch(/^ai_cache_-?\d+$/);
+      expect(key).toBe('default::hello');
       expect(key).toBe(buildCacheKey('hello'));
-      expect(buildCacheKey('')).toMatch(/^ai_cache_-?\d+$/);
+      expect(buildCacheKey('')).toBe('default::');
+    });
+
+    it('namespaces keys by taskType/provider', () => {
+      expect(buildCacheKey('hello', 'modul-ajar')).toBe('modul-ajar::hello');
+      expect(buildCacheKey('hello', 'modul-ajar')).not.toBe(buildCacheKey('hello', 'insight'));
     });
 
     it('produces different keys for different prompts', () => {
