@@ -89,18 +89,18 @@ export const generateBintangReportPdf = async (
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
         doc.text("LAPORAN PROGRAM BINTANG", pageWidth / 2, currentY, { align: 'center' });
         
-        currentY += 4;
+        currentY += 5;
         
         doc.setFont('helvetica', 'italic');
         doc.setFontSize(10);
         doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
         doc.text("(Bina Tertib dan Tanggung Jawab)", pageWidth / 2, currentY, { align: 'center' });
         
-        currentY += 5;
+        currentY += 8;
 
         // 3. Student Info Box — hide NIS/NISN row if both are empty
         const hasNisNisn = !!(report.student.nis || report.student.nisn);
-        const infoBoxHeight = hasNisNisn ? 18 : 13;
+        const infoBoxHeight = 20;
         doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
         doc.setFillColor(BG_LIGHT[0], BG_LIGHT[1], BG_LIGHT[2]);
         doc.roundedRect(margin, currentY, pageWidth - (margin * 2), infoBoxHeight, 2, 2, 'FD');
@@ -110,24 +110,26 @@ export const generateBintangReportPdf = async (
         const col1X = margin + 5;
         const col2X = pageWidth / 2 + 5;
         let lineY = currentY + 5;
-        const lineSpacing = 5;
+        const lineSpacing = 6;
+        const colonOffset = 22;
+        const valueOffset = 25;
 
         // Row 1
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
         doc.text("Nama Siswa", col1X, lineY);
-        doc.text(":", col1X + 25, lineY);
+        doc.text(":", col1X + colonOffset, lineY);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        doc.text((report.student.name || '').toUpperCase(), col1X + 28, lineY);
+        doc.text((report.student.name || '').toUpperCase(), col1X + valueOffset, lineY);
 
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
         doc.text("Tahun Ajaran", col2X, lineY);
-        doc.text(":", col2X + 25, lineY);
+        doc.text(":", col2X + colonOffset, lineY);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        doc.text(resolvedAcademicYear, col2X + 28, lineY);
+        doc.text(resolvedAcademicYear, col2X + valueOffset, lineY);
 
         lineY += lineSpacing;
 
@@ -135,18 +137,18 @@ export const generateBintangReportPdf = async (
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
         doc.text("Kelas", col1X, lineY);
-        doc.text(":", col1X + 25, lineY);
+        doc.text(":", col1X + colonOffset, lineY);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        doc.text(report.student.classes?.name || '-', col1X + 28, lineY);
+        doc.text(report.student.classes?.name || '-', col1X + valueOffset, lineY);
 
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
         doc.text("Semester", col2X, lineY);
-        doc.text(":", col2X + 25, lineY);
+        doc.text(":", col2X + colonOffset, lineY);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        doc.text(resolvedSemester, col2X + 28, lineY);
+        doc.text(resolvedSemester, col2X + valueOffset, lineY);
 
         lineY += lineSpacing;
 
@@ -155,32 +157,32 @@ export const generateBintangReportPdf = async (
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
             doc.text("NIS/NISN", col1X, lineY);
-            doc.text(":", col1X + 25, lineY);
+            doc.text(":", col1X + colonOffset, lineY);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
             const nisPart = report.student.nis || '(tidak ada)';
             const nisnPart = report.student.nisn || '(tidak ada)';
-            doc.text(nisPart + " / " + nisnPart, col1X + 28, lineY);
+            doc.text(nisPart + " / " + nisnPart, col1X + valueOffset, lineY);
 
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
             doc.text("Periode", col2X, lineY);
-            doc.text(":", col2X + 25, lineY);
+            doc.text(":", col2X + colonOffset, lineY);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-            doc.text((monthName || '').toUpperCase(), col2X + 28, lineY);
+            doc.text((monthName || '').toUpperCase(), col2X + valueOffset, lineY);
         } else {
             // Without NIS/NISN row, Periode moves to the left column
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
             doc.text("Periode", col1X, lineY);
-            doc.text(":", col1X + 25, lineY);
+            doc.text(":", col1X + colonOffset, lineY);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-            doc.text((monthName || '').toUpperCase(), col1X + 28, lineY);
+            doc.text((monthName || '').toUpperCase(), col1X + valueOffset, lineY);
         }
 
-        currentY += infoBoxHeight + 5;
+        currentY += infoBoxHeight + 6;
 
         const checkPageBreak = (requiredSpace: number) => {
             if (currentY + requiredSpace > pageHeight - margin) {
@@ -200,7 +202,7 @@ export const generateBintangReportPdf = async (
         doc.setTextColor(255, 255, 255);
         doc.text("A. Rekapitulasi Penilaian Bintang", margin + 3, currentY + 5);
         
-        currentY += 7;
+        currentY += 8;
 
         const adabScore = report.evaluation?.adab_score || report.aspects.ADAB.grade;
         const kedisiplinanScore = report.evaluation?.kedisiplinan_score || report.aspects.KEDISIPLINAN.grade;
@@ -253,7 +255,7 @@ export const generateBintangReportPdf = async (
         doc.setTextColor(255, 255, 255);
         doc.text("B. Rincian Poin Pelanggaran", margin + 3, currentY + 5);
         
-        currentY += 7;
+        currentY += 8;
 
         if (!report.violations || report.violations.length === 0) {
             doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
@@ -263,7 +265,7 @@ export const generateBintangReportPdf = async (
             doc.setFontSize(9);
             doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
             doc.text("Tidak terdapat catatan pelanggaran yang perlu dilaporkan untuk bulan ini. Ananda telah menunjukkan perilaku yang baik dan sesuai dengan ketentuan yang berlaku.", margin + 5, currentY + 7.5);
-            currentY += 12;
+            currentY += 12 + 5;
         } else {
             const totalPoin = report.violations.reduce((sum, v) => sum + (v.points || 0), 0);
             const viosData = report.violations.map((v: { date: string; description: string; points: number }, idx: number) => {
@@ -320,6 +322,7 @@ export const generateBintangReportPdf = async (
                     currentY = data.cursor?.y || currentY;
                 }
             });
+            currentY += 5;
         }
 
         // 6. Rincian Poin Keaktifan & Prestasi
@@ -332,7 +335,7 @@ export const generateBintangReportPdf = async (
             doc.setTextColor(255, 255, 255);
             doc.text("C. Rincian Poin Keaktifan & Prestasi", margin + 3, currentY + 5);
             
-            currentY += 7;
+            currentY += 8;
 
             const groupedQP = new Map<string, { activity: string; count: number; totalPoints: number }>();
             report.quizPoints.forEach((item: { quiz_name?: string | null; category?: string | null; points: number }) => {
@@ -399,7 +402,7 @@ export const generateBintangReportPdf = async (
         doc.setTextColor(255, 255, 255);
         doc.text((report.quizPoints && report.quizPoints.length > 0) ? "D. Catatan Wali Kelas" : "C. Catatan Wali Kelas", margin + 3, currentY + 5);
         
-        currentY += 7;
+        currentY += 8;
         
         doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
         doc.setFillColor(255, 255, 255);
@@ -445,18 +448,18 @@ export const generateBintangReportPdf = async (
         const notesLines = doc.splitTextToSize(generalNotes, notesWidth);
         
         const lineH = 5;
-        const notesBoxHeight = 15 + (notesLines.length * lineH);
+        const notesBoxHeight = 10 + (notesLines.length * lineH);
         
         doc.rect(margin, currentY, pageWidth - (margin * 2), notesBoxHeight, 'FD');
         
-        const noteY = currentY + 10;
+        const noteY = currentY + 7;
         
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
         // Use justify alignment and pass the raw string with maxWidth
         doc.text(generalNotes, margin + 5, noteY, { align: 'justify', maxWidth: notesWidth });
         
-        currentY += notesBoxHeight + 5;
+        currentY += notesBoxHeight + 6;
 
         // 7. Signatures — need 50mm for header (7mm) + box (40mm) + gap
         checkPageBreak(50);
@@ -468,7 +471,7 @@ export const generateBintangReportPdf = async (
         doc.setTextColor(255, 255, 255);
         doc.text("D. Pengesahan", margin + 3, currentY + 5);
         
-        currentY += 7;
+        currentY += 8;
 
         const signatureBoxHeight = 40;
         doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
@@ -488,16 +491,16 @@ export const generateBintangReportPdf = async (
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-        doc.text("Mengetahui,", margin + ((pageWidth - (margin * 2)) / 4), currentY + 10, { align: 'center' });
+        doc.text("Mengetahui,", margin + ((pageWidth - (margin * 2)) / 4), currentY + 11, { align: 'center' });
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        doc.text("Orang Tua / Wali Murid", margin + ((pageWidth - (margin * 2)) / 4), currentY + 32, { align: 'center' });
+        doc.text("Orang Tua / Wali Murid", margin + ((pageWidth - (margin * 2)) / 4), currentY + 34, { align: 'center' });
         
         doc.setDrawColor(MUTED[0], MUTED[1], MUTED[2]);
         doc.setLineDashPattern([1, 1], 0);
         const parentLineX = margin + ((pageWidth - (margin * 2)) / 4);
-        doc.line(parentLineX - 20, currentY + 36, parentLineX + 20, currentY + 36);
+        doc.line(parentLineX - 22, currentY + 38, parentLineX + 22, currentY + 38);
         doc.setLineDashPattern([], 0);
-        doc.text("( ................................... )", parentLineX, currentY + 35, { align: 'center' });
+        doc.text("( ................................... )", parentLineX, currentY + 37, { align: 'center' });
 
         // Teacher Box (Right)
         doc.setFillColor(BG_LIGHT[0], BG_LIGHT[1], BG_LIGHT[2]);
@@ -509,18 +512,18 @@ export const generateBintangReportPdf = async (
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-        doc.text(`Madiun, ${printDate}`, (pageWidth / 2) + ((pageWidth - (margin * 2)) / 4), currentY + 10, { align: 'center' });
+        doc.text(`Madiun, ${printDate}`, (pageWidth / 2) + ((pageWidth - (margin * 2)) / 4), currentY + 11, { align: 'center' });
         
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
         const teacherLineX = (pageWidth / 2) + ((pageWidth - (margin * 2)) / 4);
         const teacherName = (user?.name && user.name.trim() !== '') ? user.name.toUpperCase() : "...................................";
-        doc.text(teacherName, teacherLineX, currentY + 35, { align: 'center' });
+        doc.text(teacherName, teacherLineX, currentY + 34, { align: 'center' });
         
         const textWidth = doc.getTextWidth(teacherName);
         doc.setDrawColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
         doc.setLineWidth(0.2);
-        doc.line(teacherLineX - (textWidth / 2) - 2, currentY + 36, teacherLineX + (textWidth / 2) + 2, currentY + 36);
+        doc.line(teacherLineX - (textWidth / 2) - 3, currentY + 35, teacherLineX + (textWidth / 2) + 3, currentY + 35);
 
     }
 

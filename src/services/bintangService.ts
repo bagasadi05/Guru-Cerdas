@@ -80,19 +80,37 @@ export function calculateAspectPoints(
     summary[aspect].count += 1;
   }
 
-  // Deduct/offset violation points using poin keaktifan
+  // Deduct/offset violation points using poin keaktifan systematically (greedy)
   let remainingBonus = quizPointsTotal;
+  
+  const aspects = [
+    { name: 'ADAB', points: summary.ADAB.points },
+    { name: 'KEDISIPLINAN', points: summary.KEDISIPLINAN.points },
+    { name: 'KERAPIAN', points: summary.KERAPIAN.points }
+  ] as const;
 
-  const adabDeduction = Math.min(summary.ADAB.points, remainingBonus);
-  const netAdabPoints = summary.ADAB.points - adabDeduction;
-  remainingBonus -= adabDeduction;
+  // Distribute bonus to the aspect with the highest points first
+  while (remainingBonus > 0) {
+    let highestAspect = null;
+    let maxPts = 0;
+    
+    for (const aspect of aspects) {
+      if (aspect.points > maxPts) {
+        maxPts = aspect.points;
+        highestAspect = aspect;
+      }
+    }
+    
+    // If all aspects are at 0 points, we can stop early
+    if (!highestAspect) break;
+    
+    highestAspect.points -= 1;
+    remainingBonus -= 1;
+  }
 
-  const kedisDeduction = Math.min(summary.KEDISIPLINAN.points, remainingBonus);
-  const netKedisPoints = summary.KEDISIPLINAN.points - kedisDeduction;
-  remainingBonus -= kedisDeduction;
-
-  const kerapianDeduction = Math.min(summary.KERAPIAN.points, remainingBonus);
-  const netKerapianPoints = summary.KERAPIAN.points - kerapianDeduction;
+  const netAdabPoints = aspects.find(a => a.name === 'ADAB')!.points;
+  const netKedisPoints = aspects.find(a => a.name === 'KEDISIPLINAN')!.points;
+  const netKerapianPoints = aspects.find(a => a.name === 'KERAPIAN')!.points;
 
   // Compute final grades based on net points after keaktifan bonus offsets
   summary.ADAB.grade = pointsToGrade(netAdabPoints);
