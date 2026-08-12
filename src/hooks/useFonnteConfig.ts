@@ -7,7 +7,6 @@ import { useToast } from './useToast';
 export interface FonnteConfig {
   adminPhone: string;
   enabled: boolean;
-  dailyReportEnabled: boolean;
   dailyReportTime: string;
 }
 
@@ -15,13 +14,12 @@ const STORAGE_KEY = 'guru_cerdas_fonnte_config';
 const DEFAULT_CONFIG: FonnteConfig = {
   adminPhone: '',
   enabled: false,
-  dailyReportEnabled: true,
   dailyReportTime: '17:00',
 };
 
 /**
- * Fetch Fonnte config from Supabase — usable by ANY authenticated user
- * (even non-admin) so that notification dispatch works from teacher browsers.
+ * Fetch Fonnte config from Supabase — readable by ANY authenticated user
+ * (even non-admin) so notification dispatch works from teacher browsers.
  */
 export async function fetchFonnteConfig(): Promise<FonnteConfig> {
   try {
@@ -36,7 +34,6 @@ export async function fetchFonnteConfig(): Promise<FonnteConfig> {
     return {
       adminPhone: raw.adminPhone || '',
       enabled: raw.enabled === true,
-      dailyReportEnabled: raw.dailyReportEnabled !== false,
       dailyReportTime: raw.dailyReportTime || '17:00',
     };
   } catch {
@@ -60,7 +57,10 @@ export function useFonnteConfig() {
     if (!user) return;
     fetchFonnteConfig().then(serverConfig => {
       setConfig(prev => {
-        const merged = { ...DEFAULT_CONFIG, ...serverConfig, ...prev };
+        // Server adalah sumber kebenaran; cache lokal hanya mengisi yang kosong.
+        // (Sebelumnya `prev` menang, sehingga config basi di localStorage
+        //  menimpa config global dan berbalik saat keystroke berikutnya.)
+        const merged = { ...DEFAULT_CONFIG, ...prev, ...serverConfig };
         return merged;
       });
     });
@@ -81,6 +81,16 @@ export function useFonnteConfig() {
         });
       return next;
     });
+
+    // Perubahan jam kirim → sesuaikan jadwal pg_cron (WIB → UTC) via RPC admin.
+    // Tanpa ini picker hanya label: jadwal cron membaca key terpisah.
+    if (partial.dailyReportTime) {
+      supabase
+        .rpc('set_daily_report_schedule', { p_time: partial.dailyReportTime })
+        .then(({ error }) => {
+          if (error) console.warn('Failed to update daily report schedule', error);
+        });
+    }
   }, []);
 
   const sendTest = useCallback(async (testMessage?: string): Promise<boolean> => {

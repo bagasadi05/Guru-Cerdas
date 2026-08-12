@@ -1,8 +1,9 @@
 // Supabase Edge Function: daily-report
-// Triggered by pg_cron setiap sore. Membaca daily_input_log dan mengirim
-// laporan harian WhatsApp via Fonnte ke admin yang sudah subscribe.
+// Dipicu oleh pg_cron setiap sore (jadwal di app_config 'daily_report_schedule').
+// Membaca daily_input_log hari itu (WIB) dan mengirim laporan harian WhatsApp
+// via Fonnte ke admin yang subscribe (app_config 'fonnte_config').
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 interface InputLogRow {
   id: string;
@@ -18,11 +19,28 @@ interface InputLogRow {
 interface FonnteConfig {
   adminPhone: string;
   enabled: boolean;
-  dailyReportEnabled: boolean;
   dailyReportTime: string;
 }
 
 const FONNTE_SEND_URL = "https://api.fonnte.com/send";
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000; // Asia/Jakarta = UTC+7
+// Batas aman Fonnte (~1000 karakter per pesan); dipotong agar selalu terkirim.
+const MAX_MESSAGE_LENGTH = 950;
+
+/** Kunci grup detail agar entri berbeda (kuis/nilai/pelanggaran) tidak menyatu. */
+function logDetailKey(log: InputLogRow): string {
+  const d = (log.details ?? {}) as Record<string, unknown>;
+  switch (log.mode) {
+    case "quiz":
+      return String(d.quizName ?? "");
+    case "subject_grade":
+      return `${String(d.subject ?? "")}:${String(d.assessmentName ?? "")}`;
+    case "violation":
+      return String(d.violationDesc ?? "");
+    default:
+      return "";
+  }
+}
 
 function buildDailyReportMessage(
   logs: InputLogRow[],
@@ -40,8 +58,7 @@ function buildDailyReportMessage(
   let totalGrade = 0;
   let totalViolation = 0;
 
-  // Hitung summary dulu
-  for (const [, items] of Object.entries(byTeacher)) {
+  for (const items of Object.values(byTeacher)) {
     for (const item of items) {
       if (item.mode === "quiz") totalQuiz += item.student_count;
       else if (item.mode === "subject_grade") totalGrade += item.student_count;
@@ -60,7 +77,6 @@ function buildDailyReportMessage(
   lines.push(`Berikut ringkasan aktivitas pembelajaran hari ini, ${dateLabel}:`);
   lines.push(``);
 
-  // Ringkasan atas
   if (totalEntries === 0) {
     lines.push(`🍃 Tidak ada aktivitas input yang tercatat hari ini.`);
     lines.push(``);
@@ -77,11 +93,11 @@ function buildDailyReportMessage(
       lines.push(`   ⚠️ Pelanggaran — ${totalViolation} entri`);
     lines.push(``);
 
-    // Detail per guru
+    // Detail per guru — grup per mode+kelas+detail agar entri berbeda tetap terpisah
     for (const [teacher, items] of Object.entries(byTeacher)) {
       const grouped: Record<string, InputLogRow[]> = {};
       for (const item of items) {
-        const key = `${item.mode}:${item.class_name}`;
+        const key = `${item.mode}:${item.class_name}:${logDetailKey(item)}`;
         if (!grouped[key]) grouped[key] = [];
         grouped[key].push(item);
       }
@@ -89,7 +105,7 @@ function buildDailyReportMessage(
       const teacherTotal = items.reduce((s, g) => s + g.student_count, 0);
       lines.push(`▸ *${teacher}* — ${teacherTotal} entri`);
 
-      for (const [, group] of Object.entries(grouped)) {
+      for (const group of Object.values(grouped)) {
         const first = group[0];
         const count = group.reduce((s, g) => s + g.student_count, 0);
 
@@ -135,15 +151,51 @@ function buildDailyReportMessage(
   return lines.join("\n");
 }
 
-Deno.serve(async (req: Request) => {
-  const authHeader = req.headers.get("authorization");
-  const expectedKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const internalSecret = req.headers.get("x-internal-secret");
+function truncateMessage(message: string, maxLen: number): string {
+  if (message.length <= maxLen) return message;
+  const tail = "\n\n… (pesan dipotong karena terlalu panjang)";
+  return message.slice(0, maxLen - tail.length) + tail;
+}
 
-  // Allow calls from pg_cron (with x-internal-secret) or with service_role key
-  const scheduledSecret = Deno.env.get("SCHEDULED_FUNCTION_SECRET");
-  const isInternal = Boolean(
-    internalSecret && scheduledSecret && internalSecret === scheduledSecret,
+/** Tandai log basi (dari hari sebelumnya yang gagal terkirim) sebagai sent. */
+async function cleanupStaleLogs(
+  supabase: SupabaseClient,
+  startOfWibDayIso: string,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("daily_input_log")
+    .update({ sent: true })
+    .lt("created_at", startOfWibDayIso)
+    .eq("sent", false)
+    .select("id");
+
+  if (error) {
+    console.error("Failed to clean stale daily_input_log:", error);
+  } else if (data && data.length > 0) {
+    console.log(`Marked ${data.length} stale log(s) as sent`);
+  }
+}
+
+Deno.serve(async (req: Request) => {
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } },
+  );
+
+  // --- Auth: pg_cron (X-Internal-Secret) atau manual via service role ---
+  const authHeader = req.headers.get("authorization");
+  const internalSecret = req.headers.get("x-internal-secret");
+  const expectedKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+  const { data: storedSecret } = await supabase
+    .rpc("get_app_config", { p_key: "daily_report_worker_secret" });
+  const workerSecret = typeof storedSecret === "string" ? storedSecret : "";
+  const envScheduled = Deno.env.get("SCHEDULED_FUNCTION_SECRET") ?? "";
+
+  const isInternal = Boolean(internalSecret) && (
+    (workerSecret.length > 0 && internalSecret === workerSecret) ||
+    (envScheduled.length > 0 && internalSecret === envScheduled)
   );
   const isAuthorized =
     isInternal ||
@@ -156,12 +208,6 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    expectedKey,
-    { auth: { persistSession: false } },
-  );
-
   const fonnteToken = (Deno.env.get("FONNTE_TOKEN") ?? "").trim();
   if (!fonnteToken) {
     console.error("FONNTE_TOKEN not configured");
@@ -172,11 +218,28 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Fetch unsent logs
+    // Batas hari "hari ini" dalam WIB (bukan UTC) — label tanggal juga WIB.
+    const now = Date.now();
+    const wibDate = new Date(now + WIB_OFFSET_MS);
+    const wibDateStr = wibDate.toISOString().slice(0, 10);
+    const startOfWibDayUtc =
+      Date.UTC(wibDate.getUTCFullYear(), wibDate.getUTCMonth(), wibDate.getUTCDate()) -
+      WIB_OFFSET_MS;
+    const startOfWibDayIso = new Date(startOfWibDayUtc).toISOString();
+    const dateLabel = new Intl.DateTimeFormat("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Jakarta",
+    }).format(new Date(now));
+
+    // Log hari ini yang belum terkirim
     const { data: logs, error: logError } = await supabase
       .from("daily_input_log")
       .select("*")
       .eq("sent", false)
+      .gte("created_at", startOfWibDayIso)
       .order("created_at", { ascending: true });
 
     if (logError) {
@@ -187,6 +250,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Bersihkan backlog hari-hari sebelumnya agar tidak menumpuk/direlabel ulang
+    await cleanupStaleLogs(supabase, startOfWibDayIso);
+
     if (!logs || logs.length === 0) {
       console.log("No pending input logs to report.");
       return new Response(
@@ -195,9 +261,20 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Guard anti double-send dalam satu hari (cron + invoke manual)
+    const { data: lastSentDate } = await supabase
+      .rpc("get_app_config", { p_key: "daily_report_sent_date" });
+    if (typeof lastSentDate === "string" && lastSentDate === wibDateStr) {
+      console.log(`Daily report already sent today (${wibDateStr}).`);
+      return new Response(
+        JSON.stringify({ message: "Already sent today", count: 0 }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
+
     const typedLogs = logs as unknown as InputLogRow[];
 
-    // Fetch Fonnte config from app_config (global, bukan per-user)
+    // Config Fonnte global (app_config, bukan per-user)
     const { data: configValue } = await supabase
       .rpc("get_app_config", { p_key: "fonnte_config" });
 
@@ -210,84 +287,87 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Build date label for today
-    const today = new Date();
-    const dateLabel = today.toLocaleDateString("id-ID", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-    const message = buildDailyReportMessage(typedLogs, dateLabel);
-    let sentCount = 0;
-    let minLogId: string | null = null;
-    let maxLogId: string | null = null;
-
-    // Find log id range for marking sent
-    const sortedLogs = [...typedLogs].sort(
-      (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-    );
-    if (sortedLogs.length > 0) {
-      minLogId = sortedLogs[0].id;
-      maxLogId = sortedLogs[sortedLogs.length - 1].id;
+    if (!fonnteConfig.enabled || !fonnteConfig.adminPhone) {
+      console.log(
+        "Daily report disabled or admin phone missing; logs kept for later.",
+      );
+      return new Response(
+        JSON.stringify({
+          message: "Daily report disabled or admin phone missing",
+          logCount: typedLogs.length,
+          recipients: 0,
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      );
     }
 
-    // Send to admin if config is enabled
-    if (
-      fonnteConfig.enabled &&
-      fonnteConfig.adminPhone &&
-      fonnteConfig.dailyReportEnabled !== false
-    ) {
-      try {
-        const formData = new URLSearchParams();
-        formData.append("target", fonnteConfig.adminPhone);
-        formData.append("message", message);
+    // Claim hari ini SEBELUM mengirim — kalau gagal, dibuka lagi untuk retry
+    const { error: claimError } = await supabase.rpc("set_app_config", {
+      p_key: "daily_report_sent_date",
+      p_value: wibDateStr,
+    });
+    if (claimError) {
+      console.error("Failed to claim daily report date:", claimError);
+    }
 
-        const result = await fetch(FONNTE_SEND_URL, {
-          method: "POST",
-          headers: {
-            Authorization: fonnteToken,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: formData.toString(),
-        });
+    const message = truncateMessage(
+      buildDailyReportMessage(typedLogs, dateLabel),
+      MAX_MESSAGE_LENGTH,
+    );
 
-        if (result.ok) {
-          sentCount++;
-          console.log(`Daily report sent to ${fonnteConfig.adminPhone}`);
-        } else {
-          const body = await result.text().catch(() => "");
-          console.error(
-            `Fonnte send failed to ${fonnteConfig.adminPhone}: ${result.status} ${body}`,
-          );
-        }
-      } catch (err) {
+    let sentCount = 0;
+    try {
+      const formData = new URLSearchParams();
+      formData.append("target", fonnteConfig.adminPhone);
+      formData.append("message", message);
+
+      const result = await fetch(FONNTE_SEND_URL, {
+        method: "POST",
+        headers: {
+          Authorization: fonnteToken,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData.toString(),
+      });
+
+      if (result.ok) {
+        sentCount++;
+        console.log(`Daily report sent to ${fonnteConfig.adminPhone}`);
+      } else {
+        const body = await result.text().catch(() => "");
         console.error(
-          `Fonnte error for ${fonnteConfig.adminPhone}:`,
-          err,
+          `Fonnte send failed to ${fonnteConfig.adminPhone}: ${result.status} ${body}`,
         );
       }
+    } catch (err) {
+      console.error(
+        `Fonnte error for ${fonnteConfig.adminPhone}:`,
+        err,
+      );
     }
 
-    // Mark logs as sent
-    if (sentCount > 0 && minLogId && maxLogId) {
+    if (sentCount > 0) {
+      // Tandai log yang BENAR-BENAR terkirim via id eksplisit (bukan range UUID)
       const { error: updateError } = await supabase
         .from("daily_input_log")
         .update({ sent: true })
-        .gte("id", minLogId)
-        .lte("id", maxLogId)
+        .in("id", typedLogs.map((l) => l.id))
         .eq("sent", false);
 
       if (updateError) {
         console.error("Failed to mark logs as sent:", updateError);
       }
+    } else {
+      // Gagal terkirim — buka guard supaya bisa dicoba lagi
+      await supabase.rpc("set_app_config", {
+        p_key: "daily_report_sent_date",
+        p_value: "",
+      });
     }
 
     return new Response(
       JSON.stringify({
-        message: "Daily report sent",
+        message: sentCount > 0 ? "Daily report sent" : "Daily report send failed",
         logCount: typedLogs.length,
         recipients: sentCount,
       }),

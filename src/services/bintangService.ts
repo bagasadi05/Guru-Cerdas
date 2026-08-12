@@ -83,11 +83,11 @@ export function calculateAspectPoints(
   // Deduct/offset violation points using poin keaktifan systematically (greedy)
   let remainingBonus = quizPointsTotal;
   
-  const aspects = [
+  const aspects: Array<{ name: string; points: number }> = [
     { name: 'ADAB', points: summary.ADAB.points },
     { name: 'KEDISIPLINAN', points: summary.KEDISIPLINAN.points },
     { name: 'KERAPIAN', points: summary.KERAPIAN.points }
-  ] as const;
+  ];
 
   // Distribute bonus to the aspect with the highest points first
   while (remainingBonus > 0) {

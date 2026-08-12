@@ -176,8 +176,11 @@ function columnNameFromSegment(seg) {
   const m = /^([A-Za-z_][A-Za-z0-9_]*)/.exec(s);
   if (!m) return null;
   const name = m[1].toLowerCase();
+  // `key` TIDAK disertakan: di Postgres segmen yang diawali `key` adalah nama
+  // kolom (mis. app_config.key), bukan constraint — `PRIMARY KEY` / `FOREIGN
+  // KEY` sudah diblokir lewat `primary` / `foreign`.
   const CONSTRAINT_FIRST = new Set([
-    'primary', 'unique', 'check', 'constraint', 'foreign', 'key', 'references',
+    'primary', 'unique', 'check', 'constraint', 'foreign', 'references',
     'like', 'exclude', 'with', 'inherits', 'column',
   ]);
   if (CONSTRAINT_FIRST.has(name)) return null;
@@ -271,17 +274,32 @@ function readMigrations() {
     }
 
     // ── ALTER TABLE ... ADD COLUMN [IF NOT EXISTS] col ──
+    // Satu statement ALTER TABLE bisa menambah BANYAK kolom:
+    //   ALTER TABLE x ADD COLUMN a text, ADD COLUMN b text, ...
+    // Regex lama hanya menangkap kolom pertama per statement → kolom berikutnya
+    // (a.l. user_roles.full_name, ref_boilerplate_topik.content_status, ...)
+    // dilaporkan sebagai phantom PALSU. Di sini statement di-scan penuh.
     // Hanya keyword pemimpin constraint yang di-skip (regex sudah mengonsumsi
     // `column` dan `if not exists`); nama kolom sah seperti `type` tidak
     // boleh terblokir.
     const ADD_SKIP = new Set(['constraint', 'primary', 'unique', 'foreign', 'check', 'exclude', 'key', 'column']);
-    const addRe = /\balter\s+table\s+(?:if\s+exists\s+)?(?:public\.)?([A-Za-z_][A-Za-z0-9_]*)\s+add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?([A-Za-z_][A-Za-z0-9_]*)/gi;
+    const alterRe = /\balter\s+table\s+(?:if\s+exists\s+)?(?:public\.)?([A-Za-z_][A-Za-z0-9_]*)\b/gi;
+    const addColRe = /\badd\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?([A-Za-z_][A-Za-z0-9_]*)/gi;
     let am;
-    while ((am = addRe.exec(sql)) !== null) {
+    while ((am = alterRe.exec(sql)) !== null) {
       const table = am[1].toLowerCase();
-      const col = am[2].toLowerCase();
-      if (ADD_SKIP.has(col)) continue; // ADD CONSTRAINT/PRIMARY KEY/UNIQUE/FOREIGN ... bukan kolom
-      ensure(table).add(col);
+      const stmtStart = am.index + am[0].length;
+      const semi = sql.indexOf(';', stmtStart);
+      const stmtEnd = semi === -1 ? sql.length : semi;
+      const stmt = sql.slice(stmtStart, stmtEnd);
+      addColRe.lastIndex = 0;
+      let ac;
+      while ((ac = addColRe.exec(stmt)) !== null) {
+        const col = ac[1].toLowerCase();
+        if (ADD_SKIP.has(col)) continue; // ADD CONSTRAINT/PRIMARY KEY/UNIQUE/FOREIGN ... bukan kolom
+        ensure(table).add(col);
+      }
+      alterRe.lastIndex = stmtEnd + 1; // lanjut scan statement berikutnya
     }
 
     // ── ALTER TABLE ... DROP COLUMN [IF EXISTS] col ──

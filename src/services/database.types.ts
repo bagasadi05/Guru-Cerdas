@@ -396,6 +396,21 @@ export type Database = {
         }
         Relationships: []
       }
+      app_config: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
       attendance: {
         Row: {
           created_at: string
@@ -1549,6 +1564,7 @@ export type Database = {
           konten_json: Json | null
           lkpd_tugas: string
           mata_pelajaran: string
+          owner_id: string | null
           pemahaman_bermakna: Json
           pengayaan: Json
           pertanyaan_pemantik: Json
@@ -1579,6 +1595,7 @@ export type Database = {
           konten_json?: Json | null
           lkpd_tugas: string
           mata_pelajaran: string
+          owner_id?: string | null
           pemahaman_bermakna?: Json
           pengayaan?: Json
           pertanyaan_pemantik?: Json
@@ -1609,6 +1626,7 @@ export type Database = {
           konten_json?: Json | null
           lkpd_tugas?: string
           mata_pelajaran?: string
+          owner_id?: string | null
           pemahaman_bermakna?: Json
           pengayaan?: Json
           pertanyaan_pemantik?: Json
@@ -1633,7 +1651,10 @@ export type Database = {
           elemen: string | null
           fase: string
           id: string
+          is_verified: boolean | null
           mata_pelajaran: string
+          sumber_regulasi: string | null
+          tahun: number | null
         }
         Insert: {
           created_at?: string | null
@@ -1641,7 +1662,10 @@ export type Database = {
           elemen?: string | null
           fase: string
           id?: string
+          is_verified?: boolean | null
           mata_pelajaran: string
+          sumber_regulasi?: string | null
+          tahun?: number | null
         }
         Update: {
           created_at?: string | null
@@ -1649,7 +1673,10 @@ export type Database = {
           elemen?: string | null
           fase?: string
           id?: string
+          is_verified?: boolean | null
           mata_pelajaran?: string
+          sumber_regulasi?: string | null
+          tahun?: number | null
         }
         Relationships: []
       }
@@ -1693,28 +1720,43 @@ export type Database = {
       }
       ref_model_pembelajaran: {
         Row: {
+          cocok_untuk: Json | null
           created_at: string | null
           id: string
+          kategori: string | null
+          kelebihan: Json | null
+          kekurangan: Json | null
           nama_model: string
           sintaks_inti: Json
           sintaks_pendahuluan: Json
           sintaks_penutup: Json
+          sumber: string | null
         }
         Insert: {
+          cocok_untuk?: Json | null
           created_at?: string | null
           id?: string
+          kategori?: string | null
+          kelebihan?: Json | null
+          kekurangan?: Json | null
           nama_model: string
           sintaks_inti?: Json
           sintaks_pendahuluan?: Json
           sintaks_penutup?: Json
+          sumber?: string | null
         }
         Update: {
+          cocok_untuk?: Json | null
           created_at?: string | null
           id?: string
+          kategori?: string | null
+          kelebihan?: Json | null
+          kekurangan?: Json | null
           nama_model?: string
           sintaks_inti?: Json
           sintaks_pendahuluan?: Json
           sintaks_penutup?: Json
+          sumber?: string | null
         }
         Relationships: []
       }
@@ -1825,6 +1867,8 @@ export type Database = {
           deskripsi: string | null
           id: string
           nama_tema: string
+          tujuan: string | null
+          updated_at: string | null
           urutan: number
         }
         Insert: {
@@ -1832,6 +1876,8 @@ export type Database = {
           deskripsi?: string | null
           id: string
           nama_tema: string
+          tujuan?: string | null
+          updated_at?: string | null
           urutan?: number
         }
         Update: {
@@ -1839,6 +1885,8 @@ export type Database = {
           deskripsi?: string | null
           id?: string
           nama_tema?: string
+          tujuan?: string | null
+          updated_at?: string | null
           urutan?: number
         }
         Relationships: []
@@ -2681,6 +2729,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_daily_input_logs: { Args: { p_retention_days?: number }; Returns: number }
       cleanup_old_rate_limits: { Args: never; Returns: number }
       debug_student_verification: {
         Args: { access_code_param: string; student_id_param: string }
@@ -2768,6 +2817,11 @@ export type Database = {
       get_fonnte_config: { Args: never; Returns: Json }
       get_app_config: { Args: { p_key: string }; Returns: string }
       set_app_config: { Args: { p_key: string; p_value: string }; Returns: undefined }
+      set_daily_report_schedule: { Args: { p_time: string }; Returns: undefined }
+      set_modul_ajar_worker_config: {
+        Args: { p_service_key: string; p_url: string }
+        Returns: undefined
+      }
       get_parent_subscription_status: {
         Args: {
           p_access_code: string

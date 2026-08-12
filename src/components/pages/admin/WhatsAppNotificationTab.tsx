@@ -56,7 +56,7 @@ export const WhatsAppNotificationTab: React.FC = () => {
                         </div>
                     </div>
                     <button
-                        onClick={() => updateConfig({ enabled: !config.enabled, dailyReportEnabled: !config.enabled })}
+                        onClick={() => updateConfig({ enabled: !config.enabled })}
                         className="focus:outline-none"
                         aria-label={config.enabled ? 'Nonaktifkan laporan harian' : 'Aktifkan laporan harian'}
                     >
@@ -114,7 +114,7 @@ export const WhatsAppNotificationTab: React.FC = () => {
                     ))}
                 </div>
                 <p className="mt-3 text-xs text-gray-400">
-                    ⚠️ Perubahan jam kirim akan diterapkan saat deploy ulang Edge Function.
+                    Perubahan jam kirim diterapkan segera (jadwal pg_cron diperbarui otomatis, WIB).
                 </p>
             </div>
 
