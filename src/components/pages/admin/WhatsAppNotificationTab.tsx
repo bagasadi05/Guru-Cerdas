@@ -9,12 +9,14 @@ import {
     CheckCircle2,
     XCircle,
     Smartphone,
+    Clock,
 } from 'lucide-react';
 import { useFonnteConfig } from '../../../hooks/useFonnteConfig';
 
 /**
  * WhatsApp Notification Tab — Admin panel configuration for Fonnte WhatsApp Gateway.
- * Admin can set their WhatsApp number, toggle notification types, and test the connection.
+ * Admin dapat mengaktifkan laporan harian yang dikirim setiap sore via WhatsApp
+ * berisi ringkasan seluruh input guru hari itu.
  */
 export const WhatsAppNotificationTab: React.FC = () => {
     const { config, updateConfig, sendTest } = useFonnteConfig();
@@ -26,6 +28,10 @@ export const WhatsAppNotificationTab: React.FC = () => {
         setTestSending(false);
     };
 
+    const timeOptions = [
+        '15:00', '16:00', '17:00', '18:00', '19:00', '20:00',
+    ];
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -35,7 +41,7 @@ export const WhatsAppNotificationTab: React.FC = () => {
                 </div>
                 <div>
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Notifikasi WhatsApp</h2>
-                    <p className="text-sm text-gray-500">Admin menerima notifikasi WhatsApp setiap guru menginput data.</p>
+                    <p className="text-sm text-gray-500">Admin menerima laporan harian via WhatsApp setiap sore.</p>
                 </div>
             </div>
 
@@ -45,14 +51,14 @@ export const WhatsAppNotificationTab: React.FC = () => {
                     <div className="flex items-center gap-3">
                         <Bell size={20} className="text-gray-500" />
                         <div>
-                            <p className="font-medium text-gray-900 dark:text-white">Aktifkan Notifikasi</p>
-                            <p className="text-sm text-gray-500">Kirim notifikasi WhatsApp saat guru input data</p>
+                            <p className="font-medium text-gray-900 dark:text-white">Aktifkan Laporan Harian</p>
+                            <p className="text-sm text-gray-500">Kirim ringkasan input guru hari ini via WhatsApp</p>
                         </div>
                     </div>
                     <button
-                        onClick={() => updateConfig({ enabled: !config.enabled })}
+                        onClick={() => updateConfig({ enabled: !config.enabled, dailyReportEnabled: !config.enabled })}
                         className="focus:outline-none"
-                        aria-label={config.enabled ? 'Nonaktifkan notifikasi' : 'Aktifkan notifikasi'}
+                        aria-label={config.enabled ? 'Nonaktifkan laporan harian' : 'Aktifkan laporan harian'}
                     >
                         {config.enabled ? (
                             <ToggleRight size={44} className="text-emerald-500" />
@@ -69,7 +75,7 @@ export const WhatsAppNotificationTab: React.FC = () => {
                     <Smartphone size={20} className="text-gray-500" />
                     <div>
                         <p className="font-medium text-gray-900 dark:text-white">Nomor WhatsApp Admin</p>
-                        <p className="text-sm text-gray-500">Nomor penerima notifikasi (format: 628xxx)</p>
+                        <p className="text-sm text-gray-500">Nomor penerima laporan harian (format: 628xxx)</p>
                     </div>
                 </div>
                 <input
@@ -83,67 +89,33 @@ export const WhatsAppNotificationTab: React.FC = () => {
                 <p className="mt-2 text-xs text-gray-400">Contoh: 6281234567890 (kode negara tanpa +)</p>
             </div>
 
-            {/* Notification types */}
+            {/* Jam Pengiriman */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6">
-                <p className="font-medium text-gray-900 dark:text-white mb-4">Jenis Notifikasi</p>
-                <div className="space-y-4">
-                    {/* Quiz */}
-                    <div className="flex items-center justify-between py-2">
-                        <div>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Poin Kuis / Keaktifan</p>
-                            <p className="text-xs text-gray-400">Notifikasi saat guru input poin kuis siswa</p>
-                        </div>
-                        <button
-                            onClick={() => updateConfig({ notifyQuiz: !config.notifyQuiz })}
-                            className="focus:outline-none"
-                            aria-label={config.notifyQuiz ? 'Nonaktifkan notifikasi kuis' : 'Aktifkan notifikasi kuis'}
-                        >
-                            {config.notifyQuiz ? (
-                                <ToggleRight size={38} className="text-emerald-500" />
-                            ) : (
-                                <ToggleLeft size={38} className="text-gray-300 dark:text-gray-600" />
-                            )}
-                        </button>
-                    </div>
-
-                    {/* Grade */}
-                    <div className="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-700">
-                        <div>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Nilai Mata Pelajaran</p>
-                            <p className="text-xs text-gray-400">Notifikasi saat guru input nilai akademik</p>
-                        </div>
-                        <button
-                            onClick={() => updateConfig({ notifyGrade: !config.notifyGrade })}
-                            className="focus:outline-none"
-                            aria-label={config.notifyGrade ? 'Nonaktifkan notifikasi nilai' : 'Aktifkan notifikasi nilai'}
-                        >
-                            {config.notifyGrade ? (
-                                <ToggleRight size={38} className="text-emerald-500" />
-                            ) : (
-                                <ToggleLeft size={38} className="text-gray-300 dark:text-gray-600" />
-                            )}
-                        </button>
-                    </div>
-
-                    {/* Violation */}
-                    <div className="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-700">
-                        <div>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Pelanggaran Siswa</p>
-                            <p className="text-xs text-gray-400">Notifikasi saat guru mencatat pelanggaran</p>
-                        </div>
-                        <button
-                            onClick={() => updateConfig({ notifyViolation: !config.notifyViolation })}
-                            className="focus:outline-none"
-                            aria-label={config.notifyViolation ? 'Nonaktifkan notifikasi pelanggaran' : 'Aktifkan notifikasi pelanggaran'}
-                        >
-                            {config.notifyViolation ? (
-                                <ToggleRight size={38} className="text-emerald-500" />
-                            ) : (
-                                <ToggleLeft size={38} className="text-gray-300 dark:text-gray-600" />
-                            )}
-                        </button>
+                <div className="flex items-center gap-3 mb-4">
+                    <Clock size={20} className="text-gray-500" />
+                    <div>
+                        <p className="font-medium text-gray-900 dark:text-white">Jam Pengiriman Laporan</p>
+                        <p className="text-sm text-gray-500">Laporan dikirim setiap hari pada jam ini (WIB)</p>
                     </div>
                 </div>
+                <div className="flex flex-wrap gap-2">
+                    {timeOptions.map((time) => (
+                        <button
+                            key={time}
+                            onClick={() => updateConfig({ dailyReportTime: time })}
+                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                                config.dailyReportTime === time
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                            }`}
+                        >
+                            {time} WIB
+                        </button>
+                    ))}
+                </div>
+                <p className="mt-3 text-xs text-gray-400">
+                    ⚠️ Perubahan jam kirim akan diterapkan saat deploy ulang Edge Function.
+                </p>
             </div>
 
             {/* Test Button */}
@@ -184,7 +156,13 @@ export const WhatsAppNotificationTab: React.FC = () => {
                             <XCircle size={16} className="text-gray-400" />
                         )}
                         <span className="text-gray-600 dark:text-gray-400">
-                            Notifikasi {config.enabled ? 'aktif' : 'nonaktif'}
+                            Laporan harian {config.enabled ? 'aktif' : 'nonaktif'}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                        <Clock size={16} className="text-gray-400" />
+                        <span className="text-gray-600 dark:text-gray-400">
+                            Dikirim setiap hari pukul {config.dailyReportTime} WIB
                         </span>
                     </div>
                 </div>

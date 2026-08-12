@@ -941,6 +941,42 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_input_log: {
+        Row: {
+          class_name: string
+          created_at: string
+          details: Json
+          id: string
+          mode: string
+          sent: boolean
+          student_count: number
+          teacher_id: string
+          teacher_name: string
+        }
+        Insert: {
+          class_name?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          mode: string
+          sent?: boolean
+          student_count?: number
+          teacher_id: string
+          teacher_name: string
+        }
+        Update: {
+          class_name?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          mode?: string
+          sent?: boolean
+          student_count?: number
+          teacher_id?: string
+          teacher_name?: string
+        }
+        Relationships: []
+      }
       export_templates: {
         Row: {
           config: Json
@@ -2730,6 +2766,8 @@ export type Database = {
         }[]
       }
       get_fonnte_config: { Args: never; Returns: Json }
+      get_app_config: { Args: { p_key: string }; Returns: string }
+      set_app_config: { Args: { p_key: string; p_value: string }; Returns: undefined }
       get_parent_subscription_status: {
         Args: {
           p_access_code: string

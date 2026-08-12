@@ -7,18 +7,16 @@ import { useToast } from './useToast';
 export interface FonnteConfig {
   adminPhone: string;
   enabled: boolean;
-  notifyQuiz: boolean;
-  notifyGrade: boolean;
-  notifyViolation: boolean;
+  dailyReportEnabled: boolean;
+  dailyReportTime: string;
 }
 
 const STORAGE_KEY = 'guru_cerdas_fonnte_config';
 const DEFAULT_CONFIG: FonnteConfig = {
   adminPhone: '',
   enabled: false,
-  notifyQuiz: true,
-  notifyGrade: true,
-  notifyViolation: true,
+  dailyReportEnabled: true,
+  dailyReportTime: '17:00',
 };
 
 /**
@@ -38,9 +36,8 @@ export async function fetchFonnteConfig(): Promise<FonnteConfig> {
     return {
       adminPhone: raw.adminPhone || '',
       enabled: raw.enabled === true,
-      notifyQuiz: raw.notifyQuiz !== false,
-      notifyGrade: raw.notifyGrade !== false,
-      notifyViolation: raw.notifyViolation !== false,
+      dailyReportEnabled: raw.dailyReportEnabled !== false,
+      dailyReportTime: raw.dailyReportTime || '17:00',
     };
   } catch {
     return DEFAULT_CONFIG;
@@ -73,22 +70,18 @@ export function useFonnteConfig() {
     setConfig(prev => {
       const next = { ...prev, ...partial };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      // Also persist to Supabase so teacher browsers can read it
-      if (user) {
-        supabase
-          .from('user_settings')
-          .upsert({
-            user_id: user.id,
-            fonnte_config: next,
-            updated_at: new Date().toISOString(),
-          } as any)
-          .then(({ error }) => {
-            if (error) console.warn('Failed to sync fonnte config to Supabase', error);
-          });
-      }
+      // Persist ke app_config (global) via RPC security definer
+      supabase
+        .rpc('set_app_config', {
+          p_key: 'fonnte_config',
+          p_value: JSON.stringify(next),
+        })
+        .then(({ error }) => {
+          if (error) console.warn('Failed to sync fonnte config to Supabase', error);
+        });
       return next;
     });
-  }, [user]);
+  }, []);
 
   const sendTest = useCallback(async (testMessage?: string): Promise<boolean> => {
     if (!config.adminPhone) {

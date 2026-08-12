@@ -16,8 +16,6 @@ import { violationList } from '../../../../services/violations.data';
 import { sanitizeFilename } from '../../../../services/securityEnhanced';
 import { InputMode, ClassRow, StudentRow, AcademicRecordRow, ReviewDataItem } from '../types';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../../utils/academicRecordUtils';
-import { sendInputNotification } from '../../../../services/fonnteService';
-import { fetchFonnteConfig } from '../../../../hooks/useFonnteConfig';
 
 const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
 
@@ -304,7 +302,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     throw new Error(`Mode "${mode}" tidak mendukung penyimpanan data.`);
             }
         },
-        onSuccess: (message) => {
+        onSuccess: async (message: string) => {
             toast.success(message || 'Data berhasil disimpan!');
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
             queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
@@ -313,32 +311,30 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             isScoresDirtyRef.current = false;
             clearSubjectGradeDraft();
 
-            // Fire-and-forget WhatsApp notification to admin
+            // Fire-and-forget: log input untuk laporan harian WhatsApp
             if (mode != null) {
-                fetchFonnteConfig().then(fonnteConfig => {
-                    if (fonnteConfig?.enabled && fonnteConfig?.adminPhone) {
-                        const shouldNotify =
-                            (mode === 'quiz' && fonnteConfig.notifyQuiz) ||
-                            (mode === 'subject_grade' && fonnteConfig.notifyGrade) ||
-                            (mode === 'violation' && fonnteConfig.notifyViolation);
-                        if (shouldNotify) {
-                            const classObj = classes?.find(c => c.id === selectedClass);
-                            sendInputNotification(
-                                {
-                                    mode: mode!,
-                                    teacherName: user?.name || 'Guru',
-                                    className: classObj?.name || '',
-                                    studentCount: selectedStudentIds.size,
-                                    quizName: quizInfo.name,
-                                    subject: mode === 'subject_grade' ? subjectGradeInfo.subject : quizInfo.subject,
-                                    assessmentName: subjectGradeInfo.assessment_name,
-                                    violationDesc: selectedViolation?.description || '',
-                                },
-                                fonnteConfig.adminPhone,
-                            ).catch(() => {}); // silent fail
-                        }
+                try {
+                    const classObj = classes?.find(c => c.id === selectedClass);
+                    const details: Record<string, string> = {};
+                    if (mode === 'quiz') {
+                        details.quizName = quizInfo.name;
+                        details.subject = quizInfo.subject;
+                    } else if (mode === 'subject_grade') {
+                        details.subject = subjectGradeInfo.subject;
+                        details.assessmentName = subjectGradeInfo.assessment_name;
+                    } else if (mode === 'violation') {
+                        details.violationDesc = selectedViolation?.description || '';
                     }
-                }).catch(() => {}); // silent fail
+
+                    await supabase.from('daily_input_log').insert({
+                        mode: mode!,
+                        teacher_name: user?.name || 'Guru',
+                        teacher_id: user!.id,
+                        class_name: classObj?.name || '',
+                        student_count: selectedStudentIds.size,
+                        details,
+                    });
+                } catch {} // silent fail
             }
         },
         onError: (err: Error) => toast.error(`Gagal menyimpan: ${err.message}`),
