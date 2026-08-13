@@ -18,8 +18,9 @@ const DEFAULT_CONFIG: FonnteConfig = {
 };
 
 /**
- * Fetch Fonnte config from Supabase — readable by ANY authenticated user
- * (even non-admin) so notification dispatch works from teacher browsers.
+ * Fetch Fonnte config from Supabase — global app_config (bukan per-user).
+ * RPC get_fonnte_config() di-gate ke admin / service_role / postgres;
+ * hook ini hanya dipakai di halaman admin (WhatsAppNotificationTab).
  */
 export async function fetchFonnteConfig(): Promise<FonnteConfig> {
   try {
