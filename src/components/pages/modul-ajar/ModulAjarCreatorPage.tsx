@@ -5,12 +5,8 @@ import { useTranslation } from '../../../utils/i18n';
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
 import { FormState } from './types';
-import type { Json } from '../../../services/database.types';
+import { extractStudentHtml } from './utils/template';
 import { useModulAjarAiJob } from './hooks/useModulAjarAiJob';
-import { buildHtmlTemplate, extractStudentHtml } from './utils/template';
-import { resolveLearningSyntax } from './utils/syntaxResolver';
-import { modulAjarContentService } from '../../../services/modulAjarContentService';
-import { generateModulAjarAiContent, normalizeSoalEvaluasi } from '../../../services/modulAjarAiGenerator';
 import {
   generateTujuanPembelajaran,
   generatePertanyaanPemantik,
@@ -22,131 +18,47 @@ import {
 import { ModulAjarForm } from './components/ModulAjarForm';
 import { ModulAjarHistory } from './components/ModulAjarHistory';
 import { ModulAjarPreview } from './components/ModulAjarPreview';
+import { useModulAjarForm } from './hooks/useModulAjarForm';
+import { useModulAjarGenerator } from './hooks/useModulAjarGenerator';
 
 const ModulAjarCreatorPage: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [formState, setFormState] = useState<FormState>({
-    generationMethod: 'AI',
-    documentType: 'Modul Ajar',
-    curriculumApproach: 'Merdeka',
-    satuanPendidikan: 'MI Al Irsyad',
-    jenjang: 'SD/MI',
-    kelas: '1',
-    fase: 'A',
-    mataPelajaran: '',
-    topik: '',
-    tahunAjaran: '2023/2024',
-    semester: 'Ganjil',
-    guru: user?.name || '',
-    targetPeserta: 'Reguler/Tipikal (Peserta didik umum, tidak ada kesulitan belajar)',
-    kompetensiAwal: '',
-    saranaPrasarana: '',
-    capaianPembelajaran: '',
-    profilPelajar: [],
-    jumlahPertemuan: 1,
-    jpPerPertemuan: 2,
-    durasiPerJp: 35,
-    modelPembelajaran: 'Tatap Muka',
-    metodePembelajaran: [],
-    manualTujuanPembelajaran: '',
-    manualPertanyaanPemantik: '',
-    manualLkpdTugas: '',
-    manualSoalEvaluasi: '',
-    alokasiPendahuluan: 10,
-    alokasiInti: 50,
-    alokasiPenutup: 10,
-    rubrikAsesmen: [],
-    isKbcIntegrated: false,
-    temaKbc: [],
-    materiInsersi: '',
-    modelPembelajaranKbc: 'FIDS',
-    asesmenSikap: '',
-    pendekatanPembelajaran: 'Student Centered',
-    selectedModelId: 'pbl',
-    teknikPembelajaran: '',
-  });
+  
+  const {
+    formState,
+    setFormState,
+    activeStep,
+    setActiveStep,
+    isGeneratingCP,
+    boilerplateMissingBanner,
+    models,
+    isLoadingModels,
+    handleInputChange,
+    handleProfilToggle,
+    handleMetodeToggle,
+    generateCP,
+    resetFormToDraft,
+  } = useModulAjarForm();
 
-  const [activeStep, setActiveStep] = useState(1);
-  const [isGeneratingCP, setIsGeneratingCP] = useState(false);
-  const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [generatedDocument, setGeneratedDocument] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'preview' | 'history'>('preview');
   const [previewMode, setPreviewMode] = useState<'guru' | 'siswa'>('guru');
   
   const [history, setHistory] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [models, setModels] = useState<any[]>([]);
-  const [isLoadingModels, setIsLoadingModels] = useState(false);
-  const [boilerplateMissingBanner, setBoilerplateMissingBanner] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  
   const [aiCacheWarning, setAiCacheWarning] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string>('');
   const [fieldLoading, setFieldLoading] = useState<Record<string, boolean>>({});
 
   const previewRef = useRef<HTMLDivElement>(null);
-  const lastLoadedTopicRef = useRef<string>('');
-  // Sequence number untuk mencegah stale-write saat ganti topik cepat (A→B).
-  const boilerplateLoadSeqRef = useRef(0);
-  const [historyError, setHistoryError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Sync teacher name from profile whenever user.name changes
-  useEffect(() => {
-    if (user?.name) {
-      setFormState(prev => ({ ...prev, guru: user.name }));
-    }
-  }, [user?.name]);
 
   useEffect(() => {
-    if (formState.generationMethod === 'Manual' && formState.topik && formState.mataPelajaran) {
-      if (formState.topik !== lastLoadedTopicRef.current) {
-        lastLoadedTopicRef.current = formState.topik;
-        const loadSeq = ++boilerplateLoadSeqRef.current;
-        
-        const loadBoilerplate = async () => {
-          try {
-            const bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
-            // Abaikan hasil fetch lama — topik sudah berubah (stale-write guard).
-            if (loadSeq !== boilerplateLoadSeqRef.current) return;
-            if (bp) {
-              setBoilerplateMissingBanner(null);
-              setFormState(prev => ({
-                ...prev,
-                manualTujuanPembelajaran: Array.isArray(bp.tujuan_pembelajaran) ? bp.tujuan_pembelajaran.join('\n') : '',
-                manualPertanyaanPemantik: Array.isArray(bp.pertanyaan_pemantik) ? bp.pertanyaan_pemantik.join('\n') : '',
-                manualLkpdTugas: bp.lkpd_tugas || '',
-                manualSoalEvaluasi: bp.soal_evaluasi || ''
-              }));
-            } else {
-              setBoilerplateMissingBanner('Bank konten untuk topik ini belum tersedia — isi manual atau minta admin menambahkan');
-              setFormState(prev => ({
-                ...prev,
-                manualTujuanPembelajaran: '',
-                manualPertanyaanPemantik: '',
-                manualLkpdTugas: '',
-                manualSoalEvaluasi: ''
-              }));
-            }
-          } catch (err: any) {
-            // Query bank gagal (RLS/network) — jangan disamakan dengan "bank kosong".
-            if (loadSeq !== boilerplateLoadSeqRef.current) return;
-            console.error('[Modul Ajar] Gagal memuat bank konten:', err);
-            setBoilerplateMissingBanner(`⚠️ Gagal memuat bank konten: ${err.message || 'kesalahan tidak diketahui'}`);
-          }
-        };
-        loadBoilerplate();
-      }
-    } else {
-      boilerplateLoadSeqRef.current++; // invalidasi fetch yang sedang berjalan
-      setBoilerplateMissingBanner(null);
-    }
-  }, [formState.generationMethod, formState.topik, formState.mataPelajaran, formState.kelas, formState.fase]);
-
-  useEffect(() => {
-    // Convert school logo to base64 for reliable rendering/Word compatibility
     fetch('/logo_sekolah.png')
       .then(res => {
-        if (!res.ok) return null; // logo tidak tersedia — pakai placeholder
+        if (!res.ok) return null;
         return res.blob();
       })
       .then(blob => {
@@ -160,8 +72,52 @@ const ModulAjarCreatorPage: React.FC = () => {
       .catch(err => console.error('Failed to load logo_sekolah.png:', err));
   }, []);
 
-  // Initialize queue hook only if AI feature flag is ON
+  const fetchHistory = useCallback(async () => {
+    if (!user) return;
+    setIsLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('lesson_plans')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to load history:', error);
+        setHistoryError(`Gagal memuat riwayat: ${error.message}`);
+        setHistory([]);
+      } else if (data) {
+        setHistory(data);
+        setHistoryError(null);
+      }
+    } catch (e) {
+      console.error('Failed to load history:', e);
+      setHistoryError('Gagal memuat riwayat. Periksa koneksi lalu coba lagi.');
+      setHistory([]);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
+  
+  const { generateManualModulAjar, renderPrivateDraftAiModulAjar, isAiGenerating } = useModulAjarGenerator({
+    formState,
+    setFormState,
+    user,
+    models,
+    t,
+    isAiEnabled,
+    logoBase64,
+    fetchHistory,
+    setGeneratedDocument,
+    setAiCacheWarning,
+  });
+
   const queueHookResult = useModulAjarAiJob(
     formState,
     async (resultJson) => {
@@ -179,315 +135,11 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const queueStatus = isAiEnabled ? queueHookResult.jobStatus : 'idle';
 
-  const generateManualModulAjar = async () => {
-    if (!formState.mataPelajaran || !formState.topik) {
-      alert(t.lessonPlan.validateSubject);
-      return;
-    }
-    if (!user) {
-      alert(t.lessonPlan.validateSubject); // sesi tidak valid — minta login ulang
-      return;
-    }
-    if (isSubmitting) return; // anti double-submit
-    setIsSubmitting(true);
-    setAiCacheWarning(null);
-
-    try {
-      let bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
-
-      // AI Fallback: if no boilerplate found in database, generate via AI
-      if (!bp && isAiEnabled) {
-        setIsAiGenerating(true);
-        try {
-          const aiContent = await generateModulAjarAiContent(
-            formState.mataPelajaran,
-            formState.topik,
-            formState.fase,
-            formState.modelPembelajaran,
-            // Surface error cache ke guru — jangan dibiarkan gagal diam-diam.
-            (msg) => setAiCacheWarning(msg)
-          );
-          // Convert AI output to boilerplate-compatible format
-          bp = {
-            id: '',
-            mata_pelajaran: formState.mataPelajaran,
-            topik: formState.topik,
-            fase: formState.fase,
-            tujuan_pembelajaran: aiContent.tujuanPembelajaran,
-            pemahaman_bermakna: aiContent.pemahamanBermakna,
-            pertanyaan_pemantik: aiContent.pertanyaanPemantik,
-            lkpd_tugas: aiContent.lkpdTugas,
-            soal_evaluasi: aiContent.soalEvaluasi,
-            pengayaan: aiContent.pengayaan,
-            remedial: aiContent.remedial,
-            daftar_pustaka: aiContent.daftarPustaka,
-            is_verified: false, // konten AI belum direview admin
-            sumber_regulasi: null,
-          };
-        } catch (aiErr: any) {
-          console.warn('[AI Fallback] AI generation failed, continuing with template:', aiErr.message);
-          // Beri tahu guru kalau AI gagal — jangan biarkan diam-diam jadi template generik.
-          setAiCacheWarning('AI gagal menghasilkan konten. Modul dibuat dengan template generik — periksa koneksi/kuota AI lalu coba lagi.');
-        } finally {
-          setIsAiGenerating(false);
-        }
-      }
-
-      let modelIdToUse = formState.selectedModelId;
-      const selectedModelObj = models.find(m => m.id === modelIdToUse || m.nama_model === formState.modelPembelajaran);
-      if (selectedModelObj) {
-        modelIdToUse = selectedModelObj.id;
-      }
-
-      const sintaksList = modelIdToUse
-        ? await modulAjarContentService.getSintaksKegiatan(modelIdToUse, {
-            topik: formState.topik,
-            mapel: formState.mataPelajaran,
-            kelas: formState.kelas
-          })
-        : [];
-
-      const resolvedSyntax = resolveLearningSyntax(
-        sintaksList,
-        selectedModelObj?.sintaks_inti,
-        formState.modelPembelajaran
-      );
-
-      const kegiatanIntiData = resolvedSyntax.steps.map((s: any) => ({
-        name: s.name,
-        kegiatanGuru: s.teacherActivity,
-        kegiatanSiswa: s.studentActivity,
-      }));
-
-      let tujuanPembelajaranList: string[] = formState.manualTujuanPembelajaran
-        ? formState.manualTujuanPembelajaran.split('\n').filter(line => line.trim() !== '')
-        : (bp?.tujuan_pembelajaran && Array.isArray(bp.tujuan_pembelajaran) && bp.tujuan_pembelajaran.length > 0
-            ? bp.tujuan_pembelajaran
-            : [`Peserta didik dapat memahami dan menguasai materi ${formState.topik || formState.mataPelajaran} dengan baik.`]);
-
-      const pemahamanBermaknaList: string[] = (bp?.pemahaman_bermakna && Array.isArray(bp.pemahaman_bermakna) && bp.pemahaman_bermakna.length > 0)
-        ? bp.pemahaman_bermakna
-        : [`Peserta didik dapat memahami konsep dasar ${formState.topik || formState.mataPelajaran} dan menerapkannya dalam kehidupan sehari-hari.`];
-
-      const pertanyaanPemantikList: string[] = formState.manualPertanyaanPemantik
-        ? formState.manualPertanyaanPemantik.split('\n').filter(line => line.trim() !== '')
-        : (bp?.pertanyaan_pemantik && Array.isArray(bp.pertanyaan_pemantik) && bp.pertanyaan_pemantik.length > 0
-            ? bp.pertanyaan_pemantik
-            : [
-                `Bagaimana kita memanfaatkan ${formState.topik || formState.mataPelajaran} dalam kegiatan sehari-hari?`,
-                `Mengapa penting bagi kita untuk mempelajari ${formState.topik || formState.mataPelajaran}?`
-              ]);
-
-      const lkpdText = formState.manualLkpdTugas || bp?.lkpd_tugas || `Tugas Mandiri/Kelompok: Eksplorasi dan latihan penerapan materi ${formState.topik || formState.mataPelajaran}.`;
-      const evaluasiText = formState.manualSoalEvaluasi || bp?.soal_evaluasi || `1. Sebutkan konsep utama dari ${formState.topik || formState.mataPelajaran}!\n2. Berikan contoh penerapan ${formState.topik || formState.mataPelajaran} dalam kehidupan sehari-hari!`;
-
-      if (formState.isKbcIntegrated && formState.materiInsersi) {
-        const frasa = formState.materiInsersi.trim();
-        tujuanPembelajaranList = tujuanPembelajaranList.map(tp => {
-          const cleaned = tp.replace(/\.$/, '');
-          return `${cleaned} (${frasa}).`;
-        });
-      }
-
-      let pendahuluanText = `Guru membuka kelas dengan salam, memeriksa kehadiran, menyampaikan apersepsi, dan tujuan pembelajaran terkait ${formState.topik || formState.mataPelajaran}.`;
-      let penutupText = `Guru membimbing refleksi pembelajaran, menyimpulkan materi, dan menutup dengan doa.`;
-      let sikapText = 'Observasi sikap peserta didik selama pembelajaran';
-
-      if (formState.isKbcIntegrated) {
-        pendahuluanText = `Guru membuka kelas dengan salam ramah, meminta salah seorang peserta didik memimpin doa pembuka (Basmalah & doa menuntut ilmu), memeriksa kehadiran, menyampaikan apersepsi, serta tujuan pembelajaran bernilai cinta.`;
-        penutupText = `Guru bersama peserta didik melakukan refleksi atas pembelajaran dan nilai-nilai cinta yang dipelajari, menyimpulkan materi, kemudian menutup kelas dengan doa Hamdalah, doa kaffaratul majelis, dan salam penutup.`;
-        sikapText = 'Observasi sikap spiritual (rasa syukur, kecintaan pada ilmu & ciptaan Allah Swt.) dan sikap sosial (kasih sayang, toleransi, empati) selama pembelajaran.';
-      }
-
-      const isAiGenerated = bp && bp.id === '';
-      const manualData = {
-        ...bp,
-        tujuanPembelajaran: tujuanPembelajaranList,
-        pemahamanBermakna: pemahamanBermaknaList,
-        pertanyaanPemantik: pertanyaanPemantikList,
-        lkpdTugas: lkpdText,
-        soalEvaluasi: evaluasiText,
-        kegiatanPendahuluan: pendahuluanText,
-        kegiatanInti: kegiatanIntiData,
-        kegiatanPenutup: penutupText,
-        asesmenSikap: sikapText,
-        asesmenKeterampilan: 'Penilaian unjuk kerja/proyek presentasi',
-        asesmenPengetahuan: 'Tes tertulis/lisan di akhir materi',
-        pengayaan: bp?.pengayaan && Array.isArray(bp.pengayaan) && bp.pengayaan.length > 0 ? bp.pengayaan : [`Pendalaman materi ${formState.topik || formState.mataPelajaran} secara mandiri.`],
-        remedial: bp?.remedial && Array.isArray(bp.remedial) && bp.remedial.length > 0 ? bp.remedial : [`Bimbingan individual dan penugasan ulang materi ${formState.topik || formState.mataPelajaran}.`],
-        daftarPustaka: bp?.daftar_pustaka && Array.isArray(bp.daftar_pustaka) && bp.daftar_pustaka.length > 0 ? bp.daftar_pustaka : [`Buku Panduan Guru & Siswa ${formState.mataPelajaran} Kelas ${formState.kelas}, Kemendikbudristek.`],
-      };
-
-      const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
-      const htmlTemplate = buildHtmlTemplate(formState, manualData, totalJP, logoBase64);
-
-      const { error: insertError } = await supabase.from('lesson_plans').insert({
-        user_id: user?.id,
-        document_type: formState.documentType,
-        curriculum_approach: formState.curriculumApproach,
-        generation_method: isAiGenerated ? 'AI' : (formState.generationMethod || 'Manual'),
-        identity: {
-          kelas: formState.kelas,
-          fase: formState.fase,
-          mapel: formState.mataPelajaran,
-          topik: formState.topik,
-          tahun: formState.tahunAjaran,
-          semester: formState.semester,
-          guru: formState.guru
-        },
-        components: {
-          target: formState.targetPeserta,
-          cp: formState.capaianPembelajaran,
-          kompetensiAwal: formState.kompetensiAwal,
-          saranaPrasarana: formState.saranaPrasarana,
-          profil: formState.profilPelajar,
-          waktu: { pertemuan: formState.jumlahPertemuan, jp: formState.jpPerPertemuan, durasi: formState.durasiPerJp },
-          model: formState.modelPembelajaran,
-          metode: formState.metodePembelajaran,
-          alokasi: { pendahuluan: formState.alokasiPendahuluan, inti: formState.alokasiInti, penutup: formState.alokasiPenutup },
-          rubrik: formState.rubrikAsesmen.map(r => ({ ...r })) as unknown as Json[],
-          temaKbc: formState.temaKbc,
-          materiInsersi: formState.materiInsersi,
-          isKbcIntegrated: formState.isKbcIntegrated,
-          modelPembelajaranKbc: formState.modelPembelajaranKbc,
-          pendekatanPembelajaran: formState.pendekatanPembelajaran,
-          teknikPembelajaran: formState.teknikPembelajaran,
-          selectedModelId: formState.selectedModelId,
-          tujuanPembelajaran: tujuanPembelajaranList,
-          pertanyaanPemantik: pertanyaanPemantikList,
-          lkpdTugas: lkpdText,
-          soalEvaluasi: evaluasiText
-        },
-        generated_content: htmlTemplate
-      });
-
-      if (insertError) {
-        console.error('Gagal menyimpan modul ajar ke database:', insertError);
-        throw new Error(`Gagal menyimpan ke database: ${insertError.message}`);
-      }
-
-      setGeneratedDocument(htmlTemplate);
-      setFormState(prev => ({
-        ...prev,
-        manualTujuanPembelajaran: tujuanPembelajaranList.join('\n'),
-        manualPertanyaanPemantik: pertanyaanPemantikList.join('\n'),
-        manualLkpdTugas: lkpdText,
-        manualSoalEvaluasi: evaluasiText
-      }));
-      fetchHistory();
-      alert(isAiGenerated
-        ? '✨ Modul Ajar berhasil disusun oleh AI! Draf tersimpan di Riwayat Anda dan dikirim ke Bank Bersama untuk direview admin.'
-        : t.lessonPlan.saveSuccess);
-
-    } catch (err: any) {
-      console.error(err);
-      alert(t.lessonPlan.saveFailed.replace('{message}', err.message));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const renderPrivateDraftAiModulAjar = async (aiOutput: any) => {
-    if (!user) return; // sesi tidak valid — jangan lanjut insert
-    const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
-
-    // Gunakan AI-generated skenario array — biarkan template rich-render via intiToHtml()
-    let kegiatanIntiData: any = aiOutput.kegiatanInti || aiOutput.skenarioPembelajaran || [];
-    if (!Array.isArray(kegiatanIntiData) || kegiatanIntiData.length === 0) {
-      const resolvedSyntax = aiOutput._resolvedSyntax || resolveLearningSyntax([], [], formState.modelPembelajaran);
-      kegiatanIntiData = resolvedSyntax.steps.map((s: any) => ({
-        name: s.name,
-        fase: s.name,
-        kegiatanGuru: s.teacherActivity,
-        kegiatanSiswa: s.studentActivity,
-      }));
-    }
-
-    const draftData = {
-      tujuanPembelajaran: aiOutput.tujuanPembelajaran || [],
-      pemahamanBermakna: aiOutput.pemahamanBermakna || [],
-      pertanyaanPemantik: aiOutput.pertanyaanPemantik || [],
-      lkpdTugas: aiOutput.lkpdTugas || '',
-      soalEvaluasi: normalizeSoalEvaluasi(aiOutput.soalEvaluasi),
-      kunciJawaban: Array.isArray(aiOutput.kunciJawaban) ? aiOutput.kunciJawaban : [],
-      kegiatanPendahuluan: `Guru membuka kelas dengan salam, apersepsi, dan menyampaikan tujuan pembelajaran terkait ${formState.topik || formState.mataPelajaran}.`,
-      kegiatanInti: kegiatanIntiData,
-      kegiatanPenutup: `Guru membimbing refleksi pembelajaran dan menutup kelas dengan doa.`,
-      capaianPembelajaran: aiOutput.capaianPembelajaran || formState.capaianPembelajaran || '',
-      kompetensiAwal: aiOutput.kompetensiAwal || formState.kompetensiAwal || '',
-      asesmenSikap: 'Observasi sikap peserta didik selama pembelajaran',
-      asesmenKeterampilan: aiOutput.asesmenKeterampilan || 'Penilaian unjuk kerja/proyek presentasi',
-      asesmenPengetahuan: aiOutput.asesmenPengetahuan || 'Tes tertulis/lisan di akhir materi',
-      pengayaan: aiOutput.pengayaan || [],
-      remedial: aiOutput.remedial || [],
-      daftarPustaka: aiOutput.daftarPustaka || []
-    };
-
-    const htmlTemplate = buildHtmlTemplate(formState, draftData, totalJP, logoBase64);
-
-    const { error: insertError } = await supabase.from('lesson_plans').insert({
-      user_id: user?.id,
-      document_type: formState.documentType,
-      curriculum_approach: formState.curriculumApproach,
-      generation_method: 'AI',
-      identity: {
-        kelas: formState.kelas,
-        fase: formState.fase,
-        mapel: formState.mataPelajaran,
-        topik: formState.topik,
-        tahun: formState.tahunAjaran,
-        semester: formState.semester,
-        guru: formState.guru
-      },
-      components: {
-        target: formState.targetPeserta,
-        cp: formState.capaianPembelajaran,
-        kompetensiAwal: formState.kompetensiAwal,
-        saranaPrasarana: formState.saranaPrasarana,
-        profil: formState.profilPelajar,
-        waktu: { pertemuan: formState.jumlahPertemuan, jp: formState.jpPerPertemuan, durasi: formState.durasiPerJp },
-        model: formState.modelPembelajaran,
-        metode: formState.metodePembelajaran,
-        alokasi: { pendahuluan: formState.alokasiPendahuluan, inti: formState.alokasiInti, penutup: formState.alokasiPenutup },
-        rubrik: formState.rubrikAsesmen.map(r => ({ ...r })) as unknown as Json[],
-        temaKbc: formState.temaKbc,
-        materiInsersi: formState.materiInsersi,
-        isKbcIntegrated: formState.isKbcIntegrated,
-        modelPembelajaranKbc: formState.modelPembelajaranKbc,
-        pendekatanPembelajaran: formState.pendekatanPembelajaran,
-        teknikPembelajaran: formState.teknikPembelajaran,
-        selectedModelId: formState.selectedModelId,
-        tujuanPembelajaran: Array.isArray(draftData.tujuanPembelajaran) ? draftData.tujuanPembelajaran : (draftData.tujuanPembelajaran || []),
-        pertanyaanPemantik: Array.isArray(draftData.pertanyaanPemantik) ? draftData.pertanyaanPemantik : (draftData.pertanyaanPemantik || []),
-        lkpdTugas: draftData.lkpdTugas || '',
-        soalEvaluasi: draftData.soalEvaluasi || ''
-      },
-      generated_content: htmlTemplate
-    });
-
-    if (insertError) {
-      console.error('Gagal menyimpan modul ajar AI ke database:', insertError);
-      throw new Error(`Gagal menyimpan ke database: ${insertError.message}`);
-    }
-
-    setGeneratedDocument(htmlTemplate);
-    setFormState(prev => ({
-      ...prev,
-      manualTujuanPembelajaran: Array.isArray(draftData.tujuanPembelajaran) ? draftData.tujuanPembelajaran.join('\n') : (draftData.tujuanPembelajaran || ''),
-      manualPertanyaanPemantik: Array.isArray(draftData.pertanyaanPemantik) ? draftData.pertanyaanPemantik.join('\n') : (draftData.pertanyaanPemantik || ''),
-      manualLkpdTugas: draftData.lkpdTugas || '',
-      manualSoalEvaluasi: draftData.soalEvaluasi || ''
-    }));
-    fetchHistory();
-  };
-
   const handleGenerate = () => {
     if (!formState.mataPelajaran || !formState.topik) {
       alert(t.lessonPlan.validateSubject);
       return;
     }
-    // Mode AI: pakai antrean server (polling via useModulAjarAiJob).
-    // Mode manual: generator langsung (dengan AI fallback bila boilerplate kosong).
     if (isAiEnabled) {
       queueHookResult.startJob();
     } else {
@@ -495,7 +147,6 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   };
 
-  /** AI per-field assistant — generate konten untuk satu field saja */
   const handleAiFillField = async (field: string) => {
     if (!formState.mataPelajaran || !formState.topik) {
       alert(t.lessonPlan.validateTopic);
@@ -529,131 +180,12 @@ const ModulAjarCreatorPage: React.FC = () => {
           return;
       }
 
-      handleInputChange(field, content);
+      handleInputChange(field as keyof FormState, content);
     } catch (err: any) {
       console.error(`[AI Field] ${field} generation failed:`, err);
       alert(t.lessonPlan.saveFailed.replace('{message}', err.message));
     } finally {
       setFieldLoading(prev => ({ ...prev, [field]: false }));
-    }
-  };
-
-  const fetchHistory = useCallback(async () => {
-    if (!user) return;
-    setIsLoadingHistory(true);
-    try {
-      const { data, error } = await supabase
-        .from('lesson_plans')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        // Jangan samakan "gagal load" dengan "riwayat kosong".
-        console.error('Failed to load history:', error);
-        setHistoryError(`Gagal memuat riwayat: ${error.message}`);
-        setHistory([]);
-      } else if (data) {
-        setHistory(data);
-        setHistoryError(null);
-      }
-    } catch (e) {
-      console.error('Failed to load history:', e);
-      setHistoryError('Gagal memuat riwayat. Periksa koneksi lalu coba lagi.');
-      setHistory([]);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, [user]);
-
-  // Load models & history on mount
-  useEffect(() => {
-    const fetchModels = async () => {
-      setIsLoadingModels(true);
-      try {
-        const { data, error } = await supabase.from('ref_model_pembelajaran').select('*');
-        if (data && !error) {
-          setModels(data);
-          if (data.length > 0) {
-            setFormState(prev => ({ ...prev, modelPembelajaran: data[0].nama_model }));
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch models:', err);
-      } finally {
-        setIsLoadingModels(false);
-      }
-    };
-    fetchModels();
-    fetchHistory();
-  }, [user, fetchHistory]);
-
-  const handleInputChange = (field: keyof FormState, value: any) => {
-    setFormState(prev => {
-      const newState = { ...prev, [field]: value };
-      if (field === 'kelas') {
-        const k = parseInt(value);
-        if (k <= 2) newState.fase = 'A';
-        else if (k <= 4) newState.fase = 'B';
-        else if (k <= 6) newState.fase = 'C';
-      }
-      return newState;
-    });
-  };
-
-  const handleProfilToggle = (profil: string) => {
-    setFormState(prev => {
-      const exists = prev.profilPelajar.includes(profil);
-      if (exists) {
-        return { ...prev, profilPelajar: prev.profilPelajar.filter(p => p !== profil) };
-      }
-      return { ...prev, profilPelajar: [...prev.profilPelajar, profil] };
-    });
-  };
-
-  const handleMetodeToggle = (metode: string) => {
-    setFormState(prev => {
-      const exists = prev.metodePembelajaran.includes(metode);
-      if (exists) {
-        return { ...prev, metodePembelajaran: prev.metodePembelajaran.filter(m => m !== metode) };
-      }
-      return { ...prev, metodePembelajaran: [...prev.metodePembelajaran, metode] };
-    });
-  };
-
-  const generateCP = async () => {
-    if (!formState.mataPelajaran) {
-      alert(t.lessonPlan.validateMapel);
-      return;
-    }
-    
-    setIsGeneratingCP(true);
-    try {
-      const { data, error } = await supabase
-        .from('ref_capaian_pembelajaran')
-        .select('deskripsi_cp')
-        .eq('fase', formState.fase)
-        .ilike('mata_pelajaran', `%${formState.mataPelajaran}%`)
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        // Query gagal (RLS/network) — jangan disamakan dengan "CP tidak ada".
-        console.error('Gagal mengambil CP:', error);
-        alert(`Gagal mengambil Capaian Pembelajaran: ${error.message}`);
-        return;
-      }
-
-      if (data && data.deskripsi_cp) {
-        handleInputChange('capaianPembelajaran', data.deskripsi_cp);
-      } else {
-        handleInputChange('capaianPembelajaran', '');
-        alert(t.lessonPlan.cpNotFound);
-      }
-    } catch (err) {
-      console.error('Gagal mengambil CP:', err);
-    } finally {
-      setIsGeneratingCP(false);
     }
   };
 
@@ -678,41 +210,13 @@ const ModulAjarCreatorPage: React.FC = () => {
     printWindow.document.write('<html><head><title>Cetak Modul Ajar</title>');
     printWindow.document.write(`
       <style>
-        body {
-          font-family: 'Times New Roman', Times, serif;
-          padding: 20px;
-          color: #000;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 1rem;
-        }
-        th, td {
-          border: 1px solid #000000;
-          padding: 8px;
-          text-align: left;
-        }
+        body { font-family: 'Times New Roman', Times, serif; padding: 20px; color: #000; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        th, td { border: 1px solid #000000; padding: 8px; text-align: left; }
         @media print {
-          body {
-            font-family: 'Times New Roman', Times, serif;
-            background-color: #ffffff;
-            color: #000000;
-            padding: 0;
-            margin: 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          td[style*="background-color: #0d6b3e"] {
-            background-color: #0d6b3e !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          td[style*="background-color: #f5f0d0"] {
-            background-color: #f5f0d0 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
+          body { font-family: 'Times New Roman', Times, serif; background-color: #ffffff; color: #000000; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          td[style*="background-color: #0d6b3e"] { background-color: #0d6b3e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          td[style*="background-color: #f5f0d0"] { background-color: #f5f0d0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
       </style>
     `);
@@ -721,8 +225,6 @@ const ModulAjarCreatorPage: React.FC = () => {
     printWindow.document.write('</body></html>');
     printWindow.document.close();
     printWindow.focus();
-    // Jangan close paksa setelah print — biarkan user menutup sendiri;
-    // gunakan onafterprint agar tidak menutup saat dialog print dibatalkan.
     printWindow.onafterprint = () => printWindow.close();
     setTimeout(() => {
       try { printWindow.print(); } catch (e) { console.error('Gagal mencetak:', e); }
@@ -737,10 +239,7 @@ const ModulAjarCreatorPage: React.FC = () => {
     const footer = "</body></html>";
     const sourceHTML = header + printContent + footer;
     
-    const blob = new Blob(['\ufeff', sourceHTML], {
-      type: 'application/msword'
-    });
-    
+    const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -748,8 +247,6 @@ const ModulAjarCreatorPage: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    // Revoke setelah browser sempat memulai download — revoke sinkron bisa
-    // menggagalkan unduhan di beberapa browser.
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
@@ -770,51 +267,7 @@ const ModulAjarCreatorPage: React.FC = () => {
   };
 
   const restoreParameters = (plan: any) => {
-    setFormState({
-      generationMethod: plan.generation_method || 'Manual',
-      documentType: plan.document_type || 'Modul Ajar',
-      curriculumApproach: plan.curriculum_approach || 'Merdeka',
-      satuanPendidikan: plan.identity?.satuanPendidikan || 'MI Al Irsyad',
-      jenjang: plan.identity?.jenjang || 'SD/MI',
-      kelas: plan.identity?.kelas || '1',
-      fase: plan.identity?.fase || 'A',
-      mataPelajaran: plan.identity?.mapel || '',
-      topik: plan.identity?.topik || '',
-      tahunAjaran: plan.identity?.tahun || '',
-      semester: plan.identity?.semester || 'Ganjil',
-      guru: plan.identity?.guru || user?.name || '',
-      targetPeserta: plan.components?.target || 'Reguler/Tipikal (Peserta didik umum, tidak ada kesulitan belajar)',
-      kompetensiAwal: plan.components?.kompetensiAwal || '',
-      saranaPrasarana: plan.components?.saranaPrasarana || '',
-      capaianPembelajaran: plan.components?.cp || '',
-      profilPelajar: plan.components?.profil || [],
-      jumlahPertemuan: plan.components?.waktu?.pertemuan || 1,
-      jpPerPertemuan: plan.components?.waktu?.jp || 2,
-      durasiPerJp: plan.components?.waktu?.durasi || 35,
-      modelPembelajaran: plan.components?.model || 'Tatap Muka',
-      pendekatanPembelajaran: plan.components?.pendekatanPembelajaran || 'Student Centered',
-      teknikPembelajaran: plan.components?.teknikPembelajaran || '',
-      selectedModelId: plan.components?.selectedModelId || undefined,
-      metodePembelajaran: plan.components?.metode || [],
-      // Isi manual* dari components bila tersimpan (jangan reset ke kosong),
-      // supaya setelah restore guru tidak perlu mengisi ulang dari nol.
-      manualTujuanPembelajaran: Array.isArray(plan.components?.tujuanPembelajaran)
-        ? plan.components.tujuanPembelajaran.join('\n')
-        : (plan.components?.tujuanPembelajaran || ''),
-      manualPertanyaanPemantik: Array.isArray(plan.components?.pertanyaanPemantik)
-        ? plan.components.pertanyaanPemantik.join('\n')
-        : (plan.components?.pertanyaanPemantik || ''),
-      manualLkpdTugas: plan.components?.lkpdTugas || '',
-      manualSoalEvaluasi: plan.components?.soalEvaluasi || '',
-      alokasiPendahuluan: plan.components?.alokasi?.pendahuluan || 10,
-      alokasiInti: plan.components?.alokasi?.inti || 50,
-      alokasiPenutup: plan.components?.alokasi?.penutup || 10,
-      rubrikAsesmen: plan.components?.rubrik || [],
-      isKbcIntegrated: plan.components?.isKbcIntegrated || false,
-      temaKbc: plan.components?.temaKbc || [],
-      materiInsersi: plan.components?.materiInsersi || '',
-      modelPembelajaranKbc: plan.components?.modelPembelajaranKbc || 'FIDS',
-    });
+    resetFormToDraft(plan);
     setGeneratedDocument(plan.generated_content);
     setActiveTab('preview');
     alert(t.lessonPlan.restoreSuccess);
@@ -822,8 +275,6 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col lg:flex-row gap-6 pb-20 lg:pb-0">
-      
-      {/* Warning banner: draf AI gagal masuk Bank Bersama */}
       {aiCacheWarning && (
         <div className="fixed top-4 right-4 z-50 max-w-sm bg-amber-50 dark:bg-amber-950/90 border border-amber-300 dark:border-amber-700 rounded-xl shadow-lg p-4 text-sm">
           <div className="flex items-start gap-2">
@@ -843,7 +294,6 @@ const ModulAjarCreatorPage: React.FC = () => {
         </div>
       )}
       
-      {/* Form Wizard column */}
       <ModulAjarForm
         formState={formState}
         onChange={handleInputChange}
@@ -863,10 +313,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         isAiGenerating={isAiGenerating}
       />
 
-      {/* Preview / History Column */}
       <div className="flex-1 bg-slate-100 dark:bg-slate-950/50 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 overflow-hidden flex flex-col h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)]">
-        
-        {/* Tab Header */}
         <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-2.5 sm:px-4 shrink-0 shadow-sm z-10 gap-2">
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
             <button 
@@ -935,12 +382,9 @@ const ModulAjarCreatorPage: React.FC = () => {
           )}
         </div>
 
-        {/* Content Viewer */}
         <div className="relative flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-slate-200/50 dark:bg-slate-950/50">
-          
           {activeTab === 'preview' ? (
             <>
-              {/* Loading overlay for AI generation */}
               {isAiGenerating && (
                 <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm z-30 flex items-center justify-center p-6 text-center">
                   <MotionDiv
@@ -961,7 +405,6 @@ const ModulAjarCreatorPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Realtime Queue Overlay */}
               {(queueStatus === 'pending' || queueStatus === 'processing') && (
                 <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm z-30 flex items-center justify-center p-6 text-center">
                   <MotionDiv 
@@ -978,9 +421,7 @@ const ModulAjarCreatorPage: React.FC = () => {
                     <div className="space-y-1.5">
                       <h3 className="font-bold text-slate-800 dark:text-white">Antrian Pemrosesan AI</h3>
                       {(queueStatus as string) === 'pending' || (queueStatus as string) === 'retry_wait' ? (
-                        <>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">Permintaan dikirim ke server. Harap tunggu...</p>
-                        </>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Permintaan dikirim ke server. Harap tunggu...</p>
                       ) : (
                         <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold animate-pulse">Menghubungi AI... Sedang menulis perangkat ajar Anda.</p>
                       )}
@@ -989,20 +430,18 @@ const ModulAjarCreatorPage: React.FC = () => {
                 </div>
               )}
 
-              {
-                (() => {
-                  const documentToShow = previewMode === 'siswa'
-                    ? extractStudentHtml(generatedDocument, formState, logoBase64)
-                    : generatedDocument;
-                  return (
-                    <ModulAjarPreview
-                      generatedDocument={documentToShow}
-                      previewRef={previewRef}
-                      documentType={formState.documentType}
-                    />
-                  );
-                })()
-              }
+              {(() => {
+                const documentToShow = previewMode === 'siswa'
+                  ? extractStudentHtml(generatedDocument, formState, logoBase64)
+                  : generatedDocument;
+                return (
+                  <ModulAjarPreview
+                    generatedDocument={documentToShow}
+                    previewRef={previewRef}
+                    documentType={formState.documentType}
+                  />
+                );
+              })()}
             </>
           ) : (
             <ModulAjarHistory
@@ -1013,7 +452,6 @@ const ModulAjarCreatorPage: React.FC = () => {
               onDelete={deleteHistoryItem}
             />
           )}
-
         </div>
       </div>
     </div>
