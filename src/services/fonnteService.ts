@@ -18,7 +18,10 @@ export interface FonnteSendParams {
 }
 
 export async function sendWhatsApp(params: FonnteSendParams): Promise<{ ok: boolean; error?: string }> {
-  // 1. Coba lewat proxy /api/fonnte (mode produksi Vercel)
+  // 1. Coba lewat proxy /api/fonnte (mode produksi Vercel).
+  //    Semua respons non-2xx (403/404/429/500) atau error jaringan → fallback
+  //    ke Edge Function supaya fitur tetap jalan di mana pun aplikasi di-hosting.
+  let lastError = '';
   try {
     const response = await fetch(FONNTE_PROXY_URL, {
       method: 'POST',
@@ -26,23 +29,36 @@ export async function sendWhatsApp(params: FonnteSendParams): Promise<{ ok: bool
       body: JSON.stringify({ target: params.target, message: params.message }),
     });
 
-    if (response.status !== 404) {
-      if (!response.ok) {
-        const body = await response.text().catch(() => '');
-        let detail = body;
-        try {
-          const j = JSON.parse(body);
-          detail = j.error || j.message || body;
-        } catch {
-          // ignore plain text error
-        }
-        logger.warn('Fonnte send failed', 'FonnteService', { status: response.status, detail });
-        return { ok: false, error: detail };
-      }
-
-      return { ok: true };
+    const body = await response.text().catch(() => '');
+    let parsed: Record<string, unknown> | null = null;
+    try {
+      parsed = JSON.parse(body) as Record<string, unknown>;
+    } catch {
+      // plain text error
     }
-  } catch {
+    const detail = String(parsed?.error || parsed?.reason || parsed?.message || body || '');
+
+    if (response.ok) {
+      // Fonnte mengembalikan status:false saat pesan ditolak gateway → anggap gagal
+      if (parsed && parsed.status === false) {
+        lastError = detail || 'Pesan ditolak oleh Fonnte';
+        logger.warn('Fonnte send rejected by gateway', 'FonnteService', {
+          status: response.status,
+          detail: lastError,
+        });
+      } else {
+        return { ok: true };
+      }
+    } else {
+      lastError = detail || `HTTP ${response.status}`;
+      logger.warn('Fonnte proxy failed, falling back to Edge Function', 'FonnteService', {
+        status: response.status,
+        detail: lastError,
+      });
+      // Lanjut ke fallback untuk semua non-2xx
+    }
+  } catch (err: any) {
+    lastError = err?.message || 'Network error';
     // Network / dev error, lanjut ke Edge Function fallback
   }
 
@@ -52,11 +68,22 @@ export async function sendWhatsApp(params: FonnteSendParams): Promise<{ ok: bool
       body: { action: 'send', target: params.target, message: params.message },
     });
 
-    if (!error && data?.ok !== false) {
+    const validData = data && typeof data === 'object' && !Array.isArray(data)
+      ? (data as Record<string, unknown>)
+      : null;
+
+    if (!error && validData && validData.ok !== false && validData.status !== false) {
       return { ok: true };
     }
 
-    return { ok: false, error: error?.message || data?.error || 'Gagal mengirim via edge function' };
+    const errMsg =
+      error?.message ||
+      (validData?.error as string) ||
+      (validData?.reason as string) ||
+      lastError ||
+      'Gagal mengirim via edge function';
+    logger.warn('Fonnte edge function fallback failed', 'FonnteService', { error: errMsg });
+    return { ok: false, error: errMsg };
   } catch (err: any) {
     const msg = err?.message || 'Gagal menghubungi server';
     logger.warn('Fonnte edge function fallback failed', 'FonnteService', { error: msg });

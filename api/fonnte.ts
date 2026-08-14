@@ -20,6 +20,13 @@ const RATE_LIMIT_MAX = 20;
 const RATE_LIMIT_BURST = 5;
 const MAX_BODY_BYTES = 10_000;
 
+const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type, apikey, x-client-info',
+  'Access-Control-Max-Age': '86400',
+};
+
 type RateLimitEntry = { count: number; resetAt: number; burstUsed: number };
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
@@ -56,7 +63,9 @@ async function getToken(): Promise<string> {
         const val = await resp.json();
         if (typeof val === 'string' && val.trim()) return val.trim();
       }
-    } catch {}
+    } catch {
+      // token server tidak tersedia → fallback ke env / error di bawah
+    }
   }
   return '';
 }
@@ -66,7 +75,11 @@ function getRequestOrigin(req: ExtendedRequest): string | undefined {
   if (typeof origin === 'string' && origin.length > 0) return origin;
   const referer = req.headers.referer;
   if (typeof referer === 'string') {
-    try { return new URL(referer).origin; } catch {}
+    try {
+      return new URL(referer).origin;
+    } catch {
+      // referer tidak valid → lanjut ke host header
+    }
   }
   const host = (req.headers['x-forwarded-host'] || req.headers.host) as string | undefined;
   if (host) {
@@ -84,7 +97,9 @@ function isOriginAllowed(req: ExtendedRequest, allowedOriginEnv: string | undefi
   if (reqHost) {
     try {
       if (new URL(origin).hostname.toLowerCase() === reqHost) return true;
-    } catch {}
+    } catch {
+      // origin tidak valid → lanjut ke pattern matching
+    }
   }
 
   const defaultPatterns = [
@@ -115,7 +130,9 @@ function isOriginAllowed(req: ExtendedRequest, allowedOriginEnv: string | undefi
         const oHost = originUrl.hostname.toLowerCase();
         return oHost === pHost || oHost.endsWith('.' + pHost);
       }
-    } catch {}
+    } catch {
+      // pattern/origin tidak valid → anggap tidak cocok
+    }
     return false;
   });
 }
@@ -197,6 +214,20 @@ function isBodyValid(body: any): body is { target: string; message: string } {
 }
 
 export default async function handler(req: ExtendedRequest, res: ExtendedResponse): Promise<void> {
+  // Lampirkan CORS headers ke semua response (preflight, error, dan sukses).
+  const applyCors = () => {
+    Object.entries(CORS_HEADERS).forEach(([key, value]) => res.setHeader(key, value));
+  };
+
+  // CORS preflight (cross-origin fetch, mis. redirect www → non-www)
+  if (req.method === 'OPTIONS') {
+    applyCors();
+    res.status(204).end();
+    return;
+  }
+
+  applyCors();
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
