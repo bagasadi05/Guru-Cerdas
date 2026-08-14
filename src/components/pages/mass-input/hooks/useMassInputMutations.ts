@@ -334,7 +334,9 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         student_count: selectedStudentIds.size,
                         details,
                     });
-                } catch {} // silent fail
+                } catch {
+                    // silent fail for daily input logging
+                }
             }
         },
         onError: (err: Error) => toast.error(`Gagal menyimpan: ${err.message}`),

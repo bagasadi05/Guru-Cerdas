@@ -29,11 +29,6 @@ beforeEach(() => {
     errorReporter: {
       report: vi.fn(),
       getInstance: vi.fn().mockReturnThis()
-    },
-    ErrorType: {
-      NETWORK: 'NETWORK',
-      TIMEOUT: 'TIMEOUT',
-      SERVER: 'SERVER'
     }
   }));
 

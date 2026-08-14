@@ -136,7 +136,7 @@ begin
   perform cron.unschedule('daily-report')
     where exists (select 1 from cron.job where jobname = 'daily-report');
 
-  -- Header X-Internal-Secret (pola scheduled-backup) — bukan Authorization.
+  -- Header apikey, Authorization, dan X-Internal-Secret
   -- Cron skip bila URL/secret belum terisi.
   perform cron.schedule(
     'daily-report',
@@ -144,9 +144,11 @@ begin
     $cmd$
     select
       net.http_post(
-        url := coalesce(public.get_app_config('daily_report_function_url'), ''),
+        url := coalesce(public.get_app_config('daily_report_function_url'), 'https://fddvcyqbfqydvsfujcxd.supabase.co/functions/v1/daily-report'),
         headers := jsonb_build_object(
           'Content-Type', 'application/json',
+          'apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkZHZjeXFiZnF5ZHZzZnVqY3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4ODQ0MzAsImV4cCI6MjA2ODQ2MDQzMH0.kSKbnUaWaJmPjdz9TGxWbZZ8dcamVupdkeozWQct9i4',
+          'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkZHZjeXFiZnF5ZHZzZnVqY3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4ODQ0MzAsImV4cCI6MjA2ODQ2MDQzMH0.kSKbnUaWaJmPjdz9TGxWbZZ8dcamVupdkeozWQct9i4',
           'X-Internal-Secret', coalesce(public.get_app_config('daily_report_worker_secret'), '')
         ),
         body := jsonb_build_object(
@@ -155,7 +157,7 @@ begin
         ),
         timeout_milliseconds := 30000
       ) as request_id
-      where coalesce(public.get_app_config('daily_report_function_url'), '') <> ''
+      where coalesce(public.get_app_config('daily_report_function_url'), 'https://fddvcyqbfqydvsfujcxd.supabase.co/functions/v1/daily-report') <> ''
         and coalesce(public.get_app_config('daily_report_worker_secret'), '') <> '';
     $cmd$
   );

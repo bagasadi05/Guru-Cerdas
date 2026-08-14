@@ -307,7 +307,7 @@ const StudentDetailPage = () => {
                         onClick={() => {
                             const targetClassId = student?.class_id;
                             if (targetClassId) {
-                                try { sessionStorage.setItem('guru_cerdas_active_class_id', targetClassId); } catch {}
+                                try { sessionStorage.setItem('guru_cerdas_active_class_id', targetClassId); } catch { /* ignore storage error */ }
                                 navigate(`/siswa?class=${targetClassId}`);
                             } else {
                                 navigate('/siswa');

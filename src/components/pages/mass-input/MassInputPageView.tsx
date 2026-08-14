@@ -120,7 +120,6 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         step, mode, handleModeSelect, handleBack, currentCard,
         isConfigOpen, setIsConfigOpen, selectedClass, setSelectedClass, classes, isLoadingClasses,
         quizInfo, setQuizInfo, subjectGradeInfo, setSubjectGradeInfo, kkm, setKkm,
-        attitudePredicates, setAttitudePredicates,
         isCustomSubject, setIsCustomSubject, uniqueSubjects,
         selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
         violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,

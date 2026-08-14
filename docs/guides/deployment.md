@@ -37,8 +37,14 @@ Sebelum deployment, pastikan:
 | `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key | `eyJhbGci...` |
 | `VITE_APP_VERSION` | Application version (optional) | `1.0.0` |
 | `VITE_SENTRY_DSN` | Sentry DSN for error tracking (optional) | `` |
+| `VITE_ERROR_MONITORING_ENDPOINT` | Custom error monitoring ingestion endpoint (optional) | `/api/errors` |
 | `VITE_USE_CUSTOM_PWA_PROMPT` | Enable custom PWA prompt UI (optional) | `false` |
 | `VITE_ENABLE_AI_MODUL_AJAR` | Enable Generative AI option in Modul Ajar Creator | `true` |
+| `VITE_ENABLE_AI_FEATURES` | Feature flag for AI-assisted features (optional) | `true` |
+| `VITE_GEMINI_PROXY_URL` | Custom backend proxy URL for Gemini API (optional) | `/api/gemini` |
+| `VITE_GROQ_API_KEY` | Groq API key for dev/local fallback (optional) | `gsk_...` |
+| `VITE_GROQ_PROXY_URL` | Custom backend proxy URL for Groq API (optional) | `/api/groq` |
+| `VITE_VAPID_PUBLIC_KEY` | VAPID public key for Web Push notifications (optional) | `BN...` |
 
 > ⚠️ **Security Notice**: Do **NOT** set `VITE_GEMINI_API_KEY` in Vercel production environment variables. Keep `VITE_GEMINI_API_KEY` only in your local `.env` file for development. Production builds route requests through `/api/gemini` so API keys remain strictly server-side.
 

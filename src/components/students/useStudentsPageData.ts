@@ -44,7 +44,6 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
     setActiveClassIdState(id);
   };
 
-  const activeClassId = activeClassIdState;
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
   const [genderFilter, setGenderFilter] = useState<'all' | 'Laki-laki' | 'Perempuan'>('all');
   const [accessCodeFilter, setAccessCodeFilter] = useState<'all' | 'has_code' | 'no_code'>('all');
@@ -108,6 +107,27 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
     enabled: !!userId && !isLoadingAssignments,
   });
 
+  const classes = classesData || EMPTY_CLASSES;
+
+  const activeClassId = useMemo(() => {
+    if (!classes.length) return activeClassIdState;
+    if (activeClassIdState && classes.some((c) => c.id === activeClassIdState)) {
+      return activeClassIdState;
+    }
+    const savedClassId = (() => {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        return searchParams.get('class') || sessionStorage.getItem('guru_cerdas_active_class_id');
+      } catch {
+        return null;
+      }
+    })();
+    if (savedClassId && classes.some((c) => c.id === savedClassId)) {
+      return savedClassId;
+    }
+    return classes[0]?.id || '';
+  }, [classes, activeClassIdState]);
+
   const {
     data: studentsData,
     isLoading: isLoadingStudents,
@@ -130,7 +150,6 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
     enabled: !!userId && !!activeClassId,
   });
 
-  const classes = classesData || EMPTY_CLASSES;
   const students = studentsData || EMPTY_STUDENTS;
   const activeClass = classes.find((classItem) => classItem.id === activeClassId) || null;
   const canManageActiveClass = activeClass?.user_id === userId || hasHomeroomAssignment(userAssignments, activeClassId);
@@ -145,27 +164,14 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
   }, [isError, queryError, toast]);
 
   useEffect(() => {
-    if (classes.length > 0) {
-      const savedClassId = (() => {
-        try {
-          const searchParams = new URLSearchParams(window.location.search);
-          return searchParams.get('class') || sessionStorage.getItem('guru_cerdas_active_class_id');
-        } catch {
-          return null;
-        }
-      })();
-
-      const savedExists = savedClassId ? classes.some((c) => c.id === savedClassId) : false;
-      const activeExists = activeClassId ? classes.some((c) => c.id === activeClassId) : false;
-
-      if (savedExists && !activeExists) {
-        setActiveClassId(savedClassId!);
-      } else if (!activeExists && !savedExists) {
-        const defaultId = classes[0].id;
-        setActiveClassId(defaultId);
+    if (activeClassId) {
+      try {
+        sessionStorage.setItem('guru_cerdas_active_class_id', activeClassId);
+      } catch {
+        // ignore storage errors
       }
     }
-  }, [classes, activeClassId]);
+  }, [activeClassId]);
 
   const studentsForActiveClass = useMemo(() => {
     let filtered = students;

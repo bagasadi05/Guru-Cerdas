@@ -1,6 +1,5 @@
 import { FormState } from '../types';
 import { normalizeSoalEvaluasi } from '../../../../services/modulAjarAiGenerator';
-import { sanitizeContent } from '../../../../services/securityEnhanced';
 
 export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: number, logoBase64: string): string => {
   // Helper to sanitize markdown markers like **, *, __ and convert to HTML or clean up

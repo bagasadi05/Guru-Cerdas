@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { logger } from '../services/logger';
 import { errorReporter } from '../services/errorHandling';
 import { AlertTriangleIcon, RefreshCwIcon, HomeIcon, SparklesIcon } from './Icons';
-import { Button } from './ui/Button';
 import { idTranslations, enTranslations, type Language } from '../utils/i18n';
 
 interface ErrorContext {

@@ -82,7 +82,6 @@ export const useStudentDetailPage = () => {
         pendingData: ViolationFormValues & { evidence_file?: File };
     } | null>(null);
     const [violationConflictFields, setViolationConflictFields] = useState<string[]>([]);
-    const pendingViolationSubmitRef = useRef<((data: ViolationFormValues & { evidence_file?: File }) => void) | null>(null);
     const { kkm } = useUserSettings();
     const { activeSemester, semesters } = useSemester();
 

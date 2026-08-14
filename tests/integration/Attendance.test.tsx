@@ -48,11 +48,6 @@ vi.mock('../../src/services/supabase', () => ({
             return query;
         }),
     },
-    ai: {
-        models: {
-            generateContent: vi.fn(),
-        },
-    },
     // useAuth.tsx & useAttendance.ts meng-import ini dari supabase — tanpanya
     // Vitest melempar saat path token-refresh/offline-queue dijalankan
     // (time-bomb laten).
@@ -72,7 +67,6 @@ vi.mock('../../src/utils/confetti', () => ({
 }));
 
 vi.mock('../../src/contexts/SemesterContext', () => ({
-    SemesterProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     useSemester: () => ({
         activeSemester: null,
         activeAcademicYear: null,

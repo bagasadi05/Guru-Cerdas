@@ -146,6 +146,52 @@ const queueOfflineRequest = async (url: string, init?: RequestInit): Promise<voi
   }
 };
 
+/**
+ * Clears any stale/invalid Supabase auth tokens from storage.
+ *
+ * A "400 Bad Request" on the `token?grant_type=refresh_token` endpoint means the
+ * stored refresh token is expired, revoked, or malformed. When that happens the
+ * client can get stuck retrying with a token that will never succeed. This helper
+ * removes the persisted auth entry so the app can fall back to a clean logged-out
+ * state instead of looping on failed refreshes.
+ *
+ * @since 1.0.0
+ */
+export const clearStaleAuthTokens = (): void => {
+  try {
+    if (typeof window === 'undefined') return;
+    
+    // Clear localStorage
+    Object.keys(window.localStorage)
+      .filter((key) => key.startsWith('portal-guru-auth') || key.startsWith('sb-'))
+      .forEach((key) => window.localStorage.removeItem(key));
+
+    // Clear sessionStorage
+    Object.keys(window.sessionStorage)
+      .filter((key) => key.startsWith('portal-guru-auth') || key.startsWith('sb-'))
+      .forEach((key) => window.sessionStorage.removeItem(key));
+
+    // Clear cookies starting with sb- or portal-guru-auth
+    document.cookie.split(';').forEach((cookie) => {
+      const eqIdx = cookie.indexOf('=');
+      const name = eqIdx > -1 ? cookie.substring(0, eqIdx).trim() : cookie.trim();
+      if (name.startsWith('sb-') || name.startsWith('portal-guru-auth')) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+        
+        // Also try cleaning subdomain cookies
+        const domainParts = window.location.hostname.split('.');
+        if (domainParts.length > 2) {
+          const rootDomain = '.' + domainParts.slice(-2).join('.');
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${rootDomain};`;
+        }
+      }
+    });
+  } catch (error) {
+    logger.warn('Failed to clear stale auth tokens', 'Supabase', error);
+  }
+};
+
 const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   const url = typeof input === 'string' ? input : input.toString();
   logger.debug(`[SupabaseFetch] Request starting: ${url} (${init?.method || 'GET'})`);
@@ -160,6 +206,9 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
       retries: getRetryCount(url),
       queueWhenOffline: isMutation && !isAuth && !isSystemBSync
     });
+    if (url.includes('/auth/v1/token') && url.includes('grant_type=refresh_token') && response.status === 400) {
+      clearStaleAuthTokens();
+    }
     logger.debug(`[SupabaseFetch] Request succeeded: ${url} (${response.status})`);
     return response;
   } catch (error) {
@@ -242,52 +291,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     fetch: resilientSupabaseFetch
   }
 });
-
-/**
- * Clears any stale/invalid Supabase auth tokens from storage.
- *
- * A "400 Bad Request" on the `token?grant_type=refresh_token` endpoint means the
- * stored refresh token is expired, revoked, or malformed. When that happens the
- * client can get stuck retrying with a token that will never succeed. This helper
- * removes the persisted auth entry so the app can fall back to a clean logged-out
- * state instead of looping on failed refreshes.
- *
- * @since 1.0.0
- */
-export const clearStaleAuthTokens = (): void => {
-  try {
-    if (typeof window === 'undefined') return;
-    
-    // Clear localStorage
-    Object.keys(window.localStorage)
-      .filter((key) => key.startsWith('portal-guru-auth') || key.startsWith('sb-'))
-      .forEach((key) => window.localStorage.removeItem(key));
-
-    // Clear sessionStorage
-    Object.keys(window.sessionStorage)
-      .filter((key) => key.startsWith('portal-guru-auth') || key.startsWith('sb-'))
-      .forEach((key) => window.sessionStorage.removeItem(key));
-
-    // Clear cookies starting with sb- or portal-guru-auth
-    document.cookie.split(';').forEach((cookie) => {
-      const eqIdx = cookie.indexOf('=');
-      const name = eqIdx > -1 ? cookie.substring(0, eqIdx).trim() : cookie.trim();
-      if (name.startsWith('sb-') || name.startsWith('portal-guru-auth')) {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
-        
-        // Also try cleaning subdomain cookies
-        const domainParts = window.location.hostname.split('.');
-        if (domainParts.length > 2) {
-          const rootDomain = '.' + domainParts.slice(-2).join('.');
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${rootDomain};`;
-        }
-      }
-    });
-  } catch (error) {
-    logger.warn('Failed to clear stale auth tokens', 'Supabase', error);
-  }
-};
 
 // Centralized AI Client Configuration (Gemini)
 // Production: the client calls the bundled serverless proxy (api/gemini.ts) —

@@ -35,8 +35,30 @@ interface ExtendedResponse extends ServerResponse {
   send(body: string | Buffer): void;
 }
 
-function getToken(): string {
-  return (process.env.FONNTE_TOKEN || '').trim();
+async function getToken(): Promise<string> {
+  const envToken = (process.env.FONNTE_TOKEN || '').trim();
+  if (envToken) return envToken;
+
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (supabaseUrl && serviceKey) {
+    try {
+      const resp = await fetch(`${supabaseUrl}/rest/v1/rpc/get_app_config`, {
+        method: 'POST',
+        headers: {
+          'apikey': serviceKey,
+          'Authorization': `Bearer ${serviceKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ p_key: 'fonnte_token' }),
+      });
+      if (resp.ok) {
+        const val = await resp.json();
+        if (typeof val === 'string' && val.trim()) return val.trim();
+      }
+    } catch {}
+  }
+  return '';
 }
 
 function getRequestOrigin(req: ExtendedRequest): string | undefined {
@@ -186,7 +208,7 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
     return;
   }
 
-  const token = getToken();
+  const token = await getToken();
   if (!token) {
     res.status(500).json({ error: 'FONNTE_TOKEN is not configured' });
     return;

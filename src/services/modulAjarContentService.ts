@@ -169,7 +169,7 @@ export const modulAjarContentService = {
     // boilerplate sebelum admin meninjau (alur Bank Bersama).
     // Baris lama (pra-pipeline AI) hanya punya is_verified=true tanpa content_status —
     // tangkap keduanya agar konten verified tidak "hilang" dari guru.
-    let query = supabase
+    const query = supabase
       .from('ref_boilerplate_topik')
       .select('*')
       .eq('mata_pelajaran', normMapel)
@@ -189,7 +189,7 @@ export const modulAjarContentService = {
     }
 
     // Fallback ilike
-    let fallbackQuery = supabase
+    const fallbackQuery = supabase
       .from('ref_boilerplate_topik')
       .select('*')
       .ilike('mata_pelajaran', `%${normMapel}%`)

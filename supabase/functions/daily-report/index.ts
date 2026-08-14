@@ -1,7 +1,8 @@
 // Supabase Edge Function: daily-report
-// Dipicu oleh pg_cron setiap sore (jadwal di app_config 'daily_report_schedule').
+// Dipicu oleh pg_cron setiap sore (jadwal di app_config 'daily_report_schedule')
+// atau dipanggil manual dari admin panel.
 // Membaca daily_input_log hari itu (WIB) dan mengirim laporan harian WhatsApp
-// via Fonnte ke admin yang subscribe (app_config 'fonnte_config').
+// via Fonnte ke nomor admin yang terdaftar (app_config 'fonnte_config').
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -20,12 +21,27 @@ interface FonnteConfig {
   adminPhone: string;
   enabled: boolean;
   dailyReportTime: string;
+  token?: string;
 }
 
 const FONNTE_SEND_URL = "https://api.fonnte.com/send";
 const WIB_OFFSET_MS = 7 * 60 * 60 * 1000; // Asia/Jakarta = UTC+7
-// Batas aman Fonnte (~1000 karakter per pesan); dipotong agar selalu terkirim.
-const MAX_MESSAGE_LENGTH = 950;
+const MAX_MESSAGE_LENGTH = 1500;
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-internal-secret",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+};
+
+/** Normalisasi nomor WhatsApp ke format internasional standar (628xxx). */
+function normalizePhone(phone: string): string {
+  let cleaned = phone.replace(/\D/g, "");
+  if (cleaned.startsWith("0")) {
+    cleaned = "62" + cleaned.slice(1);
+  }
+  return cleaned;
+}
 
 /** Kunci grup detail agar entri berbeda (kuis/nilai/pelanggaran) tidak menyatu. */
 function logDetailKey(log: InputLogRow): string {
@@ -48,8 +64,9 @@ function buildDailyReportMessage(
 ): string {
   const byTeacher: Record<string, InputLogRow[]> = {};
   for (const log of logs) {
-    if (!byTeacher[log.teacher_name]) byTeacher[log.teacher_name] = [];
-    byTeacher[log.teacher_name].push(log);
+    const teacher = log.teacher_name || "Guru";
+    if (!byTeacher[teacher]) byTeacher[teacher] = [];
+    byTeacher[teacher].push(log);
   }
 
   const teacherCount = Object.keys(byTeacher).length;
@@ -153,7 +170,7 @@ function buildDailyReportMessage(
 
 function truncateMessage(message: string, maxLen: number): string {
   if (message.length <= maxLen) return message;
-  const tail = "\n\n… (pesan dipotong karena terlalu panjang)";
+  const tail = "\n\n… (pesan dipotong karena batas panjang Fonnte)";
   return message.slice(0, maxLen - tail.length) + tail;
 }
 
@@ -177,16 +194,35 @@ async function cleanupStaleLogs(
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    supabaseUrl,
+    serviceKey,
     { auth: { persistSession: false } },
   );
 
-  // --- Auth: pg_cron (X-Internal-Secret) atau manual via service role ---
+  // Request payload / query options
+  let reqBody: Record<string, unknown> = {};
+  if (req.method === "POST") {
+    try {
+      reqBody = await req.json();
+    } catch {
+      reqBody = {};
+    }
+  }
+  const urlObj = new URL(req.url);
+  const isForce = reqBody.force === true || urlObj.searchParams.get("force") === "true";
+
+  // --- Auth check ---
   const authHeader = req.headers.get("authorization");
   const internalSecret = req.headers.get("x-internal-secret");
-  const expectedKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const expectedKey = serviceKey;
 
   const { data: storedSecret } = await supabase
     .rpc("get_app_config", { p_key: "daily_report_worker_secret" });
@@ -197,28 +233,87 @@ Deno.serve(async (req: Request) => {
     (workerSecret.length > 0 && internalSecret === workerSecret) ||
     (envScheduled.length > 0 && internalSecret === envScheduled)
   );
-  const isAuthorized =
-    isInternal ||
-    (authHeader === `Bearer ${expectedKey}` && expectedKey.length > 0);
+
+  // Allow: internal pg_cron header, service role header, or authenticated user with admin check
+  let isAuthorized = isInternal || (Boolean(authHeader) && authHeader === `Bearer ${expectedKey}`);
+
+  if (!isAuthorized && authHeader) {
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    if (token && token.length > 20) {
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      if (!userError && userData?.user) {
+        const { data: isAdmin } = await supabase.rpc("is_admin_user", { p_user_id: userData.user.id });
+        if (isAdmin === true) {
+          isAuthorized = true;
+        }
+      }
+    }
+  }
 
   if (!isAuthorized) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const fonnteToken = (Deno.env.get("FONNTE_TOKEN") ?? "").trim();
+  // --- Fetch Config ---
+  const { data: configValue } = await supabase
+    .rpc("get_app_config", { p_key: "fonnte_config" });
+
+  let fonnteConfig: Partial<FonnteConfig> = {};
+  if (configValue) {
+    if (typeof configValue === "string") {
+      try {
+        fonnteConfig = JSON.parse(configValue);
+      } catch {
+        fonnteConfig = {};
+      }
+    } else if (typeof configValue === "object") {
+      fonnteConfig = configValue as Partial<FonnteConfig>;
+    }
+  }
+
+  // Token resolution: Deno.env -> app_config('fonnte_token') -> fonnteConfig.token
+  let fonnteToken = (Deno.env.get("FONNTE_TOKEN") ?? "").trim();
+  if (!fonnteToken) {
+    const { data: dbToken } = await supabase.rpc("get_app_config", { p_key: "fonnte_token" });
+    if (typeof dbToken === "string" && dbToken.trim().length > 0) {
+      fonnteToken = dbToken.trim();
+    }
+  }
+  if (!fonnteToken && fonnteConfig.token) {
+    fonnteToken = String(fonnteConfig.token).trim();
+  }
+
   if (!fonnteToken) {
     console.error("FONNTE_TOKEN not configured");
-    return new Response(JSON.stringify({ error: "FONNTE_TOKEN missing" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error: "FONNTE_TOKEN belum dikonfigurasi. Masukkan Fonnte Token di panel admin atau secrets.",
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  const rawTargetPhone = fonnteConfig.adminPhone || "";
+  const targetPhone = normalizePhone(rawTargetPhone);
+
+  if (!fonnteConfig.enabled && !isForce) {
+    return new Response(
+      JSON.stringify({ message: "Laporan harian dinonaktifkan di pengaturan", enabled: false }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  if (!targetPhone) {
+    return new Response(
+      JSON.stringify({ error: "Nomor WhatsApp admin belum diisi", recipients: 0 }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 
   try {
-    // Batas hari "hari ini" dalam WIB (bukan UTC) — label tanggal juga WIB.
     const now = Date.now();
     const wibDate = new Date(now + WIB_OFFSET_MS);
     const wibDateStr = wibDate.toISOString().slice(0, 10);
@@ -234,91 +329,56 @@ Deno.serve(async (req: Request) => {
       timeZone: "Asia/Jakarta",
     }).format(new Date(now));
 
-    // Log hari ini yang belum terkirim
-    const { data: logs, error: logError } = await supabase
+    // Bersihkan backlog hari-hari sebelumnya
+    await cleanupStaleLogs(supabase, startOfWibDayIso);
+
+    // Anti double-send guard (kecuali force trigger)
+    if (!isForce) {
+      const { data: lastSentDate } = await supabase
+        .rpc("get_app_config", { p_key: "daily_report_sent_date" });
+      if (typeof lastSentDate === "string" && lastSentDate === wibDateStr) {
+        return new Response(
+          JSON.stringify({ message: `Laporan harian sudah terkirim hari ini (${wibDateStr})`, count: 0 }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+    // Ambil log hari ini (jika isForce, ambil semua log hari ini terlepas dari flag sent)
+    let logQuery = supabase
       .from("daily_input_log")
       .select("*")
-      .eq("sent", false)
       .gte("created_at", startOfWibDayIso)
       .order("created_at", { ascending: true });
+
+    if (!isForce) {
+      logQuery = logQuery.eq("sent", false);
+    }
+
+    const { data: logs, error: logError } = await logQuery;
 
     if (logError) {
       console.error("daily_input_log query error:", logError);
       return new Response(
         JSON.stringify({ error: logError.message }),
-        { status: 500, headers: { "Content-Type": "application/json" } },
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Bersihkan backlog hari-hari sebelumnya agar tidak menumpuk/direlabel ulang
-    await cleanupStaleLogs(supabase, startOfWibDayIso);
-
-    if (!logs || logs.length === 0) {
-      console.log("No pending input logs to report.");
-      return new Response(
-        JSON.stringify({ message: "No logs to report", count: 0 }),
-        { headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    // Guard anti double-send dalam satu hari (cron + invoke manual)
-    const { data: lastSentDate } = await supabase
-      .rpc("get_app_config", { p_key: "daily_report_sent_date" });
-    if (typeof lastSentDate === "string" && lastSentDate === wibDateStr) {
-      console.log(`Daily report already sent today (${wibDateStr}).`);
-      return new Response(
-        JSON.stringify({ message: "Already sent today", count: 0 }),
-        { headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    const typedLogs = logs as unknown as InputLogRow[];
-
-    // Config Fonnte global (app_config, bukan per-user)
-    const { data: configValue } = await supabase
-      .rpc("get_app_config", { p_key: "fonnte_config" });
-
-    let fonnteConfig: Partial<FonnteConfig> = {};
-    if (configValue && typeof configValue === "string") {
-      try {
-        fonnteConfig = JSON.parse(configValue);
-      } catch {
-        fonnteConfig = {};
-      }
-    }
-
-    if (!fonnteConfig.enabled || !fonnteConfig.adminPhone) {
-      console.log(
-        "Daily report disabled or admin phone missing; logs kept for later.",
-      );
-      return new Response(
-        JSON.stringify({
-          message: "Daily report disabled or admin phone missing",
-          logCount: typedLogs.length,
-          recipients: 0,
-        }),
-        { headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    // Claim hari ini SEBELUM mengirim — kalau gagal, dibuka lagi untuk retry
-    const { error: claimError } = await supabase.rpc("set_app_config", {
-      p_key: "daily_report_sent_date",
-      p_value: wibDateStr,
-    });
-    if (claimError) {
-      console.error("Failed to claim daily report date:", claimError);
-    }
+    const typedLogs = (logs || []) as unknown as InputLogRow[];
 
     const message = truncateMessage(
       buildDailyReportMessage(typedLogs, dateLabel),
       MAX_MESSAGE_LENGTH,
     );
 
-    let sentCount = 0;
+    let sentSuccess = false;
+    let fonnteResponseText = "";
+    let fonnteResponseJson: Record<string, unknown> = {};
+
     try {
       const formData = new URLSearchParams();
-      formData.append("target", fonnteConfig.adminPhone);
+      formData.append("target", targetPhone);
       formData.append("message", message);
 
       const result = await fetch(FONNTE_SEND_URL, {
@@ -330,35 +390,39 @@ Deno.serve(async (req: Request) => {
         body: formData.toString(),
       });
 
-      if (result.ok) {
-        sentCount++;
-        console.log(`Daily report sent to ${fonnteConfig.adminPhone}`);
+      fonnteResponseText = await result.text().catch(() => "");
+      try {
+        fonnteResponseJson = JSON.parse(fonnteResponseText);
+      } catch {
+        fonnteResponseJson = {};
+      }
+
+      // Fonnte returns status: true on actual success
+      if (result.ok && fonnteResponseJson.status === true) {
+        sentSuccess = true;
+        console.log(`Daily report successfully sent to ${targetPhone}`);
       } else {
-        const body = await result.text().catch(() => "");
-        console.error(
-          `Fonnte send failed to ${fonnteConfig.adminPhone}: ${result.status} ${body}`,
-        );
+        console.error(`Fonnte send rejected (${result.status}):`, fonnteResponseText);
       }
     } catch (err) {
-      console.error(
-        `Fonnte error for ${fonnteConfig.adminPhone}:`,
-        err,
-      );
+      console.error(`Fonnte network error:`, err);
     }
 
-    if (sentCount > 0) {
-      // Tandai log yang BENAR-BENAR terkirim via id eksplisit (bukan range UUID)
-      const { error: updateError } = await supabase
-        .from("daily_input_log")
-        .update({ sent: true })
-        .in("id", typedLogs.map((l) => l.id))
-        .eq("sent", false);
+    if (sentSuccess) {
+      // Claim hari ini
+      await supabase.rpc("set_app_config", {
+        p_key: "daily_report_sent_date",
+        p_value: wibDateStr,
+      });
 
-      if (updateError) {
-        console.error("Failed to mark logs as sent:", updateError);
+      if (typedLogs.length > 0) {
+        await supabase
+          .from("daily_input_log")
+          .update({ sent: true })
+          .in("id", typedLogs.map((l) => l.id));
       }
     } else {
-      // Gagal terkirim — buka guard supaya bisa dicoba lagi
+      // Re-open guard on failure
       await supabase.rpc("set_app_config", {
         p_key: "daily_report_sent_date",
         p_value: "",
@@ -367,17 +431,22 @@ Deno.serve(async (req: Request) => {
 
     return new Response(
       JSON.stringify({
-        message: sentCount > 0 ? "Daily report sent" : "Daily report send failed",
+        success: sentSuccess,
+        message: sentSuccess ? "Laporan harian berhasil dikirim ke WhatsApp!" : `Gagal mengirim via Fonnte: ${fonnteResponseJson.reason || fonnteResponseText || 'Unknown error'}`,
+        fonnteDetail: fonnteResponseText,
         logCount: typedLogs.length,
-        recipients: sentCount,
+        recipient: targetPhone,
       }),
-      { headers: { "Content-Type": "application/json" } },
+      {
+        status: sentSuccess ? 200 : 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   } catch (err) {
     console.error("Unexpected error in daily-report:", err);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
+      JSON.stringify({ error: err instanceof Error ? err.message : "Internal server error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

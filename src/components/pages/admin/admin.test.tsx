@@ -8,7 +8,6 @@ import React from 'react';
 // Mock Lucide icons
 vi.mock('lucide-react', () => ({
     Loader2: () => <div data-testid="loader-icon">Loading</div>,
-    Users: () => <div data-testid="users-icon">Users</div>,
 }));
 
 describe('Admin Module - StatCard Component', () => {

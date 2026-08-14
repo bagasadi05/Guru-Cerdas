@@ -1,6 +1,5 @@
 import React from 'react';
 import { Bot, RefreshCw } from 'lucide-react';
-import { useTranslation } from '../../../../utils/i18n';
 
 interface AIFieldGeneratorProps {
   label: string;
@@ -25,8 +24,6 @@ export const AIFieldGenerator: React.FC<AIFieldGeneratorProps> = ({
   rows = 4,
   className = '',
 }) => {
-  const { t } = useTranslation();
-
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="flex justify-between items-center">

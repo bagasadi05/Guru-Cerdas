@@ -2,12 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';import { Star, ClipboardCheck, BarChart3, AlertTriangle,
     Sparkles, Zap, Send, FileText, CheckCircle, PlusCircle, Info, Printer,
     ChevronDown, Search, TrendingUp, Eye, Users, FileSpreadsheet,
-    Pencil, Trash2, ShieldAlert, Lock, Plus
+    Pencil, Trash2, ShieldAlert, Plus
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
-import { bintangService, calculateAspectPoints, getAspectForViolation, BINTANG_THRESHOLDS, type AspectPointsSummary, type BintangGrade } from '../../../services/bintangService';
+import { bintangService, calculateAspectPoints, BINTANG_THRESHOLDS, type AspectPointsSummary, type BintangGrade } from '../../../services/bintangService';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Card } from '../../ui/Card';
@@ -22,7 +22,7 @@ import { useBintangEvaluation } from './hooks/useBintangEvaluation';
 import BintangTrendChart from './BintangTrendChart';
 import { ViolationForm } from '../student/forms/ViolationForm';
 import { QuizForm } from '../student/forms/QuizForm';
-import { SEVERITY_LEVELS, type SeverityLevel } from '../student/violationMeta';
+import { type SeverityLevel } from '../student/violationMeta';
 import { ViolationFormValues, QuizFormValues } from '../student/schemas';
 import { ViolationRow, QuizPointRow } from '../student/types';
 import { violationList } from '../../../services/violations.data';
@@ -34,9 +34,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/Tabs';
 
 
 // ─── Violation severity helpers ─────────────────────────────────────────────
-
-const isSeverityLevel = (value: string | null | undefined): value is SeverityLevel =>
-    !!value && value in SEVERITY_LEVELS;
 
 const getViolationSeverityFromCategory = (category?: string): SeverityLevel | null => {
     const normalized = category?.toLowerCase();
@@ -57,7 +54,7 @@ const BintangDashboardPage: React.FC = () => {
     const { confirm: confirmDeleteViolation, Dialog: DeleteViolationDialog } = useConfirmation();
     const { confirm: confirmDeleteQuiz, Dialog: DeleteQuizDialog } = useConfirmation();
     const { confirm: confirmDeleteMentoring, Dialog: DeleteMentoringDialog } = useConfirmation();
-    const { isLocked, activeSemester } = useSemester();
+    const { activeSemester } = useSemester();
 
     // ── Access control ───────────────────────────────────────────────────────
     const { data: teacherAssignments = [] } = useQuery({
@@ -108,11 +105,8 @@ const BintangDashboardPage: React.FC = () => {
 
     // ── UI state ─────────────────────────────────────────────────────────────
     const [mentoringSearchQuery, setMentoringSearchQuery] = useState('');
-    const [keaktifanFilter, setKeaktifanFilter] = useState<'semua' | 'akademik' | 'keaktifan'>('semua');
 
     // ── Violation management (view / add / edit / delete) ────────────────────
-    const [violationSearchQuery, setViolationSearchQuery] = useState('');
-    const [violationSeverityFilter, setViolationSeverityFilter] = useState<'all' | 'ringan' | 'sedang' | 'berat'>('all');
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
     const [editingViolation, setEditingViolation] = useState<ViolationRow | null>(null);
     const [isViolationSaving, setIsViolationSaving] = useState(false);
@@ -307,50 +301,6 @@ const BintangDashboardPage: React.FC = () => {
             return studentName.includes(query) || logNotes.includes(query);
         });
     }, [mentoringLogs, mentoringSearchQuery]);
-
-    const filteredViolations = useMemo(() => {
-        let list = violations;
-        if (violationSeverityFilter !== 'all') {
-            list = list.filter(v => v.severity === violationSeverityFilter);
-        }
-        if (violationSearchQuery.trim()) {
-            const query = violationSearchQuery.toLowerCase();
-            list = list.filter(v => {
-                const name = (v.students?.name || '').toLowerCase();
-                const desc = (v.description || '').toLowerCase();
-                return name.includes(query) || desc.includes(query);
-            });
-        }
-        return list;
-    }, [violations, violationSearchQuery, violationSeverityFilter]);
-
-    const violationStats = useMemo(() => ({
-        total: violations.length,
-        points: violations.reduce((sum, v) => sum + (v.points || 0), 0),
-        ringan: violations.filter(v => v.severity === 'ringan').length,
-        sedang: violations.filter(v => v.severity === 'sedang').length,
-        berat: violations.filter(v => v.severity === 'berat').length,
-    }), [violations]);
-
-    // ── Grouped quiz points by student for history view ────────────────────────
-    // Recent quiz points (last 50, newest first)
-    const recentQuizPoints = useMemo(() => {
-        let filtered = [...quizPoints];
-        if (keaktifanFilter === 'akademik') filtered = filtered.filter(q => q.subject != null);
-        if (keaktifanFilter === 'keaktifan') filtered = filtered.filter(q => q.subject == null);
-        return filtered.sort((a, b) => new Date(b.quiz_date).getTime() - new Date(a.quiz_date).getTime()).slice(0, 200);
-    }, [quizPoints, keaktifanFilter]);
-
-    const keaktifanSummary = useMemo(() => {
-        const akademik = quizPoints.filter(q => q.subject != null);
-        const keaktifan = quizPoints.filter(q => q.subject == null);
-        return {
-            akademikCount: akademik.length,
-            keaktifanCount: keaktifan.length,
-            akademikPoints: akademik.reduce((s, q) => s + (q.points || 0), 0),
-            keaktifanPoints: keaktifan.reduce((s, q) => s + (q.points || 0), 0),
-        };
-    }, [quizPoints]);
 
     const getStudentName = (studentId: string) => students.find(s => s.id === studentId)?.name || 'Unknown';
 
@@ -581,11 +531,6 @@ const BintangDashboardPage: React.FC = () => {
                 }
             },
         });
-    };
-
-    const openAddViolation = () => {
-        setViolationStudentId('');
-        setIsAddViolationModalOpen(true);
     };
 
     const handleAddViolation = async (data: ViolationFormValues & { evidence_file?: File }) => {
