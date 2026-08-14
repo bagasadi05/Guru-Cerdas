@@ -87,15 +87,16 @@ export function useFonnteConfig() {
     if (!token) return null;
     setIsCheckingDevice(true);
     try {
-      const resp = await fetch('https://api.fonnte.com/device', {
-        method: 'POST',
-        headers: {
-          Authorization: token.trim(),
-        },
+      const { data, error } = await supabase.functions.invoke('fonnte-proxy', {
+        body: { action: 'device' },
       });
-      const data: FonnteDeviceStatus = await resp.json();
-      setDeviceInfo(data);
-      return data;
+
+      if (!error && data) {
+        const deviceData: FonnteDeviceStatus = data;
+        setDeviceInfo(deviceData);
+        return deviceData;
+      }
+      return null;
     } catch {
       return null;
     } finally {

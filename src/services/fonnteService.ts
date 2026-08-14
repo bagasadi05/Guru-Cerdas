@@ -1,14 +1,15 @@
 /**
  * Fonnte WhatsApp Gateway Service
  *
- * Sends WhatsApp notifications via the serverless proxy at /api/fonnte
- * with fallback directly to Fonnte API during local development or when token is provided.
+ * Sends WhatsApp notifications via the serverless proxy at /api/fonnte (Vercel)
+ * or via Supabase Edge Function as fallback (local dev).
+ * Token stays server-side — never exposed to client direct calls.
  */
 
 import { logger } from './logger';
+import { supabase } from './supabase';
 
 const FONNTE_PROXY_URL = '/api/fonnte';
-const FONNTE_DIRECT_URL = 'https://api.fonnte.com/send';
 
 export interface FonnteSendParams {
   target: string;
@@ -42,47 +43,23 @@ export async function sendWhatsApp(params: FonnteSendParams): Promise<{ ok: bool
       return { ok: true };
     }
   } catch {
-    // Network / dev error, lanjut ke direct fallback
+    // Network / dev error, lanjut ke Edge Function fallback
   }
 
-  // 2. Fallback untuk Local Development (Vite dev server) jika token tersedia
-  if (params.token) {
-    try {
-      const formData = new URLSearchParams();
-      formData.append('target', params.target);
-      formData.append('message', params.message);
+  // 2. Fallback via Supabase Edge Function (aman, tidak kena CSP)
+  try {
+    const { data, error } = await supabase.functions.invoke('fonnte-proxy', {
+      body: { action: 'send', target: params.target, message: params.message },
+    });
 
-      const response = await fetch(FONNTE_DIRECT_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: params.token.trim(),
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData.toString(),
-      });
-
-      const body = await response.text().catch(() => '');
-      let json: Record<string, unknown> = {};
-      try {
-        json = JSON.parse(body);
-      } catch {
-        json = {};
-      }
-
-      if (response.ok && json.status === true) {
-        return { ok: true };
-      }
-
-      const errMsg = String(json.reason || json.message || body || 'Gagal mengirim pesan');
-      return { ok: false, error: errMsg };
-    } catch (err: any) {
-      const msg = err?.message || 'Gagal menghubungi server Fonnte';
-      return { ok: false, error: msg };
+    if (!error && data?.ok !== false) {
+      return { ok: true };
     }
-  }
 
-  return {
-    ok: false,
-    error: 'Endpoint /api/fonnte tidak tersedia di local dev server. Pastikan Fonnte Token terisi di pengaturan.',
-  };
+    return { ok: false, error: error?.message || data?.error || 'Gagal mengirim via edge function' };
+  } catch (err: any) {
+    const msg = err?.message || 'Gagal menghubungi server';
+    logger.warn('Fonnte edge function fallback failed', 'FonnteService', { error: msg });
+    return { ok: false, error: msg };
+  }
 }
