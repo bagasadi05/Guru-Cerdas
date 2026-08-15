@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../../../services/supabase';
 import { bintangService, calculateAspectPoints, BINTANG_THRESHOLDS, type BintangGrade } from '../../../services/bintangService';
 import { CustomDropdown } from '../../ui/CustomDropdown';
-import { gradeColors, aspectMeta } from './bintangConstants';
+import { gradeColors, gradeTextColors, aspectMeta } from './bintangConstants';
 import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -199,7 +199,7 @@ const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) 
                             onChange={setSelectedStudent}
                             placeholder="Semua Siswa"
                             options={[
-                                { value: '', label: 'Semua Siswa (Rata-rata Kelas)' },
+                                { value: '', label: 'Semua Siswa (Total Kelas)' },
                                 ...students.map(s => ({ value: s.id, label: s.name })),
                             ]}
                         />
@@ -255,11 +255,11 @@ const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) 
                                     </div>
                                     <div className="flex items-center gap-3 text-xs">
                                         <span className="text-slate-500 dark:text-slate-400">
-                                            {trendData[0].label}: <span className={`font-bold ${gradeColors[firstGrade].split(' ')[1]}`}>{firstGrade}</span>
+                                            {trendData[0].label}: <span className={`font-bold ${gradeTextColors[firstGrade]}`}>{firstGrade}</span>
                                         </span>
                                         <span className="text-slate-300 dark:text-slate-600">→</span>
                                         <span className="text-slate-500 dark:text-slate-400">
-                                            {trendData[trendData.length - 1].label}: <span className={`font-bold ${gradeColors[lastGrade].split(' ')[1]}`}>{lastGrade}</span>
+                                            {trendData[trendData.length - 1].label}: <span className={`font-bold ${gradeTextColors[lastGrade]}`}>{lastGrade}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -312,10 +312,13 @@ const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) 
                                 style={{ maxHeight: '300px' }}
                             >
                                 {/* Threshold bands */}
-                                {THRESHOLD_BANDS.map((band, i) => {                    // SVG y increases downward: top of band = yScale(max), bottom = yScale(min)
-                    const yTop = band.max !== undefined ? yScale(band.max) : yScale(0);
-                    const yBottom = band.min !== undefined ? yScale(band.min) : yScale(25);
-                    const h = yBottom - yTop;
+                                {THRESHOLD_BANDS.map((band, i) => {
+                                    // SVG y increases downward: poin besar → Y kecil (atas), poin kecil → Y besar (bawah)
+                                    // yTop = pixel atas band = yScale(batas poin terbesar band)
+                                    // yBottom = pixel bawah band = yScale(batas poin terkecil band)
+                                    const yTop = band.max !== undefined ? yScale(band.max) : yScale(25);
+                                    const yBottom = band.min !== undefined ? yScale(band.min) : yScale(0);
+                                    const h = yBottom - yTop;
                                     return (
                                         <rect
                                             key={i}

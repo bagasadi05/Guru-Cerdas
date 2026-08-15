@@ -3,11 +3,19 @@ import type { BintangGrade } from '../../../services/bintangService';
 
 // ─── Grade Colors ──────────────────────────────────────────────────────────
 
-export const gradeColors: Record<string, string> = {
+export const gradeColors: Record<BintangGrade, string> = {
     A: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 ring-emerald-500/20',
     B: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 ring-blue-500/20',
     C: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 ring-amber-500/20',
     D: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 ring-rose-500/20',
+};
+
+/** Warna teks untuk badge grade (dipakai saat hanya butuh warna teks, tanpa background). */
+export const gradeTextColors: Record<BintangGrade, string> = {
+    A: 'text-emerald-600 dark:text-emerald-400',
+    B: 'text-blue-600 dark:text-blue-400',
+    C: 'text-amber-600 dark:text-amber-400',
+    D: 'text-rose-600 dark:text-rose-400',
 };
 
 // ─── Aspect Metadata ────────────────────────────────────────────────────────

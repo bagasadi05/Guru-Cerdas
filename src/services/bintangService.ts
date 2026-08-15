@@ -54,7 +54,20 @@ const descriptionToAspect = new Map<string, BintangAspect>(
 
 /** Look up which BINTANG aspect a violation falls under based on its description. */
 export function getAspectForViolation(description: string): BintangAspect {
-  return descriptionToAspect.get(description) ?? 'KEDISIPLINAN'; // safe fallback
+  const exact = descriptionToAspect.get(description);
+  if (exact) return exact;
+
+  // Fallback: partial match terhadap deskripsi yang dikenal (normalisasi lowercase),
+  // agar pelanggaran dengan teks bebas/kustom tetap masuk aspek yang tepat.
+  const normalized = description.toLowerCase().trim();
+  for (const v of violationList) {
+    const known = v.description.toLowerCase().trim();
+    if (known.length > 0 && (normalized.includes(known) || known.includes(normalized))) {
+      return v.bintangAspect;
+    }
+  }
+
+  return 'KEDISIPLINAN'; // safe fallback untuk pelanggaran yang tidak dikenal
 }
 
 export interface AspectPointsSummary {

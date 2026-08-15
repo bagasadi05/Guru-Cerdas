@@ -1,7 +1,7 @@
 import type jsPDF from 'jspdf';
 import { getAutoTable } from '../utils/dynamicImports';
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
-import { BintangGrade, bintangService, calculateAspectPoints } from './bintangService';
+import { BintangGrade, calculateAspectPoints } from './bintangService';
 import { supabase } from './supabase';
 
 
@@ -616,27 +616,45 @@ export const downloadBintangReportAction = async ({
 
     const reports = [];
 
+    // Batch fetch untuk seluruh siswa (hindari N+1): 3 query, bukan 3×siswa
+    const studentIds = studentsToFetch.map(s => s.id);
+    const [year, monthNum] = month.split('-');
+    const nextMonthNum = parseInt(monthNum) === 12 ? 1 : parseInt(monthNum) + 1;
+    const nextYear = parseInt(monthNum) === 12 ? parseInt(year) + 1 : parseInt(year);
+    const monthStart = `${month}-01`;
+    const monthEnd = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
+
+    const [evalsBatch, viosBatch, qpBatch] = await Promise.all([
+        studentIds.length > 0
+            ? supabase.from('bintang_monthly_evaluations').select('*').in('student_id', studentIds).eq('month', month)
+            : Promise.resolve({ data: [] }),
+        studentIds.length > 0
+            ? supabase.from('violations').select('id, student_id, description, points, date, severity').in('student_id', studentIds).gte('date', monthStart).lt('date', monthEnd).is('deleted_at', null)
+            : Promise.resolve({ data: [] }),
+        studentIds.length > 0
+            ? supabase.from('quiz_points').select('id, student_id, quiz_name, subject, points, category, quiz_date, semester_id').in('student_id', studentIds).is('deleted_at', null).gte('quiz_date', monthStart).lt('quiz_date', monthEnd).limit(2000)
+            : Promise.resolve({ data: [] }),
+    ]);
+
+    const allEvals = (evalsBatch.data || []) as any[];
+    const allVios = (viosBatch.data || []) as any[];
+    const allQuiz = (qpBatch.data || []) as any[];
+
+    const viosByStudent = new Map<string, any[]>();
+    for (const v of allVios) {
+        const list = viosByStudent.get(v.student_id) || [];
+        list.push(v);
+        viosByStudent.set(v.student_id, list);
+    }
+    const quizByStudent = new Map<string, number>();
+    for (const q of allQuiz) {
+        quizByStudent.set(q.student_id, (quizByStudent.get(q.student_id) || 0) + (q.points || 0));
+    }
+
     for (const student of studentsToFetch) {
-        const evals = await bintangService.getStudentEvaluations(student.id, false);
-        const currentEval = evals.find(e => e.month === month);
-        const vios = await bintangService.getViolationsForStudent(student.id, month);
-
-        // Fetch quiz points (keaktifan) for the month
-        // month is in YYYY-MM format, so we use string matching on quiz_date
-        const lastDay = new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate();
-        const { data: qpData, error: qpError } = await supabase
-            .from('quiz_points')
-            .select('*')
-            .eq('student_id', student.id)
-            .is('deleted_at', null)
-            .gte('quiz_date', `${month}-01`)
-            .lte('quiz_date', `${month}-${lastDay}`);
-            
-        if (qpError) {
-            console.error('Error fetching quiz points:', qpError);
-        }
-
-        const totalQuizPoints = (qpData || []).reduce((acc: number, curr: any) => acc + (curr.points || 0), 0);
+        const currentEval = allEvals.find((e: any) => e.student_id === student.id && e.month === month) || null;
+        const vios = viosByStudent.get(student.id) || [];
+        const totalQuizPoints = quizByStudent.get(student.id) || 0;
         const aspects = calculateAspectPoints(vios, totalQuizPoints);
 
         reports.push({
@@ -644,7 +662,7 @@ export const downloadBintangReportAction = async ({
             evaluation: currentEval || null,
             aspects,
             violations: vios,
-            quizPoints: qpData || []
+            quizPoints: allQuiz.filter(q => q.student_id === student.id)
         });
     }
 

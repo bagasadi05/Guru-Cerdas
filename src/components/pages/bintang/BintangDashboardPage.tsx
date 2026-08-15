@@ -43,6 +43,12 @@ const getViolationSeverityFromCategory = (category?: string): SeverityLevel | nu
     return null;
 };
 
+/** Bulan berjalan dalam WIB (UTC+7) — hindari off-by-one di 00:00–07:00 WIB. */
+function getCurrentMonthWib(): string {
+    const now = new Date(Date.now() + 7 * 60 * 60 * 1000);
+    return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -54,6 +60,7 @@ const BintangDashboardPage: React.FC = () => {
     const { confirm: confirmDeleteViolation, Dialog: DeleteViolationDialog } = useConfirmation();
     const { confirm: confirmDeleteQuiz, Dialog: DeleteQuizDialog } = useConfirmation();
     const { confirm: confirmDeleteMentoring, Dialog: DeleteMentoringDialog } = useConfirmation();
+    const { confirm: confirmDuplicateViolation, Dialog: DuplicateViolationDialog } = useConfirmation();
     const { activeSemester } = useSemester();
 
     // ── Access control ───────────────────────────────────────────────────────
@@ -79,7 +86,7 @@ const BintangDashboardPage: React.FC = () => {
     // ── Shared filters ───────────────────────────────────────────────────────
     const [classes, setClasses] = useState<Array<{ id: string; name: string }>>([]);
     const [selectedClass, setSelectedClass] = useState('');
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = getCurrentMonthWib();
     const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
     // ── Data state ───────────────────────────────────────────────────────────
@@ -199,13 +206,19 @@ const BintangDashboardPage: React.FC = () => {
             // Fetch quiz points (poin keaktifan) for offset calculation
             const studentIds = (studentsRes.data || []).map(s => s.id);
             if (studentIds.length > 0) {
+                const [year, monthNum] = selectedMonth.split('-');
+                const nextMonthNum = parseInt(monthNum) === 12 ? 1 : parseInt(monthNum) + 1;
+                const nextYear = parseInt(monthNum) === 12 ? parseInt(year) + 1 : parseInt(year);
                 const monthStart = `${selectedMonth}-01`;
+                const monthEnd = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
                 const { data: quizData } = await supabase
                     .from('quiz_points')
                     .select('id, student_id, quiz_name, subject, points, category, quiz_date, semester_id')
                     .in('student_id', studentIds)
                     .is('deleted_at', null)
-                    .gte('quiz_date', monthStart);
+                    .gte('quiz_date', monthStart)
+                    .lt('quiz_date', monthEnd)
+                    .limit(1000);
                 setQuizPoints(quizData || []);
             } else {
                 setQuizPoints([]);
@@ -545,10 +558,14 @@ const BintangDashboardPage: React.FC = () => {
             v.student_id === violationStudentId && v.date === data.date && v.description === data.description
         );
         if (isDuplicate) {
-            const confirmed = window.confirm(
-                `Siswa sudah memiliki catatan pelanggaran "${data.description}" pada tanggal ini.\n\nApakah Anda yakin ini adalah kejadian yang berbeda?`
-            );
-            if (!confirmed) return;
+            const ok = await confirmDuplicateViolation({
+                title: 'Pelanggaran Duplikat?',
+                message: `Siswa sudah memiliki catatan pelanggaran "${data.description}" pada tanggal ini.\n\nApakah Anda yakin ini adalah kejadian yang berbeda?`,
+                confirmText: 'Ya, Ini Kejadian Berbeda',
+                variant: 'warning',
+                onConfirm: async () => {},
+            });
+            if (!ok) return;
         }
 
         setIsViolationSaving(true);
@@ -711,8 +728,8 @@ const BintangDashboardPage: React.FC = () => {
                     <div className="flex-1 max-w-xs">
                         <CustomDropdown value={selectedMonth} onChange={setSelectedMonth} options={
                             Array.from({ length: 6 }).map((_, i) => {
-                                const d = new Date();
-                                d.setMonth(d.getMonth() - i);
+                                const nowWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
+                                const d = new Date(nowWib.getUTCFullYear(), nowWib.getUTCMonth() - i, 1);
                                 const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
                                 const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
                                 return { value: val, label };
@@ -1009,7 +1026,7 @@ const BintangDashboardPage: React.FC = () => {
                                                     </td>
                                                     {(['adab_score', 'kedisiplinan_score', 'kerapian_score'] as const).map((field, idx) => {
                                                         const aspectKey = (['ADAB', 'KEDISIPLINAN', 'KERAPIAN'] as const)[idx];
-                                                        const score = ev?.[field] || aspect[aspectKey].grade;
+                                                        const score = (ev?.[field] || aspect[aspectKey].grade) as BintangGrade;
                                                         return (
                                                             <td key={field} className="py-2 px-1 sm:py-3 sm:px-4 text-center">
                                                                 <span className={`inline-flex px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold ring-1 ${gradeColors[score]}`}>
@@ -1246,6 +1263,9 @@ const BintangDashboardPage: React.FC = () => {
 
             {/* ─── Delete Mentoring Confirmation ──────────────────────────────── */}
             {DeleteMentoringDialog}
+
+            {/* ─── Duplicate Violation Confirmation ─────────────────────────────── */}
+            {DuplicateViolationDialog}
 
             {/* ─── Edit Evaluation Modal ─────────────────────────────────────── */}
             <Modal

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CustomDropdown } from '../../ui/CustomDropdown';
-import { gradeColors, aspectMeta } from './bintangConstants';
+import { gradeTextColors, aspectMeta } from './bintangConstants';
 import type { BintangGrade } from '../../../services/bintangService';
 import type { AspectPointsSummary } from '../../../services/bintangService';
 
@@ -37,7 +37,7 @@ export const AspectSectionEditor: React.FC<AspectSectionEditorProps> = ({
                 <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{meta.label}</span>
                 {data && data.count > 0 && (
                     <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-full">
-                        {data.points} poin / {data.count} pelanggaran → Rekomendasi: <strong className={`${gradeColors[data.grade].split(' ')[1]}`}>{data.grade}</strong>
+                        {data.points} poin / {data.count} pelanggaran → Rekomendasi: <strong className={`${gradeTextColors[data.grade]}`}>{data.grade}</strong>
                     </span>
                 )}
                 {data && data.count === 0 && (

@@ -6,6 +6,7 @@ import { bintangService, calculateAspectPoints, type BintangGrade } from '../../
 import { ViolationRow } from './types';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../hooks/useAuth';
+import { supabase } from '../../../services/supabase';
 import { downloadBintangReportAction } from '../../../services/bintangPdfGenerator';
 
 const GRADE_COLORS: Record<BintangGrade, string> = {
@@ -21,11 +22,18 @@ interface BintangTabProps {
     violations: ViolationRow[];
 }
 
+/** Bulan berjalan dalam WIB (UTC+7) — hindari off-by-one di 00:00–07:00 WIB. */
+function getCurrentMonthWib(): string {
+    const now = new Date(Date.now() + 7 * 60 * 60 * 1000);
+    return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: _studentName, violations }) => {
     const toast = useToast();
     const { user } = useAuth();
-    const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+    const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonthWib());
     const [evaluations, setEvaluations] = useState<any[]>([]);
+    const [quizPoints, setQuizPoints] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
     const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
@@ -45,9 +53,34 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
         fetchEvals();
     }, [studentId, toast]);
 
+    // Fetch quiz points (poin keaktifan) for the selected month so the
+    // auto-grade matches the dashboard & PDF (keaktifan offset applied).
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            try {
+                const lastDay = new Date(parseInt(selectedMonth.split('-')[0]), parseInt(selectedMonth.split('-')[1]), 0).getDate();
+                const { data, error } = await supabase
+                    .from('quiz_points')
+                    .select('points')
+                    .eq('student_id', studentId)
+                    .is('deleted_at', null)
+                    .gte('quiz_date', `${selectedMonth}-01`)
+                    .lte('quiz_date', `${selectedMonth}-${lastDay}`);
+                if (active && !error) {
+                    const total = (data || []).reduce((sum: number, q: any) => sum + (q.points || 0), 0);
+                    setQuizPoints(total);
+                }
+            } catch {
+                if (active) setQuizPoints(0);
+            }
+        })();
+        return () => { active = false; };
+    }, [studentId, selectedMonth]);
+
     // Filter violations for the selected month
     const monthlyViolations = violations.filter(v => v.date?.startsWith(selectedMonth));
-    const aspects = calculateAspectPoints(monthlyViolations);
+    const aspects = calculateAspectPoints(monthlyViolations, quizPoints);
     
     // Check if there is an evaluation for the selected month
     const currentEval = evaluations.find(e => e.month === selectedMonth);
@@ -60,9 +93,9 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
     // Build last 6 months options
     const monthOptions = [];
     for (let i = 0; i < 6; i++) {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
-        const val = d.toISOString().slice(0, 7);
+        const nowWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
+        const d = new Date(nowWib.getUTCFullYear(), nowWib.getUTCMonth() - i, 1);
+        const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
         monthOptions.push({ value: val, label });
     }
