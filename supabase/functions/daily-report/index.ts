@@ -1,8 +1,8 @@
 // Supabase Edge Function: daily-report
 // Dipicu oleh pg_cron setiap sore (jadwal di app_config 'daily_report_schedule')
 // atau dipanggil manual dari admin panel.
-// Membaca daily_input_log hari itu (WIB) dan mengirim laporan harian WhatsApp
-// via Fonnte ke nomor admin yang terdaftar (app_config 'fonnte_config').
+// Membaca daily_input_log hari itu (WIB) dan mengirim laporan harian Telegram
+// via bot ke chat ID admin yang terdaftar (app_config 'telegram_config').
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -17,31 +17,21 @@ interface InputLogRow {
   created_at: string;
 }
 
-interface FonnteConfig {
-  adminPhone: string;
+interface TelegramConfig {
+  chatId: string;
   enabled: boolean;
   dailyReportTime: string;
-  token?: string;
 }
 
-const FONNTE_SEND_URL = "https://api.fonnte.com/send";
+const TELEGRAM_BASE_URL = "https://api.telegram.org";
 const WIB_OFFSET_MS = 7 * 60 * 60 * 1000; // Asia/Jakarta = UTC+7
-const MAX_MESSAGE_LENGTH = 1500;
+const MAX_MESSAGE_LENGTH = 4000;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-internal-secret",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
-
-/** Normalisasi nomor WhatsApp ke format internasional standar (628xxx). */
-function normalizePhone(phone: string): string {
-  let cleaned = phone.replace(/\D/g, "");
-  if (cleaned.startsWith("0")) {
-    cleaned = "62" + cleaned.slice(1);
-  }
-  return cleaned;
-}
 
 /** Kunci grup detail agar entri berbeda (kuis/nilai/pelanggaran) tidak menyatu. */
 function logDetailKey(log: InputLogRow): string {
@@ -170,7 +160,7 @@ function buildDailyReportMessage(
 
 function truncateMessage(message: string, maxLen: number): string {
   if (message.length <= maxLen) return message;
-  const tail = "\n\n… (pesan dipotong karena batas panjang Fonnte)";
+  const tail = "\n\n… (pesan dipotong karena terlalu panjang)";
   return message.slice(0, maxLen - tail.length) + tail;
 }
 
@@ -259,56 +249,52 @@ Deno.serve(async (req: Request) => {
 
   // --- Fetch Config ---
   const { data: configValue } = await supabase
-    .rpc("get_app_config", { p_key: "fonnte_config" });
+    .rpc("get_app_config", { p_key: "telegram_config" });
 
-  let fonnteConfig: Partial<FonnteConfig> = {};
+  let telegramConfig: Partial<TelegramConfig> = {};
   if (configValue) {
     if (typeof configValue === "string") {
       try {
-        fonnteConfig = JSON.parse(configValue);
+        telegramConfig = JSON.parse(configValue);
       } catch {
-        fonnteConfig = {};
+        telegramConfig = {};
       }
     } else if (typeof configValue === "object") {
-      fonnteConfig = configValue as Partial<FonnteConfig>;
+      telegramConfig = configValue as Partial<TelegramConfig>;
     }
   }
 
-  // Token resolution: Deno.env -> app_config('fonnte_token') -> fonnteConfig.token
-  let fonnteToken = (Deno.env.get("FONNTE_TOKEN") ?? "").trim();
-  if (!fonnteToken) {
-    const { data: dbToken } = await supabase.rpc("get_app_config", { p_key: "fonnte_token" });
+  // Token resolution: Deno.env -> app_config('telegram_bot_token')
+  let botToken = (Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "").trim();
+  if (!botToken) {
+    const { data: dbToken } = await supabase.rpc("get_app_config", { p_key: "telegram_bot_token" });
     if (typeof dbToken === "string" && dbToken.trim().length > 0) {
-      fonnteToken = dbToken.trim();
+      botToken = dbToken.trim();
     }
   }
-  if (!fonnteToken && fonnteConfig.token) {
-    fonnteToken = String(fonnteConfig.token).trim();
-  }
 
-  if (!fonnteToken) {
-    console.error("FONNTE_TOKEN not configured");
+  if (!botToken) {
+    console.error("TELEGRAM_BOT_TOKEN not configured");
     return new Response(
       JSON.stringify({
-        error: "FONNTE_TOKEN belum dikonfigurasi. Masukkan Fonnte Token di panel admin atau secrets.",
+        error: "TELEGRAM_BOT_TOKEN belum dikonfigurasi. Masukkan bot token di panel admin atau secrets.",
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 
-  const rawTargetPhone = fonnteConfig.adminPhone || "";
-  const targetPhone = normalizePhone(rawTargetPhone);
+  const chatId = String(telegramConfig.chatId || "").trim();
 
-  if (!fonnteConfig.enabled && !isForce) {
+  if (!telegramConfig.enabled && !isForce) {
     return new Response(
       JSON.stringify({ message: "Laporan harian dinonaktifkan di pengaturan", enabled: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 
-  if (!targetPhone) {
+  if (!chatId) {
     return new Response(
-      JSON.stringify({ error: "Nomor WhatsApp admin belum diisi", recipients: 0 }),
+      JSON.stringify({ error: "Telegram chat ID admin belum diisi", recipients: 0 }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
@@ -373,39 +359,38 @@ Deno.serve(async (req: Request) => {
     );
 
     let sentSuccess = false;
-    let fonnteResponseText = "";
-    let fonnteResponseJson: Record<string, unknown> = {};
+    let telegramResponseText = "";
+    let telegramResponseJson: Record<string, unknown> = {};
 
     try {
-      const formData = new URLSearchParams();
-      formData.append("target", targetPhone);
-      formData.append("message", message);
-
-      const result = await fetch(FONNTE_SEND_URL, {
+      const result = await fetch(`${TELEGRAM_BASE_URL}/bot${botToken}/sendMessage`, {
         method: "POST",
         headers: {
-          Authorization: fonnteToken,
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
-        body: formData.toString(),
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: "Markdown",
+        }),
       });
 
-      fonnteResponseText = await result.text().catch(() => "");
+      telegramResponseText = await result.text().catch(() => "");
       try {
-        fonnteResponseJson = JSON.parse(fonnteResponseText);
+        telegramResponseJson = JSON.parse(telegramResponseText);
       } catch {
-        fonnteResponseJson = {};
+        telegramResponseJson = {};
       }
 
-      // Fonnte returns status: true on actual success
-      if (result.ok && fonnteResponseJson.status === true) {
+      // Telegram returns ok: true on actual success
+      if (result.ok && telegramResponseJson.ok === true) {
         sentSuccess = true;
-        console.log(`Daily report successfully sent to ${targetPhone}`);
+        console.log(`Daily report successfully sent to chat ${chatId}`);
       } else {
-        console.error(`Fonnte send rejected (${result.status}):`, fonnteResponseText);
+        console.error(`Telegram send rejected (${result.status}):`, telegramResponseText);
       }
     } catch (err) {
-      console.error(`Fonnte network error:`, err);
+      console.error(`Telegram network error:`, err);
     }
 
     if (sentSuccess) {
@@ -432,10 +417,10 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         success: sentSuccess,
-        message: sentSuccess ? "Laporan harian berhasil dikirim ke WhatsApp!" : `Gagal mengirim via Fonnte: ${fonnteResponseJson.reason || fonnteResponseText || 'Unknown error'}`,
-        fonnteDetail: fonnteResponseText,
+        message: sentSuccess ? "Laporan harian berhasil dikirim ke Telegram!" : `Gagal mengirim via Telegram: ${telegramResponseJson.description || telegramResponseText || 'Unknown error'}`,
+        telegramDetail: telegramResponseText,
         logCount: typedLogs.length,
-        recipient: targetPhone,
+        recipient: chatId,
       }),
       {
         status: sentSuccess ? 200 : 502,

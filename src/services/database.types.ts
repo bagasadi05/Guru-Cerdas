@@ -2581,7 +2581,6 @@ export type Database = {
         Row: {
           created_at: string | null
           deleted_at: string | null
-          fonnte_config: Json | null
           school_name: string | null
           semester_1_locked: boolean | null
           updated_at: string | null
@@ -2590,7 +2589,6 @@ export type Database = {
         Insert: {
           created_at?: string | null
           deleted_at?: string | null
-          fonnte_config?: Json | null
           school_name?: string | null
           semester_1_locked?: boolean | null
           updated_at?: string | null
@@ -2599,7 +2597,6 @@ export type Database = {
         Update: {
           created_at?: string | null
           deleted_at?: string | null
-          fonnte_config?: Json | null
           school_name?: string | null
           semester_1_locked?: boolean | null
           updated_at?: string | null
@@ -2814,7 +2811,7 @@ export type Database = {
           sick_percentage: number
         }[]
       }
-      get_fonnte_config: { Args: never; Returns: Json }
+      get_telegram_config: { Args: never; Returns: Json }
       get_app_config: { Args: { p_key: string }; Returns: string }
       set_app_config: { Args: { p_key: string; p_value: string }; Returns: undefined }
       set_daily_report_schedule: { Args: { p_time: string }; Returns: undefined }

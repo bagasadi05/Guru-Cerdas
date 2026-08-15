@@ -1,31 +1,24 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 
 /**
- * Fonnte serverless proxy — keeps FONNTE_TOKEN server-side.
+ * Telegram serverless proxy — keeps TELEGRAM_BOT_TOKEN server-side.
  *
  * Mirrors the security model of api/groq.ts:
- *  - Origin allowlist (FONNTE_ALLOWED_ORIGIN, comma-separated)
+ *  - Origin allowlist (TELEGRAM_ALLOWED_ORIGIN, comma-separated)
  *  - Per-client rate limiting (in-memory, or Upstash Redis)
- *  - Forward POST to https://api.fonnte.com/send
+ *  - Forward POST to https://api.telegram.org/bot<token>/sendMessage
  *
- * Client contract (see src/services/fonnteService.ts):
- *   POST /api/fonnte
- *   body: { target: string, message: string }
- *   response: Fonnte API JSON passthrough
+ * Client contract (see src/services/telegramService.ts):
+ *   POST /api/telegram
+ *   body: { chatId: string, message: string }
+ *   response: Telegram Bot API JSON passthrough
  */
 
-const FONNTE_BASE_URL = 'https://api.fonnte.com/send';
+const TELEGRAM_BASE_URL = 'https://api.telegram.org';
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;
 const RATE_LIMIT_BURST = 5;
 const MAX_BODY_BYTES = 10_000;
-
-const CORS_HEADERS: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Authorization, Content-Type, apikey, x-client-info',
-  'Access-Control-Max-Age': '86400',
-};
 
 type RateLimitEntry = { count: number; resetAt: number; burstUsed: number };
 const rateLimitStore = new Map<string, RateLimitEntry>();
@@ -42,32 +35,8 @@ interface ExtendedResponse extends ServerResponse {
   send(body: string | Buffer): void;
 }
 
-async function getToken(): Promise<string> {
-  const envToken = (process.env.FONNTE_TOKEN || '').trim();
-  if (envToken) return envToken;
-
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (supabaseUrl && serviceKey) {
-    try {
-      const resp = await fetch(`${supabaseUrl}/rest/v1/rpc/get_app_config`, {
-        method: 'POST',
-        headers: {
-          'apikey': serviceKey,
-          'Authorization': `Bearer ${serviceKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ p_key: 'fonnte_token' }),
-      });
-      if (resp.ok) {
-        const val = await resp.json();
-        if (typeof val === 'string' && val.trim()) return val.trim();
-      }
-    } catch {
-      // token server tidak tersedia → fallback ke env / error di bawah
-    }
-  }
-  return '';
+function getToken(): string {
+  return (process.env.TELEGRAM_BOT_TOKEN || '').trim();
 }
 
 function getRequestOrigin(req: ExtendedRequest): string | undefined {
@@ -75,11 +44,7 @@ function getRequestOrigin(req: ExtendedRequest): string | undefined {
   if (typeof origin === 'string' && origin.length > 0) return origin;
   const referer = req.headers.referer;
   if (typeof referer === 'string') {
-    try {
-      return new URL(referer).origin;
-    } catch {
-      // referer tidak valid → lanjut ke host header
-    }
+    try { return new URL(referer).origin; } catch { /* ignore */ }
   }
   const host = (req.headers['x-forwarded-host'] || req.headers.host) as string | undefined;
   if (host) {
@@ -97,9 +62,7 @@ function isOriginAllowed(req: ExtendedRequest, allowedOriginEnv: string | undefi
   if (reqHost) {
     try {
       if (new URL(origin).hostname.toLowerCase() === reqHost) return true;
-    } catch {
-      // origin tidak valid → lanjut ke pattern matching
-    }
+    } catch { /* ignore */ }
   }
 
   const defaultPatterns = [
@@ -130,9 +93,7 @@ function isOriginAllowed(req: ExtendedRequest, allowedOriginEnv: string | undefi
         const oHost = originUrl.hostname.toLowerCase();
         return oHost === pHost || oHost.endsWith('.' + pHost);
       }
-    } catch {
-      // pattern/origin tidak valid → anggap tidak cocok
-    }
+    } catch { /* ignore */ }
     return false;
   });
 }
@@ -201,9 +162,11 @@ async function allowRequestRedis(
   }
 }
 
-function isBodyValid(body: any): body is { target: string; message: string } {
+function isBodyValid(body: any): body is { chatId: string; message: string } {
   if (!body || typeof body !== 'object') return false;
-  if (typeof body.target !== 'string' || body.target.length < 8) return false;
+  if (typeof body.chatId !== 'string' || body.chatId.length < 1) return false;
+  // chatId harus angka, boleh diawali minus (grup Telegram)
+  if (!/^-?\d{1,20}$/.test(body.chatId)) return false;
   if (typeof body.message !== 'string' || body.message.length === 0) return false;
   try {
     if (JSON.stringify(body).length > MAX_BODY_BYTES) return false;
@@ -214,20 +177,6 @@ function isBodyValid(body: any): body is { target: string; message: string } {
 }
 
 export default async function handler(req: ExtendedRequest, res: ExtendedResponse): Promise<void> {
-  // Lampirkan CORS headers ke semua response (preflight, error, dan sukses).
-  const applyCors = () => {
-    Object.entries(CORS_HEADERS).forEach(([key, value]) => res.setHeader(key, value));
-  };
-
-  // CORS preflight (cross-origin fetch, mis. redirect www → non-www)
-  if (req.method === 'OPTIONS') {
-    applyCors();
-    res.status(204).end();
-    return;
-  }
-
-  applyCors();
-
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
@@ -235,22 +184,22 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
 
   const body = req.body || {};
   if (!isBodyValid(body)) {
-    res.status(400).json({ error: 'Invalid request: target and message required' });
+    res.status(400).json({ error: 'Invalid request: chatId and message required' });
     return;
   }
 
-  const token = await getToken();
+  const token = getToken();
   if (!token) {
-    res.status(500).json({ error: 'FONNTE_TOKEN is not configured' });
+    res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN is not configured' });
     return;
   }
 
-  if (!isOriginAllowed(req, process.env.FONNTE_ALLOWED_ORIGIN)) {
+  if (!isOriginAllowed(req, process.env.TELEGRAM_ALLOWED_ORIGIN)) {
     res.status(403).json({ error: 'Origin not allowed' });
     return;
   }
 
-  const clientKey = `rl:fonnte:${getClientKey(req)}`;
+  const clientKey = `rl:telegram:${getClientKey(req)}`;
   const redisUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const redisToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
@@ -268,17 +217,16 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
   }
 
   try {
-    const formData = new URLSearchParams();
-    formData.append('target', body.target);
-    formData.append('message', body.message);
-
-    const upstream = await fetch(FONNTE_BASE_URL, {
+    const upstream = await fetch(`${TELEGRAM_BASE_URL}/bot${token}/sendMessage`, {
       method: 'POST',
       headers: {
-        'Authorization': token,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
-      body: formData.toString(),
+      body: JSON.stringify({
+        chat_id: body.chatId,
+        text: body.message,
+        parse_mode: 'Markdown',
+      }),
     });
 
     const text = await upstream.text();
@@ -291,6 +239,6 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
       res.send(text);
     }
   } catch {
-    res.status(502).json({ error: 'Failed to reach Fonnte' });
+    res.status(502).json({ error: 'Failed to reach Telegram' });
   }
 }

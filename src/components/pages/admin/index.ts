@@ -15,4 +15,4 @@ export * from './SystemTab';
 export * from './StudentsMasterDataTab';
 export * from './ClassesMasterDataTab';
 export * from './ModulAjarBankTab';
-export * from './WhatsAppNotificationTab';
+export * from './TelegramNotificationTab';

@@ -1,16 +1,31 @@
-// Supabase Edge Function: fonnte-proxy
-// Proxy aman untuk memanggil API Fonnte dari browser tanpa melanggar CSP.
-// Mendukung dua aksi: 'device' (cek status perangkat) dan 'send' (kirim pesan).
+// Supabase Edge Function: telegram-proxy
+// Proxy aman untuk memanggil Telegram Bot API dari browser tanpa melanggar CSP.
+// Mendukung dua aksi: 'send' (kirim pesan) dan 'getMe' (verifikasi token bot).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const FONNTE_BASE_URL = "https://api.fonnte.com";
+const TELEGRAM_BASE_URL = "https://api.telegram.org";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+function resolveBotToken(
+  envToken: string,
+  dbToken: unknown,
+  configToken: unknown,
+): string {
+  if (envToken.trim()) return envToken.trim();
+  if (typeof dbToken === "string" && dbToken.trim()) return dbToken.trim();
+  if (typeof configToken === "string" && configToken.trim()) return configToken.trim();
+  if (configToken && typeof configToken === "object") {
+    const cfg = configToken as Record<string, unknown>;
+    if (typeof cfg.token === "string" && cfg.token.trim()) return cfg.token.trim();
+  }
+  return "";
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -60,40 +75,61 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const action = String(body.action || "device");
+  const action = String(body.action || "send");
 
-  // --- Resolve Fonnte token dari database ---
-  let fonnteToken = (Deno.env.get("FONNTE_TOKEN") ?? "").trim();
-  if (!fonnteToken) {
-    const { data: dbToken } = await supabase.rpc("get_app_config", { p_key: "fonnte_token" });
-    if (typeof dbToken === "string" && dbToken.trim()) {
-      fonnteToken = dbToken.trim();
-    }
-  }
-  if (!fonnteToken) {
-    const { data: configValue } = await supabase.rpc("get_app_config", { p_key: "fonnte_config" });
-    if (configValue) {
-      try {
-        const cfg = typeof configValue === "string" ? JSON.parse(configValue) : configValue;
-        if (cfg?.token) fonnteToken = String(cfg.token).trim();
-      } catch { /* ignore */ }
-    }
+  // --- Resolve Telegram bot token dari env → app_config ---
+  const envToken = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
+  const { data: dbToken } = await supabase.rpc("get_app_config", { p_key: "telegram_bot_token" });
+  const { data: configValue } = await supabase.rpc("get_app_config", { p_key: "telegram_config" });
+  let cfg: unknown = null;
+  if (configValue) {
+    try {
+      cfg = typeof configValue === "string" ? JSON.parse(configValue) : configValue;
+    } catch { /* ignore */ }
   }
 
-  if (!fonnteToken) {
+  const botToken = resolveBotToken(envToken, dbToken, cfg);
+
+  if (!botToken) {
     return new Response(
-      JSON.stringify({ error: "Fonnte token belum dikonfigurasi" }),
+      JSON.stringify({ error: "TELEGRAM_BOT_TOKEN belum dikonfigurasi" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 
   try {
-    if (action === "device") {
-      // Cek status perangkat Fonnte
-      const resp = await fetch(`${FONNTE_BASE_URL}/device`, {
+    if (action === "send") {
+      const chatId = String(body.chatId || "");
+      const message = String(body.message || "");
+
+      if (!chatId || !message) {
+        return new Response(
+          JSON.stringify({ error: "chatId dan message wajib diisi" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const resp = await fetch(`${TELEGRAM_BASE_URL}/bot${botToken}/sendMessage`, {
         method: "POST",
-        headers: { Authorization: fonnteToken },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: "Markdown",
+        }),
       });
+
+      const data = await resp.json();
+      const ok = data?.ok === true;
+      return new Response(JSON.stringify({ ok, ...data }), {
+        status: resp.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "getMe") {
+      // Verifikasi token bot valid
+      const resp = await fetch(`${TELEGRAM_BASE_URL}/bot${botToken}/getMe`);
       const data = await resp.json();
       return new Response(JSON.stringify(data), {
         status: resp.status,
@@ -101,43 +137,12 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    if (action === "send") {
-      const target = String(body.target || "");
-      const message = String(body.message || "");
-
-      if (!target || !message) {
-        return new Response(
-          JSON.stringify({ error: "target dan message wajib diisi" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-
-      const formData = new URLSearchParams();
-      formData.append("target", target);
-      formData.append("message", message);
-
-      const resp = await fetch(`${FONNTE_BASE_URL}/send`, {
-        method: "POST",
-        headers: {
-          Authorization: fonnteToken,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData.toString(),
-      });
-
-      const data = await resp.json();
-      return new Response(JSON.stringify({ ok: data.status === true, ...data }), {
-        status: resp.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     return new Response(
-      JSON.stringify({ error: `Aksi '${action}' tidak dikenali. Gunakan 'device' atau 'send'.` }),
+      JSON.stringify({ error: `Aksi '${action}' tidak dikenali. Gunakan 'send' atau 'getMe'.` }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
-    console.error("fonnte-proxy error:", err);
+    console.error("telegram-proxy error:", err);
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Internal server error" }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },

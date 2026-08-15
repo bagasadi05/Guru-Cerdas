@@ -1,6 +1,6 @@
 -- 20260812000003_fix_daily_report_wiring_and_secure_app_config.sql
 --
--- Perbaikan untuk fitur laporan harian WhatsApp (commit 246552e2):
+-- Perbaikan untuk fitur laporan harian (commit 246552e2):
 -- 1. Cron pg_cron sekarang mengirim header X-Internal-Secret (pola yang sama
 --    dengan scheduled-backup), bukan Authorization yang memakai service key —
 --    sebelumnya setiap pemanggilan terjadwal pasti ditolak 401 oleh Edge Function.
@@ -10,10 +10,10 @@
 --    dibaca dua sisi (cron + Edge Function) — tidak butuh konfigurasi dashboard.
 -- 4. RPC set_daily_report_schedule(p_time WIB) untuk picker "Jam Pengiriman"
 --    di UI admin: mengubah jadwal cron secara langsung, bukan cuma label.
--- 5. set_app_config / get_app_config / get_fonnte_config kini di-gate: hanya
+-- 5. set_app_config / get_app_config / get_telegram_config kini di-gate: hanya
 --    admin, service_role, atau sesi postgres (cron/SQL editor) — mencegah user
 --    biasa menimpa config global atau membaca modul_ajar_worker_service_key
---    (JWT tersimpan) / nomor WA admin.
+--    (JWT tersimpan) / chat ID admin.
 --
 -- Idempotent.
 
@@ -67,10 +67,10 @@ $$;
 grant execute on function public.set_app_config(text, text) to authenticated;
 grant execute on function public.get_app_config(text) to authenticated;
 
--- get_fonnte_config: baca config Fonnte global — hanya untuk admin
--- (tab WhatsApp), service_role, atau postgres. Dipakai satu-satunya oleh
--- useFonnteConfig yang di-mount di halaman admin.
-create or replace function public.get_fonnte_config()
+-- get_telegram_config: baca config Telegram global — hanya untuk admin
+-- (tab Telegram), service_role, atau postgres. Dipakai satu-satunya oleh
+-- useTelegramConfig yang di-mount di halaman admin.
+create or replace function public.get_telegram_config()
 returns jsonb
 language sql
 security definer
@@ -81,7 +81,7 @@ as $$
     (
       select value::jsonb
       from public.app_config
-      where key = 'fonnte_config'
+      where key = 'telegram_config'
         and (
           public.is_admin_user(auth.uid())
           or auth.role() = 'service_role'
@@ -92,7 +92,7 @@ as $$
   );
 $$;
 
-grant execute on function public.get_fonnte_config() to authenticated;
+grant execute on function public.get_telegram_config() to authenticated;
 
 -- =========================================================
 -- 2. Konfigurasi default laporan harian
@@ -136,7 +136,7 @@ begin
   perform cron.unschedule('daily-report')
     where exists (select 1 from cron.job where jobname = 'daily-report');
 
-  -- Header apikey, Authorization, dan X-Internal-Secret
+  -- Header X-Internal-Secret (pola scheduled-backup) — bukan Authorization.
   -- Cron skip bila URL/secret belum terisi.
   perform cron.schedule(
     'daily-report',
@@ -144,11 +144,9 @@ begin
     $cmd$
     select
       net.http_post(
-        url := coalesce(public.get_app_config('daily_report_function_url'), 'https://fddvcyqbfqydvsfujcxd.supabase.co/functions/v1/daily-report'),
+        url := coalesce(public.get_app_config('daily_report_function_url'), ''),
         headers := jsonb_build_object(
           'Content-Type', 'application/json',
-          'apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkZHZjeXFiZnF5ZHZzZnVqY3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4ODQ0MzAsImV4cCI6MjA2ODQ2MDQzMH0.kSKbnUaWaJmPjdz9TGxWbZZ8dcamVupdkeozWQct9i4',
-          'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkZHZjeXFiZnF5ZHZzZnVqY3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4ODQ0MzAsImV4cCI6MjA2ODQ2MDQzMH0.kSKbnUaWaJmPjdz9TGxWbZZ8dcamVupdkeozWQct9i4',
           'X-Internal-Secret', coalesce(public.get_app_config('daily_report_worker_secret'), '')
         ),
         body := jsonb_build_object(
@@ -157,7 +155,7 @@ begin
         ),
         timeout_milliseconds := 30000
       ) as request_id
-      where coalesce(public.get_app_config('daily_report_function_url'), 'https://fddvcyqbfqydvsfujcxd.supabase.co/functions/v1/daily-report') <> ''
+      where coalesce(public.get_app_config('daily_report_function_url'), '') <> ''
         and coalesce(public.get_app_config('daily_report_worker_secret'), '') <> '';
     $cmd$
   );
