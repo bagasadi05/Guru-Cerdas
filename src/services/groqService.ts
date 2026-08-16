@@ -2,6 +2,7 @@ import type { GeminiMessage, GeminiResponse, AiTaskType } from './aiProvider';
 import type { AiProvider } from './aiProvider';
 import { aiRouter } from './aiProvider';
 import { logger } from './logger';
+import { robustParseJson } from '../utils/jsonUtils';
 import {
   pickNextGroqKey,
   getGroqKeyCount,
@@ -256,24 +257,14 @@ export async function generateGroqJson<T>(
     }
 
     const data = await response.json();
-    let content = data?.choices?.[0]?.message?.content || '';
+    const content = data?.choices?.[0]?.message?.content || '';
 
-    // Strip markdown just in case
-    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-
-    const start = content.indexOf('{');
-    const end = content.lastIndexOf('}');
-    if (start !== -1 && end !== -1 && end > start) {
-      content = content.substring(start, end + 1);
-    }
-
-    return JSON.parse(content) as T;
-  } catch (e: any) {
-    if (e instanceof SyntaxError) {
+    try {
+      return robustParseJson<T>(content);
+    } catch {
       logger.error('[Groq JSON] Parse error', 'AI');
       throw new Error('Respon AI tidak valid (JSON corrupt).');
     }
-    throw e;
   } finally {
     clearTimeout(timeoutId);
   }

@@ -549,7 +549,7 @@ const AdminPage: React.FC = () => {
     };
 
     // Permanently delete user (cannot be undone)
-    const requestPermanentDeleteUser = (userId: string) => {
+    const requestPermanentDeleteUser = async (userId: string) => {
         if (userId === user?.id) {
             setError('Tidak dapat menghapus akun sendiri');
             return;

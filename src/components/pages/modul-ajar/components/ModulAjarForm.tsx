@@ -1,8 +1,28 @@
 import React from 'react';
 import { MotionDiv, AnimatePresence } from '../../../ui/MotionComponents';
-import { Sparkles, ChevronLeft, ChevronRight, Heart, CheckCircle2, AlertTriangle, Compass } from 'lucide-react';
+import {
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  CheckCircle2,
+  AlertTriangle,
+  Compass,
+  BookOpen,
+  Target,
+  FileEdit,
+  Clock,
+  RotateCcw,
+  Plus,
+  Info,
+  Check,
+  Zap,
+  HelpCircle
+} from 'lucide-react';
 import { useTranslation } from '../../../../utils/i18n';
 import { FormState, RubrikRow } from '../types';
+import { useOptionalSemester } from '../../../../contexts/SemesterContext';
+import { getCurrentSemester } from '../../../../utils/semesterUtils';
 import { useTopikRecommendations, useRubrikTemplates, useTemaKbc, useMateriInsersiMulti, useLearningModels } from '../hooks/useModulAjarQueries';
 import { PANCA_CINTA_TOPICS_FALLBACK, MATERI_INSERSI_FALLBACK } from '../constants/kbcConstants';
 import { LEARNING_MODELS, ENNIS_IKTP_BANK, ModelCategory } from '../constants/learningModels';
@@ -14,13 +34,6 @@ interface AiButtonProps {
   fieldLoading: Record<string, boolean>;
 }
 
-/**
- * Inline "fill this field with AI" trigger.
- *
- * Declared at module scope so React keeps the same component identity across
- * renders of the form. Defining it inside the form body would remount every
- * button on each keystroke and drop its state.
- */
 const AiButton: React.FC<AiButtonProps> = ({ field, label, onAiFillField, fieldLoading }) => {
   if (!onAiFillField) return null;
   const loading = fieldLoading[field];
@@ -58,7 +71,96 @@ interface ModulAjarFormProps {
   onAiFillField?: (field: string) => void;
   fieldLoading?: Record<string, boolean>;
   isAiGenerating?: boolean;
+  onResetForm?: () => void;
+  onApplyPreset?: (presetData: Partial<FormState>) => void;
+  autoDistributeTime?: () => void;
 }
+
+const PRESET_STARTERS = [
+  {
+    id: 'matematika',
+    title: '🔢 Matematika (Kls 1)',
+    data: {
+      mataPelajaran: 'Matematika',
+      topik: 'Penjumlahan Bilangan Cacah sampai 20',
+      jenjang: 'SD',
+      kelas: '1',
+      fase: 'A',
+      documentType: 'Modul Ajar' as const,
+      curriculumApproach: 'Merdeka' as const,
+      modelPembelajaran: 'Problem Based Learning',
+      capaianPembelajaran: 'Peserta didik dapat melakukan operasi penjumlahan bilangan cacah sampai 20 menggunakan benda konkret, gambar, dan simbol matematika.',
+      profilPelajar: ['Bernalar Kritis', 'Gotong Royong', 'Mandiri'],
+      manualTujuanPembelajaran: '1. Peserta didik dapat menghitung penjumlahan 1-20 menggunakan benda konkret.\n2. Peserta didik dapat menyelesaikan soal cerita sederhana terkait penjumlahan.',
+      manualPertanyaanPemantik: 'Jika kamu memiliki 4 buah pensil, lalu temanmu meminjamkan 3 pensil lagi, berapa total pensilmu sekarang?',
+      manualLkpdTugas: '### Aktivitas 1: Berhitung Bersama Sahabat\n* Petunjuk:\n1. Hitung jumlah gambar bersama kelompokmu.\n2. Tuliskan angka pada kotak yang tersedia.\n\n[Kotak untuk Menuliskan Penjumlahan Gambar dan Jawaban]',
+      manualSoalEvaluasi: '1. 8 + 5 = ...\nA. 12\nB. 13\nC. 14\nD. 15\n\n2. Budi memiliki 6 permen dan diberi 4 permen oleh kakak. Berapa jumlah permen Budi sekarang?'
+    }
+  },
+  {
+    id: 'bahasa-indonesia',
+    title: '📖 B. Indonesia (Kls 4)',
+    data: {
+      mataPelajaran: 'Bahasa Indonesia',
+      topik: 'Menemukan Ide Pokok dalam Teks Narasi',
+      jenjang: 'SD',
+      kelas: '4',
+      fase: 'B',
+      documentType: 'Modul Ajar' as const,
+      curriculumApproach: 'Merdeka' as const,
+      modelPembelajaran: 'Inquiry Learning',
+      capaianPembelajaran: 'Peserta didik mampu memahami dan menganalisis ide pokok serta informasi penting dari teks narasi dan eksposisi.',
+      profilPelajar: ['Bernalar Kritis', 'Kreatif', 'Mandiri'],
+      manualTujuanPembelajaran: '1. Peserta didik dapat mengidentifikasi ide pokok pada setiap paragraf teks narasi.\n2. Peserta didik dapat menceritakan kembali isi teks dengan kata-kata sendiri.',
+      manualPertanyaanPemantik: 'Bagaimana cara kita mengetahui pesan utama yang ingin disampaikan oleh penulis dalam sebuah cerita?',
+      manualLkpdTugas: '### Aktivitas: Detektif Ide Pokok\n* Petunjuk:\n1. Bacalah teks cerita pendek bersama teman sebangku.\n2. Tuliskan gagasan utama pada kolom di bawah.\n\n[Kotak untuk Menuliskan Ide Pokok Paragraf 1 dan Paragraf 2]',
+      manualSoalEvaluasi: '1. Ide pokok paragraf biasanya terletak pada kalimat...\nA. Penjelas\nB. Utama\nC. Tanya\nD. Terakhir saja\n\n2. Tuliskan satu paragraf narasi singkat mengenai pengalamanmu belajar di sekolah!'
+    }
+  },
+  {
+    id: 'ipas',
+    title: '🌿 IPAS (Kls 4)',
+    data: {
+      mataPelajaran: 'IPAS',
+      topik: 'Proses Fotosintesis pada Tumbuhan Hijau',
+      jenjang: 'SD',
+      kelas: '4',
+      fase: 'B',
+      documentType: 'Modul Ajar' as const,
+      curriculumApproach: 'Merdeka' as const,
+      modelPembelajaran: 'Discovery Learning',
+      capaianPembelajaran: 'Peserta didik mendeskripsikan proses fotosintesis dan mengaitkan pentingnya proses ini bagi makhluk hidup di bumi.',
+      profilPelajar: ['Bernalar Kritis', 'Gotong Royong'],
+      manualTujuanPembelajaran: '1. Peserta didik dapat menjelaskan 4 kebutuhan utama fotosintesis (cahaya, klorofil, air, CO2).\n2. Peserta didik dapat menyimpulkan zat yang dihasilkan dari fotosintesis.',
+      manualPertanyaanPemantik: 'Mengapa tumbuhan tetap bisa hidup dan berkembang padahal tidak memakan makanan seperti manusia?',
+      manualLkpdTugas: '### Aktivitas: Eksperimen Dapur Tumbuhan Hijau\n* Petunjuk:\n1. Amati daun yang terkena sinar matahari di dalam air.\n2. Catat gelembung udara yang dihasilkan.\n\n[Kotak untuk Menggambar Gelembung Oksigen dan Menuliskan Kesimpulan]',
+      manualSoalEvaluasi: '1. Gas yang dibutuhkan tumbuhan untuk melakukan fotosintesis adalah...\nA. Oksigen\nB. Karbon Dioksida\nC. Nitrogen\nD. Gas Mulia\n\n2. Jelaskan mengapa proses fotosintesis sangat penting bagi pernapasan makhluk hidup!'
+    }
+  },
+  {
+    id: 'kbc',
+    title: '❤️ KBC Cinta (Kls 1)',
+    data: {
+      mataPelajaran: 'Pendidikan Agama Islam',
+      topik: 'Meneladani Kasih Sayang Asmaul Husna Ar-Rahman',
+      jenjang: 'SD/MI',
+      kelas: '1',
+      fase: 'A',
+      documentType: 'Modul Ajar' as const,
+      curriculumApproach: 'Berbasis Cinta' as const,
+      isKbcIntegrated: true,
+      temaKbc: ['cinta-sesama', 'cinta-allah'],
+      materiInsersi: 'Meneladani Asmaul Husna Ar-Rahman dalam menyayangi teman dan keluarga',
+      modelPembelajaran: 'MMJ (Membaca, Meniru, Menjiwai)',
+      capaianPembelajaran: 'Peserta didik mengenal Asmaul Husna Ar-Rahman dan Ar-Rahim serta membiasakan sikap kasih sayang kepada keluarga, teman, dan lingkungan sekitar.',
+      profilPelajar: ['Beriman & Bertakwa', 'Bergotong Royong', 'Mandiri'],
+      manualTujuanPembelajaran: '1. Peserta didik dapat menyebutkan arti Ar-Rahman dan Ar-Rahim dengan benar.\n2. Peserta didik mampu mempraktikkan perilaku kasih sayang kepada teman dan sesama makhluk.',
+      manualPertanyaanPemantik: 'Bagaimana cara kita menunjukkan rasa sayang kepada ibu, ayah, dan teman-teman kita setiap hari?',
+      manualLkpdTugas: '### Aktivitas: Pohon Kebaikan dan Kasih Sayang\n* Petunjuk:\n1. Tuliskan perbuatan baik yang telah kamu lakukan hari ini.\n2. Warnai gambar hati dengan rapi.\n\n[Kotak untuk Menuliskan Perbuatan Kasih Sayang dan Menggambar]',
+      manualSoalEvaluasi: '1. Ar-Rahman artinya Allah Maha...\nA. Pengasih\nB. Perkasa\nC. Mengetahui\nD. Melihat\n\n2. Sebutkan 2 contoh sikap kasih sayang kepada teman di sekolah!'
+    }
+  }
+];
 
 export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   formState,
@@ -76,12 +178,23 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   boilerplateMissingBanner,
   onAiFillField,
   fieldLoading = {},
-  isAiGenerating
+  isAiGenerating,
+  onResetForm,
+  onApplyPreset,
+  autoDistributeTime
 }) => {
   const { t } = useTranslation();
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
 
-  // Shared wiring for every inline AI trigger in this form.
+  const semesterContext = useOptionalSemester();
+  const activeAcademicYear = semesterContext?.activeAcademicYear;
+  const activeSemester = semesterContext?.activeSemester;
+  const defaultTerm = getCurrentSemester();
+  const currentActiveYearName = activeAcademicYear?.name || defaultTerm.academicYear;
+  const currentActiveSemName = activeSemester?.name
+    ? (activeSemester.name.toLowerCase().includes('genap') || activeSemester.semester_number === 2 ? 'Genap' : 'Ganjil')
+    : (defaultTerm.semester === '1' ? 'Ganjil' : 'Genap');
+
   const aiProps = { onAiFillField, fieldLoading };
 
   const [activeCategoryTab, setActiveCategoryTab] = React.useState<ModelCategory>('hots');
@@ -101,6 +214,31 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   const materiToDisplay = materiInsersiData.length > 0 
     ? materiInsersiData.map(m => m.konten)
     : formState.temaKbc.flatMap(id => MATERI_INSERSI_FALLBACK[id] || []);
+
+  const WIZARD_STEPS = [
+    { id: 1, label: 'Kurikulum', short: '1. Kurikulum', icon: Sparkles },
+    { id: 2, label: 'Identitas', short: '2. Identitas', icon: BookOpen },
+    { id: 3, label: 'Target & Profil', short: '3. Profil', icon: Target },
+    { id: 4, label: 'Komponen Inti', short: '4. Inti & LKPD', icon: FileEdit },
+    { id: 5, label: 'Model & Waktu', short: '5. Model', icon: Clock },
+  ];
+
+  const isStepComplete = (stepId: number): boolean => {
+    switch (stepId) {
+      case 1:
+        return !!formState.generationMethod && !!formState.documentType;
+      case 2:
+        return !!formState.mataPelajaran && !!formState.topik && !!formState.kelas;
+      case 3:
+        return formState.profilPelajar.length > 0 && !!formState.kompetensiAwal;
+      case 4:
+        return !!formState.capaianPembelajaran || !!formState.manualTujuanPembelajaran;
+      case 5:
+        return !!formState.modelPembelajaran;
+      default:
+        return false;
+    }
+  };
 
   const adjustPendahuluan = (newVal: number) => {
     const total = formState.jpPerPertemuan * formState.durasiPerJp;
@@ -154,28 +292,82 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
     onChange('alokasiPenutup', newPenutup);
   };
 
+  const appendToField = (field: 'manualLkpdTugas' | 'manualSoalEvaluasi', snippet: string) => {
+    const current = (formState[field] as string) || '';
+    const updated = current ? current + '\n\n' + snippet : snippet;
+    onChange(field, updated);
+  };
+
   return (
-    <div className="w-full lg:w-[45%] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)] overflow-hidden">
-      <div className="p-4 lg:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 shrink-0">
-        <h1 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-brand-500" />
-          {t.lessonPlan.title}
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">{t.lessonPlan.subtitle.replace('{step}', String(activeStep))}</p>
-        
-        {/* Progress Bar / Step Pills */}
-        <div className="flex gap-1.5 mt-4">
-          {[1,2,3,4,5].map(step => (
-            <div 
-              key={step} 
-              className={`h-2 flex-1 rounded-full transition-all duration-300 ${
-                step <= activeStep ? 'bg-brand-600' : 'bg-slate-100 dark:bg-slate-800'
-              }`}
-            />
-          ))}
+    <div className="w-full lg:w-[46%] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)] overflow-hidden">
+      
+      {/* Header with Title & Reset Action */}
+      <div className="p-4 lg:px-5 lg:pt-4 lg:pb-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/30 shrink-0">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-brand-500" />
+              {t.lessonPlan.title}
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Langkah {activeStep} dari 5 &bull; {WIZARD_STEPS[activeStep - 1]?.label}
+            </p>
+          </div>
+
+          {onResetForm && (
+            <button
+              type="button"
+              onClick={onResetForm}
+              className="p-1.5 lg:px-2.5 lg:py-1 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+              title="Reset Form / Buat Draf Baru"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Reset</span>
+            </button>
+          )}
+        </div>
+
+        {/* Interactive Clickable Step Wizard Pills */}
+        <div className="grid grid-cols-5 gap-1.5 mt-3">
+          {WIZARD_STEPS.map(step => {
+            const isActive = activeStep === step.id;
+            const isCompleted = isStepComplete(step.id);
+            const StepIcon = step.icon;
+
+            return (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => setActiveStep(step.id)}
+                className={`py-1.5 px-1 sm:px-2 rounded-xl text-center transition-all flex flex-col sm:flex-row items-center justify-center gap-1 relative ${
+                  isActive
+                    ? 'bg-brand-600 text-white shadow-sm font-bold'
+                    : isCompleted
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 hover:bg-emerald-100'
+                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+                title={`Pindah ke ${step.label}`}
+              >
+                <div className="flex items-center gap-1">
+                  {isCompleted && !isActive ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  ) : (
+                    <StepIcon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  )}
+                  <span className="text-[11px] truncate hidden md:inline">
+                    {step.label}
+                  </span>
+                  <span className="text-[10px] md:hidden">
+                    {step.id}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
+      {/* Form Content Body */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 scrollbar-hide">
         <AnimatePresence mode="wait">
           <MotionDiv
@@ -189,13 +381,46 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             {/* Step 1: Jenis & Kurikulum */}
             {activeStep === 1 && (
               <div className="space-y-6">
-                <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-wide border-b pb-2 border-slate-100 dark:border-slate-800">
-                  {t.lessonPlan.step1}
-                </h3>
+                
+                {/* Quick Presets Starter Bar */}
+                {onApplyPreset && (
+                  <div className="p-3.5 bg-gradient-to-br from-brand-50/80 to-emerald-50/80 dark:from-brand-950/40 dark:to-emerald-950/40 rounded-2xl border border-brand-200/80 dark:border-brand-800/60 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
+                        <Zap className="w-4 h-4 text-amber-500 fill-amber-400" />
+                        Preset Cepat (Muat Contoh Lengkap 1-Klik)
+                      </span>
+                      <span className="text-[10px] bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded-full font-bold">
+                        Praktis
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      {PRESET_STARTERS.map(preset => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => onApplyPreset(preset.data)}
+                          className="px-2 py-1.5 bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-800/80 hover:border-brand-500 dark:hover:border-brand-500 rounded-xl text-[11px] font-semibold text-slate-700 dark:text-slate-200 text-center transition-all hover:shadow-xs"
+                        >
+                          {preset.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                    Langkah 1: Jenis & Pendekatan Kurikulum
+                  </h3>
+                  <span className="text-[10px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold px-2 py-0.5 rounded-full">
+                    Wajib
+                  </span>
+                </div>
                 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Metode Penyusunan</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Metode Penyusunan</label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {[
                         { id: 'Manual', label: '⚡ Database (Non-AI)', desc: 'Penyusunan instan dari Bank Data & Template (Sangat Cepat & Ringan)' },
@@ -219,7 +444,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{t.lessonPlan.documentType}</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">{t.lessonPlan.documentType}</label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {['Modul Ajar', 'RPP'].map(type => (
                         <button
@@ -239,7 +464,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{t.lessonPlan.curriculumApproach}</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">{t.lessonPlan.curriculumApproach}</label>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       {['Merdeka', 'Berbasis Cinta', 'Hybrid'].map(approach => (
                         <button
@@ -297,7 +522,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                   if (isSelected) {
                                     newTopics = newTopics.filter(id => id !== topic.id);
                                   } else {
-                                    if (newTopics.length >= 2) newTopics.shift(); // Max 2 topics
+                                    if (newTopics.length >= 2) newTopics.shift();
                                     newTopics.push(topic.id);
                                   }
                                   onChange('temaKbc', newTopics);
@@ -333,7 +558,6 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           Materi Insersi Nilai Cinta (Butir Spesifik)
                         </label>
                         
-                        {/* Preset Suggestions */}
                         {formState.temaKbc.length > 0 && (
                           <div className="mb-2 space-y-1">
                             <span className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold block">
@@ -377,20 +601,44 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Tahun Ajaran</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 font-medium">Tahun Ajaran</label>
+                        {formState.tahunAjaran === currentActiveYearName ? (
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+                            <Check className="w-3 h-3" /> TA Aktif
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onChange('tahunAjaran', currentActiveYearName)}
+                            className="text-[10px] text-brand-600 dark:text-brand-400 hover:underline font-semibold"
+                            title={`Set ke Tahun Ajaran Aktif (${currentActiveYearName})`}
+                          >
+                            Set TA Aktif
+                          </button>
+                        )}
+                      </div>
                       <input 
                         type="text" 
                         value={formState.tahunAjaran}
                         onChange={(e) => onChange('tahunAjaran', e.target.value)}
-                        className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                        placeholder={`Contoh: ${currentActiveYearName}`}
+                        className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Semester</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 font-medium">Semester</label>
+                        {formState.semester === currentActiveSemName && (
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+                            <Check className="w-3 h-3" /> Aktif
+                          </span>
+                        )}
+                      </div>
                       <select 
                         value={formState.semester}
                         onChange={(e) => onChange('semester', e.target.value)}
-                        className="w-full p-2.5 rounded-lg border border-slate-200 text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                        className="w-full p-2.5 rounded-lg border border-slate-200 text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
                       >
                         <option value="Ganjil">Ganjil</option>
                         <option value="Genap">Genap</option>
@@ -404,7 +652,14 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             {/* Step 2: Identitas Pelajaran */}
             {activeStep === 2 && (
               <div className="space-y-5">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{t.lessonPlan.step2}</h3>
+                <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                    Langkah 2: Identitas Pembelajaran
+                  </h3>
+                  <span className="text-[10px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold px-2 py-0.5 rounded-full">
+                    Wajib
+                  </span>
+                </div>
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -451,71 +706,79 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.topikMateri} <span className="text-red-500">*</span></label>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Materi Pokok / Topik <span className="text-red-500">*</span></label>
                     <input 
                       type="text" 
                       value={formState.topik}
                       onChange={(e) => onChange('topik', e.target.value)}
-                      placeholder="Contoh: Penjumlahan Bilangan Cacah"
+                      placeholder="Contoh: Operasi Penjumlahan Bilangan Cacah"
                       className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
                     />
-                    {recommendations.length > 0 && (
-                      <div className="mt-2.5 flex flex-wrap gap-1.5">
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 block w-full font-medium">{t.lessonPlan.topicSuggestions}:</span>
-                        {recommendations.map(rec => (
-                          <button
-                            key={rec}
-                            type="button"
-                            onClick={() => onChange('topik', rec)}
-                            className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-md text-[11px] font-semibold text-slate-600 dark:text-slate-300 transition-colors"
-                          >
-                            {rec}
-                          </button>
-                        ))}
-                      </div>
-                    )}
 
-                    {boilerplateMissingBanner && (
-                      <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
-                        <span>{boilerplateMissingBanner}</span>
+                    {/* Recommendation chips */}
+                    {recommendations && recommendations.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        <span className="text-xs text-slate-400 block">Rekomendasi topik dari Bank Data:</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {recommendations.map((recTopic: string, idx: number) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => onChange('topik', recTopic)}
+                              className="px-2.5 py-1 bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800/60 hover:border-brand-500 rounded-lg text-xs text-brand-700 dark:text-brand-300 text-left transition-colors"
+                            >
+                              + {recTopic}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Nama Guru / Penyusun</label>
+                    <input 
+                      type="text" 
+                      value={formState.guru}
+                      onChange={(e) => onChange('guru', e.target.value)}
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Step 3: Informasi Umum & Sarpras */}
+            {/* Step 3: Target, Sarana & Prasyarat */}
             {activeStep === 3 && (
               <div className="space-y-5">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{t.lessonPlan.step3}</h3>
-                
+                <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                    Langkah 3: Target, Sarana & Prasyarat
+                  </h3>
+                </div>
+
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">{t.lessonPlan.targetPeserta}</label>
-                    <select 
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.targetPeserta}</label>
+                    <input 
+                      type="text" 
                       value={formState.targetPeserta}
                       onChange={(e) => onChange('targetPeserta', e.target.value)}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
-                    >
-                      <option value="Reguler/Tipikal (Peserta didik umum, tidak ada kesulitan belajar)">Reguler/Tipikal</option>
-                      <option value="Peserta Didik dengan Kesulitan Belajar (Memiliki gaya belajar terbatas, misal: visual/audio)">Siswa Kesulitan Belajar</option>
-                      <option value="Peserta Didik Cerdas Istimewa/Bakat Istimewa (CIBI) (Dapat mencerna materi dengan cepat)">Cerdas Istimewa (CIBI)</option>
-                    </select>
+                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    />
                   </div>
 
                   <div>
-                    <div className="flex flex-wrap justify-between items-end mb-1">
+                    <div className="flex justify-between items-end mb-1">
                       <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.kompetensiAwal}</label>
                       <AiButton field="kompetensiAwal" label="Isi AI" {...aiProps} />
                     </div>
-                    <textarea
+                    <textarea 
                       value={formState.kompetensiAwal}
                       onChange={(e) => onChange('kompetensiAwal', e.target.value)}
                       rows={3}
                       className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
-                      placeholder="Pengetahuan/keterampilan yang wajib dimiliki siswa sebelum mempelajari materi ini."
+                      placeholder="Pengetahuan/keterampilan prasyarat yang perlu dimiliki siswa."
                     />
                   </div>
 
@@ -526,17 +789,21 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       onChange={(e) => onChange('saranaPrasarana', e.target.value)}
                       rows={3}
                       className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
-                      placeholder="Alat, bahan, media pembelajaran (Proyektor, LKPD, alat peraga, dll)."
+                      placeholder="Alat, bahan, media pembelajaran (Proyektor, LKPD, alat peraga konkret, dll)."
                     />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Step 4: Komponen Inti */}
+            {/* Step 4: Komponen Inti & LKPD */}
             {activeStep === 4 && (
               <div className="space-y-5">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{t.lessonPlan.step4}</h3>
+                <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                    Langkah 4: Komponen Inti, LKPD & Evaluasi
+                  </h3>
+                </div>
                 
                 <div className="space-y-4">
                   <div>
@@ -558,9 +825,9 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                     <textarea 
                       value={formState.capaianPembelajaran}
                       onChange={(e) => onChange('capaianPembelajaran', e.target.value)}
-                      rows={5}
+                      rows={4}
                       className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
-                      placeholder="Capaian Pembelajaran dari Kurikulum."
+                      placeholder="Capaian Pembelajaran dari Kurikulum Merdeka..."
                     />
                   </div>
 
@@ -583,6 +850,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       ))}
                     </div>
                   </div>
+
                   {formState.generationMethod === 'Manual' && (
                     <>
                       <div>
@@ -593,7 +861,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                         <textarea
                           value={formState.manualTujuanPembelajaran}
                           onChange={(e) => onChange('manualTujuanPembelajaran', e.target.value)}
-                          rows={4}
+                          rows={3}
                           className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
                           placeholder="Contoh:&#10;1. Siswa dapat memahami perkalian dasar.&#10;2. Siswa dapat menjawab soal cerita perkalian."
                         />
@@ -603,19 +871,19 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
                               <Sparkles className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-                              💡 Bank Rekomendasi Indikator Berpikir Kritis (Klik + untuk isi otomatis)
+                              Bank Indikator Berpikir Kritis (Klik + untuk isi):
                             </span>
-                            <span className="text-xs bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded font-bold">
-                              HOTS
+                            <span className="text-[10px] bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded font-bold">
+                              HOTS Ennis
                             </span>
                           </div>
-                          <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+                          <div className="space-y-2 max-h-36 overflow-y-auto pr-1 scrollbar-thin">
                             {ENNIS_IKTP_BANK.map((cat, catIdx) => (
-                              <div key={catIdx} className="space-y-1.5">
-                                <span className="text-xs font-bold text-brand-800 dark:text-brand-300 block">
-                                  • {cat.kategori}
+                              <div key={catIdx} className="space-y-1">
+                                <span className="text-[11px] font-bold text-brand-800 dark:text-brand-300 block">
+                                  &bull; {cat.kategori}
                                 </span>
-                                <div className="flex flex-wrap gap-1.5">
+                                <div className="flex flex-wrap gap-1">
                                   {cat.contohIktp.map((iktp, idx) => (
                                     <button
                                       key={idx}
@@ -624,7 +892,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                         const current = formState.manualTujuanPembelajaran ? formState.manualTujuanPembelajaran + '\n' : '';
                                         onChange('manualTujuanPembelajaran', current + iktp);
                                       }}
-                                      className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-brand-200 dark:border-brand-800 hover:border-brand-500 rounded-lg text-xs text-brand-900 dark:text-brand-200 text-left transition-colors font-medium shadow-2xs"
+                                      className="px-2 py-0.5 bg-white dark:bg-slate-800 border border-brand-200 dark:border-brand-800 hover:border-brand-500 rounded text-[11px] text-brand-900 dark:text-brand-200 text-left transition-colors font-medium"
                                     >
                                       + {iktp}
                                     </button>
@@ -635,6 +903,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           </div>
                         </div>
                       </div>
+
                       <div>
                         <div className="flex flex-wrap justify-between items-end mb-1">
                           <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.pertanyaanPemantik}</label>
@@ -643,9 +912,88 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                         <textarea
                           value={formState.manualPertanyaanPemantik}
                           onChange={(e) => onChange('manualPertanyaanPemantik', e.target.value)}
+                          rows={3}
+                          className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
+                          placeholder="Contoh:&#10;Mengapa kita perlu mempelajari topik ini?&#10;Bagaimana penerapannya dalam kehidupan sehari-hari?"
+                        />
+                      </div>
+
+                      {/* Manual LKPD & Tugas with Quick Insert Bar */}
+                      <div>
+                        <div className="flex flex-wrap justify-between items-end mb-1">
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            Lembar Kerja Peserta Didik (LKPD)
+                          </label>
+                          <AiButton field="manualLkpdTugas" label="Buat AI" {...aiProps} />
+                        </div>
+
+                        {/* Quick Insert Formatting Chips */}
+                        <div className="flex flex-wrap gap-1.5 mb-1.5">
+                          <button
+                            type="button"
+                            onClick={() => appendToField('manualLkpdTugas', '[Kotak untuk Menuliskan Jawaban / Menggambar Hasil]')}
+                            className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded text-[11px] font-medium hover:bg-emerald-100 flex items-center gap-1"
+                          >
+                            <Plus className="w-3 h-3" /> [Kotak Jawaban]
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => appendToField('manualLkpdTugas', '### Aktivitas 1: Eksplorasi Bersama\nLakukan pengamatan dan diskusikan bersama kelompokmu.')}
+                            className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded text-[11px] font-medium hover:bg-slate-200 flex items-center gap-1"
+                          >
+                            <Plus className="w-3 h-3" /> Judul Aktivitas
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => appendToField('manualLkpdTugas', '* Petunjuk:\n1. Bacalah petunjuk pengerjaan.\n2. Selesaikan secara berkelompok.')}
+                            className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded text-[11px] font-medium hover:bg-slate-200 flex items-center gap-1"
+                          >
+                            <Plus className="w-3 h-3" /> Petunjuk Belajar
+                          </button>
+                        </div>
+
+                        <textarea
+                          value={formState.manualLkpdTugas}
+                          onChange={(e) => onChange('manualLkpdTugas', e.target.value)}
                           rows={4}
                           className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
-                          placeholder="Contoh:&#10;Mengapa kita perlu mempelajari perkalian?&#10;Bagaimana perkalian mempermudah hitungan kita?"
+                          placeholder="Tuliskan petunjuk dan aktivitas kerja siswa..."
+                        />
+                      </div>
+
+                      {/* Manual Soal Evaluasi with Quick Insert Bar */}
+                      <div>
+                        <div className="flex flex-wrap justify-between items-end mb-1">
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            Lembar Soal Evaluasi Pengetahuan
+                          </label>
+                          <AiButton field="manualSoalEvaluasi" label="Buat AI" {...aiProps} />
+                        </div>
+
+                        {/* Quick Insert Formatting Chips */}
+                        <div className="flex flex-wrap gap-1.5 mb-1.5">
+                          <button
+                            type="button"
+                            onClick={() => appendToField('manualSoalEvaluasi', '1. Pertanyaan pilihan ganda nomor 1...\nA. Pilihan A\nB. Pilihan B\nC. Pilihan C\nD. Pilihan D')}
+                            className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded text-[11px] font-medium hover:bg-blue-100 flex items-center gap-1"
+                          >
+                            <Plus className="w-3 h-3" /> Format Pilihan Ganda (A-D)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => appendToField('manualSoalEvaluasi', '2. Jelaskan dan tuliskan kesimpulan dari materi yang telah dipelajari!')}
+                            className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded text-[11px] font-medium hover:bg-slate-200 flex items-center gap-1"
+                          >
+                            <Plus className="w-3 h-3" /> Format Uraian / Isian
+                          </button>
+                        </div>
+
+                        <textarea
+                          value={formState.manualSoalEvaluasi}
+                          onChange={(e) => onChange('manualSoalEvaluasi', e.target.value)}
+                          rows={4}
+                          className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
+                          placeholder="Tuliskan butir soal evaluasi pemahaman konsep..."
                         />
                       </div>
                     </>
@@ -654,10 +1002,14 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
               </div>
             )}
 
-            {/* Step 5: Alokasi & Model */}
+            {/* Step 5: Alokasi Waktu, Model & Rubrik */}
             {activeStep === 5 && (
               <div className="space-y-5">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{t.lessonPlan.step5}</h3>
+                <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                    Langkah 5: Model Pembelajaran, Waktu & Rubrik
+                  </h3>
+                </div>
                 
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -687,6 +1039,33 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                         onChange={(e) => onChange('durasiPerJp', parseInt(e.target.value) || 35)}
                         className="w-full p-2.5 rounded-lg border border-slate-200 text-sm text-center dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                       />
+                    </div>
+                  </div>
+
+                  {/* Pilihan Ukuran Kertas Cetak & Dokumen */}
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-medium">
+                      Ukuran Kertas Cetak & Dokumen Word
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'A4', label: '📄 A4 (210 × 297 mm)', desc: 'Standar Nasional & Printer Biasa' },
+                        { id: 'F4', label: '📑 F4 / Folio (215 × 330 mm)', desc: 'Standar Arsip Sekolah Indonesia' }
+                      ].map(paper => (
+                        <button
+                          key={paper.id}
+                          type="button"
+                          onClick={() => onChange('paperSize', paper.id)}
+                          className={`p-2.5 rounded-lg border text-left transition-all ${
+                            (formState.paperSize || 'A4') === paper.id
+                            ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-300 shadow-xs'
+                            : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="text-xs font-bold">{paper.label}</div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{paper.desc}</div>
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -860,60 +1239,134 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                     )}
                   </div>
 
-                  {/* Visual Time Allocator Slider */}
-                  <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
-                    <div className="flex flex-wrap justify-between items-center mb-1">
-                      <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.lessonPlan.visualAlokasi} ({formState.jpPerPertemuan * formState.durasiPerJp} Menit)</h4>
-                      <span className="text-[10px] text-slate-400 font-medium">{t.lessonPlan.balancingAktif}</span>
-                    </div>
-                    
-                    <div className="space-y-3.5">
-                      <div>
-                        <div className="flex justify-between text-[11px] text-slate-500 mb-1">
-                          <span>{t.lessonPlan.pendahuluan}</span>
-                          <span className="font-bold text-brand-600 dark:text-brand-400">{formState.alokasiPendahuluan} Menit</span>
-                        </div>
-                        <input 
-                          type="range"
-                          min={5}
-                          max={Math.max(5, formState.jpPerPertemuan * formState.durasiPerJp - 20)}
-                          value={formState.alokasiPendahuluan}
-                          onChange={(e) => adjustPendahuluan(parseInt(e.target.value))}
-                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600"
-                        />
-                      </div>
+                  {/* Smart Time Calculator & Visual Time Allocator Card */}
+                  {(() => {
+                    const totalMeetingMinutes = (formState.jpPerPertemuan || 2) * (formState.durasiPerJp || 35);
+                    const currentAllocatedSum = (formState.alokasiPendahuluan || 0) + (formState.alokasiInti || 0) + (formState.alokasiPenutup || 0);
+                    const isTimeBalanced = currentAllocatedSum === totalMeetingMinutes;
 
-                      <div>
-                        <div className="flex justify-between text-[11px] text-slate-500 mb-1">
-                          <span>{t.lessonPlan.kegiatanInti}</span>
-                          <span className="font-bold text-brand-600 dark:text-brand-400">{formState.alokasiInti} Menit</span>
-                        </div>
-                        <input 
-                          type="range"
-                          min={10}
-                          max={Math.max(10, formState.jpPerPertemuan * formState.durasiPerJp - 10)}
-                          value={formState.alokasiInti}
-                          onChange={(e) => adjustInti(parseInt(e.target.value))}
-                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600"
-                        />
-                      </div>
+                    const pctPendahuluan = Math.round(((formState.alokasiPendahuluan || 0) / (totalMeetingMinutes || 1)) * 100);
+                    const pctInti = Math.round(((formState.alokasiInti || 0) / (totalMeetingMinutes || 1)) * 100);
+                    const pctPenutup = Math.round(((formState.alokasiPenutup || 0) / (totalMeetingMinutes || 1)) * 100);
 
-                      <div>
-                        <div className="flex justify-between text-[11px] text-slate-500 mb-1">
-                          <span>{t.lessonPlan.penutup}</span>
-                          <span className="font-bold text-brand-600 dark:text-brand-400">{formState.alokasiPenutup} Menit</span>
+                    return (
+                      <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-4">
+                        <div className="flex flex-wrap justify-between items-center gap-2">
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                              <Clock className="w-4 h-4 text-brand-600" />
+                              Kalkulator Alokasi Waktu Pembelajaran
+                            </h4>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                              {formState.jpPerPertemuan} JP × {formState.durasiPerJp} Menit = <strong>{totalMeetingMinutes} Menit / Pertemuan</strong>
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {isTimeBalanced ? (
+                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded-full text-[10px] font-bold flex items-center gap-1">
+                                <Check className="w-3 h-3" /> Pas 100% ({totalMeetingMinutes}m)
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 rounded-full text-[10px] font-bold flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" />
+                                Selisih {Math.abs(totalMeetingMinutes - currentAllocatedSum)}m ({currentAllocatedSum > totalMeetingMinutes ? 'Kelebihan' : 'Kekurangan'})
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <input 
-                          type="range"
-                          min={5}
-                          max={Math.max(5, formState.jpPerPertemuan * formState.durasiPerJp - 20)}
-                          value={formState.alokasiPenutup}
-                          onChange={(e) => adjustPenutup(parseInt(e.target.value))}
-                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600"
-                        />
+
+                        {/* Segmented Visual Timeline Bar */}
+                        <div className="space-y-1">
+                          <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex">
+                            <div 
+                              style={{ width: `${Math.min(100, pctPendahuluan)}%` }} 
+                              className="bg-emerald-500 transition-all duration-300"
+                              title={`Pendahuluan: ${formState.alokasiPendahuluan}m (${pctPendahuluan}%)`}
+                            />
+                            <div 
+                              style={{ width: `${Math.min(100, pctInti)}%` }} 
+                              className="bg-brand-500 transition-all duration-300"
+                              title={`Inti: ${formState.alokasiInti}m (${pctInti}%)`}
+                            />
+                            <div 
+                              style={{ width: `${Math.min(100, pctPenutup)}%` }} 
+                              className="bg-amber-500 transition-all duration-300"
+                              title={`Penutup: ${formState.alokasiPenutup}m (${pctPenutup}%)`}
+                            />
+                          </div>
+                          <div className="flex justify-between text-[10px] font-semibold text-slate-500 dark:text-slate-400 px-0.5">
+                            <span className="text-emerald-700 dark:text-emerald-400">● Pendahuluan ({pctPendahuluan}%)</span>
+                            <span className="text-brand-700 dark:text-brand-400">● Inti ({pctInti}%)</span>
+                            <span className="text-amber-700 dark:text-amber-400">● Penutup ({pctPenutup}%)</span>
+                          </div>
+                        </div>
+
+                        {/* Auto-Distribute Proporsional Button */}
+                        {autoDistributeTime && (
+                          <button
+                            type="button"
+                            onClick={autoDistributeTime}
+                            className="w-full py-2 px-3 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/50 dark:hover:bg-brand-900/60 border border-brand-200 dark:border-brand-800/80 rounded-lg text-xs font-bold text-brand-700 dark:text-brand-300 flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                          >
+                            <Zap className="w-3.5 h-3.5 text-brand-600" />
+                            ⚡ Auto-Distribusi Proporsional Standar (15% - 70% - 15%)
+                          </button>
+                        )}
+                        
+                        {/* Sliders */}
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-300 mb-1">
+                              <span className="font-semibold">1. Kegiatan Pendahuluan</span>
+                              <span className="font-bold text-emerald-700 dark:text-emerald-400">{formState.alokasiPendahuluan} Menit</span>
+                            </div>
+                            <input 
+                              type="range"
+                              min={5}
+                              max={Math.max(5, totalMeetingMinutes - 20)}
+                              step={5}
+                              value={formState.alokasiPendahuluan}
+                              onChange={(e) => adjustPendahuluan(parseInt(e.target.value))}
+                              className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                            />
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-300 mb-1">
+                              <span className="font-semibold">2. Kegiatan Inti</span>
+                              <span className="font-bold text-brand-700 dark:text-brand-400">{formState.alokasiInti} Menit</span>
+                            </div>
+                            <input 
+                              type="range"
+                              min={10}
+                              max={Math.max(10, totalMeetingMinutes - 10)}
+                              step={5}
+                              value={formState.alokasiInti}
+                              onChange={(e) => adjustInti(parseInt(e.target.value))}
+                              className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600"
+                            />
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-300 mb-1">
+                              <span className="font-semibold">3. Kegiatan Penutup</span>
+                              <span className="font-bold text-amber-700 dark:text-amber-400">{formState.alokasiPenutup} Menit</span>
+                            </div>
+                            <input 
+                              type="range"
+                              min={5}
+                              max={Math.max(5, totalMeetingMinutes - 20)}
+                              step={5}
+                              value={formState.alokasiPenutup}
+                              onChange={(e) => adjustPenutup(parseInt(e.target.value))}
+                              className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-600"
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                   {/* Rubrik Asesmen Interaktif */}
                   <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
@@ -923,7 +1376,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                         <button
                           type="button"
                           onClick={() => onChange('rubrikAsesmen', rubrikDiskusi)}
-                          className="px-2 py-1 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 transition-colors animate-pulse"
+                          className="px-2 py-1 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 transition-colors"
                         >
                           {t.lessonPlan.rubricDiskusi}
                         </button>
@@ -948,19 +1401,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                         {formState.rubrikAsesmen.map((row: RubrikRow, idx: number) => (
                           <div key={idx} className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 relative space-y-2.5">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updated = [...formState.rubrikAsesmen];
-                                updated.splice(idx, 1);
-                                onChange('rubrikAsesmen', updated);
-                              }}
-                              className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-[10px] font-bold"
-                            >
-                              {t.lessonPlan.rubricHapus}
-                            </button>
-                            <div>
-                              <label className="text-xs text-slate-400 font-bold block mb-0.5">{t.lessonPlan.rubricKriteria}</label>
+                            <div className="flex justify-between items-center">
                               <input
                                 type="text"
                                 value={row.kriteria}
@@ -969,13 +1410,24 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                   updated[idx] = { ...updated[idx], kriteria: e.target.value };
                                   onChange('rubrikAsesmen', updated);
                                 }}
-                                className="w-full p-2 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 rounded text-xs focus:ring-1 focus:ring-brand-500 outline-none text-slate-800 dark:text-white"
-                                placeholder="Misal: Keaktifan Diskusi"
+                                placeholder="Nama Kriteria..."
+                                className="w-full mr-2 p-1 font-bold text-xs border-b border-slate-200 dark:border-slate-700 dark:bg-transparent dark:text-white outline-none focus:border-brand-500"
                               />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = formState.rubrikAsesmen.filter((_, i) => i !== idx);
+                                  onChange('rubrikAsesmen', updated);
+                                }}
+                                className="text-red-500 hover:text-red-700 text-xs px-1"
+                              >
+                                &times;
+                              </button>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                               <div>
-                                <label className="text-xs text-slate-400 block font-semibold">{t.lessonPlan.rubricSangatBaik}</label>
+                                <label className="text-[10px] text-slate-400 block font-semibold">{t.lessonPlan.rubricSangatBaik}</label>
                                 <textarea
                                   value={row.sangatBaik}
                                   onChange={(e) => {
@@ -988,7 +1440,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                 />
                               </div>
                               <div>
-                                <label className="text-xs text-slate-400 block font-semibold">{t.lessonPlan.rubricBaik}</label>
+                                <label className="text-[10px] text-slate-400 block font-semibold">{t.lessonPlan.rubricBaik}</label>
                                 <textarea
                                   value={row.baik}
                                   onChange={(e) => {
@@ -1001,7 +1453,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                 />
                               </div>
                               <div>
-                                <label className="text-xs text-slate-400 block font-semibold">{t.lessonPlan.rubricCukup}</label>
+                                <label className="text-[10px] text-slate-400 block font-semibold">{t.lessonPlan.rubricCukup}</label>
                                 <textarea
                                   value={row.cukup}
                                   onChange={(e) => {
@@ -1014,7 +1466,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                                 />
                               </div>
                               <div>
-                                <label className="text-xs text-slate-400 block font-semibold">{t.lessonPlan.rubricPerluBimbingan}</label>
+                                <label className="text-[10px] text-slate-400 block font-semibold">{t.lessonPlan.rubricPerluBimbingan}</label>
                                 <textarea
                                   value={row.perluBimbingan}
                                   onChange={(e) => {
@@ -1047,33 +1499,6 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                       {t.lessonPlan.rubricAddCustom}
                     </button>
                   </div>
-
-                  <div>
-                    <div className="flex flex-wrap justify-between items-end mb-1">
-                      <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.lkpd}</label>
-                      <AiButton field="manualLkpdTugas" label="Buat AI" {...aiProps} />
-                    </div>
-                    <textarea
-                      value={formState.manualLkpdTugas}
-                      onChange={(e) => onChange('manualLkpdTugas', e.target.value)}
-                      rows={4}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
-                      placeholder="Masukkan tugas/kegiatan kelompok atau mandiri..."
-                    />
-                  </div>
-                  <div>
-                    <div className="flex flex-wrap justify-between items-end mb-1">
-                      <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.soalEvaluasi}</label>
-                      <AiButton field="manualSoalEvaluasi" label="Buat AI" {...aiProps} />
-                    </div>
-                    <textarea
-                      value={formState.manualSoalEvaluasi}
-                      onChange={(e) => onChange('manualSoalEvaluasi', e.target.value)}
-                      rows={4}
-                      className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
-                      placeholder="Masukkan butir-butir pertanyaan evaluasi..."
-                    />
-                  </div>
                 </div>
               </div>
             )}
@@ -1082,27 +1507,32 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
       </div>
 
       {/* Wizard Footer Controls */}
-      <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between gap-3 shrink-0">
+      <div className="p-3.5 lg:p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center gap-3 shrink-0">
         {activeStep > 1 ? (
           <button
             type="button"
             onClick={() => setActiveStep(prev => prev - 1)}
-            className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5"
+            className="px-3.5 py-2 sm:px-4 sm:py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            {t.lessonPlan.previous}
+            <span className="hidden xs:inline">{t.lessonPlan.previous}</span>
+            <span className="xs:hidden">Prev</span>
           </button>
         ) : (
           <div />
         )}
 
+        <div className="text-[11px] text-slate-400 hidden sm:block">
+          Langkah {activeStep} dari 5
+        </div>
+
         {activeStep < 5 ? (
           <button
             type="button"
             onClick={() => setActiveStep(prev => prev + 1)}
-            className="px-5 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 flex items-center gap-1.5"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-brand-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-brand-700 flex items-center gap-1.5 transition-colors shadow-sm"
           >
-            {t.lessonPlan.next}
+            <span>{t.lessonPlan.next}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         ) : (
@@ -1110,10 +1540,10 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             type="button"
             onClick={onGenerate}
             disabled={queueStatus === 'pending' || queueStatus === 'processing' || isAiGenerating || !formState.mataPelajaran || !formState.topik}
-            className="px-5 py-2.5 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-700 hover:to-emerald-700 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50 shadow-md transition-all text-xs sm:text-sm"
           >
             <Sparkles className="w-4 h-4" />
-            {t.lessonPlan.create.replace('{type}', formState.documentType)}
+            <span>{t.lessonPlan.create.replace('{type}', formState.documentType)}</span>
           </button>
         )}
       </div>

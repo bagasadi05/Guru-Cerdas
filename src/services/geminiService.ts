@@ -9,6 +9,7 @@ import {
   isRateLimitError,
   isTransientError,
 } from '../utils/aiConfig';
+import { robustParseJson } from '../utils/jsonUtils';
 import {
   aiRouter,
   type AiTaskType,
@@ -174,10 +175,15 @@ export class GeminiProvider implements AiProvider {
 
   private async callWithRetry(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
     let lastError: Error | null = null;
+    const candidateModels = [
+      model,
+      model.includes('2.0') ? 'gemini-1.5-flash' : 'gemini-2.0-flash'
+    ];
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      const currentModel = candidateModels[(attempt - 1) % candidateModels.length];
       try {
-        return await this.callOnce(messages, model);
+        return await this.callOnce(messages, currentModel);
       } catch (err: any) {
         lastError = err;
         const isTransient = isTransientError(err);
@@ -188,10 +194,10 @@ export class GeminiProvider implements AiProvider {
 
         if (attempt < MAX_RETRIES) {
           const retryAfterMs = err instanceof GeminiRateLimitError ? err.retryAfterMs : 0;
-          const backoffMs = getBackoffDelay(attempt, isRateLimitError(err) ? 5000 : 1500);
-          const delay = Math.min(Math.max(retryAfterMs, backoffMs), 60_000);
+          const backoffMs = getBackoffDelay(attempt, isRateLimitError(err) ? 3000 : 1000);
+          const delay = Math.min(Math.max(retryAfterMs, backoffMs), 10_000);
           logger.warn(
-            `[Gemini] Attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${Math.round(delay)}ms: ${err.message}`,
+            `[Gemini] Attempt ${attempt}/${MAX_RETRIES} with ${currentModel} failed, retrying in ${Math.round(delay)}ms: ${err.message}`,
             'AI'
           );
           await sleep(delay);
@@ -326,35 +332,11 @@ export async function generateGeminiJson<T>(
   messages.push({ role: 'user', content: jsonPrompt });
 
   const response = await generateGeminiContent(messages, taskType);
-  let content = getAssistantContent(response);
+  const content = getAssistantContent(response);
 
-  // Robust JSON extraction:
-  // 1. Remove markdown code blocks
-  content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-
-  // 2. Find the outer-most JSON structure (Object or Array)
-  const firstBrace = content.indexOf('{');
-  const firstBracket = content.indexOf('[');
-
-  let start = -1;
-  let end = -1;
-
-  // Determine start based on which appears first
-  if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
-    start = firstBrace;
-    end = content.lastIndexOf('}');
-  } else if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
-    start = firstBracket;
-    end = content.lastIndexOf(']');
-  }
-
-  if (start !== -1 && end !== -1 && end > start) {
-    content = content.substring(start, end + 1);
-  }
-
-  // 3. Try parsing
+  // Parse using multi-stage robust JSON recovery
   try {
-    const parsed = JSON.parse(content) as T;
+    const parsed = robustParseJson<T>(content);
     // Cache successful parse
     setCachedResponse(prompt, parsed, cacheCategory, `json:${taskType}`);
     return parsed;

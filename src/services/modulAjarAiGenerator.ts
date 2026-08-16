@@ -4,8 +4,10 @@ import { logger } from './logger';
 
 export interface SkenarioStep {
   name: string;
+  fase?: string;
   guru: string;
   siswa: string;
+  alokasiWaktu?: string;
 }
 
 export interface AiModulAjarContent {
@@ -20,56 +22,122 @@ export interface AiModulAjarContent {
   pengayaan: string[];
   remedial: string[];
   daftarPustaka: string[];
+  kegiatanPendahuluan?: string[] | string;
   skenarioPembelajaran: SkenarioStep[];
+  kegiatanPenutup?: string[] | string;
 }
 
 const SYSTEM_INSTRUCTION = `Kamu adalah pakar pendidikan Kurikulum Merdeka Indonesia khusus untuk jenjang SD/MI.
-Tugasmu: menyusun konten pedagogis terstruktur untuk Modul Ajar berdasarkan Mata Pelajaran, Topik, dan Fase yang diberikan.
-Setiap konten harus sangat spesifik untuk topik, bukan generik. Gunakan contoh konkret dan kontekstual.
-Gunakan gaya bahasa naratif buku panduan guru: deskriptif, konkret, dan langsung bisa dipraktikkan.
-Output hanya teks biasa tanpa format tabel Markdown. Jangan gunakan karakter | atau --- untuk membuat tabel. Gunakan poin-poin sederhana (angka atau strip) tanpa penomoran berurutan secara global.`;
+Tugasmu: menyusun dokumen Modul Ajar yang SANGAT LENGKAP, MENDALAM, dan SIAP PAKAI secara praktis di kelas oleh guru.
+Setiap komponen harus kontekstual, rinci, kaya contoh nyata, dan bebas dari kalimat template generik.
+Gunakan gaya bahasa buku panduan guru Kurikulum Merdeka: deskriptif, naratif, operasional, dan humanis.
+Format teks output: gunakan format Markdown yang rapi (heading ##, bullet point -, list angka 1., penanda kotak [Kotak untuk ...]). JANGAN gunakan tabel markdown (| --- |).`;
 
 const FASE_DESC: Record<string, string> = {
-  'A': 'Kelas 1-2 SD/MI (usia 6-8 tahun)',
-  'B': 'Kelas 3-4 SD/MI (usia 8-10 tahun)',
-  'C': 'Kelas 5-6 SD/MI (usia 10-12 tahun)',
+  'A': 'Kelas 1-2 SD/MI (usia 6-8 tahun, operasional konkret awal, pembelajaran visual & kinestetik)',
+  'B': 'Kelas 3-4 SD/MI (usia 8-10 tahun, operasional konkret lanjutan, eksplorasi & kolaborasi)',
+  'C': 'Kelas 5-6 SD/MI (usia 10-12 tahun, transisi operasional formal, penalaran kritis & proyek)',
 };
 
-function buildPrompt(mapel: string, topik: string, fase: string, modelPembelajaran?: string): string {
+function buildPrompt(mapel: string, topik: string, fase: string, modelPembelajaran?: string, metodePembelajaran?: string[]): string {
   const faseInfo = FASE_DESC[fase] || `Fase ${fase}`;
-  const modelInfo = modelPembelajaran ? `\nModel Pembelajaran: ${modelPembelajaran}` : '';
-  return `Buatkan konten Modul Ajar Kurikulum Merdeka dengan detail berikut:
+  const modelInfo = modelPembelajaran ? `\nModel Pembelajaran yang Digunakan: ${modelPembelajaran}` : '';
+  const metodeInfo = (metodePembelajaran && metodePembelajaran.length > 0)
+    ? `\nMetode Pembelajaran yang Dipilih: ${metodePembelajaran.join(', ')}`
+    : '';
+
+  return `Susunlah konten Modul Ajar Kurikulum Merdeka yang LENGKAP, KOMPREHENSIF, dan SANGAT MENDALAM untuk:
 
 Mata Pelajaran: ${mapel}
-Topik/Materi: ${topik}
-Fase: ${fase} (${faseInfo})${modelInfo}
+Topik/Materi Pokok: ${topik}
+Fase / Sasaran: Fase ${fase} (${faseInfo})${modelInfo}${metodeInfo}
 
-Hasilkan JSON dengan struktur berikut:
+Hasilkan JSON dengan struktur persis berikut:
 {
-  "tujuanPembelajaran": ["maksimal 3 tujuan pembelajaran SPESIFIK untuk topik ${topik}, dirumuskan dari Capaian Pembelajaran menggunakan kata kerja operasional (KKO) Taksonomi Bloom yang sesuai, terukur, dan dapat diamati"],
-  "pemahamanBermakna": ["minimal 2 pemahaman bermakna yang mengaitkan topik ${topik} dengan kehidupan nyata"],
-  "pertanyaanPemantik": ["minimal 3 pertanyaan pemantik terbuka yang relevan dengan topik ${topik}"],
-  "lkpdTugas": "LKPD lengkap dengan instruksi langkah demi langkah untuk topik ${topik}, bukan generic instructions",
-  "soalEvaluasi": "5 soal variatif (PG + uraian) tentang ${topik}, soal DAN kunci jawaban DIPISAH (soal di kolom soalEvaluasi, kunci di kolom kunciJawaban)",
-  "capaianPembelajaran": "2-3 paragaf CP spesifik topik ${topik} sesuai Fase ${fase} Kurikulum Merdeka",
-  "kompetensiAwal": "2-3 butir kompetensi awal/prasyarat yang harus dimiliki peserta didik sebelum belajar topik ${topik}",
-  "pengayaan": ["1-2 kegiatan pengayaan terkait ${topik}"],
-  "remedial": ["1-2 kegiatan remedial terkait ${topik}"],
-  "daftarPustaka": ["2-3 sumber rujukan relevan"],
-  "skenarioPembelajaran": [{"name": "nama langkah", "guru": "aktivitas guru SPESIFIK untuk topik ${topik} — berisi contoh konkret yang bisa langsung dipraktikkan", "siswa": "aktivitas siswa SPESIFIK untuk topik ${topik} — berisi contoh konkret"}]
+  "tujuanPembelajaran": [
+    "Tujuan 1 yang operasional (KKO Bloom), terukur, dan spesifik topik ${topik}",
+    "Tujuan 2 yang operasional...",
+    "Tujuan 3..."
+  ],
+  "pemahamanBermakna": [
+    "Pemahaman bermakna 1 yang mengaitkan esensi topik ${topik} dengan kehidupan nyata sehari-hari siswa",
+    "Pemahaman bermakna 2..."
+  ],
+  "pertanyaanPemantik": [
+    "Pertanyaan pemantik 1 (terbuka, memicu rasa penasaran siswa terhadap ${topik})",
+    "Pertanyaan pemantik 2...",
+    "Pertanyaan pemantik 3..."
+  ],
+  "kegiatanPendahuluan": [
+    "Orientasi & Penyiapan Kondisi Belajar: Guru membuka pelajaran dengan salam hangat, menyapa kabar peserta didik, meminta salah satu siswa memimpin doa bersama secara khidmat, memeriksa kehadiran dan kerapian kelas, serta mengajak siswa melakukan ice breaking penyemangat agar fokus dan ceria.",
+    "Apersepsi & Pengaitan Konsep: Guru mengaitkan materi sebelumnya dengan topik ${topik} melalui tanya jawab interaktif dan menghubungkannya dengan fenomena kontekstual sehari-hari siswa di rumah atau sekolah.",
+    "Motivasi & Manfaat Nyata: Guru menyampaikan manfaat penting dan aplikasi nyata mempelajari ${topik} dalam kehidupan nyata agar menumbuhkan antusiasme dan rasa ingin tahu mendalam.",
+    "Pemberian Acuan, Tujuan Pembelajaran & Mekanisme Asesmen: Guru menyampaikan Tujuan Pembelajaran yang ingin dicapai dengan bahasa yang mudah dipahami, menjelaskan alur kegiatan belajar (diskusi kelompok, eksperimen/LKPD, dan presentasi), serta kriteria penilaian.",
+    "Penyampaian Pertanyaan Pemantik: Guru melontarkan pertanyaan pemantik terbuka tentang ${topik} untuk memusatkan nalar kritis dan mengarahkan perhatian peserta didik ke topik inti."
+  ],
+  "skenarioPembelajaran": [
+    {
+      "name": "Langkah 1: Orientasi Siswa pada Masalah Kontekstual",
+      "guru": "Deskripsi rinci kegiatan guru secara naratif terpadu dengan metode yang dipilih: media konkret/gambar/cerita apa yang ditampilkan terkait ${topik}, bagaimana guru mendemonstrasikan/memantik siswa, pertanyaan pemandu apa yang diajukan.",
+      "siswa": "Deskripsi rinci kegiatan siswa: apa yang diamati, apa yang ditanyakan siswa, bagaimana respon mereka terhadap masalah ${topik} yang diajukan."
+    },
+    {
+      "name": "Langkah 2: Pengorganisasian Belajar & Kolaborasi",
+      "guru": "Deskripsi kegiatan guru: bagaimana guru membagi siswa ke dalam kelompok heterogen, membagikan LKPD, serta memberikan arahan peran tiap anggota kelompok.",
+      "siswa": "Deskripsi kegiatan siswa: berkumpul bersama kelompok, membaca petunjuk LKPD, membagi tugas, dan menyiapkan alat/bahan."
+    },
+    {
+      "name": "Langkah 3: Penyelidikan Mandiri & Kelompok",
+      "guru": "Deskripsi kegiatan guru: berkeliling memfasilitasi diskusi dan eksperimen/uji coba siswa, memberikan bimbingan diferensiasi (scaffolding bagi kelompok yang butuh bantuan), serta mengajukan pertanyaan penuntun.",
+      "siswa": "Deskripsi kegiatan siswa: melakukan manipulasi benda konkret/eksperimen/analisis/perhitungan terkait ${topik}, berdiskusi aktif menemukan solusi, dan mencatat temuan pada LKPD."
+    },
+    {
+      "name": "Langkah 4: Pengembangan & Penyajian Hasil Karya",
+      "guru": "Deskripsi kegiatan guru: membimbing kelompok menyusun hasil kerja LKPD dan memfasilitasi jalannya presentasi kelas yang suportif.",
+      "siswa": "Deskripsi kegiatan siswa: perwakilan kelompok mempresentasikan hasil diskusi di depan kelas, kelompok lain menyimak dengan aktif dan memberikan tanggapan/apresiasi."
+    },
+    {
+      "name": "Langkah 5: Analisis & Evaluasi Proses Pemecahan Masalah",
+      "guru": "Deskripsi kegiatan guru: memberikan klarifikasi, penguatan konsep penting terkait ${topik}, dan meluruskan miskonsepsi yang mungkin muncul.",
+      "siswa": "Deskripsi kegiatan siswa: menyimpulkan konsep bersama guru, mengoreksi hasil kerja kelompok jika ada kekeliruan, dan mencatat poin-poin penting."
+    }
+  ],
+  "kegiatanPenutup": [
+    "Refleksi & Simpulan: Guru memandu siswa menyimpulkan poin-poin utama materi ${topik}. Siswa menyampaikan refleksi perasaannya (bagian mana yang paling disukai dan dipahami).",
+    "Asesmen Formatif & Umpan Balik: Guru memberikan umpan balik apresiatif atas keaktifan siswa dan melakukan cek pemahaman kilat.",
+    "Tindak Lanjut: Guru menyampaikan tindak lanjut (tugas pengayaan/remedial) dan menginformasikan topik yang akan dipelajari pada pertemuan berikutnya.",
+    "Penutup & Doa: Kelas ditutup dengan doa bersama dipimpin oleh salah satu siswa dan salam penutup yang hangat."
+  ],
+  "lkpdTugas": "Konten Lembar Kerja Peserta Didik (LKPD) lengkap, terstruktur, ramah anak, dan kontekstual untuk ${topik}. Format: Judul LKPD, Petunjuk Belajar, Alat dan Bahan, Langkah Kerja Bernomor (Langkah 1: ..., Langkah 2: ...), Pertanyaan Diskusi, serta instruksi kotak gambar/tulis seperti [Kotak untuk Menggambar Solusi] atau [Tuliskan Jawaban Kelompok].",
+  "soalEvaluasi": "5 soal evaluasi terstruktur (3 pilihan ganda dengan opsi A, B, C, D dan 2 soal uraian pemecahan masalah kontekstual). HANYA soal tanpa kunci jawaban.",
+  "kunciJawaban": [
+    "1. Kunci dan pembahasan soal 1",
+    "2. Kunci dan pembahasan soal 2",
+    "3. Kunci dan pembahasan soal 3",
+    "4. Kunci dan rubrik jawaban uraian soal 4",
+    "5. Kunci dan rubrik jawaban uraian soal 5"
+  ],
+  "capaianPembelajaran": "2-3 paragraf Capaian Pembelajaran (CP) Kurikulum Merdeka yang relevan dan spesifik untuk materi ${topik} di Fase ${fase}.",
+  "kompetensiAwal": "2-3 butir kompetensi prasyarat yang harus dikuasai siswa sebelum mempelajari ${topik}.",
+  "pengayaan": [
+    "Aktivitas pengayaan 1 (tantangan level lebih tinggi untuk siswa yang telah tuntas)",
+    "Aktivitas pengayaan 2..."
+  ],
+  "remedial": [
+    "Aktivitas remedial 1 (pendampingan konsep dasar dengan alat peraga konkret untuk siswa yang butuh bimbingan)",
+    "Aktivitas remedial 2..."
+  ],
+  "daftarPustaka": [
+    "Buku Panduan Guru & Siswa ${mapel} Kelas Terkait, Kemendikbudristek",
+    "Sumber referensi pendukung lainnya"
+  ]
 }
 
-PENTING:
-- Semua konten harus SPESIFIK untuk topik "${topik}" dalam mapel "${mapel}", BUKAN template generik.
-- Skenario pembelajaran: setiap langkah HARUS menyebutkan contoh konkret topik ${topik}.
-  ❌ SALAH: "Guru menjelaskan materi", "Siswa mengamati penjelasan"
-  ✅ BENAR: "Guru menunjukkan 5 gambar bangun datar (segitiga, persegi, lingkaran, persegi panjang, trapesium) lalu meminta siswa menyebutkan ciri-cirinya", "Siswa menyusun puzzle tangram dan mengidentifikasi bentuk bangun datar yang digunakan"
-- Tulis aktivitas Guru dan Siswa secara NARATIF sebagai deskripsi kegiatan fisik dan verbal yang nyata.
-  ❌ SALAH: "Guru melakukan tahap orientasi masalah", "Siswa mengikuti orientasi"
-  ✅ BENAR: "Guru memperlihatkan video petualangan di hutan berisi berbagai bentuk bangun datar, lalu mengajukan pertanyaan 'Bangun datar apa saja yang kalian lihat?'", "Siswa mengamati video, menunjuk layar, dan menyebutkan nama bangun datar yang mereka kenali"
-- JANGAN mengulang nama fase/sintaks sebagai satu-satunya aktivitas. Setiap langkah harus berisi contoh konkret kegiatan.
-- LKPD harus aktivitas konkret bukan instruksi umum.
-- Gunakan bahasa sesuai ${faseInfo}.`;
+PEDOMAN KUALITAS KONTEN:
+1. SEMUA kegiatan pembelajaran dan LKPD HARUS sangat spesifik untuk topik "${topik}". DILARANG membuat langkah generik seperti "Guru menjelaskan materi" atau "Siswa mendengarkan penjelasan".
+2. INTEGRASI MODEL & METODE: Skenario Kegiatan Inti WAJIB secara eksplisit mengintegrasikan sintaks model pembelajaran (${modelPembelajaran || 'Model Terpilih'}) dan metode pembelajaran (${metodePembelajaran?.join(', ') || 'Metode Terpilih'}) ke dalam tindakan konkret guru dan siswa.
+3. Tuliskan dialog guru, pertanyaan pemandu, media nyata, dan tindakan aktif siswa secara gamblang.
+4. Sesuaikan tingkat kesulitan dan bahasa dengan ${faseInfo}.`;
 }
 
 export interface CacheToDatabaseResult {
@@ -84,9 +152,10 @@ export async function generateModulAjarAiContent(
   topik: string,
   fase: string,
   modelPembelajaran?: string,
+  metodePembelajaran?: string[],
   onCacheError?: (message: string) => void
 ): Promise<AiModulAjarContent> {
-  const prompt = buildPrompt(mapel, topik, fase, modelPembelajaran);
+  const prompt = buildPrompt(mapel, topik, fase, modelPembelajaran, metodePembelajaran);
 
   logger.info(`[AI Modul Ajar] Generating: ${mapel} / ${topik} / Fase ${fase}`, 'ModulAjarAI');
 
@@ -100,6 +169,17 @@ export async function generateModulAjarAiContent(
     tujuanPembelajaran: result.tujuanPembelajaran || [],
     pemahamanBermakna: result.pemahamanBermakna || [],
     pertanyaanPemantik: result.pertanyaanPemantik || [],
+    kegiatanPendahuluan: result.kegiatanPendahuluan || [],
+    skenarioPembelajaran: (result.skenarioPembelajaran && Array.isArray(result.skenarioPembelajaran) && result.skenarioPembelajaran.length > 0)
+      ? result.skenarioPembelajaran.map((s: any) => ({
+          name: s.name || s.fase || s.nama_langkah || 'Langkah Aktivitas',
+          fase: s.name || s.fase || s.nama_langkah || 'Langkah Aktivitas',
+          guru: s.guru || s.kegiatanGuru || s.kegiatan_guru || '',
+          siswa: s.siswa || s.kegiatanSiswa || s.kegiatan_siswa || '',
+          alokasiWaktu: s.alokasiWaktu || s.estimasi_menit || '',
+        }))
+      : [],
+    kegiatanPenutup: result.kegiatanPenutup || [],
     lkpdTugas: result.lkpdTugas || '',
     soalEvaluasi: normalizeSoalEvaluasi(result.soalEvaluasi),
     kunciJawaban: Array.isArray(result.kunciJawaban)
@@ -120,7 +200,6 @@ export async function generateModulAjarAiContent(
     pengayaan: result.pengayaan || [],
     remedial: result.remedial || [],
     daftarPustaka: result.daftarPustaka || [],
-    skenarioPembelajaran: result.skenarioPembelajaran || [],
   };
 
   // Simpan draf ke Bank Bersama — non-blocking, tapi error dilaporkan ke UI

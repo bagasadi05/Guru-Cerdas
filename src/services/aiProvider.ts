@@ -54,19 +54,19 @@ interface RouteConfig {
 }
 
 const ROUTING: Record<AiTaskType, RouteConfig> = {
-  'teacher-report':   { primary: 'gemini', model: 'gemini-2.5-flash' },
-  'child-analysis':   { primary: 'gemini', model: 'gemini-2.5-flash' },
-  'modul-ajar':       { primary: 'gemini', model: 'gemini-2.5-flash' },
+  'teacher-report':   { primary: 'gemini', model: 'gemini-2.0-flash' },
+  'child-analysis':   { primary: 'gemini', model: 'gemini-2.0-flash' },
+  'modul-ajar':       { primary: 'gemini', model: 'gemini-2.0-flash' },
   'grade-adjustment': { primary: 'groq',  model: 'llama-3.1-8b-instant' },
   insight:            { primary: 'groq',  model: 'llama-3.1-8b-instant' },
   'parse-values':     { primary: 'groq',  model: 'llama-3.1-8b-instant' },
-  general:            { primary: 'gemini', model: 'gemini-2.5-flash' },
+  general:            { primary: 'gemini', model: 'gemini-2.0-flash' },
 };
 
 const FALLBACK_MODELS: Record<AiTaskType, string> = {
   'teacher-report':   'llama-3.3-70b-versatile',
   'child-analysis':   'llama-3.3-70b-versatile',
-  'modul-ajar':       'mixtral-8x7b-32768',
+  'modul-ajar':       'llama-3.3-70b-versatile',
   'grade-adjustment': 'gemini-2.0-flash',
   insight:            'gemini-2.0-flash',
   'parse-values':     'gemini-2.0-flash',

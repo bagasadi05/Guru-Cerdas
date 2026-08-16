@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { modulAjarAiService } from '../../../../services/modulAjarAiService';
+import { generateModulAjarAiContent } from '../../../../services/modulAjarAiGenerator';
 import { resolveModelId } from '../../../../services/modelIdResolver';
 import { generateAiFingerprint } from '../utils/aiFingerprint';
 import { FormState } from '../types';
@@ -12,11 +13,8 @@ export function useModulAjarAiJob(
   onError: (errorMsg: string) => void
 ) {
   const [jobStatus, setJobStatus] = useState<QueueStatus>('idle');
-  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const pollIntervalRef = useRef<number | null>(null);
-  const pollStatusRef = useRef<() => Promise<void>>(async () => {});
 
   const getFingerprint = async () => {
     if (!formState.mataPelajaran || !formState.topik) return '';
@@ -29,115 +27,59 @@ export function useModulAjarAiJob(
     });
   };
 
-
   const startJob = async () => {
-    if (isSubmitting || jobStatus === 'pending' || jobStatus === 'processing') return; // Prevent double-click
-    setIsSubmitting(true);
-    setErrorMessage(null);
-    setJobStatus('pending');
+    if (isSubmitting || jobStatus === 'processing' || jobStatus === 'pending') return;
 
-    const fingerprint = await getFingerprint();
-    if (!fingerprint) {
-      setIsSubmitting(false);
-      setJobStatus('failed');
-      onError('Mata pelajaran dan topik wajib diisi.');
+    if (!formState.mataPelajaran?.trim() || !formState.topik?.trim()) {
+      onError('Mata pelajaran dan topik wajib diisi terlebih dahulu.');
       return;
     }
-    
+
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    setJobStatus('processing');
+
     try {
-      // Check verified cache first
-      const hasCache = await modulAjarAiService.checkCacheHit(fingerprint);
-      if (hasCache) {
-        setJobStatus('completed');
-        setIsSubmitting(false);
-        onSuccess(null, 'Cache hit: Data terverifikasi tersedia di database!');
-        return;
+      // 1. Check verified cache in bank data first
+      const fingerprint = await getFingerprint();
+      if (fingerprint) {
+        try {
+          const hasCache = await modulAjarAiService.checkCacheHit(fingerprint);
+          if (hasCache) {
+            setJobStatus('completed');
+            setIsSubmitting(false);
+            onSuccess(null, 'Data modul ajar terverifikasi tersedia di database!');
+            return;
+          }
+        } catch {
+          // Cache check is non-blocking, proceed to direct generation
+        }
       }
 
-      // Check if there is an active job running for this fingerprint
-      let job = await modulAjarAiService.getActiveJobByFingerprint(fingerprint);
+      // 2. Direct real-time AI Generation
+      const aiResult = await generateModulAjarAiContent(
+        formState.mataPelajaran.trim(),
+        formState.topik.trim(),
+        formState.fase || 'A',
+        formState.modelPembelajaran,
+        formState.metodePembelajaran,
+        (cacheWarning) => {
+          console.warn('[AI Cache Notice]:', cacheWarning);
+        }
+      );
 
-      // If not, enqueue new job
-      if (!job) {
-        const resolvedModelId = await resolveModelId(formState.selectedModelId);
-        const inputJson = {
-          mapel: formState.mataPelajaran,
-          fase: formState.fase,
-          topik: formState.topik,
-          cp: formState.capaianPembelajaran,
-          modelPenyampaian: formState.modelPembelajaran,
-          modelUuid: resolvedModelId
-        };
-
-        job = await modulAjarAiService.enqueueJob({
-          requestFingerprint: fingerprint,
-          inputJson
-        });
-      }
-
-      if (job) {
-        setCurrentJobId(job.id);
-        setJobStatus(job.status as QueueStatus);
-        
-        // Trigger worker manually to speed up cold-starts
-        modulAjarAiService.triggerWorkerAsync();
-      } else {
-        throw new Error('Gagal membuat antrean AI.');
-      }
+      setJobStatus('completed');
+      onSuccess(aiResult, 'Modul Ajar berhasil disusun oleh AI!');
     } catch (e: any) {
+      console.error('[AI Modul Ajar] Generation error:', e);
       setJobStatus('failed');
-      setErrorMessage(e.message || 'Terjadi kesalahan sistem.');
-      onError(e.message || 'Terjadi kesalahan sistem.');
+      const msg = e.message || 'Gagal menyusun modul ajar dengan AI. Silakan coba lagi.';
+      setErrorMessage(msg);
+      onError(msg);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const pollStatus = async () => {
-    if (!currentJobId) return;
-
-    try {
-      const job = await modulAjarAiService.getJobStatus(currentJobId);
-      if (!job) return;
-
-      setJobStatus(job.status as QueueStatus);
-
-      if (job.status === 'completed') {
-        stopPolling();
-        onSuccess(job.result_json, 'Pembuatan Modul Ajar AI selesai!');
-      } else if (job.status === 'failed' || job.status === 'cancelled') {
-        stopPolling();
-        const msg = job.error_detail || 'Job AI dibatalkan atau gagal diprose server.';
-        setErrorMessage(msg);
-        onError(msg);
-      }
-    } catch (err) {
-      console.warn('Error polling job status:', err);
-    }
-  };
-
-  pollStatusRef.current = pollStatus;
-
-  const stopPolling = () => {
-    if (pollIntervalRef.current) {
-      window.clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
-  };
-
-  useEffect(() => {
-    if (jobStatus === 'pending' || jobStatus === 'processing' || jobStatus === 'retry_wait') {
-      if (!pollIntervalRef.current) {
-        pollIntervalRef.current = window.setInterval(() => {
-          pollStatusRef.current();
-        }, 3000);
-      }
-    } else {
-      stopPolling();
-    }
-
-    return () => stopPolling();
-  }, [jobStatus, currentJobId]);
 
   return {
     jobStatus,
@@ -146,8 +88,8 @@ export function useModulAjarAiJob(
     isSubmitting,
     resetJob: () => {
       setJobStatus('idle');
-      setCurrentJobId(null);
       setErrorMessage(null);
+      setIsSubmitting(false);
     }
   };
 }

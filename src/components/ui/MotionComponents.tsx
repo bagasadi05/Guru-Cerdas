@@ -23,7 +23,7 @@
  * @module components/ui/MotionComponents
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, forwardRef } from 'react';
 // Type-only imports — erased at build time, zero runtime cost. The actual
 // module is fetched by MotionProvider on demand.
 import type {
@@ -120,13 +120,13 @@ const MOTION_ONLY_PROPS = new Set<string>([
  * renders the real motion component with all props; otherwise it renders a
  * plain element with motion-only props stripped (passthrough fallback).
  */
-function createMotionComponent(tag: string) {
-  const Component: React.FC<Record<string, unknown>> = (props) => {
+function createMotionComponent<T extends HTMLElement | SVGElement = HTMLElement>(tag: string) {
+  const Component = forwardRef<T, Record<string, unknown>>((props, ref) => {
     const motionModule = useContext(MotionContext);
 
     if (motionModule) {
       const MotionTag = (motionModule.motion as unknown as Record<string, React.ElementType>)[tag];
-      return <MotionTag {...props} />;
+      return <MotionTag ref={ref} {...props} />;
     }
 
     // Passthrough fallback: plain element, motion-only props stripped.
@@ -134,8 +134,9 @@ function createMotionComponent(tag: string) {
     for (const [key, value] of Object.entries(props)) {
       if (!MOTION_ONLY_PROPS.has(key)) domProps[key] = value;
     }
-    return React.createElement(tag, domProps as React.HTMLAttributes<HTMLElement>);
-  };
+    return React.createElement(tag, { ...domProps, ref } as React.HTMLAttributes<HTMLElement>);
+  });
+  Component.displayName = `Motion${tag.charAt(0).toUpperCase() + tag.slice(1)}`;
   return Component;
 }
 
@@ -143,14 +144,14 @@ function createMotionComponent(tag: string) {
 // EXPORTS — single import surface for ALL motion components
 // =============================================================================
 
-export const MotionDiv = createMotionComponent('div') as unknown as React.FC<HTMLMotionProps<'div'>>;
-export const MotionButton = createMotionComponent('button') as unknown as React.FC<HTMLMotionProps<'button'>>;
-export const MotionSpan = createMotionComponent('span') as unknown as React.FC<HTMLMotionProps<'span'>>;
-export const MotionP = createMotionComponent('p') as unknown as React.FC<HTMLMotionProps<'p'>>;
-export const MotionSection = createMotionComponent('section') as unknown as React.FC<HTMLMotionProps<'section'>>;
-export const MotionCircle = createMotionComponent('circle') as unknown as React.FC<SVGMotionProps<'circle'>>;
-export const MotionLi = createMotionComponent('li') as unknown as React.FC<HTMLMotionProps<'li'>>;
-export const MotionTr = createMotionComponent('tr') as unknown as React.FC<HTMLMotionProps<'tr'>>;
+export const MotionDiv = createMotionComponent<HTMLDivElement>('div') as unknown as React.ForwardRefExoticComponent<HTMLMotionProps<'div'> & React.RefAttributes<HTMLDivElement>>;
+export const MotionButton = createMotionComponent<HTMLButtonElement>('button') as unknown as React.ForwardRefExoticComponent<HTMLMotionProps<'button'> & React.RefAttributes<HTMLButtonElement>>;
+export const MotionSpan = createMotionComponent<HTMLSpanElement>('span') as unknown as React.ForwardRefExoticComponent<HTMLMotionProps<'span'> & React.RefAttributes<HTMLSpanElement>>;
+export const MotionP = createMotionComponent<HTMLParagraphElement>('p') as unknown as React.ForwardRefExoticComponent<HTMLMotionProps<'p'> & React.RefAttributes<HTMLParagraphElement>>;
+export const MotionSection = createMotionComponent<HTMLElement>('section') as unknown as React.ForwardRefExoticComponent<HTMLMotionProps<'section'> & React.RefAttributes<HTMLElement>>;
+export const MotionCircle = createMotionComponent<SVGCircleElement>('circle') as unknown as React.ForwardRefExoticComponent<SVGMotionProps<'circle'> & React.RefAttributes<SVGCircleElement>>;
+export const MotionLi = createMotionComponent<HTMLLIElement>('li') as unknown as React.ForwardRefExoticComponent<HTMLMotionProps<'li'> & React.RefAttributes<HTMLLIElement>>;
+export const MotionTr = createMotionComponent<HTMLTableRowElement>('tr') as unknown as React.ForwardRefExoticComponent<HTMLMotionProps<'tr'> & React.RefAttributes<HTMLTableRowElement>>;
 
 /**
  * AnimatePresence wrapper — real framer AnimatePresence when loaded,

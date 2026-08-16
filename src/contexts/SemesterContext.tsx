@@ -180,3 +180,7 @@ export const useSemester = () => {
     }
     return context;
 };
+
+export const useOptionalSemester = () => {
+    return useContext(SemesterContext);
+};

@@ -49,6 +49,9 @@ export interface FormState {
   pendekatanPembelajaran?: 'Student Centered' | 'Teacher Centered';
   selectedModelId?: string;
   teknikPembelajaran?: string;
+
+  // Document Formatting
+  paperSize?: 'A4' | 'F4';
 }
 
 export interface RubrikRow {
