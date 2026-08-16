@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { resolveModelId } from './modelIdResolver';
 import { normalizeSoalEvaluasi } from './modulAjarAiGenerator';
 
 export interface RefBoilerplateTopik {
@@ -211,7 +212,11 @@ export const modulAjarContentService = {
 
   // 2. Get Sintaks Kegiatan with Interpolation
   async getSintaksKegiatan(modelId: string, placeholders: { topik: string; mapel: string; kelas: string }): Promise<RefSintaksKegiatan[]> {
-    const { data, error } = await supabase.from('ref_sintaks_kegiatan').select('*').eq('model_id', modelId).order('urutan', { ascending: true });
+    // UI legacy slug ('pbl') must be resolved to the real uuid PK, otherwise
+    // PostgREST rejects it: invalid input syntax for type uuid (HTTP 400).
+    const resolvedId = await resolveModelId(modelId);
+    if (!resolvedId) return [];
+    const { data, error } = await supabase.from('ref_sintaks_kegiatan').select('*').eq('model_id', resolvedId).order('urutan', { ascending: true });
     
     if (error || !data) return [];
 

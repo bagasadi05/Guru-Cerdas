@@ -15,6 +15,52 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Slug model UI (mis. 'pbl') -> nama_model kanonik di DB. */
+const WORKER_MODEL_SLUG_ALIASES: Record<string, string> = {
+  pbl: 'Problem Based Learning (PBL)',
+  case_method: 'Case Method (Studi Kasus)',
+  pjbl: 'Project Based Learning (PjBL)',
+  discovery: 'Discovery Learning',
+  inquiry_terbimbing: 'Inquiry Terbimbing (Guided Inquiry)',
+  stad: 'STAD (Student Teams Achievement Divisions)',
+  jigsaw: 'Jigsaw',
+  tps: 'Think-Pair-Share (TPS)',
+  pjbl_fids: 'Project Based Learning (PjBL - FIDS)',
+  arka: 'Experiential Learning (ARKA)',
+  deep_learning_mmj: 'Deep Learning (Mindful-Meaningful-Joyful)',
+};
+
+function workerNormalize(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Resolve legacy slug / nama_model ke uuid PK ref_model_pembelajaran. */
+async function resolveWorkerModelId(supabase: SupabaseClient, value: string | null | undefined): Promise<string | null> {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (UUID_RE.test(trimmed)) return trimmed;
+
+  const { data: models } = await supabase
+    .from('ref_model_pembelajaran')
+    .select('id, nama_model');
+
+  const aliasTarget = WORKER_MODEL_SLUG_ALIASES[trimmed.toLowerCase()];
+  const norm = (s: string) => workerNormalize(s);
+
+  const byAlias = models?.find((m: any) => m.nama_model && norm(m.nama_model) === norm(aliasTarget || ''));
+  if (byAlias) return byAlias.id;
+
+  const byFuzzy = models?.find((m: any) => m.nama_model && norm(m.nama_model) === norm(trimmed));
+  return byFuzzy?.id ?? null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -131,19 +177,24 @@ async function processQueue(supabase: SupabaseClient) {
       let modelData = null;
       let sintaksData: any[] = [];
       if (input.modelUuid) {
-        const { data: mData } = await supabase
-          .from('ref_model_pembelajaran')
-          .select('*')
-          .eq('id', input.modelUuid)
-          .maybeSingle();
-        modelData = mData;
+        // Terima legacy slug ('pbl') dari client lama: resolve dulu ke uuid.
+        // Slug yang tidak dikenal → fallback ke nama model / resolver lokal.
+        const modelUuid = await resolveWorkerModelId(supabase, input.modelUuid);
+        if (modelUuid) {
+          const { data: mData } = await supabase
+            .from('ref_model_pembelajaran')
+            .select('*')
+            .eq('id', modelUuid)
+            .maybeSingle();
+          modelData = mData;
 
-        const { data: sData } = await supabase
-          .from('ref_sintaks_kegiatan')
-          .select('*')
-          .eq('model_id', input.modelUuid)
-          .order('urutan', { ascending: true });
-        sintaksData = sData || [];
+          const { data: sData } = await supabase
+            .from('ref_sintaks_kegiatan')
+            .select('*')
+            .eq('model_id', modelUuid)
+            .order('urutan', { ascending: true });
+          sintaksData = sData || [];
+        }
       }
 
       // Resolve syntax using non-blocking fallback resolver

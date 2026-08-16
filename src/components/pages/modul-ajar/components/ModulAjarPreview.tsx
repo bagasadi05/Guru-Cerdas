@@ -22,15 +22,19 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
         <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          ref={previewRef}
-          className="w-full max-w-4xl bg-white p-8 md:p-12 lg:p-16 shadow-xl rounded-lg border border-slate-200 dark:border-slate-800 min-h-full text-black focus:outline-none"
-          style={{
-            fontFamily: "'Times New Roman', Times, serif"
-          }}
-          contentEditable
-          suppressContentEditableWarning
-          dangerouslySetInnerHTML={{ __html: sanitizeContent(generatedDocument) }}
-        />
+          className="w-full max-w-4xl min-h-full"
+        >
+          <div
+            ref={previewRef}
+            className="bg-white p-8 md:p-12 lg:p-16 shadow-xl rounded-lg border border-slate-200 dark:border-slate-800 min-h-full text-black focus:outline-none"
+            style={{
+              fontFamily: "'Times New Roman', Times, serif"
+            }}
+            contentEditable
+            suppressContentEditableWarning
+            dangerouslySetInnerHTML={{ __html: sanitizeContent(generatedDocument) }}
+          />
+        </MotionDiv>
       ) : (
         <div className="w-full max-w-4xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 rounded-lg min-h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 p-8 text-center space-y-4">
           <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-2 animate-pulse">

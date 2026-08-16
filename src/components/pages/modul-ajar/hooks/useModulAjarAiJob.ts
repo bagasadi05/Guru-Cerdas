@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { modulAjarAiService } from '../../../../services/modulAjarAiService';
+import { resolveModelId } from '../../../../services/modelIdResolver';
 import { generateAiFingerprint } from '../utils/aiFingerprint';
 import { FormState } from '../types';
 
@@ -17,13 +18,14 @@ export function useModulAjarAiJob(
   const pollIntervalRef = useRef<number | null>(null);
   const pollStatusRef = useRef<() => Promise<void>>(async () => {});
 
-  const getFingerprint = () => {
+  const getFingerprint = async () => {
     if (!formState.mataPelajaran || !formState.topik) return '';
+    const resolvedModelId = await resolveModelId(formState.selectedModelId);
     return generateAiFingerprint({
       mapel: formState.mataPelajaran,
       fase: formState.fase,
       topik: formState.topik,
-      modelUuid: formState.selectedModelId || 'unknown'
+      modelUuid: resolvedModelId || 'unknown'
     });
   };
 
@@ -34,7 +36,7 @@ export function useModulAjarAiJob(
     setErrorMessage(null);
     setJobStatus('pending');
 
-    const fingerprint = getFingerprint();
+    const fingerprint = await getFingerprint();
     if (!fingerprint) {
       setIsSubmitting(false);
       setJobStatus('failed');
@@ -57,13 +59,14 @@ export function useModulAjarAiJob(
 
       // If not, enqueue new job
       if (!job) {
+        const resolvedModelId = await resolveModelId(formState.selectedModelId);
         const inputJson = {
           mapel: formState.mataPelajaran,
           fase: formState.fase,
           topik: formState.topik,
           cp: formState.capaianPembelajaran,
           modelPenyampaian: formState.modelPembelajaran,
-          modelUuid: formState.selectedModelId
+          modelUuid: resolvedModelId
         };
 
         job = await modulAjarAiService.enqueueJob({

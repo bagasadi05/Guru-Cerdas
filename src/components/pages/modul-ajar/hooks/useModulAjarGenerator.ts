@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../../../../services/supabase';
 import { modulAjarContentService } from '../../../../services/modulAjarContentService';
+import { resolveModelId } from '../../../../services/modelIdResolver';
 import { generateModulAjarAiContent, normalizeSoalEvaluasi } from '../../../../services/modulAjarAiGenerator';
 import { resolveLearningSyntax } from '../utils/syntaxResolver';
 import { buildHtmlTemplate } from '../utils/template';
@@ -89,6 +90,9 @@ export const useModulAjarGenerator = ({
       const selectedModelObj = models.find(m => m.id === modelIdToUse || m.nama_model === formState.modelPembelajaran);
       if (selectedModelObj) {
         modelIdToUse = selectedModelObj.id;
+      } else {
+        // Slug fallback (static catalog id seperti 'pbl') — resolve ke UUID DB.
+        modelIdToUse = (await resolveModelId(modelIdToUse)) || modelIdToUse;
       }
 
       const sintaksList = modelIdToUse

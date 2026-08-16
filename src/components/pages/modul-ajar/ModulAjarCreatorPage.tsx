@@ -201,7 +201,9 @@ const ModulAjarCreatorPage: React.FC = () => {
   };
 
   const handlePrint = () => {
-    const printContent = previewRef.current?.innerHTML;
+    // Prefer the raw generated HTML (full inline styling) over the
+    // sanitized preview DOM, which strips style attributes needed for print.
+    const printContent = generatedDocument || previewRef.current?.innerHTML;
     if (!printContent) return;
     
     const printWindow = window.open('', '', 'height=600,width=800');
@@ -232,7 +234,9 @@ const ModulAjarCreatorPage: React.FC = () => {
   };
 
   const handleExportWord = () => {
-    const printContent = previewRef.current?.innerHTML;
+    // Use the raw generated HTML (full inline styling) rather than the
+    // sanitized preview DOM so the .doc keeps table borders & colors.
+    const printContent = generatedDocument || previewRef.current?.innerHTML;
     if (!printContent) return;
 
     const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
@@ -276,7 +280,7 @@ const ModulAjarCreatorPage: React.FC = () => {
   return (
     <div className="h-full flex flex-col lg:flex-row gap-6 pb-20 lg:pb-0">
       {aiCacheWarning && (
-        <div className="fixed top-4 right-4 z-50 max-w-sm bg-amber-50 dark:bg-amber-950/90 border border-amber-300 dark:border-amber-700 rounded-xl shadow-lg p-4 text-sm">
+        <div className="fixed top-16 right-4 z-50 max-w-sm bg-amber-50 dark:bg-amber-950/90 border border-amber-300 dark:border-amber-700 rounded-xl shadow-lg p-4 text-sm">
           <div className="flex items-start gap-2">
             <span className="text-amber-500 dark:text-amber-400 font-bold">⚠️</span>
             <div className="flex-1">
