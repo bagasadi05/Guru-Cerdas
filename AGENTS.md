@@ -1,18 +1,31 @@
-<!-- startup-ritual v1 -->
-# 🚀 Startup Ritual — Auto-Invoke Skills
+<!-- memory v2 -->
+# Portal Guru — Memory
 
-**Ketika user mengirim pesan pertama di sesi baru**, langsung invoke skill berikut secara BERURUTAN SEBELUM menjawab pertanyaan user. Tunggu skill selesai sebelum lanjut ke skill berikutnya.
+## Skill Utama (SELALU AKTIF)
 
-## Urutan Eksekusi
+Di awal **SETIAP tugas**, aktivasi skill `portal-guru` (via `activate_skill`). Ini playbook gabungan:
+konvensi project + workflow universal (quality gates, security, docs, routing skill bawaan).
+Jika tidak auto-load, muat manual sebelum menjawab/menulis kode.
 
-1. **`/review`** — review kode saat ini (prioritas utama)
-2. **`/code-review`** — code review diff yang ada
-3. **`/update-docs`** — update dokumentasi jika ada perubahan
-4. **`/security-scan`** — scan keamanan dasar
-5. **`/focused-fix`** — siapkan mode fix jika ada isu
+## Startup Ritual
 
-## Catatan
-- Jika user mengirim pesan yang mendesak (error, bug urgent), prioritaskan jawab dulu baru ritual.
-- Jika salah satu skill error/skip, lanjutkan ke skill berikutnya — jangan berhenti.
-- Skill di luar 5 di atas tetap tersedia on-demand via `/nama-skill`.
-<!-- /startup-ritual -->
+1. `/portal-guru` — muat playbook utama
+2. Review perubahan: `rtk git diff --stat`
+3. Quality gate: `rtk tsc` → `rtk lint` → `rtk npm test`
+4. Update docs jika ada perubahan
+5. Security scan dasar
+
+(Pesan mendesak → jawab dulu, ritual sesudah. Skill error/skip → lanjut langkah berikutnya.)
+
+## Pointer Cepat
+
+- Arsitektur & konvensi → `references/project-guide.md` (dalam skill portal-guru)
+- Perintah → `references/commands.md`
+- Graphify → `references/graphify.md`
+- CI/CD → `references/ci-cd.md`
+- Pertanyaan produk Command Code → skill `command-code-knowledge`
+- Ubah settings → `cmdc config set <key> <value> --scope user|project`
+
+## Bahasa
+
+Code & komentar dalam Bahasa Inggris. Dokumentasi & teks user-facing dalam Bahasa Indonesia.
