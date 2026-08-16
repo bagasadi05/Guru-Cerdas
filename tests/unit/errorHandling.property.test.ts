@@ -48,6 +48,10 @@ beforeEach(() => {
     }
     return null;
   });
+
+  // Silence console output during property tests
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 describe('Property-Based Testing: Error Capture and Context', () => {

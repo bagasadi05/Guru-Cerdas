@@ -20,10 +20,13 @@ import { ModulAjarHistory } from './components/ModulAjarHistory';
 import { ModulAjarPreview } from './components/ModulAjarPreview';
 import { useModulAjarForm } from './hooks/useModulAjarForm';
 import { useModulAjarGenerator } from './hooks/useModulAjarGenerator';
+import { useToast } from '../../../hooks/useToast';
+import { ConfirmationDialog } from '../../ui/ConfirmationDialog';
 
 const ModulAjarCreatorPage: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   const {
     formState,
@@ -52,6 +55,7 @@ const ModulAjarCreatorPage: React.FC = () => {
   const [aiCacheWarning, setAiCacheWarning] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string>('');
   const [fieldLoading, setFieldLoading] = useState<Record<string, boolean>>({});
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -137,7 +141,7 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const handleGenerate = () => {
     if (!formState.mataPelajaran || !formState.topik) {
-      alert(t.lessonPlan.validateSubject);
+      toast.error(t.lessonPlan.validateSubject);
       return;
     }
     if (isAiEnabled) {
@@ -149,7 +153,7 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const handleAiFillField = async (field: string) => {
     if (!formState.mataPelajaran || !formState.topik) {
-      alert(t.lessonPlan.validateTopic);
+      toast.error(t.lessonPlan.validateTopic);
       return;
     }
     setFieldLoading(prev => ({ ...prev, [field]: true }));
@@ -183,7 +187,7 @@ const ModulAjarCreatorPage: React.FC = () => {
       handleInputChange(field as keyof FormState, content);
     } catch (err: any) {
       console.error(`[AI Field] ${field} generation failed:`, err);
-      alert(t.lessonPlan.saveFailed.replace('{message}', err.message));
+      toast.error(t.lessonPlan.saveFailed.replace('{message}', err.message));
     } finally {
       setFieldLoading(prev => ({ ...prev, [field]: false }));
     }
@@ -193,10 +197,10 @@ const ModulAjarCreatorPage: React.FC = () => {
     if (!previewRef.current) return;
     try {
       await navigator.clipboard.writeText(previewRef.current.innerText);
-      alert(t.lessonPlan.copySuccess);
+      toast.success(t.lessonPlan.copySuccess);
     } catch (e) {
       console.error('Gagal menyalin ke clipboard:', e);
-      alert('Gagal menyalin. Coba lagi atau gunakan Ctrl+C.');
+      toast.error('Gagal menyalin. Coba lagi atau gunakan Ctrl+C.');
     }
   };
 
@@ -256,7 +260,12 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const deleteHistoryItem = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(t.lessonPlan.deleteConfirm)) return;
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDeleteHistory = async () => {
+    if (!deleteConfirmId) return;
+    const id = deleteConfirmId;
     try {
       const { error } = await supabase.from('lesson_plans').delete().eq('id', id);
       if (!error) {
@@ -264,9 +273,15 @@ const ModulAjarCreatorPage: React.FC = () => {
         if (generatedDocument && history.find(item => item.id === id)?.generated_content === generatedDocument) {
           setGeneratedDocument('');
         }
+        toast.success('Riwayat berhasil dihapus');
+      } else {
+        toast.error(`Gagal menghapus: ${error.message}`);
       }
     } catch (err) {
       console.error('Failed to delete history item:', err);
+      toast.error('Gagal menghapus riwayat');
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -274,11 +289,18 @@ const ModulAjarCreatorPage: React.FC = () => {
     resetFormToDraft(plan);
     setGeneratedDocument(plan.generated_content);
     setActiveTab('preview');
-    alert(t.lessonPlan.restoreSuccess);
+    toast.success(t.lessonPlan.restoreSuccess);
   };
 
   return (
     <div className="h-full flex flex-col lg:flex-row gap-6 pb-20 lg:pb-0">
+      <ConfirmationDialog
+        isOpen={!!deleteConfirmId}
+        title={t.lessonPlan.deleteConfirm}
+        message="Tindakan ini tidak dapat dibatalkan. Riwayat modul ajar ini akan dihapus permanen."
+        onConfirm={confirmDeleteHistory}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
       {aiCacheWarning && (
         <div className="fixed top-16 right-4 z-50 max-w-sm bg-amber-50 dark:bg-amber-950/90 border border-amber-300 dark:border-amber-700 rounded-xl shadow-lg p-4 text-sm">
           <div className="flex items-start gap-2">

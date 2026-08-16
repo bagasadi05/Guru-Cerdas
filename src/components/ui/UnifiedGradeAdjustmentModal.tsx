@@ -6,6 +6,7 @@ import { calculateFormulaScore, analyzeAndAdjustGradesWithAI, AIStudentAdjustmen
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
 import { exportGradesWithTemplate } from '../../utils/gradeExporter';
+import { logger } from '../../services/logger';
 import { 
     SparklesIcon, 
     PrinterIcon, 
@@ -218,7 +219,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
             );
             toast.success('Daftar nilai berhasil diexport ke Excel menggunakan template sekolah!');
         } catch (error: any) {
-            console.error(error);
+            logger.error('Failed to export grades', error);
             toast.error(`Gagal mengekspor data: ${error.message || error}`);
         }
     };

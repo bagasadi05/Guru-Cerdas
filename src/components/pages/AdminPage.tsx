@@ -23,6 +23,7 @@ import { supabase } from '../../services/supabase';
 import { softDelete } from '../../services/SoftDeleteService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
+import { ConfirmationDialog } from '../ui/ConfirmationDialog';
 
 // Import from admin module
 import {
@@ -116,6 +117,8 @@ const AdminPage: React.FC = () => {
 
     // Delete Modal State
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; user: UserRoleRecord | null }>({ show: false, user: null });
+    const [permanentDeleteUserId, setPermanentDeleteUserId] = useState<string | null>(null);
+    const [deleteAnnouncementConfirmId, setDeleteAnnouncementConfirmId] = useState<string | null>(null);
 
     // Undo Toast State
     // P0 Fix: Type yang benar untuk browser setTimeout
@@ -438,7 +441,7 @@ const AdminPage: React.FC = () => {
             fetchUsers();
             fetchActivityLogs();
         } catch (err: unknown) {
-            alert('Error: ' + (err as Error).message);
+            setError('Error: ' + (err as Error).message);
         } finally {
             setUpdating(false);
         }
@@ -546,13 +549,17 @@ const AdminPage: React.FC = () => {
     };
 
     // Permanently delete user (cannot be undone)
-    // P0 Fix: Cegah self-delete + ganti confirm() dengan setError
-    const permanentDeleteUser = async (userId: string) => {
+    const requestPermanentDeleteUser = (userId: string) => {
         if (userId === user?.id) {
             setError('Tidak dapat menghapus akun sendiri');
             return;
         }
-        if (!confirm('HAPUS PERMANEN? Pengguna tidak akan bisa dipulihkan!')) return;
+        setPermanentDeleteUserId(userId);
+    };
+
+    const permanentDeleteUser = async () => {
+        if (!permanentDeleteUserId) return;
+        const userId = permanentDeleteUserId;
 
         try {
             const deletedUser = deletedUsers.find(u => u.user_id === userId) || null;
@@ -563,13 +570,15 @@ const AdminPage: React.FC = () => {
             fetchActivityLogs();
         } catch (err: unknown) {
             setError('Error: ' + (err as Error).message);
+        } finally {
+            setPermanentDeleteUserId(null);
         }
     };
 
     // Create announcement
     const handleCreateAnnouncement = async (form: { title: string; content: string; audience_type: string }) => {
         if (!form.title || !form.content) {
-            alert('Judul dan konten wajib diisi');
+            setError('Judul dan konten wajib diisi');
             return;
         }
         try {
@@ -588,18 +597,21 @@ const AdminPage: React.FC = () => {
             // Keep the visible alert (already surfaced) and log full detail
             // so RLS/INSERT policy failures are traceable.
             console.error('Create announcement error:', err);
-            alert('Error: ' + (err as Error).message);
+            setError('Error: ' + (err as Error).message);
         }
     };
 
     // Delete announcement
-    const handleDeleteAnnouncement = async (id: string) => {
-        if (!confirm('Hapus pengumuman ini?')) return;
+    const requestDeleteAnnouncement = (id: string) => setDeleteAnnouncementConfirmId(id);
+
+    const handleDeleteAnnouncement = async () => {
+        if (!deleteAnnouncementConfirmId) return;
+        const id = deleteAnnouncementConfirmId;
         try {
             const announcement = announcements.find(a => a.id === id) || null;
             const result = await softDelete('announcements', id);
             if (!result.success) {
-                alert('Gagal menghapus pengumuman: ' + result.error);
+                setError('Gagal menghapus pengumuman: ' + result.error);
                 return;
             }
             await logAdminAction('announcements', 'DELETE', id, announcement, null);
@@ -607,7 +619,9 @@ const AdminPage: React.FC = () => {
             fetchActivityLogs();
         } catch (err: unknown) {
             console.error('Delete announcement exception:', err);
-            alert('Error: ' + (err as Error).message);
+            setError('Error: ' + (err as Error).message);
+        } finally {
+            setDeleteAnnouncementConfirmId(null);
         }
     };
 
@@ -747,7 +761,7 @@ const AdminPage: React.FC = () => {
                         handleToggleApproval={handleToggleApproval}
                         openDeleteModal={openDeleteModal}
                         restoreUser={restoreUser}
-                        permanentDeleteUser={permanentDeleteUser}
+                        permanentDeleteUser={requestPermanentDeleteUser}
                         userTotal={userTotal}
                         deletedTotal={deletedTotal}
                         showDeletedUsers={showDeletedUsers}
@@ -763,7 +777,7 @@ const AdminPage: React.FC = () => {
                         onCreateAnnouncement={async (form) => {
                             await handleCreateAnnouncement(form);
                         }}
-                        onDeleteAnnouncement={handleDeleteAnnouncement}
+                        onDeleteAnnouncement={requestDeleteAnnouncement}
                     />
                 )}
 

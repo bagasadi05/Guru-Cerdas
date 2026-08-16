@@ -6,7 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { MotionDiv } from '../ui/MotionComponents';
 import { useTour } from '../OnboardingHelp';
 import AnalyticsPageSkeleton from '../skeletons/AnalyticsPageSkeleton';
-import AnalyticsExportModal from './analytics/AnalyticsExportModal';
+import AnalyticsExportModal, { ExportOptions } from './analytics/AnalyticsExportModal';
 import { generateAnalyticsPdf } from '../../utils/analyticsPdfGenerator';
 import { useAnalyticsData } from './analytics/useAnalyticsData';
 
@@ -71,7 +71,7 @@ const AnalyticsPage: React.FC = () => {
         ? 'Semua Kelas'
         : classes.find(cls => cls.id === selectedClassId)?.name || 'Kelas Dipilih';
 
-    const processExport = async (options: any) => {
+    const processExport = async (options: ExportOptions) => {
         const analyticsData = {
             students,
             classStats,
@@ -142,7 +142,7 @@ const AnalyticsPage: React.FC = () => {
                         <CalendarIcon className="w-4 h-4 text-slate-400 hidden sm:block" />
                         <CustomDropdown
                             value={dateRange}
-                            onChange={(val) => setDateRange(val as any)}
+                            onChange={(val) => setDateRange(val as '7d' | '30d' | '90d' | 'all')}
                             options={[
                                 { value: '7d', label: '7 Hari Terakhir' },
                                 { value: '30d', label: '30 Hari Terakhir' },

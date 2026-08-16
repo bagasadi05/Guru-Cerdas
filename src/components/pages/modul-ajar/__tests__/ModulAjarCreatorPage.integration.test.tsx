@@ -1,6 +1,6 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ModulAjarCreatorPage from '../ModulAjarCreatorPage';
 import { useAuth } from '../../../../hooks/useAuth';
@@ -13,6 +13,17 @@ vi.mock('../../../../hooks/useAuth', () => ({
 
 vi.mock('../../../../utils/i18n', () => ({
   useTranslation: vi.fn(),
+}));
+
+vi.mock('../../../../hooks/useToast', () => ({
+  useToast: vi.fn(() => ({
+    toast: {
+      success: vi.fn(),
+      error: vi.fn(),
+      warning: vi.fn(),
+      info: vi.fn(),
+    }
+  }))
 }));
 
 vi.mock('../../../../services/supabase', () => ({
@@ -60,6 +71,32 @@ describe('ModulAjarCreatorPage', () => {
       },
     });
 
+    // Mock window.Image to prevent logo_sekolah.png fetch error in vitest
+    const originalImage = window.Image;
+    window.Image = class {
+      onload: () => void = () => {};
+      onerror: () => void = () => {};
+      src = '';
+      constructor() {
+        setTimeout(() => this.onload(), 0);
+      }
+    } as any;
+    
+    // Mock global.fetch to prevent the invalid URL network error for relative path
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url === '/logo_sekolah.png') {
+        return Promise.resolve({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(['mock'], { type: 'image/png' }))
+        });
+      }
+      return originalFetch(url);
+    });
+
+    // Cleanup mocks after test
+    vi.stubGlobal('Image', window.Image);
+
     vi.clearAllMocks();
     (useAuth as any).mockReturnValue({
       user: { id: 'test-user-id', name: 'Test User' },
@@ -80,12 +117,18 @@ describe('ModulAjarCreatorPage', () => {
     });
   });
 
-  it('renders without crashing', () => {
-    render(
-      <QueryClientProvider client={queryClient}>
-        <ModulAjarCreatorPage />
-      </QueryClientProvider>
-    );
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('renders without crashing', async () => {
+    await act(async () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <ModulAjarCreatorPage />
+        </QueryClientProvider>
+      );
+    });
     expect(screen.getByText('Preview')).toBeInTheDocument();
     expect(screen.getByText('History')).toBeInTheDocument();
   });

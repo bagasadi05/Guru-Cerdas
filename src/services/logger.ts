@@ -41,6 +41,19 @@ interface LoggerConfig {
 const LOG_STORAGE_KEY = 'portal_guru_logs';
 const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+const safeStringify = (obj: any): string => {
+    let cache: any[] | null = [];
+    const retVal = JSON.stringify(obj, (key, value) => {
+        if (typeof value === "object" && value !== null) {
+            if (cache?.includes(value)) return "[Circular]";
+            cache?.push(value);
+        }
+        return value;
+    });
+    cache = null;
+    return retVal;
+};
+
 const levelPriority: Record<LogLevel, number> = {
     [LogLevel.DEBUG]: 0,
     [LogLevel.INFO]: 1,
@@ -91,7 +104,7 @@ export class Logger {
                 storedLogs.shift();
             }
 
-            localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(storedLogs));
+            localStorage.setItem(LOG_STORAGE_KEY, safeStringify(storedLogs));
         } catch (e) {
             // Storage might be full or unavailable
             console.warn('Failed to store log entry:', e);
@@ -176,7 +189,7 @@ export class Logger {
                 errorLogs.shift();
             }
 
-            localStorage.setItem('portal_guru_errors', JSON.stringify(errorLogs));
+            localStorage.setItem('portal_guru_errors', safeStringify(errorLogs));
         } catch {
             // Ignore storage errors
         }

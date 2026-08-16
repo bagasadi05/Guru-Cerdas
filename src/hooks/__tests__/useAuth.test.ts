@@ -274,6 +274,7 @@ describe('useAuth', () => {
   });
 
   it('should handle unexpected session fetch errors', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockSupabaseAuth.getSession.mockRejectedValue(new Error('Network error'));
     mockSupabaseAuth.onAuthStateChange.mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
@@ -287,6 +288,8 @@ describe('useAuth', () => {
     await waitFor(() => {
       expect(result.current.loading).toBe(true);
     });
+
+    consoleSpy.mockRestore();
   });
 
   // ── Auth State Change Subscription ─────────────────────────────────────────
