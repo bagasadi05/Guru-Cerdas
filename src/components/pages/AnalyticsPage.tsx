@@ -16,18 +16,19 @@ const AcademicTab = lazy(() => import('./analytics/AcademicTab').then(m => ({ de
 const AttendanceTab = lazy(() => import('./analytics/AttendanceTab').then(m => ({ default: m.AttendanceTab })));
 const ClassComparisonTab = lazy(() => import('./analytics/ClassComparisonTab'));
 const CharacterTab = lazy(() => import('./analytics/CharacterTab').then(m => ({ default: m.CharacterTab })));
+const PredictiveAnalyticsTab = lazy(() => import('./analytics/PredictiveAnalyticsTab').then(m => ({ default: m.PredictiveAnalyticsTab })));
 
 // UI Components
 import { Button } from '../ui/Button';
 import { CustomDropdown } from '../ui/CustomDropdown';
-import { Download, RefreshCwIcon, UsersIcon, CalendarIcon, LayoutDashboard, GraduationCap, Clock, ShieldAlert, BarChart3 } from 'lucide-react';
+import { Download, RefreshCwIcon, UsersIcon, CalendarIcon, LayoutDashboard, GraduationCap, Clock, ShieldAlert, BarChart3, Sparkles } from 'lucide-react';
 
 const AnalyticsPage: React.FC = () => {
     const { start } = useTour();
     const { userRole } = useAuth();
     const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'admin';
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'attendance' | 'character' | 'comparison'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'attendance' | 'character' | 'comparison' | 'predictive'>('overview');
 
     const {
         dateRange, setDateRange,
@@ -96,6 +97,7 @@ const AnalyticsPage: React.FC = () => {
         { id: 'academic', label: 'Akademik', icon: GraduationCap },
         { id: 'attendance', label: 'Kehadiran', icon: Clock },
         { id: 'character', label: 'Karakter', icon: ShieldAlert },
+        { id: 'predictive', label: 'Prediksi & AI', icon: Sparkles },
         { id: 'comparison', label: 'Perbandingan Kelas', icon: BarChart3 },
     ] as const;
 
@@ -207,6 +209,17 @@ const AnalyticsPage: React.FC = () => {
                             attendance={attendance}
                             violations={violations}
                             quizPoints={quizPoints}
+                            selectedClassId={selectedClassId}
+                        />
+                    )}
+                    {activeTab === 'predictive' && (
+                        <PredictiveAnalyticsTab
+                            students={students}
+                            classes={classes}
+                            attendance={attendance}
+                            academicRecords={academicRecords}
+                            violations={violations}
+                            tasks={_tasks}
                             selectedClassId={selectedClassId}
                         />
                     )}

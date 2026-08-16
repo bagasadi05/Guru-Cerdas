@@ -60,3 +60,94 @@ export interface AnalyticsDataPayload {
     // Processed stats (can be moved out or kept depending on who calculates them)
     // We will calculate them in a view model hook
 }
+
+// =============================================================================
+// PREDICTIVE ANALYTICS & AI REPORT TYPES (Roadmap Q3)
+// =============================================================================
+
+export type RiskLevel = 'low' | 'medium' | 'high';
+
+export interface RiskFactor {
+    category: 'attendance' | 'academic' | 'discipline' | 'task';
+    severity: 'low' | 'medium' | 'high';
+    title: string;
+    description: string;
+    scoreContribution: number; // 0 - 100 component
+}
+
+export interface StudentRiskAssessment {
+    student: Student;
+    riskScore: number; // 0 - 100
+    riskLevel: RiskLevel;
+    factors: RiskFactor[];
+    metrics: {
+        attendanceRate: number;
+        recentAlphaCount: number;
+        recentGradeAvg: number | null;
+        gradeDropPoints: number; // Drop in points from previous average
+        violationPoints: number;
+        pendingTasksCount: number;
+    };
+    predictedTrend: 'improving' | 'stable' | 'declining' | 'critical';
+}
+
+export interface DayOfWeekPattern {
+    dayName: string; // 'Senin', 'Selasa', dst.
+    dayIndex: number; // 0 = Minggu, 1 = Senin, ...
+    totalSessions: number;
+    absentCount: number;
+    absentRate: number; // percentage
+    isHighRisk: boolean;
+}
+
+export interface AttendancePatternAnalysis {
+    dayPatterns: DayOfWeekPattern[];
+    mostVulnerableDay: string | null;
+    consecutiveAbsenceAlerts: Array<{
+        student: Student;
+        consecutiveDays: number;
+        startDate: string;
+        endDate: string;
+    }>;
+    overallAttendanceTrend: 'rising' | 'stable' | 'dropping';
+    recentSpikeDetected: boolean;
+}
+
+export interface SubjectForecast {
+    subject: string;
+    currentAvg: number;
+    predictedScore: number;
+    trendSlope: number; // positive = naik, negative = turun
+    kktpGap: number; // predictedScore - kktpTarget
+    status: 'safe' | 'warning' | 'critical';
+}
+
+export interface StudentPerformanceForecast {
+    student: Student;
+    overallPredictedAvg: number;
+    subjectForecasts: SubjectForecast[];
+    kktpRiskCount: number; // jumlah mapel di bawah KKTP
+}
+
+export interface InterventionPlan {
+    studentId: string;
+    studentName: string;
+    summary: string;
+    instructionalRemedial: string[];
+    behavioralCounseling: string[];
+    parentCommunicationDraft: string;
+    recommendedTimeline: string;
+    generatedBy: 'AI' | 'Offline Fallback';
+}
+
+export interface AiClassNarrativeReport {
+    title: string;
+    period: string;
+    executiveSummary: string;
+    keyAchievements: string[];
+    criticalConcerns: string[];
+    suggestedTeacherActions: string[];
+    generatedAt: string;
+    generatedBy: 'AI' | 'Offline Fallback';
+}
+
