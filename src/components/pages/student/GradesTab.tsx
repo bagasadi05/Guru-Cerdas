@@ -5,6 +5,7 @@ import { PlusIcon, BarChartIcon, PencilIcon, TrashIcon, TrendingUpIcon, Download
 import { AcademicRecordRow } from './types';
 import { GradeTrendChart } from '../../ui/GradeTrendChart';
 import { useSemester } from '../../../contexts/SemesterContext';
+import { formatExportDate } from '../../../utils/exportUtils';
 
 // Default KKM value - can be made configurable
 const DEFAULT_KKM = 75;
@@ -412,7 +413,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
             });
 
             const link = document.createElement('a');
-            link.download = `grafik-nilai-${new Date().toISOString().split('T')[0]}.png`;
+            link.download = `Grafik_Nilai_${formatExportDate()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         } catch {

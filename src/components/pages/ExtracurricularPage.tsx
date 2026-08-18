@@ -4,6 +4,7 @@ import { Trophy, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { getJsPDF, getAutoTable, getXLSX } from '../../utils/dynamicImports';
+import { formatExportDate } from '../../utils/exportUtils';
 
 // Types & Hooks
 import { Extracurricular, Gender } from './extracurricular/types';
@@ -250,7 +251,7 @@ const ExtracurricularPage: React.FC = () => {
                 styles: { fontSize: 6, cellPadding: 1 },
                 columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 35 }, 2: { cellWidth: 18 } }
             });
-            doc.save(`Rekap_Presensi_${selectedExtracurricularData.name}_${monthName}.pdf`);
+            doc.save(`Presensi_${selectedExtracurricularData.name.replace(/\s+/g, '_')}_${monthName.replace(/\s+/g, '_')}_${formatExportDate()}.pdf`);
             toast.success('Download PDF berhasil');
         } catch (err: any) { toast.error(`Gagal export: ${err.message}`); }
     }, [selectedDate, selectedExtracurricularData, enrollments, queryClient, selectedExtracurricularId, toast]);
@@ -316,7 +317,7 @@ const ExtracurricularPage: React.FC = () => {
                 { wch: 5 }, { wch: 5 }, { wch: 5 }, { wch: 5 }
             ];
             XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Bulanan");
-            await XLSX.writeFile(workbook, `Rekap_Presensi_${selectedExtracurricularData.name}_${monthName}.xlsx`);
+            await XLSX.writeFile(workbook, `Presensi_${selectedExtracurricularData.name.replace(/\s+/g, '_')}_${monthName.replace(/\s+/g, '_')}_${formatExportDate()}.xlsx`);
             toast.success('Download Excel berhasil');
         } catch (err: any) { toast.error(`Gagal export: ${err.message}`); }
     };
@@ -347,7 +348,7 @@ const ExtracurricularPage: React.FC = () => {
             body: tableBody, startY: headerY + 35, styles: { fontSize: 9 },
             headStyles: { fillColor: [245, 158, 11] },
         });
-        doc.save(`Nilai_Ekskul_${selectedExtracurricularData.name}_${new Date().toISOString().split('T')[0]}.pdf`);
+        doc.save(`Nilai_${selectedExtracurricularData.name.replace(/\s+/g, '_')}_${formatExportDate()}.pdf`);
     }, [activeSemester, enrollments, gradesMap, selectedExtracurricularData]);
 
     const handleExportGradesExcel = async () => {
@@ -364,7 +365,7 @@ const ExtracurricularPage: React.FC = () => {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Nilai");
         worksheet["!cols"] = [{ wch: 5 }, { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 30 }];
-        await XLSX.writeFile(workbook, `Nilai_Ekskul_${selectedExtracurricularData.name}_${new Date().toISOString().split('T')[0]}.xlsx`);
+        await XLSX.writeFile(workbook, `Nilai_${selectedExtracurricularData.name.replace(/\s+/g, '_')}_${formatExportDate()}.xlsx`);
     };
 
     // ==================== RENDER ====================

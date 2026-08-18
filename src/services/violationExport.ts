@@ -6,6 +6,7 @@
 import { getAutoTable, getJsPDF, getXLSX } from '../utils/dynamicImports';
 import { ViolationRow } from '../components/pages/student/types';
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
+import { buildExportFileName } from '../utils/exportUtils';
 
 interface ViolationExportOptions {
     studentName: string;
@@ -173,7 +174,7 @@ export const exportViolationsToPDF = async (options: ViolationExportOptions) => 
         addSignatureBlocks(doc, pageWidth, signatureY, teacherName);
     }
 
-    doc.save(`Laporan_Pelanggaran_${studentName.replace(/\s+/g, '_')}.pdf`);
+    doc.save(`Pelanggaran_${studentName.replace(/\s+/g, '_')}_${className || 'Kelas'}_${buildExportFileName([])}.pdf`);
 };
 
 /**
@@ -236,7 +237,7 @@ export const exportViolationsToExcel = async (options: ViolationExportOptions): 
     ws['!cols'] = wscols;
 
     XLSX.utils.book_append_sheet(wb, ws, 'Pelanggaran');
-    await XLSX.writeFile(wb, `Data_Pelanggaran_${studentName.replace(/\s+/g, '_')}.xlsx`);
+    await XLSX.writeFile(wb, `Pelanggaran_${studentName.replace(/\s+/g, '_')}_${className || 'Kelas'}_${buildExportFileName([])}.xlsx`);
 };
 
 // ============================
@@ -411,7 +412,7 @@ export const exportBulkViolationsToPDF = async (options: BulkViolationExportOpti
         }
     });
 
-    doc.save(`Laporan_Pelanggaran_${className.replace(/\s+/g, '_')}.pdf`);
+    doc.save(`Pelanggaran_Kelas_${className.replace(/\s+/g, '_')}_${buildExportFileName([])}.pdf`);
 };
 
 /**
@@ -504,5 +505,5 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     });
 
-    await XLSX.writeFile(workbook, `Laporan_Pelanggaran_${className.replace(/\s+/g, '_')}.xlsx`);
+    await XLSX.writeFile(workbook, `Pelanggaran_Kelas_${className.replace(/\s+/g, '_')}_${buildExportFileName([])}.xlsx`);
 };

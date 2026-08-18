@@ -28,6 +28,7 @@ import { getJsPDF, getAutoTable } from '../../../../../utils/dynamicImports';
 import { MotionDiv, MotionSpan, AnimatePresence } from '../../../../ui/MotionComponents';
 import { duration as motionDuration } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
+import { formatExportDate } from '../../../../../utils/exportUtils';
 import { addPdfHeader, ensureLogosLoaded } from '../../../../../utils/pdfHeaderUtils';
 import { calculateRadarPoints, calculateAxisEndpoints, calculateLabelPositions } from '../utils/radarChartUtils';
 import { LoadingProgress } from '../components/LoadingProgress';
@@ -1155,7 +1156,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       doc.text(`( ${studentData.student.class ? 'Guru Wali Kelas' : 'Wali Kelas'} )`, pageWidth - 70, y);
 
       const safeName = analysis.summary.name.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
-      doc.save(`Laporan_Perkembangan_Siswa_${safeName}.pdf`);
+      doc.save(`Perkembangan_Siswa_${safeName}_${formatExportDate()}.pdf`);
 
       toast.success('Laporan PDF Premium berhasil diunduh!');
     } catch (err) {
@@ -1686,7 +1687,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       doc.text(`( ${studentData.student.class ? 'Guru Wali Kelas' : 'Wali Kelas'} )`, pageWidth - 70, y);
 
       const safeName = comparativeAnalysis.summary.name.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
-      doc.save(`Laporan_Komparasi_Perkembangan_Siswa_${safeName}.pdf`);
+      doc.save(`Komparasi_Perkembangan_${safeName}_${formatExportDate()}.pdf`);
 
       toast.success('Laporan Perbandingan PDF Premium berhasil diunduh!');
     } catch (err) {

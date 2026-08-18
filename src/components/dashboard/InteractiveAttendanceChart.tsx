@@ -7,6 +7,7 @@
 import React, { useState, useMemo, memo } from 'react';
 import { TrendingUp, Download, Info, Calendar, ChevronDown } from 'lucide-react';
 import { MotionDiv, AnimatePresence } from '../ui/MotionComponents';
+import { formatExportDate } from '../../utils/exportUtils';
 
 interface AttendanceData {
     day: string;
@@ -86,7 +87,7 @@ const InteractiveAttendanceChartBase: React.FC<InteractiveAttendanceChartProps> 
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `kehadiran-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.download = `Kehadiran_${formatExportDate()}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     };

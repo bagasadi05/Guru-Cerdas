@@ -3,6 +3,7 @@ import { getAutoTable } from '../utils/dynamicImports';
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 import { BintangGrade, calculateAspectPoints } from './bintangService';
 import { supabase } from './supabase';
+import { formatExportDate } from '../utils/exportUtils';
 
 
 
@@ -685,9 +686,10 @@ export const downloadBintangReportAction = async ({
         semesterName
     }, onProgress);
     
+    const exportDate = formatExportDate();
     const fileName = classId 
-        ? `Rapor_Bintang_Kelas_${reports[0]?.student?.classes?.name || classId}_${monthName.replace(/\s+/g, '_')}.pdf`
-        : `Rapor_Bintang_${reports[0]?.student?.name?.replace(/\s+/g, '_') || 'Siswa'}_${monthName.replace(/\s+/g, '_')}.pdf`;
+        ? `Bintang_Kelas_${reports[0]?.student?.classes?.name || classId}_${monthName.replace(/\s+/g, '_')}_${exportDate}.pdf`
+        : `Bintang_${reports[0]?.student?.name?.replace(/\s+/g, '_') || 'Siswa'}_${monthName.replace(/\s+/g, '_')}_${exportDate}.pdf`;
         
     doc.save(fileName);
 };

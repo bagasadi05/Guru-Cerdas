@@ -8,6 +8,7 @@ import { useToast } from '../../../../hooks/useToast';
 import { useSemester } from '../../../../contexts/SemesterContext';
 import { useOfflineStatus } from '../../../../hooks/useOfflineStatus';
 import { Database } from '../../../../services/database.types';
+import { formatExportDate } from '../../../../utils/exportUtils';
 import { generateStudentReport, ReportData as ReportDataType } from '../../../../services/pdfGenerator';
 import { addPdfHeader, ensureLogosLoaded } from '../../../../utils/pdfHeaderUtils';
 import { getAutoTable, getJsPDF } from '../../../../utils/dynamicImports';
@@ -534,9 +535,10 @@ Format JSON yang diharapkan:
                 setExportProgress(`${Math.round(70 + ((i + 1) / studentsToPrint.length) * 30)}%`);
             }
             const selectedClassName = classes?.find(c => c.id === selectedClass)?.name || 'Kelas';
+            const exportDate = formatExportDate();
             const fileName = allReportData.length === 1
-                ? `Rapor_${sanitizeFilename(allReportData[0]?.student.name || studentsToPrint[0]?.name || 'Siswa')}.pdf`
-                : `Rapor_Massal_${sanitizeFilename(selectedClassName)}.pdf`;
+                ? `Rapor_${sanitizeFilename(allReportData[0]?.student.name || studentsToPrint[0]?.name || 'Siswa')}_${sanitizeFilename(selectedClassName)}_${exportDate}.pdf`
+                : `Rapor_Massal_${sanitizeFilename(selectedClassName)}_${exportDate}.pdf`;
             doc.save(fileName);
             toast.success(allReportData.length === 1 ? 'Rapor siswa berhasil diunduh!' : 'Semua rapor terpilih berhasil digabung dalam satu PDF!');
         } catch (err) {
@@ -590,7 +592,7 @@ Format JSON yang diharapkan:
                 return rowData;
             });
         autoTable(doc, { startY: tableStartY, head, body: tableData, theme: 'grid', headStyles: { fillColor: '#0284c7' } });
-        doc.save(`Nilai_${subjectGradeInfo.subject.replace(/\s/g, '_')}_${className}.pdf`);
+        doc.save(`Nilai_${subjectGradeInfo.subject.replace(/\s/g, '_')}_${className}_${formatExportDate()}.pdf`);
         toast.success('Rekap nilai berhasil diunduh.'); setIsExporting(false);
     };
 

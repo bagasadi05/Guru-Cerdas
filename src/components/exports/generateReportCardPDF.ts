@@ -1,6 +1,7 @@
 import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
 import type { PortalData } from '../pages/portal/types';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
+import { formatExportDate } from '../../utils/exportUtils';
 
 
 
@@ -189,5 +190,5 @@ export const generateReportCardPDF = async (data: PortalData, semesterId?: strin
     doc.text('Dokumen ini dicetak secara otomatis melalui aplikasi Portal Guru.', pageWidth / 2, pageHeight - 10, { align: 'center' });
 
     // Save PDF
-    doc.save(`Rapor-${data.student.name.replace(/\s+/g, '_')}-${semester}-${academicYear.replace('/', '-')}.pdf`);
+    doc.save(`Rapor_${data.student.name.replace(/\s+/g, '_')}_${semester}_${academicYear.replace('/', '-')}_${formatExportDate()}.pdf`);
 };

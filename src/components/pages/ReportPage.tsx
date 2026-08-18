@@ -13,6 +13,7 @@ import { getJsPDF } from '../../utils/dynamicImports';
 import { useToast } from '../../hooks/useToast';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import { useSemester } from '../../contexts/SemesterContext';
+import { formatExportDate } from '../../utils/exportUtils';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../utils/academicRecordUtils';
 import { ReportPageSkeleton } from '../skeletons';
 import { StudentAchievement } from '../../types';
@@ -256,7 +257,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                 violations: filteredViolations,
                 achievements: filteredAchievements
             }, customNote, reportDate, semesterName, academicYear, user);
-            doc.save(`Rapor_${data.student.name}.pdf`);
+            doc.save(`Rapor_${data.student.name.replace(/\s+/g, '_')}_${(data.student.classes?.name || 'Kelas').replace(/\s+/g, '_')}_${semesterName}_${formatExportDate()}.pdf`);
             toast.success("Rapor berhasil diunduh sebagai PDF!");
         } catch (e: unknown) {
             toast.error(`Gagal membuat PDF: ${(e as Error).message}`);

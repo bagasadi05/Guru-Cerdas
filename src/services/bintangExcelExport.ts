@@ -1,5 +1,6 @@
 import { getExcelJS } from '../utils/dynamicImports';
 import { getAspectForViolation, calculateAspectPoints, type AspectPointsSummary, type BintangGrade } from './bintangService';
+import { formatExportDate } from '../utils/exportUtils';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -431,7 +432,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
     // ── Save ─────────────────────────────────────────────────────────────────
     const safeClassName = (className || 'Kelas').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
     const cleanMonth = (monthName || 'Bulan').replace(/[^a-zA-Z0-9]/g, '_');
-    const fileName = `BINTANG_${safeClassName}_${cleanMonth}.xlsx`;
+    const fileName = `BINTANG_${safeClassName}_${cleanMonth}_${formatExportDate()}.xlsx`;
     
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

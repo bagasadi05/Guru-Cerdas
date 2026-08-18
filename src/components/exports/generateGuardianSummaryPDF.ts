@@ -1,6 +1,7 @@
 import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
 import type { PortalData, PortalGuardianSummary, PortalWeeklySummary } from '../pages/portal/types';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
+import { formatExportDate } from '../../utils/exportUtils';
 
 interface GuardianSummaryPdfOptions {
     guardianSummary: PortalGuardianSummary | null;
@@ -133,7 +134,7 @@ export const generateGuardianSummaryPDF = async (
     doc.text(`Dicetak pada ${new Date().toLocaleDateString('id-ID')}`, margin, 287);
 
     const safeName = data.student.name.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').toLowerCase();
-    doc.save(`ringkasan-wali-${safeName || 'siswa'}.pdf`);
+    doc.save(`Ringkasan_Wali_${safeName || 'siswa'}_${formatExportDate()}.pdf`);
 };
 
 export default generateGuardianSummaryPDF;

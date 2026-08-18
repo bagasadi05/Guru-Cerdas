@@ -2,6 +2,7 @@ import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 import { getJsPDF, getAutoTable } from '../utils/dynamicImports';
 import { daysOfWeek, resolveClassName } from '../utils/scheduleUtils';
 import { ScheduleRow } from '../types';
+import { formatExportDate } from '../utils/exportUtils';
 
 // ─── PDF Export ──────────────────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ export async function exportSchedulePdf(
         }
     });
 
-    doc.save('Jadwal_Mengajar.pdf');
+    doc.save(`Jadwal_Mengajar_${formatExportDate()}.pdf`);
     toast.success("Jadwal PDF berhasil diunduh!");
 }
 
@@ -210,7 +211,7 @@ export function exportScheduleIcs(
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'jadwal_mengajar.ics';
+    link.download = `Jadwal_Mengajar_${formatExportDate()}.ics`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

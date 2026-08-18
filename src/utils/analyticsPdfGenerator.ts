@@ -2,6 +2,7 @@ import type jsPDF from 'jspdf';
 import { getAutoTable, getJsPDF } from './dynamicImports';
 import { ExportOptions } from '../components/pages/analytics/AnalyticsExportModal';
 import { addPdfHeader, ensureLogosLoaded } from './pdfHeaderUtils';
+import { formatExportDate } from './exportUtils';
 
 // Extend jsPDF type to include autoTable
 interface jsPDFWithAutoTable extends jsPDF {
@@ -321,5 +322,5 @@ export const generateAnalyticsPdf = async (data: AnalyticsData, options: ExportO
         doc.text(`Halaman ${i} dari ${pageCount}`, pageWidth - MARGIN, fy, { align: 'right' });
     }
 
-    doc.save(`Laporan_Analitik_${data.selectedClassLabel.replace(/\s/g, '_')}_${today}.pdf`);
+    doc.save(`Analitik_${data.selectedClassLabel.replace(/\s/g, '_')}_${formatExportDate()}.pdf`);
 };

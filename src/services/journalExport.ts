@@ -41,6 +41,12 @@ const formatExportDate = () =>
         year: 'numeric',
     });
 
+/** Format tanggal untuk nama file: DD-MM-YYYY (tanpa spasi). */
+const formatFileDate = () => {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+};
+
 const formatDateString = (dateStr: string) => {
     try {
         return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -205,7 +211,7 @@ export const exportJournalsToExcel = async (options: JournalExcelExportOptions):
     }
 
     const filePrefix = journals && journals.length > 0 ? 'Detail' : 'Rekap';
-    const cleanFileName = `Jurnal_Mengajar_${filePrefix}_${periodStr.replace(/[\s/]+/g, '_')}.xlsx`;
+    const cleanFileName = `Jurnal_Mengajar_${filePrefix}_${periodStr.replace(/[\s/]+/g, '_')}_${formatFileDate()}.xlsx`;
     await XLSX.writeFile(wb, cleanFileName);
 };
 
@@ -356,6 +362,6 @@ export const exportJournalsToPDF = async (options: JournalPdfExportOptions): Pro
     doc.text(getTeacherSignatureText(teacherName), rightX, signatureLineY + 5, { align: 'center' });
 
     // 4. Save file
-    const cleanFileName = `Jurnal_Mengajar_${periodStr.replace(/[\s/]+/g, '_')}.pdf`;
+    const cleanFileName = `Jurnal_Mengajar_${periodStr.replace(/[\s/]+/g, '_')}_${formatFileDate()}.pdf`;
     doc.save(cleanFileName);
 };

@@ -7,6 +7,7 @@
 
 import { getXLSX } from '../utils/dynamicImports';
 import { StudentAchievement } from '../types/studentAchievement';
+import { buildExportFileName } from '../utils/exportUtils';
 
 interface AchievementExportOptions {
     studentName: string;
@@ -82,7 +83,7 @@ export const exportAchievementsToExcel = async (options: AchievementExportOption
     ws['!cols'] = wscols;
 
     XLSX.utils.book_append_sheet(wb, ws, 'Prestasi');
-    await XLSX.writeFile(wb, `Data_Prestasi_${studentName.replace(/\s+/g, '_')}.xlsx`);
+    await XLSX.writeFile(wb, `Prestasi_${studentName.replace(/\s+/g, '_')}_${className || 'Kelas'}_${buildExportFileName([])}.xlsx`);
 };
 
 interface StudentInfo {
@@ -194,5 +195,5 @@ export const exportBulkAchievementsToExcel = async (options: BulkAchievementExpo
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     });
 
-    await XLSX.writeFile(workbook, `Laporan_Prestasi_${className.replace(/\s+/g, '_')}.xlsx`);
+    await XLSX.writeFile(workbook, `Prestasi_Kelas_${className.replace(/\s+/g, '_')}_${buildExportFileName([])}.xlsx`);
 };
