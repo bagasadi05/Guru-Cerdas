@@ -96,7 +96,7 @@ export function robustParseJson<T = any>(rawContent: string): T {
     let sanitized = content
       .replace(/\/\/[^\n\r]*/g, '') // remove line comments
       .replace(/\/\*[\s\S]*?\*\//g, '') // remove block comments
-      .replace(/,\s*([\}\]])/g, '$1'); // remove trailing commas
+      .replace(/,\s*([}\]])/g, '$1'); // remove trailing commas
 
     sanitized = fixJsonStringNewlines(sanitized);
 

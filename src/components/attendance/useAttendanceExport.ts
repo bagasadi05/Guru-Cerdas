@@ -19,6 +19,25 @@ interface ExportData {
   classes: ClassRow[];
 }
 
+/** Format tanggal export: 15-08-2026 (DD-MM-YYYY) */
+function formatExportDate(d: Date = new Date()): string {
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}-${month}-${d.getFullYear()}`;
+}
+
+/** Nama file export mengikuti kelas terpilih: Kelas_Bulan_tanggal */
+function buildExportFileName(classes: ClassRow[], period: 'monthly' | 'semester', monthOrLabel: string): string {
+  const dateStr = formatExportDate();
+  const monthPart = period === 'monthly' ? monthOrLabel : monthOrLabel;
+
+  if (classes.length === 1) {
+    const safeName = classes[0].name.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').toUpperCase();
+    return `${safeName || 'Kelas'}_${monthPart}_${dateStr}`;
+  }
+  return `SEMUA_KELAS_${monthPart}_${dateStr}`;
+}
+
 export const useAttendanceExport = (
   user: { id: string } | null,
   attendanceClasses: ClassRow[],
@@ -64,23 +83,32 @@ export const useAttendanceExport = (
 
     const classIds = exportClasses.map((classRow) => classRow.id);
 
-    const [studentsRes, attendanceRes] = await Promise.all([
-      supabase
-        .from('students')
-        .select('id, name, class_id, user_id')
-        .in('class_id', classIds)
-        .is('deleted_at', null)
-        .range(0, 1999),
-      supabase
-        .from('attendance')
-        .select('student_id, date, status')
-        .gte('date', startDate)
-        .lte('date', endDate)
-        .is('deleted_at', null)
-        .range(0, 9999),
-    ]);
+    // Ambil siswa kelas terpilih dulu, lalu filter attendance by student_ids
+    // (hindari kehilangan data saat attendance > 10.000 baris karena .range)
+    const studentsRes = await supabase
+      .from('students')
+      .select('id, name, class_id, user_id')
+      .in('class_id', classIds)
+      .is('deleted_at', null)
+      .range(0, 1999);
 
-    if (studentsRes.error || attendanceRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
+    if (studentsRes.error) throw new Error('Gagal mengambil data siswa untuk ekspor.');
+
+    const studentIds = (studentsRes.data || []).map((s) => s.id);
+    if (studentIds.length === 0) {
+      return { students: [], attendance: [], classes: [] };
+    }
+
+    const attendanceRes = await supabase
+      .from('attendance')
+      .select('student_id, date, status')
+      .in('student_id', studentIds)
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .is('deleted_at', null)
+      .range(0, 9999);
+
+    if (attendanceRes.error) throw new Error('Gagal mengambil data untuk ekspor.');
 
     const classRows = exportClasses;
     const studentRows = (studentsRes.data || []) as unknown as StudentRow[];
@@ -208,7 +236,8 @@ export const useAttendanceExport = (
           });
         }
 
-        doc.save(`Laporan_Absensi_Bulanan_${exportMonth}.pdf`);
+        const fileName = buildExportFileName(studentsByClass, 'monthly', exportMonth);
+        doc.save(`${fileName}.pdf`);
         toast.success('Laporan PDF berhasil diunduh!');
       } else if (exportPeriod === 'semester' && format === 'pdf') {
         await ensureLogosLoaded();
@@ -285,7 +314,8 @@ export const useAttendanceExport = (
           });
         }
 
-        doc.save(`Laporan_Absensi_Semester_${exportSemesterId}.pdf`);
+        const fileName = buildExportFileName(studentsByClass, 'semester', exportTitle.replace(/\s+/g, '_'));
+        doc.save(`${fileName}.pdf`);
         toast.success('Laporan PDF berhasil diunduh!');
       } else if (format === 'excel') {
         if (exportPeriod === 'monthly') {
@@ -301,7 +331,7 @@ export const useAttendanceExport = (
             year,
             monthNum,
             daysInMonth,
-            `Laporan_Absensi_Bulanan_${exportMonth}`,
+            buildExportFileName(studentsByClass, 'monthly', exportMonth),
             schoolName || 'MI AL IRSYAD KOTA MADIUN'
           );
         } else {
@@ -309,7 +339,7 @@ export const useAttendanceExport = (
             studentsByClass,
             attendance,
             exportTitle,
-            `Laporan_Absensi_Semester_${exportSemesterId}`,
+            buildExportFileName(studentsByClass, 'semester', exportTitle.replace(/\s+/g, '_')),
             schoolName || 'MI AL IRSYAD KOTA MADIUN'
           );
         }
