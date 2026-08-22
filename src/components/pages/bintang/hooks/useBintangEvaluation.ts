@@ -250,8 +250,8 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     user: user
                         ? {
                               id: user.id,
-                              name: user.user_metadata?.full_name || 'Wali Kelas',
-                              avatarUrl: user.user_metadata?.avatar_url || '',
+                              name: user.name || user.user_metadata?.full_name || user.user_metadata?.name || '',
+                              avatarUrl: user.avatarUrl || user.user_metadata?.avatar_url || '',
                               email: user.email,
                           }
                         : null,
@@ -278,8 +278,8 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                 user: user
                     ? {
                           id: user.id,
-                          name: user.user_metadata?.full_name || 'Wali Kelas',
-                          avatarUrl: user.user_metadata?.avatar_url || '',
+                          name: user.name || user.user_metadata?.full_name || user.user_metadata?.name || '',
+                          avatarUrl: user.avatarUrl || user.user_metadata?.avatar_url || '',
                           email: user.email,
                       }
                     : null,

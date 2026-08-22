@@ -59,6 +59,10 @@ export class GroqProvider implements AiProvider {
   readonly name = 'groq' as const;
 
   async generateContent(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+    if (isDev() && !import.meta.env.VITE_GROQ_PROXY_URL && !devApiKey()) {
+      throw new Error('Groq API key tidak dikonfigurasi. Tambahkan VITE_GROQ_API_KEY di .env.');
+    }
+
     if (usesDirectEndpoint() && getGroqKeyCount() === 0) {
       throw new Error('Groq API key tidak ditemukan. Cek VITE_GROQ_API_KEY di .env');
     }

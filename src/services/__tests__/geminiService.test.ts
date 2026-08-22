@@ -47,6 +47,8 @@ beforeEach(() => {
   // Default: proxy mode (production-like). Individual tests override.
   vi.stubEnv('VITE_GEMINI_PROXY_URL', '/api/gemini');
   vi.stubEnv('VITE_GEMINI_API_KEY', '');
+  vi.stubEnv('VITE_GROQ_PROXY_URL', '/api/groq');
+  vi.stubEnv('VITE_GROQ_API_KEY', '');
 });
 
 afterEach(() => {
@@ -61,14 +63,14 @@ afterEach(() => {
 describe('geminiService — proxy mode', () => {
   it('posts to the proxy endpoint with the model in the body', async () => {
     const fetchMock = stubFetch(() => Promise.resolve(okGeminiResponse('{"nama":"Budi"}')));
-    vi.stubEnv('VITE_GEMINI_MODEL', 'gemini-2.0-flash');
+    vi.stubEnv('VITE_GEMINI_MODEL', 'gemini-2.5-flash');
 
     const result = await generateGeminiJson<{ nama: string }>('Buat data siswa unik-proxy-1', 'system prompt');
 
     expect(result).toEqual({ nama: 'Budi' });
     const { url, body } = lastFetchCall(fetchMock);
     expect(url).toBe('/api/gemini');
-    expect(body.model).toBe('gemini-2.0-flash');
+    expect(body.model).toBe('gemini-2.5-flash');
     expect(body.systemInstruction).toEqual({ parts: [{ text: 'system prompt' }] });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -149,7 +151,7 @@ describe('geminiService — direct mode (dev fallback)', () => {
 
     const { url } = lastFetchCall(fetchMock);
     expect(url).toMatch(
-      /^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-2\.0-flash:generateContent\?key=dev-key-123$/
+      /^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-2\.5-flash:generateContent\?key=dev-key-123$/
     );
   });
 

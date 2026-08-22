@@ -56,9 +56,15 @@ export const useModulAjarForm = () => {
       modelPembelajaran: 'Problem Based Learning',
       metodePembelajaran: [],
       manualTujuanPembelajaran: '',
+      manualPemahamanBermakna: '',
       manualPertanyaanPemantik: '',
+      manualMateriAjar: '',
       manualLkpdTugas: '',
       manualSoalEvaluasi: '',
+      manualPengayaan: '',
+      manualRemedial: '',
+      manualGlosarium: '',
+      manualDaftarPustaka: '',
       alokasiPendahuluan: 10,
       alokasiInti: 50,
       alokasiPenutup: 10,
@@ -100,8 +106,10 @@ export const useModulAjarForm = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [isGeneratingCP, setIsGeneratingCP] = useState(false);
   const [boilerplateMissingBanner, setBoilerplateMissingBanner] = useState<string | null>(null);
+
   const lastLoadedTopicRef = useRef<string>('');
-  const boilerplateLoadSeqRef = useRef(0);
+  const boilerplateLoadSeqRef = useRef<number>(0);
+
   const [models, setModels] = useState<any[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
 
@@ -111,12 +119,10 @@ export const useModulAjarForm = () => {
     }
   }, [user?.name]);
 
-  // Sync with active academic year & semester when context updates
   useEffect(() => {
     if (activeAcademicYear?.name) {
       setFormState(prev => {
-        // Automatically sync if tahunAjaran was unset or still on previous default
-        if (!prev.tahunAjaran || prev.tahunAjaran === '2023/2024') {
+        if (!prev.tahunAjaran) {
           return { ...prev, tahunAjaran: activeAcademicYear.name };
         }
         return prev;
@@ -153,18 +159,30 @@ export const useModulAjarForm = () => {
               setFormState(prev => ({
                 ...prev,
                 manualTujuanPembelajaran: Array.isArray(bp.tujuan_pembelajaran) ? bp.tujuan_pembelajaran.join('\n') : '',
+                manualPemahamanBermakna: Array.isArray(bp.pemahaman_bermakna) ? bp.pemahaman_bermakna.join('\n') : '',
                 manualPertanyaanPemantik: Array.isArray(bp.pertanyaan_pemantik) ? bp.pertanyaan_pemantik.join('\n') : '',
                 manualLkpdTugas: bp.lkpd_tugas || '',
-                manualSoalEvaluasi: bp.soal_evaluasi || ''
+                manualSoalEvaluasi: bp.soal_evaluasi || '',
+                manualPengayaan: Array.isArray(bp.pengayaan) ? bp.pengayaan.join('\n\n') : '',
+                manualRemedial: Array.isArray(bp.remedial) ? bp.remedial.join('\n\n') : '',
+                manualDaftarPustaka: Array.isArray(bp.daftar_pustaka) ? bp.daftar_pustaka.join('\n') : '',
+                manualMateriAjar: bp.konten_json?.materiAjar || bp.konten_json?.materi || '',
+                manualGlosarium: Array.isArray(bp.konten_json?.glosarium) ? bp.konten_json.glosarium.join('\n') : '',
               }));
             } else {
               setBoilerplateMissingBanner('Bank konten untuk topik ini belum tersedia — isi manual atau minta admin menambahkan');
               setFormState(prev => ({
                 ...prev,
                 manualTujuanPembelajaran: '',
+                manualPemahamanBermakna: '',
                 manualPertanyaanPemantik: '',
+                manualMateriAjar: '',
                 manualLkpdTugas: '',
-                manualSoalEvaluasi: ''
+                manualSoalEvaluasi: '',
+                manualPengayaan: '',
+                manualRemedial: '',
+                manualGlosarium: '',
+                manualDaftarPustaka: '',
               }));
             }
           } catch (err: any) {

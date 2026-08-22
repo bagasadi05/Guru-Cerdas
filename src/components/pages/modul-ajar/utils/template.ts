@@ -242,6 +242,70 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
     }).join('');
   };
 
+  const formatMateriContent = (text: string): string => {
+    if (!text) return '<p>-</p>';
+    const lines = text.split('\n');
+    let html = '';
+    let inUl = false;
+    let inOl = false;
+
+    const closeLists = () => {
+      if (inUl) { html += '</ul>'; inUl = false; }
+      if (inOl) { html += '</ol>'; inOl = false; }
+    };
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) {
+        closeLists();
+        continue;
+      }
+
+      if (/^#{1,4}\s+/.test(line)) {
+        closeLists();
+        const headingText = line.replace(/^#{1,4}\s+/, '').replace(/\*\*/g, '');
+        html += `<div style="font-weight: bold; font-size: 11pt; color: #1b5e20; margin: 10px 0 4px 0;">${sanitize(headingText)}</div>`;
+      } else if (/^[-*•]\s+/.test(line)) {
+        if (!inUl) { closeLists(); html += '<ul style="margin: 4px 0 6px 0; padding-left: 20px; line-height: 1.5; list-style-type: disc;">'; inUl = true; }
+        html += `<li>${sanitize(line.replace(/^[-*•]\s+/, ''))}</li>`;
+      } else if (/^\d+\.\s+/.test(line)) {
+        if (!inOl) { closeLists(); html += '<ol style="margin: 4px 0 6px 0; padding-left: 20px; line-height: 1.5;">'; inOl = true; }
+        html += `<li>${sanitize(line.replace(/^\d+\.\s+/, ''))}</li>`;
+      } else {
+        closeLists();
+        html += `<p style="margin: 0 0 6px 0; line-height: 1.5; text-align: justify;">${sanitize(line)}</p>`;
+      }
+    }
+    closeLists();
+    return html;
+  };
+
+  const formatGlosariumContent = (glosarium: any, topik: string): string => {
+    if (glosarium && Array.isArray(glosarium) && glosarium.length > 0) {
+      return `
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.5;">
+          ${glosarium.map(g => {
+            const str = String(g).replace(/^[-*•]\s*/, '');
+            const colonIdx = str.indexOf(':');
+            if (colonIdx !== -1) {
+              const term = str.substring(0, colonIdx).trim();
+              const def = str.substring(colonIdx + 1).trim();
+              return `<li style="margin-bottom: 4px;"><strong>${sanitize(term)}:</strong> ${sanitize(def)}</li>`;
+            }
+            return `<li style="margin-bottom: 4px;">${sanitize(str)}</li>`;
+          }).join('')}
+        </ul>
+      `;
+    }
+    return `
+      <ul style="margin: 0; padding-left: 20px; line-height: 1.5;">
+        <li style="margin-bottom: 4px;"><strong>${sanitize(topik)}:</strong> Fokus kompetensi dan ruang lingkup materi pembelajaran yang dipelajari pada modul ajar ini.</li>
+        <li style="margin-bottom: 4px;"><strong>Diferensiasi:</strong> Penyesuaian proses dan konten pembelajaran berdasarkan kesiapan dan kebutuhan belajar siswa.</li>
+        <li style="margin-bottom: 4px;"><strong>Asesmen Formatif:</strong> Penilaian yang bertujuan memantau proses perkembangan belajar dan memberikan umpan balik berkelanjutan.</li>
+      </ul>
+    `;
+  };
+
   return `
     <div style="font-family: 'Times New Roman', Times, serif; line-height: 1.5; color: #000000; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
 
@@ -584,9 +648,19 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
 
         </div>
         
-        <!-- B. REFLEKSI GURU & PESERTA DIDIK -->
+        ${data.materiAjar ? `
+        <!-- BAHAN BACAAN / RINGKASAN MATERI -->
         <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
-          B. LEMBAR REFLEKSI GURU & PESERTA DIDIK
+          B. BAHAN BACAAN / RINGKASAN MATERI GURU & SISWA
+        </div>
+        <div style="padding: 12px; font-size: 10pt; line-height: 1.5; text-align: justify;">
+          ${formatMateriContent(data.materiAjar)}
+        </div>
+        ` : ''}
+
+        <!-- LEMBAR REFLEKSI GURU & PESERTA DIDIK -->
+        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
+          ${data.materiAjar ? 'C' : 'B'}. LEMBAR REFLEKSI GURU & PESERTA DIDIK
         </div>
         <div style="padding: 10px; font-size: 10pt;">
           <p style="margin: 0 0 4px 0; font-weight: bold;">1. Refleksi Guru:</p>
@@ -638,21 +712,17 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
           </table>
         </div>
 
-        <!-- C. GLOSARIUM -->
+        <!-- GLOSARIUM -->
         <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
-          C. GLOSARIUM
+          ${data.materiAjar ? 'D' : 'C'}. GLOSARIUM
         </div>
         <div style="padding: 10px; font-size: 10pt; line-height: 1.5;">
-          <ul style="margin: 0; padding-left: 20px;">
-            <li><strong>${sanitize(formState.topik)}:</strong> Fokus kompetensi dan ruang lingkup materi pembelajaran yang dipelajari pada modul ajar ini.</li>
-            <li><strong>Diferensiasi:</strong> Penyesuaian proses dan konten pembelajaran berdasarkan kesiapan dan kebutuhan belajar siswa.</li>
-            <li><strong>Asesmen Formatif:</strong> Penilaian yang bertujuan memantau proses perkembangan belajar dan memberikan umpan balik berkelanjutan.</li>
-          </ul>
+          ${formatGlosariumContent(data.glosarium, formState.topik)}
         </div>
 
-        <!-- D. DAFTAR PUSTAKA -->
+        <!-- DAFTAR PUSTAKA -->
         <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
-          D. DAFTAR PUSTAKA & REFERENSI
+          ${data.materiAjar ? 'E' : 'D'}. DAFTAR PUSTAKA & REFERENSI
         </div>
         <div style="padding: 10px; font-size: 10.5pt; line-height: 1.5;">
           <ul style="margin: 0; padding-left: 25px;">
@@ -755,6 +825,44 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
     return html || '<p>-</p>';
   };
 
+  const formatMateriContent = (text: string): string => {
+    if (!text) return '<p>-</p>';
+    const lines = text.split('\n');
+    let html = '';
+    let inUl = false;
+    let inOl = false;
+
+    const closeLists = () => {
+      if (inUl) { html += '</ul>'; inUl = false; }
+      if (inOl) { html += '</ol>'; inOl = false; }
+    };
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) {
+        closeLists();
+        continue;
+      }
+
+      if (/^#{1,4}\s+/.test(line)) {
+        closeLists();
+        const headingText = line.replace(/^#{1,4}\s+/, '').replace(/\*\*/g, '');
+        html += `<div style="font-weight: bold; font-size: 11pt; color: #1b5e20; margin: 10px 0 4px 0;">${sanitize(headingText)}</div>`;
+      } else if (/^[-*•]\s+/.test(line)) {
+        if (!inUl) { closeLists(); html += '<ul style="margin: 4px 0 6px 0; padding-left: 20px; line-height: 1.5; list-style-type: disc;">'; inUl = true; }
+        html += `<li>${sanitize(line.replace(/^[-*•]\s+/, ''))}</li>`;
+      } else if (/^\d+\.\s+/.test(line)) {
+        if (!inOl) { closeLists(); html += '<ol style="margin: 4px 0 6px 0; padding-left: 20px; line-height: 1.5;">'; inOl = true; }
+        html += `<li>${sanitize(line.replace(/^\d+\.\s+/, ''))}</li>`;
+      } else {
+        closeLists();
+        html += `<p style="margin: 0 0 6px 0; line-height: 1.5; text-align: justify;">${sanitize(line)}</p>`;
+      }
+    }
+    closeLists();
+    return html;
+  };
+
   const formatEvaluasiContent = (text: string): string => {
     if (!text) return '<p>-</p>';
     const normalized = normalizeSoalEvaluasi(text);
@@ -842,6 +950,19 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
 
       <!-- PAGE BREAK -->
       <br style="page-break-before: always; clear: both;" />
+
+      ${data.materiAjar ? `
+      <!-- BAHAN BACAAN SISWA -->
+      <div style="border: 2px solid #0d6b3e; padding: 20px; margin-bottom: 25px; border-radius: 8px; font-family: 'Times New Roman'; page-break-inside: avoid;">
+        <h3 style="text-align: center; margin: 0 0 15px 0; font-size: 12pt; font-weight: bold; text-decoration: underline; text-transform: uppercase; color: #0d6b3e;">
+          RINGKASAN BAHAN BACAAN SISWA
+        </h3>
+        <div style="font-size: 10.5pt; line-height: 1.5; text-align: justify;">
+          ${formatMateriContent(data.materiAjar)}
+        </div>
+      </div>
+      <br style="page-break-before: always; clear: both;" />
+      ` : ''}
 
       <!-- LKPD SHEET -->
       <div style="border: 2px dashed #000000; padding: 20px; margin-bottom: 25px; border-radius: 8px; page-break-inside: avoid; font-family: 'Times New Roman';">

@@ -368,8 +368,11 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
       const manualData = {
         ...bp,
         tujuanPembelajaran: tujuanPembelajaranList,
-        pemahamanBermakna: pemahamanBermaknaList,
+        pemahamanBermakna: formState.manualPemahamanBermakna
+          ? formState.manualPemahamanBermakna.split('\n').filter(line => line.trim() !== '')
+          : pemahamanBermaknaList,
         pertanyaanPemantik: pertanyaanPemantikList,
+        materiAjar: formState.manualMateriAjar || bp?.konten_json?.materiAjar || bp?.konten_json?.materi || '',
         lkpdTugas: lkpdText,
         soalEvaluasi: evaluasiText,
         kunciJawaban: aiGeneratedData?.kunciJawaban || (bp as any)?.konten_json?.kunciJawaban || [],
@@ -381,9 +384,18 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
         asesmenSikap: sikapText,
         asesmenKeterampilan: keterampilanText,
         asesmenPengetahuan: pengetahuanText,
-        pengayaan: bp?.pengayaan && Array.isArray(bp.pengayaan) && bp.pengayaan.length > 0 ? bp.pengayaan : [`Pendalaman materi ${formState.topik || formState.mataPelajaran} dengan tantangan pemecahan masalah tingkat lanjut.`],
-        remedial: bp?.remedial && Array.isArray(bp.remedial) && bp.remedial.length > 0 ? bp.remedial : [`Bimbingan individual terstruktur dan penugasan bertahap pada konsep esensial materi ${formState.topik || formState.mataPelajaran}.`],
-        daftarPustaka: bp?.daftar_pustaka && Array.isArray(bp.daftar_pustaka) && bp.daftar_pustaka.length > 0 ? bp.daftar_pustaka : [`Buku Panduan Guru & Siswa ${formState.mataPelajaran} Kelas ${formState.kelas}, Kemendikbudristek.`],
+        pengayaan: formState.manualPengayaan
+          ? formState.manualPengayaan.split('\n\n').filter(line => line.trim() !== '')
+          : (bp?.pengayaan && Array.isArray(bp.pengayaan) && bp.pengayaan.length > 0 ? bp.pengayaan : [`Pendalaman materi ${formState.topik || formState.mataPelajaran} dengan tantangan pemecahan masalah tingkat lanjut.`]),
+        remedial: formState.manualRemedial
+          ? formState.manualRemedial.split('\n\n').filter(line => line.trim() !== '')
+          : (bp?.remedial && Array.isArray(bp.remedial) && bp.remedial.length > 0 ? bp.remedial : [`Bimbingan individual terstruktur dan penugasan bertahap pada konsep esensial materi ${formState.topik || formState.mataPelajaran}.`]),
+        glosarium: formState.manualGlosarium
+          ? formState.manualGlosarium.split('\n').filter(line => line.trim() !== '')
+          : (Array.isArray(bp?.konten_json?.glosarium) ? bp.konten_json.glosarium : []),
+        daftarPustaka: formState.manualDaftarPustaka
+          ? formState.manualDaftarPustaka.split('\n').filter(line => line.trim() !== '')
+          : (bp?.daftar_pustaka && Array.isArray(bp.daftar_pustaka) && bp.daftar_pustaka.length > 0 ? bp.daftar_pustaka : [`Buku Panduan Guru & Siswa ${formState.mataPelajaran} Kelas ${formState.kelas}, Kemendikbudristek & Kemenag.`]),
       };
 
       const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;

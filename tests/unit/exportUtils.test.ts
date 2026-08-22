@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { exportToExcel, exportAttendanceToExcel } from '../../src/utils/exportUtils';
+import { exportToExcel, exportAttendanceToExcel, exportSemesterAttendanceToExcel } from '../../src/utils/exportUtils';
 
 // Mock dynamic imports module
 const mockXLSX = {
@@ -127,7 +127,7 @@ describe('exportAttendanceToExcel', () => {
     });
 
     it('should export attendance data to excel without throwing (uses getExcelJS)', async () => {
-        const classesData = [{ name: '5A', students: [{ id: 's1', name: 'Ahmad' }] }];
+        const classesData = [{ name: '5A', teacherName: 'Bagas Riyadi, S.Pd', students: [{ id: 's1', name: 'Ahmad' }] }];
         const attendanceData = [
             { student_id: 's1', date: '2026-07-01', status: 'Hadir' },
             { student_id: 's1', date: '2026-07-02', status: 'Sakit' },
@@ -151,6 +151,46 @@ describe('exportAttendanceToExcel', () => {
 
         expect(workbookInstances).toHaveLength(1);
         expect(workbookInstances[0].addWorksheet).not.toHaveBeenCalled();
+        expect(workbookInstances[0].xlsx.writeBuffer).toHaveBeenCalled();
+    });
+});
+
+describe('exportSemesterAttendanceToExcel', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        workbookInstances.length = 0;
+
+        vi.stubGlobal('URL', {
+            ...URL,
+            createObjectURL: vi.fn(() => 'blob:fake'),
+            revokeObjectURL: vi.fn(),
+        });
+        const originalCreateElement = document.createElement.bind(document);
+        const fakeAnchor = { href: '', download: '', click: vi.fn() };
+        vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+            if (tag.toLowerCase() === 'a') return fakeAnchor as unknown as HTMLElement;
+            return originalCreateElement(tag);
+        });
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        workbookInstances.length = 0;
+    });
+
+    it('should export semester attendance data to excel with teacher signature', async () => {
+        const classesData = [{ name: '4B', teacherName: 'Irene Saraswaty, S.S', students: [{ id: 's1', name: 'Zahra' }] }];
+        const attendanceData = [
+            { student_id: 's1', date: '2026-08-01', status: 'Hadir' },
+        ];
+
+        await expect(
+            exportSemesterAttendanceToExcel(classesData, attendanceData, 'Ganjil 2026/2027', 'semester-4B')
+        ).resolves.not.toThrow();
+
+        expect(workbookInstances).toHaveLength(1);
+        expect(workbookInstances[0].addWorksheet).toHaveBeenCalledWith('4B');
         expect(workbookInstances[0].xlsx.writeBuffer).toHaveBeenCalled();
     });
 });

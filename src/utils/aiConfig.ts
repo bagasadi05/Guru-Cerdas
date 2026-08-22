@@ -306,5 +306,5 @@ export function isRateLimitError(error: unknown): boolean {
 export function isTransientError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   const msg = error.message;
-  return /429|5\d{2}|timeout|abort|network|econnreset|econnrefused|fetch|sibuk|tidak tersedia|too many|rate/i.test(msg);
+  return /404|429|5\d{2}|timeout|abort|network|econnreset|econnrefused|fetch|sibuk|tidak tersedia|too many|rate|not found/i.test(msg);
 }

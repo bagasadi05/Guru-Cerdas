@@ -170,7 +170,7 @@ export const exportToExcel = async (data: ExportRow[], fileName: string, sheetNa
  * @since 2.0.0
  */
 export const exportAttendanceToExcel = async (
-    classesData: { name: string; students: ExportStudent[] }[],
+    classesData: { name: string; teacherName?: string; students: ExportStudent[] }[],
     attendanceData: ExportAttendanceRecord[],
     monthName: string,
     year: number,
@@ -206,15 +206,19 @@ export const exportAttendanceToExcel = async (
         titleRow1.alignment = { horizontal: 'center', vertical: 'middle' };
         titleRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
 
+        const cleanClassName = classData.name.trim().replace(/^kelas\s+/i, '');
         ws.mergeCells(2, 1, 2, totalColumns);
         const titleRow2 = ws.getCell(2, 1);
-        titleRow2.value = `DAFTAR HADIR ${classData.name.toUpperCase().includes('KELAS') ? classData.name.toUpperCase() : 'KELAS ' + classData.name.toUpperCase()}`;
+        titleRow2.value = `DAFTAR HADIR KELAS ${cleanClassName.toUpperCase()}`;
         titleRow2.font = fontTitle;
         titleRow2.alignment = { horizontal: 'center', vertical: 'middle' };
 
+        const acadYearStart = monthIndex >= 7 ? year : year - 1;
+        const academicYear = `${acadYearStart}/${acadYearStart + 1}`;
+
         ws.mergeCells(3, 1, 3, totalColumns);
         const titleRow3 = ws.getCell(3, 1);
-        titleRow3.value = `BULAN: ${monthName.toUpperCase()} - TAHUN PELAJARAN ${year}/${year + 1}`;
+        titleRow3.value = `BULAN: ${monthName.toUpperCase()} ${year} - TAHUN PELAJARAN ${academicYear}`;
         titleRow3.font = fontTitle;
         titleRow3.alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -328,9 +332,26 @@ export const exportAttendanceToExcel = async (
         });
 
         const lastRow = classData.students.length + 6;
-        ws.getCell(lastRow + 2, totalColumns - 4).value = `Madiun, ............... ${year}`;
-        ws.getCell(lastRow + 3, totalColumns - 4).value = `Wali Kelas ${classData.name}`;
-        ws.getCell(lastRow + 6, totalColumns - 4).value = '(_________________)';
+        const printDateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const teacherDisplay = classData.teacherName?.trim() ? classData.teacherName.trim() : '....................................';
+
+        const sigStartCol = Math.max(1, totalColumns - 4);
+        
+        ws.mergeCells(lastRow + 2, sigStartCol, lastRow + 2, totalColumns);
+        const sigCell1 = ws.getCell(lastRow + 2, sigStartCol);
+        sigCell1.value = `Madiun, ${printDateStr}`;
+        sigCell1.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws.mergeCells(lastRow + 3, sigStartCol, lastRow + 3, totalColumns);
+        const sigCell2 = ws.getCell(lastRow + 3, sigStartCol);
+        sigCell2.value = `Wali Kelas ${cleanClassName}`;
+        sigCell2.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws.mergeCells(lastRow + 6, sigStartCol, lastRow + 6, totalColumns);
+        const sigCell3 = ws.getCell(lastRow + 6, sigStartCol);
+        sigCell3.value = `( ${teacherDisplay} )`;
+        sigCell3.font = { bold: true };
+        sigCell3.alignment = { horizontal: 'center', vertical: 'middle' };
     }
 
     const buffer = await workbook.xlsx.writeBuffer();
@@ -633,7 +654,7 @@ export const exportClassSummaryToExcel = async (
  * @since 2.0.0
  */
 export const exportSemesterAttendanceToExcel = async (
-    classesData: { name: string; students: ExportStudent[] }[],
+    classesData: { name: string; teacherName?: string; students: ExportStudent[] }[],
     attendanceData: ExportAttendanceRecord[],
     semesterName: string,
     fileName: string,
@@ -663,9 +684,10 @@ export const exportSemesterAttendanceToExcel = async (
         titleRow1.alignment = { horizontal: 'center', vertical: 'middle' };
         titleRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
 
+        const cleanClassName = classData.name.trim().replace(/^kelas\s+/i, '');
         ws.mergeCells(2, 1, 2, totalColumns);
         const titleRow2 = ws.getCell(2, 1);
-        titleRow2.value = `REKAPITULASI KEHADIRAN SISWA - ${classData.name.toUpperCase().includes('KELAS') ? classData.name.toUpperCase() : 'KELAS ' + classData.name.toUpperCase()}`;
+        titleRow2.value = `REKAPITULASI KEHADIRAN SISWA - KELAS ${cleanClassName.toUpperCase()}`;
         titleRow2.font = fontTitle;
         titleRow2.alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -732,9 +754,26 @@ export const exportSemesterAttendanceToExcel = async (
         });
 
         const lastRow = classData.students.length + 5;
-        ws.getCell(lastRow + 2, totalColumns - 2).value = `Madiun, ............... ${new Date().getFullYear()}`;
-        ws.getCell(lastRow + 3, totalColumns - 2).value = `Wali Kelas ${classData.name}`;
-        ws.getCell(lastRow + 6, totalColumns - 2).value = '(_________________)';
+        const printDateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const teacherDisplay = classData.teacherName?.trim() ? classData.teacherName.trim() : '....................................';
+
+        const sigStartCol = Math.max(1, totalColumns - 2);
+
+        ws.mergeCells(lastRow + 2, sigStartCol, lastRow + 2, totalColumns);
+        const sigCell1 = ws.getCell(lastRow + 2, sigStartCol);
+        sigCell1.value = `Madiun, ${printDateStr}`;
+        sigCell1.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws.mergeCells(lastRow + 3, sigStartCol, lastRow + 3, totalColumns);
+        const sigCell2 = ws.getCell(lastRow + 3, sigStartCol);
+        sigCell2.value = `Wali Kelas ${cleanClassName}`;
+        sigCell2.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws.mergeCells(lastRow + 6, sigStartCol, lastRow + 6, totalColumns);
+        const sigCell3 = ws.getCell(lastRow + 6, sigStartCol);
+        sigCell3.value = `( ${teacherDisplay} )`;
+        sigCell3.font = { bold: true };
+        sigCell3.alignment = { horizontal: 'center', vertical: 'middle' };
     }
 
     const buffer = await workbook.xlsx.writeBuffer();

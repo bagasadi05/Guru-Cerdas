@@ -25,9 +25,15 @@ import { extractStudentHtml } from './utils/template';
 import { useModulAjarAiJob } from './hooks/useModulAjarAiJob';
 import {
   generateTujuanPembelajaran,
+  generatePemahamanBermakna,
   generatePertanyaanPemantik,
+  generateMateriAjar,
   generateLkpdTugas,
   generateSoalEvaluasi,
+  generatePengayaan,
+  generateRemedial,
+  generateGlosarium,
+  generateDaftarPustaka,
   generateKompetensiAwal,
   generateCapaianPembelajaran,
 } from '../../../services/modulAjarAiFieldGenerator';
@@ -68,9 +74,12 @@ const ModulAjarCreatorPage: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   
   const [history, setHistory] = useState<any[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<any | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  
+  const [isDeletingHistory, setIsDeletingHistory] = useState<boolean>(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
   const [aiCacheWarning, setAiCacheWarning] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string>('');
   const [fieldLoading, setFieldLoading] = useState<Record<string, boolean>>({});
@@ -175,9 +184,15 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const FIELD_LABELS: Record<string, string> = {
     manualTujuanPembelajaran: 'Tujuan Pembelajaran',
+    manualPemahamanBermakna: 'Pemahaman Bermakna',
     manualPertanyaanPemantik: 'Pertanyaan Pemantik',
+    manualMateriAjar: 'Ringkasan Materi Ajar',
     manualLkpdTugas: 'Lembar Kerja Peserta Didik (LKPD)',
-    manualSoalEvaluasi: 'Soal Evaluasi',
+    manualSoalEvaluasi: 'Soal Evaluasi & Penskoran',
+    manualPengayaan: 'Aktivitas Pengayaan',
+    manualRemedial: 'Aktivitas Remedial',
+    manualGlosarium: 'Glosarium',
+    manualDaftarPustaka: 'Daftar Pustaka',
     kompetensiAwal: 'Kompetensi Awal',
     capaianPembelajaran: 'Capaian Pembelajaran',
   };
@@ -195,7 +210,13 @@ const ModulAjarCreatorPage: React.FC = () => {
         mapel: formState.mataPelajaran.trim(),
         topik: formState.topik.trim(),
         fase: formState.fase || 'A',
-        modelPembelajaran: formState.modelPembelajaran
+        kelas: formState.kelas,
+        modelPembelajaran: formState.modelPembelajaran,
+        alokasiWaktu: `${formState.jpPerPertemuan} JP × ${formState.durasiPerJp} menit`,
+        profilPelajarPancasila: formState.profilPelajar,
+        temaKbc: formState.temaKbc,
+        materiInsersi: formState.materiInsersi,
+        isKbcIntegrated: formState.isKbcIntegrated || formState.curriculumApproach === 'Berbasis Cinta',
       };
       let content = '';
 
@@ -203,14 +224,32 @@ const ModulAjarCreatorPage: React.FC = () => {
         case 'manualTujuanPembelajaran':
           content = await generateTujuanPembelajaran(ctx);
           break;
+        case 'manualPemahamanBermakna':
+          content = await generatePemahamanBermakna(ctx);
+          break;
         case 'manualPertanyaanPemantik':
           content = await generatePertanyaanPemantik(ctx);
+          break;
+        case 'manualMateriAjar':
+          content = await generateMateriAjar(ctx);
           break;
         case 'manualLkpdTugas':
           content = await generateLkpdTugas(ctx);
           break;
         case 'manualSoalEvaluasi':
           content = await generateSoalEvaluasi(ctx);
+          break;
+        case 'manualPengayaan':
+          content = await generatePengayaan(ctx);
+          break;
+        case 'manualRemedial':
+          content = await generateRemedial(ctx);
+          break;
+        case 'manualGlosarium':
+          content = await generateGlosarium(ctx);
+          break;
+        case 'manualDaftarPustaka':
+          content = await generateDaftarPustaka(ctx);
           break;
         case 'kompetensiAwal':
           content = await generateKompetensiAwal(ctx);

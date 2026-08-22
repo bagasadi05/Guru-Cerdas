@@ -175,10 +175,14 @@ export class GeminiProvider implements AiProvider {
 
   private async callWithRetry(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
     let lastError: Error | null = null;
+    const defaultEnvModel = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_MODEL) || 'gemini-1.5-flash';
     const candidateModels = [
-      model,
-      model.includes('2.0') ? 'gemini-1.5-flash' : 'gemini-2.0-flash'
-    ];
+      model || defaultEnvModel,
+      'gemini-1.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-pro',
+      'gemini-1.5-flash-latest'
+    ].filter((v, idx, arr) => arr.indexOf(v) === idx);
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       const currentModel = candidateModels[(attempt - 1) % candidateModels.length];

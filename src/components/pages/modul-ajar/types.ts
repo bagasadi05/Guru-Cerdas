@@ -29,9 +29,15 @@ export interface FormState {
   metodePembelajaran: string[];
   
   manualTujuanPembelajaran: string;
+  manualPemahamanBermakna?: string;
   manualPertanyaanPemantik: string;
+  manualMateriAjar?: string;
   manualLkpdTugas: string;
   manualSoalEvaluasi: string;
+  manualPengayaan?: string;
+  manualRemedial?: string;
+  manualGlosarium?: string;
+  manualDaftarPustaka?: string;
 
   alokasiPendahuluan: number;
   alokasiInti: number;

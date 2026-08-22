@@ -95,7 +95,7 @@ describe('E2E Happy Path: Matematika - Penjumlahan - Fase A - PBL', () => {
       topik: 'Penjumlahan',
       tahunAjaran: '2023/2024',
       semester: 'Ganjil',
-      guru: 'Bagas Riyadi',
+      guru: 'Bagas Riyadi, S.Pd',
       targetPeserta: 'Reguler',
       capaianPembelajaran: 'Peserta didik dapat menjumlahkan bilangan.',
       profilPelajar: ['Bernalar Kritis', 'Bergotong Royong'],

@@ -4,6 +4,7 @@ import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 import { BintangGrade, calculateAspectPoints } from './bintangService';
 import { supabase } from './supabase';
 import { formatExportDate } from '../utils/exportUtils';
+import { formatDegreeProperly } from '../utils/greetingUtils';
 
 
 
@@ -518,7 +519,8 @@ export const generateBintangReportPdf = async (
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
         const teacherLineX = (pageWidth / 2) + ((pageWidth - (margin * 2)) / 4);
-        const teacherName = (user?.name && user.name.trim() !== '') ? user.name.toUpperCase() : "...................................";
+        const hasValidTeacherName = !!(user?.name && user.name.trim() !== '' && user.name.trim().toLowerCase() !== 'wali kelas');
+        const teacherName = hasValidTeacherName ? formatDegreeProperly(user.name.trim()) : "...................................";
         doc.text(teacherName, teacherLineX, currentY + 34, { align: 'center' });
         
         const textWidth = doc.getTextWidth(teacherName);
@@ -574,6 +576,7 @@ export const downloadBintangReportAction = async ({
     if (!studentId && !classId) return;
 
     let studentsToFetch: Array<{ id: string; name?: string | null; access_code?: string | null; class_id?: string | null; nis?: string | null; nisn?: string | null; classes?: { name: string | null } | null }> = [];
+    let classUserId: string | null = null;
     
     if (studentId) {
         const { data: sData, error: sError } = await supabase
@@ -587,19 +590,23 @@ export const downloadBintangReportAction = async ({
         if (sData.class_id) {
             const { data: cData } = await supabase
                 .from('classes')
-                .select('name')
+                .select('name, user_id, wali_kelas_id')
                 .eq('id', sData.class_id)
                 .maybeSingle();
-            if (cData) className = cData.name;
+            if (cData) {
+                className = cData.name;
+                classUserId = cData.wali_kelas_id || cData.user_id || null;
+            }
         }
         studentsToFetch = [{ ...sData, classes: { name: className } }];
     } else if (classId) {
         const { data: cData } = await supabase
             .from('classes')
-            .select('name')
+            .select('name, user_id, wali_kelas_id')
             .eq('id', classId)
             .maybeSingle();
         const className = cData?.name || '-';
+        classUserId = cData?.wali_kelas_id || cData?.user_id || null;
 
         const { data: sData, error: sError } = await supabase
             .from('students')
@@ -614,6 +621,41 @@ export const downloadBintangReportAction = async ({
     if (studentsToFetch.length === 0) {
         throw new Error('Data siswa tidak ditemukan.');
     }
+
+    // Resolve teacher name from user or homeroom teacher profile in user_roles
+    let effectiveTeacherName = (user?.name && user.name.trim() !== '' && user.name.trim().toLowerCase() !== 'wali kelas')
+        ? user.name.trim()
+        : '';
+
+    if (!effectiveTeacherName && classUserId) {
+        try {
+            const { data: roleData } = await supabase
+                .from('user_roles')
+                .select('full_name')
+                .eq('user_id', classUserId)
+                .maybeSingle();
+            if (roleData?.full_name?.trim()) {
+                effectiveTeacherName = roleData.full_name.trim();
+            }
+        } catch (e) {
+            console.warn('Failed to fetch homeroom teacher name from user_roles', e);
+        }
+    }
+
+    if (effectiveTeacherName) {
+        effectiveTeacherName = formatDegreeProperly(effectiveTeacherName);
+    }
+
+    const effectiveUser: AppUser | null = user
+        ? {
+            ...user,
+            name: effectiveTeacherName || user.name || '',
+        }
+        : (effectiveTeacherName ? {
+            id: classUserId || '',
+            name: effectiveTeacherName,
+            avatarUrl: '',
+        } : null);
 
     const reports = [];
 
@@ -680,7 +722,7 @@ export const downloadBintangReportAction = async ({
     const academicYear = `${monthAcadYearStart}/${monthAcadYearStart + 1}`;
     const semesterName = monthSemester === '1' ? 'Ganjil' : 'Genap';
 
-    await generateBintangReportPdf(doc, reports, monthName, printDate, user, {
+    await generateBintangReportPdf(doc, reports, monthName, printDate, effectiveUser, {
         schoolName: undefined, // Will use default from addPdfHeader
         academicYear,
         semesterName

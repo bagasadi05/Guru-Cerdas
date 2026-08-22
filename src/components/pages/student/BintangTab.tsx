@@ -108,8 +108,8 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
                 month: selectedMonth,
                 user: (user as any) ? {
                     id: (user as any).id,
-                    name: (user as any).user_metadata?.full_name || 'Wali Kelas',
-                    avatarUrl: (user as any).user_metadata?.avatar_url || '',
+                    name: (user as any).name || (user as any).user_metadata?.full_name || (user as any).user_metadata?.name || '',
+                    avatarUrl: (user as any).avatarUrl || (user as any).user_metadata?.avatar_url || '',
                     email: (user as any).email
                 } : null
             });

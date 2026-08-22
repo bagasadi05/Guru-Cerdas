@@ -53,23 +53,25 @@ interface RouteConfig {
   model: string;
 }
 
+const DEFAULT_GEMINI_MODEL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_MODEL) || 'gemini-1.5-flash';
+
 const ROUTING: Record<AiTaskType, RouteConfig> = {
-  'teacher-report':   { primary: 'gemini', model: 'gemini-2.0-flash' },
-  'child-analysis':   { primary: 'gemini', model: 'gemini-2.0-flash' },
-  'modul-ajar':       { primary: 'gemini', model: 'gemini-2.0-flash' },
+  'teacher-report':   { primary: 'gemini', model: DEFAULT_GEMINI_MODEL },
+  'child-analysis':   { primary: 'gemini', model: DEFAULT_GEMINI_MODEL },
+  'modul-ajar':       { primary: 'gemini', model: DEFAULT_GEMINI_MODEL },
   'grade-adjustment': { primary: 'groq',  model: 'llama-3.1-8b-instant' },
   insight:            { primary: 'groq',  model: 'llama-3.1-8b-instant' },
   'parse-values':     { primary: 'groq',  model: 'llama-3.1-8b-instant' },
-  general:            { primary: 'gemini', model: 'gemini-2.0-flash' },
+  general:            { primary: 'gemini', model: DEFAULT_GEMINI_MODEL },
 };
 
 const FALLBACK_MODELS: Record<AiTaskType, string> = {
   'teacher-report':   'llama-3.3-70b-versatile',
   'child-analysis':   'llama-3.3-70b-versatile',
   'modul-ajar':       'llama-3.3-70b-versatile',
-  'grade-adjustment': 'gemini-2.0-flash',
-  insight:            'gemini-2.0-flash',
-  'parse-values':     'gemini-2.0-flash',
+  'grade-adjustment': DEFAULT_GEMINI_MODEL,
+  insight:            DEFAULT_GEMINI_MODEL,
+  'parse-values':     DEFAULT_GEMINI_MODEL,
   general:            'llama-3.3-70b-versatile',
 };
 

@@ -17,13 +17,16 @@ const ProfileSection: React.FC = () => {
     const isOnline = useOfflineStatus();
     const [name, setName] = useState(user?.name || '');
     const [schoolName, setSchoolName] = useState(user?.school_name || '');
+    const [title, setTitle] = useState(user?.title || '');
+    const [gender, setGender] = useState(user?.gender || '');
 
     useEffect(() => {
         if (user) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setName(user.name || '');
-             
             setSchoolName(user.school_name || '');
+            setTitle(user.title || '');
+            setGender(user.gender || '');
         }
     }, [user]);
 
@@ -80,7 +83,7 @@ const ProfileSection: React.FC = () => {
 
     const handleProfileSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const { error } = await updateUser({ name, school_name: schoolName });
+        const { error } = await updateUser({ name, school_name: schoolName, title, gender });
         if (error) {
             toast.error(`Gagal memperbarui profil: ${error.message}`);
         } else {
@@ -153,6 +156,34 @@ const ProfileSection: React.FC = () => {
                                 className="h-12 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="Masukkan nama sekolah"
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <label htmlFor="title" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Gelar Sapaan / Panggilan</label>
+                            <select
+                                id="title"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all text-sm"
+                            >
+                                <option value="">Otomatis (Berdasarkan Nama/Gender)</option>
+                                <option value="Ustadzah">Ustadzah</option>
+                                <option value="Ustadz">Ustadz</option>
+                                <option value="Ibu">Ibu</option>
+                                <option value="Bapak">Bapak</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label htmlFor="gender" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Jenis Kelamin</label>
+                            <select
+                                id="gender"
+                                value={gender}
+                                onChange={(e) => setGender(e.target.value)}
+                                className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all text-sm"
+                            >
+                                <option value="">Belum Ditentukan</option>
+                                <option value="Perempuan">Perempuan</option>
+                                <option value="Laki-laki">Laki-laki</option>
+                            </select>
                         </div>
                     </div>
                     <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">

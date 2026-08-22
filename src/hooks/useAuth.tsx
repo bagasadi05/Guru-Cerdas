@@ -108,7 +108,7 @@ interface AuthContextType {
   /** Signs out the current user and disables notifications */
   logout: () => Promise<void>;
   /** Updates the current user's profile information */
-  updateUser: (data: { name?: string; school_name?: string; avatar_url?: string; password?: string }) => Promise<UserResponse>;
+  updateUser: (data: { name?: string; school_name?: string; avatar_url?: string; password?: string; gender?: string; title?: string }) => Promise<UserResponse>;
   /** Registers a new user account */
   signup: (name: string, email: string, password?: string) => Promise<AuthResponse>;
   /** Enables push notifications for schedule reminders */
@@ -197,9 +197,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return {
       id: authUser.id,
       email: authUser.email,
-      name: authUser.user_metadata.name || 'Guru',
+      name: authUser.user_metadata.name || authUser.user_metadata.full_name || 'Guru',
       school_name: authUser.user_metadata.school_name || '',
-      avatarUrl: avatarUrl
+      avatarUrl: avatarUrl,
+      gender: authUser.user_metadata.gender || '',
+      title: authUser.user_metadata.title || ''
     };
   };
 
@@ -400,9 +402,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateUser: (data) => supabase.auth.updateUser({
       password: data.password,
       data: {
-        name: data.name,
-        school_name: data.school_name,
-        avatar_url: data.avatar_url
+        ...(data.name !== undefined ? { name: data.name, full_name: data.name } : {}),
+        ...(data.school_name !== undefined ? { school_name: data.school_name } : {}),
+        ...(data.avatar_url !== undefined ? { avatar_url: data.avatar_url } : {}),
+        ...(data.gender !== undefined ? { gender: data.gender } : {}),
+        ...(data.title !== undefined ? { title: data.title } : {}),
       }
     }),
     enableScheduleNotifications,

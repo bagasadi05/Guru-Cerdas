@@ -906,6 +906,20 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
                       <div>
                         <div className="flex flex-wrap justify-between items-end mb-1">
+                          <label className="block text-xs text-slate-500 dark:text-slate-400">Pemahaman Bermakna (Big Ideas)</label>
+                          <AiButton field="manualPemahamanBermakna" label="Isi AI" {...aiProps} />
+                        </div>
+                        <textarea
+                          value={formState.manualPemahamanBermakna || ''}
+                          onChange={(e) => onChange('manualPemahamanBermakna', e.target.value)}
+                          rows={3}
+                          className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
+                          placeholder="Contoh:&#10;1. Siswa memahami peran penting materi dalam kehidupan nyata.&#10;2. Menumbuhkan rasa syukur dan kepedulian terhadap lingkungan sekitar."
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex flex-wrap justify-between items-end mb-1">
                           <label className="block text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.pertanyaanPemantik}</label>
                           <AiButton field="manualPertanyaanPemantik" label="Isi AI" {...aiProps} />
                         </div>
@@ -915,6 +929,23 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           rows={3}
                           className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
                           placeholder="Contoh:&#10;Mengapa kita perlu mempelajari topik ini?&#10;Bagaimana penerapannya dalam kehidupan sehari-hari?"
+                        />
+                      </div>
+
+                      {/* Ringkasan Bahan Bacaan / Materi Ajar */}
+                      <div>
+                        <div className="flex flex-wrap justify-between items-end mb-1">
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            Ringkasan Bahan Bacaan / Materi Ajar Siswa
+                          </label>
+                          <AiButton field="manualMateriAjar" label="Buat AI" {...aiProps} />
+                        </div>
+                        <textarea
+                          value={formState.manualMateriAjar || ''}
+                          onChange={(e) => onChange('manualMateriAjar', e.target.value)}
+                          rows={4}
+                          className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
+                          placeholder="Ringkasan materi pelajaran yang ramah anak, padat, dan terstruktur..."
                         />
                       </div>
 
@@ -995,6 +1026,52 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                           className="w-full p-2.5 rounded-lg border border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
                           placeholder="Tuliskan butir soal evaluasi pemahaman konsep..."
                         />
+                      </div>
+
+                      {/* Asesmen Diferensiasi: Pengayaan & Remedial */}
+                      <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                            Asesmen Diferensiasi Pembelajaran
+                          </h4>
+                          <span className="text-[10px] bg-brand-100 text-brand-800 dark:bg-brand-900/60 dark:text-brand-300 font-bold px-2 py-0.5 rounded-full">
+                            Kurikulum Merdeka
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <div className="flex flex-wrap justify-between items-end mb-1">
+                              <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                                🌟 Aktivitas Pengayaan
+                              </label>
+                              <AiButton field="manualPengayaan" label="Buat AI" {...aiProps} />
+                            </div>
+                            <textarea
+                              value={formState.manualPengayaan || ''}
+                              onChange={(e) => onChange('manualPengayaan', e.target.value)}
+                              rows={3}
+                              className="w-full p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60 text-xs dark:bg-slate-800 dark:text-white resize-none focus:ring-2 focus:ring-emerald-500 outline-none"
+                              placeholder="Tantangan / eksplorasi mendalam bagi siswa cepat paham..."
+                            />
+                          </div>
+
+                          <div>
+                            <div className="flex flex-wrap justify-between items-end mb-1">
+                              <label className="block text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                🛡️ Aktivitas Remedial
+                              </label>
+                              <AiButton field="manualRemedial" label="Buat AI" {...aiProps} />
+                            </div>
+                            <textarea
+                              value={formState.manualRemedial || ''}
+                              onChange={(e) => onChange('manualRemedial', e.target.value)}
+                              rows={3}
+                              className="w-full p-2.5 rounded-lg border border-amber-200 dark:border-amber-800/60 text-xs dark:bg-slate-800 dark:text-white resize-none focus:ring-2 focus:ring-amber-500 outline-none"
+                              placeholder="Panduan bimbingan bertahap bagi siswa yang butuh pendampingan..."
+                            />
+                          </div>
+                        </div>
                       </div>
                     </>
                   )}
@@ -1498,6 +1575,52 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                     >
                       {t.lessonPlan.rubricAddCustom}
                     </button>
+                  </div>
+
+                  {/* Lampiran & Referensi Belajar: Glosarium & Daftar Pustaka */}
+                  <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                        Lampiran & Sumber Referensi
+                      </h4>
+                      <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold px-2 py-0.5 rounded-full">
+                        Standar Kemendikbud & Kemenag
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <div className="flex flex-wrap justify-between items-end mb-1">
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            📖 Glosarium (Istilah Kunci)
+                          </label>
+                          <AiButton field="manualGlosarium" label="Isi AI" {...aiProps} />
+                        </div>
+                        <textarea
+                          value={formState.manualGlosarium || ''}
+                          onChange={(e) => onChange('manualGlosarium', e.target.value)}
+                          rows={3}
+                          className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs dark:bg-slate-800 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
+                          placeholder="Istilah 1: Penjelasan istilah...&#10;Istilah 2: Penjelasan istilah..."
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex flex-wrap justify-between items-end mb-1">
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            📚 Daftar Pustaka Resmi
+                          </label>
+                          <AiButton field="manualDaftarPustaka" label="Isi AI" {...aiProps} />
+                        </div>
+                        <textarea
+                          value={formState.manualDaftarPustaka || ''}
+                          onChange={(e) => onChange('manualDaftarPustaka', e.target.value)}
+                          rows={3}
+                          className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs dark:bg-slate-800 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
+                          placeholder="Buku Guru & Buku Siswa Kemendikbudristek & Kemenag..."
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
