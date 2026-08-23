@@ -27,9 +27,9 @@ export interface AiModulAjarContent {
   kegiatanPenutup?: string[] | string;
 }
 
-const SYSTEM_INSTRUCTION = `Kamu adalah pakar pendidikan Kurikulum Merdeka Indonesia khusus untuk jenjang SD/MI.
+const SYSTEM_INSTRUCTION = `Kamu adalah pakar pendidikan Kurikulum Merdeka Indonesia khusus untuk jenjang SD/MI, berperan sebagai instructional designer dan pengembang kurikulum profesional.
 Tugasmu: menyusun dokumen Modul Ajar yang SANGAT LENGKAP, MENDALAM, dan SIAP PAKAI secara praktis di kelas oleh guru.
-Setiap komponen harus kontekstual, rinci, kaya contoh nyata, dan bebas dari kalimat template generik.
+Setiap komponen harus kontekstual, rinci, student-centered, kaya contoh nyata, selaras dengan Tujuan Pembelajaran (TP), dan bebas dari kalimat template generik.
 Gunakan gaya bahasa buku panduan guru Kurikulum Merdeka: deskriptif, naratif, operasional, dan humanis.
 Format teks output: gunakan format Markdown yang rapi (heading ##, bullet point -, list angka 1., penanda kotak [Kotak untuk ...]). JANGAN gunakan tabel markdown (| --- |).`;
 
@@ -134,10 +134,12 @@ Hasilkan JSON dengan struktur persis berikut:
 }
 
 PEDOMAN KUALITAS KONTEN:
-1. SEMUA kegiatan pembelajaran dan LKPD HARUS sangat spesifik untuk topik "${topik}". DILARANG membuat langkah generik seperti "Guru menjelaskan materi" atau "Siswa mendengarkan penjelasan".
-2. INTEGRASI MODEL & METODE: Skenario Kegiatan Inti WAJIB secara eksplisit mengintegrasikan sintaks model pembelajaran (${modelPembelajaran || 'Model Terpilih'}) dan metode pembelajaran (${metodePembelajaran?.join(', ') || 'Metode Terpilih'}) ke dalam tindakan konkret guru dan siswa.
-3. Tuliskan dialog guru, pertanyaan pemandu, media nyata, dan tindakan aktif siswa secara gamblang.
-4. Sesuaikan tingkat kesulitan dan bahasa dengan ${faseInfo}.`;
+1. SPESIFIK & KONKRET: SEMUA kegiatan pembelajaran dan LKPD HARUS sangat spesifik untuk topik "${topik}". DILARANG membuat langkah generik (spt "Guru menjelaskan materi"). Tuliskan dialog guru, pertanyaan pemandu, media nyata, dan tindakan aktif siswa secara gamblang.
+2. INTEGRASI MODEL & METODE: Skenario Kegiatan Inti WAJIB secara eksplisit mengintegrasikan sintaks model pembelajaran (${modelPembelajaran || 'Model Terpilih'}) dan metode pembelajaran (${metodePembelajaran?.join(', ') || 'Metode Terpilih'}).
+3. DEEP LEARNING & 4C: Mengintegrasikan prinsip pembelajaran mendalam (Deep Learning) melalui aktivitas memahami, mengaplikasikan, menganalisis, merefleksikan, dan mentransfer pengetahuan ke konteks nyata, serta memfasilitasi 4C (Kritis, Kreatif, Kolaboratif, Komunikatif).
+4. ASESMEN & DIFERENSIASI: Sertakan strategi diferensiasi sederhana (konten/proses/produk) sesuai karakteristik siswa, dan cantumkan asesmen formatif (beserta indikator yang diamati) secara natural di dalam langkah-langkah kegiatan inti atau penutup.
+5. KETERKAITAN TP & PRAKTIS: Pastikan seluruh alur pembelajaran benar-benar selaras untuk mencapai Tujuan Pembelajaran (TP). Gunakan bahasa yang praktis, operasional, dan siap diterapkan di kelas tanpa memerlukan banyak revisi.
+6. TINGKAT PERKEMBANGAN: Sesuaikan tingkat kesulitan, kompleksitas pemecahan masalah, dan pemilihan bahasa dengan tahap perkembangan ${faseInfo}.`;
 }
 
 export interface CacheToDatabaseResult {
