@@ -450,31 +450,86 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         } finally { setIsParsing(false); }
     };
 
-    const fetchReportDataForStudent = async (studentId: string, semesterId: string): Promise<ReportDataType> => {
-        const studentRes = await supabase.from('students').select('*, classes(id, name)').eq('id', studentId).is('deleted_at', null).single();
-        if (studentRes.error) throw new Error(studentRes.error.message);
-        const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes] = await Promise.all([
-            supabase.from('reports').select('*').eq('student_id', studentId).is('deleted_at', null),
-            supabase.from('attendance').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('academic_records').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('violations').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('quiz_points').select('*').eq('student_id', studentId).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('student_achievements').select('*').eq('student_id', studentId).is('deleted_at', null),
+    const fetchBulkReportData = async (studentIds: string[], semesterId: string): Promise<ReportDataType[]> => {
+        if (studentIds.length === 0) return [];
+        const [
+            studentsRes,
+            reportsRes,
+            attendanceRes,
+            academicRes,
+            violationsRes,
+            quizPointsRes,
+            achievementsRes
+        ] = await Promise.all([
+            supabase.from('students').select('*, classes(id, name)').in('id', studentIds).is('deleted_at', null),
+            supabase.from('reports').select('*').in('student_id', studentIds).is('deleted_at', null),
+            supabase.from('attendance').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('academic_records').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('violations').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('quiz_points').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
+            supabase.from('student_achievements').select('*').in('student_id', studentIds).is('deleted_at', null),
         ]) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes].map((r: any) => r.error).filter((e: any) => e !== null);
+        const errors = [studentsRes, reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes]
+            .map((r: any) => r.error)
+            .filter((e: any) => e !== null);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (errors.length > 0) throw new Error(errors.map((e: any) => e!.message).join(', '));
-         
-        return { 
-            student: studentRes.data as any, 
-            reports: reportsRes.data || [], 
-            attendanceRecords: attendanceRes.data || [], 
-            academicRecords: dedupeAcademicRecords((academicRes.data || []) as any) as any, 
-            violations: dedupeViolations((violationsRes.data || []) as any) as any, 
-            quizPoints: dedupeQuizPoints((quizPointsRes.data || []) as any) as any,
-            achievements: achievementsRes.data || []
-        };
+
+        const studentsList: any[] = studentsRes.data || [];
+        const reportsByStudent = new Map<string, any[]>();
+        const attendanceByStudent = new Map<string, any[]>();
+        const academicByStudent = new Map<string, any[]>();
+        const violationsByStudent = new Map<string, any[]>();
+        const quizPointsByStudent = new Map<string, any[]>();
+        const achievementsByStudent = new Map<string, any[]>();
+
+        (reportsRes.data || []).forEach((item: any) => {
+            const arr = reportsByStudent.get(item.student_id) || [];
+            arr.push(item);
+            reportsByStudent.set(item.student_id, arr);
+        });
+        (attendanceRes.data || []).forEach((item: any) => {
+            const arr = attendanceByStudent.get(item.student_id) || [];
+            arr.push(item);
+            attendanceByStudent.set(item.student_id, arr);
+        });
+        (academicRes.data || []).forEach((item: any) => {
+            const arr = academicByStudent.get(item.student_id) || [];
+            arr.push(item);
+            academicByStudent.set(item.student_id, arr);
+        });
+        (violationsRes.data || []).forEach((item: any) => {
+            const arr = violationsByStudent.get(item.student_id) || [];
+            arr.push(item);
+            violationsByStudent.set(item.student_id, arr);
+        });
+        (quizPointsRes.data || []).forEach((item: any) => {
+            const arr = quizPointsByStudent.get(item.student_id) || [];
+            arr.push(item);
+            quizPointsByStudent.set(item.student_id, arr);
+        });
+        (achievementsRes.data || []).forEach((item: any) => {
+            const arr = achievementsByStudent.get(item.student_id) || [];
+            arr.push(item);
+            achievementsByStudent.set(item.student_id, arr);
+        });
+
+        // Ensure order matches studentIds input
+        const studentMap = new Map<string, any>(studentsList.map(s => [s.id, s]));
+        return studentIds
+            .map(id => studentMap.get(id))
+            .filter(Boolean)
+            .map(student => ({
+                student: student as any,
+                reports: reportsByStudent.get(student.id) || [],
+                attendanceRecords: attendanceByStudent.get(student.id) || [],
+                academicRecords: dedupeAcademicRecords((academicByStudent.get(student.id) || []) as any) as any,
+                violations: dedupeViolations((violationsByStudent.get(student.id) || []) as any) as any,
+                quizPoints: dedupeQuizPoints((quizPointsByStudent.get(student.id) || []) as any) as any,
+                achievements: achievementsByStudent.get(student.id) || []
+            }));
     };
 
     const handlePrintBulkReports = async () => {
@@ -485,7 +540,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         try {
             setExportProgress('10%');
             if (!activeSemester?.id) throw new Error('Semester aktif tidak ditemukan.');
-            const allReportData = await Promise.all(studentsToPrint.map(student => fetchReportDataForStudent(student.id, activeSemester.id)));
+            const allReportData = await fetchBulkReportData(studentsToPrint.map(s => s.id), activeSemester.id);
             setExportProgress('40%');
             let teacherNotesMap: Map<string, string>;
             if (noteMethod === 'template') {

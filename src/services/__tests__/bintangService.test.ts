@@ -124,4 +124,9 @@ describe('calculateAspectPoints', () => {
         expect(s.ADAB.grade).toBe('A');
         expect(s.KEDISIPLINAN.points).toBe(0);
     });
+
+    it('bintangService provides bulkInsertViolations method', async () => {
+        const { bintangService } = await import('../bintangService');
+        expect(typeof bintangService.bulkInsertViolations).toBe('function');
+    });
 });

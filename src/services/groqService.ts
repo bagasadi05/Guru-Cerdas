@@ -2,6 +2,7 @@ import type { GeminiMessage, GeminiResponse, AiTaskType } from './aiProvider';
 import type { AiProvider } from './aiProvider';
 import { aiRouter } from './aiProvider';
 import { logger } from './logger';
+import { supabase } from './supabase';
 import { robustParseJson } from '../utils/jsonUtils';
 import {
   pickNextGroqKey,
@@ -152,9 +153,19 @@ export class GroqProvider implements AiProvider {
         };
       } else {
         url = getEndpoint();
+        let token: string | undefined;
+        try {
+          const session = (await supabase.auth.getSession()).data.session;
+          token = session?.access_token;
+        } catch {
+          // ignore if session fetch fails (e.g. offline/mock)
+        }
         init = {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(body),
           signal: controller.signal,
         };

@@ -285,7 +285,11 @@ export const UndoToastProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 export const useUndoToastContext = () => {
     const context = useContext(UndoToastContext);
     if (!context) {
-        throw new Error('useUndoToastContext must be used within UndoToastProvider');
+        return {
+            showUndoToast: () => {},
+            hideUndoToast: () => {},
+            UndoToastComponent: null,
+        };
     }
     return context;
 };

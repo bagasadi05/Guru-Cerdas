@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
+import { authenticateRequest } from './_auth';
 
 /**
  * Groq serverless proxy — keeps GROQ_API_KEY server-side.
@@ -76,7 +77,7 @@ function getRequestOrigin(req: ExtendedRequest): string | undefined {
   if (typeof origin === 'string' && origin.length > 0) return origin;
   const referer = req.headers.referer;
   if (typeof referer === 'string') {
-    try { return new URL(referer).origin; } catch {}
+    try { return new URL(referer).origin; } catch { /* ignore malformed URL */ }
   }
   const host = (req.headers['x-forwarded-host'] || req.headers.host) as string | undefined;
   if (host) {
@@ -94,7 +95,9 @@ function isOriginAllowed(req: ExtendedRequest, allowedOriginEnv: string | undefi
   if (reqHost) {
     try {
       if (new URL(origin).hostname.toLowerCase() === reqHost) return true;
-    } catch {}
+    } catch {
+      /* ignore malformed URL */
+    }
   }
 
   const defaultPatterns = [
@@ -125,7 +128,9 @@ function isOriginAllowed(req: ExtendedRequest, allowedOriginEnv: string | undefi
         const oHost = originUrl.hostname.toLowerCase();
         return oHost === pHost || oHost.endsWith('.' + pHost);
       }
-    } catch {}
+    } catch {
+      /* ignore malformed pattern or origin */
+    }
     return false;
   });
 }
@@ -220,6 +225,13 @@ function isBodyValid(body: any): body is {
 export default async function handler(req: ExtendedRequest, res: ExtendedResponse): Promise<void> {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  // Security: Authentication check
+  const auth = await authenticateRequest(req);
+  if (!auth.authorized) {
+    res.status(401).json({ error: auth.error || 'Unauthorized' });
     return;
   }
 

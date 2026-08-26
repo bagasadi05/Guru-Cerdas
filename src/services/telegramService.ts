@@ -22,9 +22,16 @@ export async function sendTelegram(params: TelegramSendParams): Promise<{ ok: bo
   //    ke Edge Function supaya fitur tetap jalan di mana pun aplikasi di-hosting.
   let lastError = '';
   try {
+    const session = (await supabase.auth.getSession()).data.session;
+    const token = session?.access_token;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
     const response = await fetch(TELEGRAM_PROXY_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ chatId: params.chatId, message: params.message }),
     });
 

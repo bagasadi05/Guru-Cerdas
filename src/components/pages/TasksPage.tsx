@@ -21,6 +21,7 @@ import { ValidationService } from '../../services/ValidationService';
 import { ValidationRules } from '../../types';
 import { EmptyError } from '../EmptyStates';
 import { CustomDropdown } from '../ui/CustomDropdown';
+import { useSoftDelete } from '../../hooks/useSoftDelete';
 
 // Native date helpers
 const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -453,40 +454,25 @@ const TasksPage: React.FC = () => {
         onError: () => toast.error('Gagal memperbarui tugas'),
     });
 
+    const { deleteItem: softDeleteTask, deleteItems: softDeleteBulkTasks } = useSoftDelete({
+        entity: 'tasks',
+        queryKey: ['tasks'],
+        entityLabel: 'tugas',
+    });
+
     const deleteTaskMutation = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await supabase
-                .from('tasks')
-                .update({ deleted_at: new Date().toISOString() } as Partial<TaskRow>)
-                .eq('id', id);
-            if (error) throw error;
+            await softDeleteTask(id);
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
-            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
-            toast.success('Tugas berhasil dihapus');
-        },
-        onError: () => toast.error('Gagal menghapus tugas'),
     });
 
     const clearCompletedTasksMutation = useMutation({
         mutationFn: async () => {
             if (!user) return;
-            const { error } = await supabase
-                .from('tasks')
-                .update({ deleted_at: new Date().toISOString() } as never)
-                .eq('user_id', user.id)
-                .eq('status', 'done');
-            if (error) throw error;
+            const completedTaskIds = tasks.filter((t) => t.status === 'done').map((t) => t.id);
+            if (completedTaskIds.length === 0) return;
+            await softDeleteBulkTasks(completedTaskIds);
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
-            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
-            toast.success('Semua tugas selesai berhasil dibersihkan');
-        },
-        onError: () => toast.error('Gagal membersihkan tugas selesai'),
     });
 
     const updateStatusMutation = useMutation({

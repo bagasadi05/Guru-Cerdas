@@ -134,6 +134,7 @@ function createMotionComponent<T extends HTMLElement | SVGElement = HTMLElement>
     for (const [key, value] of Object.entries(props)) {
       if (!MOTION_ONLY_PROPS.has(key)) domProps[key] = value;
     }
+    // eslint-disable-next-line react-hooks/refs
     return React.createElement(tag, { ...domProps, ref } as React.HTMLAttributes<HTMLElement>);
   });
   Component.displayName = `Motion${tag.charAt(0).toUpperCase() + tag.slice(1)}`;

@@ -53,7 +53,7 @@ interface RouteConfig {
   model: string;
 }
 
-const DEFAULT_GEMINI_MODEL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_MODEL) || 'gemini-1.5-flash';
+const DEFAULT_GEMINI_MODEL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_MODEL) || 'gemini-2.5-flash';
 
 const ROUTING: Record<AiTaskType, RouteConfig> = {
   'teacher-report':   { primary: 'gemini', model: DEFAULT_GEMINI_MODEL },
@@ -91,14 +91,18 @@ export class ProviderRouter {
     messages: GeminiMessage[],
   ): Promise<GeminiResponse> {
     const route = ROUTING[taskType] || ROUTING.general;
+    const dynamicGeminiModel = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_MODEL) || 'gemini-2.5-flash';
+    const primaryModel = route.primary === 'gemini' ? dynamicGeminiModel : route.model;
     const primary = this.providers.get(route.primary);
     const fallbackName: AiProviderName = route.primary === 'gemini' ? 'groq' : 'gemini';
     const fallback = this.providers.get(fallbackName);
+    const fallbackDefaultModel = FALLBACK_MODELS[taskType] || 'llama-3.3-70b-versatile';
+    const fallbackModel = fallbackName === 'gemini' ? dynamicGeminiModel : fallbackDefaultModel;
 
     // Try primary
     if (primary && baseIsCircuitAllowed(route.primary)) {
       try {
-        const result = await primary.generateContent(messages, route.model);
+        const result = await primary.generateContent(messages, primaryModel);
         baseRecordCircuitSuccess(route.primary);
         return result;
       } catch (err: any) {
@@ -114,7 +118,6 @@ export class ProviderRouter {
     if (fallback && baseIsCircuitAllowed(fallbackName)) {
       try {
         logger.info(`[AI Router] Falling back to ${fallbackName}`, 'AI');
-        const fallbackModel = FALLBACK_MODELS[taskType] || FALLBACK_MODELS.general;
         const result = await fallback.generateContent(messages, fallbackModel);
         baseRecordCircuitSuccess(fallbackName);
         return result;

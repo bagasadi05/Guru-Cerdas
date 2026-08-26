@@ -141,6 +141,7 @@ dist-ssr
 .codex/
 .cursor/
 .gemini/
+.claude/
 
 # Test artifacts
 test-export.pdf

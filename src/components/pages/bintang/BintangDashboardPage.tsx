@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';import { Star, ClipboardCheck, BarChart3, AlertTriangle,
+import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';import { Star, ClipboardCheck, BarChart3,
     Sparkles, Zap, Send, FileText, CheckCircle, PlusCircle, Info, Printer,
-    ChevronDown, Search, TrendingUp, Eye, Users, FileSpreadsheet,
+    ChevronDown, TrendingUp, Eye, Users, FileSpreadsheet,
     Pencil, Trash2, ShieldAlert, Plus
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -30,6 +30,8 @@ import { writeAuditLog } from '../../../services/auditTrail';
 import { r2StorageService } from '../../../services/r2StorageService';
 import { useSemester } from '../../../contexts/SemesterContext';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/Tabs';
+import { BintangScoringBanner } from './components/BintangScoringBanner';
+import { PembinaanTab } from './tabs/PembinaanTab';
 
 
 
@@ -111,7 +113,7 @@ const BintangDashboardPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     // ── UI state ─────────────────────────────────────────────────────────────
-    const [mentoringSearchQuery, setMentoringSearchQuery] = useState('');
+    // (mentoring search is now encapsulated inside PembinaanTab)
 
     // ── Violation management (view / add / edit / delete) ────────────────────
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
@@ -119,6 +121,9 @@ const BintangDashboardPage: React.FC = () => {
     const [isViolationSaving, setIsViolationSaving] = useState(false);
     const [isAddViolationModalOpen, setIsAddViolationModalOpen] = useState(false);
     const [violationStudentId, setViolationStudentId] = useState('');
+    const [violationInputMode, setViolationInputMode] = useState<'single' | 'bulk'>('single');
+    const [violationSelectedStudentIds, setViolationSelectedStudentIds] = useState<string[]>([]);
+    const [violationStudentSearch, setViolationStudentSearch] = useState('');
 
     // ── Quiz point (poin keaktifan) edit/delete ──────────────────────────────
     const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
@@ -127,7 +132,6 @@ const BintangDashboardPage: React.FC = () => {
 
     // Collapsible section
     const [showTrendChart, setShowTrendChart] = useState(false);
-    const [showInfoBanner, setShowInfoBanner] = useState(false);
     const [showMoreActions, setShowMoreActions] = useState(false);
 
     // ── Student Detail Modal ─────────────────────────────────────────────────
@@ -261,6 +265,27 @@ const BintangDashboardPage: React.FC = () => {
         }
     }, [mentoringClass]);
 
+    // ── Bulk violation student filtering & selection ─────────────────────────
+    const filteredViolationStudents = useMemo(() => {
+        if (!violationStudentSearch.trim()) return students;
+        const q = violationStudentSearch.toLowerCase();
+        return students.filter(s => s.name.toLowerCase().includes(q));
+    }, [students, violationStudentSearch]);
+
+    const toggleViolationStudent = (id: string) => {
+        setViolationSelectedStudentIds(prev =>
+            prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
+        );
+    };
+
+    const selectAllViolationStudents = () => {
+        setViolationSelectedStudentIds(filteredViolationStudents.map(s => s.id));
+    };
+
+    const deselectAllViolationStudents = () => {
+        setViolationSelectedStudentIds([]);
+    };
+
 
 
     // ── Computed data ────────────────────────────────────────────────────────
@@ -304,16 +329,6 @@ const BintangDashboardPage: React.FC = () => {
             KERAPIAN: { points: 0, count: 0, grade: 'A' as BintangGrade },
         };
     };
-
-    const filteredMentoringLogs = useMemo(() => {
-        if (!mentoringSearchQuery.trim()) return mentoringLogs;
-        const query = mentoringSearchQuery.toLowerCase();
-        return mentoringLogs.filter((log: any) => {
-            const studentName = ((log.students as any)?.name || '').toLowerCase();
-            const logNotes = (log.notes || '').toLowerCase();
-            return studentName.includes(query) || logNotes.includes(query);
-        });
-    }, [mentoringLogs, mentoringSearchQuery]);
 
     const getStudentName = (studentId: string) => students.find(s => s.id === studentId)?.name || 'Unknown';
 
@@ -548,19 +563,32 @@ const BintangDashboardPage: React.FC = () => {
 
     const handleAddViolation = async (data: ViolationFormValues & { evidence_file?: File }) => {
         if (!user) return;
-        if (!violationStudentId) {
-            toast.error('Pilih siswa terlebih dahulu');
+
+        const targetIds = violationInputMode === 'single'
+            ? (violationStudentId ? [violationStudentId] : [])
+            : violationSelectedStudentIds;
+
+        if (targetIds.length === 0) {
+            toast.error(violationInputMode === 'single'
+                ? 'Pilih siswa terlebih dahulu'
+                : 'Pilih minimal satu siswa'
+            );
             return;
         }
 
-        // Soft duplicate warning (harian) — scoped ke siswa yang dipilih
-        const isDuplicate = violations.some(v =>
-            v.student_id === violationStudentId && v.date === data.date && v.description === data.description
-        );
-        if (isDuplicate) {
+        // Soft duplicate warning (harian) — scoped ke siswa-siswa yang dipilih
+        const duplicateStudentNames = targetIds
+            .filter(sid => violations.some(v => v.student_id === sid && v.date === data.date && v.description === data.description))
+            .map(sid => students.find(s => s.id === sid)?.name || 'Siswa');
+
+        if (duplicateStudentNames.length > 0) {
+            const msg = duplicateStudentNames.length === 1
+                ? `${duplicateStudentNames[0]} sudah memiliki catatan pelanggaran "${data.description}" pada tanggal ini.\n\nApakah Anda yakin ini adalah kejadian yang berbeda?`
+                : `${duplicateStudentNames.length} siswa (${duplicateStudentNames.slice(0, 3).join(', ')}${duplicateStudentNames.length > 3 ? '...' : ''}) sudah memiliki catatan pelanggaran "${data.description}" pada tanggal ini.\n\nApakah Anda yakin ini adalah kejadian yang berbeda?`;
+
             const ok = await confirmDuplicateViolation({
                 title: 'Pelanggaran Duplikat?',
-                message: `Siswa sudah memiliki catatan pelanggaran "${data.description}" pada tanggal ini.\n\nApakah Anda yakin ini adalah kejadian yang berbeda?`,
+                message: msg,
                 confirmText: 'Ya, Ini Kejadian Berbeda',
                 variant: 'warning',
                 onConfirm: async () => {},
@@ -577,36 +605,46 @@ const BintangDashboardPage: React.FC = () => {
                 evidenceUrl = result.publicUrl;
             }
 
-            const payload = {
+            const points = selectedViolation?.points ?? 0;
+            const severity = data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || null;
+            const type = selectedViolation?.code || 'general';
+
+            const payloads = targetIds.map(student_id => ({
                 date: data.date,
                 description: data.description,
                 context_notes: data.context_notes || null,
-                points: selectedViolation?.points ?? 0,
-                type: 'general' as const,
-                severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || null,
+                points,
+                type,
+                severity,
                 evidence_url: evidenceUrl,
-                student_id: violationStudentId,
+                student_id,
                 user_id: user.id,
                 semester_id: activeSemester?.id || null,
-            };
+            }));
 
-            await bintangService.insertViolation(payload);
+            await bintangService.bulkInsertViolations(payloads);
             try {
                 await writeAuditLog({
                     userId: user.id,
                     userEmail: user.email,
                     tableName: 'violations',
-                    recordId: payload.student_id,
+                    recordId: targetIds.length === 1 ? targetIds[0] : 'bulk',
                     action: 'INSERT',
                     oldData: null,
-                    newData: payload as Record<string, unknown>,
+                    newData: { count: targetIds.length, description: data.description, points } as Record<string, unknown>,
                 });
             } catch (auditErr) {
                 console.warn('Gagal menulis audit log pelanggaran baru:', auditErr);
             }
-            toast.success('Pelanggaran berhasil dicatat');
+            toast.success(
+                targetIds.length === 1
+                    ? 'Pelanggaran berhasil dicatat'
+                    : `Pelanggaran berhasil dicatat untuk ${targetIds.length} siswa`
+            );
             setIsAddViolationModalOpen(false);
             setViolationStudentId('');
+            setViolationSelectedStudentIds([]);
+            setViolationStudentSearch('');
             await fetchAllData();
         } catch (error: any) {
             console.error('Gagal mencatat pelanggaran:', error);
@@ -767,52 +805,7 @@ const BintangDashboardPage: React.FC = () => {
                     {/* ══════════════════════════════════════════════════════════
                         1. SCORING INFO BANNER (collapsible)
                        ══════════════════════════════════════════════════════════ */}
-                    <div className="rounded-2xl border border-brand-200/60 dark:border-brand-800/40 overflow-hidden">
-                        <button
-                            type="button"
-                            onClick={() => setShowInfoBanner(v => !v)}
-                            className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-brand-100 to-brand-200 dark:from-brand-950/30 dark:to-brand-950/30 hover:opacity-90 transition-opacity text-left"
-                        >
-                            <div className="flex items-center gap-2 text-brand-700 dark:text-brand-300">
-                                <Info size={15} />
-                                <span className="font-semibold text-sm">Cara kerja Skor BINTANG</span>
-                            </div>
-                            <ChevronDown size={16} className={`text-brand-500 transition-transform duration-200 ${showInfoBanner ? 'rotate-180' : ''}`} />
-                        </button>
-                        {showInfoBanner && (
-                            <div className="p-4 bg-gradient-to-r from-brand-50 to-brand-100 dark:from-brand-950/20 dark:to-brand-950/20">
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600 dark:text-slate-400">
-                                    <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/40">
-                                        <div className="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
-                                            <AlertTriangle size={14} className="text-rose-500" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-slate-700 dark:text-slate-300">1. Pelanggaran</p>
-                                            <p className="mt-0.5">Setiap pelanggaran menambah poin per aspek (ADAB/DISIPLIN/RAPI). Makin tinggi poin, makin turun grade.</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/40">
-                                        <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                                            <Sparkles size={14} className="text-emerald-500" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-slate-700 dark:text-slate-300">2. Poin Keaktifan</p>
-                                            <p className="mt-0.5">Setiap +1 poin keaktifan <strong>meng-offset</strong> poin pelanggaran (Adab → Disiplin → Rapi).</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/40">
-                                        <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                                            <FileText size={14} className="text-amber-500" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-slate-700 dark:text-slate-300">3. Evaluasi Bulanan</p>
-                                            <p className="mt-0.5">Wali kelas review &amp; konfirmasi grade otomatis, tambah catatan, lalu publikasikan.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    <BintangScoringBanner />
 
                     {/* ══════════════════════════════════════════════════════════
                         2. SUMMARY CARDS (3 Aspek)
@@ -859,7 +852,12 @@ const BintangDashboardPage: React.FC = () => {
                                 <span>+ Poin Keaktifan</span>
                             </Button>
                             <Button
-                                onClick={() => { setViolationStudentId(''); setIsAddViolationModalOpen(true); }}
+                                onClick={() => {
+                                    setViolationStudentId('');
+                                    setViolationSelectedStudentIds([]);
+                                    setViolationStudentSearch('');
+                                    setIsAddViolationModalOpen(true);
+                                }}
                                 className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-sm shadow-rose-600/20"
                             >
                                 <ShieldAlert size={15} />
@@ -1159,95 +1157,13 @@ const BintangDashboardPage: React.FC = () => {
 
                     {/* ══ TAB: PEMBINAAN ══ */}
                     <TabsContent value="pembinaan" className="mt-6">
-                        <div className="space-y-4">
-                            {/* Header + add */}
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <p className="font-semibold text-sm text-slate-800 dark:text-white">Riwayat Pembinaan</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">{mentoringLogs.length} catatan tersimpan</p>
-                                </div>
-                                {isWalas && (
-                                    <Button
-                                        onClick={openMentoringModal}
-                                        className="bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20"
-                                    >
-                                        <Plus size={16} /> Catat Pembinaan
-                                    </Button>
-                                )}
-                            </div>
-
-                            {/* Search */}
-                            <div className="relative max-w-sm">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-                                <Input
-                                    placeholder="Cari siswa atau catatan..."
-                                    className="pl-9 w-full text-sm"
-                                    value={mentoringSearchQuery}
-                                    onChange={(e) => setMentoringSearchQuery(e.target.value)}
-                                />
-                            </div>
-
-                            {/* Table */}
-                            <Card className="p-0 overflow-hidden">
-                                {filteredMentoringLogs.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-14 text-center">
-                                        <ClipboardCheck size={40} className="text-slate-300 dark:text-slate-600 mb-3" />
-                                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                                            {mentoringSearchQuery.trim() ? 'Tidak ada catatan yang cocok.' : 'Belum ada catatan pembinaan.'}
-                                        </p>
-                                        {isWalas && (
-                                            <Button
-                                                onClick={openMentoringModal}
-                                                variant="outline"
-                                                className="mt-4 text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-800/60"
-                                            >
-                                                <Plus size={14} className="mr-1.5" /> Catat Pembinaan Pertama
-                                            </Button>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
-                                        <table className="w-full text-left border-collapse">
-                                            <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/80">
-                                                <tr className="border-b border-slate-200 dark:border-slate-700">
-                                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Tanggal</th>
-                                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Siswa</th>
-                                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Mentor</th>
-                                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Catatan</th>
-                                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300 text-right">Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {filteredMentoringLogs.map((log: any) => (
-                                                    <tr key={log.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                                                        <td className="py-2.5 px-4 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                                                            {new Date(log.date).toLocaleDateString('id-ID')}
-                                                        </td>
-                                                        <td className="py-2.5 px-4 text-xs text-slate-700 dark:text-slate-300 font-medium">
-                                                            {(log.students as any)?.name}
-                                                        </td>
-                                                        <td className="py-2.5 px-4 text-xs">
-                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-brand-100 text-brand-800 dark:bg-brand-900/30 dark:text-brand-300">
-                                                                {log.mentor_role}
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-2.5 px-4 text-xs text-slate-600 dark:text-slate-400 max-w-[300px] truncate" title={log.notes}>
-                                                            {log.notes}
-                                                        </td>
-                                                        <td className="py-2.5 px-4 text-right whitespace-nowrap">
-                                                            <div className="flex justify-end gap-1">
-                                                                <button onClick={() => openEditMentoring(log)} className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30" title="Edit"><Pencil size={13}/></button>
-                                                                <button onClick={() => handleDeleteMentoring(log)} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30" title="Hapus"><Trash2 size={13}/></button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </Card>
-                        </div>
+                        <PembinaanTab
+                            mentoringLogs={mentoringLogs}
+                            isWalas={isWalas}
+                            onOpenMentoringModal={openMentoringModal}
+                            onOpenEditMentoring={openEditMentoring}
+                            onDeleteMentoring={handleDeleteMentoring}
+                        />
                     </TabsContent>
                 </Tabs>
             )}
@@ -1349,7 +1265,10 @@ const BintangDashboardPage: React.FC = () => {
                                 <Button
                                     size="sm"
                                     onClick={() => {
+                                        setViolationInputMode('single');
                                         setViolationStudentId(detailStudentId!);
+                                        setViolationSelectedStudentIds([]);
+                                        setViolationStudentSearch('');
                                         setIsAddViolationModalOpen(true);
                                     }}
                                     className="bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 dark:hover:bg-rose-900/50"
@@ -1497,6 +1416,8 @@ const BintangDashboardPage: React.FC = () => {
                 onClose={() => {
                     setIsAddViolationModalOpen(false);
                     setViolationStudentId('');
+                    setViolationSelectedStudentIds([]);
+                    setViolationStudentSearch('');
                 }}
                 title="Catat Pelanggaran"
                 maxWidth="max-w-xl"
@@ -1508,21 +1429,109 @@ const BintangDashboardPage: React.FC = () => {
                             Pelanggaran yang dicatat akan menambah poin aspek BINTANG siswa (Adab / Disiplin / Rapi) dan menyesuaikan grade otomatis.
                         </p>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Siswa <span className="text-rose-500">*</span>
-                        </label>
-                        <CustomDropdown
-                            value={violationStudentId}
-                            onChange={setViolationStudentId}
-                            placeholder="Pilih siswa..."
-                            options={students.map(s => ({ value: s.id, label: s.name }))}
-                        />
+
+                    {/* ─── Input Mode Toggle ────────────────────────────── */}
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setViolationInputMode('single')}
+                            className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                                violationInputMode === 'single'
+                                    ? 'bg-rose-600 text-white shadow-sm'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                            }`}
+                        >
+                            Per Siswa
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViolationInputMode('bulk')}
+                            className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                                violationInputMode === 'bulk'
+                                    ? 'bg-rose-600 text-white shadow-sm'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                            }`}
+                        >
+                            Pilih Banyak Siswa ({students.length} siswa)
+                        </button>
                     </div>
+
+                    {/* ─── Student Selection ───────────────────────────── */}
+                    {violationInputMode === 'single' ? (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                Siswa <span className="text-rose-500">*</span>
+                            </label>
+                            <CustomDropdown
+                                value={violationStudentId}
+                                onChange={setViolationStudentId}
+                                placeholder="Pilih siswa..."
+                                options={students.map(s => ({ value: s.id, label: s.name }))}
+                            />
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                Pilih Siswa ({violationSelectedStudentIds.length} dipilih) <span className="text-rose-500">*</span>
+                            </label>
+                            <div className="flex gap-2 mb-2">
+                                <button
+                                    type="button"
+                                    onClick={selectAllViolationStudents}
+                                    className="text-xs px-2 py-1 rounded bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 hover:bg-rose-200 dark:hover:bg-rose-800/50 transition-colors font-medium"
+                                >
+                                    Pilih Semua
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={deselectAllViolationStudents}
+                                    className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium"
+                                >
+                                    Hapus Semua
+                                </button>
+                            </div>
+                            <Input
+                                placeholder="Cari nama siswa..."
+                                value={violationStudentSearch}
+                                onChange={(e) => setViolationStudentSearch(e.target.value)}
+                                className="mb-2 text-sm"
+                            />
+                            <div className="max-h-44 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 bg-slate-50 dark:bg-slate-800/50 space-y-0.5">
+                                {filteredViolationStudents.length === 0 ? (
+                                    <p className="text-sm text-slate-500 p-2 text-center">Tidak ada siswa ditemukan</p>
+                                ) : (
+                                    filteredViolationStudents.map(student => (
+                                        <label
+                                            key={student.id}
+                                            className={`flex items-center gap-3 px-2.5 py-1.5 rounded-md cursor-pointer transition-colors ${
+                                                violationSelectedStudentIds.includes(student.id)
+                                                    ? 'bg-rose-100 dark:bg-rose-900/30'
+                                                    : 'hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                                            }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={violationSelectedStudentIds.includes(student.id)}
+                                                onChange={() => toggleViolationStudent(student.id)}
+                                                className="rounded text-rose-600 focus:ring-rose-500 w-4 h-4"
+                                            />
+                                            <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{student.name}</span>
+                                        </label>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <ViolationForm
                         defaultValues={null}
                         onSubmit={handleAddViolation}
-                        onClose={() => setIsAddViolationModalOpen(false)}
+                        onClose={() => {
+                            setIsAddViolationModalOpen(false);
+                            setViolationStudentId('');
+                            setViolationSelectedStudentIds([]);
+                            setViolationStudentSearch('');
+                        }}
                         isPending={isViolationSaving}
                     />
                 </div>

@@ -145,7 +145,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
       if (inOl) { html += '</ol>'; inOl = false; }
     };
 
-    for (let rawLine of lines) {
+    for (const rawLine of lines) {
       const line = rawLine.trim();
       if (!line) {
         closeLists();
@@ -782,7 +782,7 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
       if (inOl) { html += '</ol>'; inOl = false; }
     };
 
-    for (let rawLine of lines) {
+    for (const rawLine of lines) {
       const line = rawLine.trim();
       if (!line) {
         closeLists();

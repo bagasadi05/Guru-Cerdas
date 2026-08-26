@@ -13,7 +13,7 @@ export type SoftDeleteEntity = 'students' | 'classes' | 'attendance' | 'violatio
     | 'reports' | 'schedules' | 'communications' | 'homework' | 'extracurriculars'
     | 'student_extracurriculars' | 'extracurricular_attendance' | 'extracurricular_grades'
     | 'extracurricular_students' | 'student_achievements' | 'student_development_analyses'
-    | 'school_info' | 'announcements' | 'academic_years' | 'semesters' | 'user_settings';
+    | 'attitude_records' | 'school_info' | 'announcements' | 'academic_years' | 'semesters' | 'user_settings';
 
 export interface SoftDeleteResult {
     success: boolean;
@@ -54,6 +54,32 @@ interface SoftDeleteQuery extends PromiseLike<QueryResult> {
 const tableQuery = (entity: SoftDeleteEntity): SoftDeleteQuery =>
     supabase.from(entity as keyof Database['public']['Tables']) as unknown as SoftDeleteQuery;
 
+async function cascadeStudentSoftDelete(studentIds: string[], deletedAt: string): Promise<void> {
+    if (studentIds.length === 0) return;
+    await Promise.allSettled([
+        (supabase.from('attendance') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        (supabase.from('academic_records') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        (supabase.from('violations') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        (supabase.from('quiz_points') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        (supabase.from('student_achievements') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        (supabase.from('reports') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        (supabase.from('attitude_records') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
+    ]);
+}
+
+async function cascadeStudentRestore(studentIds: string[]): Promise<void> {
+    if (studentIds.length === 0) return;
+    await Promise.allSettled([
+        (supabase.from('attendance') as any).update({ deleted_at: null }).in('student_id', studentIds),
+        (supabase.from('academic_records') as any).update({ deleted_at: null }).in('student_id', studentIds),
+        (supabase.from('violations') as any).update({ deleted_at: null }).in('student_id', studentIds),
+        (supabase.from('quiz_points') as any).update({ deleted_at: null }).in('student_id', studentIds),
+        (supabase.from('student_achievements') as any).update({ deleted_at: null }).in('student_id', studentIds),
+        (supabase.from('reports') as any).update({ deleted_at: null }).in('student_id', studentIds),
+        (supabase.from('attitude_records') as any).update({ deleted_at: null }).in('student_id', studentIds),
+    ]);
+}
+
 /**
  * Soft delete a record by setting deleted_at timestamp
  */
@@ -69,6 +95,10 @@ export async function softDelete(
             .eq(ENTITY_KEY_COLUMN[entity], id);
 
         if (error) throw error;
+
+        if (entity === 'students') {
+            await cascadeStudentSoftDelete([id], deletedAt);
+        }
 
         return { success: true, deletedAt };
     } catch (error) {
@@ -95,6 +125,10 @@ export async function softDeleteBulk(
 
         if (error) throw error;
 
+        if (entity === 'students') {
+            await cascadeStudentSoftDelete(ids, deletedAt);
+        }
+
         return { success: true, deletedAt };
     } catch (error) {
         return {
@@ -118,6 +152,10 @@ export async function restore(
 
         if (error) throw error;
 
+        if (entity === 'students') {
+            await cascadeStudentRestore([id]);
+        }
+
         return { success: true };
     } catch (error) {
         return {
@@ -140,6 +178,10 @@ export async function restoreBulk(
             .in(ENTITY_KEY_COLUMN[entity], ids);
 
         if (error) throw error;
+
+        if (entity === 'students') {
+            await cascadeStudentRestore(ids);
+        }
 
         return { success: true };
     } catch (error) {
@@ -205,6 +247,7 @@ export const ENTITY_OWNER_COLUMN: Readonly<Record<SoftDeleteEntity, string | nul
     extracurricular_students: 'user_id',
     student_achievements: 'user_id',
     student_development_analyses: 'user_id',
+    attitude_records: 'user_id',
     school_info: 'user_id',
     announcements: null,
     academic_years: 'user_id',
@@ -269,7 +312,7 @@ export const ALL_SOFT_DELETE_ENTITIES: SoftDeleteEntity[] = [
     'extracurriculars', 'student_extracurriculars',
     'extracurricular_attendance', 'extracurricular_grades',
     'extracurricular_students', 'student_achievements',
-    'student_development_analyses', 'school_info',
+    'student_development_analyses', 'attitude_records', 'school_info',
     'announcements', 'academic_years', 'semesters', 'user_settings',
 ];
 
@@ -323,6 +366,7 @@ export const ENTITY_KEY_COLUMN: Readonly<Record<SoftDeleteEntity, string>> = {
     extracurricular_students: 'id',
     student_achievements: 'id',
     student_development_analyses: 'id',
+    attitude_records: 'id',
     school_info: 'id',
     announcements: 'id',
     academic_years: 'id',

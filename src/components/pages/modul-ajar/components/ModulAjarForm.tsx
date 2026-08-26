@@ -14,10 +14,8 @@ import {
   Clock,
   RotateCcw,
   Plus,
-  Info,
   Check,
-  Zap,
-  HelpCircle
+  Zap
 } from 'lucide-react';
 import { useTranslation } from '../../../../utils/i18n';
 import { FormState, RubrikRow } from '../types';
@@ -175,7 +173,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   isLoadingModels: _isLoadingModels,
   queueStatus,
   onGenerate,
-  boilerplateMissingBanner,
+  boilerplateMissingBanner: _boilerplateMissingBanner,
   onAiFillField,
   fieldLoading = {},
   isAiGenerating,

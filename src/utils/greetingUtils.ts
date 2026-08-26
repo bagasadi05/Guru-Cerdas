@@ -93,18 +93,6 @@ export function formatDegreeProperly(name?: string | null): string {
   if (!name || typeof name !== 'string') return '';
   let result = name.trim();
 
-  // Convert ALL CAPS names to Title Case first (e.g. "BAGAS RIYADI" -> "Bagas Riyadi")
-  // Only apply this if the name looks like it's mostly uppercase or lowercase
-  const isMostlyUpper = result === result.toUpperCase();
-  const isMostlyLower = result === result.toLowerCase();
-  
-  if (isMostlyUpper || isMostlyLower) {
-    result = result.replace(
-      /\w\S*/g,
-      (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase()
-    );
-  }
-
   // Regexes are built to handle optional dots and spaces (e.g., "S. PD", "S PD", "S.P.D")
   // \b ensures we only match whole words
   const DEGREE_REPLACEMENTS: [RegExp, string][] = [
@@ -136,11 +124,11 @@ export function formatDegreeProperly(name?: string | null): string {
     [/\bM\s*\.?\s*M\b/gi, 'M.M.'],
     [/\bS\s*\.?\s*P\b/gi, 'S.P.'],
     [/\bM\s*\.?\s*P\b/gi, 'M.P.'],
-    [/\bD\s*R\s*A\b/gi, 'Dra.'],
-    [/\bD\s*R\s*S\b/gi, 'Drs.'],
-    [/\bP\s*R\s*O\s*F\b/gi, 'Prof.'],
-    [/\bD\s*R\b/gi, 'Dr.'],
-    [/\bH\s*J\b/gi, 'Hj.'],
+    [/\bD\s*R\s*A\b\.?/gi, 'Dra.'],
+    [/\bD\s*R\s*S\b\.?/gi, 'Drs.'],
+    [/\bP\s*R\s*O\s*F\b\.?/gi, 'Prof.'],
+    [/\bD\s*R\b\.?/gi, 'Dr.'],
+    [/\bH\s*J\b\.?/gi, 'Hj.'],
   ];
 
   for (const [regex, replacement] of DEGREE_REPLACEMENTS) {

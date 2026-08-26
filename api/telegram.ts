@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
+import { authenticateRequest } from './_auth';
 
 /**
  * Telegram serverless proxy — keeps TELEGRAM_BOT_TOKEN server-side.
@@ -182,6 +183,13 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
     return;
   }
 
+  // Security 1: Authentication check
+  const auth = await authenticateRequest(req);
+  if (!auth.authorized) {
+    res.status(401).json({ error: auth.error || 'Unauthorized' });
+    return;
+  }
+
   const body = req.body || {};
   if (!isBodyValid(body)) {
     res.status(400).json({ error: 'Invalid request: chatId and message required' });
@@ -217,7 +225,7 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
   }
 
   try {
-    const upstream = await fetch(`${TELEGRAM_BASE_URL}/bot${token}/sendMessage`, {
+    let upstream = await fetch(`${TELEGRAM_BASE_URL}/bot${token}/sendMessage`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -229,7 +237,24 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
       }),
     });
 
-    const text = await upstream.text();
+    let text = await upstream.text();
+
+    // Fallback: If Telegram returns 400 Bad Request due to unescaped Markdown syntax,
+    // retry sending the message without parse_mode (as plain text) to ensure delivery.
+    if (!upstream.ok && upstream.status === 400 && text.toLowerCase().includes('parse')) {
+      upstream = await fetch(`${TELEGRAM_BASE_URL}/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: body.chatId,
+          text: body.message,
+        }),
+      });
+      text = await upstream.text();
+    }
+
     res.status(upstream.status);
     res.setHeader('Content-Type', 'application/json');
     try {

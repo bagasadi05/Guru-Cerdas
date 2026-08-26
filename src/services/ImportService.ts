@@ -61,6 +61,8 @@ export const STUDENT_FIELDS = [
     { key: 'gender', label: 'Jenis Kelamin', required: true },
     { key: 'class_name', label: 'Nama Kelas', required: false },
     { key: 'access_code', label: 'Kode Akses', required: false },
+    { key: 'parent_name', label: 'Nama Orang Tua / Wali', required: false },
+    { key: 'parent_phone', label: 'No. HP Orang Tua / Wali', required: false },
 ] as const;
 
 /**
@@ -128,15 +130,21 @@ export const parseFile = async (file: File): Promise<{ headers: string[]; rows: 
 export const autoDetectMappings = (headers: string[]): ColumnMapping[] => {
     const mappings: ColumnMapping[] = [];
 
-    const namePatterns = ['nama', 'name', 'nama siswa', 'nama lengkap', 'student name'];
+    const parentNamePatterns = ['nama orang tua', 'nama wali', 'orang tua', 'wali', 'parent name', 'parent'];
+    const parentPhonePatterns = ['no hp orang tua', 'nomor hp orang tua', 'no hp wali', 'no hp', 'nomor hp', 'telepon', 'whatsapp', 'wa', 'phone', 'telp'];
+    const namePatterns = ['nama siswa', 'nama lengkap', 'student name', 'nama', 'name'];
     const genderPatterns = ['gender', 'jenis kelamin', 'kelamin', 'jk', 'l/p'];
     const classPatterns = ['kelas', 'class', 'nama kelas', 'class name'];
-    const codePatterns = ['kode', 'code', 'kode akses', 'access code', 'nis', 'nisn'];
+    const codePatterns = ['kode akses', 'access code', 'kode', 'code', 'nis', 'nisn'];
 
     headers.forEach((header) => {
         const lowerHeader = header.toLowerCase().trim();
 
-        if (namePatterns.some((pattern) => lowerHeader.includes(pattern))) {
+        if (parentNamePatterns.some((pattern) => lowerHeader.includes(pattern))) {
+            mappings.push({ sourceColumn: header, targetField: 'parent_name', required: false });
+        } else if (parentPhonePatterns.some((pattern) => lowerHeader.includes(pattern))) {
+            mappings.push({ sourceColumn: header, targetField: 'parent_phone', required: false });
+        } else if (namePatterns.some((pattern) => lowerHeader.includes(pattern))) {
             mappings.push({ sourceColumn: header, targetField: 'name', required: true });
         } else if (genderPatterns.some((pattern) => lowerHeader.includes(pattern))) {
             mappings.push({
@@ -241,16 +249,17 @@ export const parseAndValidate = (
 export const generateTemplate = async (format: 'xlsx' | 'csv' = 'xlsx'): Promise<Blob> => {
     const TOTAL_ROWS = 30;
     const XLSX = await getXLSX();
-    const templateData: string[][] = [['No', 'Nama Siswa', 'Jenis Kelamin', 'Kelas']];
+    const templateData: string[][] = [['No', 'Nama Siswa', 'Jenis Kelamin', 'Kelas', 'Nama Orang Tua', 'No HP Orang Tua']];
 
     for (let i = 1; i <= TOTAL_ROWS; i++) {
-        templateData.push([String(i), '', '', '']);
+        templateData.push([String(i), '', '', '', '', '']);
     }
 
     templateData.push([]);
     templateData.push(['PETUNJUK PENGISIAN:']);
     templateData.push(['- Kolom "Nama Siswa" dan "Jenis Kelamin" wajib diisi']);
     templateData.push(['- Jenis Kelamin: isi "L" / "Laki-laki" atau "P" / "Perempuan"']);
+    templateData.push(['- Kolom "Kelas", "Nama Orang Tua", dan "No HP Orang Tua" bersifat opsional']);
     templateData.push(['- Kolom "No" hanya untuk penomoran dan akan diabaikan saat import']);
     templateData.push(['- Baris kosong tanpa nama akan otomatis diabaikan']);
 
@@ -259,7 +268,9 @@ export const generateTemplate = async (format: 'xlsx' | 'csv' = 'xlsx'): Promise
         { wch: 8 },
         { wch: 35 },
         { wch: 18 },
-        { wch: 12 },
+        { wch: 15 },
+        { wch: 25 },
+        { wch: 20 },
     ];
 
     const workbook = XLSX.utils.book_new();

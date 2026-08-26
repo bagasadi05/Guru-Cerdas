@@ -10,6 +10,7 @@ import { ClassRow, ConfirmModalState, StudentRow } from './types';
 import { getStudentAvatar } from '../../utils/avatarUtils';
 
 import { generateSimpleAccessCode } from '../../utils/accessCode';
+import { softDelete, softDeleteBulk } from '../../services/SoftDeleteService';
 
 const pickLiveColumns = <T extends Record<string, unknown>>(data: T, columns: readonly string[]) => (
   Object.fromEntries(Object.entries(data).filter(([key]) => columns.includes(key)))
@@ -131,11 +132,8 @@ export const useStudentsPageActions = ({
 
   const { mutate: deleteStudent, isPending: isDeletingStudent } = useMutation({
     mutationFn: async (studentId: string) => {
-      const { error } = await supabase
-        .from('students')
-        .update({ deleted_at: new Date().toISOString() } as never)
-        .eq('id', studentId);
-      if (error) throw error;
+      const res = await softDelete('students', studentId);
+      if (!res.success) throw new Error(res.error || 'Gagal menghapus siswa');
     },
     ...mutationOptions,
     onSuccess: () => {
@@ -339,12 +337,12 @@ export const useStudentsPageActions = ({
       message: `Apakah Anda yakin ingin menghapus ${ids.length} siswa terpilih secara permanen?`,
       onConfirm: async () => {
         try {
-          for (const id of ids) {
-            await deleteStudent(id);
-          }
+          const res = await softDeleteBulk('students', ids);
+          if (!res.success) throw new Error(res.error || 'Gagal menghapus siswa');
+          invalidateStudentQueries();
           clearSelection();
           setConfirmModalState((prev) => ({ ...prev, isOpen: false }));
-          toast.success(`${ids.length} siswa berhasil dihapus.`);
+          toast.success(`${ids.length} siswa berhasil dihapus. Lihat Sampah untuk memulihkan.`);
         } catch {
           toast.error('Gagal menghapus beberapa siswa.');
         }
@@ -481,12 +479,14 @@ export const useStudentsPageActions = ({
         user_id: userId,
         avatar_url: avatarUrl,
         access_code: row.data.access_code ? String(row.data.access_code) : undefined,
+        parent_name: row.data.parent_name ? String(row.data.parent_name) : null,
+        parent_phone: row.data.parent_phone ? String(row.data.parent_phone) : null,
         address: '',
         class: classId ? classes.find((item) => item.id === classId)?.name || '' : '',
         contact: '',
         date_of_birth: new Date().toISOString().split('T')[0],
         email: '',
-        guardian_name: '',
+        guardian_name: row.data.parent_name ? String(row.data.parent_name) : '',
         nis: '',
         nisn: '',
         photo_url: avatarUrl,

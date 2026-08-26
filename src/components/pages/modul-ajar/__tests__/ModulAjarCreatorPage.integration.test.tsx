@@ -72,7 +72,7 @@ describe('ModulAjarCreatorPage', () => {
     });
 
     // Mock window.Image to prevent logo_sekolah.png fetch error in vitest
-    const originalImage = window.Image;
+    const _originalImage = window.Image;
     window.Image = class {
       onload: () => void = () => {};
       onerror: () => void = () => {};

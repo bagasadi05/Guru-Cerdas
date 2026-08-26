@@ -89,6 +89,30 @@ export const violationList: ViolationItem[] = [
     { code: '54', description: 'Pencemaran nama baik sekolah', points: 20, category: 'Berat', bintangAspect: 'ADAB' },
     { code: '55', description: 'Merokok / membawa rokok', points: 20, category: 'Berat', bintangAspect: 'KEDISIPLINAN' },
     { code: '56', description: 'Mengintimidasi /Meneror teman', points: 20, category: 'Berat', bintangAspect: 'ADAB' },
+
+    // ── Penambahan Pelanggaran Baru (Ringan, Sedang, Berat) ──────────────
+    // Ringan (3 Poin)
+    { code: '57', description: 'Tidak membawa buku pelajaran / alat tulis / perlengkapan belajar', points: 3, category: 'Ringan', bintangAspect: 'KEDISIPLINAN' },
+    { code: '58', description: 'Tidak mengerjakan Pekerjaan Rumah (PR) / tugas mandiri', points: 3, category: 'Ringan', bintangAspect: 'KEDISIPLINAN' },
+    { code: '59', description: 'Makan atau mengunyah makanan/permen saat KBM berlangsung', points: 3, category: 'Ringan', bintangAspect: 'ADAB' },
+    { code: '60', description: 'Membawa mainan pribadi (kartu, gasing, boneka, lato-lato) ke dalam kelas', points: 3, category: 'Ringan', bintangAspect: 'KEDISIPLINAN' },
+    { code: '61', description: 'Bercanda atau tidak tertib saat berdoa bersama / apel pagi', points: 3, category: 'Ringan', bintangAspect: 'ADAB' },
+
+    // Sedang (7 Poin)
+    { code: '62', description: 'Meninggalkan tugas piket kebersihan kelas tanpa izin', points: 7, category: 'Sedang', bintangAspect: 'KEDISIPLINAN' },
+    { code: '63', description: 'Mencontek saat ulangan atau asesmen', points: 7, category: 'Sedang', bintangAspect: 'ADAB' },
+    { code: '64', description: 'Mendorong, mencubit, atau menjahili teman saat bermain/antre', points: 7, category: 'Sedang', bintangAspect: 'ADAB' },
+    { code: '65', description: 'Menyalahgunakan HP / gawai saat jam pelajaran tanpa instruksi guru', points: 7, category: 'Sedang', bintangAspect: 'KEDISIPLINAN' },
+    { code: '66', description: 'Menggunakan Vape / Rokok Elektrik / Pods di lingkungan sekolah', points: 7, category: 'Sedang', bintangAspect: 'KEDISIPLINAN' },
+    { code: '67', description: 'Memalak / meminta uang saku atau barang teman secara paksa', points: 7, category: 'Sedang', bintangAspect: 'ADAB' },
+    { code: '68', description: 'Tidak mengikuti Sholat Berjamaah / Sholat Dhuha / Dzuhur tanpa uzur', points: 7, category: 'Sedang', bintangAspect: 'ADAB' },
+
+    // Berat (15 - 20 Poin)
+    { code: '69', description: 'Membawa, mengonsumsi, atau mengedarkan Miras / Narkoba / Obat Terlarang (NAPZA)', points: 20, category: 'Berat', bintangAspect: 'ADAB' },
+    { code: '70', description: 'Perundungan siber (Cyberbullying) atau pelecehan melalui media sosial / grup chat', points: 20, category: 'Berat', bintangAspect: 'ADAB' },
+    { code: '71', description: 'Judi online / slot / taruhan digital saat jam sekolah', points: 20, category: 'Berat', bintangAspect: 'ADAB' },
+    { code: '72', description: 'Membawa benda berbahaya / petasan / bahan peledak ke sekolah', points: 15, category: 'Berat', bintangAspect: 'KEDISIPLINAN' },
+    { code: '73', description: 'Menyimpan, melihat, atau menyebarkan konten/media pornografi digital', points: 20, category: 'Berat', bintangAspect: 'ADAB' },
 ];
 
 

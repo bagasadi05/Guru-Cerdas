@@ -21,12 +21,23 @@ export const AttendanceClassSelector: React.FC<AttendanceClassSelectorProps> = (
     );
   }, [classes]);
 
-  // Scroll selected class pill into view automatically
+  // Scroll the selected class pill into view inside the strip only.
+  // scrollIntoView() is deliberately avoided here: it also scrolls every
+  // scrollable ancestor (including body), which shifted the whole page on
+  // mobile when the rightmost pill was tapped and pushed header controls
+  // out of reach.
   useEffect(() => {
-    if (!containerRef.current || !selectedClass) return;
-    const selectedEl = containerRef.current.querySelector<HTMLElement>(`[data-class-id="${selectedClass}"]`);
-    if (selectedEl) {
-      selectedEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    const container = containerRef.current;
+    if (!container || !selectedClass) return;
+    const selectedEl = container.querySelector<HTMLElement>(`[data-class-id="${selectedClass}"]`);
+    if (!selectedEl) return;
+    const containerRect = container.getBoundingClientRect();
+    const elRect = selectedEl.getBoundingClientRect();
+    const target = container.scrollLeft + (elRect.left - containerRect.left) - (containerRect.width - elRect.width) / 2;
+    if (typeof container.scrollTo === 'function') {
+      container.scrollTo({ left: target, behavior: 'smooth' });
+    } else {
+      container.scrollLeft = target;
     }
   }, [selectedClass]);
 

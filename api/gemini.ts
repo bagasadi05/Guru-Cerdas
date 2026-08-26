@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
+import { authenticateRequest } from './_auth';
 
 /**
  * Gemini serverless proxy — keeps GEMINI_API_KEY server-side.
@@ -285,6 +286,13 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  // Security: Authentication check
+  const auth = await authenticateRequest(req);
+  if (!auth.authorized) {
+    res.status(401).json({ error: auth.error || 'Unauthorized', requestId });
     return;
   }
 

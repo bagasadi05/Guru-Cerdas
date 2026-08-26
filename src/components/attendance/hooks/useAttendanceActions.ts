@@ -1,15 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { User } from '@supabase/supabase-js';
+import type { AppUser } from '../../../hooks/useAuth';
 import { supabase, wasLastResponseQueued } from '../../../services/supabase';
 import { addToQueue } from '../../../services/offlineQueue';
-import { AttendanceRecord, AttendanceStatus } from '../../../types';
+import { AttendanceStatus } from '../../../types';
+import type { AttendanceRecord, StudentRow, SemesterRow, AttendanceInsert } from '../../../types';
+import type { useToast } from '../../../hooks/useToast';
 import { queryKeys } from '../../../lib/queryKeys';
 import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../../utils/confetti';
 
 interface UseAttendanceActionsProps {
-    user: any;
+    user: AppUser | User | null;
     selectedClass: string;
     selectedDate: string;
-    students: any[];
+    students: StudentRow[];
     attendanceRecords: Record<string, AttendanceRecord>;
     setAttendanceRecords: React.Dispatch<React.SetStateAction<Record<string, AttendanceRecord>>>;
     selectedStudents: Set<string>;
@@ -17,14 +21,14 @@ interface UseAttendanceActionsProps {
     noteText: string;
     setNoteText: (text: string) => void;
     setIsNoteModalOpen: (isOpen: boolean) => void;
-    unmarkedStudents: any[];
+    unmarkedStudents: StudentRow[];
     isOnline: boolean;
     localDirtyRef: React.MutableRefObject<boolean>;
     initialSyncRef: React.MutableRefObject<boolean>;
-    toast: any;
-    getSemesterByDate: (date: string) => any;
+    toast: ReturnType<typeof useToast>;
+    getSemesterByDate: (date: string) => SemesterRow | null | undefined;
     selectedSemesterId: string | null;
-    activeSemester: any | null;
+    activeSemester: SemesterRow | null;
     setIsResetModalOpen: (isOpen: boolean) => void;
     setIsSaveConfirmOpen: (isOpen: boolean) => void;
 }

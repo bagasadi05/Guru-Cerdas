@@ -10,12 +10,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
-  Minimize2,
-  RotateCcw,
-  Sparkles,
-  Layers,
-  Heart,
-  X
+  Minimize2
 } from 'lucide-react';
 import { useTranslation } from '../../../utils/i18n';
 import { useAuth } from '../../../hooks/useAuth';

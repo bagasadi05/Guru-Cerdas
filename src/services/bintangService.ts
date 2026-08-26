@@ -321,6 +321,19 @@ export const bintangService = {
   },
 
   /**
+   * Bulk insert violation records (used by BINTANG dashboard for mass violation input).
+   */
+  async bulkInsertViolations(payloads: Database['public']['Tables']['violations']['Insert'][]) {
+    const { data, error } = await supabase
+      .from('violations')
+      .insert(payloads)
+      .select('id');
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
    * Update an existing violation record (used by the BINTANG dashboard so
    * walas/kesiswaan can correct a recorded violation without leaving the menu).
    */

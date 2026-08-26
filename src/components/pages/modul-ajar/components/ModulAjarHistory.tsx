@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Clock, RefreshCw, AlertTriangle, Search, Filter, BookOpen, FileText, Heart, Eye, Copy, Download } from 'lucide-react';
+import { Trash2, Clock, RefreshCw, AlertTriangle, Search, Filter, Heart, Eye, Copy, Download } from 'lucide-react';
 import { useTranslation } from '../../../../utils/i18n';
 
 interface ModulAjarHistoryProps {

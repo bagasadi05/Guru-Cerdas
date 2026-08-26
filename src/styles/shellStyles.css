@@ -399,7 +399,12 @@
 .cosmic-bg::after {
   content: '';
   position: absolute;
-  width: 500px;
+  /* Cap by viewport so these purely decorative orbs never extend past the
+     screen edge. A wider-than-viewport pseudo-element makes body horizontally
+     scrollable-by-script (overflow-x hidden still allows programmatic
+     scrolling), which lets any scrollIntoView() yank the whole page sideways
+     on mobile. */
+  width: min(500px, 78vw);
   height: 500px;
   border-radius: 50%;
   z-index: 0;

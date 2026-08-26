@@ -11,6 +11,7 @@ import { generateGuardianSummaryPDF } from '../exports/generateGuardianSummaryPD
 import { useSemester } from '../../contexts/SemesterContext';
 import { getSemesterTerm } from '../../utils/semesterUtils';
 import { CalendarIcon } from '../Icons';
+import { AlertCircle } from 'lucide-react';
 import { isAchievementsBackendMissing } from '../../utils/achievementBackend';
 import {
     GlassCard,
@@ -351,19 +352,21 @@ export const ParentPortalPage: React.FC = () => {
         onError: (err) => toast.error(`Gagal memperbarui data: ${err.message}`),
     });
 
-    const { data, isLoading, isError, error } = useQuery({
+    const { data, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['portalData', studentId],
         queryFn: () => fetchPortalData(studentId!, accessCode!),
         enabled: !!studentId && !!accessCode,
-        retry: false,
+        retry: 1,
     });
 
     useEffect(() => {
         if (!accessCode) {
             navigate('/portal-login', { replace: true });
+            return;
         }
-        if (isError) {
-            console.error('Portal Data Fetch Error:', error);
+        // Only clear session and redirect if access is explicitly denied (invalid code/expired)
+        if (isError && error?.message?.includes('Akses ditolak')) {
+            console.warn('Portal access denied:', error.message);
             sessionStorage.removeItem('portal_access_code');
             navigate('/portal-login', { replace: true });
         }
@@ -561,6 +564,40 @@ export const ParentPortalPage: React.FC = () => {
 
     if (isLoading) {
         return <ParentPortalPageSkeleton />;
+    }
+
+    if (isError && !data) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
+                <div className="max-w-md w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-center shadow-lg">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
+                        <AlertCircle className="h-8 w-8" />
+                    </div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                        Gagal Memuat Data Portal
+                    </h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                        {error?.message || 'Terjadi gangguan koneksi ke server. Silakan periksa jaringan internet Anda dan coba lagi.'}
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button
+                            type="button"
+                            onClick={() => refetch()}
+                            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors"
+                        >
+                            Coba Lagi
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors"
+                        >
+                            Keluar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     if (!data) return null;

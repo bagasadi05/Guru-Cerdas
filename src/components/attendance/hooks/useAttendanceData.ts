@@ -1,14 +1,16 @@
 import { useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import type { User } from '@supabase/supabase-js';
+import type { AppUser } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
 import { type TeacherClassAssignmentRow } from '../../../services/teacherAssignments';
-import { AttendanceRecord, AttendanceStatus, StudentRow, ClassRow, AttendanceRow } from '../../../types';
+import { AttendanceRecord, AttendanceStatus, StudentRow, ClassRow, AttendanceRow, SemesterRow } from '../../../types';
 
 interface UseAttendanceDataProps {
-    user: any;
+    user: AppUser | User | null;
     isAdmin: boolean;
     selectedSemesterId: string | null;
-    selectedSemester: any;
+    selectedSemester: SemesterRow | null | undefined;
     selectedClass: string;
     setSelectedClass: (id: string) => void;
     selectedDate: string;

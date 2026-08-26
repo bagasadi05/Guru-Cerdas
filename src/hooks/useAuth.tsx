@@ -11,7 +11,7 @@ import { logger } from '../services/logger';
 /**
  * Represents an authenticated application user with profile information
  */
-interface AppUser {
+export interface AppUser {
   /** Unique user identifier */
   id: string;
   /** User's email address */

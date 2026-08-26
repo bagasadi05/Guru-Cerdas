@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildHtmlTemplate, buildStudentHtmlTemplate } from '../../src/components/pages/modul-ajar/utils/template';
-import { resolveLearningSyntax, LOCAL_MODEL_FALLBACKS, GENERIC_LEARNING_STEPS } from '../../src/components/pages/modul-ajar/utils/syntaxResolver';
+import { resolveLearningSyntax } from '../../src/components/pages/modul-ajar/utils/syntaxResolver';
 import { FormState } from '../../src/components/pages/modul-ajar/types';
 
 describe('Modul Ajar Layout & Scenario Enhancement Tests', () => {
@@ -227,9 +227,9 @@ D. 9
   it('calculates proportional time allocation accurately (15% - 70% - 15%)', () => {
     const calculateDistribution = (jp: number, durasi: number) => {
       const totalMinutes = jp * durasi;
-      let pendahuluan = Math.max(5, Math.round((totalMinutes * 0.15) / 5) * 5);
-      let penutup = Math.max(5, Math.round((totalMinutes * 0.15) / 5) * 5);
-      let inti = totalMinutes - pendahuluan - penutup;
+      const pendahuluan = Math.max(5, Math.round((totalMinutes * 0.15) / 5) * 5);
+      const penutup = Math.max(5, Math.round((totalMinutes * 0.15) / 5) * 5);
+      const inti = totalMinutes - pendahuluan - penutup;
       return { pendahuluan, inti, penutup, total: totalMinutes, sum: pendahuluan + inti + penutup };
     };
 
