@@ -36,4 +36,6 @@ export type { ResponsiveGridProps, GridVariant } from './ResponsiveGrid';
 
 export { DashboardSummaryCards } from './DashboardSummaryCards';
 export { WallOfFameWidget } from './WallOfFameWidget';
+export { DashboardAlertStack } from './DashboardAlertStack';
+export { DashboardSection } from './DashboardSection';
 

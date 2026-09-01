@@ -12,16 +12,15 @@ import { resolveClassName } from '../../utils/scheduleUtils';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   CalendarIcon,
-  AlertTriangleIcon,
   ClockIcon,
   BookOpenIcon,
   SearchIcon,
   BrainCircuitIcon,
   SettingsIcon,
   PlusIcon,
+  BarChart3Icon,
 } from '../Icons';
 import { Button } from '../ui/Button';
-import { SectionHeading } from '../ui/SectionHeading';
 import { WelcomeEmptyState } from '../EmptyStates';
 import { AIInsightWidget } from '../dashboard/AIInsightWidget';
 import StatsGrid from '../dashboard/StatsGrid';
@@ -36,9 +35,8 @@ import FloatingActionButton from '../ui/FloatingActionButton';
 import { LeaderboardCard } from '../gamification/LeaderboardCard';
 import TodayActionPanel from '../dashboard/TodayActionPanel';
 import { DashboardSummaryCards } from '../dashboard';
-// Below-the-fold and role-gated widgets load on demand. The school-wide ones
-// in particular were downloaded by every teacher despite only ever rendering
-// for leadership.
+import { DashboardAlertStack } from '../dashboard/DashboardAlertStack';
+import { DashboardSection } from '../dashboard/DashboardSection';
 import {
   LazyAttendanceStatsWidget,
   LazyClassAnalyticsSection,
@@ -64,7 +62,6 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const currentTime = useClock();
   const [isFabOpen, setIsFabOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -82,10 +79,10 @@ const DashboardPage: React.FC = () => {
   const randomQuote = useMemo(() => {
     const quotes = [
       'Pendidikan adalah senjata paling mematikan di dunia, karena dengan itu Anda bisa mengubah dunia. — Nelson Mandela',
-      'Tugas utama seorang pendidik bukan sekadar mengajar, melainkan menginspirasi sanubari. 🌟',
-      'Setiap siswa memiliki bakat unik yang menunggu untuk Anda kembangkan dengan penuh kasih sayang. 💖',
-      'Pendidik yang baik bagaikan lilin — ia menghabiskan dirinya sendiri untuk menerangi jalan orang lain. 🕯️',
-      'Terima kasih atas dedikasi luar biasa Anda hari ini dalam mencerdaskan anak bangsa! 🇮🇩',
+      'Tugas utama seorang pendidik bukan sekadar mengajar, melainkan menginspirasi sanubari.',
+      'Setiap siswa memiliki bakat unik yang menunggu untuk Anda kembangkan dengan penuh kasih sayang.',
+      'Pendidik yang baik bagaikan lilin — ia menghabiskan dirinya sendiri untuk menerangi jalan orang lain.',
+      'Terima kasih atas dedikasi luar biasa Anda hari ini dalam mencerdaskan anak bangsa!',
     ];
     const dateNum = new Date().getDate();
     return quotes[dateNum % quotes.length];
@@ -95,12 +92,9 @@ const DashboardPage: React.FC = () => {
   const dashboardErrorMessage =
     error instanceof Error ? error.message : 'Gagal memuat data dashboard. Silakan coba lagi.';
 
-  // Sync schedule with Service Worker for notifications
   useScheduleNotifications(user?.id);
-
   useGradeAudit({ data });
 
-  // Activity feed (reminders + timeline) from existing hook
   const { activeReminders, activities: recentActivities, dismissReminder: handleDismissReminder } = useDashboardActivities(
     data ? {
       students: data.students ?? [],
@@ -149,236 +143,79 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="w-full min-h-full p-3 md:p-5 lg:p-6 flex flex-col space-y-3 sm:space-y-4 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8">
+      {/* Error Banner */}
       {isError && (
         <div className="rounded-xl border border-red-200/60 dark:border-red-500/30 bg-red-50/60 dark:bg-red-500/10 px-4 py-3 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400">
-                <AlertTriangleIcon className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-red-700 dark:text-red-300">
-                  Gagal memuat data dashboard
-                </p>
-                <p className="text-xs text-red-600/80 dark:text-red-400/80">
-                  {dashboardErrorMessage}
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={() => refetch()}
-              disabled={isFetching}
-              variant="destructive"
-              size="sm"
-              className="self-start sm:self-auto"
-            >
+            <p className="text-sm font-semibold text-red-700 dark:text-red-300">
+              {dashboardErrorMessage}
+            </p>
+            <Button onClick={() => refetch()} disabled={isFetching} variant="destructive" size="sm">
               {isFetching ? 'Memuat...' : 'Coba Lagi'}
             </Button>
           </div>
         </div>
       )}
+
+      {/* Semester Transition */}
       <SemesterTransitionBanner />
+
+      {/* Dynamic Alert Stack */}
+      <DashboardAlertStack data={data} journalStatus={journalStatus} />
+
+      {/* Greeting */}
       <DashboardGreeting
         userName={user?.name}
         isOnline={isOnline}
         randomQuote={randomQuote}
-        isSidebarOpen={isSidebarOpen}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        isSidebarOpen={true}
+        onToggleSidebar={() => {}}
       />
 
-      {data && data.students.length > 0 && Math.max(data.students.length - (data.dailyAttendanceSummary?.total || 0), 0) > 0 && (
-        <div className="p-5 rounded-3xl bg-rose-50/90 dark:bg-rose-500/10 backdrop-blur-xl border border-rose-200/80 dark:border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_8px_30px_rgb(243,24,96,0.06)] animate-fade-in transition-all hover:shadow-[0_8px_30px_rgb(243,24,96,0.12)]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center shrink-0">
-              <AlertTriangleIcon className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-            </div>
-            <div>
-              <h4 className="font-bold text-rose-800 dark:text-rose-400 text-sm">
-                Tunggakan Absensi Hari Ini
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-                Ada {Math.max(data.students.length - (data.dailyAttendanceSummary?.total || 0), 0)} siswa yang belum dicatat kehadirannya hari ini.
-              </p>
-            </div>
-          </div>
-          <Button
-            onClick={() => navigate('/absensi')}
-            size="sm"
-            className="w-full sm:w-auto shrink-0 !bg-rose-600 hover:!bg-rose-700 text-white rounded-xl"
-          >
-            Isi Sekarang
-          </Button>
-        </div>
-      )}
+      {/* ============================================ */}
+      {/* SECTION 1: Hari Ini                          */}
+      {/* ============================================ */}
+      <DashboardSection title="Hari Ini" dataTutorial="dashboard-stats">
+        {/* KPI Cards */}
+        {isGlobalRole ? (
+          <Suspense fallback={<CardSkeleton />}>
+            <LazySchoolStatsGrid />
+          </Suspense>
+        ) : (
+          data && <StatsGrid data={data} currentTime={currentTime} />
+        )}
 
-      {journalStatus && journalStatus.unfilled > 0 && (
-        <div className="p-5 rounded-3xl bg-amber-50/90 dark:bg-amber-500/10 backdrop-blur-xl border border-amber-200/80 dark:border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_8px_30px_rgb(245,158,11,0.06)] animate-fade-in transition-all hover:shadow-[0_8px_30px_rgb(245,158,11,0.12)]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
-              <BookOpenIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <h4 className="font-bold text-amber-800 dark:text-amber-400 text-sm">
-                Jurnal Hari Ini Belum Diisi
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-                Ada {journalStatus.unfilled} agenda KBM hari ini yang belum dicatat ke jurnal mengajar.
-              </p>
-            </div>
-          </div>
-          <Button
-            onClick={() => navigate('/jurnal')}
-            size="sm"
-            className="w-full sm:w-auto shrink-0 !bg-amber-600 hover:!bg-amber-700 text-white rounded-xl"
-          >
-            Isi Sekarang
-          </Button>
-        </div>
-      )}
-
-      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6">
-        {/* Left Column Part 1 */}
-        <div className={`space-y-3 sm:space-y-4 order-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9 lg:col-start-1' : 'lg:col-span-12'}`}>
-          {/* School-Wide Stats (Leadership) */}
+        {/* Action Panel + Schedule side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+          {/* Today Action Panel */}
           {isGlobalRole ? (
-            <section className="mb-2">
+            <div className="space-y-4">
               <Suspense fallback={<CardSkeleton />}>
-                <LazySchoolStatsGrid />
+                <LazySmartInsightsPanel />
               </Suspense>
-            </section>
-          ) : (
-            <section data-tutorial="dashboard-stats">
-              {data && <StatsGrid data={data} currentTime={currentTime} />}
-            </section>
-          )}
-
-          {/* Combined Wawasan & Action Panel */}
-          {isGlobalRole ? (
-            <section className="space-y-4 mt-6">
-              <SectionHeading>Wawasan & Tindakan Prioritas</SectionHeading>
-              <div className="overflow-hidden rounded-3xl border border-slate-200/70 dark:border-slate-700/60 bg-white dark:bg-slate-900 shadow-sm flex flex-col">
-                <div className="p-5 border-b border-slate-200/70 dark:border-slate-700/60 bg-slate-50/30 dark:bg-slate-800/10 [&>div]:mb-0">
-                  <Suspense fallback={<CardSkeleton />}>
-                    <LazySmartInsightsPanel />
-                  </Suspense>
-                </div>
-                <div className="flex-1">
-                  <TodayActionPanel data={data} isLoading={isLoading} isCombined={true} />
-                </div>
-              </div>
-            </section>
+              <TodayActionPanel data={data} isLoading={isLoading} isCombined={true} />
+            </div>
           ) : (
             <TodayActionPanel data={data} isLoading={isLoading} />
           )}
-          {/* Operational Section */}
-          <section className="space-y-4">
-            {/* AI Insight Widget */}
-            <div data-tutorial="ai-insight" className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl p-0 overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-              <div className="p-5 border-b border-slate-200/80 dark:border-slate-700/60 bg-gradient-to-r from-brand-500/10 to-brand-400/5">
-                <h3 className="flex items-center gap-2 font-semibold text-xl text-slate-900 dark:text-white">
-                  <BrainCircuitIcon className="w-5 h-5 text-brand-600 dark:text-brand-400" />
-                  Analisis Cerdas Harian
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Wawasan berbasis AI untuk performa kelas Anda.
-                </p>
-              </div>
-              <div className="p-4">
-                <AIInsightWidget dashboardData={data || null} userId={user?.id} />
-              </div>
-            </div>
-          </section>
-        </div>
 
-        {/* Left Column Part 2 */}
-        <div className={`space-y-3 sm:space-y-4 order-3 lg:col-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'}`}>
-          {/* Analytics Section */}
-          <section className="space-y-6">
-            <SectionHeading>Analisis Penilaian & Kehadiran</SectionHeading>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Attendance Chart */}
-              <div className="flex flex-col">
-                <Suspense fallback={<CardSkeleton />}>
-                  <LazyAttendanceStatsWidget weeklyData={weeklyAttendance} />
-                </Suspense>
-              </div>
-
-              {/* Grade Audit */}
-              <GradeAuditWidget data={data} classes={classes} />
-            </div>
-          </section>
-          {/* Performance Section */}
-          {data && (data.classes.length > 0 || data.students.length > 0) && (
-            <section className="space-y-6">
-              <div className="flex items-center gap-2 mb-4 px-2">
-              <SectionHeading>Performa Kelas & Siswa</SectionHeading>
-              </div>
-
-              {/* Class Analytics */}
-              {data.classes.length > 0 && (
-                <Suspense fallback={<CardSkeleton />}>
-                  <LazyClassAnalyticsSection
-                    classes={data.classes}
-                    students={data.students}
-                    academicRecords={data.academicRecords}
-                    attendanceRecords={[]}
-                  />
-                </Suspense>
-              )}
-            </section>
-          )}
-          {/* Leaderboard */}
-          {data && data.students.length > 0 && (
-            <LeaderboardCard
-              studentsData={data.students.map((s) => {
-                const className = data.classes.find((c) => c.id === s.class_id)?.name || 'N/A';
-                return transformToGameData(
-                  s,
-                  className,
-                  data.academicRecords,
-                  [],
-                  [],
-                  data.violations,
-                );
-              })}
-              classes={data.classes}
-            />
-          )}
-
-          {/* Summary Alerts Grid */}
-          {data && !isGlobalRole && (
-            <section className="space-y-4">
-              <SectionHeading animate>Informasi & Tindakan Prioritas</SectionHeading>
-              <DashboardSummaryCards data={data} />
-            </section>
-          )}
-
-        </div>
-
-        {/* Right Column */}
-        <div className={`space-y-4 order-2 lg:row-span-4 lg:row-start-1 transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-3 lg:col-start-10 block' : 'hidden lg:block lg:col-span-3 lg:col-start-10'}`}>
-          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl h-full max-h-[800px] flex flex-col overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+          {/* Schedule + Tasks Tabs */}
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
             <Tabs defaultValue="schedule" className="w-full flex flex-col h-full">
-              <div className="p-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-100/50 dark:bg-slate-800/40 backdrop-blur-md">
+              <div className="p-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-100/50 dark:bg-slate-800/40">
                 <TabsList className="w-full grid grid-cols-2">
                   <TabsTrigger value="schedule">Jadwal</TabsTrigger>
-                  <TabsTrigger value="tasks">Tugas</TabsTrigger>
+                  <TabsTrigger value="tasks">Tugas ({tasks.length})</TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent
-                value="schedule"
-                className="flex-1 overflow-y-auto p-0 m-0 custom-scrollbar"
-              >
+              <TabsContent value="schedule" className="flex-1 overflow-y-auto p-0 m-0 custom-scrollbar max-h-[400px]">
                 <ScheduleTimeline schedule={todaySchedule} currentTime={currentTime} />
               </TabsContent>
-              <TabsContent
-                value="tasks"
-                className="flex-1 overflow-y-auto p-0 m-0 custom-scrollbar"
-              >
-                <div className="p-6 space-y-4">
+              <TabsContent value="tasks" className="flex-1 overflow-y-auto p-0 m-0 custom-scrollbar max-h-[400px]">
+                <div className="p-4 space-y-3">
                   {tasks.length > 0 ? (
-                    tasks.slice(0, 10).map((task) => (
+                    tasks.slice(0, 8).map((task) => (
                       <div
                         key={task.id}
                         className="p-3 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 group cursor-pointer"
@@ -388,50 +225,131 @@ const DashboardPage: React.FC = () => {
                             <p className="font-semibold text-sm text-slate-800 dark:text-white line-clamp-1 group-hover:text-amber-500 transition-colors">
                               {task.title}
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1.5">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
                               <ClockIcon className="w-3.5 h-3.5" />
-                              Jatuh tempo:{' '}
-                              {task.due_date ? formatTaskDueDate(task.due_date) : 'Tidak ada'}
+                              {task.due_date ? formatTaskDueDate(task.due_date) : 'Tidak ada deadline'}
                             </p>
                           </div>
-                          <div
-                            className={`w-2.5 h-2.5 rounded-full mt-1.5 ${isTaskOverdue(task.due_date, currentTime) ? 'bg-red-500 shadow-sm shadow-red-500/50' : 'bg-blue-500 shadow-sm shadow-blue-500/50'}`}
-                          ></div>
+                          <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${isTaskOverdue(task.due_date, currentTime) ? 'bg-red-500 shadow-sm shadow-red-500/50' : 'bg-blue-500 shadow-sm shadow-blue-500/50'}`} />
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-20 text-center text-slate-400 dark:text-slate-500">
-                      <BookOpenIcon className="w-16 h-16 mb-4 opacity-30" />
-                      <p className="font-medium">Tidak ada tugas aktif.</p>
+                    <div className="flex flex-col items-center justify-center py-12 text-center text-slate-400">
+                      <BookOpenIcon className="w-12 h-12 mb-3 opacity-30" />
+                      <p className="font-medium text-sm">Tidak ada tugas aktif</p>
                     </div>
                   )}
                 </div>
-                <div className="p-4 border-t border-slate-200/60 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/40 backdrop-blur-md">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate('/tugas')}
-                    className="w-full"
-                  >
-                    Lihat Semua Tugas
-                  </Button>
-                </div>
+                {tasks.length > 0 && (
+                  <div className="p-3 border-t border-slate-200/60 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/40">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/tugas')} className="w-full">
+                      Lihat Semua Tugas
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
+        </div>
+      </DashboardSection>
 
-          {/* Wall of Fame Widget */}
+      {/* ============================================ */}
+      {/* SECTION 2: Wawasan & Analisis                */}
+      {/* ============================================ */}
+      <DashboardSection
+        title="Wawasan & Analisis"
+        icon={<BrainCircuitIcon className="w-5 h-5 text-brand-600 dark:text-brand-400" />}
+        dataTutorial="ai-insight"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* AI Insight */}
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-sm">
+            <div className="p-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-gradient-to-r from-brand-500/10 to-brand-400/5">
+              <h3 className="flex items-center gap-2 font-semibold text-base text-slate-900 dark:text-white">
+                <BrainCircuitIcon className="w-4 h-4 text-brand-600" />
+                Analisis Cerdas Harian
+              </h3>
+            </div>
+            <div className="p-4">
+              <AIInsightWidget dashboardData={data || null} userId={user?.id} />
+            </div>
+          </div>
+
+          {/* Grade Audit (guru) or extra Smart Insights (leadership) */}
+          {isGlobalRole ? (
+            <div className="space-y-4">
+              <TodayActionPanel data={data} isLoading={isLoading} isCombined={true} />
+            </div>
+          ) : (
+            <GradeAuditWidget data={data} classes={classes} />
+          )}
+        </div>
+      </DashboardSection>
+
+      {/* ============================================ */}
+      {/* SECTION 3: Performa                          */}
+      {/* ============================================ */}
+      <DashboardSection
+        title="Performa Kelas & Siswa"
+        icon={<BarChart3Icon className="w-5 h-5 text-emerald-500" />}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Attendance Chart */}
+          <Suspense fallback={<CardSkeleton />}>
+            <LazyAttendanceStatsWidget weeklyData={weeklyAttendance} />
+          </Suspense>
+
+          {/* Class Analytics */}
+          {data && data.classes.length > 0 && (
+            <Suspense fallback={<CardSkeleton />}>
+              <LazyClassAnalyticsSection
+                classes={data.classes}
+                students={data.students}
+                academicRecords={data.academicRecords}
+                attendanceRecords={[]}
+                defaultOpen={true}
+              />
+            </Suspense>
+          )}
+        </div>
+
+        {/* Leaderboard + Summary Cards */}
+        {data && data.students.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+            <LeaderboardCard
+              studentsData={data.students.map((s) => {
+                const className = data.classes.find((c) => c.id === s.class_id)?.name || 'N/A';
+                return transformToGameData(s, className, data.academicRecords, [], [], data.violations);
+              })}
+              classes={data.classes}
+            />
+
+            {!isGlobalRole && <DashboardSummaryCards data={data} />}
+          </div>
+        )}
+      </DashboardSection>
+
+      {/* ============================================ */}
+      {/* SECTION 4: Lainnya (collapsible)             */}
+      {/* ============================================ */}
+      <DashboardSection
+        title="Lainnya"
+        collapsible
+        defaultOpen={false}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Wall of Fame */}
           <Suspense fallback={<CardSkeleton />}>
             <LazyWallOfFameWidget data={data} />
           </Suspense>
 
-          {/* Parent Messages Widget */}
+          {/* Parent Messages */}
           <Suspense fallback={<CardSkeleton />}>
             <LazyParentMessagesWidget />
           </Suspense>
 
-          {/* Activity Feed (Reminders + Timeline) — personal/teacher-centric, hidden for leadership */}
+          {/* Activity Feed (teacher only) */}
           {!isGlobalRole && (
             <Suspense fallback={<CardSkeleton />}>
               <LazyActivityFeedWidget
@@ -442,7 +360,7 @@ const DashboardPage: React.FC = () => {
             </Suspense>
           )}
         </div>
-      </div>
+      </DashboardSection>
 
       {/* Speed Dial FAB */}
       <nav className="fixed bottom-24 right-4 lg:bottom-10 lg:right-10 z-50 flex flex-col items-end gap-4 pointer-events-none" aria-label="Aksi cepat">
@@ -452,19 +370,19 @@ const DashboardPage: React.FC = () => {
           className={`flex flex-col gap-3 transition-all duration-300 ${isFabOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-10 pointer-events-none'}`}
         >
           <Link to="/jadwal" role="menuitem" aria-label="Buka jadwal" className="flex items-center gap-3 pr-1 group">
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0" aria-hidden="true">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               Jadwal
             </span>
             <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-brand-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
-              <CalendarIcon className="w-6 h-6" aria-hidden="true" />
+              <CalendarIcon className="w-6 h-6" />
             </div>
           </Link>
           <button type="button" onClick={openSearch} role="menuitem" aria-label="Cari" className="flex items-center gap-3 pr-1 group">
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0" aria-hidden="true">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               Cari
             </span>
             <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
-              <SearchIcon className="w-6 h-6" aria-hidden="true" />
+              <SearchIcon className="w-6 h-6" />
             </div>
           </button>
           <button type="button"
@@ -473,19 +391,19 @@ const DashboardPage: React.FC = () => {
             aria-label="Buka AI Chat"
             className="flex items-center gap-3 pr-1 group"
           >
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0" aria-hidden="true">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               AI Chat
             </span>
             <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-brand-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
-              <BrainCircuitIcon className="w-6 h-6" aria-hidden="true" />
+              <BrainCircuitIcon className="w-6 h-6" />
             </div>
           </button>
           <Link to="/pengaturan" role="menuitem" aria-label="Buka pengaturan" className="flex items-center gap-3 pr-1 group">
-            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0" aria-hidden="true">
+            <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               Pengaturan
             </span>
             <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-400 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
-              <SettingsIcon className="w-6 h-6" aria-hidden="true" />
+              <SettingsIcon className="w-6 h-6" />
             </div>
           </Link>
         </div>
@@ -496,9 +414,9 @@ const DashboardPage: React.FC = () => {
           aria-label={isFabOpen ? 'Tutup menu aksi cepat' : 'Buka menu aksi cepat'}
           icon={
             isFabOpen ? (
-              <PlusIcon className="w-7 h-7 rotate-45 transition-transform duration-300" aria-hidden="true" />
+              <PlusIcon className="w-7 h-7 rotate-45 transition-transform duration-300" />
             ) : (
-              <PlusIcon className="w-7 h-7 transition-transform duration-300" aria-hidden="true" />
+              <PlusIcon className="w-7 h-7 transition-transform duration-300" />
             )
           }
           className={`pointer-events-auto transition-all duration-300 ${isFabOpen ? 'bg-red-500 hover:bg-red-600 dark:bg-red-600 shadow-red-500/30 rotate-90' : 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/30'}`}
