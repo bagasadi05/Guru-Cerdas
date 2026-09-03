@@ -186,39 +186,41 @@ const DashboardPage: React.FC = () => {
         )}
 
         {/* Action Panel + Schedule side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4 items-stretch">
           {/* Today Action Panel */}
-          {isGlobalRole ? (
-            <div className="space-y-4">
-              <Suspense fallback={<CardSkeleton />}>
-                <LazySmartInsightsPanel />
-              </Suspense>
-              <TodayActionPanel data={data} isLoading={isLoading} isCombined={true} />
-            </div>
-          ) : (
-            <TodayActionPanel data={data} isLoading={isLoading} />
-          )}
+          <div className="lg:col-span-2 space-y-4">
+            {isGlobalRole ? (
+              <>
+                <Suspense fallback={<CardSkeleton />}>
+                  <LazySmartInsightsPanel />
+                </Suspense>
+                <TodayActionPanel data={data} isLoading={isLoading} isCombined={true} />
+              </>
+            ) : (
+              <TodayActionPanel data={data} isLoading={isLoading} />
+            )}
+          </div>
 
           {/* Schedule + Tasks Tabs */}
-          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
-            <Tabs defaultValue="schedule" className="w-full flex flex-col h-full">
-              <div className="p-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-100/50 dark:bg-slate-800/40">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col h-full min-h-[360px]">
+            <Tabs defaultValue="schedule" className="w-full flex flex-col flex-1 min-h-0">
+              <div className="px-3 py-2.5 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-100/50 dark:bg-slate-800/40">
                 <TabsList className="w-full grid grid-cols-2">
                   <TabsTrigger value="schedule">Jadwal</TabsTrigger>
                   <TabsTrigger value="tasks">Tugas ({tasks.length})</TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent value="schedule" className="flex-1 overflow-y-auto p-0 m-0 custom-scrollbar max-h-[400px]">
+              <TabsContent value="schedule" className="flex-1 overflow-y-auto p-0 m-0 custom-scrollbar min-h-0">
                 <ScheduleTimeline schedule={todaySchedule} currentTime={currentTime} />
               </TabsContent>
-              <TabsContent value="tasks" className="flex-1 overflow-y-auto p-0 m-0 custom-scrollbar max-h-[400px]">
-                <div className="p-4 space-y-3">
+              <TabsContent value="tasks" className="flex-1 flex flex-col overflow-y-auto p-0 m-0 custom-scrollbar min-h-0">
+                <div className="p-3 space-y-2 flex-1">
                   {tasks.length > 0 ? (
-                    tasks.slice(0, 8).map((task) => (
+                    tasks.slice(0, 5).map((task) => (
                       <div
                         key={task.id}
-                        className="p-3 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 group cursor-pointer"
+                        className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 group cursor-pointer"
                       >
                         <div className="flex items-start justify-between">
                           <div>
@@ -235,14 +237,14 @@ const DashboardPage: React.FC = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-center text-slate-400">
-                      <BookOpenIcon className="w-12 h-12 mb-3 opacity-30" />
+                    <div className="flex flex-col items-center justify-center h-full py-8 text-center text-slate-400">
+                      <BookOpenIcon className="w-10 h-10 mb-3 opacity-30" />
                       <p className="font-medium text-sm">Tidak ada tugas aktif</p>
                     </div>
                   )}
                 </div>
                 {tasks.length > 0 && (
-                  <div className="p-3 border-t border-slate-200/60 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/40">
+                  <div className="p-2.5 border-t border-slate-200/60 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/40">
                     <Button variant="outline" size="sm" onClick={() => navigate('/tugas')} className="w-full">
                       Lihat Semua Tugas
                     </Button>
@@ -262,28 +264,22 @@ const DashboardPage: React.FC = () => {
         icon={<BrainCircuitIcon className="w-5 h-5 text-brand-600 dark:text-brand-400" />}
         dataTutorial="ai-insight"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
           {/* AI Insight */}
-          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-sm">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex flex-col h-full">
             <div className="p-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-gradient-to-r from-brand-500/10 to-brand-400/5">
               <h3 className="flex items-center gap-2 font-semibold text-base text-slate-900 dark:text-white">
                 <BrainCircuitIcon className="w-4 h-4 text-brand-600" />
                 Analisis Cerdas Harian
               </h3>
             </div>
-            <div className="p-4">
+            <div className="p-4 flex-1">
               <AIInsightWidget dashboardData={data || null} userId={user?.id} />
             </div>
           </div>
 
           {/* Grade Audit (guru) or extra Smart Insights (leadership) */}
-          {isGlobalRole ? (
-            <div className="space-y-4">
-              <TodayActionPanel data={data} isLoading={isLoading} isCombined={true} />
-            </div>
-          ) : (
-            <GradeAuditWidget data={data} classes={classes} />
-          )}
+          {!isGlobalRole && <GradeAuditWidget data={data} classes={classes} />}
         </div>
       </DashboardSection>
 
@@ -294,7 +290,7 @@ const DashboardPage: React.FC = () => {
         title="Performa Kelas & Siswa"
         icon={<BarChart3Icon className="w-5 h-5 text-emerald-500" />}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
           {/* Attendance Chart */}
           <Suspense fallback={<CardSkeleton />}>
             <LazyAttendanceStatsWidget weeklyData={weeklyAttendance} />
@@ -316,14 +312,16 @@ const DashboardPage: React.FC = () => {
 
         {/* Leaderboard + Summary Cards */}
         {data && data.students.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-            <LeaderboardCard
-              studentsData={data.students.map((s) => {
-                const className = data.classes.find((c) => c.id === s.class_id)?.name || 'N/A';
-                return transformToGameData(s, className, data.academicRecords, [], [], data.violations);
-              })}
-              classes={data.classes}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4 items-stretch">
+            <div className="h-full">
+              <LeaderboardCard
+                studentsData={data.students.map((s) => {
+                  const className = data.classes.find((c) => c.id === s.class_id)?.name || 'N/A';
+                  return transformToGameData(s, className, data.academicRecords, [], [], data.violations);
+                })}
+                classes={data.classes}
+              />
+            </div>
 
             {!isGlobalRole && <DashboardSummaryCards data={data} />}
           </div>
@@ -338,7 +336,7 @@ const DashboardPage: React.FC = () => {
         collapsible
         defaultOpen={false}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
           {/* Wall of Fame */}
           <Suspense fallback={<CardSkeleton />}>
             <LazyWallOfFameWidget data={data} />

@@ -19,7 +19,7 @@ const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
     const reminderCount = reminders.length;
 
     return (
-        <DashboardPanel>
+        <DashboardPanel className="flex flex-col h-full">
             <Tabs defaultValue="activity" className="w-full">
                 <DashboardPanelHeader>
                     <TabsList className="flex w-full">

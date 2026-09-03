@@ -109,7 +109,7 @@ const ParentMessagesWidget: React.FC = () => {
 
     if (isLoading) {
         return (
-            <DashboardPanel>
+            <DashboardPanel className="flex flex-col h-full">
                 <DashboardPanelHeader className="p-6 border-slate-200/50 dark:border-white/5">
                     <Skeleton className="h-6 w-48" />
                 </DashboardPanelHeader>
@@ -131,7 +131,7 @@ const ParentMessagesWidget: React.FC = () => {
     const { messages = [], unreadCount = 0 } = data || {};
 
     return (
-        <DashboardPanel>
+        <DashboardPanel className="flex flex-col h-full">
             {/* Header */}
             <DashboardPanelHeader className="bg-emerald-500/10">
                 <div className="flex items-center justify-between">

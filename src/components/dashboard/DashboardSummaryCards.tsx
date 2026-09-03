@@ -221,10 +221,10 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
   if (!hasData) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full h-full items-stretch">
       {/* CARD 1: Kelas Perlu Perhatian */}
       {classesNeedAttention.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group h-full">
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
@@ -264,7 +264,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
 
       {/* CARD 2: Siswa Prioritas (real data) */}
       {priorityStudents.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group h-full">
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">

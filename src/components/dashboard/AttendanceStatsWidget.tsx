@@ -181,8 +181,8 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
 
     if (classStats.length === 0) {
         return (
-            <DashboardPanel>
-                <DashboardPanelContent className="p-6">
+            <DashboardPanel className="flex flex-col h-full">
+                <DashboardPanelContent className="p-6 flex-1">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
                         <CalendarIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
@@ -205,8 +205,8 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
     }
 
     return (
-        <DashboardPanel>
-            <DashboardPanelContent className="p-6">
+        <DashboardPanel className="flex flex-col h-full">
+            <DashboardPanelContent className="p-6 flex-1">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
