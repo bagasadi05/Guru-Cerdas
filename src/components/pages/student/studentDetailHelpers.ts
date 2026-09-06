@@ -56,7 +56,7 @@ export const buildStudentCommunicationSignals = (params: {
             id: 'academic-support',
             label: 'Nilai Perlu Perhatian',
             tone: 'warning',
-            message: `Yth. Bapak/Ibu Wali,\n\nKami ingin menginformasikan bahwa ${studentName} perlu pendampingan tambahan pada mata pelajaran ${subjects}. Mohon bantu mengulang materi di rumah dan menjaga rutinitas belajar.\n\nTerima kasih atas kerja samanya.`,
+            message: `Yth. Ayah/Bunda Wali,\n\nKami ingin menginformasikan bahwa ${studentName} perlu pendampingan tambahan pada mata pelajaran ${subjects}. Mohon bantu mengulang materi di rumah dan menjaga rutinitas belajar.\n\nTerima kasih atas kerja samanya.`,
         });
     }
 
@@ -65,7 +65,7 @@ export const buildStudentCommunicationSignals = (params: {
             id: 'attendance-alpha',
             label: 'Kehadiran Alpha',
             tone: 'warning',
-            message: `Yth. Bapak/Ibu Wali,\n\nKami mencatat ${studentName} memiliki ${alphaCount} ketidakhadiran tanpa keterangan pada semester ini. Mohon konfirmasi dan bantu memastikan kehadiran siswa lebih konsisten.\n\nTerima kasih.`,
+            message: `Yth. Ayah/Bunda Wali,\n\nKami mencatat ${studentName} memiliki ${alphaCount} ketidakhadiran tanpa keterangan pada semester ini. Mohon konfirmasi dan bantu memastikan kehadiran siswa lebih konsisten.\n\nTerima kasih.`,
         });
     }
 
@@ -74,7 +74,7 @@ export const buildStudentCommunicationSignals = (params: {
             id: 'behavior-followup',
             label: 'Tindak Lanjut Perilaku',
             tone: 'warning',
-            message: `Yth. Bapak/Ibu Wali,\n\nKami mencatat ${studentName} memiliki ${totalViolationPoints} poin pelanggaran pada semester ini. Mohon kerja samanya untuk memberikan arahan di rumah agar perilaku siswa semakin baik.\n\nTerima kasih.`,
+            message: `Yth. Ayah/Bunda Wali,\n\nKami mencatat ${studentName} memiliki ${totalViolationPoints} poin pelanggaran pada semester ini. Mohon kerja samanya untuk memberikan arahan di rumah agar perilaku siswa semakin baik.\n\nTerima kasih.`,
         });
     }
 
@@ -83,7 +83,7 @@ export const buildStudentCommunicationSignals = (params: {
             id: 'appreciation',
             label: 'Apresiasi Siswa',
             tone: 'success',
-            message: `Yth. Bapak/Ibu Wali,\n\nKami ingin menyampaikan apresiasi atas perkembangan positif ${studentName}. Terima kasih atas dukungan Bapak/Ibu di rumah. Semoga konsistensi baik ini dapat terus dipertahankan.\n\nSalam hangat.`,
+            message: `Yth. Ayah/Bunda Wali,\n\nKami ingin menyampaikan apresiasi atas perkembangan positif ${studentName}. Terima kasih atas dukungan Ayah/Bunda di rumah. Semoga konsistensi baik ini dapat terus dipertahankan.\n\nSalam hangat.`,
         });
     }
 
@@ -92,7 +92,7 @@ export const buildStudentCommunicationSignals = (params: {
             id: 'general-update',
             label: 'Kabar Umum',
             tone: 'info',
-            message: `Yth. Bapak/Ibu Wali,\n\nKami ingin menyampaikan kabar perkembangan ${studentName}. Jika ada hal yang ingin didiskusikan terkait pembelajaran atau kehadiran, Bapak/Ibu dapat membalas pesan ini.\n\nTerima kasih.`,
+            message: `Yth. Ayah/Bunda Wali,\n\nKami ingin menyampaikan kabar perkembangan ${studentName}. Jika ada hal yang ingin didiskusikan terkait pembelajaran atau kehadiran, Ayah/Bunda dapat membalas pesan ini.\n\nTerima kasih.`,
         });
     }
 

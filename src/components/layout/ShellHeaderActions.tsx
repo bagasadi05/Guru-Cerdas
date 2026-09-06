@@ -73,7 +73,7 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
 
             <Link
                 to="/pengaturan"
-                className="hidden sm:flex ml-1 h-11 w-11 items-center justify-center rounded-full ring-2 ring-white shadow-md transition-transform hover:scale-105 active:scale-95 dark:ring-slate-800 overflow-hidden shrink-0"
+                className="hidden sm:flex lg:hidden ml-1 h-11 w-11 items-center justify-center rounded-full ring-2 ring-white shadow-md transition-transform hover:scale-105 active:scale-95 dark:ring-slate-800 overflow-hidden shrink-0"
                 aria-label="Settings"
             >
                 <img

@@ -3,7 +3,7 @@ import type { BintangGrade, AspectPointsSummary } from '../../../../services/bin
 import { bintangService } from '../../../../services/bintangService';
 import { downloadBintangReportAction } from '../../../../services/bintangPdfGenerator';
 import { exportBintangToExcel } from '../../../../services/bintangExcelExport';
-import { generateAutoNote, generateHomeroomNote } from '../bintangConstants';
+import { generateAutoNote, generateHomeroomNote, type StudentViolationSummaryItem } from '../bintangConstants';
 import { supabase } from '../../../../services/supabase';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -42,6 +42,8 @@ export interface UseBintangEvaluationOptions {
     selectedClass: string;
     /** Getter function for quiz points — avoids TDZ issues with computed values */
     getStudentQuizPoints?: (studentId: string) => number;
+    /** Getter function for student violations list — allows contextual note generation */
+    getStudentViolations?: (studentId: string) => StudentViolationSummaryItem[];
 }
 
 export interface UseBintangEvaluationReturn {
@@ -64,6 +66,7 @@ export interface UseBintangEvaluationReturn {
 
     // Handlers
     handleOpenEditModal: (student: any, getAspectSummary: (id: string) => AspectPointsSummary) => void;
+    handleRegenerateHomeroomNote: (student: any, getAspectSummary: (id: string) => AspectPointsSummary) => void;
     handleSaveEvaluation: (e: React.FormEvent, getAspectSummary: (id: string) => AspectPointsSummary) => Promise<void>;
     handleGenerateAll: (getAspectSummary: (id: string) => AspectPointsSummary) => Promise<void>;
     handlePublish: () => Promise<void>;
@@ -78,7 +81,7 @@ export interface UseBintangEvaluationReturn {
 export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseBintangEvaluationReturn {
     const {
         toast, confirmPublish, fetchData, selectedMonth, user,
-        students, evaluations, selectedClass, getStudentQuizPoints,
+        students, evaluations, selectedClass, getStudentQuizPoints, getStudentViolations,
     } = options;
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -123,6 +126,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             const existingEval = getEvaluationForStudent(student.id);
             const aspect = getAspectSummary(student.id);
             const activePts = getStudentQuizPoints?.(student.id) || 0;
+            const studentVios = getStudentViolations?.(student.id) || [];
 
             if (existingEval) {
                 setFormData({
@@ -136,7 +140,13 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                 });
             } else {
                 const autoNotes = generateAutoNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade, activePts);
-                const autoHomeroomNote = generateHomeroomNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade, activePts);
+                const autoHomeroomNote = generateHomeroomNote(
+                    aspect.ADAB.grade,
+                    aspect.KEDISIPLINAN.grade,
+                    aspect.KERAPIAN.grade,
+                    activePts,
+                    { studentName: student.name, violations: studentVios }
+                );
                 setFormData({
                     adab_score: aspect.ADAB.grade,
                     kedisiplinan_score: aspect.KEDISIPLINAN.grade,
@@ -149,7 +159,26 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             }
             setIsEditModalOpen(true);
         },
-        [getEvaluationForStudent, getStudentQuizPoints]
+        [getEvaluationForStudent, getStudentQuizPoints, getStudentViolations]
+    );
+
+    const handleRegenerateHomeroomNote = useCallback(
+        (student: any, _getAspectSummary: (id: string) => AspectPointsSummary) => {
+            if (!student) return;
+            const activePts = getStudentQuizPoints?.(student.id) || 0;
+            const studentVios = getStudentViolations?.(student.id) || [];
+
+            const regenerated = generateHomeroomNote(
+                formData.adab_score,
+                formData.kedisiplinan_score,
+                formData.kerapian_score,
+                activePts,
+                { studentName: student.name, violations: studentVios }
+            );
+            setFormData(prev => ({ ...prev, catatan_wali: regenerated }));
+            toast.success('Catatan wali kelas berhasil dibuat ulang secara kontekstual');
+        },
+        [formData.adab_score, formData.kedisiplinan_score, formData.kerapian_score, getStudentQuizPoints, getStudentViolations, toast]
     );
 
     const handleSaveEvaluation = useCallback(
@@ -189,8 +218,15 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                 const evalInserts = students.map(student => {
                     const aspect = getAspectSummary(student.id);
                     const activePts = getStudentQuizPoints?.(student.id) || 0;
+                    const studentVios = getStudentViolations?.(student.id) || [];
                     const autoNotes = generateAutoNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade, activePts);
-                    const autoHomeroomNote = generateHomeroomNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade, activePts);
+                    const autoHomeroomNote = generateHomeroomNote(
+                        aspect.ADAB.grade,
+                        aspect.KEDISIPLINAN.grade,
+                        aspect.KERAPIAN.grade,
+                        activePts,
+                        { studentName: student.name, violations: studentVios }
+                    );
                     return {
                         student_id: student.id,
                         month: selectedMonth,
@@ -215,7 +251,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                 setIsGenerating(false);
             }
         },
-        [students, selectedMonth, user, getStudentQuizPoints, toast, fetchData]
+        [students, selectedMonth, user, getStudentQuizPoints, getStudentViolations, toast, fetchData]
     );
 
     const handlePublish = useCallback(async () => {
@@ -396,6 +432,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
         evalStats,
 
         handleOpenEditModal,
+        handleRegenerateHomeroomNote,
         handleSaveEvaluation,
         handleGenerateAll,
         handlePublish,

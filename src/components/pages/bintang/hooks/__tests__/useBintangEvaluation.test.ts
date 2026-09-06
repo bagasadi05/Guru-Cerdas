@@ -246,7 +246,7 @@ describe('useBintangEvaluation', () => {
             expect(result.current.isEditModalOpen).toBe(true);
             expect(result.current.editingStudent).toEqual({ id: 'student-1', name: 'Ahmad Fauzi' });
             expect(mockGenerateAutoNote).toHaveBeenCalledWith('B', 'A', 'C', 0);
-            expect(mockGenerateHomeroomNote).toHaveBeenCalledWith('B', 'A', 'C', 0);
+            expect(mockGenerateHomeroomNote).toHaveBeenCalledWith('B', 'A', 'C', 0, expect.objectContaining({ studentName: 'Ahmad Fauzi' }));
             expect(result.current.formData.adab_score).toBe('B');
             expect(result.current.formData.adab_notes).toBe('Auto adab note');
             expect(result.current.formData.catatan_wali).toBe('Auto homeroom note');
@@ -301,7 +301,31 @@ describe('useBintangEvaluation', () => {
 
             expect(getStudentQuizPoints).toHaveBeenCalledWith('student-1');
             expect(mockGenerateAutoNote).toHaveBeenCalledWith('B', 'A', 'C', 5);
-            expect(mockGenerateHomeroomNote).toHaveBeenCalledWith('B', 'A', 'C', 5);
+            expect(mockGenerateHomeroomNote).toHaveBeenCalledWith('B', 'A', 'C', 5, expect.objectContaining({ studentName: 'Ahmad Fauzi' }));
+        });
+
+        it('should allow regenerating homeroom note with handleRegenerateHomeroomNote', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const toast = { success: vi.fn(), error: vi.fn() };
+            const getStudentViolations = vi.fn(() => [
+                { description: 'Terlambat masuk sekolah' },
+            ]);
+            const options = createDefaultOptions({ toast, getStudentViolations });
+
+            mockGenerateHomeroomNote.mockReturnValue('Regenerated note with violations');
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            await act(async () => {
+                result.current.handleRegenerateHomeroomNote(
+                    { id: 'student-1', name: 'Ahmad Fauzi' },
+                    mockGetAspectSummary,
+                );
+            });
+
+            expect(getStudentViolations).toHaveBeenCalledWith('student-1');
+            expect(result.current.formData.catatan_wali).toBe('Regenerated note with violations');
+            expect(toast.success).toHaveBeenCalledWith('Catatan wali kelas berhasil dibuat ulang secara kontekstual');
         });
     });
 

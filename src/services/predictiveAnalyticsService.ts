@@ -582,7 +582,7 @@ export function generateFallbackInterventionPlan(
         ? `Siswa menunjukkan potensi penurunan performa (skor risiko ${riskScore}/100) yang dapat diatasi dengan pendampingan bertahap dan pemantauan aktif.`
         : `Kondisi belajar siswa dalam kategori stabil (skor risiko ${riskScore}/100). Pertahankan performa dengan pengayaan berkala.`;
 
-    const parentDraft = `Yth. Bapak/Ibu Wali dari ${student.name},\n\nSemoga Bapak/Ibu sekeluarga senantiasa sehat. Kami dari pihak sekolah ingin menyampaikan apresiasi atas perkembangan ananda di kelas.\n\nUntuk mendukung potensi ${student.name} agar semakin optimal, kami mencatat perlunya perhatian bersama terkait ${factors.map((f) => f.title.toLowerCase()).join(', ') || 'konsistensi belajar'}.\n\nKami mengundang Bapak/Ibu untuk berdiskusi santai mengenai langkah pendampingan di rumah. Terima kasih banyak atas kerja sama yang baik.\n\nSalam hangat,\nWali Kelas`;
+    const parentDraft = `Yth. Ayah/Bunda Wali dari ${student.name},\n\nSemoga Ayah/Bunda sekeluarga senantiasa sehat. Kami dari pihak madrasah ingin menyampaikan apresiasi atas perkembangan ananda di kelas.\n\nUntuk mendukung potensi ${student.name} agar semakin optimal, kami mencatat perlunya perhatian bersama terkait ${factors.map((f) => f.title.toLowerCase()).join(', ') || 'konsistensi belajar'}.\n\nKami mengundang Ayah/Bunda untuk berdiskusi santai mengenai langkah pendampingan di rumah. Terima kasih banyak atas kerja sama yang baik.\n\nSalam hangat,\nWali Kelas`;
 
     return {
         studentId: student.id,

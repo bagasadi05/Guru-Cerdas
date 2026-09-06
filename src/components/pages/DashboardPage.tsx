@@ -290,7 +290,7 @@ const DashboardPage: React.FC = () => {
         title="Performa Kelas & Siswa"
         icon={<BarChart3Icon className="w-5 h-5 text-emerald-500" />}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
           {/* Attendance Chart */}
           <Suspense fallback={<CardSkeleton />}>
             <LazyAttendanceStatsWidget weeklyData={weeklyAttendance} />
@@ -303,7 +303,6 @@ const DashboardPage: React.FC = () => {
                 classes={data.classes}
                 students={data.students}
                 academicRecords={data.academicRecords}
-                attendanceRecords={[]}
                 defaultOpen={true}
               />
             </Suspense>

@@ -148,6 +148,7 @@ const BintangDashboardPage: React.FC = () => {
         evaluations,
         selectedClass,
         getStudentQuizPoints: (studentId: string) => studentQuizMap?.get(studentId)?.totalPoints || 0,
+        getStudentViolations: (studentId: string) => studentViolationsMap?.get(studentId) || [],
     });
 
     // ── Keaktifan modal ──────────────────────────────────────────────────────
@@ -321,6 +322,21 @@ const BintangDashboardPage: React.FC = () => {
         }
         return map;
     }, [violations, students, studentQuizMap]);
+
+    const studentViolationsMap = useMemo(() => {
+        const map = new Map<string, Array<{ description: string; bintangAspect?: 'ADAB' | 'KEDISIPLINAN' | 'KERAPIAN'; category?: string | null }>>();
+        for (const v of violations) {
+            const list = map.get(v.student_id) || [];
+            const item = violationList.find(i => i.description === v.description);
+            list.push({
+                description: v.description,
+                bintangAspect: item?.bintangAspect,
+                category: v.severity,
+            });
+            map.set(v.student_id, list);
+        }
+        return map;
+    }, [violations]);
 
     const getAspectSummary = (studentId: string): AspectPointsSummary => {
         return studentAspectMap.get(studentId) ?? {
@@ -1221,15 +1237,54 @@ const BintangDashboardPage: React.FC = () => {
                     />
 
                     <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
-                        <div className="flex items-center gap-2 mb-3">
-                            <FileText size={18} className="text-emerald-600 dark:text-emerald-400" />
-                            <span className="font-bold text-sm text-slate-800 dark:text-slate-200">Catatan Wali Kelas</span>
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <div className="flex items-center gap-2">
+                                <FileText size={18} className="text-emerald-600 dark:text-emerald-400" />
+                                <span className="font-bold text-sm text-slate-800 dark:text-slate-200">Catatan Wali Kelas</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {evalHook.editingStudent && (() => {
+                                    const vios = studentViolationsMap.get(evalHook.editingStudent.id) || [];
+                                    const activePts = studentQuizMap.get(evalHook.editingStudent.id)?.totalPoints || 0;
+                                    return (
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {vios.length === 0 ? (
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                                                    ✓ 0 Pelanggaran (Teladan)
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                                                    {vios.length} Pelanggaran
+                                                </span>
+                                            )}
+                                            {activePts > 0 && (
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                                                    +{activePts} Keaktifan
+                                                </span>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => evalHook.handleRegenerateHomeroomNote(evalHook.editingStudent, getAspectSummary)}
+                                    className="h-7 px-2.5 text-xs text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-800 bg-brand-50/50 dark:bg-brand-900/20 hover:bg-brand-100 rounded-lg flex items-center gap-1 shadow-sm"
+                                    title="Buat ulang catatan secara otomatis berdasarkan data & nilai terbaru siswa"
+                                >
+                                    <Sparkles size={12} />
+                                    <span>Buat Ulang Otomatis</span>
+                                </Button>
+                            </div>
                         </div>
                         <div className="w-full">
-                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tuliskan pesan atau catatan perkembangan umum siswa untuk Orang Tua / Wali</label>
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                Tuliskan pesan atau catatan perkembangan umum siswa untuk Orang Tua / Wali (dihasilkan otomatis &amp; dapat disesuaikan)
+                            </label>
                             <textarea
-                                className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-                                rows={3}
+                                className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 leading-relaxed"
+                                rows={4}
                                 value={evalHook.formData.catatan_wali}
                                 onChange={(e) => evalHook.setFormData(prev => ({ ...prev, catatan_wali: e.target.value }))}
                                 placeholder="Tuliskan catatan umum wali kelas di sini..."

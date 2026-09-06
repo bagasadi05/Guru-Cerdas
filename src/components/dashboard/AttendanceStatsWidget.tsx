@@ -8,8 +8,6 @@ import {
     CheckCircleIcon,
     XCircleIcon,
     AlertTriangleIcon,
-    TrendingUpIcon,
-    TrendingDownIcon,
     CalendarIcon,
     Activity
 } from 'lucide-react';
@@ -226,104 +224,55 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                 </div>
             </div>
 
-            {/* Overall Stats */}
-            <div className="grid grid-cols-4 gap-2 mb-6">
-                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mb-2 shadow-lg">
-                        <CheckCircleIcon className="w-5 h-5 text-white" />
+            {/* Overall Stats - Responsive 2x2 on mobile, 4x1 on desktop */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
+                <div className="flex flex-col items-center justify-center p-2.5 sm:p-3 min-h-[90px] sm:min-h-[100px] bg-emerald-50/80 dark:bg-emerald-900/20 rounded-xl border border-emerald-100/60 dark:border-emerald-800/30">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mb-1.5 shadow-sm">
+                        <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
-                    <span className="text-3xl font-extrabold leading-none text-emerald-600 dark:text-emerald-400">{overallStats.hadir}</span>
-                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 mt-1">Hadir</p>
+                    <span className="text-2xl sm:text-3xl font-extrabold leading-none text-emerald-600 dark:text-emerald-400">{overallStats.hadir}</span>
+                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1">Hadir</p>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center mb-2 shadow-lg">
-                        <AlertTriangleIcon className="w-5 h-5 text-white" />
+                <div className="flex flex-col items-center justify-center p-2.5 sm:p-3 min-h-[90px] sm:min-h-[100px] bg-blue-50/80 dark:bg-blue-900/20 rounded-xl border border-blue-100/60 dark:border-blue-800/30">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center mb-1.5 shadow-sm">
+                        <AlertTriangleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
-                    <span className="text-3xl font-extrabold leading-none text-blue-600 dark:text-blue-400">{overallStats.sakit}</span>
-                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 mt-1">Sakit</p>
+                    <span className="text-2xl sm:text-3xl font-extrabold leading-none text-blue-600 dark:text-blue-400">{overallStats.sakit}</span>
+                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1">Sakit</p>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-2 shadow-lg">
-                        <UsersIcon className="w-5 h-5 text-white" />
+                <div className="flex flex-col items-center justify-center p-2.5 sm:p-3 min-h-[90px] sm:min-h-[100px] bg-amber-50/80 dark:bg-amber-900/20 rounded-xl border border-amber-100/60 dark:border-amber-800/30">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-1.5 shadow-sm">
+                        <UsersIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
-                    <span className="text-3xl font-extrabold leading-none text-amber-600 dark:text-amber-400">{overallStats.izin}</span>
-                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 mt-1">Izin</p>
+                    <span className="text-2xl sm:text-3xl font-extrabold leading-none text-amber-600 dark:text-amber-400">{overallStats.izin}</span>
+                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1">Izin</p>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 min-h-[100px] bg-rose-50 dark:bg-rose-900/20 rounded-lg">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center mb-2 shadow-lg">
-                        <XCircleIcon className="w-5 h-5 text-white" />
+                <div className="flex flex-col items-center justify-center p-2.5 sm:p-3 min-h-[90px] sm:min-h-[100px] bg-rose-50/80 dark:bg-rose-900/20 rounded-xl border border-rose-100/60 dark:border-rose-800/30">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center mb-1.5 shadow-sm">
+                        <XCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
-                    <span className="text-3xl font-extrabold leading-none text-rose-600 dark:text-rose-400">{overallStats.alpha}</span>
-                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 mt-1">Alpha</p>
+                    <span className="text-2xl sm:text-3xl font-extrabold leading-none text-rose-600 dark:text-rose-400">{overallStats.alpha}</span>
+                    <p className="text-xxs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1">Alpha</p>
                 </div>
             </div>
-
-            {/* Per Class Stats */}
-            <div className="space-y-3">
-                <h4 className="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Per Kelas</h4>
-                {classStats.map(stat => (
-                    <div
-                        key={stat.classId}
-                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    >
-                        <div className="flex items-center gap-3">
-                            <span className="font-bold text-slate-800 dark:text-white">{stat.className}</span>
-                            {showTrend && stat.trend !== 'stable' && (
-                                <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${stat.trend === 'up'
-                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                    : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                    }`}>
-                                    {stat.trend === 'up' ? <TrendingUpIcon className="w-3 h-3" /> : <TrendingDownIcon className="w-3 h-3" />}
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2 text-xs">
-                                <span className="text-emerald-600 dark:text-emerald-400 font-medium">{stat.hadir}H</span>
-                                <span className="text-blue-600 dark:text-blue-400">{stat.sakit}S</span>
-                                <span className="text-amber-600 dark:text-amber-400">{stat.izin}I</span>
-                                <span className="text-rose-600 dark:text-rose-400">{stat.alpha}A</span>
-                            </div>
-                            <div className="w-20">
-                                <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                                    <div
-                                        className={`h-full rounded-full transition-all duration-500 ${stat.percentage >= 80 ? 'bg-emerald-500' :
-                                            stat.percentage >= 60 ? 'bg-amber-500' : 'bg-rose-500'
-                                            }`}
-                                        style={{ width: `${stat.percentage}%` }}
-                                    />
-                                </div>
-                            </div>
-                            <span className={`font-bold text-sm w-12 text-right ${stat.percentage >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
-                                stat.percentage >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
-                                }`}>
-                                {stat.percentage.toFixed(0)}%
-                            </span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
 
             {/* Weekly Trend Chart */}
-            {
-                weeklyData && weeklyData.length > 0 && (
-                    <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h4 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            {weeklyData && weeklyData.length > 0 && (
+                <div className="mt-4 pt-5 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-col flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                        <div>
+                            <h4 className="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2">
                                 <Activity className="w-4 h-4 text-emerald-500" />
-                                    Tren Kehadiran Mingguan
-                                </h4>
-                                <p className="text-xs text-slate-500 mt-1">5 Hari Terakhir</p>
-                            </div>
-                        </div>
-                        <div className="h-40">
-                            <WeeklyAttendanceChart data={weeklyData} />
+                                Tren Kehadiran Mingguan
+                            </h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">5 Hari Terakhir</p>
                         </div>
                     </div>
-                )
-            }
+                    <div className="h-44 flex-1">
+                        <WeeklyAttendanceChart data={weeklyData} />
+                    </div>
+                </div>
+            )}
             </DashboardPanelContent>
         </DashboardPanel>
     );

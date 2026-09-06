@@ -49,13 +49,14 @@ describe('offlineQueue — Conflict Detection & Resolution', () => {
     });
 
     describe('resolveConflict', () => {
-        const local = {
+        type TestRecord = { id: string; name: string; score: number; _localTimestamp?: string; updated_at?: string };
+        const local: TestRecord = {
             id: '1',
             name: 'Budi Updated Local',
             score: 90,
             _localTimestamp: '2026-08-01T12:00:00Z',
         };
-        const server = {
+        const server: TestRecord = {
             id: '1',
             name: 'Budi Server Original',
             score: 80,
