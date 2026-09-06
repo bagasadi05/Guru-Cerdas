@@ -72,8 +72,10 @@ export interface UseBintangEvaluationReturn {
     handlePublish: () => Promise<void>;
     handleDownloadSinglePdf: (studentId: string) => Promise<void>;
     handleDownloadClassPdf: () => Promise<void>;
-    handleExportExcel: () => Promise<void>;
+    handleDownloadBulkPdf: (studentIds: string[]) => Promise<void>;
+    handleExportExcel: (targetStudentIds?: string[]) => Promise<void>;
     isExportingExcel: boolean;
+    isDownloadingBulk: boolean;
 }
 
 // ─── Hook ───────────────────────────────────────────────────────────────────
@@ -91,6 +93,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
     const [isGenerating, setIsGenerating] = useState(false);
     const [downloadingStudentId, setDownloadingStudentId] = useState<string | null>(null);
     const [isDownloadingClass, setIsDownloadingClass] = useState(false);
+    const [isDownloadingBulk, setIsDownloadingBulk] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState<{ current: number; total: number } | null>(null);
     const [isExportingExcel, setIsExportingExcel] = useState(false);
 
@@ -334,7 +337,41 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
         }
     }, [selectedClass, selectedMonth, user, toast]);
 
-    const handleExportExcel = useCallback(async () => {
+    const handleDownloadBulkPdf = useCallback(async (studentIds: string[]) => {
+        if (!studentIds || studentIds.length === 0) {
+            toast.error('Pilih setidaknya satu siswa untuk diunduh');
+            return;
+        }
+        setIsDownloadingBulk(true);
+        setDownloadProgress({ current: 0, total: studentIds.length });
+        try {
+            await downloadBintangReportAction({
+                targetStudentIds: studentIds,
+                month: selectedMonth,
+                user: user
+                    ? {
+                          id: user.id,
+                          name: user.name || user.user_metadata?.full_name || user.user_metadata?.name || '',
+                          avatarUrl: user.avatarUrl || user.user_metadata?.avatar_url || '',
+                          email: user.email,
+                      }
+                    : null,
+                onProgress: (current, total) => {
+                    setDownloadProgress({ current, total });
+                },
+            });
+            setDownloadProgress(null);
+            toast.success(`Rapor ${studentIds.length} siswa berhasil diunduh`);
+        } catch (error: any) {
+            console.error('Error downloading bulk PDF:', error);
+            toast.error(error.message || 'Gagal mengunduh PDF');
+            setDownloadProgress(null);
+        } finally {
+            setIsDownloadingBulk(false);
+        }
+    }, [selectedMonth, user, toast]);
+
+    const handleExportExcel = useCallback(async (targetStudentIds?: string[]) => {
         if (!selectedClass || !students || students.length === 0) {
             toast.error('Tidak ada data untuk diexport');
             return;
@@ -343,6 +380,16 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             toast.error('Pilih bulan terlebih dahulu');
             return;
         }
+
+        const effectiveStudents = (targetStudentIds && targetStudentIds.length > 0)
+            ? students.filter(s => targetStudentIds.includes(s.id))
+            : students;
+
+        if (effectiveStudents.length === 0) {
+            toast.error('Tidak ada siswa yang dipilih untuk diexport');
+            return;
+        }
+
         setIsExportingExcel(true);
         try {
             const parts = selectedMonth.split('-');
@@ -368,22 +415,17 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             const nextYear = monthNum === 12 ? year + 1 : year;
             const endDate = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
 
+            const effectiveStudentIds = effectiveStudents.map(s => s.id);
+
             // Fetch violations & quiz points directly for export completeness
             const [viosData, quizData] = await Promise.all([
                 bintangService.getViolationsForClass(selectedClass, selectedMonth),
                 (async () => {
-                    const { data: classStudents } = await supabase
-                        .from('students')
-                        .select('id')
-                        .eq('class_id', selectedClass)
-                        .is('deleted_at', null);
-                    
-                    const studentIds = (classStudents || []).map((s: any) => s.id);
-                    if (studentIds.length === 0) return [];
+                    if (effectiveStudentIds.length === 0) return [];
                     const { data, error } = await supabase
                         .from('quiz_points')
                         .select('*')
-                        .in('student_id', studentIds)
+                        .in('student_id', effectiveStudentIds)
                         .gte('quiz_date', startDate)
                         .lt('quiz_date', endDate)
                         .is('deleted_at', null);
@@ -394,19 +436,24 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                 })(),
             ]);
 
+            const filteredVios = (viosData || []).filter(v => effectiveStudentIds.includes(v.student_id));
+            const filteredEvals = (evaluations || []).filter(e => effectiveStudentIds.includes(e.student_id));
+
             await exportBintangToExcel({
-                className,
+                className: (targetStudentIds && targetStudentIds.length > 0 && targetStudentIds.length < students.length)
+                    ? `${className} (Subset ${effectiveStudents.length} Siswa)`
+                    : className,
                 schoolName: 'LAPORAN PROGRAM BINTANG',
                 monthName,
                 academicYear,
                 semesterName,
-                students,
-                violations: viosData || [],
+                students: effectiveStudents,
+                violations: filteredVios,
                 quizPoints: quizData || [],
-                evaluations,
+                evaluations: filteredEvals,
             });
 
-            toast.success('Data BINTANG berhasil diexport ke Excel');
+            toast.success(`Data BINTANG (${effectiveStudents.length} siswa) berhasil diexport ke Excel`);
         } catch (error: any) {
             console.error('Error exporting Excel:', error);
             toast.error(error.message || 'Gagal export Excel');
@@ -426,6 +473,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
         isGenerating,
         downloadingStudentId,
         isDownloadingClass,
+        isDownloadingBulk,
         downloadProgress,
 
         getEvaluationForStudent,
@@ -438,6 +486,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
         handlePublish,
         handleDownloadSinglePdf,
         handleDownloadClassPdf,
+        handleDownloadBulkPdf,
         handleExportExcel,
         isExportingExcel,
     };

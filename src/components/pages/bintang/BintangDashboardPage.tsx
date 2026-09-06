@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';import { Star, ClipboardCheck, BarChart3,
     Sparkles, Zap, Send, FileText, CheckCircle, PlusCircle, Info, Printer,
     ChevronDown, TrendingUp, Eye, Users, FileSpreadsheet,
-    Pencil, Trash2, ShieldAlert, Plus
+    Pencil, Trash2, ShieldAlert, Plus, Download, Loader2, X
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../hooks/useAuth';
@@ -20,6 +20,8 @@ import { gradeColors, aspectMeta } from './bintangConstants';
 import { AspectSectionEditor } from './AspectSectionEditor';
 import { useBintangEvaluation } from './hooks/useBintangEvaluation';
 import BintangTrendChart from './BintangTrendChart';
+import { useBulkSelection } from '../../advanced-features/useBulkSelection';
+import { BintangBulkExportModal } from './components/BintangBulkExportModal';
 import { ViolationForm } from '../student/forms/ViolationForm';
 import { QuizForm } from '../student/forms/QuizForm';
 import { type SeverityLevel } from '../student/violationMeta';
@@ -148,8 +150,29 @@ const BintangDashboardPage: React.FC = () => {
         evaluations,
         selectedClass,
         getStudentQuizPoints: (studentId: string) => studentQuizMap?.get(studentId)?.totalPoints || 0,
-        getStudentViolations: (studentId: string) => studentViolationsMap?.get(studentId) || [],
     });
+
+    // ── Bulk Selection & Export ──────────────────────────────────────────────
+    const bulkSelection = useBulkSelection(students);
+    const [isBulkExportModalOpen, setIsBulkExportModalOpen] = useState(false);
+
+    // Clear selection when class or month changes
+    const clearSelection = bulkSelection.clearSelection;
+    useEffect(() => {
+        clearSelection();
+    }, [selectedClass, selectedMonth, clearSelection]);
+
+    // Dismiss selection on Escape key
+    useEffect(() => {
+        if (bulkSelection.selectedCount === 0) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                clearSelection();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [bulkSelection.selectedCount, clearSelection]);
 
     // ── Keaktifan modal ──────────────────────────────────────────────────────
     const [isKeaktifanModalOpen, setIsKeaktifanModalOpen] = useState(false);
@@ -915,11 +938,20 @@ const BintangDashboardPage: React.FC = () => {
                                         {isWalas && (
                                             <button
                                                 type="button"
+                                                onClick={() => { setIsBulkExportModalOpen(true); setShowMoreActions(false); }}
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-brand-600 dark:text-brand-400 font-medium hover:bg-brand-50 dark:hover:bg-brand-900/20"
+                                            >
+                                                <Download size={15} /> Export Bulk...
+                                            </button>
+                                        )}
+                                        {isWalas && (
+                                            <button
+                                                type="button"
                                                 onClick={() => { evalHook.handleDownloadClassPdf(); setShowMoreActions(false); }}
-                                                disabled={evalHook.isDownloadingClass}
+                                                disabled={evalHook.isDownloadingClass || evalHook.isDownloadingBulk}
                                                 className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
                                             >
-                                                <Printer size={15} className="text-slate-400" /> {evalHook.isDownloadingClass ? 'Proses...' : 'Cetak Kelas'}
+                                                <Printer size={15} className="text-slate-400" /> {evalHook.isDownloadingClass ? 'Proses...' : 'Cetak Rapor Kelas'}
                                             </button>
                                         )}
                                         {isWalas && (
@@ -929,7 +961,7 @@ const BintangDashboardPage: React.FC = () => {
                                                 disabled={evalHook.isExportingExcel || students.length === 0}
                                                 className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
                                             >
-                                                <FileSpreadsheet size={15} className="text-slate-400" /> {evalHook.isExportingExcel ? 'Proses...' : 'Export Excel'}
+                                                <FileSpreadsheet size={15} className="text-slate-400" /> {evalHook.isExportingExcel ? 'Proses...' : 'Export Rekap Excel'}
                                             </button>
                                         )}
                                     </div>
@@ -961,6 +993,94 @@ const BintangDashboardPage: React.FC = () => {
                         )}
                     </div>
 
+                    {/* ─── In-Flow Bulk Action Bar (Di bawah tombol Keaktifan) ──────────── */}
+                    <AnimatePresence>
+                        {isWalas && bulkSelection.selectedCount > 0 && (
+                            <MotionDiv
+                                initial={{ opacity: 0, height: 0, y: -6 }}
+                                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                                exit={{ opacity: 0, height: 0, y: -6 }}
+                                transition={{ duration: 0.22, ease: 'easeOut' }}
+                                className="overflow-hidden"
+                            >
+                                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 dark:bg-slate-850 text-white p-3 sm:px-4 sm:py-3 rounded-2xl shadow-md border border-slate-700/80">
+                                    {/* Kiri: Status pilihan */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-300">
+                                            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm">
+                                                {bulkSelection.selectedCount}
+                                            </span>
+                                            <span className="text-sm font-semibold">
+                                                siswa dipilih
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={bulkSelection.isAllSelected ? bulkSelection.clearSelection : bulkSelection.selectAll}
+                                            className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 px-2.5 py-1.5 rounded-lg transition-colors"
+                                        >
+                                            {bulkSelection.isAllSelected ? 'Batal Pilih Semua' : `Pilih Semua (${students.length})`}
+                                        </button>
+                                    </div>
+
+                                    {/* Kanan: Tombol-tombol aksi */}
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            onClick={async () => {
+                                                await evalHook.handleDownloadBulkPdf(Array.from(bulkSelection.selectedItems));
+                                            }}
+                                            disabled={evalHook.isDownloadingBulk}
+                                            className="flex items-center gap-1.5 text-xs sm:text-sm h-10 px-4 font-medium bg-brand-600 hover:bg-brand-500 text-white rounded-xl shadow-sm active:scale-95"
+                                        >
+                                            {evalHook.isDownloadingBulk ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Printer size={16} />
+                                            )}
+                                            <span>Cetak PDF</span>
+                                        </Button>
+
+                                        <Button
+                                            onClick={async () => {
+                                                await evalHook.handleExportExcel(Array.from(bulkSelection.selectedItems));
+                                            }}
+                                            disabled={evalHook.isExportingExcel}
+                                            className="flex items-center gap-1.5 text-xs sm:text-sm h-10 px-4 font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-sm active:scale-95"
+                                        >
+                                            {evalHook.isExportingExcel ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <FileSpreadsheet size={16} />
+                                            )}
+                                            <span>Export Excel</span>
+                                        </Button>
+
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setIsBulkExportModalOpen(true)}
+                                            className="flex items-center gap-1.5 text-xs sm:text-sm h-10 px-3.5 font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 rounded-xl active:scale-95"
+                                        >
+                                            <Download size={15} />
+                                            <span className="hidden sm:inline">Opsi Export...</span>
+                                            <span className="sm:hidden">Opsi</span>
+                                        </Button>
+
+                                        <button
+                                            type="button"
+                                            onClick={bulkSelection.clearSelection}
+                                            className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors ml-1"
+                                            aria-label="Batalkan pilihan (Esc)"
+                                            title="Batalkan pilihan (Esc)"
+                                        >
+                                            <X className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </MotionDiv>
+                        )}
+                    </AnimatePresence>
+
                     {/* ══════════════════════════════════════════════════════════
                         4. PROGRESS BAR (evaluation fill status) — Walas only
                        ══════════════════════════════════════════════════════════ */}
@@ -991,6 +1111,20 @@ const BintangDashboardPage: React.FC = () => {
                             <table className="w-full text-left border-collapse min-w-[480px]">
                                 <thead>
                                     <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+                                        {isWalas && (
+                                            <th className="py-2.5 px-3 w-10 text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={bulkSelection.isAllSelected}
+                                                    ref={(el) => {
+                                                        if (el) el.indeterminate = bulkSelection.isPartiallySelected;
+                                                    }}
+                                                    onChange={bulkSelection.toggleAll}
+                                                    className="rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500 h-4 w-4 cursor-pointer"
+                                                    aria-label="Pilih semua siswa"
+                                                />
+                                            </th>
+                                        )}
                                         <th className="py-2.5 px-3 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
                                             <div className="flex items-center gap-1.5">
                                                 <Users size={14} /> Nama Siswa
@@ -1007,7 +1141,7 @@ const BintangDashboardPage: React.FC = () => {
                                 <tbody>
                                     {students.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="text-center py-10 text-slate-500">
+                                            <td colSpan={isWalas ? 8 : 7} className="text-center py-10 text-slate-500">
                                                 Tidak ada data siswa ditemukan di kelas ini.
                                             </td>
                                         </tr>
@@ -1022,7 +1156,25 @@ const BintangDashboardPage: React.FC = () => {
                                             const hasKeaktifan = activePts && activePts.totalPoints > 0;
 
                                             return (
-                                                <tr key={student.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                <tr
+                                                    key={student.id}
+                                                    className={`border-b border-slate-100 dark:border-slate-800 transition-colors ${
+                                                        bulkSelection.isSelected(student.id)
+                                                            ? 'bg-brand-50/60 dark:bg-brand-900/20'
+                                                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                                    }`}
+                                                >
+                                                    {isWalas && (
+                                                        <td className="py-2 px-3 text-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={bulkSelection.isSelected(student.id)}
+                                                                onChange={() => bulkSelection.toggleItem(student.id)}
+                                                                className="rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500 h-4 w-4 cursor-pointer"
+                                                                aria-label={`Pilih ${student.name}`}
+                                                            />
+                                                        </td>
+                                                    )}
                                                     <td className="py-2 px-2 sm:py-3 sm:px-4 text-[11px] sm:text-sm font-medium text-slate-900 dark:text-white max-w-[90px] sm:max-w-none truncate" title={student.name}>
                                                         <div className="flex items-center gap-1.5">
                                                             <span className="truncate">{student.name}</span>
@@ -1876,8 +2028,8 @@ const BintangDashboardPage: React.FC = () => {
                 </form>
             </Modal>
 
-            {/* ─── Progress Modal untuk Cetak Kelas ──────────────────────────── */}
-            {evalHook.isDownloadingClass && evalHook.downloadProgress && (
+            {/* ─── Progress Modal untuk Cetak Kelas / Bulk ──────────────────── */}
+            {(evalHook.isDownloadingClass || evalHook.isDownloadingBulk) && evalHook.downloadProgress && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
                     <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 p-6">
@@ -1891,7 +2043,7 @@ const BintangDashboardPage: React.FC = () => {
                             </div>
 
                             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                                Mengunduh Rapor Kelas
+                                Mengunduh Rapor BINTANG
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                                 Memproses {evalHook.downloadProgress.total} siswa untuk {evalHook.downloadProgress.current > 0 ? '...' : ''}
@@ -1929,6 +2081,30 @@ const BintangDashboardPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* ─── Bulk Export Modal ───────────────────────────────────────────── */}
+            {isBulkExportModalOpen && (
+                <BintangBulkExportModal
+                    isOpen={isBulkExportModalOpen}
+                    onClose={() => setIsBulkExportModalOpen(false)}
+                    classNameTitle={classes.find(c => c.id === selectedClass)?.name || 'Kelas'}
+                    selectedMonth={selectedMonth}
+                    students={students}
+                    selectedStudentIds={bulkSelection.selectedItems}
+                    evaluations={evaluations}
+                    getAspectSummary={getAspectSummary}
+                    onExportPdf={async (ids) => {
+                        await evalHook.handleDownloadBulkPdf(ids);
+                        setIsBulkExportModalOpen(false);
+                    }}
+                    onExportExcel={async (ids) => {
+                        await evalHook.handleExportExcel(ids);
+                        setIsBulkExportModalOpen(false);
+                    }}
+                    isExporting={evalHook.isDownloadingBulk || evalHook.isExportingExcel}
+                    progress={evalHook.downloadProgress}
+                />
             )}
         </div>
     );

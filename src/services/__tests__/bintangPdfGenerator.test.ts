@@ -555,6 +555,61 @@ describe('bintangPdfGenerator', () => {
 
         expect(doc.getNumberOfPages()).toBe(1);
     });
+
+    it('generates bulk reports for multiple students with onProgress callback tracking', async () => {
+        const doc = new jsPDF();
+        const progressReports: Array<{ current: number; total: number }> = [];
+
+        const studentA = {
+            student: { id: 's_bulk_1', name: 'Siswa Satu', classes: { name: 'Kelas 3A' } },
+            aspects: {
+                ADAB: { grade: 'A', points: 0 },
+                KEDISIPLINAN: { grade: 'A', points: 0 },
+                KERAPIAN: { grade: 'A', points: 0 },
+            },
+            violations: [],
+            evaluation: {
+                adab_score: 'A',
+                kedisiplinan_score: 'A',
+                kerapian_score: 'A',
+                catatan_wali: 'Catatan siswa satu',
+            },
+        };
+
+        const studentB = {
+            student: { id: 's_bulk_2', name: 'Siswa Dua', classes: { name: 'Kelas 3A' } },
+            aspects: {
+                ADAB: { grade: 'B', points: 5 },
+                KEDISIPLINAN: { grade: 'A', points: 0 },
+                KERAPIAN: { grade: 'A', points: 0 },
+            },
+            violations: [{ description: 'Datang terlambat', points: 5, date: '2026-08-10' }],
+            evaluation: {
+                adab_score: 'B',
+                kedisiplinan_score: 'A',
+                kerapian_score: 'A',
+                catatan_wali: 'Catatan siswa dua',
+            },
+        };
+
+        await generateBintangReportPdf(
+            doc,
+            [studentA, studentB],
+            'Agustus 2026',
+            '5 September 2026',
+            { id: 'u1', name: 'Wali Kelas 3A, S.Pd', avatarUrl: '' },
+            undefined,
+            (current, total) => {
+                progressReports.push({ current, total });
+            }
+        );
+
+        expect(doc.getNumberOfPages()).toBe(2);
+        expect(progressReports).toEqual([
+            { current: 1, total: 2 },
+            { current: 2, total: 2 },
+        ]);
+    });
 });
 
 

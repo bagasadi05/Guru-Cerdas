@@ -725,23 +725,51 @@ export const generateBintangReportPdf = async (
 
 export const downloadBintangReportAction = async ({
     studentId,
+    targetStudentIds,
     classId,
     month,
     user,
     onProgress
 }: {
     studentId?: string;
+    targetStudentIds?: string[];
     classId?: string;
     month: string;
     user: AppUser | null;
     onProgress?: (current: number, total: number) => void;
 }) => {
-    if (!studentId && !classId) return;
+    if (!studentId && (!targetStudentIds || targetStudentIds.length === 0) && !classId) return;
 
     let studentsToFetch: Array<{ id: string; name?: string | null; access_code?: string | null; class_id?: string | null; nis?: string | null; nisn?: string | null; classes?: { name: string | null } | null }> = [];
     let classUserId: string | null = null;
     
-    if (studentId) {
+    if (targetStudentIds && targetStudentIds.length > 0) {
+        const { data: sData, error: sError } = await supabase
+            .from('students')
+            .select('id, name, access_code, class_id')
+            .in('id', targetStudentIds)
+            .is('deleted_at', null)
+            .order('name', { ascending: true });
+        if (sError) throw sError;
+
+        const distinctClassIds = [...new Set((sData || []).map(s => s.class_id).filter(Boolean) as string[])];
+        const classMap = new Map<string, { name: string; user_id?: string | null; wali_kelas_id?: string | null }>();
+        if (distinctClassIds.length > 0) {
+            const { data: cData } = await supabase
+                .from('classes')
+                .select('id, name, user_id, wali_kelas_id')
+                .in('id', distinctClassIds);
+            (cData || []).forEach(c => classMap.set(c.id, c));
+            if (cData && cData.length > 0) {
+                classUserId = cData[0].wali_kelas_id || cData[0].user_id || null;
+            }
+        }
+
+        studentsToFetch = (sData || []).map(s => ({
+            ...s,
+            classes: { name: (s.class_id && classMap.get(s.class_id)?.name) || '-' }
+        }));
+    } else if (studentId) {
         const { data: sData, error: sError } = await supabase
             .from('students')
             .select('id, name, access_code, class_id')
@@ -892,9 +920,15 @@ export const downloadBintangReportAction = async ({
     }, onProgress);
     
     const exportDate = formatExportDate();
-    const fileName = classId 
-        ? `Bintang_Kelas_${reports[0]?.student?.classes?.name || classId}_${monthName.replace(/\s+/g, '_')}_${exportDate}.pdf`
-        : `Bintang_${reports[0]?.student?.name?.replace(/\s+/g, '_') || 'Siswa'}_${monthName.replace(/\s+/g, '_')}_${exportDate}.pdf`;
+    let fileName = `Bintang_${monthName.replace(/\s+/g, '_')}_${exportDate}.pdf`;
+    if (targetStudentIds && targetStudentIds.length > 0) {
+        const className = reports[0]?.student?.classes?.name;
+        fileName = `Bintang_Bulk_${className ? `${className.replace(/\s+/g, '_')}_` : ''}${targetStudentIds.length}Siswa_${monthName.replace(/\s+/g, '_')}_${exportDate}.pdf`;
+    } else if (classId) {
+        fileName = `Bintang_Kelas_${reports[0]?.student?.classes?.name || classId}_${monthName.replace(/\s+/g, '_')}_${exportDate}.pdf`;
+    } else if (reports[0]?.student?.name) {
+        fileName = `Bintang_${reports[0].student.name.replace(/\s+/g, '_')}_${monthName.replace(/\s+/g, '_')}_${exportDate}.pdf`;
+    }
         
     doc.save(fileName);
 };

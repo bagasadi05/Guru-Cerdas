@@ -6,6 +6,7 @@ export interface BulkSelectionState {
   isPartiallySelected: boolean;
   toggleItem: (id: string) => void;
   toggleAll: () => void;
+  selectAll: () => void;
   selectItems: (ids: string[]) => void;
   clearSelection: () => void;
   isSelected: (id: string) => boolean;
@@ -40,6 +41,10 @@ export function useBulkSelection<T extends { id: string }>(
     });
   }, [allIds]);
 
+  const selectAll = useCallback(() => {
+    setSelectedItems(new Set(allIds));
+  }, [allIds]);
+
   const selectItems = useCallback((ids: string[]) => {
     setSelectedItems(new Set(ids));
   }, []);
@@ -56,6 +61,7 @@ export function useBulkSelection<T extends { id: string }>(
     isPartiallySelected: selectedItems.size > 0 && selectedItems.size < allIds.size,
     toggleItem,
     toggleAll,
+    selectAll,
     selectItems,
     clearSelection,
     isSelected,
